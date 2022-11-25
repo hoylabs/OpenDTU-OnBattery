@@ -5,6 +5,19 @@
 #include "MqttSettings.h"
 #include "MessageOutput.h"
 #include "Configuration.h"
+#include "NetworkSettings.h"
+#include "ZeroExportPowerLimiter.h"
+#include <Hoymiles.h>
+#include <MqttClientSetup.h>
+#include <Ticker.h>
+#include <espMqttClient.h>
+
+#define TOPIC_SUB_LIMIT_PERSISTENT_RELATIVE "limit_persistent_relative"
+#define TOPIC_SUB_LIMIT_PERSISTENT_ABSOLUTE "limit_persistent_absolute"
+#define TOPIC_SUB_LIMIT_NONPERSISTENT_RELATIVE "limit_nonpersistent_relative"
+#define TOPIC_SUB_LIMIT_NONPERSISTENT_ABSOLUTE "limit_nonpersistent_absolute"
+#define TOPIC_SUB_POWER "power"
+#define TOPIC_SUB_RESTART "restart"
 
 MqttSettingsClass::MqttSettingsClass()
 {
@@ -34,6 +47,27 @@ void MqttSettingsClass::onMqttConnect(bool sessionPresent)
 
     for (const auto& cb : _mqttSubscribeParser.get_callbacks()) {
         mqttClient->subscribe(cb.topic.c_str(), cb.qos);
+    }
+
+    String topic = getPrefix();
+    mqttClient->subscribe(String(topic + "+/cmd/" + TOPIC_SUB_LIMIT_PERSISTENT_RELATIVE).c_str(), 0);
+    mqttClient->subscribe(String(topic + "+/cmd/" + TOPIC_SUB_LIMIT_PERSISTENT_ABSOLUTE).c_str(), 0);
+    mqttClient->subscribe(String(topic + "+/cmd/" + TOPIC_SUB_LIMIT_NONPERSISTENT_RELATIVE).c_str(), 0);
+    mqttClient->subscribe(String(topic + "+/cmd/" + TOPIC_SUB_LIMIT_NONPERSISTENT_ABSOLUTE).c_str(), 0);
+    mqttClient->subscribe(String(topic + "+/cmd/" + TOPIC_SUB_POWER).c_str(), 0);
+    mqttClient->subscribe(String(topic + "+/cmd/" + TOPIC_SUB_RESTART).c_str(), 0);
+
+    // Zero export power limiter
+    if (strlen(TOPIC_CURRENT_POWER_CONSUMPTION_1) != 0) {
+        mqttClient->subscribe(TOPIC_CURRENT_POWER_CONSUMPTION_1, 0);
+    }
+
+    if (strlen(TOPIC_CURRENT_POWER_CONSUMPTION_2) != 0) {
+        mqttClient->subscribe(TOPIC_CURRENT_POWER_CONSUMPTION_2, 0);
+    }
+
+    if (strlen(TOPIC_CURRENT_POWER_CONSUMPTION_3) != 0) {
+        mqttClient->subscribe(TOPIC_CURRENT_POWER_CONSUMPTION_3, 0);
     }
 }
 
@@ -84,6 +118,13 @@ void MqttSettingsClass::onMqttMessage(const espMqttClientTypes::MessagePropertie
 {
     MessageOutput.print(F("Received MQTT message on topic: "));
     MessageOutput.println(topic);
+
+    if (strcmp(topic, TOPIC_CURRENT_POWER_CONSUMPTION_1) == 0
+            || strcmp(topic, TOPIC_CURRENT_POWER_CONSUMPTION_2) == 0
+            || strcmp(topic, TOPIC_CURRENT_POWER_CONSUMPTION_3) == 0) {
+        ZeroExportPowerLimiter.onMqttMessage(properties, topic, payload, len, index, total);
+        return;
+    }
 
     _mqttSubscribeParser.handle_message(properties, topic, payload, len, index, total);
 }

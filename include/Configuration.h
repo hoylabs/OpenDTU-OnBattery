@@ -17,7 +17,7 @@
 #define MQTT_MAX_HOSTNAME_STRLEN 128
 #define MQTT_MAX_USERNAME_STRLEN 64
 #define MQTT_MAX_PASSWORD_STRLEN 64
-#define MQTT_MAX_TOPIC_STRLEN 32
+#define MQTT_MAX_TOPIC_STRLEN 256
 #define MQTT_MAX_LWTVALUE_STRLEN 20
 #define MQTT_MAX_ROOT_CA_CERT_STRLEN 2048 
 
@@ -69,6 +69,8 @@ struct CONFIG_T {
     char Mqtt_LwtValue_Offline[MQTT_MAX_LWTVALUE_STRLEN + 1];
     uint32_t Mqtt_PublishInterval;
 
+    uint32_t ZeroExportPowerLimiter_Interval;
+
     INVERTER_CONFIG_T Inverter[INV_MAX_COUNT];
 
     uint64_t Dtu_Serial;
@@ -89,6 +91,15 @@ struct CONFIG_T {
     char Mqtt_Hostname[MQTT_MAX_HOSTNAME_STRLEN + 1];
 
     bool Mqtt_Hass_Expire;
+
+    bool PowerLimiter_Enabled;
+    char PowerLimiter_MqttTopicPowerMeter1[MQTT_MAX_TOPIC_STRLEN + 1];
+    char PowerLimiter_MqttTopicPowerMeter2[MQTT_MAX_TOPIC_STRLEN + 1];
+    char PowerLimiter_MqttTopicPowerMeter3[MQTT_MAX_TOPIC_STRLEN + 1];
+    uint32_t PowerLimiter_PowerMeterTimeout;
+    uint32_t PowerLimiter_MinLimit;
+    uint32_t PowerLimiter_TurnOffVoltage;
+    uint32_t PowerLimiter_TurnOnVoltage;
 
     char Security_Password[WIFI_MAX_PASSWORD_STRLEN + 1];
     bool Security_AllowReadonly;

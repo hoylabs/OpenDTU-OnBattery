@@ -71,6 +71,9 @@ bool ConfigurationClass::write()
     mqtt_hass["individual_panels"] = config.Mqtt_Hass_IndividualPanels;
     mqtt_hass["expire"] = config.Mqtt_Hass_Expire;
 
+    JsonObject zeroExportPowerLimiter = doc.createNestedObject("zeroexportpowerlimiter");
+    zeroExportPowerLimiter["interval"] = config.ZeroExportPowerLimiter_Interval;
+
     JsonObject dtu = doc.createNestedObject("dtu");
     dtu["serial"] = config.Dtu_Serial;
     dtu["poll_interval"] = config.Dtu_PollInterval;
@@ -196,6 +199,9 @@ bool ConfigurationClass::read()
     config.Mqtt_Hass_Expire = mqtt_hass["expire"] | MQTT_HASS_EXPIRE;
     config.Mqtt_Hass_IndividualPanels = mqtt_hass["individual_panels"] | MQTT_HASS_INDIVIDUALPANELS;
     strlcpy(config.Mqtt_Hass_Topic, mqtt_hass["topic"] | MQTT_HASS_TOPIC, sizeof(config.Mqtt_Hass_Topic));
+
+    JsonObject zeroExportPowerLimiter = doc["zeroexportpowerlimiter"];
+    config.ZeroExportPowerLimiter_Interval = zeroExportPowerLimiter["interval"] | ZEROEXPORTPOWERLIMITER_INTERVAL;
 
     JsonObject dtu = doc["dtu"];
     config.Dtu_Serial = dtu["serial"] | DTU_SERIAL;

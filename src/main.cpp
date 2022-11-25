@@ -14,6 +14,7 @@
 #include "NtpSettings.h"
 #include "Utils.h"
 #include "WebApi.h"
+#include "ZeroExportPowerLimiter.h"
 #include "defaults.h"
 #include <Arduino.h>
 #include <Hoymiles.h>
@@ -143,6 +144,8 @@ void setup()
 void loop()
 {
     NetworkSettings.loop();
+    yield();
+    ZeroExportPowerLimiter.loop();
     yield();
     Hoymiles.loop();
     yield();
