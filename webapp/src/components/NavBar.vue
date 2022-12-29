@@ -52,7 +52,7 @@
                                 <router-link @click="onClick" class="dropdown-item" to="/settings/vedirect">{{ $t('menu.VedirectSettings') }}</router-link>
                             </li>
                             <li>
-                                <router-link @click="onClick" class="dropdown-item" to="/settings/powerlimiter">Power limiter</router-link>
+                                <router-link @click="onClick" class="dropdown-item" to="/settings/powerlimiter">Dynamic Power Limiter</router-link>
                             </li>
                             <li>
                                 <hr class="dropdown-divider" />

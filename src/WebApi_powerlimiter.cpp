@@ -7,6 +7,8 @@
 #include "ArduinoJson.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
+#include "MqttHassPublishing.h"
+#include "MqttSettings.h"
 #include "WebApi.h"
 #include "helper.h"
 
@@ -35,6 +37,11 @@ void WebApiPowerLimiterClass::onStatus(AsyncWebServerRequest* request)
     root[F("mqtt_topic_powermeter_1")] = config.PowerLimiter_MqttTopicPowerMeter1;
     root[F("mqtt_topic_powermeter_2")] = config.PowerLimiter_MqttTopicPowerMeter2;
     root[F("mqtt_topic_powermeter_3")] = config.PowerLimiter_MqttTopicPowerMeter3;
+    root[F("is_inverter_behind_powermeter")] = config.PowerLimiter_IsInverterBehindPowerMeter;
+    root[F("lower_power_limit")] = config.PowerLimiter_LowerPowerLimit;
+    root[F("upper_power_limit")] = config.PowerLimiter_UpperPowerLimit;
+    root[F("voltage_start_threshold")] = config.PowerLimiter_VoltageStartThreshold;
+    root[F("voltage_stop_threshold")] = config.PowerLimiter_VoltageStopThreshold;
 
     response->setLength();
     request->send(response);
@@ -46,17 +53,7 @@ void WebApiPowerLimiterClass::onAdminGet(AsyncWebServerRequest* request)
         return;
     }
 
-    AsyncJsonResponse* response = new AsyncJsonResponse();
-    JsonObject root = response->getRoot();
-    const CONFIG_T& config = Configuration.get();
-
-    root[F("enabled")] = config.PowerLimiter_Enabled;
-    root[F("mqtt_topic_powermeter_1")] = config.PowerLimiter_MqttTopicPowerMeter1;
-    root[F("mqtt_topic_powermeter_2")] = config.PowerLimiter_MqttTopicPowerMeter2;
-    root[F("mqtt_topic_powermeter_3")] = config.PowerLimiter_MqttTopicPowerMeter3;
-
-    response->setLength();
-    request->send(response);
+    this->onStatus(request);
 }
 
 void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
@@ -95,8 +92,7 @@ void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
-    if (!(root.containsKey("enabled") && root.containsKey("mqtt_topic_powermeter_1") && root.containsKey("mqtt_topic_powermeter_2")
-            && root.containsKey("mqtt_topic_powermeter_3"))) {
+    if (!(root.containsKey("enabled") && root.containsKey("lower_power_limit"))) {
         retMsg[F("message")] = F("Values are missing!");
         response->setLength();
         request->send(response);
@@ -108,6 +104,11 @@ void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
     strlcpy(config.PowerLimiter_MqttTopicPowerMeter1, root[F("mqtt_topic_powermeter_1")].as<String>().c_str(), sizeof(config.PowerLimiter_MqttTopicPowerMeter1));
     strlcpy(config.PowerLimiter_MqttTopicPowerMeter2, root[F("mqtt_topic_powermeter_2")].as<String>().c_str(), sizeof(config.PowerLimiter_MqttTopicPowerMeter2));
     strlcpy(config.PowerLimiter_MqttTopicPowerMeter3, root[F("mqtt_topic_powermeter_3")].as<String>().c_str(), sizeof(config.PowerLimiter_MqttTopicPowerMeter3));
+    config.PowerLimiter_IsInverterBehindPowerMeter = root[F("is_inverter_behind_powermeter")].as<bool>();
+    config.PowerLimiter_LowerPowerLimit = root[F("lower_power_limit")].as<uint32_t>();
+    config.PowerLimiter_UpperPowerLimit = root[F("upper_power_limit")].as<uint32_t>();
+    config.PowerLimiter_VoltageStartThreshold = root[F("voltage_start_threshold")].as<float>();
+    config.PowerLimiter_VoltageStopThreshold = root[F("voltage_stop_threshold")].as<float>();
     Configuration.write();
 
     retMsg[F("type")] = F("success");
@@ -115,4 +116,7 @@ void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
 
     response->setLength();
     request->send(response);
+
+    MqttSettings.performReconnect();
+    MqttHassPublishing.forceUpdate();
 }

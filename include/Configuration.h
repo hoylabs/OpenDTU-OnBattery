@@ -69,7 +69,7 @@ struct CONFIG_T {
     char Mqtt_LwtValue_Offline[MQTT_MAX_LWTVALUE_STRLEN + 1];
     uint32_t Mqtt_PublishInterval;
 
-    uint32_t ZeroExportPowerLimiter_Interval;
+    uint32_t PowerLimiter_Interval;
 
     INVERTER_CONFIG_T Inverter[INV_MAX_COUNT];
 
@@ -96,10 +96,11 @@ struct CONFIG_T {
     char PowerLimiter_MqttTopicPowerMeter1[MQTT_MAX_TOPIC_STRLEN + 1];
     char PowerLimiter_MqttTopicPowerMeter2[MQTT_MAX_TOPIC_STRLEN + 1];
     char PowerLimiter_MqttTopicPowerMeter3[MQTT_MAX_TOPIC_STRLEN + 1];
-    uint32_t PowerLimiter_PowerMeterTimeout;
-    uint32_t PowerLimiter_MinLimit;
-    uint32_t PowerLimiter_TurnOffVoltage;
-    uint32_t PowerLimiter_TurnOnVoltage;
+    bool PowerLimiter_IsInverterBehindPowerMeter;
+    uint32_t PowerLimiter_LowerPowerLimit;
+    uint32_t PowerLimiter_UpperPowerLimit;
+    float PowerLimiter_VoltageStartThreshold;
+    float PowerLimiter_VoltageStopThreshold;
 
     char Security_Password[WIFI_MAX_PASSWORD_STRLEN + 1];
     bool Security_AllowReadonly;

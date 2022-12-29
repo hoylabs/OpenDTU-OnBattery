@@ -72,7 +72,7 @@ bool ConfigurationClass::write()
     mqtt_hass["expire"] = config.Mqtt_Hass_Expire;
 
     JsonObject zeroExportPowerLimiter = doc.createNestedObject("zeroexportpowerlimiter");
-    zeroExportPowerLimiter["interval"] = config.ZeroExportPowerLimiter_Interval;
+    zeroExportPowerLimiter["interval"] = config.PowerLimiter_Interval;
 
     JsonObject dtu = doc.createNestedObject("dtu");
     dtu["serial"] = config.Dtu_Serial;
@@ -101,6 +101,17 @@ bool ConfigurationClass::write()
     vedirect["enabled"] = config.Vedirect_Enabled;
     vedirect["updates_only"] = config.Vedirect_UpdatesOnly;
     vedirect["poll_interval"] = config.Vedirect_PollInterval;
+
+    JsonObject powerlimiter = doc.createNestedObject("powerlimiter");
+    powerlimiter["enabled"] = config.PowerLimiter_Enabled;
+    powerlimiter["mqtt_topic_powermeter_1"] = config.PowerLimiter_MqttTopicPowerMeter1;
+    powerlimiter["mqtt_topic_powermeter_2"] = config.PowerLimiter_MqttTopicPowerMeter2;
+    powerlimiter["mqtt_topic_powermeter_3"] = config.PowerLimiter_MqttTopicPowerMeter3;
+    powerlimiter["is_inverter_behind_powermeter"] = config.PowerLimiter_IsInverterBehindPowerMeter;
+    powerlimiter["lower_power_limit"] = config.PowerLimiter_LowerPowerLimit;
+    powerlimiter["upper_power_limit"] = config.PowerLimiter_UpperPowerLimit;
+    powerlimiter["voltage_start_threshold"] = config.PowerLimiter_VoltageStartThreshold;
+    powerlimiter["voltage_stop_threshold"] = config.PowerLimiter_VoltageStopThreshold;
 
     // Serialize JSON to file
     if (serializeJson(doc, f) == 0) {
@@ -200,8 +211,8 @@ bool ConfigurationClass::read()
     config.Mqtt_Hass_IndividualPanels = mqtt_hass["individual_panels"] | MQTT_HASS_INDIVIDUALPANELS;
     strlcpy(config.Mqtt_Hass_Topic, mqtt_hass["topic"] | MQTT_HASS_TOPIC, sizeof(config.Mqtt_Hass_Topic));
 
-    JsonObject zeroExportPowerLimiter = doc["zeroexportpowerlimiter"];
-    config.ZeroExportPowerLimiter_Interval = zeroExportPowerLimiter["interval"] | ZEROEXPORTPOWERLIMITER_INTERVAL;
+    JsonObject PowerLimiter = doc["tpowerlimiter"];
+    config.PowerLimiter_Interval = PowerLimiter["interval"] | POWERLIMITER_INTERVAL;
 
     JsonObject dtu = doc["dtu"];
     config.Dtu_Serial = dtu["serial"] | DTU_SERIAL;
@@ -229,6 +240,17 @@ bool ConfigurationClass::read()
     config.Vedirect_Enabled = vedirect["enabled"] | VEDIRECT_ENABLED;
     config.Vedirect_UpdatesOnly = vedirect["updates_only"] | VEDIRECT_UPDATESONLY;
     config.Vedirect_PollInterval = vedirect["poll_interval"] | VEDIRECT_POLL_INTERVAL;
+
+    JsonObject powerlimiter = doc["powerlimiter"];
+    config.PowerLimiter_Enabled = powerlimiter["enabled"] | POWERLIMITER_ENABLED;
+    strlcpy(config.PowerLimiter_MqttTopicPowerMeter1,  powerlimiter["mqtt_topic_powermeter_1"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter1));
+    strlcpy(config.PowerLimiter_MqttTopicPowerMeter2,  powerlimiter["mqtt_topic_powermeter_2"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter2));
+    strlcpy(config.PowerLimiter_MqttTopicPowerMeter3,  powerlimiter["mqtt_topic_powermeter_3"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter3));
+    config.PowerLimiter_IsInverterBehindPowerMeter = powerlimiter["is_inverter_behind_powermeter"] | POWERLIMITER_IS_INVERTER_BEHIND_POWER_METER;
+    config.PowerLimiter_LowerPowerLimit = powerlimiter["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
+    config.PowerLimiter_UpperPowerLimit = powerlimiter["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+    config.PowerLimiter_VoltageStartThreshold = powerlimiter["voltage_start_threshold"] | POWERLIMITER_VOLTAGE_START_THRESHOLD;
+    config.PowerLimiter_VoltageStopThreshold = powerlimiter["voltage_stop_threshold"] | POWERLIMITER_VOLTAGE_STOP_THRESHOLD;
 
     f.close();
     return true;
