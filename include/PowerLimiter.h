@@ -7,7 +7,7 @@
 #include <Hoymiles.h>
 #include <memory>
 
-class ZeroExportPowerLimiterClass {
+class PowerLimiterClass {
 public:
     void init();
     void loop();
@@ -24,4 +24,4 @@ private:
     float _powerMeter3Power;
 };
 
-extern ZeroExportPowerLimiterClass ZeroExportPowerLimiter;
+extern PowerLimiterClass PowerLimiter;

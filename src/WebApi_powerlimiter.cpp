@@ -7,7 +7,7 @@
 #include "ArduinoJson.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
-#include "MqttHassPublishing.h"
+#include "MqttHandleHass.h"
 #include "MqttSettings.h"
 #include "WebApi.h"
 #include "helper.h"
@@ -118,5 +118,5 @@ void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
     request->send(response);
 
     MqttSettings.performReconnect();
-    MqttHassPublishing.forceUpdate();
+    MqttHandleHass.forceUpdate();
 }

@@ -8,16 +8,38 @@
 #include "NetworkSettings.h"
 #include <ctime>
 
-ZeroExportPowerLimiterClass ZeroExportPowerLimiter;
+PowerLimiterClass PowerLimiter;
 
-void ZeroExportPowerLimiterClass::init()
+void PowerLimiterClass::init()
 {
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    using std::placeholders::_3;
+    using std::placeholders::_4;
+    using std::placeholders::_5;
+    using std::placeholders::_6;
+
     _lastRequestedPowerLimit = 0;
+
+    CONFIG_T& config = Configuration.get();
+
+    // Zero export power limiter
+    if (strlen(config.PowerLimiter_MqttTopicPowerMeter1) != 0) {
+        MqttSettings.subscribe(config.PowerLimiter_MqttTopicPowerMeter1, 0, std::bind(&PowerLimiterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
+    }
+
+    if (strlen(config.PowerLimiter_MqttTopicPowerMeter2) != 0) {
+        MqttSettings.subscribe(config.PowerLimiter_MqttTopicPowerMeter2, 0, std::bind(&PowerLimiterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
+    }
+
+    if (strlen(config.PowerLimiter_MqttTopicPowerMeter3) != 0) {
+        MqttSettings.subscribe(config.PowerLimiter_MqttTopicPowerMeter3, 0, std::bind(&PowerLimiterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
+    }
 }
 
-void ZeroExportPowerLimiterClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total)
+void PowerLimiterClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total)
 {
-    Serial.print(F("ZeroExportPowerLimiterClass: Received MQTT message on topic: "));
+    Serial.print(F("PowerLimiterClass: Received MQTT message on topic: "));
     Serial.println(topic);
 
     CONFIG_T& config = Configuration.get();
@@ -37,7 +59,7 @@ void ZeroExportPowerLimiterClass::onMqttMessage(const espMqttClientTypes::Messag
     _lastPowerMeterUpdate = millis();
 }
 
-void ZeroExportPowerLimiterClass::loop()
+void PowerLimiterClass::loop()
 {
     CONFIG_T& config = Configuration.get();
 
@@ -60,7 +82,7 @@ void ZeroExportPowerLimiterClass::loop()
     float dcVoltage = inverter->Statistics()->getChannelFieldValue(CH1, FLD_UDC);
 
     if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
-        Serial.printf("[ZeroExportPowerLimiterClass::loop] dcVoltage: %f config.PowerLimiter_VoltageStartThreshold: %f config.PowerLimiter_VoltageStopThreshold: %f inverter->isProducing(): %d\n",
+        Serial.printf("[PowerLimiterClass::loop] dcVoltage: %f config.PowerLimiter_VoltageStartThreshold: %f config.PowerLimiter_VoltageStopThreshold: %f inverter->isProducing(): %d\n",
             dcVoltage, config.PowerLimiter_VoltageStartThreshold, config.PowerLimiter_VoltageStopThreshold, inverter->isProducing());
     }
 
@@ -69,7 +91,7 @@ void ZeroExportPowerLimiterClass::loop()
                 && config.PowerLimiter_VoltageStartThreshold > 0.0
                 && dcVoltage >= config.PowerLimiter_VoltageStartThreshold) {
             // DC voltage high enough, start the inverter
-            Serial.printf("[ZeroExportPowerLimiterClass::loop] Starting up inverter...\n");
+            Serial.printf("[PowerLimiterClass::loop] Starting up inverter...\n");
             _lastCommandSent = millis();
             inverter->sendPowerControlRequest(Hoymiles.getRadio(), true);
         }
@@ -80,7 +102,7 @@ void ZeroExportPowerLimiterClass::loop()
             && config.PowerLimiter_VoltageStopThreshold > 0.0
             && dcVoltage <= config.PowerLimiter_VoltageStopThreshold) {
         // DC voltage too low, stop the inverter
-        Serial.printf("[ZeroExportPowerLimiterClass::loop] Stopping inverter...\n");
+        Serial.printf("[PowerLimiterClass::loop] Stopping inverter...\n");
         _lastCommandSent = millis();
         inverter->sendPowerControlRequest(Hoymiles.getRadio(), false);
         return;
@@ -103,7 +125,7 @@ void ZeroExportPowerLimiterClass::loop()
 
         newPowerLimit = constrain(newPowerLimit, (uint16_t)config.PowerLimiter_LowerPowerLimit, (uint16_t)config.PowerLimiter_UpperPowerLimit);
 
-        Serial.printf("[ZeroExportPowerLimiterClass::loop] powerMeter: %d W lastRequestedPowerLimit: %d\n",
+        Serial.printf("[PowerLimiterClass::loop] powerMeter: %d W lastRequestedPowerLimit: %d\n",
             int(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power), _lastRequestedPowerLimit);
     } else {
         // If the power meter values are older than 30 seconds,
@@ -112,11 +134,11 @@ void ZeroExportPowerLimiterClass::loop()
     }
 
     //if (abs(currentPowerLimit - newPowerLimit) > 10) {
-    Serial.printf("[ZeroExportPowerLimiterClass::loop] Limit Non-Persistent: %d W\n", newPowerLimit);
+    Serial.printf("[PowerLimiterClass::loop] Limit Non-Persistent: %d W\n", newPowerLimit);
     inverter->sendActivePowerControlRequest(Hoymiles.getRadio(), newPowerLimit, PowerLimitControlType::AbsolutNonPersistent);
     _lastRequestedPowerLimit = newPowerLimit;
     //} else {
-    //    Serial.printf("[ZeroExportPowerLimiterClass::loop] Diff to old limit < 10, not setting new limit!\n");
+    //    Serial.printf("[PowerLimiterClass::loop] Diff to old limit < 10, not setting new limit!\n");
     //}
 
     _lastCommandSent = millis();

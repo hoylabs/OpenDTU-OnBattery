@@ -145,7 +145,7 @@ void loop()
 {
     NetworkSettings.loop();
     yield();
-    ZeroExportPowerLimiter.loop();
+    PowerLimiter.loop();
     yield();
     Hoymiles.loop();
     yield();

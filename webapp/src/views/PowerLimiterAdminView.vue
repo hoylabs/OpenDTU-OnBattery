@@ -151,7 +151,7 @@ export default defineComponent({
         getPowerLimiterConfig() {
             this.dataLoading = true;
             fetch("/api/powerlimiter/config", { headers: authHeader() })
-                .then((response) => handleResponse(response, this.$emitter))
+                .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
                     this.powerLimiterConfigList = data;
                     this.dataLoading = false;
@@ -168,7 +168,7 @@ export default defineComponent({
                 headers: authHeader(),
                 body: formData,
             })
-                .then((response) => handleResponse(response, this.$emitter))
+                .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then(
                     (response) => {
                         this.alertMessage = response.message;

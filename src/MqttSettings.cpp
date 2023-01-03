@@ -6,7 +6,6 @@
 #include "MessageOutput.h"
 #include "Configuration.h"
 #include "NetworkSettings.h"
-#include "PowerLimiter.h"
 #include <Hoymiles.h>
 #include <MqttClientSetup.h>
 #include <Ticker.h>
@@ -56,19 +55,6 @@ void MqttSettingsClass::onMqttConnect(bool sessionPresent)
     mqttClient->subscribe(String(topic + "+/cmd/" + TOPIC_SUB_LIMIT_NONPERSISTENT_ABSOLUTE).c_str(), 0);
     mqttClient->subscribe(String(topic + "+/cmd/" + TOPIC_SUB_POWER).c_str(), 0);
     mqttClient->subscribe(String(topic + "+/cmd/" + TOPIC_SUB_RESTART).c_str(), 0);
-
-    // Zero export power limiter
-    if (strlen(config.PowerLimiter_MqttTopicPowerMeter1) != 0) {
-        mqttClient->subscribe(config.PowerLimiter_MqttTopicPowerMeter1, 0);
-    }
-
-    if (strlen(config.PowerLimiter_MqttTopicPowerMeter2) != 0) {
-        mqttClient->subscribe(config.PowerLimiter_MqttTopicPowerMeter2, 0);
-    }
-
-    if (strlen(config.PowerLimiter_MqttTopicPowerMeter3) != 0) {
-        mqttClient->subscribe(config.PowerLimiter_MqttTopicPowerMeter3, 0);
-    }
 }
 
 void MqttSettingsClass::subscribe(const String& topic, uint8_t qos, const espMqttClientTypes::OnMessageCallback& cb)
@@ -118,13 +104,6 @@ void MqttSettingsClass::onMqttMessage(const espMqttClientTypes::MessagePropertie
 {
     MessageOutput.print(F("Received MQTT message on topic: "));
     MessageOutput.println(topic);
-
-    if (strcmp(topic, config.PowerLimiter_MqttTopicPowerMeter1) == 0
-            || strcmp(topic, config.PowerLimiter_MqttTopicPowerMeter2) == 0
-            || strcmp(topic, config.PowerLimiter_MqttTopicPowerMeter3) == 0) {
-        ZeroExportPowerLimiter.onMqttMessage(properties, topic, payload, len, index, total);
-        return;
-    }
 
     _mqttSubscribeParser.handle_message(properties, topic, payload, len, index, total);
 }
