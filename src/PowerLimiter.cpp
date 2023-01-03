@@ -39,8 +39,8 @@ void PowerLimiterClass::init()
 
 void PowerLimiterClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total)
 {
-    Serial.print(F("PowerLimiterClass: Received MQTT message on topic: "));
-    Serial.println(topic);
+    Hoymiles.getMessageOutput()->print(F("PowerLimiterClass: Received MQTT message on topic: "));
+    Hoymiles.getMessageOutput()->println(topic);
 
     CONFIG_T& config = Configuration.get();
 
@@ -82,7 +82,7 @@ void PowerLimiterClass::loop()
     float dcVoltage = inverter->Statistics()->getChannelFieldValue(CH1, FLD_UDC);
 
     if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
-        Serial.printf("[PowerLimiterClass::loop] dcVoltage: %f config.PowerLimiter_VoltageStartThreshold: %f config.PowerLimiter_VoltageStopThreshold: %f inverter->isProducing(): %d\n",
+        Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] dcVoltage: %f config.PowerLimiter_VoltageStartThreshold: %f config.PowerLimiter_VoltageStopThreshold: %f inverter->isProducing(): %d\n",
             dcVoltage, config.PowerLimiter_VoltageStartThreshold, config.PowerLimiter_VoltageStopThreshold, inverter->isProducing());
     }
 
@@ -91,7 +91,7 @@ void PowerLimiterClass::loop()
                 && config.PowerLimiter_VoltageStartThreshold > 0.0
                 && dcVoltage >= config.PowerLimiter_VoltageStartThreshold) {
             // DC voltage high enough, start the inverter
-            Serial.printf("[PowerLimiterClass::loop] Starting up inverter...\n");
+            Hoymiles.getMessageOutput()->println("[PowerLimiterClass::loop] Starting up inverter...\n");
             _lastCommandSent = millis();
             inverter->sendPowerControlRequest(Hoymiles.getRadio(), true);
         }
@@ -102,7 +102,7 @@ void PowerLimiterClass::loop()
             && config.PowerLimiter_VoltageStopThreshold > 0.0
             && dcVoltage <= config.PowerLimiter_VoltageStopThreshold) {
         // DC voltage too low, stop the inverter
-        Serial.printf("[PowerLimiterClass::loop] Stopping inverter...\n");
+        Hoymiles.getMessageOutput()->println("[PowerLimiterClass::loop] Stopping inverter...\n");
         _lastCommandSent = millis();
         inverter->sendPowerControlRequest(Hoymiles.getRadio(), false);
         return;
@@ -125,7 +125,7 @@ void PowerLimiterClass::loop()
 
         newPowerLimit = constrain(newPowerLimit, (uint16_t)config.PowerLimiter_LowerPowerLimit, (uint16_t)config.PowerLimiter_UpperPowerLimit);
 
-        Serial.printf("[PowerLimiterClass::loop] powerMeter: %d W lastRequestedPowerLimit: %d\n",
+        Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] powerMeter: %d W lastRequestedPowerLimit: %d\n",
             int(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power), _lastRequestedPowerLimit);
     } else {
         // If the power meter values are older than 30 seconds,
@@ -134,11 +134,11 @@ void PowerLimiterClass::loop()
     }
 
     //if (abs(currentPowerLimit - newPowerLimit) > 10) {
-    Serial.printf("[PowerLimiterClass::loop] Limit Non-Persistent: %d W\n", newPowerLimit);
+    Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] Limit Non-Persistent: %d W\n", newPowerLimit);
     inverter->sendActivePowerControlRequest(Hoymiles.getRadio(), newPowerLimit, PowerLimitControlType::AbsolutNonPersistent);
     _lastRequestedPowerLimit = newPowerLimit;
     //} else {
-    //    Serial.printf("[PowerLimiterClass::loop] Diff to old limit < 10, not setting new limit!\n");
+    //    Hoymiles.getMessageOutput()->printf"[PowerLimiterClass::loop] Diff to old limit < 10, not setting new limit!\n");
     //}
 
     _lastCommandSent = millis();
