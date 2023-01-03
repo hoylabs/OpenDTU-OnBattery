@@ -211,7 +211,7 @@ bool ConfigurationClass::read()
     config.Mqtt_Hass_IndividualPanels = mqtt_hass["individual_panels"] | MQTT_HASS_INDIVIDUALPANELS;
     strlcpy(config.Mqtt_Hass_Topic, mqtt_hass["topic"] | MQTT_HASS_TOPIC, sizeof(config.Mqtt_Hass_Topic));
 
-    JsonObject PowerLimiter = doc["tpowerlimiter"];
+    JsonObject PowerLimiter = doc["powerlimiter"];
     config.PowerLimiter_Interval = PowerLimiter["interval"] | POWERLIMITER_INTERVAL;
 
     JsonObject dtu = doc["dtu"];
