@@ -9,6 +9,7 @@
 #include "Configuration.h"
 #include "MqttHandleHass.h"
 #include "MqttSettings.h"
+#include "PowerLimiter.h"
 #include "WebApi.h"
 #include "helper.h"
 
@@ -119,4 +120,5 @@ void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
 
     MqttSettings.performReconnect();
     MqttHandleHass.forceUpdate();
+    PowerLimiter.init();
 }
