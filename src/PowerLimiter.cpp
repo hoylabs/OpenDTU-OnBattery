@@ -39,7 +39,7 @@ void PowerLimiterClass::init()
 
 void PowerLimiterClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total)
 {
-    Hoymiles.getMessageOutput()->printf("PowerLimiterClass: Received MQTT message on topic: %s", topic);
+    Hoymiles.getMessageOutput()->printf("PowerLimiterClass: Received MQTT message on topic: %s\n", topic);
 
     CONFIG_T& config = Configuration.get();
 

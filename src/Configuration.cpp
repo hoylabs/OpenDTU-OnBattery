@@ -243,9 +243,9 @@ bool ConfigurationClass::read()
 
     JsonObject powerlimiter = doc["powerlimiter"];
     config.PowerLimiter_Enabled = powerlimiter["enabled"] | POWERLIMITER_ENABLED;
-    strlcpy(config.PowerLimiter_MqttTopicPowerMeter1,  powerlimiter["mqtt_topic_powermeter_1"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter1));
-    strlcpy(config.PowerLimiter_MqttTopicPowerMeter2,  powerlimiter["mqtt_topic_powermeter_2"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter2));
-    strlcpy(config.PowerLimiter_MqttTopicPowerMeter3,  powerlimiter["mqtt_topic_powermeter_3"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter3));
+    strlcpy(config.PowerLimiter_MqttTopicPowerMeter1, powerlimiter["mqtt_topic_powermeter_1"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter1));
+    strlcpy(config.PowerLimiter_MqttTopicPowerMeter2, powerlimiter["mqtt_topic_powermeter_2"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter2));
+    strlcpy(config.PowerLimiter_MqttTopicPowerMeter3, powerlimiter["mqtt_topic_powermeter_3"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter3));
     config.PowerLimiter_IsInverterBehindPowerMeter = powerlimiter["is_inverter_behind_powermeter"] | POWERLIMITER_IS_INVERTER_BEHIND_POWER_METER;
     config.PowerLimiter_LowerPowerLimit = powerlimiter["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
     config.PowerLimiter_UpperPowerLimit = powerlimiter["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
