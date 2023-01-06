@@ -27,7 +27,7 @@
 
 #define CHAN_MAX_NAME_STRLEN 31
 
-#define JSON_BUFFER_SIZE 6144
+#define JSON_BUFFER_SIZE 8192
 
 struct CHANNEL_CONFIG_T {
     uint16_t MaxChannelPower;
