@@ -71,7 +71,7 @@ bool ConfigurationClass::write()
     mqtt_hass["individual_panels"] = config.Mqtt_Hass_IndividualPanels;
     mqtt_hass["expire"] = config.Mqtt_Hass_Expire;
 
-    JsonObject powerLimiter = doc.createNestedObject("zeroexportpowerlimiter");
+    JsonObject powerLimiter = doc.createNestedObject("powerlimiter");
     powerLimiter["interval"] = config.PowerLimiter_Interval;
 
     JsonObject dtu = doc.createNestedObject("dtu");
