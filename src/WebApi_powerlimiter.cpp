@@ -43,6 +43,7 @@ void WebApiPowerLimiterClass::onStatus(AsyncWebServerRequest* request)
     root[F("upper_power_limit")] = config.PowerLimiter_UpperPowerLimit;
     root[F("voltage_start_threshold")] = config.PowerLimiter_VoltageStartThreshold;
     root[F("voltage_stop_threshold")] = config.PowerLimiter_VoltageStopThreshold;
+    root[F("voltage_load_correction_factor")] = config.PowerLimiter_VoltageLoadCorrectionFactor;
 
     response->setLength();
     request->send(response);
@@ -110,6 +111,7 @@ void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
     config.PowerLimiter_UpperPowerLimit = root[F("upper_power_limit")].as<uint32_t>();
     config.PowerLimiter_VoltageStartThreshold = root[F("voltage_start_threshold")].as<float>();
     config.PowerLimiter_VoltageStopThreshold = root[F("voltage_stop_threshold")].as<float>();
+    config.PowerLimiter_VoltageLoadCorrectionFactor = root[F("voltage_load_correction_factor")].as<float>();
     Configuration.write();
 
     retMsg[F("type")] = F("success");

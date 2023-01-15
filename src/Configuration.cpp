@@ -71,9 +71,6 @@ bool ConfigurationClass::write()
     mqtt_hass["individual_panels"] = config.Mqtt_Hass_IndividualPanels;
     mqtt_hass["expire"] = config.Mqtt_Hass_Expire;
 
-    JsonObject powerLimiter = doc.createNestedObject("powerlimiter");
-    powerLimiter["interval"] = config.PowerLimiter_Interval;
-
     JsonObject dtu = doc.createNestedObject("dtu");
     dtu["serial"] = config.Dtu_Serial;
     dtu["poll_interval"] = config.Dtu_PollInterval;
@@ -104,6 +101,7 @@ bool ConfigurationClass::write()
 
     JsonObject powerlimiter = doc.createNestedObject("powerlimiter");
     powerlimiter["enabled"] = config.PowerLimiter_Enabled;
+    powerlimiter["interval"] = config.PowerLimiter_Interval;
     powerlimiter["mqtt_topic_powermeter_1"] = config.PowerLimiter_MqttTopicPowerMeter1;
     powerlimiter["mqtt_topic_powermeter_2"] = config.PowerLimiter_MqttTopicPowerMeter2;
     powerlimiter["mqtt_topic_powermeter_3"] = config.PowerLimiter_MqttTopicPowerMeter3;
@@ -112,6 +110,7 @@ bool ConfigurationClass::write()
     powerlimiter["upper_power_limit"] = config.PowerLimiter_UpperPowerLimit;
     powerlimiter["voltage_start_threshold"] = config.PowerLimiter_VoltageStartThreshold;
     powerlimiter["voltage_stop_threshold"] = config.PowerLimiter_VoltageStopThreshold;
+    powerlimiter["voltage_load_correction_factor"] = config.PowerLimiter_VoltageLoadCorrectionFactor;
 
     // Serialize JSON to file
     if (serializeJson(doc, f) == 0) {
@@ -211,9 +210,6 @@ bool ConfigurationClass::read()
     config.Mqtt_Hass_IndividualPanels = mqtt_hass["individual_panels"] | MQTT_HASS_INDIVIDUALPANELS;
     strlcpy(config.Mqtt_Hass_Topic, mqtt_hass["topic"] | MQTT_HASS_TOPIC, sizeof(config.Mqtt_Hass_Topic));
 
-    JsonObject PowerLimiter = doc["powerlimiter"];
-    config.PowerLimiter_Interval = PowerLimiter["interval"] | POWERLIMITER_INTERVAL;
-
     JsonObject dtu = doc["dtu"];
     config.Dtu_Serial = dtu["serial"] | DTU_SERIAL;
     config.Dtu_PollInterval = dtu["poll_interval"] | DTU_POLL_INTERVAL;
@@ -243,6 +239,7 @@ bool ConfigurationClass::read()
 
     JsonObject powerlimiter = doc["powerlimiter"];
     config.PowerLimiter_Enabled = powerlimiter["enabled"] | POWERLIMITER_ENABLED;
+    config.PowerLimiter_Interval =  POWERLIMITER_INTERVAL;
     strlcpy(config.PowerLimiter_MqttTopicPowerMeter1, powerlimiter["mqtt_topic_powermeter_1"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter1));
     strlcpy(config.PowerLimiter_MqttTopicPowerMeter2, powerlimiter["mqtt_topic_powermeter_2"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter2));
     strlcpy(config.PowerLimiter_MqttTopicPowerMeter3, powerlimiter["mqtt_topic_powermeter_3"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter3));
@@ -251,6 +248,7 @@ bool ConfigurationClass::read()
     config.PowerLimiter_UpperPowerLimit = powerlimiter["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
     config.PowerLimiter_VoltageStartThreshold = powerlimiter["voltage_start_threshold"] | POWERLIMITER_VOLTAGE_START_THRESHOLD;
     config.PowerLimiter_VoltageStopThreshold = powerlimiter["voltage_stop_threshold"] | POWERLIMITER_VOLTAGE_STOP_THRESHOLD;
+    config.PowerLimiter_VoltageLoadCorrectionFactor = powerlimiter["voltage_load_correction_factor"] | POWERLIMITER_VOLTAGE_LOAD_CORRECTION_FACTOR;
 
     f.close();
     return true;

@@ -8,4 +8,5 @@ export interface PowerLimiterConfig {
     upper_power_limit: number;
     voltage_start_threshold: number;
     voltage_stop_threshold: number;
+    voltage_load_correction_factor: number;
 }

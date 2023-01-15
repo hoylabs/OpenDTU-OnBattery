@@ -76,6 +76,7 @@ void setup()
     MqttHandleDtu.init();
     MqttHandleInverter.init();
     MqttHandleVedirect.init();
+    PowerLimiter.init();
     MqttHandleHass.init();
     MessageOutput.println(F("done"));
 

@@ -65,7 +65,7 @@ void PowerLimiterClass::loop()
     if (!config.PowerLimiter_Enabled
             || !MqttSettings.getConnected()
             || !Hoymiles.getRadio()->isIdle()
-            //|| (millis() - _lastCommandSent) < (config.PowerLimiter_Interval * 1000)
+            || (millis() - _lastCommandSent) < (config.PowerLimiter_Interval * 1000)
             || (millis() - _lastLoop) < (config.PowerLimiter_Interval * 1000)) {
         return;
     }
@@ -78,6 +78,10 @@ void PowerLimiterClass::loop()
         return;
     }
 
+    if ((millis() - inverter->Statistics()->getLastUpdate()) > 10000) {
+        return;
+    }
+
     float dcVoltage = inverter->Statistics()->getChannelFieldValue(CH1, FLD_UDC);
 
     if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
@@ -85,7 +89,28 @@ void PowerLimiterClass::loop()
             dcVoltage, config.PowerLimiter_VoltageStartThreshold, config.PowerLimiter_VoltageStopThreshold, inverter->isProducing());
     }
 
-    if (!inverter->isProducing()) {
+    if (inverter->isProducing()) {
+        float acPower = inverter->Statistics()->getChannelFieldValue(CH0, FLD_PAC);
+        float correctedDcVoltage = dcVoltage + (acPower * config.PowerLimiter_VoltageLoadCorrectionFactor);
+
+        if (dcVoltage > 0.0
+                && config.PowerLimiter_VoltageStopThreshold > 0.0
+                && correctedDcVoltage <= config.PowerLimiter_VoltageStopThreshold) {
+            // DC voltage too low, stop the inverter
+            Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] DC voltage: %f Corrected DC voltage: %f...\n",
+                dcVoltage, correctedDcVoltage);
+            Hoymiles.getMessageOutput()->println("[PowerLimiterClass::loop] Stopping inverter...\n");
+            inverter->sendPowerControlRequest(Hoymiles.getRadio(), false);
+
+            uint16_t newPowerLimit = (uint16_t)config.PowerLimiter_LowerPowerLimit;
+            inverter->sendActivePowerControlRequest(Hoymiles.getRadio(), newPowerLimit, PowerLimitControlType::AbsolutNonPersistent);
+            _lastRequestedPowerLimit = newPowerLimit;
+
+            _lastCommandSent = millis();
+
+            return;
+        }
+    } else {
         if (dcVoltage > 0.0
                 && config.PowerLimiter_VoltageStartThreshold > 0.0
                 && dcVoltage >= config.PowerLimiter_VoltageStartThreshold) {
@@ -95,15 +120,6 @@ void PowerLimiterClass::loop()
             inverter->sendPowerControlRequest(Hoymiles.getRadio(), true);
         }
 
-        return;
-    } else if (inverter->isProducing()
-            && dcVoltage > 0.0
-            && config.PowerLimiter_VoltageStopThreshold > 0.0
-            && dcVoltage <= config.PowerLimiter_VoltageStopThreshold) {
-        // DC voltage too low, stop the inverter
-        Hoymiles.getMessageOutput()->println("[PowerLimiterClass::loop] Stopping inverter...\n");
-        _lastCommandSent = millis();
-        inverter->sendPowerControlRequest(Hoymiles.getRadio(), false);
         return;
     }
 

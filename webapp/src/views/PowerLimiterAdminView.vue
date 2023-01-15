@@ -115,6 +115,23 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="row mb-3">
+                        <label for="inputVoltageLoadCorrectionFactor" class="col-sm-2 col-form-label">DC Voltage - Load correction factor:</label>
+                        <div class="col-sm-10">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="inputVoltageLoadCorrectionFactor"
+                                    placeholder="49" v-model="powerLimiterConfigList.voltage_load_correction_factor"
+                                    aria-describedby="voltageLoadCorrectionFactorDescription" />
+                                <span class="input-group-text" id="voltageLoadCorrectionFactorDescription">V</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-secondary" role="alert">
+                        <b>Hint:</b> When the power output is higher, the voltage is usually decreasing.
+                        In order to not stop the inverter too early (Stop treshold), a power factor can be specified here to correct this.
+                        Corrected voltage = DC Voltage + (Current power * correction factor).</div>
                 </div>
             </div>
 
