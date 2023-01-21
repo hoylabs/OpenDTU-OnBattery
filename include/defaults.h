@@ -8,7 +8,7 @@
 #define HTTP_PORT 80
 
 #define ACCESS_POINT_NAME "OpenDTU-"
-#define ACCESS_POINT_PASSWORD "gmcIwbU8sQkDYFJ0"
+#define ACCESS_POINT_PASSWORD "openDTU42"
 #define AUTH_USERNAME "admin"
 #define SECURITY_ALLOW_READONLY true
 
