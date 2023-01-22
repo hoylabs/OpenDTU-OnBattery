@@ -18,10 +18,14 @@ private:
     uint32_t _lastLoop;
     uint32_t _lastPowerMeterUpdate;
     uint16_t _lastRequestedPowerLimit;
+    bool _consumeSolarPowerOnly;
 
     float _powerMeter1Power;
     float _powerMeter2Power;
     float _powerMeter3Power;
+
+    bool canUseDirectSolarPower();
+    long getDirectSolarPower();
 };
 
 extern PowerLimiterClass PowerLimiter;

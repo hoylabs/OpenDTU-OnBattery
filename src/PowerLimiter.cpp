@@ -6,6 +6,7 @@
 #include "Configuration.h"
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
+#include <VeDirectFrameHandler.h>
 #include <ctime>
 
 PowerLimiterClass PowerLimiter;
@@ -35,6 +36,8 @@ void PowerLimiterClass::init()
     if (strlen(config.PowerLimiter_MqttTopicPowerMeter3) != 0) {
         MqttSettings.subscribe(config.PowerLimiter_MqttTopicPowerMeter3, 0, std::bind(&PowerLimiterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
     }
+
+    _consumeSolarPowerOnly = false;
 }
 
 void PowerLimiterClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total)
@@ -78,11 +81,17 @@ void PowerLimiterClass::loop()
         return;
     }
 
-    if ((millis() - inverter->Statistics()->getLastUpdate()) > 10000) {
+    float dcVoltage = inverter->Statistics()->getChannelFieldValue(CH1, FLD_UDC);
+
+    if ((millis() - inverter->Statistics()->getLastUpdate()) > 10000
+            || dcVoltage <= 0.0) {
         return;
     }
 
-    float dcVoltage = inverter->Statistics()->getChannelFieldValue(CH1, FLD_UDC);
+    long victronChargePower = this->getDirectSolarPower();
+
+    Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] victronChargePower: %d\n",
+        (int)victronChargePower);
 
     if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
         Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] dcVoltage: %f config.PowerLimiter_VoltageStartThreshold: %f config.PowerLimiter_VoltageStopThreshold: %f inverter->isProducing(): %d\n",
@@ -93,9 +102,17 @@ void PowerLimiterClass::loop()
         float acPower = inverter->Statistics()->getChannelFieldValue(CH0, FLD_PAC);
         float correctedDcVoltage = dcVoltage + (acPower * config.PowerLimiter_VoltageLoadCorrectionFactor);
 
-        if (dcVoltage > 0.0
-                && config.PowerLimiter_VoltageStopThreshold > 0.0
-                && correctedDcVoltage <= config.PowerLimiter_VoltageStopThreshold) {
+        if (_consumeSolarPowerOnly && correctedDcVoltage >= config.PowerLimiter_VoltageStartThreshold) {
+            // The battery is full enough again, use Solar power and battery power from now on.
+            _consumeSolarPowerOnly = false;
+        } else if (!_consumeSolarPowerOnly && correctedDcVoltage <= config.PowerLimiter_VoltageStopThreshold) {
+            // The battery voltage dropped too low
+            _consumeSolarPowerOnly = true;
+        }
+
+        if (config.PowerLimiter_VoltageStopThreshold > 0.0
+                && correctedDcVoltage <= config.PowerLimiter_VoltageStopThreshold
+                && victronChargePower < 10) {
             // DC voltage too low, stop the inverter
             Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] DC voltage: %f Corrected DC voltage: %f...\n",
                 dcVoltage, correctedDcVoltage);
@@ -107,17 +124,24 @@ void PowerLimiterClass::loop()
             _lastRequestedPowerLimit = newPowerLimit;
 
             _lastCommandSent = millis();
+            _consumeSolarPowerOnly = false;
 
             return;
         }
     } else {
-        if (dcVoltage > 0.0
-                && config.PowerLimiter_VoltageStartThreshold > 0.0
-                && dcVoltage >= config.PowerLimiter_VoltageStartThreshold) {
+        if ((config.PowerLimiter_VoltageStartThreshold > 0.0
+                && dcVoltage >= config.PowerLimiter_VoltageStartThreshold)
+                || victronChargePower >= 20) {
             // DC voltage high enough, start the inverter
             Hoymiles.getMessageOutput()->println("[PowerLimiterClass::loop] Starting up inverter...\n");
             _lastCommandSent = millis();
             inverter->sendPowerControlRequest(Hoymiles.getRadio(), true);
+
+            // In this mode, the inverter should consume the current solar power only
+            // and not drain additional power from the battery
+            if (dcVoltage < config.PowerLimiter_VoltageStartThreshold) {
+                _consumeSolarPowerOnly = true;
+            }
         }
 
         return;
@@ -125,7 +149,10 @@ void PowerLimiterClass::loop()
 
     uint16_t newPowerLimit = 0;
 
-    if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
+    if (_consumeSolarPowerOnly) {
+        // Battery voltage too low, use Victron solar power only
+        newPowerLimit = victronChargePower;
+    } else if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
         newPowerLimit = int(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power);
 
         if (config.PowerLimiter_IsInverterBehindPowerMeter) {
@@ -148,13 +175,31 @@ void PowerLimiterClass::loop()
         newPowerLimit = config.PowerLimiter_LowerPowerLimit;
     }
 
-    //if (abs(currentPowerLimit - newPowerLimit) > 10) {
     Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] Limit Non-Persistent: %d W\n", newPowerLimit);
     inverter->sendActivePowerControlRequest(Hoymiles.getRadio(), newPowerLimit, PowerLimitControlType::AbsolutNonPersistent);
     _lastRequestedPowerLimit = newPowerLimit;
-    //} else {
-    //    Hoymiles.getMessageOutput()->printf"[PowerLimiterClass::loop] Diff to old limit < 10, not setting new limit!\n");
-    //}
 
     _lastCommandSent = millis();
+}
+
+bool PowerLimiterClass::canUseDirectSolarPower() {
+    if (!Configuration.get().Vedirect_Enabled
+            || !VeDirect.veMap.count("PPV")) {
+        return false;
+    }
+
+    if (VeDirect.veMap["PPV"].toInt() < 10) {
+        // Not enough power
+        return false;
+    }
+
+    return true;
+}
+
+long PowerLimiterClass::getDirectSolarPower() {
+    if (!this->canUseDirectSolarPower()) {
+        return 0;
+    }
+
+    return VeDirect.veMap["PPV"].toInt();
 }
