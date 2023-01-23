@@ -110,9 +110,9 @@ void PowerLimiterClass::loop()
             _consumeSolarPowerOnly = true;
         }
 
-        if (config.PowerLimiter_VoltageStopThreshold > 0.0
-                && correctedDcVoltage <= config.PowerLimiter_VoltageStopThreshold
-                && victronChargePower < 10) {
+        if ((!_consumeSolarPowerOnly && config.PowerLimiter_VoltageStopThreshold > 0.0
+                && correctedDcVoltage <= config.PowerLimiter_VoltageStopThreshold)
+                || (_consumeSolarPowerOnly && victronChargePower < 10)) {
             // DC voltage too low, stop the inverter
             Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] DC voltage: %f Corrected DC voltage: %f...\n",
                 dcVoltage, correctedDcVoltage);
