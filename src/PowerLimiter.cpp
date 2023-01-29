@@ -165,7 +165,13 @@ void PowerLimiterClass::loop()
 
         newPowerLimit -= 10;
 
-        newPowerLimit = constrain(newPowerLimit, (uint16_t)config.PowerLimiter_LowerPowerLimit, (uint16_t)config.PowerLimiter_UpperPowerLimit);
+        uint16_t upperPowerLimit = config.PowerLimiter_UpperPowerLimit;
+        if (_consumeSolarPowerOnly && upperPowerLimit > victronChargePower) {
+            // Battery voltage too low, use Victron solar power only
+            upperPowerLimit = victronChargePower;
+        }
+
+        newPowerLimit = constrain(newPowerLimit, (uint16_t)config.PowerLimiter_LowerPowerLimit, upperPowerLimit);
 
         Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] powerMeter: %d W lastRequestedPowerLimit: %d\n",
             int(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power), _lastRequestedPowerLimit);
