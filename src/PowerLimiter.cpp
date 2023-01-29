@@ -149,10 +149,7 @@ void PowerLimiterClass::loop()
 
     uint16_t newPowerLimit = 0;
 
-    if (_consumeSolarPowerOnly) {
-        // Battery voltage too low, use Victron solar power only
-        newPowerLimit = victronChargePower;
-    } else if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
+    if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
         newPowerLimit = int(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power);
 
         if (config.PowerLimiter_IsInverterBehindPowerMeter) {
