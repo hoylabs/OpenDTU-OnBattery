@@ -9,7 +9,7 @@ This project is still under development and adds following features:
 * Voltage correction that takes the voltage drop because of the current output load into account (not 100% reliable calculation)
 * Can read the current solar panel power from the Victron MPPT and adjust the limiter accordingly to not save energy in the battery (for increased system efficiency). Increases the battery lifespan and reduces energy loses.
 * Settings can be configured in the UI
-* WIP: Pylontech 48V Battery support (either RS485 or CAN bus) to use the SOC for starting/stopping the power output and provide the battery data via MQTT
+* Pylontech Battery support (via CAN bus interface). Use the SOC for starting/stopping the power output and provide the battery data via MQTT
 
 [![OpenDTU Build](https://github.com/tbnobody/OpenDTU/actions/workflows/build.yml/badge.svg)](https://github.com/tbnobody/OpenDTU/actions/workflows/build.yml)
 [![cpplint](https://github.com/tbnobody/OpenDTU/actions/workflows/cpplint.yml/badge.svg)](https://github.com/tbnobody/OpenDTU/actions/workflows/cpplint.yml)
