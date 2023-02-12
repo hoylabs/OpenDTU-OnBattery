@@ -101,6 +101,7 @@ bool ConfigurationClass::write()
 
     JsonObject powerlimiter = doc.createNestedObject("powerlimiter");
     powerlimiter["enabled"] = config.PowerLimiter_Enabled;
+    powerlimiter["solar_passtrough_enabled"] = config.PowerLimiter_SolarPassTroughEnabled;
     powerlimiter["interval"] = config.PowerLimiter_Interval;
     powerlimiter["mqtt_topic_powermeter_1"] = config.PowerLimiter_MqttTopicPowerMeter1;
     powerlimiter["mqtt_topic_powermeter_2"] = config.PowerLimiter_MqttTopicPowerMeter2;
@@ -108,9 +109,14 @@ bool ConfigurationClass::write()
     powerlimiter["is_inverter_behind_powermeter"] = config.PowerLimiter_IsInverterBehindPowerMeter;
     powerlimiter["lower_power_limit"] = config.PowerLimiter_LowerPowerLimit;
     powerlimiter["upper_power_limit"] = config.PowerLimiter_UpperPowerLimit;
+    powerlimiter["battery_soc_start_threshold"] = config.PowerLimiter_BatterySocStartThreshold;
+    powerlimiter["battery_soc_stop_threshold"] = config.PowerLimiter_BatterySocStopThreshold;
     powerlimiter["voltage_start_threshold"] = config.PowerLimiter_VoltageStartThreshold;
     powerlimiter["voltage_stop_threshold"] = config.PowerLimiter_VoltageStopThreshold;
     powerlimiter["voltage_load_correction_factor"] = config.PowerLimiter_VoltageLoadCorrectionFactor;
+
+    JsonObject battery = doc.createNestedObject("battery");
+    battery["enabled"] = config.Battery_Enabled;
 
     // Serialize JSON to file
     if (serializeJson(doc, f) == 0) {
@@ -239,6 +245,7 @@ bool ConfigurationClass::read()
 
     JsonObject powerlimiter = doc["powerlimiter"];
     config.PowerLimiter_Enabled = powerlimiter["enabled"] | POWERLIMITER_ENABLED;
+    config.PowerLimiter_SolarPassTroughEnabled = powerlimiter["solar_passtrough_enabled"] | POWERLIMITER_SOLAR_PASSTROUGH_ENABLED;
     config.PowerLimiter_Interval =  POWERLIMITER_INTERVAL;
     strlcpy(config.PowerLimiter_MqttTopicPowerMeter1, powerlimiter["mqtt_topic_powermeter_1"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter1));
     strlcpy(config.PowerLimiter_MqttTopicPowerMeter2, powerlimiter["mqtt_topic_powermeter_2"] | "", sizeof(config.PowerLimiter_MqttTopicPowerMeter2));
@@ -246,9 +253,14 @@ bool ConfigurationClass::read()
     config.PowerLimiter_IsInverterBehindPowerMeter = powerlimiter["is_inverter_behind_powermeter"] | POWERLIMITER_IS_INVERTER_BEHIND_POWER_METER;
     config.PowerLimiter_LowerPowerLimit = powerlimiter["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
     config.PowerLimiter_UpperPowerLimit = powerlimiter["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+    config.PowerLimiter_BatterySocStartThreshold = powerlimiter["battery_soc_start_threshold"] | POWERLIMITER_BATTERY_SOC_START_THRESHOLD;
+    config.PowerLimiter_BatterySocStopThreshold = powerlimiter["battery_soc_stop_threshold"] | POWERLIMITER_BATTERY_SOC_STOP_THRESHOLD;
     config.PowerLimiter_VoltageStartThreshold = powerlimiter["voltage_start_threshold"] | POWERLIMITER_VOLTAGE_START_THRESHOLD;
     config.PowerLimiter_VoltageStopThreshold = powerlimiter["voltage_stop_threshold"] | POWERLIMITER_VOLTAGE_STOP_THRESHOLD;
     config.PowerLimiter_VoltageLoadCorrectionFactor = powerlimiter["voltage_load_correction_factor"] | POWERLIMITER_VOLTAGE_LOAD_CORRECTION_FACTOR;
+
+    JsonObject battery = doc["battery"];
+    config.Battery_Enabled = battery["enabled"] | BATTERY_ENABLED;
 
     f.close();
     return true;

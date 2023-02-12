@@ -15,6 +15,7 @@
 #include "Utils.h"
 #include "WebApi.h"
 #include "PowerLimiter.h"
+#include "PylontechCanReceiver.h"
 #include "defaults.h"
 #include <Arduino.h>
 #include <Hoymiles.h>
@@ -76,7 +77,6 @@ void setup()
     MqttHandleDtu.init();
     MqttHandleInverter.init();
     MqttHandleVedirect.init();
-    PowerLimiter.init();
     MqttHandleHass.init();
     MessageOutput.println(F("done"));
 
@@ -140,6 +140,12 @@ void setup()
     VeDirect.init();
     VeDirect.setPollInterval(config.Vedirect_PollInterval);
     MessageOutput.println(F("done"));
+
+    // Dynamic power limiter
+    PowerLimiter.init();
+
+    // Pylontech / CAN bus
+    PylontechCanReceiver.init();
 }
 
 void loop()
@@ -167,5 +173,7 @@ void loop()
     WebApi.loop();
     yield();
     MessageOutput.loop();
+    yield();
+    PylontechCanReceiver.loop();
     yield();
 }

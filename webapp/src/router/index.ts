@@ -1,4 +1,5 @@
 import AboutView from '@/views/AboutView.vue';
+import BatteryAdminView from '@/views/BatteryAdminView.vue';
 import ConfigAdminView from '@/views/ConfigAdminView.vue';
 import ConsoleInfoView from '@/views/ConsoleInfoView.vue';
 import DtuAdminView from '@/views/DtuAdminView.vue';
@@ -86,8 +87,13 @@ const router = createRouter({
     },
     {
         path: '/settings/powerlimiter',
-        name: 'Power limiter',
+        name: 'Power limiter Settings',
         component: PowerLimiterAdminView
+    },
+    {
+        path: '/settings/battery',
+        name: 'Battery Settings',
+        component: BatteryAdminView
     },
     {
         path: '/settings/mqtt',

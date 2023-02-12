@@ -26,6 +26,9 @@ private:
 
     bool canUseDirectSolarPower();
     long getDirectSolarPower();
+    float getLoadCorrectedVoltage(std::shared_ptr<InverterAbstract> inverter);
+    bool isStartThresholdReached(std::shared_ptr<InverterAbstract> inverter);
+    bool isStopThresholdReached(std::shared_ptr<InverterAbstract> inverter);
 };
 
 extern PowerLimiterClass PowerLimiter;

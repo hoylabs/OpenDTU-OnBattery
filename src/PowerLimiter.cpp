@@ -2,6 +2,8 @@
 /*
  * Copyright (C) 2022 Thomas Basler and others
  */
+
+#include "Battery.h"
 #include "PowerLimiter.h"
 #include "Configuration.h"
 #include "MqttSettings.h"
@@ -75,7 +77,7 @@ void PowerLimiterClass::loop()
 
     _lastLoop = millis();
 
-    auto inverter = Hoymiles.getInverterByPos(0);
+    std::shared_ptr<InverterAbstract> inverter = Hoymiles.getInverterByPos(0);
 
     if (inverter == nullptr || !inverter->isReachable()) {
         return;
@@ -83,8 +85,7 @@ void PowerLimiterClass::loop()
 
     float dcVoltage = inverter->Statistics()->getChannelFieldValue(CH1, FLD_UDC);
 
-    if ((millis() - inverter->Statistics()->getLastUpdate()) > 10000
-            || dcVoltage <= 0.0) {
+    if ((millis() - inverter->Statistics()->getLastUpdate()) > 10000) {
         return;
     }
 
@@ -102,16 +103,16 @@ void PowerLimiterClass::loop()
         float acPower = inverter->Statistics()->getChannelFieldValue(CH0, FLD_PAC);
         float correctedDcVoltage = dcVoltage + (acPower * config.PowerLimiter_VoltageLoadCorrectionFactor);
 
-        if (_consumeSolarPowerOnly && correctedDcVoltage >= config.PowerLimiter_VoltageStartThreshold) {
-            // The battery is full enough again, use Solar power and battery power from now on.
+        if ((_consumeSolarPowerOnly && isStartThresholdReached(inverter))
+                || !canUseDirectSolarPower()) {
+            // The battery is full enough again, use the full battery power from now on.
             _consumeSolarPowerOnly = false;
-        } else if (!_consumeSolarPowerOnly && correctedDcVoltage <= config.PowerLimiter_VoltageStopThreshold) {
+        } else if (!_consumeSolarPowerOnly && isStopThresholdReached(inverter) && canUseDirectSolarPower()) {
             // The battery voltage dropped too low
             _consumeSolarPowerOnly = true;
         }
 
-        if ((!_consumeSolarPowerOnly && config.PowerLimiter_VoltageStopThreshold > 0.0
-                && correctedDcVoltage <= config.PowerLimiter_VoltageStopThreshold)
+        if ((!_consumeSolarPowerOnly && isStopThresholdReached(inverter))
                 || (_consumeSolarPowerOnly && victronChargePower < 10)) {
             // DC voltage too low, stop the inverter
             Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] DC voltage: %f Corrected DC voltage: %f...\n",
@@ -129,9 +130,7 @@ void PowerLimiterClass::loop()
             return;
         }
     } else {
-        if ((config.PowerLimiter_VoltageStartThreshold > 0.0
-                && dcVoltage >= config.PowerLimiter_VoltageStartThreshold)
-                || victronChargePower >= 20) {
+        if ((isStartThresholdReached(inverter)) || victronChargePower >= 20) {
             // DC voltage high enough, start the inverter
             Hoymiles.getMessageOutput()->println("[PowerLimiterClass::loop] Starting up inverter...\n");
             _lastCommandSent = millis();
@@ -139,7 +138,7 @@ void PowerLimiterClass::loop()
 
             // In this mode, the inverter should consume the current solar power only
             // and not drain additional power from the battery
-            if (dcVoltage < config.PowerLimiter_VoltageStartThreshold) {
+            if (!isStartThresholdReached(inverter)) {
                 _consumeSolarPowerOnly = true;
             }
         }
@@ -185,8 +184,12 @@ void PowerLimiterClass::loop()
     _lastCommandSent = millis();
 }
 
-bool PowerLimiterClass::canUseDirectSolarPower() {
-    if (!Configuration.get().Vedirect_Enabled
+bool PowerLimiterClass::canUseDirectSolarPower()
+{
+    CONFIG_T& config = Configuration.get();
+
+    if (!config.PowerLimiter_SolarPassTroughEnabled
+            || !config.Vedirect_Enabled
             || !VeDirect.veMap.count("PPV")) {
         return false;
     }
@@ -199,10 +202,67 @@ bool PowerLimiterClass::canUseDirectSolarPower() {
     return true;
 }
 
-long PowerLimiterClass::getDirectSolarPower() {
+long PowerLimiterClass::getDirectSolarPower()
+{
     if (!this->canUseDirectSolarPower()) {
         return 0;
     }
 
     return VeDirect.veMap["PPV"].toInt();
+}
+
+float PowerLimiterClass::getLoadCorrectedVoltage(std::shared_ptr<InverterAbstract> inverter)
+{
+    CONFIG_T& config = Configuration.get();
+
+    float acPower = inverter->Statistics()->getChannelFieldValue(CH0, FLD_PAC);
+    float dcVoltage = inverter->Statistics()->getChannelFieldValue(CH1, FLD_UDC);
+
+    if (dcVoltage <= 0.0) {
+        return 0.0;
+    }
+
+    return dcVoltage + (acPower * config.PowerLimiter_VoltageLoadCorrectionFactor);
+}
+
+bool PowerLimiterClass::isStartThresholdReached(std::shared_ptr<InverterAbstract> inverter)
+{
+    CONFIG_T& config = Configuration.get();
+
+    // If the Battery interface is enabled, use the SOC value
+    if (config.Battery_Enabled
+            && config.PowerLimiter_BatterySocStartThreshold > 0.0
+            && (millis() - Battery.stateOfChargeLastUpdate) < 60000
+            && Battery.stateOfCharge >= config.PowerLimiter_BatterySocStartThreshold) {
+        return true;
+    }
+
+    // Otherwise we use the voltage threshold
+    if (config.PowerLimiter_VoltageStartThreshold <= 0.0) {
+        return false;
+    }
+
+    float correctedDcVoltage = getLoadCorrectedVoltage(inverter);
+    return correctedDcVoltage >= config.PowerLimiter_VoltageStartThreshold;
+}
+
+bool PowerLimiterClass::isStopThresholdReached(std::shared_ptr<InverterAbstract> inverter)
+{
+    CONFIG_T& config = Configuration.get();
+
+    // If the Battery interface is enabled, use the SOC value
+    if (config.Battery_Enabled
+            && config.PowerLimiter_BatterySocStopThreshold > 0.0
+            && (millis() - Battery.stateOfChargeLastUpdate) < 60000
+            && Battery.stateOfCharge <= config.PowerLimiter_BatterySocStopThreshold) {
+        return true;
+    }
+
+    // Otherwise we use the voltage threshold
+    if (config.PowerLimiter_VoltageStopThreshold <= 0.0) {
+        return false;
+    }
+
+    float correctedDcVoltage = getLoadCorrectedVoltage(inverter);
+    return correctedDcVoltage <= config.PowerLimiter_VoltageStopThreshold;
 }

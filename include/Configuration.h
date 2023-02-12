@@ -91,6 +91,7 @@ struct CONFIG_T {
     bool Mqtt_Hass_Expire;
 
     bool PowerLimiter_Enabled;
+    bool PowerLimiter_SolarPassTroughEnabled;
     uint32_t PowerLimiter_Interval;
     char PowerLimiter_MqttTopicPowerMeter1[MQTT_MAX_TOPIC_STRLEN + 1];
     char PowerLimiter_MqttTopicPowerMeter2[MQTT_MAX_TOPIC_STRLEN + 1];
@@ -98,9 +99,13 @@ struct CONFIG_T {
     bool PowerLimiter_IsInverterBehindPowerMeter;
     uint32_t PowerLimiter_LowerPowerLimit;
     uint32_t PowerLimiter_UpperPowerLimit;
+    uint32_t PowerLimiter_BatterySocStartThreshold;
+    uint32_t PowerLimiter_BatterySocStopThreshold;
     float PowerLimiter_VoltageStartThreshold;
     float PowerLimiter_VoltageStopThreshold;
     float PowerLimiter_VoltageLoadCorrectionFactor;
+
+    bool Battery_Enabled;
 
     char Security_Password[WIFI_MAX_PASSWORD_STRLEN + 1];
     bool Security_AllowReadonly;
