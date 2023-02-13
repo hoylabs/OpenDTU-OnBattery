@@ -49,15 +49,15 @@ void PowerLimiterClass::onMqttMessage(const espMqttClientTypes::MessagePropertie
     CONFIG_T& config = Configuration.get();
 
     if (strcmp(topic, config.PowerLimiter_MqttTopicPowerMeter1) == 0) {
-        _powerMeter1Power = std::stof(std::string((char *)payload, (unsigned int)len));
+        _powerMeter1Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
     }
 
     if (strcmp(topic, config.PowerLimiter_MqttTopicPowerMeter2) == 0) {
-        _powerMeter2Power = std::stof(std::string((char *)payload, (unsigned int)len));
+        _powerMeter2Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
     }
 
     if (strcmp(topic, config.PowerLimiter_MqttTopicPowerMeter3) == 0) {
-        _powerMeter3Power = std::stof(std::string((char *)payload, (unsigned int)len));
+        _powerMeter3Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
     }
 
     _lastPowerMeterUpdate = millis();
@@ -89,10 +89,10 @@ void PowerLimiterClass::loop()
         return;
     }
 
-    long victronChargePower = this->getDirectSolarPower();
+    uint32_t victronChargePower = this->getDirectSolarPower();
 
     Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] victronChargePower: %d\n",
-        (int)victronChargePower);
+        static_cast<int>(victronChargePower));
 
     if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
         Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] dcVoltage: %f config.PowerLimiter_VoltageStartThreshold: %f config.PowerLimiter_VoltageStopThreshold: %f inverter->isProducing(): %d\n",
@@ -149,7 +149,7 @@ void PowerLimiterClass::loop()
     int32_t newPowerLimit = 0;
 
     if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
-        newPowerLimit = int(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power);
+        newPowerLimit = static_cast<int>(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power);
 
         if (config.PowerLimiter_IsInverterBehindPowerMeter) {
             // If the inverter the behind the power meter (part of measurement),
@@ -202,7 +202,7 @@ bool PowerLimiterClass::canUseDirectSolarPower()
     return true;
 }
 
-long PowerLimiterClass::getDirectSolarPower()
+uint32_t PowerLimiterClass::getDirectSolarPower()
 {
     if (!this->canUseDirectSolarPower()) {
         return 0;
