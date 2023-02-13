@@ -6,6 +6,7 @@ import DtuAdminView from '@/views/DtuAdminView.vue';
 import FirmwareUpgradeView from '@/views/FirmwareUpgradeView.vue';
 import HomeView from '@/views/HomeView.vue';
 import VedirectAdminView from '@/views/VedirectAdminView.vue'
+import PowerMeterAdminView from '@/views/PowerMeterAdminView.vue'
 import PowerLimiterAdminView from '@/views/PowerLimiterAdminView.vue'
 import VedirectInfoView from '@/views/VedirectInfoView.vue'
 import InverterAdminView from '@/views/InverterAdminView.vue';
@@ -84,6 +85,11 @@ const router = createRouter({
         path: '/settings/vedirect',
         name: 'Ve.direct Settings',
         component: VedirectAdminView
+    },
+    {
+        path: '/settings/powermeter',
+        name: 'Power meter Settings',
+        component: PowerMeterAdminView
     },
     {
         path: '/settings/powerlimiter',

@@ -8,7 +8,9 @@
         "InverterSettings": "Wechselrichter Einstellungen",
         "SecuritySettings": "Sicherheitseinstellungen",
         "DTUSettings": "DTU Einstellungen",
-        "VedirectSettings": "Ve.direct Settings",
+        "VedirectSettings": "Ve.direct Einstellungen",
+        "PowerMeterSettings": "Stromzähler Einstellungen",
+        "PowerLimiterSettings": "Dynamic Power Limiter",
         "BatterySettings": "Battery Settings",
         "ConfigManagement": "Konfigurationsverwaltung",
         "FirmwareUpgrade": "Firmware Aktualisierung",
@@ -430,6 +432,20 @@
         "PublishInterval": "Veröffentlichungsintervall:",
         "Seconds": "Sekunden",
         "UpdatesOnly": "Nur Änderungen senden:",
+        "Save": "@:dtuadmin.Save"
+    },
+    "powermeteradmin":{
+        "PowerMeterSettings": "Stromzähler Einstellungen",
+        "PowerMeterConfiguration": "Stromzähler Konfiguration",
+        "PowerMeterEnable": "Aktiviere Stromzähler",
+        "PowerMeterParameter": "Power Meter Parameter",
+        "PowerMeterSorce": "Stromzählertyp",
+        "typeMQTT": "MQTT",
+        "typeSDM1ph": "SDM 1 phase (SDM230)",
+        "typeSDM3ph": "SDM 3 phase (SDM72/630)",
+        "MqttTopicPowerMeter1": "MQTT topic - Stromzähler #1",
+        "MqttTopicPowerMeter2": "MQTT topic - Stromzähler #2",
+        "MqttTopicPowerMeter3": "MQTT topic - Stromzähler #3",
         "Save": "@:dtuadmin.Save"
     },
     "batteryadmin": {

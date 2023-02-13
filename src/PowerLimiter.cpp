@@ -5,8 +5,8 @@
 
 #include "Battery.h"
 #include "PowerLimiter.h"
+#include "PowerMeter.h"
 #include "Configuration.h"
-#include "MqttSettings.h"
 #include "NetworkSettings.h"
 #include <VeDirectFrameHandler.h>
 #include <ctime>
@@ -15,52 +15,9 @@ PowerLimiterClass PowerLimiter;
 
 void PowerLimiterClass::init()
 {
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-    using std::placeholders::_3;
-    using std::placeholders::_4;
-    using std::placeholders::_5;
-    using std::placeholders::_6;
-
     _lastRequestedPowerLimit = 0;
 
-    CONFIG_T& config = Configuration.get();
-
-    // Zero export power limiter
-    if (strlen(config.PowerLimiter_MqttTopicPowerMeter1) != 0) {
-        MqttSettings.subscribe(config.PowerLimiter_MqttTopicPowerMeter1, 0, std::bind(&PowerLimiterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
-    }
-
-    if (strlen(config.PowerLimiter_MqttTopicPowerMeter2) != 0) {
-        MqttSettings.subscribe(config.PowerLimiter_MqttTopicPowerMeter2, 0, std::bind(&PowerLimiterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
-    }
-
-    if (strlen(config.PowerLimiter_MqttTopicPowerMeter3) != 0) {
-        MqttSettings.subscribe(config.PowerLimiter_MqttTopicPowerMeter3, 0, std::bind(&PowerLimiterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
-    }
-
     _consumeSolarPowerOnly = false;
-}
-
-void PowerLimiterClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total)
-{
-    Hoymiles.getMessageOutput()->printf("PowerLimiterClass: Received MQTT message on topic: %s\n", topic);
-
-    CONFIG_T& config = Configuration.get();
-
-    if (strcmp(topic, config.PowerLimiter_MqttTopicPowerMeter1) == 0) {
-        _powerMeter1Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
-    }
-
-    if (strcmp(topic, config.PowerLimiter_MqttTopicPowerMeter2) == 0) {
-        _powerMeter2Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
-    }
-
-    if (strcmp(topic, config.PowerLimiter_MqttTopicPowerMeter3) == 0) {
-        _powerMeter3Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
-    }
-
-    _lastPowerMeterUpdate = millis();
 }
 
 void PowerLimiterClass::loop()
@@ -68,7 +25,7 @@ void PowerLimiterClass::loop()
     CONFIG_T& config = Configuration.get();
 
     if (!config.PowerLimiter_Enabled
-            || !MqttSettings.getConnected()
+            || !config.PowerMeter_Enabled
             || !Hoymiles.getRadio()->isIdle()
             || (millis() - _lastCommandSent) < (config.PowerLimiter_Interval * 1000)
             || (millis() - _lastLoop) < (config.PowerLimiter_Interval * 1000)) {
@@ -149,7 +106,8 @@ void PowerLimiterClass::loop()
     int32_t newPowerLimit = 0;
 
     if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
-        newPowerLimit = static_cast<int>(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power);
+        float powerTotal = PowerMeter.getPowerTotal();
+        newPowerLimit = static_cast(int)(powerTotal);
 
         if (config.PowerLimiter_IsInverterBehindPowerMeter) {
             // If the inverter the behind the power meter (part of measurement),
@@ -170,7 +128,7 @@ void PowerLimiterClass::loop()
         newPowerLimit = constrain(newPowerLimit, (uint16_t)config.PowerLimiter_LowerPowerLimit, upperPowerLimit);
 
         Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] powerMeter: %d W lastRequestedPowerLimit: %d\n",
-            static_cast<int>(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power), _lastRequestedPowerLimit);
+            static_cast<int>(powerTotal), _lastRequestedPowerLimit);
     } else {
         // If the power meter values are older than 30 seconds,
         // set the limit to config.PowerLimiter_LowerPowerLimit for safety reasons.
