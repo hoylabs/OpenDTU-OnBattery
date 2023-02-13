@@ -170,7 +170,7 @@ void PowerLimiterClass::loop()
         newPowerLimit = constrain(newPowerLimit, (uint16_t)config.PowerLimiter_LowerPowerLimit, upperPowerLimit);
 
         Hoymiles.getMessageOutput()->printf("[PowerLimiterClass::loop] powerMeter: %d W lastRequestedPowerLimit: %d\n",
-            int(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power), _lastRequestedPowerLimit);
+            static_cast<int>(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power), _lastRequestedPowerLimit);
     } else {
         // If the power meter values are older than 30 seconds,
         // set the limit to config.PowerLimiter_LowerPowerLimit for safety reasons.
