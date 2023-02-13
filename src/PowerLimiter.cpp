@@ -146,7 +146,7 @@ void PowerLimiterClass::loop()
         return;
     }
 
-    uint16_t newPowerLimit = 0;
+    int32_t newPowerLimit = 0;
 
     if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
         newPowerLimit = int(_powerMeter1Power + _powerMeter2Power + _powerMeter3Power);
