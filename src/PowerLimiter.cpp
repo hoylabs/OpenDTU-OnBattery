@@ -107,7 +107,7 @@ void PowerLimiterClass::loop()
 
     if (millis() - _lastPowerMeterUpdate < (30 * 1000)) {
         float powerTotal = PowerMeter.getPowerTotal();
-        newPowerLimit = static_cast(int)(powerTotal);
+        newPowerLimit = static_cast<int>(powerTotal);
 
         if (config.PowerLimiter_IsInverterBehindPowerMeter) {
             // If the inverter the behind the power meter (part of measurement),
