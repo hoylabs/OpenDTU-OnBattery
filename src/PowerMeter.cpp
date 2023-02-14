@@ -56,15 +56,15 @@ void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties&
     CONFIG_T& config = Configuration.get();
 
     if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter1) == 0) {
-        _powerMeter1Power = std::stof(std::string((char *)payload, (unsigned int)len));
+        _powerMeter1Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
     }
 
     if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter2) == 0) {
-        _powerMeter2Power = std::stof(std::string((char *)payload, (unsigned int)len));
+        _powerMeter2Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
     }
 
     if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter3) == 0) {
-        _powerMeter3Power = std::stof(std::string((char *)payload, (unsigned int)len));
+        _powerMeter3Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
     }
     
     _powerMeterTotalPower = _powerMeter1Power + _powerMeter2Power + _powerMeter3Power;
@@ -83,7 +83,7 @@ void PowerMeterClass::loop()
     CONFIG_T& config = Configuration.get();
 
     if(millis() - _lastPowerMeterUpdate >= (config.PowerMeter_Interval * 1000)){
-        _powerMeterTotalPower = (float)sdm.readVal(SDM_TOTAL_SYSTEM_POWER, 0x01);
+        _powerMeterTotalPower = static_cast<float>sdm.readVal(SDM_TOTAL_SYSTEM_POWER, 0x01);
 
         Hoymiles.getMessageOutput()->printf("PowerMeterClass: TotalPower: %5.2f\n", _powerMeterTotalPower);
 
