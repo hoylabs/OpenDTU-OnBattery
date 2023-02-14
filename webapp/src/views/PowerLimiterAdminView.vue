@@ -60,35 +60,6 @@
             <div class="card mt-5">
                 <div class="card-header text-bg-primary">{{ $t('powerlimiteradmin.PowerMeters') }}</div>
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <label for="inputMqttTopicPowerMeter1" class="col-sm-2 col-form-label">{{ $t('powerlimiteradmin.MqttTopicPowerMeter1') }}:</label>
-                        <div class="col-sm-10">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="inputMqttTopicPowerMeter1"
-                                    placeholder="shellies/shellyem3/emeter/0/power" v-model="powerLimiterConfigList.mqtt_topic_powermeter_1" />
-                            </div>
-                        </div>
-                    </div>
-                
-                    <div class="row mb-3">
-                        <label for="inputMqttTopicPowerMeter2" class="col-sm-2 col-form-label">{{ $t('powerlimiteradmin.MqttTopicPowerMeter2') }}:</label>
-                        <div class="col-sm-10">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="inputMqttTopicPowerMeter2"
-                                    placeholder="shellies/shellyem3/emeter/1/power" v-model="powerLimiterConfigList.mqtt_topic_powermeter_2" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <label for="inputMqttTopicPowerMeter3" class="col-sm-2 col-form-label">{{ $t('powerlimiteradmin.MqttTopicPowerMeter3') }}:</label>
-                        <div class="col-sm-10">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="inputMqttTopicPowerMeter3"
-                                    placeholder="shellies/shellyem3/emeter/2/power" v-model="powerLimiterConfigList.mqtt_topic_powermeter_3" />
-                            </div>
-                        </div>
-                    </div>
 
                     <div class="row mb-3">
                         <label class="col-sm-2 form-check-label" for="inputRetain">{{ $t('powerlimiteradmin.InverterIsBehindPowerMeter') }}</label>
