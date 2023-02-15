@@ -440,6 +440,7 @@
         "PowerMeterEnable": "Enable Power Meter",
         "PowerMeterParameter": "Power Meter Parameter",
         "PowerMeterSource": "Power Meter type",
+        "MQTT": "MQTT",
         "typeMQTT": "MQTT",
         "typeSDM1ph": "SDM 1 phase (SDM120/220/230)",
         "typeSDM3ph": "SDM 3 phase (SDM72/630)",

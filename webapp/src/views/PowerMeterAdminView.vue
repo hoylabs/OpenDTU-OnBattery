@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                    <label for="inputTimezone" class="col-sm-2 col-form-label">{{ $t('powermeteradmin.PowerMeterSorce') }}</label>
+                    <label for="inputTimezone" class="col-sm-2 col-form-label">{{ $t('powermeteradmin.PowerMeterSource') }}</label>
                     <div class="col-sm-10">
                         <select class="form-select" v-model="powerMeterConfigList.source">
                             <option v-for="source in powerMeterSourceList" :key="source.key" :value="source.key">
