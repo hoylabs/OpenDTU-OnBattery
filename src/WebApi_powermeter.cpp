@@ -90,7 +90,7 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
-    if (!(root.containsKey("enabled") && root.containsKey("lower_power_limit"))) {
+    if (!(root.containsKey("enabled") && root.containsKey("source"))) {
         retMsg[F("message")] = F("Values are missing!");
         response->setLength();
         request->send(response);
