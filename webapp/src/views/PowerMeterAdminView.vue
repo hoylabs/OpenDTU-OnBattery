@@ -3,37 +3,39 @@
         <BootstrapAlert v-model="showAlert" dismissible :variant="alertType">
             {{ alertMessage }}
         </BootstrapAlert>
-
+        
         <form @submit="savePowerMeterConfig">
-            <CardElement :text="$t('powermeteradmin.PowerMeterConfiguration')" textVariant="text-bg-primary">
-                <InputElement :label="$t('powermeteradmin.PowerMeterEneble')"
-                              v-model="powerMeterConfigList.vedirect_enabled"
-                              type="checkbox" wide/>
-            </CardElement>
+            <div class="card">
+                <div class="card-header text-bg-primary">{{ $t('powermeteradmin.PowerMeterConfiguration') }}</div>
+                <div class="card-body">
 
-            <CardElement :text="$t('powermeteradmin.PowerMeterParameter')" textVariant="text-bg-primary" add-space
-                         v-show="powerMeterConfigList.enabled"
-            >
-                <div class="row mb-3">
-                    <label for="inputTimezone" class="col-sm-2 col-form-label">
-                        {{ $t('powermeteradmin.PowerMeterSorce') }}
-                    </label>
+                    <div class="row mb-3">
+                        <label class="col-sm-2 form-check-label" for="inputPowerMeterEnable">{{ $t('powermeteradmin.PowerMeterEnable') }}</label>
+                        <div class="col-sm-10">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="inputPowerMeterEnable"
+                                    v-model="powerMeterConfigList.enabled" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                    <label for="inputTimezone" class="col-sm-2 col-form-label">{{ $t('powermeteradmin.PowerMeterSorce') }}</label>
                     <div class="col-sm-10">
                         <select class="form-select" v-model="powerMeterConfigList.source">
                             <option v-for="source in powerMeterSourceList" :key="source.key" :value="source.key">
-                                {{ powerMeterSource.value }}
+                                {{ source.value }}
                             </option>
                         </select>
                     </div>
                 </div>
-            </CardElement>
+                </div>
+            </div>
 
-            <form @submit="savePowerMeterConfig">
             <div class="card">
-                <div class="card-header text-bg-primary">{{ $t('powerlimiteradmin.General') }}</div>
+                <div class="card-header text-bg-primary">{{ $t('powermeteradmin.MQTT') }}</div>
                 <div class="card-body">
                     <div class="row mb-3">
-                        <label for="inputMqttTopicPowerMeter1" class="col-sm-2 col-form-label">{{ $t('powerlimiteradmin.MqttTopicPowerMeter1') }}:</label>
+                        <label for="inputMqttTopicPowerMeter1" class="col-sm-2 col-form-label">{{ $t('powermeteradmin.MqttTopicPowerMeter1') }}:</label>
                         <div class="col-sm-10">
                             <div class="input-group">
                                 <input type="text" class="form-control" id="inputMqttTopicPowerMeter1"
@@ -43,7 +45,7 @@
                     </div>
                 
                     <div class="row mb-3">
-                        <label for="inputMqttTopicPowerMeter2" class="col-sm-2 col-form-label">{{ $t('powerlimiteradmin.MqttTopicPowerMeter2') }}:</label>
+                        <label for="inputMqttTopicPowerMeter2" class="col-sm-2 col-form-label">{{ $t('powermeteradmin.MqttTopicPowerMeter2') }}:</label>
                         <div class="col-sm-10">
                             <div class="input-group">
                                 <input type="text" class="form-control" id="inputMqttTopicPowerMeter2"
@@ -53,7 +55,7 @@
                     </div>
 
                     <div class="row mb-3">
-                        <label for="inputMqttTopicPowerMeter3" class="col-sm-2 col-form-label">{{ $t('powerlimiteradmin.MqttTopicPowerMeter3') }}:</label>
+                        <label for="inputMqttTopicPowerMeter3" class="col-sm-2 col-form-label">{{ $t('powermeteradmin.MqttTopicPowerMeter3') }}:</label>
                         <div class="col-sm-10">
                             <div class="input-group">
                                 <input type="text" class="form-control" id="inputMqttTopicPowerMeter3"
@@ -61,6 +63,8 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
             <button type="submit" class="btn btn-primary mb-3">{{ $t('powermeteradmin.Save') }}</button>
         </form>
     </BasePage>
@@ -81,7 +85,7 @@ export default defineComponent({
     data() {
         return {
             dataLoading: true,
-            powerLimiterConfigList: {} as PowerMeterConfig,
+            powerMeterConfigList: {} as PowerMeterConfig,
             powerMeterSourceList: [
                 { key: 0, value: this.$t('powermeteradmin.typeMQTT') },
                 { key: 1, value: this.$t('powermeteradmin.typeSDM1ph') },
@@ -101,7 +105,7 @@ export default defineComponent({
             fetch("/api/powermeter/config", { headers: authHeader() })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
-                    this.powerLimiterConfigList = data;
+                    this.powerMeterConfigList = data;
                     this.dataLoading = false;
                 });
         },

@@ -1,4 +1,4 @@
-export interface PowerLimiterConfig {
+export interface PowerMeterConfig {
     enabled: boolean;
     source: number;
     mqtt_topic_powermeter_1: string;
