@@ -8,6 +8,14 @@
 #include <memory>
 #include "SDM.h"
 
+#ifndef SDM_RX_PIN
+#define SDM_RX_PIN 13
+#endif
+
+#ifndef SDM_TX_PIN
+#define SDM_TX_PIN 32
+#endif
+
 class PowerMeterClass {
 public:
     void init();
@@ -18,6 +26,7 @@ public:
 private:
     uint32_t _interval;
     uint32_t _lastPowerMeterUpdate;
+    bool _initDone = false;
 
     float _powerMeter1Power;
     float _powerMeter2Power;

@@ -31,7 +31,7 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card" v-if="powerMeterConfigList.source === 0" >
                 <div class="card-header text-bg-primary">{{ $t('powermeteradmin.MQTT') }}</div>
                 <div class="card-body">
                     <div class="row mb-3">
