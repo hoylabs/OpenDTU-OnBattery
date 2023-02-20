@@ -97,6 +97,8 @@ struct CONFIG_T {
     char PowerMeter_MqttTopicPowerMeter1[MQTT_MAX_TOPIC_STRLEN + 1];
     char PowerMeter_MqttTopicPowerMeter2[MQTT_MAX_TOPIC_STRLEN + 1];
     char PowerMeter_MqttTopicPowerMeter3[MQTT_MAX_TOPIC_STRLEN + 1];
+    uint32_t PowerMeter_SdmBaudrate;
+    uint32_t PowerMeter_SdmAddress;
 
     bool PowerLimiter_Enabled;
     bool PowerLimiter_SolarPassTroughEnabled;

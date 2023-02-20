@@ -106,6 +106,8 @@ bool ConfigurationClass::write()
     powermeter["mqtt_topic_powermeter_1"] = config.PowerMeter_MqttTopicPowerMeter1;
     powermeter["mqtt_topic_powermeter_2"] = config.PowerMeter_MqttTopicPowerMeter2;
     powermeter["mqtt_topic_powermeter_3"] = config.PowerMeter_MqttTopicPowerMeter3;
+    powermeter["sdmbaudrate"] = config.PowerMeter_SdmBaudrate;
+    powermeter["sdmaddress"] = config.PowerMeter_SdmAddress;
 
     JsonObject powerlimiter = doc.createNestedObject("powerlimiter");
     powerlimiter["enabled"] = config.PowerLimiter_Enabled;
@@ -255,6 +257,8 @@ bool ConfigurationClass::read()
     strlcpy(config.PowerMeter_MqttTopicPowerMeter1, powermeter["mqtt_topic_powermeter_1"] | "", sizeof(config.PowerMeter_MqttTopicPowerMeter1));
     strlcpy(config.PowerMeter_MqttTopicPowerMeter2, powermeter["mqtt_topic_powermeter_2"] | "", sizeof(config.PowerMeter_MqttTopicPowerMeter2));
     strlcpy(config.PowerMeter_MqttTopicPowerMeter3, powermeter["mqtt_topic_powermeter_3"] | "", sizeof(config.PowerMeter_MqttTopicPowerMeter3));
+    config.PowerMeter_SdmBaudrate =  POWERMETER_SDMBAUDRATE;
+    config.PowerMeter_SdmAddress =  POWERMETER_SDMADDRESS;
 
     JsonObject powerlimiter = doc["powerlimiter"];
     config.PowerLimiter_Enabled = powerlimiter["enabled"] | POWERLIMITER_ENABLED;

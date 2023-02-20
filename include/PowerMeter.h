@@ -26,7 +26,6 @@ public:
 private:
     uint32_t _interval;
     uint32_t _lastPowerMeterUpdate;
-    bool _initDone = false;
 
     float _powerMeter1Power;
     float _powerMeter2Power;

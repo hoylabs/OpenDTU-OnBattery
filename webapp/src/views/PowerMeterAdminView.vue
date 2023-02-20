@@ -65,6 +65,32 @@
                     </div>
                 </div>
             </div>
+
+            
+            <div class="card" v-if="powerMeterConfigList.source === 1 || powerMeterConfigList.source === 2" >
+                <div class="card-header text-bg-primary">{{ $t('powermeteradmin.SDM') }}</div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <label for="sdmbaudrate" class="col-sm-2 col-form-label">{{ $t('powermeteradmin.sdmbaudrate') }}:</label>
+                        <div class="col-sm-10">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="sdmbaudrate"
+                                    placeholder="9600" v-model="powerMeterConfigList.sdmbaudrate" />
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="row mb-3">
+                        <label for="sdmaddress" class="col-sm-2 col-form-label">{{ $t('powermeteradmin.sdmaddress') }}:</label>
+                        <div class="col-sm-10">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="sdmaddress"
+                                    placeholder="1" v-model="powerMeterConfigList.sdmaddress" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <button type="submit" class="btn btn-primary mb-3">{{ $t('powermeteradmin.Save') }}</button>
         </form>
     </BasePage>
