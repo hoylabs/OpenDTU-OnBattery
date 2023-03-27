@@ -10,6 +10,58 @@
 #include "MessageOutput.h"
 #include <ctime>
 
+#include "sml.h"
+
+#define SML_RX_PIN 35
+
+typedef struct {
+  const unsigned char OBIS[6];
+  void (*Handler)();
+} OBISHandler;
+
+double smlTotalPower = 0;
+double smlImport = 0;
+double smlExport = 0;
+
+void smlPower() { smlOBISW(smlTotalPower); }
+void smlEnergyIn() { smlOBISWh(smlImport); }
+void smlEnergyOut() { smlOBISWh(smlExport); }
+
+// clang-format off
+OBISHandler OBISHandlers[] = {
+    {{0x01, 0x00, 0x10, 0x07, 0x00, 0xff}, &smlPower},
+    {{0x01, 0x00, 0x01, 0x08, 0x00, 0xff}, &smlEnergyIn},
+    {{0x01, 0x00, 0x02, 0x08, 0x00, 0xff}, &smlEnergyOut},
+    {{0}, 0}
+};
+// clang-format on
+
+bool smlProcessByte(unsigned char smlCurrentChar)
+{
+    unsigned int iHandler = 0;
+    sml_states_t smlCurrentState = smlState(smlCurrentChar);
+    if (smlCurrentState == SML_START) {
+        /* reset local vars */
+        smlTotalPower = 0;
+        smlImport = 0;
+        smlExport = 0;
+    }
+    if (smlCurrentState == SML_LISTEND) {
+        /* check handlers on last received list */
+        for (iHandler = 0; OBISHandlers[iHandler].Handler != 0 && !(smlOBISCheck(OBISHandlers[iHandler].OBIS)); iHandler++);
+        if (OBISHandlers[iHandler].Handler != 0) {
+            OBISHandlers[iHandler].Handler();
+        }
+    }
+    if (smlCurrentState == SML_UNEXPECTED) {
+        MessageOutput.printf("SML-Read-Failed: Unexpected byte! \r\n");
+    }
+    if (smlCurrentState == SML_FINAL) {
+        return true;
+    }
+    return false;
+}
+
 PowerMeterClass PowerMeter;
 
 SDM sdm(Serial2, 9600, NOT_A_PIN, SERIAL_8N1, SDM_RX_PIN, SDM_TX_PIN);
@@ -33,7 +85,13 @@ void PowerMeterClass::init()
        
     mqttInitDone = true;
 
-    sdm.begin();
+    if(config.PowerMeter_Source == 99){
+        Serial2.begin(9600, SERIAL_8N1, SML_RX_PIN, -1);
+        Serial2.flush();
+    }
+    else {
+      sdm.begin();
+    }
 }
 
 void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total)
@@ -56,11 +114,13 @@ void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties&
         MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\n", getPowerTotal());
     }
 
+    _powerMeterTotalPower = _powerMeter1Power + _powerMeter2Power + _powerMeter3Power;
+
     _lastPowerMeterUpdate = millis();
 }
 
 float PowerMeterClass::getPowerTotal(){
-    return _powerMeter1Power + _powerMeter2Power + _powerMeter3Power;
+    return _powerMeterTotalPower;
 }
 
 uint32_t PowerMeterClass::getLastPowerMeterUpdate(){
@@ -88,6 +148,20 @@ void PowerMeterClass::loop()
 {
     CONFIG_T& config = Configuration.get();
 
+    if (config.PowerMeter_Enabled && config.PowerMeter_Source == 99) {
+        while (Serial2.available()) {
+            if (smlProcessByte(Serial2.read())) {
+                _powerMeterTotalPower = smlTotalPower;
+                _PowerMeterImport = smlImport;
+                _PowerMeterExport = smlExport;
+                break;
+            }
+            else if (!Serial2.available()) {
+                return;
+            }
+        }
+    }
+
     if(config.PowerMeter_Enabled && millis() - _lastPowerMeterUpdate >= (config.PowerMeter_Interval * 1000)){
         uint8_t _address = config.PowerMeter_SdmAddress;
         if(config.PowerMeter_Source == 1){
@@ -99,8 +173,11 @@ void PowerMeterClass::loop()
             _powerMeter3Voltage = 0.0;
             _PowerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
             _PowerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
+
+            _powerMeterTotalPower = _powerMeter1Power;
         }
         if(config.PowerMeter_Source == 2){
+
             _powerMeter1Power = static_cast<float>(sdm.readVal(SDM_PHASE_1_POWER, _address));
             _powerMeter2Power = static_cast<float>(sdm.readVal(SDM_PHASE_2_POWER, _address));
             _powerMeter3Power = static_cast<float>(sdm.readVal(SDM_PHASE_3_POWER, _address));
@@ -109,9 +186,11 @@ void PowerMeterClass::loop()
             _powerMeter3Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_3_VOLTAGE, _address));
             _PowerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
             _PowerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
+
+            _powerMeterTotalPower = _powerMeter1Power + _powerMeter2Power + _powerMeter3Power;
         }
         
-        MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\n", getPowerTotal());
+        MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\r\n", getPowerTotal());
         
         mqtt();
 

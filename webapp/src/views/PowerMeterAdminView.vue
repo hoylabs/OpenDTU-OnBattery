@@ -116,6 +116,7 @@ export default defineComponent({
                 { key: 0, value: this.$t('powermeteradmin.typeMQTT') },
                 { key: 1, value: this.$t('powermeteradmin.typeSDM1ph') },
                 { key: 2, value: this.$t('powermeteradmin.typeSDM3ph') },
+                { key: 99, value: this.$t('powermeteradmin.typeSML') },
             ],
             alertMessage: "",
             alertType: "info",
