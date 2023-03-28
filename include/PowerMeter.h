@@ -39,6 +39,8 @@ private:
     float _PowerMeterImport = 0.0;
     float _PowerMeterExport = 0.0;
 
+    bool _powerMeterOnyTotalPowerAvailable = false;
+
     bool mqttInitDone = false;
 };
 

@@ -110,6 +110,8 @@ void PowerMeterClass::init()
         #endif
 
         inputSerial.flush();
+
+        _powerMeterOnyTotalPowerAvailable = true;
     }
     else {
       sdm.begin();
@@ -136,13 +138,11 @@ void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties&
         MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\n", getPowerTotal());
     }
 
-    _powerMeterTotalPower = _powerMeter1Power + _powerMeter2Power + _powerMeter3Power;
-
     _lastPowerMeterUpdate = millis();
 }
 
 float PowerMeterClass::getPowerTotal(){
-    return _powerMeterTotalPower;
+    return _powerMeterOnyTotalPowerAvailable ? _powerMeterTotalPower : _powerMeter1Power + _powerMeter2Power + _powerMeter3Power;
 }
 
 uint32_t PowerMeterClass::getLastPowerMeterUpdate(){
@@ -191,8 +191,6 @@ void PowerMeterClass::loop()
             _powerMeter3Voltage = 0.0;
             _PowerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
             _PowerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
-
-            _powerMeterTotalPower = _powerMeter1Power;
         }
         if(config.PowerMeter_Source == 2){
             _powerMeter1Power = static_cast<float>(sdm.readVal(SDM_PHASE_1_POWER, _address));
@@ -203,8 +201,6 @@ void PowerMeterClass::loop()
             _powerMeter3Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_3_VOLTAGE, _address));
             _PowerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
             _PowerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
-
-            _powerMeterTotalPower = _powerMeter1Power + _powerMeter2Power + _powerMeter3Power;
         }
         
         MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\r\n", getPowerTotal());
