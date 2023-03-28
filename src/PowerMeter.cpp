@@ -12,6 +12,15 @@
 
 #include "sml.h"
 
+#define USE_SW_SERIAL
+
+#ifdef USE_SW_SERIAL
+#include <SoftwareSerial.h>
+SoftwareSerial inputSerial;
+#else
+HardwareSerial inputSerial(2);
+#endif
+
 #define SML_RX_PIN 35
 
 typedef struct {
@@ -36,28 +45,33 @@ OBISHandler OBISHandlers[] = {
 };
 // clang-format on
 
-bool smlProcessByte(unsigned char smlCurrentChar)
+bool smlReadLoop()
 {
-    unsigned int iHandler = 0;
-    sml_states_t smlCurrentState = smlState(smlCurrentChar);
-    if (smlCurrentState == SML_START) {
-        /* reset local vars */
-        smlTotalPower = 0;
-        smlImport = 0;
-        smlExport = 0;
-    }
-    if (smlCurrentState == SML_LISTEND) {
-        /* check handlers on last received list */
-        for (iHandler = 0; OBISHandlers[iHandler].Handler != 0 && !(smlOBISCheck(OBISHandlers[iHandler].OBIS)); iHandler++);
-        if (OBISHandlers[iHandler].Handler != 0) {
-            OBISHandlers[iHandler].Handler();
+    while (inputSerial.available()){
+        unsigned char smlCurrentChar = inputSerial.read();
+        unsigned int iHandler = 0;
+        sml_states_t smlCurrentState = smlState(smlCurrentChar);
+        if (smlCurrentState == SML_START){
+            /* reset local vars */
+            smlTotalPower = 0;
+            smlImport = 0;
+            smlExport = 0;
         }
-    }
-    if (smlCurrentState == SML_UNEXPECTED) {
-        MessageOutput.printf("SML-Read-Failed: Unexpected byte! \r\n");
-    }
-    if (smlCurrentState == SML_FINAL) {
-        return true;
+        if (smlCurrentState == SML_LISTEND){
+            /* check handlers on last received list */
+            for (iHandler = 0; OBISHandlers[iHandler].Handler != 0 && !(smlOBISCheck(OBISHandlers[iHandler].OBIS)); iHandler++);
+            if (OBISHandlers[iHandler].Handler != 0){
+                OBISHandlers[iHandler].Handler();
+            }
+        }
+        /*
+        if (smlCurrentState == SML_UNEXPECTED){
+            MessageOutput.printf("SML-Read-Failed: Unexpected byte! \r\n");
+        }
+        */
+        if (smlCurrentState == SML_FINAL){
+            return true;
+        }
     }
     return false;
 }
@@ -86,8 +100,16 @@ void PowerMeterClass::init()
     mqttInitDone = true;
 
     if(config.PowerMeter_Source == 99){
-        Serial2.begin(9600, SERIAL_8N1, SML_RX_PIN, -1);
-        Serial2.flush();
+        #ifdef USE_SW_SERIAL
+        pinMode(SML_RX_PIN, INPUT);
+        inputSerial.begin(9600, SWSERIAL_8N1, SML_RX_PIN, -1, false, 128, 95);
+        inputSerial.enableRx(true);
+        inputSerial.enableTx(false);
+        #else
+        inputSerial.begin(9600, SERIAL_8N1, SML_RX_PIN, -1);
+        #endif
+
+        inputSerial.flush();
     }
     else {
       sdm.begin();
@@ -148,17 +170,13 @@ void PowerMeterClass::loop()
 {
     CONFIG_T& config = Configuration.get();
 
-    if (config.PowerMeter_Enabled && config.PowerMeter_Source == 99) {
-        while (Serial2.available()) {
-            if (smlProcessByte(Serial2.read())) {
+    if (config.PowerMeter_Enabled && config.PowerMeter_Source == 99){
+        if (smlReadLoop()){
                 _powerMeterTotalPower = smlTotalPower;
                 _PowerMeterImport = smlImport;
                 _PowerMeterExport = smlExport;
-                break;
-            }
-            else if (!Serial2.available()) {
-                return;
-            }
+        }else{
+            return;
         }
     }
 
@@ -177,7 +195,6 @@ void PowerMeterClass::loop()
             _powerMeterTotalPower = _powerMeter1Power;
         }
         if(config.PowerMeter_Source == 2){
-
             _powerMeter1Power = static_cast<float>(sdm.readVal(SDM_PHASE_1_POWER, _address));
             _powerMeter2Power = static_cast<float>(sdm.readVal(SDM_PHASE_2_POWER, _address));
             _powerMeter3Power = static_cast<float>(sdm.readVal(SDM_PHASE_3_POWER, _address));
