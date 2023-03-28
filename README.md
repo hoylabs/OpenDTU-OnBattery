@@ -13,6 +13,7 @@ This project is still under development and adds following features:
 * Can read the current solar panel power from the Victron MPPT and adjust the limiter accordingly to not save energy in the battery (for increased system efficiency). Increases the battery lifespan and reduces energy loses.
 * Settings can be configured in the UI
 * Pylontech Battery support (via CAN bus interface). Use the SOC for starting/stopping the power output and provide the battery data via MQTT (autodiscovery for home assistant is currently not supported). Pin Mapping is supported (default RX PIN 27, TX PIN 26). Actual no live view support for Pylontech Battery.
+* Huawei R4850G2 power supply unit that can act as AC charger. Supports status shown on the web interface and options to set voltage and current limits on the web interface and via MQTT. Connection is done using CAN bus (needs to be separate from Pylontech CAN bus) via SN65HVD230 interface.
 
 [![OpenDTU Build](https://github.com/tbnobody/OpenDTU/actions/workflows/build.yml/badge.svg)](https://github.com/tbnobody/OpenDTU/actions/workflows/build.yml)
 [![cpplint](https://github.com/tbnobody/OpenDTU/actions/workflows/cpplint.yml/badge.svg)](https://github.com/tbnobody/OpenDTU/actions/workflows/cpplint.yml)
@@ -166,6 +167,23 @@ Topics for 3 phases of a power meter is configurable. Given is an example for th
 | battery/charging/dischargeEnabled        | R     |                                               |                    |
 | battery/charging/chargeImmediately       | R     |                                               |                    |
 
+## Huawei AC charger topics
+| Topic                                   | R / W | Description                                          | Value / Unit               |
+| --------------------------------------- | ----- | ---------------------------------------------------- | -------------------------- |
+| huawei/cmd/limit_online_voltage         | W     | Online voltage (i.e. CAN bus connected)              | Volt (V)                   |
+| huawei/cmd/limit_online_current         | W     | Online current (i.e. CAN bus connected)              | Ampere (A)                 |
+| huawei/cmd/power                        | W     | Controls output pin GPIO to drive solid state relais | 0 / 1                      |
+| huawei/data_age                         | R     | How old the data is                                  | Seconds                    |
+| huawei/input_voltage                    | R     | Input voltage                                        | Volt (V)                   |
+| huawei/input_current                    | R     | Input current                                        | Ampere (A)                 |
+| huawei/input_power                      | R     | Input power                                          | Watt (W)                   |
+| huawei/output_voltage                   | R     | Output voltage                                       | Volt (V)                   |
+| huawei/output_current                   | R     | Output current                                       | Ampere (A)                 |
+| huawei/max_output_current               | R     | Maximum output current (set using the online limit)  | Ampere (A)                 |
+| huawei/output_power                     | R     | Output power                                         | Watt (W)                   |
+| huawei/input_temp                       | R     | Input air temperature                                | °C                         |
+| huawei/output_temp                      | R     | Output air temperature                               | °C                         |
+| huawei/efficiency                       | R     | Efficiency                                           | Percentage                 |
 
 ## Currently supported Inverters
 * Hoymiles HM-300
@@ -178,6 +196,7 @@ Topics for 3 phases of a power meter is configurable. Given is an example for th
 * Hoymiles HM-1200
 * Hoymiles HM-1500
 * Solenso SOL-H400
+* Solenso SOL-H800
 * TSUN TSOL-M350 (Maybe depending on firmware/serial number on the inverter)
 * TSUN TSOL-M800 (Maybe depending on firmware/serial number on the inverter)
 * TSUN TSOL-M1600 (Maybe depending on firmware/serial number on the inverter)
@@ -298,7 +317,7 @@ You can also change  the pins by creating a custom [device profile](docs/DeviceP
     * upload_port
     * monitor_port
 * Select the arrow button in the blue bottom status bar (PlatformIO: Upload) to compile and upload the firmware. During the compilation, all required libraries are downloaded automatically.
-* Under Linux, if the upload fails with error messages "Could not open /dev/ttyUSB0, the port doesn't exist", you can check via ```ls -la /dev/tty*``` to which group your port belongs to, and then add your user this group via ```sudo adduser <yourusername> dialout```
+* Under Linux, if the upload fails with error messages "Could not open /dev/ttyUSB0, the port doesn't exist", you can check via ```ls -la /dev/tty*``` to which group your port belongs to, and then add your user this group via ```sudo adduser <yourusername> dialout``` (if you are using ```arch-linux``` use: ```sudo gpasswd -a <yourusername> uucp```, this method requires a logout/login of the affected user).
 * There are two videos showing these steps:
     * [Git Clone and compilation](https://youtu.be/9cA_esv3zeA)
     * [Full installation and compilation](https://youtu.be/xs6TqHn7QWM)
@@ -353,7 +372,7 @@ esptool.py --port /dev/ttyUSB0 --chip esp32 --before default_reset --after hard_
 Users report that [ESP_Flasher](https://github.com/Jason2866/ESP_Flasher/releases/) is suitable for flashing OpenDTU on Windows.
 
 #### Flash with [ESP_Flasher](https://espressif.github.io/esptool-js/) - web version
-It is also possible to flash it via the web tools which might be more convenient and is platformindependent.
+It is also possible to flash it via the web tools which might be more convenient and is platform independent.
 
 ## First configuration
 * After the initial flashing of the microcontroller, an Access Point called "OpenDTU-*" is opened. The default password is "openDTU42".
@@ -369,7 +388,7 @@ It is also possible to flash it via the web tools which might be more convenient
 Once you have your OpenDTU running and connected to WLAN, you can do further updates through the web interface.
 Navigate to Settings --> Firmware upgrade and press the browse button. Select the firmware file from your local computer.
 
-You'll find the firmware file (after a successfull build process) under `.pio/build/generic/firmware.bin`.
+You'll find the firmware file (after a successful build process) under `.pio/build/generic/firmware.bin`.
 
 If you downloaded a precompiled zip archive, unpack it and choose `opendtu-generic.bin`.
 
