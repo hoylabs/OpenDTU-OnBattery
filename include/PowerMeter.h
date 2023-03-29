@@ -7,6 +7,7 @@
 #include <Hoymiles.h>
 #include <memory>
 #include "SDM.h"
+#include "sml.h"
 
 #ifndef SDM_RX_PIN
 #define SDM_RX_PIN 13
@@ -15,6 +16,16 @@
 #ifndef SDM_TX_PIN
 #define SDM_TX_PIN 32
 #endif
+
+#ifndef SML_RX_PIN
+#define SML_RX_PIN 35
+#endif
+
+typedef struct {
+  const unsigned char OBIS[6];
+  void (*Fn)(double&);
+  float* Arg;
+} OBISHandler;
 
 class PowerMeterClass {
 public:
@@ -36,12 +47,19 @@ private:
     float _powerMeter1Voltage = 0.0;
     float _powerMeter2Voltage = 0.0;
     float _powerMeter3Voltage = 0.0;
-    float _PowerMeterImport = 0.0;
-    float _PowerMeterExport = 0.0;
+    float _powerMeterImport = 0.0;
+    float _powerMeterExport = 0.0;
 
-    bool _powerMeterOnyTotalPowerAvailable = false;
+    bool _powerMeterOnlyTotalPowerAvailable = false;
 
     bool mqttInitDone = false;
+
+    bool smlReadLoop();
+    const std::list<OBISHandler> smlHandlerList{
+        {{0x01, 0x00, 0x10, 0x07, 0x00, 0xff}, &smlOBISW, &_powerMeterTotalPower},
+        {{0x01, 0x00, 0x01, 0x08, 0x00, 0xff}, &smlOBISWh, &_powerMeterImport},
+        {{0x01, 0x00, 0x02, 0x08, 0x00, 0xff}, &smlOBISWh, &_powerMeterExport}
+    };
 };
 
 extern PowerMeterClass PowerMeter;
