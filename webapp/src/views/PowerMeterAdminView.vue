@@ -165,12 +165,13 @@
                 <ul>
                     <li>http://admin:secret@shelly3em.home/status</li>
                     <li>https://admin:secret@shelly3em.home/status</li>
+                    <li>http://tasmota-123.home/cm?cmnd=status%208</li>
                     <li>http://12.34.56.78/emeter/0</li>
                 </ul>
 
                 <h2>JSON path examples:</h2>
                 <ul>
-                    <li>total_power - { othervalue: "blah", "total_power": 123.4 }</li>
+                    <li>total_power - { "othervalue": "blah", "total_power": 123.4 }</li>
                     <li>testarray/[2]/myvalue - { "testarray": [ {}, { "power": 123.4 } ] }</li>
                 </ul>
 
