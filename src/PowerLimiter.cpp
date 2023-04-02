@@ -185,8 +185,6 @@ int32_t PowerLimiterClass::calcPowerLimit(std::shared_ptr<InverterAbstract> inve
         if (config.PowerLimiter_IsInverterBehindPowerMeter) {
             // If the inverter the behind the power meter (part of measurement),
             // the produced power of this inverter has also to be taken into account.
-            // We don't use FLD_PAC from the statistics, because that
-            // data might be too old and unrelieable.
             float acPower = inverter->Statistics()->getChannelFieldValue(TYPE_AC, (ChannelNum_t) config.PowerLimiter_InverterChannelId, FLD_PAC); 
             newPowerLimit += static_cast<int>(acPower);
         }
