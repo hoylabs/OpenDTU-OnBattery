@@ -87,7 +87,8 @@ bool HttpPowerMeterClass::httpRequest(const char* url, const char* httpHeader, c
 
     if (httpCode == HTTP_CODE_OK) {
         if (httpClient.getSize() > (responseSize - 1)) {
-            snprintf_P(error, errorSize, "Response too large!");
+            snprintf_P(error, errorSize, "Response too large! Response length: %d Body: %s",
+                httpClient.getSize(), httpClient.getString().c_str());
         } else {
             snprintf(response, responseSize, httpClient.getString().c_str());
         }
