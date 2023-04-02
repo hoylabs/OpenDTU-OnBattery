@@ -75,21 +75,21 @@ public:
     void setPower(bool power);
 
     RectifierParameters_t * get();
-    unsigned long getLastUpdate();
+    uint32_t getLastUpdate();
 
 private:
     void sendRequest();
     void onReceive(uint8_t* frame, uint8_t len);
 
-    unsigned long previousMillis;
-    unsigned long lastUpdate;
+    uint32_t previousMillis;
+    uint32_t lastUpdate;
     RectifierParameters_t _rp;
 
     SPIClass *spi;
     MCP_CAN *CAN;
     uint8_t _huawei_irq;
     uint8_t _huawei_power;
-
+    bool initialized = false;
 };
 
 extern HuaweiCanClass HuaweiCan;

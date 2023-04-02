@@ -44,17 +44,27 @@ void PowerMeterClass::init()
         inputSerial.enableTx(false);
         #else
         inputSerial.begin(9600, SERIAL_8N1, SML_RX_PIN, -1);
-        #endif
-
+        #endif        
         inputSerial.flush();
 
         _powerMeterOnlyTotalPowerAvailable = true;
     }
-    else {
-        MqttSettings.subscribe(config.PowerMeter_MqttTopicPowerMeter1, 0, std::bind(&PowerMeterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
-        MqttSettings.subscribe(config.PowerMeter_MqttTopicPowerMeter2, 0, std::bind(&PowerMeterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
-        MqttSettings.subscribe(config.PowerMeter_MqttTopicPowerMeter3, 0, std::bind(&PowerMeterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
 
+    if (config.PowerMeter_Enabled && config.PowerMeter_Source == 0) {
+        if (strlen(config.PowerMeter_MqttTopicPowerMeter1) > 0) {
+            MqttSettings.subscribe(config.PowerMeter_MqttTopicPowerMeter1, 0, std::bind(&PowerMeterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
+        }
+
+        if (strlen(config.PowerMeter_MqttTopicPowerMeter2) > 0) {
+            MqttSettings.subscribe(config.PowerMeter_MqttTopicPowerMeter2, 0, std::bind(&PowerMeterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
+        }
+
+        if (strlen(config.PowerMeter_MqttTopicPowerMeter3) > 0) {
+            MqttSettings.subscribe(config.PowerMeter_MqttTopicPowerMeter3, 0, std::bind(&PowerMeterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
+        }
+    }
+
+    if(config.PowerMeter_Source == 1 || config.PowerMeter_Source == 2){
         sdm.begin();
     }
 
