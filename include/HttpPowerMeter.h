@@ -9,7 +9,7 @@ public:
     bool updateValues();
     float getPower(int8_t phase);
     bool httpRequest(const char* url, const char* httpHeader, const char* httpValue, uint32_t timeout,
-        char* response, uint32_t responseSize, char* error, uint32_t errorSize);
+        char* response, size_t responseSize, char* error, size_t errorSize);
     float getFloatValueByJsonPath(const char* jsonString, const char* jsonPath, float &value);
 
 private:

@@ -50,7 +50,7 @@ bool HttpPowerMeterClass::updateValues()
 }
 
 bool HttpPowerMeterClass::httpRequest(const char* url, const char* httpHeader, const char* httpValue, uint32_t timeout,
-        char* response, uint32_t responseSize, char* error, uint32_t errorSize)
+        char* response, size_t responseSize, char* error, size_t errorSize)
 {
     WiFiClient* wifiClient = NULL;
     HTTPClient httpClient;
@@ -86,11 +86,13 @@ bool HttpPowerMeterClass::httpRequest(const char* url, const char* httpHeader, c
 
 
     if (httpCode == HTTP_CODE_OK) {
-        if (httpClient.getSize() > (responseSize - 1)) {
-            snprintf_P(error, errorSize, "Response too large! Response length: %d Body: %s",
-                httpClient.getSize(), httpClient.getString().c_str());
+        String responseBody = httpClient.getString();
+
+        if (responseBody.length() > (responseSize - 1)) {
+            snprintf_P(error, errorSize, "Response too large! Response length: %d Body start: %s",
+                httpClient.getSize(), responseBody.c_str());
         } else {
-            snprintf(response, responseSize, httpClient.getString().c_str());
+            snprintf(response, responseSize, responseBody.c_str());
         }
     } else if (httpCode <= 0) {
         snprintf_P(error, errorSize, "Error: %s", httpClient.errorToString(httpCode).c_str());
