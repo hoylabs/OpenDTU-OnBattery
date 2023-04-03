@@ -68,7 +68,7 @@ void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties&
         _powerMeter3Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
     }
 
-    MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\n", getPowerTotal());
+    MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\r\n", getPowerTotal());
 
     _lastPowerMeterUpdate = millis();
 }
@@ -143,7 +143,7 @@ void PowerMeterClass::loop()
         }
     }
 
-    MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\n", getPowerTotal());
+    MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\r\n", getPowerTotal());
 
     mqtt();
 

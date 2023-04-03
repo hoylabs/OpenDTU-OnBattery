@@ -34,14 +34,14 @@ bool HttpPowerMeterClass::updateValues()
         if (i == 0 || config.PowerMeter_HttpIndividualRequests) {
             if (!httpRequest(phaseConfig.Url, phaseConfig.HeaderKey, phaseConfig.HeaderValue, phaseConfig.Timeout,
                 response, sizeof(response), errorMessage, sizeof(errorMessage))) {
-                MessageOutput.printf("[HttpPowerMeter] Getting the power of phase %d failed. Error: %s\n",
+                MessageOutput.printf("[HttpPowerMeter] Getting the power of phase %d failed. Error: %s\r\n",
                     i + 1, errorMessage);
                 success = false;
             }
         }
 
         if (!getFloatValueByJsonPath(response, phaseConfig.JsonPath, power[i])) {
-            MessageOutput.printf("[HttpPowerMeter] Couldn't find a value with Json query \"%s\"\n", phaseConfig.JsonPath);
+            MessageOutput.printf("[HttpPowerMeter] Couldn't find a value with Json query \"%s\"\r\n", phaseConfig.JsonPath);
             success = false;
         }
     }
