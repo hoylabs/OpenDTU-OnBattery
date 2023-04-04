@@ -35,12 +35,12 @@ void PowerMeterClass::init()
 
     _lastPowerMeterCheck = 0;
     _lastPowerMeterUpdate = 0;
-    
-    if (config.PowerMeter_Enabled) {
-        return;
-    }
 
     CONFIG_T& config = Configuration.get();
+    
+    if (!config.PowerMeter_Enabled) {
+        return;
+    }
 
     if (config.PowerMeter_Source == SOURCE_MQTT) {
         if (strlen(config.PowerMeter_MqttTopicPowerMeter1) > 0) {
@@ -64,7 +64,7 @@ void PowerMeterClass::init()
         HttpPowerMeter.init();
     }
 
-    if(config.PowerMeter_Source == 99) {
+    if(config.PowerMeter_Source == SOURCE_SML) {
         #ifdef USE_SW_SERIAL
         pinMode(SML_RX_PIN, INPUT);
         inputSerial.begin(9600, SWSERIAL_8N1, SML_RX_PIN, -1, false, 128, 95);
@@ -115,11 +115,6 @@ uint32_t PowerMeterClass::getLastPowerMeterUpdate() {
     return _lastPowerMeterUpdate;
 }
 
-uint32_t PowerMeterClass::getLastPowerMeterUpdate()
-{
-    return _lastPowerMeterUpdate;
-}
-
 void PowerMeterClass::mqtt()
 {
     if (!MqttSettings.getConnected()) {
@@ -142,7 +137,7 @@ void PowerMeterClass::loop()
 {
     CONFIG_T& config = Configuration.get();
 
-    if (config.PowerMeter_Enabled && config.PowerMeter_Source == 99) {
+    if (config.PowerMeter_Enabled && config.PowerMeter_Source == SOURCE_SML) {
         if (!smlReadLoop()) {
             return;
         }
@@ -162,8 +157,8 @@ void PowerMeterClass::loop()
         _powerMeter1Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_1_VOLTAGE, _address));
         _powerMeter2Voltage = 0.0;
         _powerMeter3Voltage = 0.0;
-        _PowerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
-        _PowerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
+        _powerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
+        _powerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
         _lastPowerMeterUpdate = millis();
     }
     else if (config.PowerMeter_Source == SOURCE_SDM3PH) {
@@ -173,8 +168,8 @@ void PowerMeterClass::loop()
         _powerMeter1Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_1_VOLTAGE, _address));
         _powerMeter2Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_2_VOLTAGE, _address));
         _powerMeter3Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_3_VOLTAGE, _address));
-        _PowerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
-        _PowerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
+        _powerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
+        _powerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
         _lastPowerMeterUpdate = millis();
     }
     else if (config.PowerMeter_Source == SOURCE_HTTP) {

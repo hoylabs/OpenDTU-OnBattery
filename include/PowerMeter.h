@@ -34,6 +34,7 @@ public:
         SOURCE_SDM1PH = 1,
         SOURCE_SDM3PH = 2,
         SOURCE_HTTP = 3,
+        SOURCE_SML = 4
     };
     void init();
     void mqtt();
