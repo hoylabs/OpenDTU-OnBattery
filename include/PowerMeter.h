@@ -29,6 +29,12 @@ typedef struct {
 
 class PowerMeterClass {
 public:
+    enum SOURCE {
+        SOURCE_MQTT = 0,
+        SOURCE_SDM1PH = 1,
+        SOURCE_SDM3PH = 2,
+        SOURCE_HTTP = 3,
+    };
     void init();
     void mqtt();
     void loop();
@@ -38,6 +44,8 @@ public:
 
 private:
     uint32_t _interval;
+    uint32_t _lastPowerMeterCheck;
+    // Used in Power limiter for safety check
     uint32_t _lastPowerMeterUpdate;
 
     float _powerMeter1Power = 0.0;

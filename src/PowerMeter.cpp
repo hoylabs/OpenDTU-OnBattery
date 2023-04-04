@@ -4,6 +4,7 @@
  */
 #include "PowerMeter.h"
 #include "Configuration.h"
+#include "HttpPowerMeter.h"
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
 #include "SDM.h"
@@ -32,11 +33,16 @@ void PowerMeterClass::init()
     using std::placeholders::_5;
     using std::placeholders::_6;
 
+    _lastPowerMeterCheck = 0;
     _lastPowerMeterUpdate = 0;
+    
+    if (config.PowerMeter_Enabled) {
+        return;
+    }
 
     CONFIG_T& config = Configuration.get();
 
-    if (config.PowerMeter_Enabled && config.PowerMeter_Source == 0) {
+    if (config.PowerMeter_Source == SOURCE_MQTT) {
         if (strlen(config.PowerMeter_MqttTopicPowerMeter1) > 0) {
             MqttSettings.subscribe(config.PowerMeter_MqttTopicPowerMeter1, 0, std::bind(&PowerMeterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
         }
@@ -50,8 +56,12 @@ void PowerMeterClass::init()
         }
     }
 
-    if(config.PowerMeter_Source == 1 || config.PowerMeter_Source == 2) {
+    if(config.PowerMeter_Source == SOURCE_SDM1PH || config.PowerMeter_Source == SOURCE_SDM3PH) {
         sdm.begin();
+    }
+    
+    if (config.PowerMeter_Source == SOURCE_HTTP) {
+        HttpPowerMeter.init();
     }
 
     if(config.PowerMeter_Source == 99) {
@@ -67,34 +77,37 @@ void PowerMeterClass::init()
 
         _powerMeterOnlyTotalPowerAvailable = true;
     }
-
+    
     mqttInitDone = true;
 }
 
 void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total)
 {
     CONFIG_T& config = Configuration.get();
-    if(config.PowerMeter_Enabled && config.PowerMeter_Source == 0) {
 
-        if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter1) == 0) {
-            _powerMeter1Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
-        }
-
-        if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter2) == 0) {
-            _powerMeter2Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
-        }
-
-        if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter3) == 0) {
-            _powerMeter3Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
-        }
-        
-        MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\n", getPowerTotal());
+    if (!config.PowerMeter_Enabled || config.PowerMeter_Source != SOURCE_MQTT) {
+        return;
     }
+
+    if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter1) == 0) {
+        _powerMeter1Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
+    }
+
+    if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter2) == 0) {
+        _powerMeter2Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
+    }
+
+    if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter3) == 0) {
+        _powerMeter3Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
+    }
+
+    MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\r\n", getPowerTotal());
 
     _lastPowerMeterUpdate = millis();
 }
 
-float PowerMeterClass::getPowerTotal() {
+float PowerMeterClass::getPowerTotal()
+{
     return _powerMeterOnlyTotalPowerAvailable ? _powerMeterTotalPower : _powerMeter1Power + _powerMeter2Power + _powerMeter3Power;
 }
 
@@ -102,10 +115,16 @@ uint32_t PowerMeterClass::getLastPowerMeterUpdate() {
     return _lastPowerMeterUpdate;
 }
 
-void PowerMeterClass::mqtt() {
+uint32_t PowerMeterClass::getLastPowerMeterUpdate()
+{
+    return _lastPowerMeterUpdate;
+}
+
+void PowerMeterClass::mqtt()
+{
     if (!MqttSettings.getConnected()) {
         return;
-    }else{
+    } else {
         String topic = "powermeter";
         MqttSettings.publish(topic + "/power1", String(_powerMeter1Power));
         MqttSettings.publish(topic + "/power2", String(_powerMeter2Power));
@@ -129,35 +148,49 @@ void PowerMeterClass::loop()
         }
     }
 
-    if(config.PowerMeter_Enabled && millis() - _lastPowerMeterUpdate >= (config.PowerMeter_Interval * 1000)) {
-        uint8_t _address = config.PowerMeter_SdmAddress;
-        if(config.PowerMeter_Source == 1) {
-            _powerMeter1Power = static_cast<float>(sdm.readVal(SDM_PHASE_1_POWER, _address));
-            _powerMeter2Power = 0.0;
-            _powerMeter3Power = 0.0;
-            _powerMeter1Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_1_VOLTAGE, _address));
-            _powerMeter2Voltage = 0.0;
-            _powerMeter3Voltage = 0.0;
-            _powerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
-            _powerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
-        }
-        if(config.PowerMeter_Source == 2) {
-            _powerMeter1Power = static_cast<float>(sdm.readVal(SDM_PHASE_1_POWER, _address));
-            _powerMeter2Power = static_cast<float>(sdm.readVal(SDM_PHASE_2_POWER, _address));
-            _powerMeter3Power = static_cast<float>(sdm.readVal(SDM_PHASE_3_POWER, _address));
-            _powerMeter1Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_1_VOLTAGE, _address));
-            _powerMeter2Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_2_VOLTAGE, _address));
-            _powerMeter3Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_3_VOLTAGE, _address));
-            _powerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
-            _powerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
-        }
-        
-        MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\r\n", getPowerTotal());
-        
-        mqtt();
+    if (!config.PowerMeter_Enabled
+            || (millis() - _lastPowerMeterCheck) < (config.PowerMeter_Interval * 1000)) {
+        return;
+    }
 
+    uint8_t _address = config.PowerMeter_SdmAddress;
+
+    if (config.PowerMeter_Source == SOURCE_SDM1PH) {
+        _powerMeter1Power = static_cast<float>(sdm.readVal(SDM_PHASE_1_POWER, _address));
+        _powerMeter2Power = 0.0;
+        _powerMeter3Power = 0.0;
+        _powerMeter1Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_1_VOLTAGE, _address));
+        _powerMeter2Voltage = 0.0;
+        _powerMeter3Voltage = 0.0;
+        _PowerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
+        _PowerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
         _lastPowerMeterUpdate = millis();
     }
+    else if (config.PowerMeter_Source == SOURCE_SDM3PH) {
+        _powerMeter1Power = static_cast<float>(sdm.readVal(SDM_PHASE_1_POWER, _address));
+        _powerMeter2Power = static_cast<float>(sdm.readVal(SDM_PHASE_2_POWER, _address));
+        _powerMeter3Power = static_cast<float>(sdm.readVal(SDM_PHASE_3_POWER, _address));
+        _powerMeter1Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_1_VOLTAGE, _address));
+        _powerMeter2Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_2_VOLTAGE, _address));
+        _powerMeter3Voltage = static_cast<float>(sdm.readVal(SDM_PHASE_3_VOLTAGE, _address));
+        _PowerMeterImport = static_cast<float>(sdm.readVal(SDM_IMPORT_ACTIVE_ENERGY, _address));
+        _PowerMeterExport = static_cast<float>(sdm.readVal(SDM_EXPORT_ACTIVE_ENERGY, _address));
+        _lastPowerMeterUpdate = millis();
+    }
+    else if (config.PowerMeter_Source == SOURCE_HTTP) {
+        if (HttpPowerMeter.updateValues()) {
+            _powerMeter1Power = HttpPowerMeter.getPower(1);
+            _powerMeter2Power = HttpPowerMeter.getPower(2);
+            _powerMeter3Power = HttpPowerMeter.getPower(3);
+            _lastPowerMeterUpdate = millis();
+        }
+    }
+
+    MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\r\n", getPowerTotal());
+
+    mqtt();
+
+    _lastPowerMeterCheck = millis();
 }
 
 bool PowerMeterClass::smlReadLoop()
