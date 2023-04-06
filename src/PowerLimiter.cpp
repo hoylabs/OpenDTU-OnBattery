@@ -25,7 +25,7 @@ void PowerLimiterClass::init()
 void PowerLimiterClass::loop()
 {
     CONFIG_T& config = Configuration.get();
-
+ 
     // Run inital checks to make sure we have met the basic conditions
     if ( !config.PowerMeter_Enabled
             || !Hoymiles.getRadio()->isIdle()
@@ -92,10 +92,34 @@ void PowerLimiterClass::loop()
       _batteryDischargeEnabled = true;
     }
 
+    // We'll slowly ramp the percentage of MPPT power directed to the inverter up / down if the MPPT has reachted absorbtion phase
+    if (VeDirect.veFrame.CS == 4) {
+      // Absorbtion Phase
+      _mpptDirectFeedToGridPercent += 0.01;
+      if (_mpptDirectFeedToGridPercent > 0.9) {
+        _mpptDirectFeedToGridPercent = 0.9;
+      }
+    } else {
+      _mpptDirectFeedToGridPercent -= 0.01;
+      if (_mpptDirectFeedToGridPercent < 0.0) {
+        _mpptDirectFeedToGridPercent = 0.0;
+      }
+    }
+
+    int32_t mpptDirectFeedToGridPower = _mpptDirectFeedToGridPercent * VeDirect.veFrame.PPV;
+
+    //if (mpptDirectFeedToGridPower < config.PowerLimiter_LowerPowerLimit && VeDirect.veFrame.PPV > config.PowerLimiter_LowerPowerLimit) {
+    //  mpptDirectFeedToGridPower = config.PowerLimiter_LowerPowerLimit;
+    //} 
     int32_t newPowerLimit = calcPowerLimit(inverter, !_batteryDischargeEnabled);
+
     // Debug, TODO: Remove
-    MessageOutput.printf("****************************** Powerlimit: %i\r\n", newPowerLimit);
-    setNewPowerLimit(inverter, newPowerLimit);
+    MessageOutput.printf("****************************** Powerlimit: %i, Mpptpower: %i, BatteryDischargeFlag: %i\r\n", newPowerLimit, mpptDirectFeedToGridPower, _batteryDischargeEnabled);
+    if (newPowerLimit > mpptDirectFeedToGridPower) {
+      setNewPowerLimit(inverter, newPowerLimit);
+    } else {
+      setNewPowerLimit(inverter, mpptDirectFeedToGridPower);
+    }
 }
 
 plStates PowerLimiterClass::getPowerLimiterState() {

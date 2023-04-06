@@ -16,7 +16,7 @@ typedef enum {
     EMPTY_WHEN_FULL= 0, 
     EMPTY_AT_NIGHT
 } batDrainStrategy;
-   
+
 
 class PowerLimiterClass {
 public:
@@ -35,6 +35,8 @@ private:
     float _powerMeter1Power;
     float _powerMeter2Power;
     float _powerMeter3Power;
+
+    float _mpptDirectFeedToGridPercent = 0;
 
     bool canUseDirectSolarPower();
     int32_t calcPowerLimit(std::shared_ptr<InverterAbstract> inverter, bool consumeSolarPowerOnly);
