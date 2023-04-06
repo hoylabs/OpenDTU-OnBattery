@@ -10,19 +10,13 @@
 #include "SDM.h"
 #include "MessageOutput.h"
 #include <ctime>
+#include <SoftwareSerial.h>
 
 PowerMeterClass PowerMeter;
 
 SDM sdm(Serial2, 9600, NOT_A_PIN, SERIAL_8N1, SDM_RX_PIN, SDM_TX_PIN);
 
-#define USE_SW_SERIAL
-
-#ifdef USE_SW_SERIAL
-#include <SoftwareSerial.h>
 SoftwareSerial inputSerial;
-#else
-HardwareSerial inputSerial(2);
-#endif
 
 void PowerMeterClass::init()
 {
@@ -65,14 +59,10 @@ void PowerMeterClass::init()
     }
 
     if(config.PowerMeter_Source == SOURCE_SML) {
-        #ifdef USE_SW_SERIAL
         pinMode(SML_RX_PIN, INPUT);
         inputSerial.begin(9600, SWSERIAL_8N1, SML_RX_PIN, -1, false, 128, 95);
         inputSerial.enableRx(true);
         inputSerial.enableTx(false);
-        #else
-        inputSerial.begin(9600, SERIAL_8N1, SML_RX_PIN, -1);
-        #endif
         inputSerial.flush();
 
         _powerMeterOnlyTotalPowerAvailable = true;
