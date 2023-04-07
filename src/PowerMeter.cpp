@@ -64,8 +64,6 @@ void PowerMeterClass::init()
         inputSerial.enableRx(true);
         inputSerial.enableTx(false);
         inputSerial.flush();
-
-        _powerMeterOnlyTotalPowerAvailable = true;
     }
     
     mqttInitDone = true;
@@ -98,10 +96,11 @@ void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties&
 
 float PowerMeterClass::getPowerTotal()
 {
-    return _powerMeterOnlyTotalPowerAvailable ? _powerMeterTotalPower : _powerMeter1Power + _powerMeter2Power + _powerMeter3Power;
+    return _powerMeter1Power + _powerMeter2Power + _powerMeter3Power;
 }
 
-uint32_t PowerMeterClass::getLastPowerMeterUpdate() {
+uint32_t PowerMeterClass::getLastPowerMeterUpdate()
+{
     return _lastPowerMeterUpdate;
 }
 

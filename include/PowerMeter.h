@@ -52,20 +52,17 @@ private:
     float _powerMeter1Power = 0.0;
     float _powerMeter2Power = 0.0;
     float _powerMeter3Power = 0.0;
-    float _powerMeterTotalPower = 0.0;
     float _powerMeter1Voltage = 0.0;
     float _powerMeter2Voltage = 0.0;
     float _powerMeter3Voltage = 0.0;
     float _powerMeterImport = 0.0;
     float _powerMeterExport = 0.0;
 
-    bool _powerMeterOnlyTotalPowerAvailable = false;
-
     bool mqttInitDone = false;
 
     bool smlReadLoop();
     const std::list<OBISHandler> smlHandlerList{
-        {{0x01, 0x00, 0x10, 0x07, 0x00, 0xff}, &smlOBISW, &_powerMeterTotalPower},
+        {{0x01, 0x00, 0x10, 0x07, 0x00, 0xff}, &smlOBISW, &_powerMeter1Power},
         {{0x01, 0x00, 0x01, 0x08, 0x00, 0xff}, &smlOBISWh, &_powerMeterImport},
         {{0x01, 0x00, 0x02, 0x08, 0x00, 0xff}, &smlOBISWh, &_powerMeterExport}
     };
