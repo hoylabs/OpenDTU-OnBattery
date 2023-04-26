@@ -97,8 +97,27 @@ void PowerLimiterClass::loop()
     setNewPowerLimit(inverter, newPowerLimit);
 }
 
-plStates PowerLimiterClass::getPowerLimiterState() {
-    return _plState;
+uint8_t PowerLimiterClass::getPowerLimiterState() {
+    CONFIG_T& config = Configuration.get();
+
+    std::shared_ptr<InverterAbstract> inverter = Hoymiles.getInverterByPos(config.PowerLimiter_InverterId);
+    if (inverter == nullptr || !inverter->isReachable()) {
+        return PL_UI_STATE_DISABLED;
+    }
+
+    if(_plState == SHUTDOWN) {
+      return PL_UI_STATE_DISABLED;
+    }
+
+    if (!inverter->isProducing()) {
+      return PL_UI_STATE_OFF;
+    } 
+
+    if (!_batteryDischargeEnabled) {
+      return PL_UI_STATE_SOLAR_ONLY;
+    }
+        
+    return PL_UI_STATE_SOLAR_AND_BATTERY;
 }
 
 int32_t PowerLimiterClass::getLastRequestedPowewrLimit() {
