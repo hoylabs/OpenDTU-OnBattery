@@ -132,8 +132,8 @@ uint8_t PowerLimiterClass::getPowerLimiterState() {
       return PL_UI_STATE_USE_SOLAR_ONLY;
     }
 
-    if(VeDirect.veFrame.PPV > 0) {
-      return PL_UI_STATE_CHARGING;
+    if(!inverter->isProducing()) {
+       return PL_UI_STATE_CHARGING;
     }
 
     return PL_UI_STATE_INACTIVE;
