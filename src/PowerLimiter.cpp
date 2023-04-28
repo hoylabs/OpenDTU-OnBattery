@@ -61,7 +61,7 @@ void PowerLimiterClass::loop()
             || (millis() - inverter->Statistics()->getLastUpdate()) > (config.Dtu_PollInterval * 10 * 1000)) {
         // If the power meter values are older than 30 seconds, 
         // or the Inverter Stats are older then 10x the poll interval
-        // set the limit to 0W for safety reasons.
+        // set the limit to lower power limit for safety reasons.
         MessageOutput.println("[PowerLimiterClass::loop] Power Meter/Inverter values too old. Using 0W (i.e. disable inverter)");
         inverter->sendActivePowerControlRequest(config.PowerLimiter_LowerPowerLimit, PowerLimitControlType::AbsolutNonPersistent);
         inverter->sendPowerControlRequest(false);
@@ -99,9 +99,15 @@ void PowerLimiterClass::loop()
       }
 
       // UI: Solar Passthrough Enabled -> true && EMPTY_AT_NIGHT
-      // In this case we should only discharge the battery when there is no sunshine
       if (config.PowerLimiter_SolarPassThroughEnabled && config.PowerLimiter_BatteryDrainStategy == EMPTY_AT_NIGHT) {
-        _batteryDischargeEnabled = !canUseDirectSolarPower();
+        if(isStartThresholdReached(inverter)) {
+            // In this case we should only discharge the battery as long it is above startThreshold
+            _batteryDischargeEnabled = true;
+        }
+        else {
+            // In this case we should only discharge the battery when there is no sunshine
+            _batteryDischargeEnabled = !canUseDirectSolarPower();
+        }
       }
 
       // UI: Solar Passthrough Enabled -> true && EMPTY_WHEN_FULL
