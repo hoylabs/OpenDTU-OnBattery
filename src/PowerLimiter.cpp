@@ -55,6 +55,19 @@ void PowerLimiterClass::loop()
     if (!config.PowerLimiter_Enabled || _disabled) {
       return;
     }
+
+    // Safety check, return on too old power meter values
+    if (millis() - PowerMeter.getLastPowerMeterUpdate() > (30 * 1000)
+            || (millis() - inverter->Statistics()->getLastUpdate()) > (config.Dtu_PollInterval * 10 * 1000)) {
+        // If the power meter values are older than 30 seconds, 
+        // or the Inverter Stats are older then 10x the poll interval
+        // set the limit to 0W for safety reasons.
+        MessageOutput.println("[PowerLimiterClass::loop] Power Meter/Inverter values too old. Using 0W (i.e. disable inverter)");
+        inverter->sendActivePowerControlRequest(config.PowerLimiter_LowerPowerLimit, PowerLimitControlType::AbsolutNonPersistent);
+        inverter->sendPowerControlRequest(false);
+        return;
+    }
+
   	// At this point the PL is enabled but we could still be in the shutdown state 
     _plState = ACTIVE;
 
@@ -167,16 +180,6 @@ int32_t PowerLimiterClass::calcPowerLimit(std::shared_ptr<InverterAbstract> inve
     if (!solarPowerEnabled && !batteryDischargeEnabled) {
       // No energy sources available
       return 0;
-    }
-
-    // Safety check, return on too old power meter values
-    if (millis() - PowerMeter.getLastPowerMeterUpdate() > (30 * 1000)
-            || (millis() - inverter->Statistics()->getLastUpdate()) > (config.Dtu_PollInterval * 10 * 1000)) {
-        // If the power meter values are older than 30 seconds, 
-        // or the Inverter Stats are older then 10x the poll interval
-        // set the limit to 0W for safety reasons.
-        MessageOutput.println("[PowerLimiterClass::loop] Power Meter/Inverter values too old. Using 0W (i.e. disable inverter)");
-        return 0;
     }
 
     if (config.PowerLimiter_IsInverterBehindPowerMeter) {
