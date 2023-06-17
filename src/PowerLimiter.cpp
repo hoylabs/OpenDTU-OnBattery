@@ -79,9 +79,7 @@ void PowerLimiterClass::loop()
     if (((!config.PowerLimiter_Enabled || _mode == PL_MODE_FULL_DISABLE) && _plState != SHUTDOWN)) {
         if (inverter->isProducing()) {
             MessageOutput.printf("PL initiated inverter shutdown.\r\n");
-            inverter->sendActivePowerControlRequest(static_cast<float>(config.PowerLimiter_LowerPowerLimit), PowerLimitControlType::AbsolutNonPersistent);
-            _lastRequestedPowerLimit = config.PowerLimiter_LowerPowerLimit;
-            inverter->sendPowerControlRequest(false);
+            commitPowerLimit(inverter, config.PowerLimiter_LowerPowerLimit, false);
         } else {
             _plState = SHUTDOWN;
         }
@@ -105,10 +103,8 @@ void PowerLimiterClass::loop()
         // If the power meter values are older than 30 seconds, 
         // or the Inverter Stats are older then 10x the poll interval
         // set the limit to lower power limit for safety reasons.
-        MessageOutput.println("[PowerLimiterClass::loop] Power Meter/Inverter values too old. Using 0W (i.e. disable inverter)");
-        inverter->sendActivePowerControlRequest(static_cast<float>(config.PowerLimiter_LowerPowerLimit), PowerLimitControlType::AbsolutNonPersistent);
-        _lastRequestedPowerLimit = config.PowerLimiter_LowerPowerLimit;
-        inverter->sendPowerControlRequest(false);
+        MessageOutput.println("[PowerLimiterClass::loop] Power Meter/Inverter values too old, shutting down inverter");
+        commitPowerLimit(inverter, config.PowerLimiter_LowerPowerLimit, false);
 #ifdef POWER_LIMITER_DEBUG
   MessageOutput.printf("[PowerLimiterClass::loop] ******************* PL safety shutdown, update times exceeded PM: %li, Inverter: %li \r\n", millis() - PowerMeter.getLastPowerMeterUpdate(), millis() - inverter->Statistics()->getLastUpdate());
 #endif        
