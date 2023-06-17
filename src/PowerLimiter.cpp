@@ -12,6 +12,7 @@
 #include <VeDirectFrameHandler.h>
 #include "MessageOutput.h"
 #include <ctime>
+#include <cmath>
 
 PowerLimiterClass PowerLimiter;
 
@@ -290,74 +291,89 @@ int32_t PowerLimiterClass::calcPowerLimit(std::shared_ptr<InverterAbstract> inve
           newPowerLimit = adjustedVictronChargePower;
     }
 
-    // Respect power limit
-    if (newPowerLimit > config.PowerLimiter_UpperPowerLimit) 
-        newPowerLimit = config.PowerLimiter_UpperPowerLimit;
-
-    // Check if the new value is within the limits of the hysteresis and
-    // if we can discharge the battery
-    // If things did not change much we just use the old setting
-    if ((newPowerLimit - acPower) >= (-config.PowerLimiter_TargetPowerConsumptionHysteresis) &&
-        (newPowerLimit - acPower) <= (+config.PowerLimiter_TargetPowerConsumptionHysteresis) &&
-        batteryDischargeEnabled ) {
-            MessageOutput.println("[PowerLimiterClass::loop] reusing old limit");
-            return _lastRequestedPowerLimit;
-    }
-
     MessageOutput.printf("[PowerLimiterClass::loop] newPowerLimit: %d\r\n", newPowerLimit);
     return newPowerLimit;
 }
 
+void PowerLimiterClass::commitPowerLimit(std::shared_ptr<InverterAbstract> inverter, int32_t limit, bool enablePowerProduction)
+{
+    // disable power production as soon as possible.
+    // setting the power limit is less important.
+    if (!enablePowerProduction && inverter->isProducing()) {
+        MessageOutput.println("[PowerLimiterClass::commitPowerLimit] Stopping inverter...");
+        inverter->sendPowerControlRequest(false);
+    }
+
+    inverter->sendActivePowerControlRequest(static_cast<float>(limit),
+            PowerLimitControlType::AbsolutNonPersistent);
+
+    _lastRequestedPowerLimit = limit;
+    _lastLimitSetTime = millis();
+
+    // enable power production only after setting the desired limit,
+    // such that an older, greater limit will not cause power spikes.
+    if (enablePowerProduction && !inverter->isProducing()) {
+        MessageOutput.println("[PowerLimiterClass::commitPowerLimit] Starting up inverter...");
+        inverter->sendPowerControlRequest(true);
+    }
+}
+
+/**
+ * enforces limits and a hystersis on the requested power limit, after scaling
+ * the power limit to the ratio of total and producing inverter channels.
+ * commits the sanitized power limit.
+ */
 void PowerLimiterClass::setNewPowerLimit(std::shared_ptr<InverterAbstract> inverter, int32_t newPowerLimit)
 {
     CONFIG_T& config = Configuration.get();
 
-    // Start the inverter in case it's inactive and if the requested power is high enough
-    if (!inverter->isProducing() && newPowerLimit > config.PowerLimiter_LowerPowerLimit) {
-        MessageOutput.println("[PowerLimiterClass::loop] Starting up inverter...");
-        inverter->sendPowerControlRequest(true);
-    }
-
     // Stop the inverter if limit is below threshold.
     // We'll also set the power limit to the lower value in this case
     if (newPowerLimit < config.PowerLimiter_LowerPowerLimit) {
-        if (inverter->isProducing()) {
-            MessageOutput.println("[PowerLimiterClass::loop] Stopping inverter...");
-            inverter->sendActivePowerControlRequest(static_cast<float>(config.PowerLimiter_LowerPowerLimit), PowerLimitControlType::AbsolutNonPersistent);
-            _lastRequestedPowerLimit = config.PowerLimiter_LowerPowerLimit;
-            inverter->sendPowerControlRequest(false);
-        }
-        newPowerLimit = config.PowerLimiter_LowerPowerLimit;
+        if (!inverter->isProducing()) { return; }
+
+        MessageOutput.printf("[PowerLimiterClass::setNewPowerLimit] requested power limit %d is smaller than lower power limit %d\r\n",
+                newPowerLimit, config.PowerLimiter_LowerPowerLimit);
+        return commitPowerLimit(inverter, config.PowerLimiter_LowerPowerLimit, false);
     }
 
-    // Set the actual limit. We'll only do this is if the limit is in the right range
-    // and differs from the last requested value
-    if( _lastRequestedPowerLimit != newPowerLimit &&
-          /* newPowerLimit > config.PowerLimiter_LowerPowerLimit &&  -->  This will always be true given the check above, kept for code readability */
-          newPowerLimit <= config.PowerLimiter_UpperPowerLimit ) {
-        MessageOutput.printf("[PowerLimiterClass::loop] Limit Non-Persistent: %d W\r\n", newPowerLimit);
+    // enforce configured upper power limit
+    newPowerLimit = std::min(newPowerLimit, config.PowerLimiter_UpperPowerLimit);
 
-        int32_t effPowerLimit = newPowerLimit;
-        std::list<ChannelNum_t> dcChnls = inverter->Statistics()->getChannelsByType(TYPE_DC);
-        int dcProdChnls = 0, dcTotalChnls = dcChnls.size();
-        for (auto& c : dcChnls) {
-            if (inverter->Statistics()->getChannelFieldValue(TYPE_DC, c, FLD_PDC) > 1.0) {
-                dcProdChnls++;
-            }
-        }
-        if (dcProdChnls > 0) {
-            effPowerLimit = round(newPowerLimit * static_cast<float>(dcTotalChnls) / dcProdChnls);
-            uint16_t inverterMaxPower = inverter->DevInfo()->getMaxPower();
-            if (effPowerLimit > inverterMaxPower) {
-                effPowerLimit = inverterMaxPower;
-            }
-        }
+    int32_t effPowerLimit = newPowerLimit;
 
-        inverter->sendActivePowerControlRequest(static_cast<float>(effPowerLimit), PowerLimitControlType::AbsolutNonPersistent);
-        _lastRequestedPowerLimit = effPowerLimit;
-        // wait for the next inverter update (+ 3 seconds to make sure the limit got applied)
-        _lastLimitSetTime = millis();
+    // scale the power limit by the amount of all inverter channels devided by
+    // the amount of producing inverter channels. the inverters limit each of
+    // the n channels to 1/n of the total power limit. scaling the power limit
+    // ensures the total inverter output is what we are asking for.
+    std::list<ChannelNum_t> dcChnls = inverter->Statistics()->getChannelsByType(TYPE_DC);
+    int dcProdChnls = 0, dcTotalChnls = dcChnls.size();
+    for (auto& c : dcChnls) {
+        if (inverter->Statistics()->getChannelFieldValue(TYPE_DC, c, FLD_PDC) > 1.0) {
+            dcProdChnls++;
+        }
     }
+    if (dcProdChnls > 0) {
+        MessageOutput.printf("[PowerLimiterClass::setNewPowerLimit] %d channels total, %d producing channels, scaling power limit\r\n",
+                dcTotalChnls, dcProdChnls);
+        effPowerLimit = round(newPowerLimit * static_cast<float>(dcTotalChnls) / dcProdChnls);
+        if (effPowerLimit > inverter->DevInfo()->getMaxPower()) {
+            effPowerLimit = inverter->DevInfo()->getMaxPower();
+        }
+    }
+
+    // Check if the new value is within the limits of the hysteresis
+    auto diff = std::abs(effPowerLimit - _lastRequestedPowerLimit);
+    if ( diff <= config.PowerLimiter_TargetPowerConsumptionHysteresis) {
+        MessageOutput.printf("[PowerLimiterClass::setNewPowerLimit] reusing old limit: %d W, diff: %d, hysteresis: %d\r\n",
+                _lastRequestedPowerLimit, diff, config.PowerLimiter_TargetPowerConsumptionHysteresis);
+        return;
+    }
+
+    MessageOutput.printf("[PowerLimiterClass::setNewPowerLimit] using new limit: %d W, requested power limit: %d\r\n",
+            effPowerLimit, newPowerLimit);
+
+    commitPowerLimit(inverter, effPowerLimit, true);
 }
 
 int32_t PowerLimiterClass::getDirectSolarPower()
