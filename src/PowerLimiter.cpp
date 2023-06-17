@@ -266,16 +266,6 @@ int32_t PowerLimiterClass::calcPowerLimit(std::shared_ptr<InverterAbstract> inve
     // Case 3
     newPowerLimit -= config.PowerLimiter_TargetPowerConsumption;
 
-    // Check if the new value is within the limits of the hysteresis and
-    // if we can discharge the battery
-    // If things did not change much we just use the old setting
-    if ((newPowerLimit - acPower) >= (-config.PowerLimiter_TargetPowerConsumptionHysteresis) &&
-        (newPowerLimit - acPower) <= (+config.PowerLimiter_TargetPowerConsumptionHysteresis) &&
-        batteryDischargeEnabled ) {
-            MessageOutput.println("[PowerLimiterClass::loop] reusing old limit");
-            return _lastRequestedPowerLimit;
-    }
-
     // At this point we've calculated the required energy to compensate for household consumption. 
     // If the battery is enabled this can always be supplied since we assume that the battery can supply unlimited power
     // The next step is to determine if the Solar power as provided by the Victron charger
@@ -303,6 +293,16 @@ int32_t PowerLimiterClass::calcPowerLimit(std::shared_ptr<InverterAbstract> inve
     // Respect power limit
     if (newPowerLimit > config.PowerLimiter_UpperPowerLimit) 
         newPowerLimit = config.PowerLimiter_UpperPowerLimit;
+
+    // Check if the new value is within the limits of the hysteresis and
+    // if we can discharge the battery
+    // If things did not change much we just use the old setting
+    if ((newPowerLimit - acPower) >= (-config.PowerLimiter_TargetPowerConsumptionHysteresis) &&
+        (newPowerLimit - acPower) <= (+config.PowerLimiter_TargetPowerConsumptionHysteresis) &&
+        batteryDischargeEnabled ) {
+            MessageOutput.println("[PowerLimiterClass::loop] reusing old limit");
+            return _lastRequestedPowerLimit;
+    }
 
     MessageOutput.printf("[PowerLimiterClass::loop] newPowerLimit: %d\r\n", newPowerLimit);
     return newPowerLimit;
