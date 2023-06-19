@@ -120,6 +120,11 @@
                                                 </thead>
                                                 <tbody>
                                                     <tr>
+                                                        <th scope="row">{{ $t('vedirecthome.BatteryPower') }}</th>
+                                                        <td style="text-align: right">{{vedirectData.P.v}}</td>
+                                                        <td>{{vedirectData.P.u}}</td>
+                                                    </tr>
+                                                    <tr>
                                                         <th scope="row">{{ $t('vedirecthome.BatteryVoltage') }}</th>
                                                         <td style="text-align: right">{{formatNumber(vedirectData.V.v)}}</td>
                                                         <td>{{vedirectData.V.u}}</td>
@@ -128,6 +133,11 @@
                                                         <th scope="row">{{ $t('vedirecthome.BatteryCurrent') }}</th>
                                                         <td style="text-align: right">{{formatNumber(vedirectData.I.v)}}</td>
                                                         <td>{{vedirectData.I.u}}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th scope="row">{{ $t('vedirecthome.Efficiency') }}</th>
+                                                        <td style="text-align: right">{{formatNumber(vedirectData.E.v)}}</td>
+                                                        <td>{{vedirectData.E.u}}</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -150,14 +160,19 @@
                                                 </thead>
                                                 <tbody>
                                                     <tr>
+                                                        <th scope="row">{{ $t('vedirecthome.PanelPower') }}</th>
+                                                        <td style="text-align: right">{{vedirectData.PPV.v}}</td>
+                                                        <td>{{vedirectData.PPV.u}}</td>
+                                                    </tr>
+                                                    <tr>
                                                         <th scope="row">{{ $t('vedirecthome.PanelVoltage') }}</th>
                                                         <td style="text-align: right">{{formatNumber(vedirectData.VPV.v)}}</td>
                                                         <td>{{vedirectData.VPV.u}}</td>
                                                     </tr>
                                                     <tr>
-                                                        <th scope="row">{{ $t('vedirecthome.PanelPower') }}</th>
-                                                        <td style="text-align: right">{{formatNumber(vedirectData.PPV.v)}}</td>
-                                                        <td>{{vedirectData.PPV.u}}</td>
+                                                        <th scope="row">{{ $t('vedirecthome.PanelCurrent') }}</th>
+                                                        <td style="text-align: right">{{formatNumber(vedirectData.IPV.v)}}</td>
+                                                        <td>{{vedirectData.IPV.u}}</td>
                                                     </tr>
                                                     <tr>
                                                         <th scope="row">{{ $t('vedirecthome.YieldTotal') }}</th>

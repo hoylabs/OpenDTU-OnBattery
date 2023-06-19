@@ -15,7 +15,10 @@ export interface Vedirect {
     HSDS: ValueObject;
     V: ValueObject;
     I: ValueObject;
+    P: ValueObject;
+    E: ValueObject;
     VPV: ValueObject;
+    IPV: ValueObject;
     PPV: ValueObject;
     H19: ValueObject;
     H20: ValueObject;

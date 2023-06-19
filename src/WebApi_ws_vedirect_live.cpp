@@ -106,10 +106,16 @@ void WebApiWsVedirectLiveClass::generateJsonResponse(JsonVariant& root)
     root["V"]["u"] = "V";
     root["I"]["v"] = VeDirect.veFrame.I;
     root["I"]["u"] = "A";
+    root["P"]["v"] = VeDirect.veFrame.P;
+    root["P"]["u"] = "W";
+    root["E"]["v"] = VeDirect.veFrame.E;
+    root["E"]["u"] = "%";
 
     // panel info
     root["VPV"]["v"] = VeDirect.veFrame.VPV;
     root["VPV"]["u"] = "V";
+    root["IPV"]["v"] = VeDirect.veFrame.IPV;
+    root["IPV"]["u"] = "A";
     root["PPV"]["v"] = VeDirect.veFrame.PPV;
     root["PPV"]["u"] = "W";
     root["H19"]["v"] = VeDirect.veFrame.H19;
