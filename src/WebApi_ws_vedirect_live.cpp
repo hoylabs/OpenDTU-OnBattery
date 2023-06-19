@@ -99,7 +99,7 @@ void WebApiWsVedirectLiveClass::generateJsonResponse(JsonVariant& root)
     root["OR"] = VeDirect.getOrAsString(VeDirect.veFrame.OR);
     root["MPPT"] = VeDirect.getMpptAsString(VeDirect.veFrame.MPPT);
     root["HSDS"]["v"] = VeDirect.veFrame.HSDS;
-    root["HSDS"]["u"] = "Days";
+    root["HSDS"]["u"] = "d";
 
     // battery info    
     root["V"]["v"] = VeDirect.veFrame.V;
