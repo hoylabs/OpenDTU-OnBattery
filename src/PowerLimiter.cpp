@@ -334,9 +334,8 @@ void PowerLimiterClass::setNewPowerLimit(std::shared_ptr<InverterAbstract> inver
     }
 
     // enforce configured upper power limit
-    newPowerLimit = std::min(newPowerLimit, config.PowerLimiter_UpperPowerLimit);
+    int32_t effPowerLimit = std::min(newPowerLimit, config.PowerLimiter_UpperPowerLimit);
 
-    int32_t effPowerLimit = newPowerLimit;
 
     // scale the power limit by the amount of all inverter channels devided by
     // the amount of producing inverter channels. the inverters limit each of
