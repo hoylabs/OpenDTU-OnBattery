@@ -359,7 +359,7 @@ void PowerLimiterClass::setNewPowerLimit(std::shared_ptr<InverterAbstract> inver
 
     // Check if the new value is within the limits of the hysteresis
     auto diff = std::abs(effPowerLimit - _lastRequestedPowerLimit);
-    if ( diff <= config.PowerLimiter_TargetPowerConsumptionHysteresis) {
+    if ( diff < config.PowerLimiter_TargetPowerConsumptionHysteresis) {
         MessageOutput.printf("[PowerLimiterClass::setNewPowerLimit] reusing old limit: %d W, diff: %d, hysteresis: %d\r\n",
                 _lastRequestedPowerLimit, diff, config.PowerLimiter_TargetPowerConsumptionHysteresis);
         return;
