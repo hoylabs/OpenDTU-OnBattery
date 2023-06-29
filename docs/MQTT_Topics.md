@@ -178,6 +178,10 @@ cmd topics are used to set values. Status topics are updated from values set in 
 | powerlimiter/cmd/mode                   | W     | Power Limiter operation mode                         | see below                  |
 | powerlimiter/status/mode                | R     | Get Power Limiter operation mode                     | see below                  |
 
+Setting any of these modes through MQTT has *no* effect if the Power Limiter is
+disabled by configuration in the web application. The Power Limiter will stay
+off in that case.
+
 Three modes are implemented:
 * **0** - Normal operation: The Power Limiter works as configured through the
   web application.
