@@ -50,7 +50,6 @@ void JkBmsSerial::announceStatus(JkBmsSerial::Status status)
     _lastStatusPrinted = millis();
 }
 
-static size_t sIdx = 0;
 void JkBmsSerial::sendRequest()
 {
     if ((millis() - _lastRequest) < _pollInterval * 1000) {
@@ -65,58 +64,8 @@ void JkBmsSerial::sendRequest()
         return announceStatus(Status::BusyReading);
     }
 
-    //static std::vector<uint8_t> const activate = {
-    //    0x4E, // start[1]
-    //    0x57, // start[0]
-    //    0x00, // frame length MSB
-    //    0x13, // frame length LSB
-    //    0x00, // BMS terminal number (what does this do?)
-    //    0x00, // BMS terminal number (what does this do?)
-    //    0x00, // BMS terminal number (what does this do?)
-    //    0x00, // BMS terminal number (what does this do?)
-    //    0x01, // activate
-    //    0x03, // frame source (PC)
-    //    0x00, // transmission type: read
-    //    0x00, // register: 0x00 (read all registers) (why?)
-    //    0x00, // reserved
-    //    0x00, // record number[2]
-    //    0x00, // record number[1]
-    //    0x01, // record number[0]
-    //    0x68, // end marker
-    //    0x00, // reserved
-    //    0x00, // reserved
-    //    0x01, // checksum LSB
-    //    0x25  // checksum MSB
-    //};
-
-    static std::vector<uint8_t> const read = {
-        0x4E, // start[1]
-        0x57, // start[0]
-        0x00, // frame length MSB
-        0x13, // frame length LSB
-        0x00, // BMS terminal number (what does this do?)
-        0x00, // BMS terminal number (what does this do?)
-        0x00, // BMS terminal number (what does this do?)
-        0x00, // BMS terminal number (what does this do?)
-        0x06, // read all
-        0x03, // frame source (PC)
-        0x00, // transmission type: read
-        0x00, // register: 0x00 (read all registers) (why?)
-        0x00, // reserved
-        0x00, // record number[2]
-        0x00, // record number[1]
-        0x01, // record number[0]
-        0x68, // end marker
-        0x00, // reserved
-        0x00, // reserved
-        0x01, // checksum MSB
-        0x2A  // checksum LSB
-    };
-
-    static std::vector<std::vector<uint8_t>> const testMsgs = { read };
-    HwSerial.write(testMsgs[sIdx].data(), testMsgs[sIdx].size());
-    sIdx = (sIdx + 1) % testMsgs.size();
-    MessageOutput.printf("sent test message %d\r\n", sIdx);
+    JkBmsSerialMessage readAll(JkBmsSerialMessage::Command::ReadAll);
+    HwSerial.write(readAll.data(), readAll.size());
     _lastRequest = millis();
 
     setReadState(ReadState::WaitingForFrameStart);
