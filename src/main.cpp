@@ -9,6 +9,7 @@
 #include "Led_Single.h"
 #include "MessageOutput.h"
 #include "VeDirectFrameHandler.h"
+#include "JkBmsSerial.h"
 #include "PylontechCanReceiver.h"
 #include "Huawei_can.h"
 #include "MqttHandleDtu.h"
@@ -196,6 +197,19 @@ void setup()
         MessageOutput.println(F("Invalid pin config"));
     }
 
+    // Initialize JkBms serial communication
+    MessageOutput.println("Initialize JK BMS serial interface... ");
+    //if (PinMapping.isValidJkBmsSerialConfig()) {
+    //    MessageOutput.printf("JK BMS rx = %d, tx = %d\r\n", pin.jkbms_rx, pin.jkbms_tx);
+    //    JkBms.init(pin.jkbms_rx, pin.jkbms_tx);
+    //    JkBms.setPollInterval(config.JkBms_PollInterval);
+    //    MessageOutput.println("done");
+    //} else {
+    //    MessageOutput.println("Invalid pin config");
+    //}
+    JkBms.init(34/*RX*/, 22/*TX*/);
+    JkBms.setPollInterval(5);
+    MessageOutput.println("done");
 }
 
 void loop()
@@ -246,6 +260,8 @@ void loop()
     MqttHandlePylontechHass.loop();
     yield();
     HuaweiCan.loop();
+    yield();
+    JkBms.loop();
     yield();
     LedSingle.loop();
     yield();
