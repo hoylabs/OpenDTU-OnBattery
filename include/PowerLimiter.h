@@ -38,6 +38,7 @@ public:
         InverterCommandsDisabled,
         InverterLimitPending,
         InverterPowerCmdPending,
+        InverterDevInfoPending,
         InverterStatsPending,
         UnconditionalSolarPassthrough,
         NoVeDirect,
