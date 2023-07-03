@@ -323,7 +323,7 @@
         "Status": "@:ntpinfo.Status",
         "Enabled": "@:mqttinfo.Enabled",
         "Disabled": "@:mqttinfo.Disabled",
-        "UpdatesOnly": "Send updates only",
+        "UpdatesOnly": "@:vedirectadmin.UpdatesOnly",
         "UpdatesEnabled": "@:mqttinfo.Enabled",
         "UpdatesDisabled": "@:mqttinfo.Disabled"
     },
@@ -490,7 +490,7 @@
         "EnableVedirect": "Enable VE.Direct",
         "VedirectParameter": "VE.Direct Parameter",
         "Seconds": "seconds",
-        "UpdatesOnly": "Send only updates:",
+        "UpdatesOnly": "Publish values to MQTT only when they change",
         "Save": "@:dtuadmin.Save"
     },
     "inverteradmin": {

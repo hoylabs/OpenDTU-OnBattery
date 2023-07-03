@@ -323,7 +323,7 @@
         "Status": "@:ntpinfo.Status",
         "Enabled": "@:mqttinfo.Enabled",
         "Disabled": "@:mqttinfo.Disabled",
-        "UpdatesOnly": "Nur Änderungen senden",
+        "UpdatesOnly": "@:vedirectadmin.UpdatesOnly",
         "UpdatesEnabled": "@:mqttinfo.Enabled",
         "UpdatesDisabled": "@:mqttinfo.Disabled"
     },
@@ -490,7 +490,7 @@
         "EnableVedirect": "Aktiviere VE.Direct",
         "VedirectParameter": "VE.Direct Parameter",
         "Seconds": "Sekunden",
-        "UpdatesOnly": "Nur Änderungen senden:",
+        "UpdatesOnly": "Werte nur bei Änderung an MQTT broker senden",
         "Save": "@:dtuadmin.Save"
     },
     "powermeteradmin":{
