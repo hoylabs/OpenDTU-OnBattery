@@ -292,7 +292,7 @@ void PowerLimiterClass::loop()
         return announceStatus(Status::Stable);
     }
 
-    _calculationBackoffMs = 128;
+    _calculationBackoffMs = _calculationBackoffMsDefault;
 }
 
 /**
