@@ -28,6 +28,7 @@ public:
         Initializing,
         DisabledByConfig,
         DisabledByMqtt,
+        WaitingForValidTimestamp,
         PowerMeterDisabled,
         PowerMeterTimeout,
         PowerMeterPending,

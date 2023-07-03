@@ -30,6 +30,7 @@ std::string const& PowerLimiterClass::getStatusText(PowerLimiterClass::Status st
         { Status::Initializing, "initializing (should not see me)" },
         { Status::DisabledByConfig, "disabled by configuration" },
         { Status::DisabledByMqtt, "disabled by MQTT" },
+        { Status::WaitingForValidTimestamp, "waiting for valid date and time to be available" },
         { Status::PowerMeterDisabled, "no power meter is configured/enabled" },
         { Status::PowerMeterTimeout, "power meter readings are outdated" },
         { Status::PowerMeterPending, "waiting for sufficiently recent power meter reading" },
@@ -96,6 +97,14 @@ void PowerLimiterClass::shutdown(PowerLimiterClass::Status status)
 void PowerLimiterClass::loop()
 {
     CONFIG_T& config = Configuration.get();
+
+    // we know that the Hoymiles library refuses to send any message to any
+    // inverter until the system has valid time information. until then we can
+    // do nothing, not even shutdown the inverter.
+    struct tm timeinfo;
+    if (!getLocalTime(&timeinfo, 5)) {
+        return announceStatus(Status::WaitingForValidTimestamp);
+    }
 
     if (_shutdownInProgress) {
         // we transition from SHUTDOWN to OFF when we know the inverter was
