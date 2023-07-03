@@ -489,7 +489,6 @@
         "VedirectConfiguration": "Ve.direct Configuration",
         "EnableVedirect": "Enable Ve.direct",
         "VedirectParameter": "Ve.direct Parameter",
-        "PublishInterval": "Publish Interval:",
         "Seconds": "seconds",
         "UpdatesOnly": "Send only updates:",
         "Save": "@:dtuadmin.Save"
