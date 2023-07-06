@@ -3,6 +3,8 @@
 #include <vector>
 #include <Arduino.h>
 
+namespace JkBms {
+
 class JkBmsSerialMessage {
     public:
         using tData = std::vector<uint8_t>;
@@ -51,3 +53,5 @@ class JkBmsSerialMessage {
         static constexpr uint16_t startMarker = 0x4e57;
         static constexpr uint8_t endMarker = 0x68;
 };
+
+} /* namespace JkBms */

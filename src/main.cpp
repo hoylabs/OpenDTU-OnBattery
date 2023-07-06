@@ -207,8 +207,8 @@ void setup()
     //} else {
     //    MessageOutput.println("Invalid pin config");
     //}
-    JkBms.init(34/*RX*/, 22/*TX*/);
-    JkBms.setPollInterval(5);
+    JkBms::Controller.init(34/*RX*/, 22/*TX*/);
+    JkBms::Controller.setPollInterval(5);
     MessageOutput.println("done");
 }
 
@@ -261,7 +261,7 @@ void loop()
     yield();
     HuaweiCan.loop();
     yield();
-    JkBms.loop();
+    JkBms::Controller.loop();
     yield();
     LedSingle.loop();
     yield();

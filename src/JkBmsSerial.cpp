@@ -6,7 +6,9 @@
 
 HardwareSerial HwSerial(2);
 
-JkBmsSerial JkBms;
+namespace JkBms {
+
+JkBmsSerial Controller;
 
 void JkBmsSerial::init(int8_t rx, int8_t tx)
 {
@@ -151,3 +153,5 @@ void JkBmsSerial::frameComplete()
 bool JkBmsSerial::isDataValid() {
     return false; // TODO
 }
+
+} /* namespace JkBms */

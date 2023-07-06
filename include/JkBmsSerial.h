@@ -11,6 +11,8 @@ typedef struct {
     uint16_t length;
 } JkBmsData;
 
+namespace JkBms {
+
 class JkBmsSerial {
     public:
         JkBmsSerial() = default;
@@ -73,4 +75,6 @@ class JkBmsSerial {
         std::unique_ptr<JkBmsSerialMessage const> _pData = nullptr;
 };
 
-extern JkBmsSerial JkBms;
+extern JkBmsSerial Controller;
+
+} /* namespace JkBms */

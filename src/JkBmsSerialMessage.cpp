@@ -3,6 +3,8 @@
 #include "JkBmsSerialMessage.h"
 #include "MessageOutput.h"
 
+namespace JkBms {
+
 JkBmsSerialMessage::JkBmsSerialMessage(Command cmd)
     : _raw(20, 0x00)
 {
@@ -74,3 +76,5 @@ bool JkBmsSerialMessage::isValid() const {
 
     return true;
 }
+
+} /* namespace JkBms */
