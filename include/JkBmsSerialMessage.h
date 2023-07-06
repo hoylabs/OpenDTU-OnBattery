@@ -63,7 +63,7 @@ class JkBmsSerialMessage {
         void updateChecksum();
 
         tData _raw;
-        JkBms::DataPoints _dp;
+        JkBms::DataPointContainer _dp;
 
         static constexpr uint16_t startMarker = 0x4e57;
         static constexpr uint8_t endMarker = 0x68;

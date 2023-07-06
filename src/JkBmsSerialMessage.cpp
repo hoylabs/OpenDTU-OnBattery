@@ -231,7 +231,10 @@ JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw)
 
     auto iter = _dp.cbegin();
     while ( iter != _dp.cend() ) {
-        MessageOutput.printf("found %s\r\n", iter->second.labelName);
+        MessageOutput.printf("%d: %s: %s\r\n",
+            iter->second.getTimestamp(),
+            iter->second.getLabelText().c_str(),
+            iter->second.getValueText().c_str());
         ++iter;
     }
 }

@@ -1,7 +1,10 @@
 #pragma once
 
+#include <Arduino.h>
 #include <optional>
 #include <string>
+#include <sstream>
+#include <unordered_map>
 #include <variant>
 
 namespace JkBms {
@@ -76,7 +79,7 @@ template<DataPointLabel> struct DataPointLabelTraits;
 
 /**
  * the types associated with the labels are the types for the respective data
- * points in the JkBms::DataPoints class. they are *not* always equal to the
+ * points in the JkBms::DataPoint class. they are *not* always equal to the
  * type used in the serial message.
  *
  * it is unfortunate that we have to repeat all enum values here to define the
@@ -85,8 +88,8 @@ template<DataPointLabel> struct DataPointLabelTraits;
  * however, the compiler will complain if an enum is misspelled or traits are
  * defined for a removed enum, so we will notice. it will also complain when a
  * trait is missing and if a data point for a label without traits is added to
- * the DataPoints class, because the traits must be available then. even though
- * this is tedious to maintain, human errors will be caught.
+ * the DataPointContainer class, because the traits must be available then.
+ * even though this is tedious to maintain, human errors will be caught.
  */
 LABEL_TRAIT(BmsTempCelsius, int16_t);
 LABEL_TRAIT(BatteryTempOneCelsius, int16_t);
@@ -148,41 +151,74 @@ LABEL_TRAIT(ProductId, std::string);
 LABEL_TRAIT(ProtocolVersion, uint8_t);
 #undef LABEL_TRAIT
 
-class DataPoints {
+class DataPoint {
+    friend class DataPointContainer;
+
     public:
+        using tValue = std::variant<bool, uint8_t, uint16_t, uint32_t, int16_t, std::string>;
+
+        DataPoint() = delete;
+
+        DataPoint(DataPoint const& other)
+            : _strLabel(other._strLabel)
+            , _strValue(other._strValue)
+            , _value(other._value)
+            , _timestamp(other._timestamp) { }
+
+        DataPoint(std::string const& strLabel, std::string const& strValue, tValue value, uint32_t timestamp)
+            : _strLabel(strLabel)
+            , _strValue(strValue)
+            , _value(std::move(value))
+            , _timestamp(timestamp) { }
+
+        std::string const& getLabelText() const { return _strLabel; }
+        std::string const& getValueText() const { return _strValue; }
+        uint32_t getTimestamp() const { return _timestamp; }
+
+    private:
+        std::string _strLabel;
+        std::string _strValue;
+        tValue _value;
+        uint32_t _timestamp;
+};
+
+template<typename T> std::string dataPointValueToStr(T const& v);
+
+class DataPointContainer {
+    public:
+        DataPointContainer() = default;
+
         using Label = DataPointLabel;
         template<Label L> using Traits = JkBms::DataPointLabelTraits<L>;
 
-        using ValueVariant = std::variant<bool, uint8_t, uint16_t, uint32_t, int16_t, std::string>;
-
-        typedef struct {
-            char const* labelName;
-            ValueVariant value;
-            uint32_t timestamp;
-        } tDataPoint;
-
         template<Label L>
         void add(typename Traits<L>::type val) {
-            _dataPoints[L] = tDataPoint{
-                Traits<L>::name,
-                ValueVariant(std::move(val)),
-                millis()};
+            _dataPoints.emplace(
+                    L,
+                    DataPoint(
+                        Traits<L>::name,
+                        dataPointValueToStr(val),
+                        DataPoint::tValue(std::move(val)),
+                        millis()
+                    )
+            );
         }
 
-        std::optional<tDataPoint> getDataPointFor(Label label) {
-            auto it = _dataPoints.find(label);
+        template<Label L>
+        std::optional<DataPoint const> getDataPointFor() {
+            auto it = _dataPoints.find(L);
             if (it == _dataPoints.end()) { return std::nullopt; }
             return it->second;
         }
 
         template<Label L>
         std::optional<typename Traits<L>::type> get() {
-            auto optionalDataPoint = getDataPointFor(L);
+            auto optionalDataPoint = getDataPointFor<L>();
             if (!optionalDataPoint.has_value()) { return std::nullopt; }
-            return std::get<typename Traits<L>::type>(optionalDataPoint->value);
+            return std::get<typename Traits<L>::type>(optionalDataPoint->_value);
         }
 
-        using tMap = std::unordered_map<Label, tDataPoint>;
+        using tMap = std::unordered_map<Label, DataPoint const>;
         tMap::const_iterator cbegin() const { return _dataPoints.cbegin(); }
         tMap::const_iterator cend() const { return _dataPoints.cend(); }
 
