@@ -5,12 +5,6 @@
 
 #include "JkBmsSerialMessage.h"
 
-typedef struct {
-    uint8_t start0;
-    uint8_t start1;
-    uint16_t length;
-} JkBmsData;
-
 namespace JkBms {
 
 class JkBmsSerial {
@@ -42,8 +36,6 @@ class JkBmsSerial {
 
         bool isDataValid();
 
-        JkBmsData data{};
-
     private:
         std::string const& getStatusText(Status status);
         void announceStatus(Status status);
@@ -67,7 +59,7 @@ class JkBmsSerial {
 
         Status _lastStatus = Status::Initializing;
         uint32_t _lastStatusPrinted = 0;
-        std::vector<uint8_t> _buffer = {};
+        JkBmsSerialMessage::tData _buffer = {};
         uint32_t _pollInterval = 5;
         uint32_t _lastRequest = 0;
         uint32_t _lastMessage = 0;

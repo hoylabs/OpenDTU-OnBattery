@@ -91,6 +91,7 @@ void JkBmsSerial::loop()
 void JkBmsSerial::rxData(uint8_t inbyte)
 {
     _buffer.push_back(inbyte);
+
     switch(_readState) {
         case ReadState::Idle: // unsolicited message from BMS
         case ReadState::WaitingForFrameStart:
@@ -138,6 +139,7 @@ void JkBmsSerial::frameComplete()
     for(auto const& b : _buffer) {
         MessageOutput.printf("%02x ", b);
     }
+    MessageOutput.println("");
     auto pMsg = std::make_unique<JkBmsSerialMessage>(std::move(_buffer));
     if (pMsg->isValid()) {
         MessageOutput.println("message is valid :)");

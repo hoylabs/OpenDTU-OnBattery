@@ -3,6 +3,8 @@
 #include <vector>
 #include <Arduino.h>
 
+#include "JkBmsDataPoints.h"
+
 namespace JkBms {
 
 class JkBmsSerialMessage {
@@ -11,8 +13,7 @@ class JkBmsSerialMessage {
 
         JkBmsSerialMessage() = delete;
 
-        JkBmsSerialMessage(tData const& raw)
-            : _raw(raw) { }
+        JkBmsSerialMessage(tData const& raw);
 
         enum class Command : uint8_t {
             Activate = 0x01,
@@ -23,8 +24,7 @@ class JkBmsSerialMessage {
         };
 
         JkBmsSerialMessage(Command cmd);
-
-        bool isValid() const;
+        Command getCommand() const { return static_cast<Command>(_raw[8]); }
 
         enum class Source : uint8_t {
             BMS = 0x00,
@@ -32,23 +32,38 @@ class JkBmsSerialMessage {
             GPS = 0x02,
             Host = 0x03
         };
+        Source getSource() const { return static_cast<Source>(_raw[9]); }
 
         enum class Type : uint8_t {
             Command = 0x00,
             Response = 0x01,
             Unsolicited = 0x02
         };
+        Type getType() const { return static_cast<Type>(_raw[10]); }
+
+        uint16_t getFrameLength() const { return get<uint16_t>(_raw.cbegin()+2); }
+        uint16_t getVariableFieldLength() const { return getFrameLength() - 20; }
+        uint32_t getTerminalId() const { return get<uint32_t>(_raw.cbegin()+4); }
+
+        // the upper byte of the 4-byte "record number" is reserved (for encryption)
+        uint32_t getSequence() const { return get<uint32_t>(_raw.cend()-9) >> 8; }
+
+        bool isValid() const;
 
         uint8_t const* data() { return _raw.data(); }
         size_t size() { return _raw.size(); }
 
     private:
-        template<typename T> T get(tData::const_iterator const& pos) const;
+        template<typename T, typename It> T get(It&& pos) const;
+        template<typename It> bool getBool(It&& pos) const;
+        template<typename It> int16_t getTemperature(It&& pos) const;
+        template<typename It> std::string getString(It&& pos, size_t len) const;
         template<typename T> void set(tData::iterator const& pos, T val);
         uint16_t calcChecksum() const;
         void updateChecksum();
 
         tData _raw;
+        JkBms::DataPoints _dp;
 
         static constexpr uint16_t startMarker = 0x4e57;
         static constexpr uint8_t endMarker = 0x68;
