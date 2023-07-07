@@ -72,9 +72,10 @@ enum class DataPointLabel : uint8_t {
 
 template<DataPointLabel> struct DataPointLabelTraits;
 
-#define LABEL_TRAIT(n, t) template<> struct DataPointLabelTraits<DataPointLabel::n> { \
+#define LABEL_TRAIT(n, t, u) template<> struct DataPointLabelTraits<DataPointLabel::n> { \
     using type = t; \
     static constexpr char const name[] = #n; \
+    static constexpr char const unit[] = u; \
 };
 
 /**
@@ -91,64 +92,64 @@ template<DataPointLabel> struct DataPointLabelTraits;
  * the DataPointContainer class, because the traits must be available then.
  * even though this is tedious to maintain, human errors will be caught.
  */
-LABEL_TRAIT(BmsTempCelsius, int16_t);
-LABEL_TRAIT(BatteryTempOneCelsius, int16_t);
-LABEL_TRAIT(BatteryTempTwoCelsius, int16_t);
-LABEL_TRAIT(BatteryVoltageMilliVolt, uint16_t);
-LABEL_TRAIT(BatteryCurrentMilliAmps, int16_t);
-LABEL_TRAIT(BatterySoCPercent, uint8_t);
-LABEL_TRAIT(BatteryTemperatureSensorAmount, uint8_t);
-LABEL_TRAIT(BatteryCycles, uint16_t);
-LABEL_TRAIT(BatteryCycleCapacity, uint32_t);
-LABEL_TRAIT(BatteryCellAmount, uint16_t);
-LABEL_TRAIT(AlarmsBitmask, uint16_t);
-LABEL_TRAIT(StatusBitmask, uint16_t);
-LABEL_TRAIT(TotalOvervoltageThresholdMilliVolt, uint32_t);
-LABEL_TRAIT(TotalUndervoltageThresholdMilliVolt, uint32_t);
-LABEL_TRAIT(CellOvervoltageThresholdMilliVolt, uint16_t);
-LABEL_TRAIT(CellOvervoltageRecoveryMilliVolt, uint16_t);
-LABEL_TRAIT(CellOvervoltageProtectionDelaySeconds, uint16_t);
-LABEL_TRAIT(CellUndervoltageThresholdMilliVolt, uint16_t);
-LABEL_TRAIT(CellUndervoltageRecoveryMilliVolt, uint16_t);
-LABEL_TRAIT(CellUndervoltageProtectionDelaySeconds, uint16_t);
-LABEL_TRAIT(CellVoltageDiffThresholdMilliVolt, uint16_t);
-LABEL_TRAIT(DischargeOvercurrentThresholdAmperes, uint16_t);
-LABEL_TRAIT(DischargeOvercurrentDelaySeconds, uint16_t);
-LABEL_TRAIT(ChargeOvercurrentThresholdAmps, uint16_t);
-LABEL_TRAIT(ChargeOvercurrentDelaySeconds, uint16_t);
-LABEL_TRAIT(BalanceCellVoltageThresholdMilliVolt, uint16_t);
-LABEL_TRAIT(BalanceVoltageDiffThresholdMilliVolt, uint16_t);
-LABEL_TRAIT(BalancingEnabled, bool);
-LABEL_TRAIT(BmsTempProtectionThresholdCelsius, uint16_t);
-LABEL_TRAIT(BmsTempRecoveryThresholdCelsius, uint16_t);
-LABEL_TRAIT(BatteryTempProtectionThresholdCelsius, int16_t);
-LABEL_TRAIT(BatteryTempRecoveryThresholdCelsius, int16_t);
-LABEL_TRAIT(BatteryTempDiffThresholdCelsius, int16_t);
-LABEL_TRAIT(ChargeHighTempThresholdCelsius, int16_t);
-LABEL_TRAIT(DischargeHighTempThresholdCelsius, int16_t);
-LABEL_TRAIT(ChargeLowTempThresholdCelsius, int16_t);
-LABEL_TRAIT(ChargeLowTempRecoveryCelsius, int16_t);
-LABEL_TRAIT(DischargeLowTempThresholdCelsius, int16_t);
-LABEL_TRAIT(DischargeLowTempRecoveryCelsius, int16_t);
-LABEL_TRAIT(CellAmountSetting, uint8_t);
-LABEL_TRAIT(BatteryCapacitySettingAmpHours, uint32_t);
-LABEL_TRAIT(BatteryChargeEnabled, bool);
-LABEL_TRAIT(BatteryDischargeEnabled, bool);
-LABEL_TRAIT(CurrentCalibrationMilliAmps, uint16_t);
-LABEL_TRAIT(BmsAddress, uint8_t);
-LABEL_TRAIT(BatteryType, uint8_t);
-LABEL_TRAIT(SleepWaitTime, uint16_t);
-LABEL_TRAIT(LowCapacityAlarmThresholdPercent, uint8_t);
-LABEL_TRAIT(ModificationPassword, std::string);
-LABEL_TRAIT(DedicatedChargerSwitch, uint8_t);
-LABEL_TRAIT(EquipmentId, std::string);
-LABEL_TRAIT(DateOfManufacturing, std::string);
-LABEL_TRAIT(BmsHourMeterMinutes, uint32_t);
-LABEL_TRAIT(BmsSoftwareVersion, std::string);
-LABEL_TRAIT(CurrentCalibration, bool);
-LABEL_TRAIT(ActualBatteryCapacityAmpHours, uint32_t);
-LABEL_TRAIT(ProductId, std::string);
-LABEL_TRAIT(ProtocolVersion, uint8_t);
+LABEL_TRAIT(BmsTempCelsius,                         int16_t,     "°C");
+LABEL_TRAIT(BatteryTempOneCelsius,                  int16_t,     "°C");
+LABEL_TRAIT(BatteryTempTwoCelsius,                  int16_t,     "°C");
+LABEL_TRAIT(BatteryVoltageMilliVolt,                uint16_t,    "mV");
+LABEL_TRAIT(BatteryCurrentMilliAmps,                int16_t,     "mA");
+LABEL_TRAIT(BatterySoCPercent,                      uint8_t,     "%");
+LABEL_TRAIT(BatteryTemperatureSensorAmount,         uint8_t,     "");
+LABEL_TRAIT(BatteryCycles,                          uint16_t,    "");
+LABEL_TRAIT(BatteryCycleCapacity,                   uint32_t,    "Ah");
+LABEL_TRAIT(BatteryCellAmount,                      uint16_t,    "");
+LABEL_TRAIT(AlarmsBitmask,                          uint16_t,    "");
+LABEL_TRAIT(StatusBitmask,                          uint16_t,    "");
+LABEL_TRAIT(TotalOvervoltageThresholdMilliVolt,     uint32_t,    "mV");
+LABEL_TRAIT(TotalUndervoltageThresholdMilliVolt,    uint32_t,    "mV");
+LABEL_TRAIT(CellOvervoltageThresholdMilliVolt,      uint16_t,    "mV");
+LABEL_TRAIT(CellOvervoltageRecoveryMilliVolt,       uint16_t,    "mV");
+LABEL_TRAIT(CellOvervoltageProtectionDelaySeconds,  uint16_t,    "s");
+LABEL_TRAIT(CellUndervoltageThresholdMilliVolt,     uint16_t,    "mV");
+LABEL_TRAIT(CellUndervoltageRecoveryMilliVolt,      uint16_t,    "mV");
+LABEL_TRAIT(CellUndervoltageProtectionDelaySeconds, uint16_t,    "s");
+LABEL_TRAIT(CellVoltageDiffThresholdMilliVolt,      uint16_t,    "mV");
+LABEL_TRAIT(DischargeOvercurrentThresholdAmperes,   uint16_t,    "A");
+LABEL_TRAIT(DischargeOvercurrentDelaySeconds,       uint16_t,    "s");
+LABEL_TRAIT(ChargeOvercurrentThresholdAmps,         uint16_t,    "A");
+LABEL_TRAIT(ChargeOvercurrentDelaySeconds,          uint16_t,    "s");
+LABEL_TRAIT(BalanceCellVoltageThresholdMilliVolt,   uint16_t,    "mV");
+LABEL_TRAIT(BalanceVoltageDiffThresholdMilliVolt,   uint16_t,    "mV");
+LABEL_TRAIT(BalancingEnabled,                       bool,        "");
+LABEL_TRAIT(BmsTempProtectionThresholdCelsius,      uint16_t,    "°C");
+LABEL_TRAIT(BmsTempRecoveryThresholdCelsius,        uint16_t,    "°C");
+LABEL_TRAIT(BatteryTempProtectionThresholdCelsius,  int16_t,     "°C");
+LABEL_TRAIT(BatteryTempRecoveryThresholdCelsius,    int16_t,     "°C");
+LABEL_TRAIT(BatteryTempDiffThresholdCelsius,        int16_t,     "°C");
+LABEL_TRAIT(ChargeHighTempThresholdCelsius,         int16_t,     "°C");
+LABEL_TRAIT(DischargeHighTempThresholdCelsius,      int16_t,     "°C");
+LABEL_TRAIT(ChargeLowTempThresholdCelsius,          int16_t,     "°C");
+LABEL_TRAIT(ChargeLowTempRecoveryCelsius,           int16_t,     "°C");
+LABEL_TRAIT(DischargeLowTempThresholdCelsius,       int16_t,     "°C");
+LABEL_TRAIT(DischargeLowTempRecoveryCelsius,        int16_t,     "°C");
+LABEL_TRAIT(CellAmountSetting,                      uint8_t,     "");
+LABEL_TRAIT(BatteryCapacitySettingAmpHours,         uint32_t,    "Ah");
+LABEL_TRAIT(BatteryChargeEnabled,                   bool,        "");
+LABEL_TRAIT(BatteryDischargeEnabled,                bool,        "");
+LABEL_TRAIT(CurrentCalibrationMilliAmps,            uint16_t,    "mA");
+LABEL_TRAIT(BmsAddress,                             uint8_t,     "");
+LABEL_TRAIT(BatteryType,                            uint8_t,     "");
+LABEL_TRAIT(SleepWaitTime,                          uint16_t,    "s");
+LABEL_TRAIT(LowCapacityAlarmThresholdPercent,       uint8_t,     "%");
+LABEL_TRAIT(ModificationPassword,                   std::string, "");
+LABEL_TRAIT(DedicatedChargerSwitch,                 bool,        "");
+LABEL_TRAIT(EquipmentId,                            std::string, "");
+LABEL_TRAIT(DateOfManufacturing,                    std::string, "");
+LABEL_TRAIT(BmsHourMeterMinutes,                    uint32_t,    "min");
+LABEL_TRAIT(BmsSoftwareVersion,                     std::string, "");
+LABEL_TRAIT(CurrentCalibration,                     bool,        "");
+LABEL_TRAIT(ActualBatteryCapacityAmpHours,          uint32_t,    "Ah");
+LABEL_TRAIT(ProductId,                              std::string, "");
+LABEL_TRAIT(ProtocolVersion,                        uint8_t,     "");
 #undef LABEL_TRAIT
 
 class DataPoint {
@@ -162,22 +163,27 @@ class DataPoint {
         DataPoint(DataPoint const& other)
             : _strLabel(other._strLabel)
             , _strValue(other._strValue)
+            , _strUnit(other._strUnit)
             , _value(other._value)
             , _timestamp(other._timestamp) { }
 
-        DataPoint(std::string const& strLabel, std::string const& strValue, tValue value, uint32_t timestamp)
+        DataPoint(std::string const& strLabel, std::string const& strValue,
+                std::string const& strUnit, tValue value, uint32_t timestamp)
             : _strLabel(strLabel)
             , _strValue(strValue)
+            , _strUnit(strUnit)
             , _value(std::move(value))
             , _timestamp(timestamp) { }
 
         std::string const& getLabelText() const { return _strLabel; }
         std::string const& getValueText() const { return _strValue; }
+        std::string const& getUnitText() const { return _strUnit; }
         uint32_t getTimestamp() const { return _timestamp; }
 
     private:
         std::string _strLabel;
         std::string _strValue;
+        std::string _strUnit;
         tValue _value;
         uint32_t _timestamp;
 };
@@ -198,6 +204,7 @@ class DataPointContainer {
                     DataPoint(
                         Traits<L>::name,
                         dataPointValueToStr(val),
+                        Traits<L>::unit,
                         DataPoint::tValue(std::move(val)),
                         millis()
                     )

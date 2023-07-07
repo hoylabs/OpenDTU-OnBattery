@@ -231,10 +231,11 @@ JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw)
 
     auto iter = _dp.cbegin();
     while ( iter != _dp.cend() ) {
-        MessageOutput.printf("%d: %s: %s\r\n",
+        MessageOutput.printf("%d: %s: %s%s\r\n",
             iter->second.getTimestamp(),
             iter->second.getLabelText().c_str(),
-            iter->second.getValueText().c_str());
+            iter->second.getValueText().c_str(),
+            iter->second.getUnitText().c_str());
         ++iter;
     }
 }
