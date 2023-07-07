@@ -211,6 +211,11 @@ class DataPointContainer {
             );
         }
 
+        // make sure add() is only called with the type expected for the
+        // respective label, no implicit conversions allowed.
+        template<Label L, typename T>
+        void add(T) = delete;
+
         template<Label L>
         std::optional<DataPoint const> getDataPointFor() {
             auto it = _dataPoints.find(L);
