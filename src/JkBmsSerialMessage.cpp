@@ -63,8 +63,8 @@ JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw)
             case 0x84: {
                 // TODO must respect protocol version when interpreting this value
                 uint16_t raw = get<uint16_t>(pos);
-                bool discharging = (raw & 0x8000) > 0;
-                _dp.add<Label::BatteryCurrentMilliAmps>(static_cast<int16_t>(raw & 0x7FFF) * (discharging ? -1 : 1));
+                bool charging = (raw & 0x8000) > 0;
+                _dp.add<Label::BatteryCurrentMilliAmps>(static_cast<int32_t>(raw & 0x7FFF) * (charging ? 10 : -10));
                 break;
             }
             case 0x85:
@@ -158,16 +158,16 @@ JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw)
                 _dp.add<Label::DischargeHighTempThresholdCelsius>(get<uint16_t>(pos));
                 break;
             case 0xa5:
-                _dp.add<Label::ChargeLowTempThresholdCelsius>(get<uint16_t>(pos));
+                _dp.add<Label::ChargeLowTempThresholdCelsius>(get<int16_t>(pos));
                 break;
             case 0xa6:
-                _dp.add<Label::ChargeLowTempRecoveryCelsius>(get<uint16_t>(pos));
+                _dp.add<Label::ChargeLowTempRecoveryCelsius>(get<int16_t>(pos));
                 break;
             case 0xa7:
-                _dp.add<Label::DischargeLowTempThresholdCelsius>(get<uint16_t>(pos));
+                _dp.add<Label::DischargeLowTempThresholdCelsius>(get<int16_t>(pos));
                 break;
             case 0xa8:
-                _dp.add<Label::DischargeLowTempRecoveryCelsius>(get<uint16_t>(pos));
+                _dp.add<Label::DischargeLowTempRecoveryCelsius>(get<int16_t>(pos));
                 break;
             case 0xa9:
                 _dp.add<Label::CellAmountSetting>(get<uint8_t>(pos));

@@ -95,8 +95,8 @@ template<DataPointLabel> struct DataPointLabelTraits;
 LABEL_TRAIT(BmsTempCelsius,                         int16_t,     "°C");
 LABEL_TRAIT(BatteryTempOneCelsius,                  int16_t,     "°C");
 LABEL_TRAIT(BatteryTempTwoCelsius,                  int16_t,     "°C");
-LABEL_TRAIT(BatteryVoltageMilliVolt,                uint16_t,    "mV");
-LABEL_TRAIT(BatteryCurrentMilliAmps,                int16_t,     "mA");
+LABEL_TRAIT(BatteryVoltageMilliVolt,                uint32_t,    "mV");
+LABEL_TRAIT(BatteryCurrentMilliAmps,                int32_t,     "mA");
 LABEL_TRAIT(BatterySoCPercent,                      uint8_t,     "%");
 LABEL_TRAIT(BatteryTemperatureSensorAmount,         uint8_t,     "");
 LABEL_TRAIT(BatteryCycles,                          uint16_t,    "");
@@ -122,11 +122,11 @@ LABEL_TRAIT(BalanceVoltageDiffThresholdMilliVolt,   uint16_t,    "mV");
 LABEL_TRAIT(BalancingEnabled,                       bool,        "");
 LABEL_TRAIT(BmsTempProtectionThresholdCelsius,      uint16_t,    "°C");
 LABEL_TRAIT(BmsTempRecoveryThresholdCelsius,        uint16_t,    "°C");
-LABEL_TRAIT(BatteryTempProtectionThresholdCelsius,  int16_t,     "°C");
-LABEL_TRAIT(BatteryTempRecoveryThresholdCelsius,    int16_t,     "°C");
-LABEL_TRAIT(BatteryTempDiffThresholdCelsius,        int16_t,     "°C");
-LABEL_TRAIT(ChargeHighTempThresholdCelsius,         int16_t,     "°C");
-LABEL_TRAIT(DischargeHighTempThresholdCelsius,      int16_t,     "°C");
+LABEL_TRAIT(BatteryTempProtectionThresholdCelsius,  uint16_t,    "°C");
+LABEL_TRAIT(BatteryTempRecoveryThresholdCelsius,    uint16_t,    "°C");
+LABEL_TRAIT(BatteryTempDiffThresholdCelsius,        uint16_t,    "°C");
+LABEL_TRAIT(ChargeHighTempThresholdCelsius,         uint16_t,    "°C");
+LABEL_TRAIT(DischargeHighTempThresholdCelsius,      uint16_t,    "°C");
 LABEL_TRAIT(ChargeLowTempThresholdCelsius,          int16_t,     "°C");
 LABEL_TRAIT(ChargeLowTempRecoveryCelsius,           int16_t,     "°C");
 LABEL_TRAIT(DischargeLowTempThresholdCelsius,       int16_t,     "°C");
@@ -156,7 +156,7 @@ class DataPoint {
     friend class DataPointContainer;
 
     public:
-        using tValue = std::variant<bool, uint8_t, uint16_t, uint32_t, int16_t, std::string>;
+        using tValue = std::variant<bool, uint8_t, uint16_t, uint32_t, int16_t, int32_t, std::string>;
 
         DataPoint() = delete;
 
