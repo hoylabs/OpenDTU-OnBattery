@@ -223,7 +223,7 @@ JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw)
                 _dp.add<Label::ActualBatteryCapacityAmpHours>(get<uint32_t>(pos));
                 break;
             case 0xba:
-                _dp.add<Label::ProductId>(getString(pos, 24));
+                _dp.add<Label::ProductId>(getString(pos, 24, true));
                 break;
             default:
                 MessageOutput.printf("unknown field type 0x%02x\r\n", fieldType);
@@ -281,13 +281,22 @@ int16_t JkBmsSerialMessage::getTemperature(It&& pos) const
 }
 
 template<typename It>
-std::string JkBmsSerialMessage::getString(It&& pos, size_t len) const
+std::string JkBmsSerialMessage::getString(It&& pos, size_t len, bool replaceZeroes) const
 {
     // avoid out-of-bound read
     len = std::min<size_t>(std::distance(pos, _raw.cend()), len);
 
     auto start = pos;
     pos += len;
+
+    if (replaceZeroes) {
+        std::vector<uint8_t> copy(start, pos);
+        for (auto& c : copy) {
+            if (c == 0) { c = 0x20; } // replace by ASCII space
+        }
+        return std::string(copy.cbegin(), copy.cend());
+    }
+
     return std::string(start, pos);
 }
 

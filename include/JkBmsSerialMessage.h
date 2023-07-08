@@ -62,7 +62,7 @@ class JkBmsSerialMessage {
         template<typename T, typename It> T get(It&& pos) const;
         template<typename It> bool getBool(It&& pos) const;
         template<typename It> int16_t getTemperature(It&& pos) const;
-        template<typename It> std::string getString(It&& pos, size_t len) const;
+        template<typename It> std::string getString(It&& pos, size_t len, bool replaceZeroes = false) const;
         template<typename T> void set(tData::iterator const& pos, T val);
         uint16_t calcChecksum() const;
         void updateChecksum();
