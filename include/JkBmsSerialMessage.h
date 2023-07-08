@@ -13,7 +13,7 @@ class JkBmsSerialMessage {
 
         JkBmsSerialMessage() = delete;
 
-        JkBmsSerialMessage(tData const& raw);
+        JkBmsSerialMessage(tData const& raw, uint8_t protocolVersion = -1);
 
         enum class Command : uint8_t {
             Activate = 0x01,
@@ -58,11 +58,14 @@ class JkBmsSerialMessage {
         uint8_t const* data() { return _raw.data(); }
         size_t size() { return _raw.size(); }
 
+        JkBms::DataPointContainer const& getDataPoints() const { return _dp; }
+
     private:
         template<typename T, typename It> T get(It&& pos) const;
         template<typename It> bool getBool(It&& pos) const;
         template<typename It> int16_t getTemperature(It&& pos) const;
         template<typename It> std::string getString(It&& pos, size_t len, bool replaceZeroes = false) const;
+        void processBatteryCurrent(tData::const_iterator& pos, uint8_t protocolVersion);
         template<typename T> void set(tData::iterator const& pos, T val);
         uint16_t calcChecksum() const;
         void updateChecksum();

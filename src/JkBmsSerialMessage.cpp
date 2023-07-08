@@ -20,7 +20,7 @@ JkBmsSerialMessage::JkBmsSerialMessage(Command cmd)
 using Label = JkBms::DataPointLabel;
 template<Label L> using Traits = JkBms::DataPointLabelTraits<L>;
 
-JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw)
+JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw, uint8_t protocolVersion)
     : _raw(raw)
 {
     if (!isValid()) { return; }
@@ -62,13 +62,8 @@ JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw)
                 _dp.add<Label::BatteryVoltageMilliVolt>(static_cast<uint32_t>(get<uint16_t>(pos)) * 10);
                 break;
             case 0x84:
-            {
-                // TODO must respect protocol version when interpreting this value
-                uint16_t raw = get<uint16_t>(pos);
-                bool charging = (raw & 0x8000) > 0;
-                _dp.add<Label::BatteryCurrentMilliAmps>(static_cast<int32_t>(raw & 0x7FFF) * (charging ? 10 : -10));
+                processBatteryCurrent(pos, protocolVersion);
                 break;
-            }
             case 0x85:
                 _dp.add<Label::BatterySoCPercent>(get<uint8_t>(pos));
                 break;
@@ -225,6 +220,9 @@ JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw)
             case 0xba:
                 _dp.add<Label::ProductId>(getString(pos, 24, true));
                 break;
+            case 0xc0:
+                _dp.add<Label::ProtocolVersion>(get<uint8_t>(pos));
+                break;
             default:
                 MessageOutput.printf("unknown field type 0x%02x\r\n", fieldType);
                 break;
@@ -298,6 +296,24 @@ std::string JkBmsSerialMessage::getString(It&& pos, size_t len, bool replaceZero
     }
 
     return std::string(start, pos);
+}
+
+void JkBmsSerialMessage::processBatteryCurrent(JkBmsSerialMessage::tData::const_iterator& pos, uint8_t protocolVersion)
+{
+    uint16_t raw = get<uint16_t>(pos);
+
+    if (0x00 == protocolVersion) {
+        // untested!
+        _dp.add<Label::BatteryCurrentMilliAmps>((static_cast<int32_t>(10000) - raw) * 10);
+        return;
+    }
+    else if (0x01 == protocolVersion) {
+        bool charging = (raw & 0x8000) > 0;
+        _dp.add<Label::BatteryCurrentMilliAmps>(static_cast<int32_t>(raw & 0x7FFF) * (charging ? 10 : -10));
+        return;
+    }
+
+    MessageOutput.println("cannot decode battery current field without knowing the protocol version");
 }
 
 template<typename T>

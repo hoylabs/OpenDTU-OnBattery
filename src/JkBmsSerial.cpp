@@ -140,15 +140,14 @@ void JkBmsSerial::frameComplete()
         MessageOutput.printf("%02x ", b);
     }
     MessageOutput.println("");
-    auto pMsg = std::make_unique<JkBmsSerialMessage>(std::move(_buffer));
+    auto pMsg = std::make_unique<JkBmsSerialMessage>(std::move(_buffer), _protocolVersion);
     if (pMsg->isValid()) {
-        MessageOutput.println("message is valid :)");
         _pData = std::move(pMsg);
         _lastMessage = millis();
-    }
-    else {
-        MessageOutput.println("message is NOT valid :(");
-    }
+
+        auto oProtocolVersion = _pData->getDataPoints().get<JkBms::DataPointLabel::ProtocolVersion>();
+        if (oProtocolVersion.has_value()) { _protocolVersion = *oProtocolVersion; }
+    } // if invalid, error message has been produced by JkBmsSerialMessage
     reset();
 }
 

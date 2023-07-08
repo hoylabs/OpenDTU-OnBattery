@@ -223,14 +223,14 @@ class DataPointContainer {
         void add(T) = delete;
 
         template<Label L>
-        std::optional<DataPoint const> getDataPointFor() {
+        std::optional<DataPoint const> getDataPointFor() const {
             auto it = _dataPoints.find(L);
             if (it == _dataPoints.end()) { return std::nullopt; }
             return it->second;
         }
 
         template<Label L>
-        std::optional<typename Traits<L>::type> get() {
+        std::optional<typename Traits<L>::type> get() const {
             auto optionalDataPoint = getDataPointFor<L>();
             if (!optionalDataPoint.has_value()) { return std::nullopt; }
             return std::get<typename Traits<L>::type>(optionalDataPoint->_value);

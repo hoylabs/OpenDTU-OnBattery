@@ -64,6 +64,7 @@ class JkBmsSerial {
         uint32_t _lastRequest = 0;
         uint32_t _lastMessage = 0;
         uint16_t _frameLength = 0;
+        uint8_t _protocolVersion = -1;
         std::unique_ptr<JkBmsSerialMessage const> _pData = nullptr;
 };
 
