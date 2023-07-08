@@ -41,9 +41,14 @@ class JkBmsSerialMessage {
         };
         Type getType() const { return static_cast<Type>(_raw[10]); }
 
+        // this does *not* include the two byte start marker
         uint16_t getFrameLength() const { return get<uint16_t>(_raw.cbegin()+2); }
-        uint16_t getVariableFieldLength() const { return getFrameLength() - 20; }
+
         uint32_t getTerminalId() const { return get<uint32_t>(_raw.cbegin()+4); }
+
+        // there are 20 bytes of overhead. two of those are the start marker
+        // bytes, which are *not* counted by the frame length.
+        uint16_t getVariableFieldLength() const { return getFrameLength() - 18; }
 
         // the upper byte of the 4-byte "record number" is reserved (for encryption)
         uint32_t getSequence() const { return get<uint32_t>(_raw.cend()-9) >> 8; }
