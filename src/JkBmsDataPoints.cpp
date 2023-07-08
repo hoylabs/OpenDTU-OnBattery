@@ -34,4 +34,17 @@ std::string dataPointValueToStr(uint8_t const& v) {
     return out.str();
 }
 
+template<>
+std::string dataPointValueToStr(tCells const& v) {
+    std::ostringstream out;
+    out << "(";
+    std::string sep = "";
+    for(auto const& mapval : v) {
+        out << sep << static_cast<unsigned>(mapval.first) << " = " << mapval.second;
+        sep = ", ";
+    }
+    out << ")";
+    return out.str();
+}
+
 } /* namespace JkBms */

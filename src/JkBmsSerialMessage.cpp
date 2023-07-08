@@ -28,19 +28,8 @@ JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw)
     auto pos = _raw.cbegin() + 11;
     auto end = pos + getVariableFieldLength();
 
-    while ( pos != end ) {
+    while ( pos < end ) {
         uint8_t fieldType = *(pos++);
-
-        if (0x79 == fieldType) {
-            uint8_t cellAmount = *(pos++) / 3;
-            for (size_t cellCounter = 0; cellCounter < cellAmount; ++cellCounter) {
-                uint8_t idx = *(pos++);
-                // indices in the message are one-based
-                auto cellMilliVolt = get<uint16_t>(pos);
-                MessageOutput.printf("cell %d voltage is %dmV\r\n", idx, cellMilliVolt);
-            }
-            continue;
-        }
 
         /**
          * there seems to be no way to make this more generic. the main reason
@@ -48,6 +37,18 @@ JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw)
          * used as a template parameter.
          */
         switch(fieldType) {
+            case 0x79:
+            {
+                uint8_t cellAmount = *(pos++) / 3;
+                std::map<uint8_t, uint16_t> voltages;
+                for (size_t cellCounter = 0; cellCounter < cellAmount; ++cellCounter) {
+                    uint8_t idx = *(pos++);
+                    auto cellMilliVolt = get<uint16_t>(pos);
+                    voltages[idx] = cellMilliVolt;
+                }
+                _dp.add<Label::CellsMilliVolt>(voltages);
+                break;
+            }
             case 0x80:
                 _dp.add<Label::BmsTempCelsius>(getTemperature(pos));
                 break;
@@ -60,7 +61,8 @@ JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw)
             case 0x83:
                 _dp.add<Label::BatteryVoltageMilliVolt>(static_cast<uint32_t>(get<uint16_t>(pos)) * 10);
                 break;
-            case 0x84: {
+            case 0x84:
+            {
                 // TODO must respect protocol version when interpreting this value
                 uint16_t raw = get<uint16_t>(pos);
                 bool charging = (raw & 0x8000) > 0;

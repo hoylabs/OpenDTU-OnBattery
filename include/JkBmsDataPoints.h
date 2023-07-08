@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <map>
 #include <optional>
 #include <string>
 #include <sstream>
@@ -10,6 +11,7 @@
 namespace JkBms {
 
 enum class DataPointLabel : uint8_t {
+    CellsMilliVolt = 0x79,
     BmsTempCelsius = 0x80,
     BatteryTempOneCelsius = 0x81,
     BatteryTempTwoCelsius = 0x82,
@@ -70,6 +72,8 @@ enum class DataPointLabel : uint8_t {
     ProtocolVersion = 0xc0
 };
 
+using tCells = std::map<uint8_t, uint16_t>;
+
 template<DataPointLabel> struct DataPointLabelTraits;
 
 #define LABEL_TRAIT(n, t, u) template<> struct DataPointLabelTraits<DataPointLabel::n> { \
@@ -92,6 +96,7 @@ template<DataPointLabel> struct DataPointLabelTraits;
  * the DataPointContainer class, because the traits must be available then.
  * even though this is tedious to maintain, human errors will be caught.
  */
+LABEL_TRAIT(CellsMilliVolt,                         tCells,      "mV");
 LABEL_TRAIT(BmsTempCelsius,                         int16_t,     "°C");
 LABEL_TRAIT(BatteryTempOneCelsius,                  int16_t,     "°C");
 LABEL_TRAIT(BatteryTempTwoCelsius,                  int16_t,     "°C");
@@ -156,7 +161,8 @@ class DataPoint {
     friend class DataPointContainer;
 
     public:
-        using tValue = std::variant<bool, uint8_t, uint16_t, uint32_t, int16_t, int32_t, std::string>;
+        using tValue = std::variant<bool, uint8_t, uint16_t, uint32_t,
+              int16_t, int32_t, std::string, tCells>;
 
         DataPoint() = delete;
 
