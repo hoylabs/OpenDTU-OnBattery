@@ -43,6 +43,7 @@ class JkBmsSerial {
         void rxData(uint8_t inbyte);
         void reset();
         void frameComplete();
+        void processDataPoints();
 
         enum class ReadState : unsigned {
             Idle,

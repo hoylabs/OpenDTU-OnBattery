@@ -1,6 +1,7 @@
 //#include <Arduino.h>
 #include "HardwareSerial.h"
 #include "MessageOutput.h"
+#include "Battery.h"
 #include "JkBmsSerial.h"
 #include <map>
 
@@ -145,10 +146,53 @@ void JkBmsSerial::frameComplete()
         _pData = std::move(pMsg);
         _lastMessage = millis();
 
-        auto oProtocolVersion = _pData->getDataPoints().get<JkBms::DataPointLabel::ProtocolVersion>();
-        if (oProtocolVersion.has_value()) { _protocolVersion = *oProtocolVersion; }
+        processDataPoints();
     } // if invalid, error message has been produced by JkBmsSerialMessage
     reset();
+}
+
+void JkBmsSerial::processDataPoints()
+{
+    using Label = JkBms::DataPointLabel;
+    auto const& dataPoints = _pData->getDataPoints();
+
+    auto oProtocolVersion = dataPoints.get<Label::ProtocolVersion>();
+    if (oProtocolVersion.has_value()) { _protocolVersion = *oProtocolVersion; }
+
+    Battery.lastUpdate = _lastMessage;
+
+    auto oSoCValue = dataPoints.get<Label::BatterySoCPercent>();
+    if (oSoCValue.has_value()) {
+        Battery.stateOfCharge = *oSoCValue;
+        auto oSoCDataPoint = dataPoints.getDataPointFor<Label::BatterySoCPercent>();
+        Battery.stateOfChargeLastUpdate = oSoCDataPoint->getTimestamp();
+    }
+
+    auto oVoltage = dataPoints.get<Label::BatteryVoltageMilliVolt>();
+    if (oVoltage.has_value()) { Battery.voltage = static_cast<float>(*oVoltage) / 1000; }
+
+    auto oCurrent = dataPoints.get<Label::BatteryCurrentMilliAmps>();
+    if (oCurrent.has_value()) { Battery.current = static_cast<float>(*oCurrent) / 1000; }
+
+    auto oTemperature = dataPoints.get<Label::BatteryTempOneCelsius>();
+    if (oTemperature.has_value()) { Battery.temperature = *oTemperature; }
+
+    std::string manufacturer("JKBMS");
+    auto oProductId = dataPoints.get<Label::ProductId>();
+    if (oProductId.has_value()) {
+        manufacturer = *oProductId;
+        auto pos = oProductId->rfind("JK");
+        if (pos != std::string::npos) {
+            manufacturer = oProductId->substr(pos);
+        }
+    }
+    strlcpy(Battery.manufacturer, manufacturer.c_str(), sizeof(Battery.manufacturer));
+
+    auto oChargeEnabled = dataPoints.get<Label::BatteryChargeEnabled>();
+    if (oChargeEnabled.has_value()) { Battery.chargeEnabled = *oChargeEnabled; }
+
+    auto oDischargeEnabled = dataPoints.get<Label::BatteryDischargeEnabled>();
+    if (oDischargeEnabled.has_value()) { Battery.dischargeEnabled = *oDischargeEnabled; }
 }
 
 bool JkBmsSerial::isDataValid() {

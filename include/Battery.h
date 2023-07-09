@@ -34,7 +34,7 @@ public:
 
     bool warningBmsInternal;
     bool warningHighCurrentCharge;
-    char manufacturer[9];
+    char manufacturer[25];
     bool chargeEnabled;
     bool dischargeEnabled;
     bool chargeImmediately;
