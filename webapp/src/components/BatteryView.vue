@@ -10,7 +10,7 @@
       <div class="tab-content col-sm-12 col-md-12" id="v-pills-tabContent">
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center" :class="{
-            'text-bg-danger': batteryData.data_age > 20,
+            'text-bg-danger': batteryData.data_age >= 20,
             'text-bg-primary': batteryData.data_age < 20,
           }">
             <div class="p-1 flex-grow-1">
@@ -29,7 +29,7 @@
             <div class="row flex-row flex-wrap align-items-start g-3">
               <div class="col order-0">
                 <div class="card" :class="{ 'border-info': true }">
-                  <div class="card-header bg-info">{{ $t('battery.Status') }}</div>
+                  <div class="card-header text-bg-info">{{ $t('battery.Status') }}</div>
                   <div class="card-body">
                     <table class="table table-striped table-hover">
                       <thead>
@@ -86,8 +86,8 @@
                 </div>
               </div>
               <div class="col order-1">
-                <div class="card" :class="{ 'border-info': false }">
-                  <div class="card-header bg-info">{{ $t('battery.warn_alarm') }}</div>
+                <div class="card">
+                  <div class="card-header">{{ $t('battery.warn_alarm') }}</div>
                   <div class="card-body">
                     <table class="table table-striped table-hover">
                       <thead>
