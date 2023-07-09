@@ -11,11 +11,12 @@ class JkBmsSerial {
     public:
         JkBmsSerial() = default;
 
-        void init(int8_t rx, int8_t tx);
+        void init(int8_t rx, int8_t tx, int8_t rxEnableNot, int8_t txEnable);
         void loop();
 
         enum class Status : unsigned {
             Initializing,
+            InvalidTransceiverConfig,
             DisabledByConfig,
             Timeout,
             WaitingForPollInterval,
@@ -66,6 +67,7 @@ class JkBmsSerial {
             _readState = state;
         }
 
+        int8_t _txEnablePin = -1;
         Status _lastStatus = Status::Initializing;
         uint32_t _lastStatusPrinted = 0;
         JkBmsSerialMessage::tData _buffer = {};

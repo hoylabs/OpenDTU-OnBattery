@@ -207,7 +207,8 @@ void setup()
     //} else {
     //    MessageOutput.println("Invalid pin config");
     //}
-    JkBms::Controller.init(34/*RX*/, 22/*TX*/);
+    //JkBms::Controller.init(34/*RX*/, 22/*TX*/, -1, -1); // nodeMCU
+    JkBms::Controller.init(16/*RX*/, 45/*TX*/, 15/*RX enable*/, 46/*TX enable*/); // OpenDTU FUSION v2
     JkBms::Controller.setPollInterval(5);
     MessageOutput.println("done");
 }

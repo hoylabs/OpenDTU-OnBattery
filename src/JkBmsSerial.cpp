@@ -1,4 +1,4 @@
-//#include <Arduino.h>
+#include <Arduino.h>
 #include "Configuration.h"
 #include "HardwareSerial.h"
 #include "MessageOutput.h"
@@ -12,11 +12,25 @@ namespace JkBms {
 
 JkBmsSerial Controller;
 
-void JkBmsSerial::init(int8_t rx, int8_t tx)
+void JkBmsSerial::init(int8_t rx, int8_t tx, int8_t rxEnableNot, int8_t txEnable)
 {
-    MessageOutput.printf("JkBmsSerial::init, rx=%d, tx=%d\r\n", rx, tx);
+    MessageOutput.printf("JkBmsSerial::init, rx=%d, tx=%d, rxEnableNot=%d, txEnable=%d\r\n",
+            rx, tx, rxEnableNot, txEnable);
     HwSerial.begin(115200, SERIAL_8N1, rx, tx);
     HwSerial.flush();
+
+    if (Interface::Transceiver != getInterface()) { return; }
+
+    if (rxEnableNot < 0 || txEnable < 0) {
+        return announceStatus(Status::InvalidTransceiverConfig);
+    }
+
+    // permanently enable reception of data
+    pinMode(rxEnableNot, OUTPUT);
+    digitalWrite(rxEnableNot, LOW);
+
+    _txEnablePin = txEnable;
+    pinMode(_txEnablePin, OUTPUT);
 }
 
 JkBmsSerial::Interface JkBmsSerial::getInterface() const
@@ -34,6 +48,7 @@ std::string const& JkBmsSerial::getStatusText(JkBmsSerial::Status status)
 
     static const std::map<Status, const std::string> texts = {
         { Status::DisabledByConfig, "disabled by configuration" },
+        { Status::InvalidTransceiverConfig, "invalid config: transceiver enable pins not specified" },
         { Status::Timeout, "timeout wating for response from BMS" },
         { Status::WaitingForPollInterval, "waiting for poll interval to elapse" },
         { Status::HwSerialNotAvailableForWrite, "UART is not available for writing" },
@@ -78,7 +93,18 @@ void JkBmsSerial::sendRequest()
     }
 
     JkBmsSerialMessage readAll(JkBmsSerialMessage::Command::ReadAll);
+
+    if (Interface::Transceiver == getInterface()) {
+        digitalWrite(_txEnablePin, HIGH); // enable transmission
+    }
+
     HwSerial.write(readAll.data(), readAll.size());
+
+    if (Interface::Transceiver == getInterface()) {
+        HwSerial.flush();
+        digitalWrite(_txEnablePin, LOW); // disable transmission (free the bus)
+    }
+
     _lastRequest = millis();
 
     setReadState(ReadState::WaitingForFrameStart);
@@ -89,6 +115,10 @@ void JkBmsSerial::loop()
 {
     if (Interface::Disabled == getInterface()) {
         return announceStatus(Status::DisabledByConfig);
+    }
+
+    if (Interface::Transceiver == getInterface() && _txEnablePin < 0) {
+        return announceStatus(Status::InvalidTransceiverConfig);
     }
 
     sendRequest();
