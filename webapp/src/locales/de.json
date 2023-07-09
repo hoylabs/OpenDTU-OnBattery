@@ -580,8 +580,12 @@
     },
     "batteryadmin": {
         "BatterySettings": "Batterie Einstellungen",
-        "BatteryConfiguration": "Batterie Konfiguration",
-        "EnableBatteryCanBus": "Aktiviere Batterie CAN Bus Schnittstelle",
+        "BatteryConfiguration": "Batterie-Kommunikationsschnittstelle",
+        "EnableBattery": "Aktiviere Schnittstelle",
+        "Protocol": "Kommunikationsprotokoll",
+        "ProtocolPylontechCan": "Pylontech per CAN Bus",
+        "ProtocolJkBmsSerialUart": "Jikong (JK) BMS per UART an der MCU",
+        "ProtocolJkBmsSerialTransceiver": "Jikong (JK) BMS per RS485 Transceiver an der MCU",
         "Seconds": "@:dtuadmin.Seconds",
         "Save": "@:dtuadmin.Save"
     },

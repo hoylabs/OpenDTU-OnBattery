@@ -1,4 +1,5 @@
 //#include <Arduino.h>
+#include "Configuration.h"
 #include "HardwareSerial.h"
 #include "MessageOutput.h"
 #include "Battery.h"
@@ -16,6 +17,15 @@ void JkBmsSerial::init(int8_t rx, int8_t tx)
     MessageOutput.printf("JkBmsSerial::init, rx=%d, tx=%d\r\n", rx, tx);
     HwSerial.begin(115200, SERIAL_8N1, rx, tx);
     HwSerial.flush();
+}
+
+JkBmsSerial::Interface JkBmsSerial::getInterface() const
+{
+    CONFIG_T& config = Configuration.get();
+    if (!config.Battery_Enabled) { return Interface::Disabled; }
+    if (0x01 == config.Battery_Protocol) { return Interface::Uart; }
+    if (0x02 == config.Battery_Protocol) { return Interface::Transceiver; }
+    return Interface::Disabled;
 }
 
 std::string const& JkBmsSerial::getStatusText(JkBmsSerial::Status status)
@@ -77,6 +87,10 @@ void JkBmsSerial::sendRequest()
 
 void JkBmsSerial::loop()
 {
+    if (Interface::Disabled == getInterface()) {
+        return announceStatus(Status::DisabledByConfig);
+    }
+
     sendRequest();
 
     while (HwSerial.available()) {

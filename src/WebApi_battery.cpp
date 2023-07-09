@@ -39,6 +39,7 @@ void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
     const CONFIG_T& config = Configuration.get();
 
     root[F("enabled")] = config.Battery_Enabled;
+    root[F("protocol")] = config.Battery_Protocol;
 
     response->setLength();
     request->send(response);
@@ -88,7 +89,7 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
-    if (!(root.containsKey("enabled"))) {
+    if (!root.containsKey(F("enabled")) || !root.containsKey(F("protocol"))) {
         retMsg[F("message")] = F("Values are missing!");
         retMsg[F("code")] = WebApiError::GenericValueMissing;
         response->setLength();
@@ -98,6 +99,7 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
 
     CONFIG_T& config = Configuration.get();
     config.Battery_Enabled = root[F("enabled")].as<bool>();
+    config.Battery_Protocol = root[F("protocol")].as<uint8_t>();
     Configuration.write();
 
     retMsg[F("type")] = F("success");
@@ -106,10 +108,4 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
 
     response->setLength();
     request->send(response);
-
-    if (config.Battery_Enabled) {
-        PylontechCanReceiver.enable();
-    } else {
-        PylontechCanReceiver.disable();
-    }
 }

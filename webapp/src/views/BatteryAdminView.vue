@@ -6,9 +6,22 @@
 
         <form @submit="saveBatteryConfig">
             <CardElement :text="$t('batteryadmin.BatteryConfiguration')" textVariant="text-bg-primary">
-                <InputElement :label="$t('batteryadmin.EnableBatteryCanBus')"
+                <InputElement :label="$t('batteryadmin.EnableBattery')"
                               v-model="batteryConfigList.enabled"
-                              type="checkbox" wide/>
+                              type="checkbox" />
+
+                <div class="row mb-3" v-show="batteryConfigList.enabled">
+                    <label class="col-sm-2 col-form-label">
+                        {{ $t('batteryadmin.Protocol') }}
+                    </label>
+                    <div class="col-sm-10">
+                        <select class="form-select" v-model="batteryConfigList.protocol">
+                            <option v-for="proto in protocolTypeList" :key="proto.key" :value="proto.key">
+                                {{ $t(`batteryadmin.Protocol` + proto.value) }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
             </CardElement>
 
             <button type="submit" class="btn btn-primary mb-3">{{ $t('batteryadmin.Save') }}</button>
@@ -39,6 +52,11 @@ export default defineComponent({
             alertMessage: "",
             alertType: "info",
             showAlert: false,
+            protocolTypeList: [
+                { key: 0, value: 'PylontechCan' },
+                { key: 1, value: 'JkBmsSerialUart' },
+                { key: 2, value: 'JkBmsSerialTransceiver' },
+            ],
         };
     },
     created() {

@@ -45,6 +45,14 @@ class JkBmsSerial {
         void frameComplete();
         void processDataPoints();
 
+        enum class Interface : unsigned {
+            Disabled,
+            Uart,
+            Transceiver
+        };
+
+        Interface getInterface() const;
+
         enum class ReadState : unsigned {
             Idle,
             WaitingForFrameStart,

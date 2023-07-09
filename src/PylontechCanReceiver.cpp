@@ -11,13 +11,16 @@
 
 PylontechCanReceiverClass PylontechCanReceiver;
 
-void PylontechCanReceiverClass::init(int8_t rx, int8_t tx)
+bool PylontechCanReceiverClass::isEnabledByConfig()
 {
     CONFIG_T& config = Configuration.get();
+    return config.Battery_Enabled && config.Battery_Protocol == 0x00;
+}
+
+void PylontechCanReceiverClass::init(int8_t rx, int8_t tx)
+{
     g_config = TWAI_GENERAL_CONFIG_DEFAULT((gpio_num_t)tx, (gpio_num_t)rx, TWAI_MODE_NORMAL);
-    if (config.Battery_Enabled) {
-        enable();
-    }
+    if (isEnabledByConfig()) { enable(); }
 }
 
 void PylontechCanReceiverClass::enable()
@@ -91,11 +94,13 @@ void PylontechCanReceiverClass::disable()
 
 void PylontechCanReceiverClass::loop()
 {
-    CONFIG_T& config = Configuration.get();
+    bool enabled = isEnabledByConfig();
 
-    if (!config.Battery_Enabled) {
-        return;
-    }
+    // apply configuration changes
+    enabled != _lastIsEnabledByConfig ? enable() : disable();
+    _lastIsEnabledByConfig = enabled;
+
+    if (!enabled) { return; }
 
     parseCanPackets();
     mqtt();

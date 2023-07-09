@@ -25,6 +25,7 @@ public:
     void mqtt();
 
 private:
+    bool isEnabledByConfig();
     uint16_t readUnsignedInt16(uint8_t *data);
     int16_t readSignedInt16(uint8_t *data);
     void readString(char* str, uint8_t numBytes);
@@ -33,6 +34,7 @@ private:
     bool getBit(uint8_t value, uint8_t bit);
 
     bool _isEnabled = false;
+    bool _lastIsEnabledByConfig = false;
     uint32_t _lastPublish;
     twai_general_config_t g_config;
     esp_err_t twaiLastResult;

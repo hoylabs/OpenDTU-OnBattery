@@ -166,6 +166,8 @@ struct CONFIG_T {
     float PowerLimiter_FullSolarPassThroughStopVoltage;
 
     bool Battery_Enabled;
+    uint8_t Battery_Protocol;
+
     bool Huawei_Enabled;
     bool Huawei_Auto_Power_Enabled;
     float Huawei_Auto_Power_Voltage_Limit;
