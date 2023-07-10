@@ -198,19 +198,16 @@ void setup()
     }
 
     // Initialize JkBms serial communication
-    MessageOutput.println("Initialize JK BMS serial interface... ");
-    //if (PinMapping.isValidJkBmsSerialConfig()) {
-    //    MessageOutput.printf("JK BMS rx = %d, tx = %d\r\n", pin.jkbms_rx, pin.jkbms_tx);
-    //    JkBms.init(pin.jkbms_rx, pin.jkbms_tx);
-    //    JkBms.setPollInterval(config.JkBms_PollInterval);
-    //    MessageOutput.println("done");
-    //} else {
-    //    MessageOutput.println("Invalid pin config");
-    //}
-    //JkBms::Controller.init(34/*RX*/, 22/*TX*/, -1, -1); // nodeMCU
-    JkBms::Controller.init(16/*RX*/, 45/*TX*/, 15/*RX enable*/, 46/*TX enable*/); // OpenDTU FUSION v2
-    JkBms::Controller.setPollInterval(5);
-    MessageOutput.println("done");
+    MessageOutput.println(F("Initialize JK BMS serial interface..."));
+    if (PinMapping.isValidBatteryConfig()) {
+        MessageOutput.printf("JK BMS rx = %d, rxen = %d, tx = %d, txen = %d\r\n",
+                pin.battery_rx, pin.battery_rxen, pin.battery_tx, pin.battery_txen);
+        JkBms::Controller.init(pin.battery_rx, pin.battery_rxen, pin.battery_tx, pin.battery_txen);
+        JkBms::Controller.setPollInterval(3/*config.JkBms_PollInterval*/);
+        MessageOutput.println(F("done"));
+    } else {
+        MessageOutput.println(F("Invalid pin config"));
+    }
 }
 
 void loop()

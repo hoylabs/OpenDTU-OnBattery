@@ -12,10 +12,8 @@ namespace JkBms {
 
 JkBmsSerial Controller;
 
-void JkBmsSerial::init(int8_t rx, int8_t tx, int8_t rxEnableNot, int8_t txEnable)
+void JkBmsSerial::init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEnable)
 {
-    MessageOutput.printf("JkBmsSerial::init, rx=%d, tx=%d, rxEnableNot=%d, txEnable=%d\r\n",
-            rx, tx, rxEnableNot, txEnable);
     HwSerial.begin(115200, SERIAL_8N1, rx, tx);
     HwSerial.flush();
 

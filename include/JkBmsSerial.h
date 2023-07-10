@@ -11,7 +11,7 @@ class JkBmsSerial {
     public:
         JkBmsSerial() = default;
 
-        void init(int8_t rx, int8_t tx, int8_t rxEnableNot, int8_t txEnable);
+        void init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEnable);
         void loop();
 
         enum class Status : unsigned {
