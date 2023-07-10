@@ -67,6 +67,7 @@ class JkBmsSerial {
             _readState = state;
         }
 
+        int8_t _rxEnablePin = -1;
         int8_t _txEnablePin = -1;
         Status _lastStatus = Status::Initializing;
         uint32_t _lastStatusPrinted = 0;

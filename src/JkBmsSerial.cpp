@@ -23,9 +23,8 @@ void JkBmsSerial::init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEnable
         return announceStatus(Status::InvalidTransceiverConfig);
     }
 
-    // permanently enable reception of data
+    _rxEnablePin = rxEnableNot;
     pinMode(rxEnableNot, OUTPUT);
-    digitalWrite(rxEnableNot, LOW);
 
     _txEnablePin = txEnable;
     pinMode(_txEnablePin, OUTPUT);
@@ -93,6 +92,7 @@ void JkBmsSerial::sendRequest()
     JkBmsSerialMessage readAll(JkBmsSerialMessage::Command::ReadAll);
 
     if (Interface::Transceiver == getInterface()) {
+        digitalWrite(_rxEnablePin, HIGH); // disable reception (of our own data)
         digitalWrite(_txEnablePin, HIGH); // enable transmission
     }
 
@@ -100,6 +100,7 @@ void JkBmsSerial::sendRequest()
 
     if (Interface::Transceiver == getInterface()) {
         HwSerial.flush();
+        digitalWrite(_rxEnablePin, LOW); // enable reception
         digitalWrite(_txEnablePin, LOW); // disable transmission (free the bus)
     }
 
