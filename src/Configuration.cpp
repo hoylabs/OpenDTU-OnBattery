@@ -358,7 +358,7 @@ bool ConfigurationClass::read()
 
     JsonObject powerlimiter = doc["powerlimiter"];
     config.PowerLimiter_Enabled = powerlimiter["enabled"] | POWERLIMITER_ENABLED;
-    config.PowerLimiter_SolarPassThroughEnabled = powerlimiter["solar_passtrough_enabled"] | POWERLIMITER_SOLAR_PASSTROUGH_ENABLED;
+    config.PowerLimiter_SolarPassThroughEnabled = powerlimiter["solar_passtrough_enabled"] | POWERLIMITER_SOLAR_PASSTHROUGH_ENABLED;
     config.PowerLimiter_BatteryDrainStategy = powerlimiter["battery_drain_strategy"] | POWERLIMITER_BATTERY_DRAIN_STRATEGY;
     config.PowerLimiter_Interval =  powerlimiter["interval"] | POWERLIMITER_INTERVAL;
     config.PowerLimiter_IsInverterBehindPowerMeter = powerlimiter["is_inverter_behind_powermeter"] | POWERLIMITER_IS_INVERTER_BEHIND_POWER_METER;
