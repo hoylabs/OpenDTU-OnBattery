@@ -49,7 +49,7 @@ std::string const& JkBmsSerial::getStatusText(JkBmsSerial::Status status)
         { Status::Timeout, "timeout wating for response from BMS" },
         { Status::WaitingForPollInterval, "waiting for poll interval to elapse" },
         { Status::HwSerialNotAvailableForWrite, "UART is not available for writing" },
-        { Status::BusyReading, "busy reading a message from the BMS" },
+        { Status::BusyReading, "busy waiting for or reading a message from the BMS" },
         { Status::RequestSent, "request for data sent" },
         { Status::FrameCompleted, "a whole frame was received" }
     };
@@ -77,16 +77,16 @@ void JkBmsSerial::announceStatus(JkBmsSerial::Status status)
 
 void JkBmsSerial::sendRequest()
 {
+    if (ReadState::Idle != _readState) {
+        return announceStatus(Status::BusyReading);
+    }
+
     if ((millis() - _lastRequest) < _pollInterval * 1000) {
         return announceStatus(Status::WaitingForPollInterval);
     }
 
     if (!HwSerial.availableForWrite()) {
         return announceStatus(Status::HwSerialNotAvailableForWrite);
-    }
-
-    if (ReadState::Idle != _readState) {
-        return announceStatus(Status::BusyReading);
     }
 
     JkBmsSerialMessage readAll(JkBmsSerialMessage::Command::ReadAll);
@@ -120,13 +120,13 @@ void JkBmsSerial::loop()
         return announceStatus(Status::InvalidTransceiverConfig);
     }
 
-    sendRequest();
-
     while (HwSerial.available()) {
         rxData(HwSerial.read());
     }
 
-    if (millis() > _lastRequest + 10 * 1000) {
+    sendRequest();
+
+    if (millis() > _lastRequest + 2 * _pollInterval * 1000 + 250) {
         reset();
         return announceStatus(Status::Timeout);
     }
@@ -171,7 +171,6 @@ void JkBmsSerial::rxData(uint8_t inbyte)
 
 void JkBmsSerial::reset()
 {
-    MessageOutput.println("resetting...");
     _buffer.clear();
     return setReadState(ReadState::Idle);
 }
