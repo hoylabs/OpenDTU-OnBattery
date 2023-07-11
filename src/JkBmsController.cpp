@@ -240,8 +240,4 @@ void ControllerClass::processDataPoints()
     if (oDischargeEnabled.has_value()) { Battery.dischargeEnabled = *oDischargeEnabled; }
 }
 
-bool ControllerClass::isDataValid() {
-    return false; // TODO
-}
-
 } /* namespace JkBms */

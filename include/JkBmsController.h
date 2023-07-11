@@ -31,8 +31,6 @@ class ControllerClass {
             return _lastMessage;
         }
 
-        bool isDataValid();
-
     private:
         std::string const& getStatusText(Status status);
         void announceStatus(Status status);
