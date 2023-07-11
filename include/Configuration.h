@@ -167,6 +167,7 @@ struct CONFIG_T {
 
     bool Battery_Enabled;
     uint8_t Battery_Protocol;
+    uint8_t Battery_JkBmsPollingInterval;
 
     bool Huawei_Enabled;
     bool Huawei_Auto_Power_Enabled;

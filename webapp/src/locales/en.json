@@ -595,6 +595,7 @@
         "ProtocolPylontechCan": "Pylontech using CAN Bus",
         "ProtocolJkBmsSerialUart": "Jikong (JK) BMS using UART on MCU",
         "ProtocolJkBmsSerialTransceiver": "Jikong (JK) BMS using RS485 Transceiver on MCU",
+        "PollingInterval": "Polling Interval",
         "Seconds": "@:dtuadmin.Seconds",
         "Save": "@:dtuadmin.Save"
     },

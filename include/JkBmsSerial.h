@@ -26,10 +26,6 @@ class JkBmsSerial {
             FrameCompleted
         };
 
-        void setPollInterval(uint32_t interval) {
-            _pollInterval = interval;
-        }
-
         // timestamp in millis() when the last data was received
         uint32_t getLastMessageTimestamp() {
             return _lastMessage;
@@ -40,7 +36,7 @@ class JkBmsSerial {
     private:
         std::string const& getStatusText(Status status);
         void announceStatus(Status status);
-        void sendRequest();
+        void sendRequest(uint8_t pollInterval);
         void rxData(uint8_t inbyte);
         void reset();
         void frameComplete();
@@ -72,7 +68,6 @@ class JkBmsSerial {
         Status _lastStatus = Status::Initializing;
         uint32_t _lastStatusPrinted = 0;
         JkBmsSerialMessage::tData _buffer = {};
-        uint32_t _pollInterval = 5;
         uint32_t _lastRequest = 0;
         uint32_t _lastMessage = 0;
         uint16_t _frameLength = 0;

@@ -22,6 +22,10 @@
                         </select>
                     </div>
                 </div>
+                <InputElement v-show="batteryConfigList.enabled && batteryConfigList.protocol >= 1 && batteryConfigList.protocol <= 2"
+                              :label="$t('batteryadmin.PollingInterval')"
+                              v-model="batteryConfigList.jkbms_polling_interval"
+                              type="number" min="2" max="90" step="1" :postfix="$t('batteryadmin.Seconds')"/>
             </CardElement>
 
             <button type="submit" class="btn btn-primary mb-3">{{ $t('batteryadmin.Save') }}</button>

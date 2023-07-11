@@ -179,6 +179,7 @@ bool ConfigurationClass::write()
     JsonObject battery = doc.createNestedObject("battery");
     battery["enabled"] = config.Battery_Enabled;
     battery["protocol"] = config.Battery_Protocol;
+    battery["jkbms_polling_interval"] = config.Battery_JkBmsPollingInterval;
 
     JsonObject huawei = doc.createNestedObject("huawei");
     huawei["enabled"] = config.Huawei_Enabled;
@@ -394,6 +395,7 @@ bool ConfigurationClass::read()
     JsonObject battery = doc["battery"];
     config.Battery_Enabled = battery["enabled"] | BATTERY_ENABLED;
     config.Battery_Protocol = battery["protocol"] | BATTERY_PROTOCOL;
+    config.Battery_JkBmsPollingInterval = battery["jkbms_polling_interval"] | BATTERY_JKBMS_POLLING_INTERVAL;
 
     JsonObject huawei = doc["huawei"];
     config.Huawei_Enabled = huawei["enabled"] | HUAWEI_ENABLED;

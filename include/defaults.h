@@ -130,6 +130,7 @@
 
 #define BATTERY_ENABLED false
 #define BATTERY_PROTOCOL 0 // Pylontech CAN receiver
+#define BATTERY_JKBMS_POLLING_INTERVAL 5
 
 #define HUAWEI_ENABLED false
 #define HUAWEI_AUTO_POWER_VOLTAGE_LIMIT 42.0

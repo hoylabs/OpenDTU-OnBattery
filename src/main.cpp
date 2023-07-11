@@ -203,7 +203,6 @@ void setup()
         MessageOutput.printf("JK BMS rx = %d, rxen = %d, tx = %d, txen = %d\r\n",
                 pin.battery_rx, pin.battery_rxen, pin.battery_tx, pin.battery_txen);
         JkBms::Controller.init(pin.battery_rx, pin.battery_rxen, pin.battery_tx, pin.battery_txen);
-        JkBms::Controller.setPollInterval(3/*config.JkBms_PollInterval*/);
         MessageOutput.println(F("done"));
     } else {
         MessageOutput.println(F("Invalid pin config"));

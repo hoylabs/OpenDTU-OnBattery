@@ -75,13 +75,13 @@ void JkBmsSerial::announceStatus(JkBmsSerial::Status status)
     _lastStatusPrinted = millis();
 }
 
-void JkBmsSerial::sendRequest()
+void JkBmsSerial::sendRequest(uint8_t pollInterval)
 {
     if (ReadState::Idle != _readState) {
         return announceStatus(Status::BusyReading);
     }
 
-    if ((millis() - _lastRequest) < _pollInterval * 1000) {
+    if ((millis() - _lastRequest) < pollInterval * 1000) {
         return announceStatus(Status::WaitingForPollInterval);
     }
 
@@ -112,6 +112,9 @@ void JkBmsSerial::sendRequest()
 
 void JkBmsSerial::loop()
 {
+    CONFIG_T& config = Configuration.get();
+    uint8_t pollInterval = config.Battery_JkBmsPollingInterval;
+
     if (Interface::Disabled == getInterface()) {
         return announceStatus(Status::DisabledByConfig);
     }
@@ -124,9 +127,9 @@ void JkBmsSerial::loop()
         rxData(HwSerial.read());
     }
 
-    sendRequest();
+    sendRequest(pollInterval);
 
-    if (millis() > _lastRequest + 2 * _pollInterval * 1000 + 250) {
+    if (millis() > _lastRequest + 2 * pollInterval * 1000 + 250) {
         reset();
         return announceStatus(Status::Timeout);
     }
