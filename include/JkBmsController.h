@@ -26,10 +26,7 @@ class ControllerClass {
             FrameCompleted
         };
 
-        // timestamp in millis() when the last data was received
-        uint32_t getLastMessageTimestamp() {
-            return _lastMessage;
-        }
+        DataPointContainer const& getDataPoints() const { return _dp; }
 
     private:
         std::string const& getStatusText(Status status);
@@ -38,7 +35,7 @@ class ControllerClass {
         void rxData(uint8_t inbyte);
         void reset();
         void frameComplete();
-        void processDataPoints();
+        void processDataPoints(DataPointContainer const& dataPoints);
 
         enum class Interface : unsigned {
             Disabled,
@@ -66,11 +63,10 @@ class ControllerClass {
         Status _lastStatus = Status::Initializing;
         uint32_t _lastStatusPrinted = 0;
         uint32_t _lastRequest = 0;
-        uint32_t _lastMessage = 0;
         uint16_t _frameLength = 0;
         uint8_t _protocolVersion = -1;
         SerialResponse::tData _buffer = {};
-        std::unique_ptr<SerialResponse const> _pData = nullptr;
+        DataPointContainer _dp;
 };
 
 extern ControllerClass Controller;

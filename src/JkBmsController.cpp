@@ -186,25 +186,23 @@ void ControllerClass::frameComplete()
         MessageOutput.printf("%02x ", b);
     }
     MessageOutput.println("");
-    auto pMsg = std::make_unique<SerialResponse>(std::move(_buffer), _protocolVersion);
-    if (pMsg->isValid()) {
-        _pData = std::move(pMsg);
-        _lastMessage = millis();
-
-        processDataPoints();
+    auto pResponse = std::make_unique<SerialResponse>(std::move(_buffer), _protocolVersion);
+    if (pResponse->isValid()) {
+        processDataPoints(pResponse->getDataPoints());
     } // if invalid, error message has been produced by SerialResponse c'tor
     reset();
 }
 
-void ControllerClass::processDataPoints()
+void ControllerClass::processDataPoints(DataPointContainer const& dataPoints)
 {
+    _dp.updateFrom(dataPoints);
+
     using Label = JkBms::DataPointLabel;
-    auto const& dataPoints = _pData->getDataPoints();
 
     auto oProtocolVersion = dataPoints.get<Label::ProtocolVersion>();
     if (oProtocolVersion.has_value()) { _protocolVersion = *oProtocolVersion; }
 
-    Battery.lastUpdate = _lastMessage;
+    Battery.lastUpdate = millis();
 
     auto oSoCValue = dataPoints.get<Label::BatterySoCPercent>();
     if (oSoCValue.has_value()) {

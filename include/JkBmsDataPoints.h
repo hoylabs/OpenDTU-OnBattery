@@ -240,6 +240,10 @@ class DataPointContainer {
         tMap::const_iterator cbegin() const { return _dataPoints.cbegin(); }
         tMap::const_iterator cend() const { return _dataPoints.cend(); }
 
+        // copy all data points from source into this instance, overwriting
+        // existing data points in this instance.
+        void updateFrom(DataPointContainer const& source);
+
     private:
         tMap _dataPoints;
 };

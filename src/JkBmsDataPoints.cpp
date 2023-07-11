@@ -47,4 +47,12 @@ std::string dataPointValueToStr(tCells const& v) {
     return out.str();
 }
 
+void DataPointContainer::updateFrom(DataPointContainer const& source)
+{
+    for (auto iter = source.cbegin(); iter != source.cend(); ++iter) {
+        _dataPoints.erase(iter->first);
+        _dataPoints.insert(*iter);
+    }
+}
+
 } /* namespace JkBms */

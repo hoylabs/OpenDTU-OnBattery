@@ -56,8 +56,6 @@ class SerialMessage {
         uint8_t const* data() { return _raw.data(); }
         size_t size() { return _raw.size(); }
 
-        JkBms::DataPointContainer const& getDataPoints() const { return _dp; }
-
     protected:
         template <typename... Args>
         explicit SerialMessage(Args&&... args) : _raw(std::forward<Args>(args)...) { }
@@ -82,6 +80,8 @@ class SerialResponse : public SerialMessage {
     public:
         using tData = SerialMessage::tData;
         explicit SerialResponse(tData&& raw, uint8_t protocolVersion = -1);
+
+        DataPointContainer const& getDataPoints() const { return _dp; }
 };
 
 class SerialCommand : public SerialMessage {
