@@ -7,13 +7,13 @@
 
 namespace JkBms {
 
-class JkBmsSerialMessage {
+class SerialMessage {
     public:
         using tData = std::vector<uint8_t>;
 
-        JkBmsSerialMessage() = delete;
+        SerialMessage() = delete;
 
-        JkBmsSerialMessage(tData const& raw, uint8_t protocolVersion = -1);
+        SerialMessage(tData const& raw, uint8_t protocolVersion = -1);
 
         enum class Command : uint8_t {
             Activate = 0x01,
@@ -23,7 +23,7 @@ class JkBmsSerialMessage {
             ReadAll = 0x06
         };
 
-        JkBmsSerialMessage(Command cmd);
+        SerialMessage(Command cmd);
         Command getCommand() const { return static_cast<Command>(_raw[8]); }
 
         enum class Source : uint8_t {

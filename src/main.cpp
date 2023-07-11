@@ -9,7 +9,7 @@
 #include "Led_Single.h"
 #include "MessageOutput.h"
 #include "VeDirectFrameHandler.h"
-#include "JkBmsSerial.h"
+#include "JkBmsController.h"
 #include "PylontechCanReceiver.h"
 #include "Huawei_can.h"
 #include "MqttHandleDtu.h"

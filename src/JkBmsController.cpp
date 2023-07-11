@@ -3,16 +3,16 @@
 #include "HardwareSerial.h"
 #include "MessageOutput.h"
 #include "Battery.h"
-#include "JkBmsSerial.h"
+#include "JkBmsController.h"
 #include <map>
 
 HardwareSerial HwSerial(2);
 
 namespace JkBms {
 
-JkBmsSerial Controller;
+ControllerClass Controller;
 
-void JkBmsSerial::init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEnable)
+void ControllerClass::init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEnable)
 {
     HwSerial.begin(115200, SERIAL_8N1, rx, tx);
     HwSerial.flush();
@@ -30,7 +30,7 @@ void JkBmsSerial::init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEnable
     pinMode(_txEnablePin, OUTPUT);
 }
 
-JkBmsSerial::Interface JkBmsSerial::getInterface() const
+ControllerClass::Interface ControllerClass::getInterface() const
 {
     CONFIG_T& config = Configuration.get();
     if (!config.Battery_Enabled) { return Interface::Disabled; }
@@ -39,7 +39,7 @@ JkBmsSerial::Interface JkBmsSerial::getInterface() const
     return Interface::Disabled;
 }
 
-std::string const& JkBmsSerial::getStatusText(JkBmsSerial::Status status)
+std::string const& ControllerClass::getStatusText(ControllerClass::Status status)
 {
     static const std::string missing =  "programmer error: missing status text";
 
@@ -60,7 +60,7 @@ std::string const& JkBmsSerial::getStatusText(JkBmsSerial::Status status)
     return iter->second;
 }
 
-void JkBmsSerial::announceStatus(JkBmsSerial::Status status)
+void ControllerClass::announceStatus(ControllerClass::Status status)
 {
     if (_lastStatus == status && millis() < _lastStatusPrinted + 10 * 1000) { return; }
 
@@ -75,7 +75,7 @@ void JkBmsSerial::announceStatus(JkBmsSerial::Status status)
     _lastStatusPrinted = millis();
 }
 
-void JkBmsSerial::sendRequest(uint8_t pollInterval)
+void ControllerClass::sendRequest(uint8_t pollInterval)
 {
     if (ReadState::Idle != _readState) {
         return announceStatus(Status::BusyReading);
@@ -89,7 +89,7 @@ void JkBmsSerial::sendRequest(uint8_t pollInterval)
         return announceStatus(Status::HwSerialNotAvailableForWrite);
     }
 
-    JkBmsSerialMessage readAll(JkBmsSerialMessage::Command::ReadAll);
+    SerialMessage readAll(SerialMessage::Command::ReadAll);
 
     if (Interface::Transceiver == getInterface()) {
         digitalWrite(_rxEnablePin, HIGH); // disable reception (of our own data)
@@ -110,7 +110,7 @@ void JkBmsSerial::sendRequest(uint8_t pollInterval)
     return announceStatus(Status::RequestSent);
 }
 
-void JkBmsSerial::loop()
+void ControllerClass::loop()
 {
     CONFIG_T& config = Configuration.get();
     uint8_t pollInterval = config.Battery_JkBmsPollingInterval;
@@ -135,7 +135,7 @@ void JkBmsSerial::loop()
     }
 }
 
-void JkBmsSerial::rxData(uint8_t inbyte)
+void ControllerClass::rxData(uint8_t inbyte)
 {
     _buffer.push_back(inbyte);
 
@@ -172,13 +172,13 @@ void JkBmsSerial::rxData(uint8_t inbyte)
     reset();
 }
 
-void JkBmsSerial::reset()
+void ControllerClass::reset()
 {
     _buffer.clear();
     return setReadState(ReadState::Idle);
 }
 
-void JkBmsSerial::frameComplete()
+void ControllerClass::frameComplete()
 {
     announceStatus(Status::FrameCompleted);
 
@@ -186,17 +186,17 @@ void JkBmsSerial::frameComplete()
         MessageOutput.printf("%02x ", b);
     }
     MessageOutput.println("");
-    auto pMsg = std::make_unique<JkBmsSerialMessage>(std::move(_buffer), _protocolVersion);
+    auto pMsg = std::make_unique<SerialMessage>(std::move(_buffer), _protocolVersion);
     if (pMsg->isValid()) {
         _pData = std::move(pMsg);
         _lastMessage = millis();
 
         processDataPoints();
-    } // if invalid, error message has been produced by JkBmsSerialMessage
+    } // if invalid, error message has been produced by SerialMessage
     reset();
 }
 
-void JkBmsSerial::processDataPoints()
+void ControllerClass::processDataPoints()
 {
     using Label = JkBms::DataPointLabel;
     auto const& dataPoints = _pData->getDataPoints();
@@ -240,7 +240,7 @@ void JkBmsSerial::processDataPoints()
     if (oDischargeEnabled.has_value()) { Battery.dischargeEnabled = *oDischargeEnabled; }
 }
 
-bool JkBmsSerial::isDataValid() {
+bool ControllerClass::isDataValid() {
     return false; // TODO
 }
 

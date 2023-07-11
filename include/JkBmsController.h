@@ -7,9 +7,9 @@
 
 namespace JkBms {
 
-class JkBmsSerial {
+class ControllerClass {
     public:
-        JkBmsSerial() = default;
+        ControllerClass() = default;
 
         void init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEnable);
         void loop();
@@ -67,14 +67,14 @@ class JkBmsSerial {
         int8_t _txEnablePin = -1;
         Status _lastStatus = Status::Initializing;
         uint32_t _lastStatusPrinted = 0;
-        JkBmsSerialMessage::tData _buffer = {};
         uint32_t _lastRequest = 0;
         uint32_t _lastMessage = 0;
         uint16_t _frameLength = 0;
         uint8_t _protocolVersion = -1;
-        std::unique_ptr<JkBmsSerialMessage const> _pData = nullptr;
+        SerialMessage::tData _buffer = {};
+        std::unique_ptr<SerialMessage const> _pData = nullptr;
 };
 
-extern JkBmsSerial Controller;
+extern ControllerClass Controller;
 
 } /* namespace JkBms */

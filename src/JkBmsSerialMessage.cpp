@@ -5,7 +5,7 @@
 
 namespace JkBms {
 
-JkBmsSerialMessage::JkBmsSerialMessage(Command cmd)
+SerialMessage::SerialMessage(Command cmd)
     : _raw(20, 0x00)
 {
     set(_raw.begin(), startMarker);
@@ -20,7 +20,7 @@ JkBmsSerialMessage::JkBmsSerialMessage(Command cmd)
 using Label = JkBms::DataPointLabel;
 template<Label L> using Traits = JkBms::DataPointLabelTraits<L>;
 
-JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw, uint8_t protocolVersion)
+SerialMessage::SerialMessage(tData const& raw, uint8_t protocolVersion)
     : _raw(raw)
 {
     if (!isValid()) { return; }
@@ -244,7 +244,7 @@ JkBmsSerialMessage::JkBmsSerialMessage(tData const& raw, uint8_t protocolVersion
  * NOTE that this function moves the iterator by the amount of bytes read.
  */
 template<typename T, typename It>
-T JkBmsSerialMessage::get(It&& pos) const
+T SerialMessage::get(It&& pos) const
 {
     // add easy-to-understand error message when called with non-const iter,
     // as compiler generated error message is hard to understand.
@@ -264,14 +264,14 @@ T JkBmsSerialMessage::get(It&& pos) const
 }
 
 template<typename It>
-bool JkBmsSerialMessage::getBool(It&& pos) const
+bool SerialMessage::getBool(It&& pos) const
 {
     uint8_t raw = get<uint8_t>(pos);
     return raw > 0;
 }
 
 template<typename It>
-int16_t JkBmsSerialMessage::getTemperature(It&& pos) const
+int16_t SerialMessage::getTemperature(It&& pos) const
 {
     uint16_t raw = get<uint16_t>(pos);
     if (raw <= 100) { return static_cast<int16_t>(raw); }
@@ -279,7 +279,7 @@ int16_t JkBmsSerialMessage::getTemperature(It&& pos) const
 }
 
 template<typename It>
-std::string JkBmsSerialMessage::getString(It&& pos, size_t len, bool replaceZeroes) const
+std::string SerialMessage::getString(It&& pos, size_t len, bool replaceZeroes) const
 {
     // avoid out-of-bound read
     len = std::min<size_t>(std::distance(pos, _raw.cend()), len);
@@ -298,7 +298,7 @@ std::string JkBmsSerialMessage::getString(It&& pos, size_t len, bool replaceZero
     return std::string(start, pos);
 }
 
-void JkBmsSerialMessage::processBatteryCurrent(JkBmsSerialMessage::tData::const_iterator& pos, uint8_t protocolVersion)
+void SerialMessage::processBatteryCurrent(SerialMessage::tData::const_iterator& pos, uint8_t protocolVersion)
 {
     uint16_t raw = get<uint16_t>(pos);
 
@@ -317,7 +317,7 @@ void JkBmsSerialMessage::processBatteryCurrent(JkBmsSerialMessage::tData::const_
 }
 
 template<typename T>
-void JkBmsSerialMessage::set(tData::iterator const& pos, T val)
+void SerialMessage::set(tData::iterator const& pos, T val)
 {
     // avoid out-of-bound write
     if (std::distance(pos, _raw.end()) < sizeof(T)) { return; }
@@ -327,34 +327,34 @@ void JkBmsSerialMessage::set(tData::iterator const& pos, T val)
     }
 }
 
-uint16_t JkBmsSerialMessage::calcChecksum() const
+uint16_t SerialMessage::calcChecksum() const
 {
     return std::accumulate(_raw.cbegin(), _raw.cend()-4, 0);
 }
 
-void JkBmsSerialMessage::updateChecksum()
+void SerialMessage::updateChecksum()
 {
     set(_raw.end()-2, calcChecksum());
 }
 
-bool JkBmsSerialMessage::isValid() const {
+bool SerialMessage::isValid() const {
     uint16_t const actualStartMarker = get<uint16_t>(_raw.cbegin());
     if (actualStartMarker != startMarker) {
-        MessageOutput.printf("JkBmsSerialMessage: invalid start marker %04x, expected 0x%04x\r\n",
+        MessageOutput.printf("JkBms::SerialMessage: invalid start marker %04x, expected 0x%04x\r\n",
             actualStartMarker, startMarker);
         return false;
     }
 
     uint16_t const frameLength = get<uint16_t>(_raw.cbegin()+2);
     if (frameLength != _raw.size() - 2) {
-        MessageOutput.printf("JkBmsSerialMessage: unexpected frame length %04x, expected 0x%04x\r\n",
+        MessageOutput.printf("JkBms::SerialMessage: unexpected frame length %04x, expected 0x%04x\r\n",
             frameLength, _raw.size() - 2);
         return false;
     }
 
     uint8_t const actualEndMarker = *(_raw.cend()-5);
     if (actualEndMarker != endMarker) {
-        MessageOutput.printf("JkBmsSerialMessage: invalid end marker %02x, expected 0x%02x\r\n",
+        MessageOutput.printf("JkBms::SerialMessage: invalid end marker %02x, expected 0x%02x\r\n",
             actualEndMarker, endMarker);
         return false;
     }
@@ -362,7 +362,7 @@ bool JkBmsSerialMessage::isValid() const {
     uint16_t const actualChecksum = get<uint16_t>(_raw.cend()-2);
     uint16_t const expectedChecksum = calcChecksum();
     if (actualChecksum != expectedChecksum) {
-        MessageOutput.printf("JkBmsSerialMessage: invalid checksum 0x%04x, expected 0x%04x\r\n",
+        MessageOutput.printf("JkBms::SerialMessage: invalid checksum 0x%04x, expected 0x%04x\r\n",
             actualChecksum, expectedChecksum);
         return false;
     }
