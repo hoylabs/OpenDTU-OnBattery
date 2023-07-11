@@ -89,7 +89,7 @@ void ControllerClass::sendRequest(uint8_t pollInterval)
         return announceStatus(Status::HwSerialNotAvailableForWrite);
     }
 
-    SerialMessage readAll(SerialMessage::Command::ReadAll);
+    SerialCommand readAll(SerialCommand::Command::ReadAll);
 
     if (Interface::Transceiver == getInterface()) {
         digitalWrite(_rxEnablePin, HIGH); // disable reception (of our own data)
@@ -186,13 +186,13 @@ void ControllerClass::frameComplete()
         MessageOutput.printf("%02x ", b);
     }
     MessageOutput.println("");
-    auto pMsg = std::make_unique<SerialMessage>(std::move(_buffer), _protocolVersion);
+    auto pMsg = std::make_unique<SerialResponse>(std::move(_buffer), _protocolVersion);
     if (pMsg->isValid()) {
         _pData = std::move(pMsg);
         _lastMessage = millis();
 
         processDataPoints();
-    } // if invalid, error message has been produced by SerialMessage
+    } // if invalid, error message has been produced by SerialResponse c'tor
     reset();
 }
 

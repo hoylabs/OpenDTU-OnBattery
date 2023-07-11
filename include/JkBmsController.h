@@ -71,8 +71,8 @@ class ControllerClass {
         uint32_t _lastMessage = 0;
         uint16_t _frameLength = 0;
         uint8_t _protocolVersion = -1;
-        SerialMessage::tData _buffer = {};
-        std::unique_ptr<SerialMessage const> _pData = nullptr;
+        SerialResponse::tData _buffer = {};
+        std::unique_ptr<SerialResponse const> _pData = nullptr;
 };
 
 extern ControllerClass Controller;

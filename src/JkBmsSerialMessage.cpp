@@ -5,8 +5,8 @@
 
 namespace JkBms {
 
-SerialMessage::SerialMessage(Command cmd)
-    : _raw(20, 0x00)
+SerialCommand::SerialCommand(SerialCommand::Command cmd)
+    : SerialMessage(20, 0x00)
 {
     set(_raw.begin(), startMarker);
     set(_raw.begin() + 2, static_cast<uint16_t>(_raw.size() - 2)); // frame length
@@ -18,10 +18,10 @@ SerialMessage::SerialMessage(Command cmd)
 }
 
 using Label = JkBms::DataPointLabel;
-template<Label L> using Traits = JkBms::DataPointLabelTraits<L>;
+template<Label L> using Traits = DataPointLabelTraits<L>;
 
-SerialMessage::SerialMessage(tData const& raw, uint8_t protocolVersion)
-    : _raw(raw)
+SerialResponse::SerialResponse(tData&& raw, uint8_t protocolVersion)
+    : SerialMessage(std::move(raw))
 {
     if (!isValid()) { return; }
 

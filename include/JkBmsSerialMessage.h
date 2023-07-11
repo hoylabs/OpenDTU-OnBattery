@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 #include <Arduino.h>
 
@@ -13,8 +14,6 @@ class SerialMessage {
 
         SerialMessage() = delete;
 
-        SerialMessage(tData const& raw, uint8_t protocolVersion = -1);
-
         enum class Command : uint8_t {
             Activate = 0x01,
             Write = 0x02,
@@ -23,7 +22,6 @@ class SerialMessage {
             ReadAll = 0x06
         };
 
-        SerialMessage(Command cmd);
         Command getCommand() const { return static_cast<Command>(_raw[8]); }
 
         enum class Source : uint8_t {
@@ -60,7 +58,10 @@ class SerialMessage {
 
         JkBms::DataPointContainer const& getDataPoints() const { return _dp; }
 
-    private:
+    protected:
+        template <typename... Args>
+        explicit SerialMessage(Args&&... args) : _raw(std::forward<Args>(args)...) { }
+
         template<typename T, typename It> T get(It&& pos) const;
         template<typename It> bool getBool(It&& pos) const;
         template<typename It> int16_t getTemperature(It&& pos) const;
@@ -75,6 +76,18 @@ class SerialMessage {
 
         static constexpr uint16_t startMarker = 0x4e57;
         static constexpr uint8_t endMarker = 0x68;
+};
+
+class SerialResponse : public SerialMessage {
+    public:
+        using tData = SerialMessage::tData;
+        explicit SerialResponse(tData&& raw, uint8_t protocolVersion = -1);
+};
+
+class SerialCommand : public SerialMessage {
+    public:
+        using Command = SerialMessage::Command;
+        explicit SerialCommand(Command cmd);
 };
 
 } /* namespace JkBms */
