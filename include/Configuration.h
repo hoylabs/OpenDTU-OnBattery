@@ -140,6 +140,7 @@ struct CONFIG_T {
     POWERMETER_HTTP_PHASE_CONFIG_T Powermeter_Http_Phase[POWERMETER_MAX_PHASES];
 
     bool PowerLimiter_Enabled;
+    bool PowerLimiter_VerboseLogging;
     bool PowerLimiter_SolarPassThroughEnabled;
     uint8_t PowerLimiter_SolarPassThroughLosses;
     uint8_t PowerLimiter_BatteryDrainStategy;
