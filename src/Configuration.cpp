@@ -125,6 +125,7 @@ bool ConfigurationClass::write()
 
     JsonObject powermeter = doc.createNestedObject("powermeter");
     powermeter["enabled"] = config.PowerMeter_Enabled;
+    powermeter["verbose_logging"] = config.PowerMeter_VerboseLogging;
     powermeter["interval"] = config.PowerMeter_Interval;
     powermeter["source"] = config.PowerMeter_Source;
     powermeter["mqtt_topic_powermeter_1"] = config.PowerMeter_MqttTopicPowerMeter1;
@@ -336,6 +337,7 @@ bool ConfigurationClass::read()
 
     JsonObject powermeter = doc["powermeter"];
     config.PowerMeter_Enabled = powermeter["enabled"] | POWERMETER_ENABLED;
+    config.PowerMeter_VerboseLogging = powermeter["verbose_logging"] | VERBOSE_LOGGING;
     config.PowerMeter_Interval =  powermeter["interval"] | POWERMETER_INTERVAL;
     config.PowerMeter_Source =  powermeter["source"] | POWERMETER_SOURCE;
     strlcpy(config.PowerMeter_MqttTopicPowerMeter1, powermeter["mqtt_topic_powermeter_1"] | "", sizeof(config.PowerMeter_MqttTopicPowerMeter1));

@@ -129,6 +129,7 @@ struct CONFIG_T {
     bool Mqtt_Hass_Expire;
 
     bool PowerMeter_Enabled;
+    bool PowerMeter_VerboseLogging;
     uint32_t PowerMeter_Interval;
     uint32_t PowerMeter_Source;
     char PowerMeter_MqttTopicPowerMeter1[MQTT_MAX_TOPIC_STRLEN + 1];

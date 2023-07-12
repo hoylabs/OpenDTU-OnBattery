@@ -499,6 +499,7 @@
         "PowerMeterSettings": "Stromzähler Einstellungen",
         "PowerMeterConfiguration": "Stromzähler Konfiguration",
         "PowerMeterEnable": "Aktiviere Stromzähler",
+        "VerboseLogging": "@:base.VerboseLogging",
         "PowerMeterParameter": "Power Meter Parameter",
         "PowerMeterSource": "Stromzählertyp",
         "MQTT": "MQTT Konfiguration",

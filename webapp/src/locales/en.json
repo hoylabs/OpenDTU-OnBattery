@@ -499,6 +499,7 @@
         "PowerMeterSettings": "Power Meter Settings",
         "PowerMeterConfiguration": "Power Meter Configuration",
         "PowerMeterEnable": "Enable Power Meter",
+        "VerboseLogging": "@:base.VerboseLogging",
         "PowerMeterParameter": "Power Meter Parameter",
         "PowerMeterSource": "Power Meter type",
         "MQTT": "MQTT Parameter",
