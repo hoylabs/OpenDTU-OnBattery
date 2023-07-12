@@ -28,6 +28,7 @@
         "Login": "Anmelden"
     },
     "base": {
+        "VerboseLogging": "Ausführliche Protokollierung",
         "Loading": "Lade...",
         "Reload": "Aktualisieren"
     },
@@ -450,6 +451,7 @@
         "MqttSettings": "MQTT-Einstellungen",
         "MqttConfiguration": "MQTT-Konfiguration",
         "EnableMqtt": "MQTT aktivieren",
+        "VerboseLogging": "@:base.VerboseLogging",
         "EnableHass": "Home Assistant MQTT-Auto-Discovery aktivieren",
         "MqttBrokerParameter": "MQTT-Broker-Parameter",
         "Hostname": "Hostname:",
@@ -531,7 +533,7 @@
         "PowerLimiterConfiguration": "Power Limiter Konfiguration",
         "General": "Allgemein",
         "Enable": "Aktiviert",
-        "VerboseLogging": "Ausführliche Protokollierung",
+        "VerboseLogging": "@:base.VerboseLogging",
         "EnableSolarPassthrough": "Aktiviere Solar-Passthrough",
         "SolarPassthroughLosses": "(Full) Solar-Passthrough Verluste:",
         "SolarPassthroughLossesInfo": "<b>Hinweis:</b> Bei der Übertragung von Energie vom Solarladeregler zum Inverter sind Leitungsverluste zu erwarten. Um eine schleichende Entladung der Batterie im (Full) Solar-Passthrough Modus zu unterbinden, können diese Verluste berücksichtigt werden. Das am Inverter einzustellende Power Limit wird nach Berücksichtigung von dessen Effizienz zusätzlich um diesen Faktor verringert.",
