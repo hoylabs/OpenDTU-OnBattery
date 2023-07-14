@@ -187,7 +187,11 @@ Topics for 3 phases of a power meter is configurable. Given is an example for th
 | --------------------------------------- | ----- | ---------------------------------------------------- | -------------------------- |
 | huawei/cmd/limit_online_voltage         | W     | Online voltage (i.e. CAN bus connected)              | Volt (V)                   |
 | huawei/cmd/limit_online_current         | W     | Online current (i.e. CAN bus connected)              | Ampere (A)                 |
-| huawei/cmd/mode                         | W     | Set PSU Mode - 0:Turned OFF 1:Turned ON 2:Internal on/off control, external power limit 3:Full internal control | 0 / 1                      |
+| huawei/cmd/mode                         | W     | Set PSU Mode - 
+                                                        0:Turned OFF 
+                                                        1:Turned ON 
+                                                        2:Internal on/off control, external power limit 
+                                                        3:Full internal control                          | 0 - 3                      |
 | huawei/data_age                         | R     | How old the data is                                  | Seconds                    |
 | huawei/input_voltage                    | R     | Input voltage                                        | Volt (V)                   |
 | huawei/input_current                    | R     | Input current                                        | Ampere (A)                 |
