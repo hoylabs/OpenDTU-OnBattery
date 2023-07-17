@@ -238,7 +238,7 @@ Print* HoymilesClass::getMessageOutput()
 
 class Silent : public Print {
     public:
-        virtual size_t write(uint8_t c) override final { return 0; }
+        size_t write(uint8_t c) final { return 0; }
 };
 
 Silent Dummy;
