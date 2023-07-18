@@ -132,7 +132,7 @@ cmd topics are used to set values. Status topics are updated from values set in 
 | battery/settings/dischargeCurrentLimitation | R | BMS requested max. discharge current                 | Ampere (A)                 |
 | battery/stateOfCharge                   | R     | State of Health                                      | %                          |
 | battery/stateOfHealth                   | R     | State of Charge                                      | %                          |
-| battery/dateAge                         | R     | How old the data is                                  | Seconds                    |
+| battery/dataAge                         | R     | How old the data is                                  | Seconds                    |
 | battery/voltage                         | R     | Actual voltage                                       | Volt (V)                   |
 | battery/current                         | R     | Actual current                                       | Ampere (A)                 |
 | battery/temperature"                    | R     | Actual temperature                                   | °C                         |
