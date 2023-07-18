@@ -553,9 +553,8 @@ bool PowerLimiterClass::isStartThresholdReached(std::shared_ptr<InverterAbstract
     // Check if the Battery interface is enabled and the SOC start threshold is reached
     if (config.Battery_Enabled
             && config.PowerLimiter_BatterySocStartThreshold > 0.0
-            && (millis() - Battery.stateOfChargeLastUpdate) < 60000
-            && Battery.stateOfCharge >= config.PowerLimiter_BatterySocStartThreshold) {
-        return true;
+            && (millis() - Battery.stateOfChargeLastUpdate) < 60000) {
+              return Battery.stateOfCharge >= config.PowerLimiter_BatterySocStartThreshold;
     }
 
     // Otherwise we use the voltage threshold
@@ -574,9 +573,8 @@ bool PowerLimiterClass::isStopThresholdReached(std::shared_ptr<InverterAbstract>
     // Check if the Battery interface is enabled and the SOC stop threshold is reached
     if (config.Battery_Enabled
             && config.PowerLimiter_BatterySocStopThreshold > 0.0
-            && (millis() - Battery.stateOfChargeLastUpdate) < 60000
-            && Battery.stateOfCharge <= config.PowerLimiter_BatterySocStopThreshold) {
-        return true;
+            && (millis() - Battery.stateOfChargeLastUpdate) < 60000) {
+              return Battery.stateOfCharge <= config.PowerLimiter_BatterySocStopThreshold;
     }
 
     // Otherwise we use the voltage threshold
@@ -640,9 +638,8 @@ bool PowerLimiterClass::useFullSolarPassthrough(std::shared_ptr<InverterAbstract
     // Check if the Battery interface is enabled and the SOC stop threshold is reached
     if (config.Battery_Enabled
             && config.PowerLimiter_FullSolarPassThroughSoc > 0.0
-            && (millis() - Battery.stateOfChargeLastUpdate) < 60000
-            && Battery.stateOfCharge >= config.PowerLimiter_FullSolarPassThroughSoc) {
-        return true;
+            && (millis() - Battery.stateOfChargeLastUpdate) < 60000) {
+              return Battery.stateOfCharge >= config.PowerLimiter_FullSolarPassThroughSoc;
     }
     
     // Otherwise we use the voltage threshold
