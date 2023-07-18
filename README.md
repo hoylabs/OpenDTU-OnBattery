@@ -161,7 +161,7 @@ Topics for 3 phases of a power meter is configurable. Given is an example for th
 | battery/settings/dischargeCurrentLimitation | R | BMS requested max. discharge current                 | Ampere (A)                 |
 | battery/stateOfCharge                   | R     | State of Health                                      | %                          |
 | battery/stateOfHealth                   | R     | State of Charge                                      | %                          |
-| battery/dateAge                         | R     | How old the data is                                  | Seconds                    |
+| battery/dataAge                         | R     | How old the data is                                  | Seconds                    |
 | battery/voltage                         | R     | Actual voltage                                       | Volt (V)                   |
 | battery/current                         | R     | Actual current                                       | Ampere (A)                 |
 | battery/temperature"                    | R     | Actual temperature                                   | °C                         |
