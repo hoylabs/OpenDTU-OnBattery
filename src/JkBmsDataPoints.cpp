@@ -1,17 +1,21 @@
+#include <stdio.h>
+
 #include "JkBmsDataPoints.h"
 
 namespace JkBms {
 
+static char conversionBuffer[16];
+
 template<typename T>
 std::string dataPointValueToStr(T const& v) {
-    std::ostringstream out;
-    out << v;
-    return out.str();
+    snprintf(conversionBuffer, sizeof(conversionBuffer), "%d", v);
+    return conversionBuffer;
 }
 
 // explicit instanciations for the above unspecialized implementation
 template std::string dataPointValueToStr(int16_t const& v);
 template std::string dataPointValueToStr(int32_t const& v);
+template std::string dataPointValueToStr(uint8_t const& v);
 template std::string dataPointValueToStr(uint16_t const& v);
 template std::string dataPointValueToStr(uint32_t const& v);
 
@@ -26,25 +30,19 @@ std::string dataPointValueToStr(bool const& v) {
 }
 
 template<>
-std::string dataPointValueToStr(uint8_t const& v) {
-    std::ostringstream out;
-    // this specialization is required as unsigned char is streamed as a
-    // character, rather than being interpreted as a decimal number.
-    out << static_cast<unsigned>(v);
-    return out.str();
-}
-
-template<>
 std::string dataPointValueToStr(tCells const& v) {
-    std::ostringstream out;
-    out << "(";
+    std::string res;
+    res.reserve(v.size()*(2+2+1+4)); // separator, index, equal sign, value
+    res += "(";
     std::string sep = "";
     for(auto const& mapval : v) {
-        out << sep << static_cast<unsigned>(mapval.first) << " = " << mapval.second;
+        snprintf(conversionBuffer, sizeof(conversionBuffer), "%s%d=%d",
+                sep.c_str(), mapval.first, mapval.second);
+        res += conversionBuffer;
         sep = ", ";
     }
-    out << ")";
-    return out.str();
+    res += ")";
+    return std::move(res);
 }
 
 void DataPointContainer::updateFrom(DataPointContainer const& source)
