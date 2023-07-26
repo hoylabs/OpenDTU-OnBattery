@@ -4,9 +4,9 @@
 #include "ArduinoJson.h"
 #include <ESPAsyncWebServer.h>
 
-class WebApiWsPylontechLiveClass {
+class WebApiWsBatteryLiveClass {
 public:
-    WebApiWsPylontechLiveClass();
+    WebApiWsBatteryLiveClass();
     void init(AsyncWebServer* server);
     void loop();
 

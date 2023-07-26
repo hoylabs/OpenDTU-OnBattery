@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2022 Thomas Basler and others
  */
-#include "WebApi_ws_Pylontech.h"
+#include "WebApi_ws_battery.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
 #include "Battery.h"
@@ -10,12 +10,12 @@
 #include "WebApi.h"
 #include "defaults.h"
 
-WebApiWsPylontechLiveClass::WebApiWsPylontechLiveClass()
+WebApiWsBatteryLiveClass::WebApiWsBatteryLiveClass()
     : _ws("/batterylivedata")
 {
 }
 
-void WebApiWsPylontechLiveClass::init(AsyncWebServer* server)
+void WebApiWsBatteryLiveClass::init(AsyncWebServer* server)
 {
     using std::placeholders::_1;
     using std::placeholders::_2;
@@ -25,13 +25,13 @@ void WebApiWsPylontechLiveClass::init(AsyncWebServer* server)
     using std::placeholders::_6;
 
     _server = server;
-    _server->on("/api/batterylivedata/status", HTTP_GET, std::bind(&WebApiWsPylontechLiveClass::onLivedataStatus, this, _1));
+    _server->on("/api/batterylivedata/status", HTTP_GET, std::bind(&WebApiWsBatteryLiveClass::onLivedataStatus, this, _1));
 
     _server->addHandler(&_ws);
-    _ws.onEvent(std::bind(&WebApiWsPylontechLiveClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
+    _ws.onEvent(std::bind(&WebApiWsBatteryLiveClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
 }
 
-void WebApiWsPylontechLiveClass::loop()
+void WebApiWsBatteryLiveClass::loop()
 {
     // see: https://github.com/me-no-dev/ESPAsyncWebServer#limiting-the-number-of-web-socket-clients
     if (millis() - _lastWsCleanup > 1000) {
@@ -73,7 +73,7 @@ void WebApiWsPylontechLiveClass::loop()
         }
 }
 
-void WebApiWsPylontechLiveClass::generateJsonResponse(JsonVariant& root)
+void WebApiWsBatteryLiveClass::generateJsonResponse(JsonVariant& root)
 {
     root["data_age"] = (millis() - Battery.lastUpdate) / 1000;
 
@@ -121,7 +121,7 @@ void WebApiWsPylontechLiveClass::generateJsonResponse(JsonVariant& root)
 
 }
 
-void WebApiWsPylontechLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
+void WebApiWsBatteryLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
 {
     if (type == WS_EVT_CONNECT) {
         char str[64];
@@ -136,7 +136,7 @@ void WebApiWsPylontechLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncW
     }
 }
 
-void WebApiWsPylontechLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
+void WebApiWsBatteryLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
 {
     if (!WebApi.checkCredentialsReadonly(request)) {
         return;
