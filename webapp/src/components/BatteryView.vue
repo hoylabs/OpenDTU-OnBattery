@@ -295,7 +295,7 @@ export default defineComponent({
       console.log("Get initalData for Battery");
       this.dataLoading = true;
 
-      fetch("/api/battery/livedata", { headers: authHeader() })
+      fetch("/api/batterylivedata/status", { headers: authHeader() })
         .then((response) => handleResponse(response, this.$emitter, this.$router))
         .then((data) => {
           this.batteryData = data;
