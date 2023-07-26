@@ -229,7 +229,7 @@ void ControllerClass::processDataPoints(DataPointContainer const& dataPoints)
             manufacturer = oProductId->substr(pos);
         }
     }
-    strlcpy(Battery.manufacturer, manufacturer.c_str(), sizeof(Battery.manufacturer));
+    Battery.manufacturer = std::move(manufacturer);
 
     auto oChargeEnabled = dataPoints.get<Label::BatteryChargeEnabled>();
     if (oChargeEnabled.has_value()) { Battery.chargeEnabled = *oChargeEnabled; }

@@ -141,7 +141,7 @@ void PylontechCanReceiverClass::mqtt()
     MqttSettings.publish(topic + "/warning/highVoltage", String(Battery.warningHighVoltage));
     MqttSettings.publish(topic + "/warning/bmsInternal", String(Battery.warningBmsInternal));
     MqttSettings.publish(topic + "/warning/highCurrentCharge", String(Battery.warningHighCurrentCharge));
-    MqttSettings.publish(topic + "/manufacturer", Battery.manufacturer);
+    MqttSettings.publish(topic + "/manufacturer", Battery.manufacturer.c_str());
     MqttSettings.publish(topic + "/charging/chargeEnabled", String(Battery.chargeEnabled));
     MqttSettings.publish(topic + "/charging/dischargeEnabled", String(Battery.dischargeEnabled));
     MqttSettings.publish(topic + "/charging/chargeImmediately", String(Battery.chargeImmediately));
@@ -260,18 +260,16 @@ void PylontechCanReceiverClass::parseCanPackets()
         }
 
         case 0x35E: {
-            String manufacturer = String(rx_message.data, rx_message.data_length_code);
-            //CAN.readString();
+            std::string manufacturer(reinterpret_cast<char*>(rx_message.data),
+                    rx_message.data_length_code);
 
-            if (manufacturer == "") {
-                break;
-            }
-
-            strlcpy(Battery.manufacturer, manufacturer.c_str(), sizeof(Battery.manufacturer));
+            if (manufacturer.empty()) { break; }
 
 #ifdef PYLONTECH_DEBUG_ENABLED
             MessageOutput.printf("[Pylontech] Manufacturer: %s\n", manufacturer.c_str());
-#endif   
+#endif
+
+            Battery.manufacturer = std::move(manufacturer);
             break;
         }
 
