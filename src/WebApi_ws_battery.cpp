@@ -68,9 +68,9 @@ void WebApiWsBatteryLiveClass::loop()
 
             _ws.textAll(buffer);
         }
-            } catch (std::bad_alloc& bad_alloc) {
-            MessageOutput.printf("Calling /api/livedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
-        }
+    } catch (std::bad_alloc& bad_alloc) {
+        MessageOutput.printf("Calling /api/batterylivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
+    }
 }
 
 void WebApiWsBatteryLiveClass::generateJsonResponse(JsonVariant& root)
@@ -124,15 +124,9 @@ void WebApiWsBatteryLiveClass::generateJsonResponse(JsonVariant& root)
 void WebApiWsBatteryLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
 {
     if (type == WS_EVT_CONNECT) {
-        char str[64];
-        snprintf(str, sizeof(str), "Websocket: [%s][%u] connect", server->url(), client->id());
-        Serial.println(str);
-        MessageOutput.println(str);
+        MessageOutput.printf("Websocket: [%s][%u] connect\r\n", server->url(), client->id());
     } else if (type == WS_EVT_DISCONNECT) {
-        char str[64];
-        snprintf(str, sizeof(str), "Websocket: [%s][%u] disconnect", server->url(), client->id());
-        Serial.println(str);
-        MessageOutput.println(str);
+        MessageOutput.printf("Websocket: [%s][%u] disconnect\r\n", server->url(), client->id());
     }
 }
 
@@ -149,7 +143,7 @@ void WebApiWsBatteryLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
         response->setLength();
         request->send(response);
     } catch (std::bad_alloc& bad_alloc) {
-        MessageOutput.printf("Calling /api/livedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
+        MessageOutput.printf("Calling /api/batterylivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
 
         WebApi.sendTooManyRequests(request);
     }
