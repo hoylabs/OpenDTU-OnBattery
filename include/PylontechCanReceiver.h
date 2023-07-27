@@ -7,14 +7,6 @@
 #include <Arduino.h>
 #include <memory>
 
-#ifndef PYLONTECH_PIN_RX
-#define PYLONTECH_PIN_RX 27
-#endif
-
-#ifndef PYLONTECH_PIN_TX
-#define PYLONTECH_PIN_TX 26
-#endif
-
 class PylontechCanReceiverClass {
 public:
     void init(int8_t rx, int8_t tx);
