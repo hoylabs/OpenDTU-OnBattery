@@ -20,17 +20,10 @@ SoftwareSerial inputSerial;
 
 void PowerMeterClass::init()
 {
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-    using std::placeholders::_3;
-    using std::placeholders::_4;
-    using std::placeholders::_5;
-    using std::placeholders::_6;
-
     _lastPowerMeterCheck = 0;
     _lastPowerMeterUpdate = 0;
 
-    for (auto const& t: _mqttSubscriptions) { MqttSettings.unsubscribe(t); }
+    for (auto const& s: _mqttSubscriptions) { MqttSettings.unsubscribe(s.first); }
     _mqttSubscriptions.clear();
 
     CONFIG_T& config = Configuration.get();
@@ -41,16 +34,20 @@ void PowerMeterClass::init()
 
     switch(config.PowerMeter_Source) {
     case SOURCE_MQTT: {
-        auto subscribe = [this](char const* topic) {
+        auto subscribe = [this](char const* topic, float* target) {
             if (strlen(topic) == 0) { return; }
-            MqttSettings.subscribe(topic, 0, std::bind(&PowerMeterClass::onMqttMessage,
-                        this, _1, _2, _3, _4, _5, _6));
-            _mqttSubscriptions.push_back(topic);
+            MqttSettings.subscribe(topic, 0,
+                    std::bind(&PowerMeterClass::onMqttMessage,
+                        this, std::placeholders::_1, std::placeholders::_2,
+                        std::placeholders::_3, std::placeholders::_4,
+                        std::placeholders::_5, std::placeholders::_6)
+                    );
+            _mqttSubscriptions.try_emplace(topic, target);
         };
 
-        subscribe(config.PowerMeter_MqttTopicPowerMeter1);
-        subscribe(config.PowerMeter_MqttTopicPowerMeter2);
-        subscribe(config.PowerMeter_MqttTopicPowerMeter3);
+        subscribe(config.PowerMeter_MqttTopicPowerMeter1, &_powerMeter1Power);
+        subscribe(config.PowerMeter_MqttTopicPowerMeter2, &_powerMeter2Power);
+        subscribe(config.PowerMeter_MqttTopicPowerMeter3, &_powerMeter3Power);
         break;
     }
 
@@ -75,18 +72,12 @@ void PowerMeterClass::init()
 
 void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total)
 {
-    CONFIG_T& config = Configuration.get();
-
-    if (!config.PowerMeter_Enabled || config.PowerMeter_Source != SOURCE_MQTT) {
-        return;
-    }
-
-    auto processTopic = [this,&topic,&payload,&len](char const* expected, float& target) {
-        if (strcmp(topic, expected) != 0) { return; }
+    for (auto const& subscription: _mqttSubscriptions) {
+        if (subscription.first != topic) { continue; }
 
         std::string value(reinterpret_cast<const char*>(payload), len);
         try {
-            target = std::stof(value);
+            *subscription.second = std::stof(value);
         }
         catch(std::invalid_argument const& e) {
             MessageOutput.printf("PowerMeterClass: cannot parse payload of topic '%s' as float: %s\r\n",
@@ -100,11 +91,7 @@ void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties&
         }
 
         _lastPowerMeterUpdate = millis();
-    };
-
-    processTopic(config.PowerMeter_MqttTopicPowerMeter1, _powerMeter1Power);
-    processTopic(config.PowerMeter_MqttTopicPowerMeter2, _powerMeter2Power);
-    processTopic(config.PowerMeter_MqttTopicPowerMeter3, _powerMeter3Power);
+    }
 }
 
 float PowerMeterClass::getPowerTotal(bool forceUpdate)
