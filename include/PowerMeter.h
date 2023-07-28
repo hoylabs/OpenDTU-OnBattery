@@ -4,8 +4,8 @@
 #include "Configuration.h"
 #include <espMqttClient.h>
 #include <Arduino.h>
-#include <Hoymiles.h>
-#include <memory>
+#include <vector>
+#include <list>
 #include "SDM.h"
 #include "sml.h"
 
@@ -59,7 +59,7 @@ private:
     float _powerMeterImport = 0.0;
     float _powerMeterExport = 0.0;
 
-    bool mqttInitDone = false;
+    std::vector<String> _mqttSubscriptions;
 
     void readPowerMeter();
 

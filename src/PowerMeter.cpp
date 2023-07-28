@@ -30,43 +30,47 @@ void PowerMeterClass::init()
     _lastPowerMeterCheck = 0;
     _lastPowerMeterUpdate = 0;
 
+    for (auto const& t: _mqttSubscriptions) { MqttSettings.unsubscribe(t); }
+    _mqttSubscriptions.clear();
+
     CONFIG_T& config = Configuration.get();
-    
+
     if (!config.PowerMeter_Enabled) {
         return;
     }
 
-    if (config.PowerMeter_Source == SOURCE_MQTT) {
-        if (strlen(config.PowerMeter_MqttTopicPowerMeter1) > 0) {
-            MqttSettings.subscribe(config.PowerMeter_MqttTopicPowerMeter1, 0, std::bind(&PowerMeterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
-        }
+    switch(config.PowerMeter_Source) {
+    case SOURCE_MQTT: {
+        auto subscribe = [this](char const* topic) {
+            if (strlen(topic) == 0) { return; }
+            MqttSettings.subscribe(topic, 0, std::bind(&PowerMeterClass::onMqttMessage,
+                        this, _1, _2, _3, _4, _5, _6));
+            _mqttSubscriptions.push_back(topic);
+        };
 
-        if (strlen(config.PowerMeter_MqttTopicPowerMeter2) > 0) {
-            MqttSettings.subscribe(config.PowerMeter_MqttTopicPowerMeter2, 0, std::bind(&PowerMeterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
-        }
-
-        if (strlen(config.PowerMeter_MqttTopicPowerMeter3) > 0) {
-            MqttSettings.subscribe(config.PowerMeter_MqttTopicPowerMeter3, 0, std::bind(&PowerMeterClass::onMqttMessage, this, _1, _2, _3, _4, _5, _6));
-        }
+        subscribe(config.PowerMeter_MqttTopicPowerMeter1);
+        subscribe(config.PowerMeter_MqttTopicPowerMeter2);
+        subscribe(config.PowerMeter_MqttTopicPowerMeter3);
+        break;
     }
 
-    if(config.PowerMeter_Source == SOURCE_SDM1PH || config.PowerMeter_Source == SOURCE_SDM3PH) {
+    case SOURCE_SDM1PH:
+    case SOURCE_SDM3PH:
         sdm.begin();
-    }
+        break;
 
-    if (config.PowerMeter_Source == SOURCE_HTTP) {
+    case SOURCE_HTTP:
         HttpPowerMeter.init();
-    }
+        break;
 
-    if (config.PowerMeter_Source == SOURCE_SML) {
+    case SOURCE_SML:
         pinMode(SML_RX_PIN, INPUT);
         inputSerial.begin(9600, SWSERIAL_8N1, SML_RX_PIN, -1, false, 128, 95);
         inputSerial.enableRx(true);
         inputSerial.enableTx(false);
         inputSerial.flush();
+        break;
     }
-
-    mqttInitDone = true;
 }
 
 void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total)
