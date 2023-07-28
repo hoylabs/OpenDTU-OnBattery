@@ -77,7 +77,7 @@ void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties&
         return;
     }
 
-    auto processTopic = [&topic,&payload,&len](char const* expected, float& target) {
+    auto processTopic = [this,&topic,&payload,&len](char const* expected, float& target) {
         if (strcmp(topic, expected) != 0) { return; }
 
         std::string value(reinterpret_cast<const char*>(payload), len);
@@ -87,18 +87,20 @@ void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties&
         catch(std::invalid_argument const& e) {
             MessageOutput.printf("PowerMeterClass: cannot parse payload of topic '%s' as float: %s\r\n",
                     topic, value.c_str());
+            return;
         }
+
+        if (_verboseLogging) {
+            MessageOutput.printf("PowerMeterClass: Updated from '%s', TotalPower: %5.2f\r\n",
+                    topic, getPowerTotal());
+        }
+
+        _lastPowerMeterUpdate = millis();
     };
 
     processTopic(config.PowerMeter_MqttTopicPowerMeter1, _powerMeter1Power);
     processTopic(config.PowerMeter_MqttTopicPowerMeter2, _powerMeter2Power);
     processTopic(config.PowerMeter_MqttTopicPowerMeter3, _powerMeter3Power);
-
-    if (_verboseLogging) {
-        MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\r\n", getPowerTotal());
-    }
-
-    _lastPowerMeterUpdate = millis();
 }
 
 float PowerMeterClass::getPowerTotal(bool forceUpdate)
