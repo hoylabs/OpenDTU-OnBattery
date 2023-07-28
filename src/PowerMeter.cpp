@@ -77,17 +77,22 @@ void PowerMeterClass::onMqttMessage(const espMqttClientTypes::MessageProperties&
         return;
     }
 
-    if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter1) == 0) {
-        _powerMeter1Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
-    }
+    auto processTopic = [&topic,&payload,&len](char const* expected, float& target) {
+        if (strcmp(topic, expected) != 0) { return; }
 
-    if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter2) == 0) {
-        _powerMeter2Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
-    }
+        std::string value(reinterpret_cast<const char*>(payload), len);
+        try {
+            target = std::stof(value);
+        }
+        catch(std::invalid_argument const& e) {
+            MessageOutput.printf("PowerMeterClass: cannot parse payload of topic '%s' as float: %s\r\n",
+                    topic, value.c_str());
+        }
+    };
 
-    if (strcmp(topic, config.PowerMeter_MqttTopicPowerMeter3) == 0) {
-        _powerMeter3Power = std::stof(std::string(reinterpret_cast<const char*>(payload), (unsigned int)len));
-    }
+    processTopic(config.PowerMeter_MqttTopicPowerMeter1, _powerMeter1Power);
+    processTopic(config.PowerMeter_MqttTopicPowerMeter2, _powerMeter2Power);
+    processTopic(config.PowerMeter_MqttTopicPowerMeter3, _powerMeter3Power);
 
     if (_verboseLogging) {
         MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\r\n", getPowerTotal());
