@@ -81,9 +81,9 @@ private:
     void commitPowerLimit(std::shared_ptr<InverterAbstract> inverter, int32_t limit, bool enablePowerProduction);
     bool setNewPowerLimit(std::shared_ptr<InverterAbstract> inverter, int32_t newPowerLimit);
     int32_t getSolarChargePower();
-    float getLoadCorrectedVoltage(std::shared_ptr<InverterAbstract> inverter);
-    bool isStartThresholdReached(std::shared_ptr<InverterAbstract> inverter);
-    bool isStopThresholdReached(std::shared_ptr<InverterAbstract> inverter);
+    float getLoadCorrectedVoltage();
+    bool isStartThresholdReached();
+    bool isStopThresholdReached();
     bool useFullSolarPassthrough(std::shared_ptr<InverterAbstract> inverter);
 };
 

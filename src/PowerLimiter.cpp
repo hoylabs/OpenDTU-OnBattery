@@ -254,19 +254,19 @@ void PowerLimiterClass::loop()
 
     // Battery charging cycle conditions
     // First we always disable discharge if the battery is empty
-    if (isStopThresholdReached(_inverter)) {
+    if (isStopThresholdReached()) {
       // Disable battery discharge when empty
       _batteryDischargeEnabled = false;
     } else {
       // UI: Solar Passthrough Enabled -> false
       // Battery discharge can be enabled when start threshold is reached
-      if (!config.PowerLimiter_SolarPassThroughEnabled && isStartThresholdReached(_inverter)) {
+      if (!config.PowerLimiter_SolarPassThroughEnabled && isStartThresholdReached()) {
         _batteryDischargeEnabled = true;
       }
 
       // UI: Solar Passthrough Enabled -> true && EMPTY_AT_NIGHT
       if (config.PowerLimiter_SolarPassThroughEnabled && config.PowerLimiter_BatteryDrainStategy == EMPTY_AT_NIGHT) {
-        if(isStartThresholdReached(_inverter)) {
+        if(isStartThresholdReached()) {
             // In this case we should only discharge the battery as long it is above startThreshold
             _batteryDischargeEnabled = true;
         }
@@ -278,7 +278,7 @@ void PowerLimiterClass::loop()
 
       // UI: Solar Passthrough Enabled -> true && EMPTY_WHEN_FULL
       // Battery discharge can be enabled when start threshold is reached
-      if (config.PowerLimiter_SolarPassThroughEnabled && isStartThresholdReached(_inverter) && config.PowerLimiter_BatteryDrainStategy == EMPTY_WHEN_FULL) {
+      if (config.PowerLimiter_SolarPassThroughEnabled && isStartThresholdReached() && config.PowerLimiter_BatteryDrainStategy == EMPTY_WHEN_FULL) {
         _batteryDischargeEnabled = true;
       }
     }
@@ -291,13 +291,13 @@ void PowerLimiterClass::loop()
 
         float dcVoltage = _inverter->Statistics()->getChannelFieldValue(TYPE_DC, (ChannelNum_t)config.PowerLimiter_InverterChannelId, FLD_UDC);
         MessageOutput.printf("[DPL::loop] dcVoltage: %.2f V, loadCorrectedVoltage: %.2f V, StartTH: %.2f V, StopTH: %.2f V\r\n",
-                dcVoltage, getLoadCorrectedVoltage(_inverter),
+                dcVoltage, getLoadCorrectedVoltage(),
                 config.PowerLimiter_VoltageStartThreshold,
                 config.PowerLimiter_VoltageStopThreshold);
 
         MessageOutput.printf("[DPL::loop] StartTH reached: %s, StopTH reached: %s, inverter %s producing\r\n",
-                (isStartThresholdReached(_inverter)?"yes":"no"),
-                (isStopThresholdReached(_inverter)?"yes":"no"),
+                (isStartThresholdReached()?"yes":"no"),
+                (isStopThresholdReached()?"yes":"no"),
                 (_inverter->isProducing()?"is":"is NOT"));
 
         MessageOutput.printf("[DPL::loop] SolarPT %s, Drain Strategy: %i, canUseDirectSolarPower: %s\r\n",
@@ -411,6 +411,7 @@ bool PowerLimiterClass::canUseDirectSolarPower()
     CONFIG_T& config = Configuration.get();
 
     if (!config.PowerLimiter_SolarPassThroughEnabled
+            || isStopThresholdReached()
             || !config.Vedirect_Enabled
             || !VeDirect.isDataValid()) {
         return false;
@@ -577,12 +578,19 @@ int32_t PowerLimiterClass::getSolarChargePower()
     return VeDirect.veFrame.V * VeDirect.veFrame.I;
 }
 
-float PowerLimiterClass::getLoadCorrectedVoltage(std::shared_ptr<InverterAbstract> inverter)
+float PowerLimiterClass::getLoadCorrectedVoltage()
 {
+    if (!_inverter) {
+        // there should be no need to call this method if no target inverter is known
+        MessageOutput.println(F("DPL getLoadCorrectedVoltage: no inverter (programmer error)"));
+        return 0.0;
+    }
+
     CONFIG_T& config = Configuration.get();
 
-    float acPower = inverter->Statistics()->getChannelFieldValue(TYPE_AC, (ChannelNum_t) config.PowerLimiter_InverterChannelId, FLD_PAC);
-    float dcVoltage = inverter->Statistics()->getChannelFieldValue(TYPE_DC, (ChannelNum_t) config.PowerLimiter_InverterChannelId, FLD_UDC); 
+    auto channel = static_cast<ChannelNum_t>(config.PowerLimiter_InverterChannelId);
+    float acPower = _inverter->Statistics()->getChannelFieldValue(TYPE_AC, channel, FLD_PAC);
+    float dcVoltage = _inverter->Statistics()->getChannelFieldValue(TYPE_DC, channel, FLD_UDC);
 
     if (dcVoltage <= 0.0) {
         return 0.0;
@@ -591,7 +599,7 @@ float PowerLimiterClass::getLoadCorrectedVoltage(std::shared_ptr<InverterAbstrac
     return dcVoltage + (acPower * config.PowerLimiter_VoltageLoadCorrectionFactor);
 }
 
-bool PowerLimiterClass::isStartThresholdReached(std::shared_ptr<InverterAbstract> inverter)
+bool PowerLimiterClass::isStartThresholdReached()
 {
     CONFIG_T& config = Configuration.get();
 
@@ -607,11 +615,11 @@ bool PowerLimiterClass::isStartThresholdReached(std::shared_ptr<InverterAbstract
         return false;
     }
 
-    float correctedDcVoltage = getLoadCorrectedVoltage(inverter);
+    float correctedDcVoltage = getLoadCorrectedVoltage();
     return correctedDcVoltage >= config.PowerLimiter_VoltageStartThreshold;
 }
 
-bool PowerLimiterClass::isStopThresholdReached(std::shared_ptr<InverterAbstract> inverter)
+bool PowerLimiterClass::isStopThresholdReached()
 {
     CONFIG_T& config = Configuration.get();
 
@@ -627,7 +635,7 @@ bool PowerLimiterClass::isStopThresholdReached(std::shared_ptr<InverterAbstract>
         return false;
     }
 
-    float correctedDcVoltage = getLoadCorrectedVoltage(inverter);
+    float correctedDcVoltage = getLoadCorrectedVoltage();
     return correctedDcVoltage <= config.PowerLimiter_VoltageStopThreshold;
 }
 
