@@ -411,7 +411,7 @@ bool PowerLimiterClass::canUseDirectSolarPower()
     CONFIG_T& config = Configuration.get();
 
     if (!config.PowerLimiter_SolarPassThroughEnabled
-            || isStopThresholdReached()
+            || isBelowStopThreshold()
             || !config.Vedirect_Enabled
             || !VeDirect.isDataValid()) {
         return false;
@@ -599,44 +599,54 @@ float PowerLimiterClass::getLoadCorrectedVoltage()
     return dcVoltage + (acPower * config.PowerLimiter_VoltageLoadCorrectionFactor);
 }
 
+bool PowerLimiterClass::testThreshold(float socThreshold, float voltThreshold,
+        std::function<bool(float, float)> compare)
+{
+    CONFIG_T& config = Configuration.get();
+
+    // prefer SoC provided through battery interface
+    if (config.Battery_Enabled && socThreshold > 0.0
+            && (millis() - Battery.stateOfChargeLastUpdate) < 60000) {
+              return compare(Battery.stateOfCharge, socThreshold);
+    }
+
+    // use voltage threshold as fallback
+    if (voltThreshold <= 0.0) { return false; }
+
+    return compare(getLoadCorrectedVoltage(), voltThreshold);
+}
+
 bool PowerLimiterClass::isStartThresholdReached()
 {
     CONFIG_T& config = Configuration.get();
 
-    // Check if the Battery interface is enabled and the SOC start threshold is reached
-    if (config.Battery_Enabled
-            && config.PowerLimiter_BatterySocStartThreshold > 0.0
-            && (millis() - Battery.stateOfChargeLastUpdate) < 60000) {
-              return Battery.stateOfCharge >= config.PowerLimiter_BatterySocStartThreshold;
-    }
-
-    // Otherwise we use the voltage threshold
-    if (config.PowerLimiter_VoltageStartThreshold <= 0.0) {
-        return false;
-    }
-
-    float correctedDcVoltage = getLoadCorrectedVoltage();
-    return correctedDcVoltage >= config.PowerLimiter_VoltageStartThreshold;
+    return testThreshold(
+            config.PowerLimiter_BatterySocStartThreshold,
+            config.PowerLimiter_VoltageStartThreshold,
+            [](float a, float b) -> bool { return a >= b; }
+    );
 }
 
 bool PowerLimiterClass::isStopThresholdReached()
 {
     CONFIG_T& config = Configuration.get();
 
-    // Check if the Battery interface is enabled and the SOC stop threshold is reached
-    if (config.Battery_Enabled
-            && config.PowerLimiter_BatterySocStopThreshold > 0.0
-            && (millis() - Battery.stateOfChargeLastUpdate) < 60000) {
-              return Battery.stateOfCharge <= config.PowerLimiter_BatterySocStopThreshold;
-    }
+    return testThreshold(
+            config.PowerLimiter_BatterySocStopThreshold,
+            config.PowerLimiter_VoltageStopThreshold,
+            [](float a, float b) -> bool { return a <= b; }
+    );
+}
 
-    // Otherwise we use the voltage threshold
-    if (config.PowerLimiter_VoltageStopThreshold <= 0.0) {
-        return false;
-    }
+bool PowerLimiterClass::isBelowStopThreshold()
+{
+    CONFIG_T& config = Configuration.get();
 
-    float correctedDcVoltage = getLoadCorrectedVoltage();
-    return correctedDcVoltage <= config.PowerLimiter_VoltageStopThreshold;
+    return testThreshold(
+            config.PowerLimiter_BatterySocStopThreshold,
+            config.PowerLimiter_VoltageStopThreshold,
+            [](float a, float b) -> bool { return a < b; }
+    );
 }
 
 /// @brief calculate next inverter restart in millis
