@@ -1,5 +1,5 @@
 export interface BatteryConfig {
     enabled: boolean;
-    protocol: number;
+    provider: number;
     jkbms_polling_interval: number;
 }

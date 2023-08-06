@@ -39,7 +39,7 @@ void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
     const CONFIG_T& config = Configuration.get();
 
     root[F("enabled")] = config.Battery_Enabled;
-    root[F("protocol")] = config.Battery_Protocol;
+    root[F("provider")] = config.Battery_Provider;
     root[F("jkbms_polling_interval")] = config.Battery_JkBmsPollingInterval;
 
     response->setLength();
@@ -90,7 +90,7 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
-    if (!root.containsKey(F("enabled")) || !root.containsKey(F("protocol"))) {
+    if (!root.containsKey(F("enabled")) || !root.containsKey(F("provider"))) {
         retMsg[F("message")] = F("Values are missing!");
         retMsg[F("code")] = WebApiError::GenericValueMissing;
         response->setLength();
@@ -100,7 +100,7 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
 
     CONFIG_T& config = Configuration.get();
     config.Battery_Enabled = root[F("enabled")].as<bool>();
-    config.Battery_Protocol = root[F("protocol")].as<uint8_t>();
+    config.Battery_Provider = root[F("provider")].as<uint8_t>();
     config.Battery_JkBmsPollingInterval = root[F("jkbms_polling_interval")].as<uint8_t>();
     Configuration.write();
 

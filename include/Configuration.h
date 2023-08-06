@@ -166,7 +166,7 @@ struct CONFIG_T {
     float PowerLimiter_FullSolarPassThroughStopVoltage;
 
     bool Battery_Enabled;
-    uint8_t Battery_Protocol;
+    uint8_t Battery_Provider;
     uint8_t Battery_JkBmsPollingInterval;
 
     bool Huawei_Enabled;

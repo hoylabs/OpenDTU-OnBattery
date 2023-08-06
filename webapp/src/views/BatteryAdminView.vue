@@ -15,14 +15,14 @@
                         {{ $t('batteryadmin.Protocol') }}
                     </label>
                     <div class="col-sm-10">
-                        <select class="form-select" v-model="batteryConfigList.protocol">
-                            <option v-for="proto in protocolTypeList" :key="proto.key" :value="proto.key">
-                                {{ $t(`batteryadmin.Protocol` + proto.value) }}
+                        <select class="form-select" v-model="batteryConfigList.provider">
+                            <option v-for="provider in providerTypeList" :key="provider.key" :value="provider.key">
+                                {{ $t(`batteryadmin.Protocol` + provider.value) }}
                             </option>
                         </select>
                     </div>
                 </div>
-                <InputElement v-show="batteryConfigList.enabled && batteryConfigList.protocol >= 1 && batteryConfigList.protocol <= 2"
+                <InputElement v-show="batteryConfigList.enabled && batteryConfigList.provider >= 1 && batteryConfigList.provider <= 2"
                               :label="$t('batteryadmin.PollingInterval')"
                               v-model="batteryConfigList.jkbms_polling_interval"
                               type="number" min="2" max="90" step="1" :postfix="$t('batteryadmin.Seconds')"/>
@@ -56,7 +56,7 @@ export default defineComponent({
             alertMessage: "",
             alertType: "info",
             showAlert: false,
-            protocolTypeList: [
+            providerTypeList: [
                 { key: 0, value: 'PylontechCan' },
                 { key: 1, value: 'JkBmsSerialUart' },
                 { key: 2, value: 'JkBmsSerialTransceiver' },

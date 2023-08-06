@@ -34,8 +34,8 @@ ControllerClass::Interface ControllerClass::getInterface() const
 {
     CONFIG_T& config = Configuration.get();
     if (!config.Battery_Enabled) { return Interface::Disabled; }
-    if (0x01 == config.Battery_Protocol) { return Interface::Uart; }
-    if (0x02 == config.Battery_Protocol) { return Interface::Transceiver; }
+    if (0x01 == config.Battery_Provider) { return Interface::Uart; }
+    if (0x02 == config.Battery_Provider) { return Interface::Transceiver; }
     return Interface::Disabled;
 }
 
