@@ -1,49 +1,36 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
-#include <optional>
 #include <stdint.h>
+#include <memory>
+
+#include "BatteryStats.h"
 
 class BatteryClass {
-public:
-    // mandatory values for all battery interfaces
-    uint16_t stateOfCharge;
-    uint32_t stateOfChargeLastUpdate;
-    uint32_t lastUpdate; // the last time *any* datum was updated
-    std::string manufacturer;
+    public:
+        BatteryClass()
+            : _stats(std::make_shared<BatteryStats>()) { }
 
-    // common values
-    float chargeCurrentLimitation;
-    float dischargeCurrentLimitation;
-    float voltage; // total voltage of the battery pack
-    // total current into (positive) or from (negative)
-    // the battery, i.e., the charging current
-    float current;
-    float temperature;
-    bool chargeEnabled;
-    bool dischargeEnabled;
+        void init();
+        void loop();
+        void reload();
 
-    bool alarmOverCurrentDischarge;
-    bool alarmUnderTemperature;
-    bool alarmOverTemperature;
-    bool alarmUnderVoltage;
-    bool alarmOverVoltage;
-    bool alarmBmsInternal;
-    bool alarmOverCurrentCharge;
+        std::shared_ptr<BatteryStats const> getStats() const { return _stats; }
 
-    bool warningHighCurrentDischarge;
-    bool warningLowTemperature;
-    bool warningHighTemperature;
-    bool warningLowVoltage;
-    bool warningHighVoltage;
-    bool warningBmsInternal;
-    bool warningHighCurrentCharge;
+    private:
+        void deinit();
+        void mqttPublish();
 
-    uint16_t stateOfHealth;
-    float chargeVoltage;
-    bool chargeImmediately;
+        enum class Provider : int {
+            None = -1,
+            Pylontech = 0,
+            JkBmsUart = 1,
+            JkBmsTransceiver = 2,
+        };
 
-private:
+        Provider _provider = Provider::None;
+        uint32_t _lastMqttPublish = 0;
+        std::shared_ptr<BatteryStats const> _stats;
 };
 
 extern BatteryClass Battery;

@@ -3,6 +3,7 @@
 #include "HardwareSerial.h"
 #include "MessageOutput.h"
 #include "Battery.h"
+#include "JkBmsDataPoints.h"
 #include "JkBmsController.h"
 #include <map>
 
@@ -12,8 +13,11 @@ namespace JkBms {
 
 ControllerClass Controller;
 
-void ControllerClass::init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEnable)
+void ControllerClass::init(int8_t rx, int8_t rxEnableNot, int8_t tx,
+        int8_t txEnable, std::shared_ptr<JkBmsBatteryStats> stats)
 {
+    _stats = stats;
+
     HwSerial.begin(115200, SERIAL_8N1, rx, tx);
     HwSerial.flush();
 
@@ -28,6 +32,14 @@ void ControllerClass::init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEn
 
     _txEnablePin = txEnable;
     pinMode(_txEnablePin, OUTPUT);
+}
+
+void ControllerClass::deinit()
+{
+    HwSerial.end();
+
+    if (_rxEnablePin > 0) { pinMode(_rxEnablePin, INPUT); }
+    if (_txEnablePin > 0) { pinMode(_txEnablePin, INPUT); }
 }
 
 ControllerClass::Interface ControllerClass::getInterface() const
@@ -195,47 +207,12 @@ void ControllerClass::frameComplete()
 
 void ControllerClass::processDataPoints(DataPointContainer const& dataPoints)
 {
-    _dp.updateFrom(dataPoints);
+    _stats->updateFrom(dataPoints);
 
     using Label = JkBms::DataPointLabel;
 
     auto oProtocolVersion = dataPoints.get<Label::ProtocolVersion>();
     if (oProtocolVersion.has_value()) { _protocolVersion = *oProtocolVersion; }
-
-    Battery.lastUpdate = millis();
-
-    auto oSoCValue = dataPoints.get<Label::BatterySoCPercent>();
-    if (oSoCValue.has_value()) {
-        Battery.stateOfCharge = *oSoCValue;
-        auto oSoCDataPoint = dataPoints.getDataPointFor<Label::BatterySoCPercent>();
-        Battery.stateOfChargeLastUpdate = oSoCDataPoint->getTimestamp();
-    }
-
-    auto oVoltage = dataPoints.get<Label::BatteryVoltageMilliVolt>();
-    if (oVoltage.has_value()) { Battery.voltage = static_cast<float>(*oVoltage) / 1000; }
-
-    auto oCurrent = dataPoints.get<Label::BatteryCurrentMilliAmps>();
-    if (oCurrent.has_value()) { Battery.current = static_cast<float>(*oCurrent) / 1000; }
-
-    auto oTemperature = dataPoints.get<Label::BatteryTempOneCelsius>();
-    if (oTemperature.has_value()) { Battery.temperature = *oTemperature; }
-
-    std::string manufacturer("JKBMS");
-    auto oProductId = dataPoints.get<Label::ProductId>();
-    if (oProductId.has_value()) {
-        manufacturer = *oProductId;
-        auto pos = oProductId->rfind("JK");
-        if (pos != std::string::npos) {
-            manufacturer = oProductId->substr(pos);
-        }
-    }
-    Battery.manufacturer = std::move(manufacturer);
-
-    auto oChargeEnabled = dataPoints.get<Label::BatteryChargeEnabled>();
-    if (oChargeEnabled.has_value()) { Battery.chargeEnabled = *oChargeEnabled; }
-
-    auto oDischargeEnabled = dataPoints.get<Label::BatteryDischargeEnabled>();
-    if (oDischargeEnabled.has_value()) { Battery.dischargeEnabled = *oDischargeEnabled; }
 }
 
 } /* namespace JkBms */

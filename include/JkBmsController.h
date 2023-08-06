@@ -5,13 +5,18 @@
 
 #include "JkBmsSerialMessage.h"
 
+class DataPointContainer;
+class JkBmsBatteryStats;
+
 namespace JkBms {
 
 class ControllerClass {
     public:
         ControllerClass() = default;
 
-        void init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEnable);
+        void init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEnable,
+                std::shared_ptr<JkBmsBatteryStats> stats);
+        void deinit();
         void loop();
 
         enum class Status : unsigned {
@@ -25,8 +30,6 @@ class ControllerClass {
             RequestSent,
             FrameCompleted
         };
-
-        DataPointContainer const& getDataPoints() const { return _dp; }
 
     private:
         std::string const& getStatusText(Status status);
@@ -66,7 +69,7 @@ class ControllerClass {
         uint16_t _frameLength = 0;
         uint8_t _protocolVersion = -1;
         SerialResponse::tData _buffer = {};
-        DataPointContainer _dp;
+        std::shared_ptr<JkBmsBatteryStats> _stats;
 };
 
 extern ControllerClass Controller;

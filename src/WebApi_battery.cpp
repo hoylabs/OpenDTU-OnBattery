@@ -110,4 +110,6 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
 
     response->setLength();
     request->send(response);
+
+    Battery.reload();
 }

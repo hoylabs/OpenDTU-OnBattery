@@ -75,50 +75,9 @@ void WebApiWsBatteryLiveClass::loop()
 
 void WebApiWsBatteryLiveClass::generateJsonResponse(JsonVariant& root)
 {
-    root["data_age"] = (millis() - Battery.lastUpdate) / 1000;
-
-    root[F("chargeVoltage")]["v"] = Battery.chargeVoltage ;
-    root[F("chargeVoltage")]["u"] = "V";
-    root[F("chargeCurrentLimitation")]["v"] = Battery.chargeCurrentLimitation ;
-    root[F("chargeCurrentLimitation")]["u"] = "A";
-    root[F("dischargeCurrentLimitation")]["v"] = Battery.dischargeCurrentLimitation ;
-    root[F("dischargeCurrentLimitation")]["u"] = "A";
-    root[F("stateOfCharge")]["v"] = Battery.stateOfCharge ;
-    root[F("stateOfCharge")]["u"] = "%";
-    root[F("stateOfHealth")]["v"] = Battery.stateOfHealth ;
-    root[F("stateOfHealth")]["u"] = "%";
-    root[F("voltage")]["v"] = Battery.voltage;
-    root[F("voltage")]["u"] = "V";
-    root[F("current")]["v"] = Battery.current ;
-    root[F("current")]["u"] = "A";
-    root[F("temperature")]["v"] = Battery.temperature ;
-    root[F("temperature")]["u"] = "°C";
-
-    // Alarms
-    root["alarms"][F("dischargeCurrent")] = Battery.alarmOverCurrentDischarge ;
-    root["alarms"][F("chargeCurrent")] = Battery.alarmOverCurrentCharge ;
-    root["alarms"][F("lowTemperature")] = Battery.alarmUnderTemperature ;
-    root["alarms"][F("highTemperature")] = Battery.alarmOverTemperature ;
-    root["alarms"][F("lowVoltage")] = Battery.alarmUnderVoltage ;
-    root["alarms"][F("highVoltage")] = Battery.alarmOverVoltage ;
-    root["alarms"][F("bmsInternal")] = Battery.alarmBmsInternal ;
-
-    // Warnings
-    root["warnings"][F("dischargeCurrent")] = Battery.warningHighCurrentDischarge ;
-    root["warnings"][F("chargeCurrent")] = Battery.warningHighCurrentCharge ;
-    root["warnings"][F("lowTemperature")] = Battery.warningLowTemperature ;
-    root["warnings"][F("highTemperature")] = Battery.warningHighTemperature ;
-    root["warnings"][F("lowVoltage")] = Battery.warningLowVoltage ;
-    root["warnings"][F("highVoltage")] = Battery.warningHighVoltage ;
-    root["warnings"][F("bmsInternal")] = Battery.warningBmsInternal ;
-
-    // Misc
-    root[F("manufacturer")] = Battery.manufacturer ;
-    root[F("chargeEnabled")] = Battery.chargeEnabled ;
-    root[F("dischargeEnabled")] = Battery.dischargeEnabled ;
-    root[F("chargeImmediately")] = Battery.chargeImmediately ;
-
-
+    auto spStats = Battery.getStats();
+    if (!spStats) { return; }
+    spStats->getLiveViewData(root);
 }
 
 void WebApiWsBatteryLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
