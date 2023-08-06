@@ -33,7 +33,7 @@ class BatteryStats {
 };
 
 class PylontechBatteryStats : public BatteryStats {
-    friend class PylontechCanReceiverClass;
+    friend class PylontechCanReceiver;
 
     public:
         void getLiveViewData(JsonVariant& root) const final;

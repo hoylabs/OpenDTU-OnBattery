@@ -2,27 +2,25 @@
 #pragma once
 
 #include "Configuration.h"
+#include "Battery.h"
 #include <espMqttClient.h>
 #include <driver/twai.h>
 #include <Arduino.h>
 #include <memory>
 
-class PylontechBatteryStats;
-
-class PylontechCanReceiverClass {
+class PylontechCanReceiver : public BatteryProvider {
 public:
-    void init(int8_t rx, int8_t tx, std::shared_ptr<PylontechBatteryStats> stats);
-    void deinit();
-    void loop();
+    bool init() final;
+    void deinit() final;
+    void loop() final;
+    std::shared_ptr<BatteryStats> getStats() const final { return _stats; }
 
 private:
-    void parseCanPackets();
     uint16_t readUnsignedInt16(uint8_t *data);
     int16_t readSignedInt16(uint8_t *data);
     float scaleValue(int16_t value, float factor);
     bool getBit(uint8_t value, uint8_t bit);
 
-    std::shared_ptr<PylontechBatteryStats> _stats;
+    std::shared_ptr<PylontechBatteryStats> _stats =
+        std::make_shared<PylontechBatteryStats>();
 };
-
-extern PylontechCanReceiverClass PylontechCanReceiver;

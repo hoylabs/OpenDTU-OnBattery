@@ -311,12 +311,6 @@ bool PinMappingClass::isValidVictronConfig()
         && _pinMapping.victron_tx >= 0;
 }
 
-bool PinMappingClass::isValidBatteryConfig()
-{
-    return _pinMapping.battery_rx >= 0
-        && _pinMapping.battery_tx >= 0;
-}
-
 bool PinMappingClass::isValidHuaweiConfig()
 {
     return _pinMapping.huawei_miso >= 0

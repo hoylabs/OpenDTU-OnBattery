@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "Battery.h"
-#include "PinMapping.h"
 #include "MessageOutput.h"
 #include "MqttSettings.h"
 #include "PylontechCanReceiver.h"
@@ -8,72 +7,40 @@
 
 BatteryClass Battery;
 
-void BatteryClass::deinit()
+std::shared_ptr<BatteryStats const> BatteryClass::getStats() const
 {
-    _stats = std::make_shared<BatteryStats>();
-
-    switch (_provider) {
-        case Provider::None:
-            return;
-            break;
-        case Provider::Pylontech:
-            PylontechCanReceiver.deinit();
-            break;
-        case Provider::JkBmsUart:
-        case Provider::JkBmsTransceiver:
-            JkBms::Controller.deinit();
-            break;
+    if (!_upProvider) {
+        static auto sspDummyStats = std::make_shared<BatteryStats>();
+        return sspDummyStats;
     }
+
+    return _upProvider->getStats();
 }
 
 void BatteryClass::init()
 {
     CONFIG_T& config = Configuration.get();
-    if (!config.Battery_Enabled) {
-        _provider = Provider::None;
-        return;
-    }
+    if (!config.Battery_Enabled) { return; }
 
-    _provider = static_cast<Provider>(config.Battery_Provider);
-
-    const PinMapping_t& pin = PinMapping.get();
-
-    switch (_provider) {
-        case Provider::Pylontech:
-            MessageOutput.println(F("Initialize Pylontech interface..."));
-            if (PinMapping.isValidBatteryConfig()) {
-                auto pylontechStats = std::make_shared<PylontechBatteryStats>();
-                MessageOutput.printf("Pylontech Battery rx = %d, tx = %d\r\n", pin.battery_rx, pin.battery_tx);
-                PylontechCanReceiver.init(pin.battery_rx, pin.battery_tx, pylontechStats);
-                _stats = pylontechStats;
-                MessageOutput.println(F("done"));
-            } else {
-                MessageOutput.println(F("Invalid Pylontech pin config"));
-            }
+    switch (config.Battery_Provider) {
+        case 0:
+            _upProvider = std::make_unique<PylontechCanReceiver>();
+            if (!_upProvider->init()) { _upProvider = nullptr; }
             break;
-        case Provider::JkBmsUart:
-        case Provider::JkBmsTransceiver:
-            MessageOutput.println(F("Initialize JK BMS interface..."));
-            if (PinMapping.isValidBatteryConfig()) {
-                auto jkbmsStats = std::make_shared<JkBmsBatteryStats>();
-                MessageOutput.printf("JK BMS rx = %d, rxen = %d, tx = %d, txen = %d\r\n",
-                        pin.battery_rx, pin.battery_rxen, pin.battery_tx, pin.battery_txen);
-                JkBms::Controller.init(pin.battery_rx, pin.battery_rxen,
-                        pin.battery_tx, pin.battery_txen, jkbmsStats);
-                _stats = jkbmsStats;
-                MessageOutput.println(F("done"));
-            } else {
-                MessageOutput.println(F("Invalid JK BMS pin config"));
-            }
+        case 1:
+        case 2:
+            _upProvider = std::make_unique<JkBms::Controller>();
+            if (!_upProvider->init()) { _upProvider = nullptr; }
             break;
         default:
             MessageOutput.printf("Unknown battery provider: %d\r\n", config.Battery_Provider);
+            break;
     }
 }
 
 void BatteryClass::mqttPublish()
 {
-    if (!_stats) { return; }
+    if (!_upProvider) { return; }
 
     CONFIG_T& config = Configuration.get();
 
@@ -82,31 +49,26 @@ void BatteryClass::mqttPublish()
         return;
     }
 
-    _stats->mqttPublish();
+    _upProvider->getStats()->mqttPublish();
 
     _lastMqttPublish = millis();
 }
 
 void BatteryClass::loop()
 {
-    switch (_provider) {
-        case Provider::None:
-            return;
-            break;
-        case Provider::Pylontech:
-            PylontechCanReceiver.loop();
-            break;
-        case Provider::JkBmsUart:
-        case Provider::JkBmsTransceiver:
-            JkBms::Controller.loop();
-            break;
-    }
+    if (!_upProvider) { return; }
+
+    _upProvider->loop();
 
     mqttPublish();
 }
 
 void BatteryClass::reload()
 {
-    deinit();
+    if (_upProvider) {
+        _upProvider->deinit();
+        _upProvider = nullptr;
+    }
+
     init();
 }

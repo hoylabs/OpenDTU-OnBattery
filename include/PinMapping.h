@@ -63,7 +63,6 @@ public:
     bool isValidCmt2300Config();
     bool isValidEthConfig();
     bool isValidVictronConfig();
-    bool isValidBatteryConfig();
     bool isValidHuaweiConfig();
     
 private:

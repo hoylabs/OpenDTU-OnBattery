@@ -6,19 +6,25 @@
 
 #include "BatteryStats.h"
 
+class BatteryProvider {
+    public:
+        // returns true if the provider is ready for use, false otherwise
+        virtual bool init() = 0;
+
+        virtual void deinit() = 0;
+        virtual void loop() = 0;
+        virtual std::shared_ptr<BatteryStats> getStats() const = 0;
+};
+
 class BatteryClass {
     public:
-        BatteryClass()
-            : _stats(std::make_shared<BatteryStats>()) { }
-
         void init();
         void loop();
         void reload();
 
-        std::shared_ptr<BatteryStats const> getStats() const { return _stats; }
+        std::shared_ptr<BatteryStats const> getStats() const;
 
     private:
-        void deinit();
         void mqttPublish();
 
         enum class Provider : int {
@@ -28,9 +34,8 @@ class BatteryClass {
             JkBmsTransceiver = 2,
         };
 
-        Provider _provider = Provider::None;
         uint32_t _lastMqttPublish = 0;
-        std::shared_ptr<BatteryStats const> _stats;
+        std::unique_ptr<BatteryProvider> _upProvider = nullptr;
 };
 
 extern BatteryClass Battery;

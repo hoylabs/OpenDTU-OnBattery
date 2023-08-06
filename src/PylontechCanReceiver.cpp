@@ -1,21 +1,29 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "PylontechCanReceiver.h"
-#include "Battery.h"
 #include "Configuration.h"
 #include "MessageOutput.h"
+#include "PinMapping.h"
 #include <driver/twai.h>
 #include <ctime>
 
 //#define PYLONTECH_DEBUG_ENABLED
 
-PylontechCanReceiverClass PylontechCanReceiver;
-
-void PylontechCanReceiverClass::init(int8_t rx, int8_t tx,
-        std::shared_ptr<PylontechBatteryStats> stats)
+bool PylontechCanReceiver::init()
 {
-    _stats = stats;
+    MessageOutput.println(F("[Pylontech] Initialize interface..."));
 
-    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT((gpio_num_t)tx, (gpio_num_t)rx, TWAI_MODE_NORMAL);
+    const PinMapping_t& pin = PinMapping.get();
+    MessageOutput.printf("[Pylontech] Interface rx = %d, tx = %d\r\n",
+            pin.battery_rx, pin.battery_tx);
+
+    if (pin.battery_rx < 0 || pin.battery_tx < 0) {
+        MessageOutput.println(F("[Pylontech] Invalid pin config"));
+        return false;
+    }
+
+    auto tx = static_cast<gpio_num_t>(pin.battery_tx);
+    auto rx = static_cast<gpio_num_t>(pin.battery_rx);
+    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(tx, rx, TWAI_MODE_NORMAL);
 
     // Initialize configuration structures using macro initializers
     twai_timing_config_t t_config = TWAI_TIMING_CONFIG_500KBITS();
@@ -29,12 +37,15 @@ void PylontechCanReceiverClass::init(int8_t rx, int8_t tx,
             break;
         case ESP_ERR_INVALID_ARG:
             MessageOutput.println(F("[Pylontech] Twai driver install - invalid arg"));
+            return false;
             break;
         case ESP_ERR_NO_MEM:
             MessageOutput.println(F("[Pylontech] Twai driver install - no memory"));
+            return false;
             break;
         case ESP_ERR_INVALID_STATE:
             MessageOutput.println(F("[Pylontech] Twai driver install - invalid state"));
+            return false;
             break;
     }
 
@@ -46,11 +57,14 @@ void PylontechCanReceiverClass::init(int8_t rx, int8_t tx,
             break;
         case ESP_ERR_INVALID_STATE:
             MessageOutput.println(F("[Pylontech] Twai driver start - invalid state"));
+            return false;
             break;
     }
+
+    return true;
 }
 
-void PylontechCanReceiverClass::deinit()
+void PylontechCanReceiver::deinit()
 {
     // Stop TWAI driver
     esp_err_t twaiLastResult = twai_stop();
@@ -75,12 +89,7 @@ void PylontechCanReceiverClass::deinit()
     }
 }
 
-void PylontechCanReceiverClass::loop()
-{
-    parseCanPackets();
-}
-
-void PylontechCanReceiverClass::parseCanPackets()
+void PylontechCanReceiver::loop()
 {
     // Check for messages. twai_receive is blocking when there is no data so we return if there are no frames in the buffer
     twai_status_info_t status_info;
@@ -104,11 +113,6 @@ void PylontechCanReceiverClass::parseCanPackets()
     twai_message_t rx_message;
     if (twai_receive(&rx_message, pdMS_TO_TICKS(100)) != ESP_OK) {
         MessageOutput.println(F("[Pylontech] Failed to receive message"));
-        return;
-    }
-
-    if (!_stats) {
-        MessageOutput.println(F("[Pylontech] no statistics instance"));
         return;
     }
 
@@ -233,7 +237,7 @@ void PylontechCanReceiverClass::parseCanPackets()
     _stats->setLastUpdate(millis());
 }
 
-uint16_t PylontechCanReceiverClass::readUnsignedInt16(uint8_t *data)
+uint16_t PylontechCanReceiver::readUnsignedInt16(uint8_t *data)
 {
     uint8_t bytes[2];
     bytes[0] = *data;
@@ -241,17 +245,17 @@ uint16_t PylontechCanReceiverClass::readUnsignedInt16(uint8_t *data)
     return (bytes[1] << 8) + bytes[0];
 }
 
-int16_t PylontechCanReceiverClass::readSignedInt16(uint8_t *data)
+int16_t PylontechCanReceiver::readSignedInt16(uint8_t *data)
 {
     return this->readUnsignedInt16(data);
 }
 
-float PylontechCanReceiverClass::scaleValue(int16_t value, float factor)
+float PylontechCanReceiver::scaleValue(int16_t value, float factor)
 {
     return value * factor;
 }
 
-bool PylontechCanReceiverClass::getBit(uint8_t value, uint8_t bit)
+bool PylontechCanReceiver::getBit(uint8_t value, uint8_t bit)
 {
     return (value & (1 << bit)) >> bit;
 }

@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include "Configuration.h"
 #include "HardwareSerial.h"
+#include "PinMapping.h"
 #include "MessageOutput.h"
-#include "Battery.h"
 #include "JkBmsDataPoints.h"
 #include "JkBmsController.h"
 #include <map>
@@ -11,30 +11,39 @@ HardwareSerial HwSerial(2);
 
 namespace JkBms {
 
-ControllerClass Controller;
-
-void ControllerClass::init(int8_t rx, int8_t rxEnableNot, int8_t tx,
-        int8_t txEnable, std::shared_ptr<JkBmsBatteryStats> stats)
+bool Controller::init()
 {
-    _stats = stats;
+    MessageOutput.println(F("[JK BMS] Initialize interface..."));
 
-    HwSerial.begin(115200, SERIAL_8N1, rx, tx);
-    HwSerial.flush();
+    const PinMapping_t& pin = PinMapping.get();
+    MessageOutput.printf("[JK BMS] rx = %d, rxen = %d, tx = %d, txen = %d\r\n",
+            pin.battery_rx, pin.battery_rxen, pin.battery_tx, pin.battery_txen);
 
-    if (Interface::Transceiver != getInterface()) { return; }
-
-    if (rxEnableNot < 0 || txEnable < 0) {
-        return announceStatus(Status::InvalidTransceiverConfig);
+    if (pin.battery_rx < 0 || pin.battery_tx < 0) {
+        MessageOutput.println(F("[JK BMS] Invalid RX/TX pin config"));
+        return false;
     }
 
-    _rxEnablePin = rxEnableNot;
-    pinMode(rxEnableNot, OUTPUT);
+    HwSerial.begin(115200, SERIAL_8N1, pin.battery_rx, pin.battery_tx);
+    HwSerial.flush();
 
-    _txEnablePin = txEnable;
+    if (Interface::Transceiver != getInterface()) { return true; }
+
+    _rxEnablePin = pin.battery_rxen;
+    _txEnablePin = pin.battery_txen;
+
+    if (_rxEnablePin < 0 || _txEnablePin < 0) {
+        MessageOutput.println(F("[JK BMS] Invalid transceiver pin config"));
+        return false;
+    }
+
+    pinMode(_rxEnablePin, OUTPUT);
     pinMode(_txEnablePin, OUTPUT);
+
+    return true;
 }
 
-void ControllerClass::deinit()
+void Controller::deinit()
 {
     HwSerial.end();
 
@@ -42,22 +51,19 @@ void ControllerClass::deinit()
     if (_txEnablePin > 0) { pinMode(_txEnablePin, INPUT); }
 }
 
-ControllerClass::Interface ControllerClass::getInterface() const
+Controller::Interface Controller::getInterface() const
 {
     CONFIG_T& config = Configuration.get();
-    if (!config.Battery_Enabled) { return Interface::Disabled; }
     if (0x01 == config.Battery_Provider) { return Interface::Uart; }
     if (0x02 == config.Battery_Provider) { return Interface::Transceiver; }
-    return Interface::Disabled;
+    return Interface::Invalid;
 }
 
-std::string const& ControllerClass::getStatusText(ControllerClass::Status status)
+std::string const& Controller::getStatusText(Controller::Status status)
 {
     static const std::string missing =  "programmer error: missing status text";
 
     static const std::map<Status, const std::string> texts = {
-        { Status::DisabledByConfig, "disabled by configuration" },
-        { Status::InvalidTransceiverConfig, "invalid config: transceiver enable pins not specified" },
         { Status::Timeout, "timeout wating for response from BMS" },
         { Status::WaitingForPollInterval, "waiting for poll interval to elapse" },
         { Status::HwSerialNotAvailableForWrite, "UART is not available for writing" },
@@ -72,13 +78,9 @@ std::string const& ControllerClass::getStatusText(ControllerClass::Status status
     return iter->second;
 }
 
-void ControllerClass::announceStatus(ControllerClass::Status status)
+void Controller::announceStatus(Controller::Status status)
 {
     if (_lastStatus == status && millis() < _lastStatusPrinted + 10 * 1000) { return; }
-
-    // after announcing once that the JK BMS is disabled by configuration, it
-    // should just be silent while it is disabled.
-    if (status == Status::DisabledByConfig && _lastStatus == status) { return; }
 
     MessageOutput.printf("[%11.3f] JK BMS: %s\r\n",
         static_cast<double>(millis())/1000, getStatusText(status).c_str());
@@ -87,7 +89,7 @@ void ControllerClass::announceStatus(ControllerClass::Status status)
     _lastStatusPrinted = millis();
 }
 
-void ControllerClass::sendRequest(uint8_t pollInterval)
+void Controller::sendRequest(uint8_t pollInterval)
 {
     if (ReadState::Idle != _readState) {
         return announceStatus(Status::BusyReading);
@@ -122,18 +124,10 @@ void ControllerClass::sendRequest(uint8_t pollInterval)
     return announceStatus(Status::RequestSent);
 }
 
-void ControllerClass::loop()
+void Controller::loop()
 {
     CONFIG_T& config = Configuration.get();
     uint8_t pollInterval = config.Battery_JkBmsPollingInterval;
-
-    if (Interface::Disabled == getInterface()) {
-        return announceStatus(Status::DisabledByConfig);
-    }
-
-    if (Interface::Transceiver == getInterface() && _txEnablePin < 0) {
-        return announceStatus(Status::InvalidTransceiverConfig);
-    }
 
     while (HwSerial.available()) {
         rxData(HwSerial.read());
@@ -147,7 +141,7 @@ void ControllerClass::loop()
     }
 }
 
-void ControllerClass::rxData(uint8_t inbyte)
+void Controller::rxData(uint8_t inbyte)
 {
     _buffer.push_back(inbyte);
 
@@ -184,13 +178,13 @@ void ControllerClass::rxData(uint8_t inbyte)
     reset();
 }
 
-void ControllerClass::reset()
+void Controller::reset()
 {
     _buffer.clear();
     return setReadState(ReadState::Idle);
 }
 
-void ControllerClass::frameComplete()
+void Controller::frameComplete()
 {
     announceStatus(Status::FrameCompleted);
 
@@ -205,7 +199,7 @@ void ControllerClass::frameComplete()
     reset();
 }
 
-void ControllerClass::processDataPoints(DataPointContainer const& dataPoints)
+void Controller::processDataPoints(DataPointContainer const& dataPoints)
 {
     _stats->updateFrom(dataPoints);
 

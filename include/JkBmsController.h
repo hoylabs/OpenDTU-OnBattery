@@ -3,26 +3,25 @@
 #include <memory>
 #include <vector>
 
+#include "Battery.h"
 #include "JkBmsSerialMessage.h"
 
 class DataPointContainer;
-class JkBmsBatteryStats;
 
 namespace JkBms {
 
-class ControllerClass {
+class Controller : public BatteryProvider {
     public:
-        ControllerClass() = default;
+        Controller() = default;
 
-        void init(int8_t rx, int8_t rxEnableNot, int8_t tx, int8_t txEnable,
-                std::shared_ptr<JkBmsBatteryStats> stats);
-        void deinit();
-        void loop();
+        bool init() final;
+        void deinit() final;
+        void loop() final;
+        std::shared_ptr<BatteryStats> getStats() const final { return _stats; }
 
+    private:
         enum class Status : unsigned {
             Initializing,
-            InvalidTransceiverConfig,
-            DisabledByConfig,
             Timeout,
             WaitingForPollInterval,
             HwSerialNotAvailableForWrite,
@@ -31,7 +30,6 @@ class ControllerClass {
             FrameCompleted
         };
 
-    private:
         std::string const& getStatusText(Status status);
         void announceStatus(Status status);
         void sendRequest(uint8_t pollInterval);
@@ -41,7 +39,7 @@ class ControllerClass {
         void processDataPoints(DataPointContainer const& dataPoints);
 
         enum class Interface : unsigned {
-            Disabled,
+            Invalid,
             Uart,
             Transceiver
         };
@@ -69,9 +67,8 @@ class ControllerClass {
         uint16_t _frameLength = 0;
         uint8_t _protocolVersion = -1;
         SerialResponse::tData _buffer = {};
-        std::shared_ptr<JkBmsBatteryStats> _stats;
+        std::shared_ptr<JkBmsBatteryStats> _stats =
+            std::make_shared<JkBmsBatteryStats>();
 };
-
-extern ControllerClass Controller;
 
 } /* namespace JkBms */
