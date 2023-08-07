@@ -10,6 +10,11 @@
                               v-model="batteryConfigList.enabled"
                               type="checkbox" />
 
+                <InputElement v-show="batteryConfigList.enabled"
+                                :label="$t('batteryadmin.VerboseLogging')"
+                                v-model="batteryConfigList.verbose_logging"
+                                type="checkbox"/>
+
                 <div class="row mb-3" v-show="batteryConfigList.enabled">
                     <label class="col-sm-2 col-form-label">
                         {{ $t('batteryadmin.Provider') }}

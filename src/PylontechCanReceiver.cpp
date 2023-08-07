@@ -6,10 +6,10 @@
 #include <driver/twai.h>
 #include <ctime>
 
-//#define PYLONTECH_DEBUG_ENABLED
-
-bool PylontechCanReceiver::init()
+bool PylontechCanReceiver::init(bool verboseLogging)
 {
+    _verboseLogging = verboseLogging;
+
     MessageOutput.println(F("[Pylontech] Initialize interface..."));
 
     const PinMapping_t& pin = PinMapping.get();
@@ -122,10 +122,10 @@ void PylontechCanReceiver::loop()
             _stats->_chargeCurrentLimitation = this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1);
             _stats->_dischargeCurrentLimitation = this->scaleValue(this->readSignedInt16(rx_message.data + 4), 0.1);
 
-#ifdef PYLONTECH_DEBUG_ENABLED
-           MessageOutput.printf("[Pylontech] chargeVoltage: %f chargeCurrentLimitation: %f dischargeCurrentLimitation: %f\n",
-                _stats->_chargeVoltage, _stats->_chargeCurrentLimitation, _stats->_dischargeCurrentLimitation);
-#endif
+            if (_verboseLogging) {
+                MessageOutput.printf("[Pylontech] chargeVoltage: %f chargeCurrentLimitation: %f dischargeCurrentLimitation: %f\n",
+                        _stats->_chargeVoltage, _stats->_chargeCurrentLimitation, _stats->_dischargeCurrentLimitation);
+            }
             break;
         }
 
@@ -133,10 +133,10 @@ void PylontechCanReceiver::loop()
             _stats->setSoC(static_cast<uint8_t>(this->readUnsignedInt16(rx_message.data)));
             _stats->_stateOfHealth = this->readUnsignedInt16(rx_message.data + 2);
 
-#ifdef PYLONTECH_DEBUG_ENABLED
-            MessageOutput.printf("[Pylontech] soc: %d soh: %d\n",
-                _stats->getSoC(), _stats->_stateOfHealth);
-#endif
+            if (_verboseLogging) {
+                MessageOutput.printf("[Pylontech] soc: %d soh: %d\n",
+                        _stats->getSoC(), _stats->_stateOfHealth);
+            }
             break;
         }
 
@@ -145,10 +145,10 @@ void PylontechCanReceiver::loop()
             _stats->_current = this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1);
             _stats->_temperature = this->scaleValue(this->readSignedInt16(rx_message.data + 4), 0.1);
 
-#ifdef PYLONTECH_DEBUG_ENABLED
-            MessageOutput.printf("[Pylontech] voltage: %f current: %f temperature: %f\n",
-                _stats->_voltage, _stats->_current, _stats->_temperature);
-#endif
+            if (_verboseLogging) {
+                MessageOutput.printf("[Pylontech] voltage: %f current: %f temperature: %f\n",
+                        _stats->_voltage, _stats->_current, _stats->_temperature);
+            }
             break;
         }
 
@@ -164,16 +164,16 @@ void PylontechCanReceiver::loop()
             _stats->_alarmBmsInternal= this->getBit(alarmBits, 3);
             _stats->_alarmOverCurrentCharge = this->getBit(alarmBits, 0);
 
-#ifdef PYLONTECH_DEBUG_ENABLED
-            MessageOutput.printf("[Pylontech] Alarms: %d %d %d %d %d %d %d\n",
-                _stats->_alarmOverCurrentDischarge,
-                _stats->_alarmUnderTemperature,
-                _stats->_alarmOverTemperature,
-                _stats->_alarmUnderVoltage,
-                _stats->_alarmOverVoltage,
-                _stats->_alarmBmsInternal,
-                _stats->_alarmOverCurrentCharge);
-#endif
+            if (_verboseLogging) {
+                MessageOutput.printf("[Pylontech] Alarms: %d %d %d %d %d %d %d\n",
+                        _stats->_alarmOverCurrentDischarge,
+                        _stats->_alarmUnderTemperature,
+                        _stats->_alarmOverTemperature,
+                        _stats->_alarmUnderVoltage,
+                        _stats->_alarmOverVoltage,
+                        _stats->_alarmBmsInternal,
+                        _stats->_alarmOverCurrentCharge);
+            }
 
             uint16_t warningBits = rx_message.data[2];
             _stats->_warningHighCurrentDischarge = this->getBit(warningBits, 7);
@@ -186,16 +186,16 @@ void PylontechCanReceiver::loop()
             _stats->_warningBmsInternal= this->getBit(warningBits, 3);
             _stats->_warningHighCurrentCharge = this->getBit(warningBits, 0);
 
-#ifdef PYLONTECH_DEBUG_ENABLED
-            MessageOutput.printf("[Pylontech] Warnings: %d %d %d %d %d %d %d\n",
-                _stats->_warningHighCurrentDischarge,
-                _stats->_warningLowTemperature,
-                _stats->_warningHighTemperature,
-                _stats->_warningLowVoltage,
-                _stats->_warningHighVoltage,
-                _stats->_warningBmsInternal,
-                _stats->_warningHighCurrentCharge);
-#endif
+            if (_verboseLogging) {
+                MessageOutput.printf("[Pylontech] Warnings: %d %d %d %d %d %d %d\n",
+                        _stats->_warningHighCurrentDischarge,
+                        _stats->_warningLowTemperature,
+                        _stats->_warningHighTemperature,
+                        _stats->_warningLowVoltage,
+                        _stats->_warningHighVoltage,
+                        _stats->_warningBmsInternal,
+                        _stats->_warningHighCurrentCharge);
+            }
             break;
         }
 
@@ -205,9 +205,9 @@ void PylontechCanReceiver::loop()
 
             if (manufacturer.isEmpty()) { break; }
 
-#ifdef PYLONTECH_DEBUG_ENABLED
-            MessageOutput.printf("[Pylontech] Manufacturer: %s\n", manufacturer.c_str());
-#endif
+            if (_verboseLogging) {
+                MessageOutput.printf("[Pylontech] Manufacturer: %s\n", manufacturer.c_str());
+            }
 
             _stats->setManufacturer(std::move(manufacturer));
             break;
@@ -219,12 +219,12 @@ void PylontechCanReceiver::loop()
             _stats->_dischargeEnabled = this->getBit(chargeStatusBits, 6);
             _stats->_chargeImmediately = this->getBit(chargeStatusBits, 5);
 
-#ifdef PYLONTECH_DEBUG_ENABLED
-            MessageOutput.printf("[Pylontech] chargeStatusBits: %d %d %d\n",
-                _stats->_chargeEnabled,
-                _stats->_dischargeEnabled,
-                _stats->_chargeImmediately);
-#endif
+            if (_verboseLogging) {
+                MessageOutput.printf("[Pylontech] chargeStatusBits: %d %d %d\n",
+                    _stats->_chargeEnabled,
+                    _stats->_dischargeEnabled,
+                    _stats->_chargeImmediately);
+            }
 
             break;
         }

@@ -10,7 +10,7 @@
 
 class PylontechCanReceiver : public BatteryProvider {
 public:
-    bool init() final;
+    bool init(bool verboseLogging) final;
     void deinit() final;
     void loop() final;
     std::shared_ptr<BatteryStats> getStats() const final { return _stats; }
@@ -21,6 +21,7 @@ private:
     float scaleValue(int16_t value, float factor);
     bool getBit(uint8_t value, uint8_t bit);
 
+    bool _verboseLogging = true;
     std::shared_ptr<PylontechBatteryStats> _stats =
         std::make_shared<PylontechBatteryStats>();
 };

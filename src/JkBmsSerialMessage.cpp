@@ -228,16 +228,6 @@ SerialResponse::SerialResponse(tData&& raw, uint8_t protocolVersion)
                 break;
         }
     }
-
-    auto iter = _dp.cbegin();
-    while ( iter != _dp.cend() ) {
-        MessageOutput.printf("%d: %s: %s%s\r\n",
-            iter->second.getTimestamp(),
-            iter->second.getLabelText().c_str(),
-            iter->second.getValueText().c_str(),
-            iter->second.getUnitText().c_str());
-        ++iter;
-    }
 }
 
 /**

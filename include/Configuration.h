@@ -166,6 +166,7 @@ struct CONFIG_T {
     float PowerLimiter_FullSolarPassThroughStopVoltage;
 
     bool Battery_Enabled;
+    bool Battery_VerboseLogging;
     uint8_t Battery_Provider;
     uint8_t Battery_JkBmsInterface;
     uint8_t Battery_JkBmsPollingInterval;

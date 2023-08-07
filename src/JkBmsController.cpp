@@ -11,8 +11,10 @@ HardwareSerial HwSerial(2);
 
 namespace JkBms {
 
-bool Controller::init()
+bool Controller::init(bool verboseLogging)
 {
+    _verboseLogging = verboseLogging;
+
     std::string ifcType = "transceiver";
     if (Interface::Transceiver != getInterface()) { ifcType = "TTL-UART"; }
     MessageOutput.printf("[JK BMS] Initialize %s interface...\r\n", ifcType.c_str());
@@ -190,14 +192,17 @@ void Controller::frameComplete()
 {
     announceStatus(Status::FrameCompleted);
 
-    for(auto const& b : _buffer) {
-        MessageOutput.printf("%02x ", b);
+    if (_verboseLogging) {
+        MessageOutput.print("raw data: ");
+        for(auto const& b : _buffer) { MessageOutput.printf("%02x ", b); }
+        MessageOutput.println("");
     }
-    MessageOutput.println("");
+
     auto pResponse = std::make_unique<SerialResponse>(std::move(_buffer), _protocolVersion);
     if (pResponse->isValid()) {
         processDataPoints(pResponse->getDataPoints());
     } // if invalid, error message has been produced by SerialResponse c'tor
+
     reset();
 }
 
@@ -209,6 +214,18 @@ void Controller::processDataPoints(DataPointContainer const& dataPoints)
 
     auto oProtocolVersion = dataPoints.get<Label::ProtocolVersion>();
     if (oProtocolVersion.has_value()) { _protocolVersion = *oProtocolVersion; }
+
+    if (!_verboseLogging) { return; }
+
+    auto iter = dataPoints.cbegin();
+    while ( iter != dataPoints.cend() ) {
+        MessageOutput.printf("%d: %s: %s%s\r\n",
+            iter->second.getTimestamp(),
+            iter->second.getLabelText().c_str(),
+            iter->second.getValueText().c_str(),
+            iter->second.getUnitText().c_str());
+        ++iter;
+    }
 }
 
 } /* namespace JkBms */

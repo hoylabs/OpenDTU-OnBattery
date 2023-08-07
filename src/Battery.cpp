@@ -22,14 +22,16 @@ void BatteryClass::init()
     CONFIG_T& config = Configuration.get();
     if (!config.Battery_Enabled) { return; }
 
+    bool verboseLogging = config.Battery_VerboseLogging;
+
     switch (config.Battery_Provider) {
         case 0:
             _upProvider = std::make_unique<PylontechCanReceiver>();
-            if (!_upProvider->init()) { _upProvider = nullptr; }
+            if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
             break;
         case 1:
             _upProvider = std::make_unique<JkBms::Controller>();
-            if (!_upProvider->init()) { _upProvider = nullptr; }
+            if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
             break;
         default:
             MessageOutput.printf("Unknown battery provider: %d\r\n", config.Battery_Provider);

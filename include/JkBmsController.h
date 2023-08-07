@@ -14,7 +14,7 @@ class Controller : public BatteryProvider {
     public:
         Controller() = default;
 
-        bool init() final;
+        bool init(bool verboseLogging) final;
         void deinit() final;
         void loop() final;
         std::shared_ptr<BatteryStats> getStats() const final { return _stats; }
@@ -59,6 +59,7 @@ class Controller : public BatteryProvider {
             _readState = state;
         }
 
+        bool _verboseLogging = true;
         int8_t _rxEnablePin = -1;
         int8_t _txEnablePin = -1;
         Status _lastStatus = Status::Initializing;

@@ -582,6 +582,7 @@
         "BatterySettings": "Batterie Einstellungen",
         "BatteryConfiguration": "Generelle Schnittstelleneinstellungen",
         "EnableBattery": "Aktiviere Schnittstelle",
+        "VerboseLogging": "@:base.VerboseLogging",
         "Provider": "Datenanbieter",
         "ProviderPylontechCan": "Pylontech per CAN-Bus",
         "ProviderJkBmsSerial": "Jikong (JK) BMS per serieller Verbindung",
