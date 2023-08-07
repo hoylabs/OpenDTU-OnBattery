@@ -40,6 +40,7 @@ void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
 
     root[F("enabled")] = config.Battery_Enabled;
     root[F("provider")] = config.Battery_Provider;
+    root[F("jkbms_interface")] = config.Battery_JkBmsInterface;
     root[F("jkbms_polling_interval")] = config.Battery_JkBmsPollingInterval;
 
     response->setLength();
@@ -101,6 +102,7 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
     CONFIG_T& config = Configuration.get();
     config.Battery_Enabled = root[F("enabled")].as<bool>();
     config.Battery_Provider = root[F("provider")].as<uint8_t>();
+    config.Battery_JkBmsInterface = root[F("jkbms_interface")].as<uint8_t>();
     config.Battery_JkBmsPollingInterval = root[F("jkbms_polling_interval")].as<uint8_t>();
     Configuration.write();
 

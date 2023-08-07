@@ -12,18 +12,34 @@
 
                 <div class="row mb-3" v-show="batteryConfigList.enabled">
                     <label class="col-sm-2 col-form-label">
-                        {{ $t('batteryadmin.Protocol') }}
+                        {{ $t('batteryadmin.Provider') }}
                     </label>
                     <div class="col-sm-10">
                         <select class="form-select" v-model="batteryConfigList.provider">
                             <option v-for="provider in providerTypeList" :key="provider.key" :value="provider.key">
-                                {{ $t(`batteryadmin.Protocol` + provider.value) }}
+                                {{ $t(`batteryadmin.Provider` + provider.value) }}
                             </option>
                         </select>
                     </div>
                 </div>
-                <InputElement v-show="batteryConfigList.enabled && batteryConfigList.provider >= 1 && batteryConfigList.provider <= 2"
-                              :label="$t('batteryadmin.PollingInterval')"
+            </CardElement>
+
+            <CardElement v-show="batteryConfigList.enabled && batteryConfigList.provider == 1"
+                         :text="$t('batteryadmin.JkBmsConfiguration')" textVariant="text-bg-primary" addSpace>
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label">
+                        {{ $t('batteryadmin.JkBmsInterface') }}
+                    </label>
+                    <div class="col-sm-10">
+                        <select class="form-select" v-model="batteryConfigList.jkbms_interface">
+                            <option v-for="jkBmsInterface in jkBmsInterfaceTypeList" :key="jkBmsInterface.key" :value="jkBmsInterface.key">
+                                {{ $t(`batteryadmin.JkBmsInterface` + jkBmsInterface.value) }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <InputElement :label="$t('batteryadmin.PollingInterval')"
                               v-model="batteryConfigList.jkbms_polling_interval"
                               type="number" min="2" max="90" step="1" :postfix="$t('batteryadmin.Seconds')"/>
             </CardElement>
@@ -58,8 +74,11 @@ export default defineComponent({
             showAlert: false,
             providerTypeList: [
                 { key: 0, value: 'PylontechCan' },
-                { key: 1, value: 'JkBmsSerialUart' },
-                { key: 2, value: 'JkBmsSerialTransceiver' },
+                { key: 1, value: 'JkBmsSerial' },
+            ],
+            jkBmsInterfaceTypeList: [
+                { key: 0, value: 'Uart' },
+                { key: 1, value: 'Transceiver' },
             ],
         };
     },

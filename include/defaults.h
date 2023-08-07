@@ -130,6 +130,7 @@
 
 #define BATTERY_ENABLED false
 #define BATTERY_PROVIDER 0 // Pylontech CAN receiver
+#define BATTERY_JKBMS_INTERFACE 0
 #define BATTERY_JKBMS_POLLING_INTERVAL 5
 
 #define HUAWEI_ENABLED false

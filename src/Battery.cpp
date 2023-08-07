@@ -28,7 +28,6 @@ void BatteryClass::init()
             if (!_upProvider->init()) { _upProvider = nullptr; }
             break;
         case 1:
-        case 2:
             _upProvider = std::make_unique<JkBms::Controller>();
             if (!_upProvider->init()) { _upProvider = nullptr; }
             break;

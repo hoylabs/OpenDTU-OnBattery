@@ -13,7 +13,9 @@ namespace JkBms {
 
 bool Controller::init()
 {
-    MessageOutput.println(F("[JK BMS] Initialize interface..."));
+    std::string ifcType = "transceiver";
+    if (Interface::Transceiver != getInterface()) { ifcType = "TTL-UART"; }
+    MessageOutput.printf("[JK BMS] Initialize %s interface...\r\n", ifcType.c_str());
 
     const PinMapping_t& pin = PinMapping.get();
     MessageOutput.printf("[JK BMS] rx = %d, rxen = %d, tx = %d, txen = %d\r\n",
@@ -54,8 +56,8 @@ void Controller::deinit()
 Controller::Interface Controller::getInterface() const
 {
     CONFIG_T& config = Configuration.get();
-    if (0x01 == config.Battery_Provider) { return Interface::Uart; }
-    if (0x02 == config.Battery_Provider) { return Interface::Transceiver; }
+    if (0x00 == config.Battery_JkBmsInterface) { return Interface::Uart; }
+    if (0x01 == config.Battery_JkBmsInterface) { return Interface::Transceiver; }
     return Interface::Invalid;
 }
 

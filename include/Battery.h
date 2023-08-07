@@ -27,13 +27,6 @@ class BatteryClass {
     private:
         void mqttPublish();
 
-        enum class Provider : int {
-            None = -1,
-            Pylontech = 0,
-            JkBmsUart = 1,
-            JkBmsTransceiver = 2,
-        };
-
         uint32_t _lastMqttPublish = 0;
         std::unique_ptr<BatteryProvider> _upProvider = nullptr;
 };
