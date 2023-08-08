@@ -21,12 +21,17 @@ std::shared_ptr<BatteryStats const> BatteryClass::getStats() const
 
 void BatteryClass::init()
 {
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (_upProvider) {
+        _upProvider->deinit();
+        _upProvider = nullptr;
+    }
+
     CONFIG_T& config = Configuration.get();
     if (!config.Battery_Enabled) { return; }
 
     bool verboseLogging = config.Battery_VerboseLogging;
-
-    std::lock_guard<std::mutex> lock(_mutex);
 
     switch (config.Battery_Provider) {
         case 0:
@@ -61,18 +66,4 @@ void BatteryClass::loop()
     _upProvider->getStats()->mqttPublish();
 
     _lastMqttPublish = millis();
-}
-
-void BatteryClass::reload()
-{
-    std::unique_lock<std::mutex> lock(_mutex);
-
-    if (_upProvider) {
-        _upProvider->deinit();
-        _upProvider = nullptr;
-    }
-
-    lock.unlock(); // init() will re-lock to re-assign _upProvider
-
-    init();
 }

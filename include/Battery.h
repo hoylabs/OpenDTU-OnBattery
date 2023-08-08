@@ -21,7 +21,6 @@ class BatteryClass {
     public:
         void init();
         void loop();
-        void reload();
 
         std::shared_ptr<BatteryStats const> getStats() const;
 
