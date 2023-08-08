@@ -307,9 +307,16 @@ void Controller::frameComplete()
     announceStatus(Status::FrameCompleted);
 
     if (_verboseLogging) {
-        MessageOutput.print("raw data: ");
-        for(auto const& b : _buffer) { MessageOutput.printf("%02x ", b); }
-        MessageOutput.println("");
+        double ts = static_cast<double>(millis())/1000;
+        MessageOutput.printf("[%11.3f] JK BMS: raw data (%d Bytes):",
+            ts, _buffer.size());
+        for (size_t ctr = 0; ctr < _buffer.size(); ++ctr) {
+            if (ctr % 16 == 0) {
+                MessageOutput.printf("\r\n[%11.3f] JK BMS: ", ts);
+            }
+            MessageOutput.printf("%02x ", _buffer[ctr]);
+        }
+        MessageOutput.println();
     }
 
     auto pResponse = std::make_unique<SerialResponse>(std::move(_buffer), _protocolVersion);
@@ -333,8 +340,8 @@ void Controller::processDataPoints(DataPointContainer const& dataPoints)
 
     auto iter = dataPoints.cbegin();
     while ( iter != dataPoints.cend() ) {
-        MessageOutput.printf("%d: %s: %s%s\r\n",
-            iter->second.getTimestamp(),
+        MessageOutput.printf("[%11.3f] JK BMS: %s: %s%s\r\n",
+            static_cast<double>(iter->second.getTimestamp())/1000,
             iter->second.getLabelText().c_str(),
             iter->second.getValueText().c_str(),
             iter->second.getUnitText().c_str());
