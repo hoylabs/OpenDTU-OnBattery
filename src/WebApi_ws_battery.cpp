@@ -44,9 +44,7 @@ void WebApiWsBatteryLiveClass::loop()
         return;
     }
 
-    if (millis() - _lastUpdateCheck < 1000) {
-        return;
-    }
+    if (!Battery.getStats()->updateAvailable(_lastUpdateCheck)) { return; }
     _lastUpdateCheck = millis();
 
     try {
