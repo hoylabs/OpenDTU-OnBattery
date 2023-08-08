@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <memory>
+#include <mutex>
 
 #include "BatteryStats.h"
 
@@ -25,9 +26,8 @@ class BatteryClass {
         std::shared_ptr<BatteryStats const> getStats() const;
 
     private:
-        void mqttPublish();
-
         uint32_t _lastMqttPublish = 0;
+        mutable std::mutex _mutex;
         std::unique_ptr<BatteryProvider> _upProvider = nullptr;
 };
 

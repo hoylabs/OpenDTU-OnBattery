@@ -9,6 +9,8 @@ BatteryClass Battery;
 
 std::shared_ptr<BatteryStats const> BatteryClass::getStats() const
 {
+    std::lock_guard<std::mutex> lock(_mutex);
+
     if (!_upProvider) {
         static auto sspDummyStats = std::make_shared<BatteryStats>();
         return sspDummyStats;
@@ -23,6 +25,8 @@ void BatteryClass::init()
     if (!config.Battery_Enabled) { return; }
 
     bool verboseLogging = config.Battery_VerboseLogging;
+
+    std::lock_guard<std::mutex> lock(_mutex);
 
     switch (config.Battery_Provider) {
         case 0:
@@ -39,9 +43,13 @@ void BatteryClass::init()
     }
 }
 
-void BatteryClass::mqttPublish()
+void BatteryClass::loop()
 {
+    std::lock_guard<std::mutex> lock(_mutex);
+
     if (!_upProvider) { return; }
+
+    _upProvider->loop();
 
     CONFIG_T& config = Configuration.get();
 
@@ -55,21 +63,16 @@ void BatteryClass::mqttPublish()
     _lastMqttPublish = millis();
 }
 
-void BatteryClass::loop()
-{
-    if (!_upProvider) { return; }
-
-    _upProvider->loop();
-
-    mqttPublish();
-}
-
 void BatteryClass::reload()
 {
+    std::unique_lock<std::mutex> lock(_mutex);
+
     if (_upProvider) {
         _upProvider->deinit();
         _upProvider = nullptr;
     }
+
+    lock.unlock(); // init() will re-lock to re-assign _upProvider
 
     init();
 }

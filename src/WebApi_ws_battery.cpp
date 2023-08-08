@@ -75,9 +75,7 @@ void WebApiWsBatteryLiveClass::loop()
 
 void WebApiWsBatteryLiveClass::generateJsonResponse(JsonVariant& root)
 {
-    auto spStats = Battery.getStats();
-    if (!spStats) { return; }
-    spStats->getLiveViewData(root);
+    Battery.getStats()->getLiveViewData(root);
 }
 
 void WebApiWsBatteryLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
