@@ -36,10 +36,11 @@ void MqttHandlePowerLimiterClass::loop()
     const CONFIG_T& config = Configuration.get();
 
     if ((millis() - _lastPublish) > (config.Mqtt_PublishInterval * 1000) ) {
-      MqttSettings.publish("powerlimiter/status/mode", String(PowerLimiter.getMode()));
+        auto val = static_cast<unsigned>(PowerLimiter.getMode());
+        MqttSettings.publish("powerlimiter/status/mode", String(val));
 
-      yield();
-      _lastPublish = millis();
+        yield();
+        _lastPublish = millis();
     }
 }
 
@@ -65,18 +66,19 @@ void MqttHandlePowerLimiterClass::onCmdMode(const espMqttClientTypes::MessagePro
         return;
     }
 
-    switch (intValue) {
-        case 2:
+    using Mode = PowerLimiterClass::Mode;
+    switch (static_cast<Mode>(intValue)) {
+        case Mode::UnconditionalFullSolarPassthrough:
             MessageOutput.println("Power limiter unconditional full solar PT");
-            PowerLimiter.setMode(PL_MODE_SOLAR_PT_ONLY);
+            PowerLimiter.setMode(Mode::UnconditionalFullSolarPassthrough);
             break;
-        case 1:
+        case Mode::Disabled:
             MessageOutput.println("Power limiter disabled (override)");
-            PowerLimiter.setMode(PL_MODE_FULL_DISABLE);
+            PowerLimiter.setMode(Mode::Disabled);
             break;
-        case 0:
+        case Mode::Normal:
             MessageOutput.println("Power limiter normal operation");
-            PowerLimiter.setMode(PL_MODE_ENABLE_NORMAL_OP);
+            PowerLimiter.setMode(Mode::Normal);
             break;
         default:
             MessageOutput.printf("PowerLimiter - unknown mode %d\r\n", intValue);
