@@ -3,81 +3,105 @@
 #include "MqttSettings.h"
 #include "JkBmsDataPoints.h"
 
+template<typename T>
+void BatteryStats::addLiveViewValue(JsonVariant& root, std::string const& name,
+    T&& value, std::string const& unit, uint8_t precision) const
+{
+    auto jsonValue = root["values"][name];
+    jsonValue["v"] = value;
+    jsonValue["u"] = unit;
+    jsonValue["d"] = precision;
+}
+
+void BatteryStats::addLiveViewText(JsonVariant& root, std::string const& name,
+    std::string const& text) const
+{
+    root["values"][name] = text;
+}
+
+void BatteryStats::addLiveViewWarning(JsonVariant& root, std::string const& name,
+    bool warning) const
+{
+    if (!warning) { return; }
+    root["issues"][name] = 1;
+}
+
+void BatteryStats::addLiveViewAlarm(JsonVariant& root, std::string const& name,
+    bool alarm) const
+{
+    if (!alarm) { return; }
+    root["issues"][name] = 2;
+}
+
 void BatteryStats::getLiveViewData(JsonVariant& root) const
 {
     root[F("manufacturer")] = _manufacturer;
     root[F("data_age")] = getAgeSeconds();
-    root[F("stateOfCharge")]["v"] = _SoC;
-    root[F("stateOfCharge")]["u"] = "%";
-    root[F("stateOfCharge")]["d"] = 0;
+
+    addLiveViewValue(root, "SoC", _SoC, "%", 0);
 }
 
 void PylontechBatteryStats::getLiveViewData(JsonVariant& root) const
 {
     BatteryStats::getLiveViewData(root);
 
-    root[F("chargeVoltage")]["v"] = _chargeVoltage;
-    root[F("chargeVoltage")]["u"] = "V";
-    root[F("chargeCurrentLimitation")]["v"] = _chargeCurrentLimitation;
-    root[F("chargeCurrentLimitation")]["u"] = "A";
-    root[F("dischargeCurrentLimitation")]["v"] = _dischargeCurrentLimitation;
-    root[F("dischargeCurrentLimitation")]["u"] = "A";
-    root[F("stateOfHealth")]["v"] = _stateOfHealth;
-    root[F("stateOfHealth")]["u"] = "%";
-    root[F("voltage")]["v"] = _voltage;
-    root[F("voltage")]["u"] = "V";
-    root[F("current")]["v"] = _current;
-    root[F("current")]["u"] = "A";
-    root[F("temperature")]["v"] = _temperature;
-    root[F("temperature")]["u"] = "°C";
+    // values go into the "Status" card of the web application
+    addLiveViewValue(root, "chargeVoltage", _chargeVoltage, "V", 1);
+    addLiveViewValue(root, "chargeCurrentLimitation", _chargeCurrentLimitation, "A", 1);
+    addLiveViewValue(root, "dischargeCurrentLimitation", _dischargeCurrentLimitation, "A", 1);
+    addLiveViewValue(root, "stateOfHealth", _stateOfHealth, "%", 0);
+    addLiveViewValue(root, "voltage", _voltage, "V", 2);
+    addLiveViewValue(root, "current", _current, "A", 1);
+    addLiveViewValue(root, "temperature", _temperature, "°C", 1);
 
-    // Alarms
-    root["alarms"][F("dischargeCurrent")] = _alarmOverCurrentDischarge;
-    root["alarms"][F("chargeCurrent")] = _alarmOverCurrentCharge;
-    root["alarms"][F("lowTemperature")] = _alarmUnderTemperature;
-    root["alarms"][F("highTemperature")] = _alarmOverTemperature;
-    root["alarms"][F("lowVoltage")] = _alarmUnderVoltage;
-    root["alarms"][F("highVoltage")] = _alarmOverVoltage;
-    root["alarms"][F("bmsInternal")] = _alarmBmsInternal;
+    addLiveViewText(root, "chargeEnabled", (_chargeEnabled?"yes":"no"));
+    addLiveViewText(root, "dischargeEnabled", (_dischargeEnabled?"yes":"no"));
+    addLiveViewText(root, "chargeImmediately", (_chargeImmediately?"yes":"no"));
 
-    // Warnings
-    root["warnings"][F("dischargeCurrent")] = _warningHighCurrentDischarge;
-    root["warnings"][F("chargeCurrent")] = _warningHighCurrentCharge;
-    root["warnings"][F("lowTemperature")] = _warningLowTemperature;
-    root["warnings"][F("highTemperature")] = _warningHighTemperature;
-    root["warnings"][F("lowVoltage")] = _warningLowVoltage;
-    root["warnings"][F("highVoltage")] = _warningHighVoltage;
-    root["warnings"][F("bmsInternal")] = _warningBmsInternal;
+    // alarms and warnings go into the "Issues" card of the web application
+    addLiveViewWarning(root, "highCurrentDischarge", _warningHighCurrentDischarge);
+    addLiveViewAlarm(root, "overCurrentDischarge", _alarmOverCurrentDischarge);
 
-    // Misc
-    root[F("chargeEnabled")] = _chargeEnabled;
-    root[F("dischargeEnabled")] = _dischargeEnabled;
-    root[F("chargeImmediately")] = _chargeImmediately;
+    addLiveViewWarning(root, "highCurrentCharge", _warningHighCurrentCharge);
+    addLiveViewAlarm(root, "overCurrentCharge", _alarmOverCurrentCharge);
+
+    addLiveViewWarning(root, "lowTemperature", _warningLowTemperature);
+    addLiveViewAlarm(root, "underTemperature", _alarmUnderTemperature);
+
+    addLiveViewWarning(root, "highTemperature", _warningHighTemperature);
+    addLiveViewAlarm(root, "overTemperature", _alarmOverTemperature);
+
+    addLiveViewWarning(root, "lowVoltage", _warningLowVoltage);
+    addLiveViewAlarm(root, "underVoltage", _alarmUnderVoltage);
+
+    addLiveViewWarning(root, "highVoltage", _warningHighVoltage);
+    addLiveViewAlarm(root, "overVoltage", _alarmOverVoltage);
+
+    addLiveViewWarning(root, "bmsInternal", _warningBmsInternal);
+    addLiveViewAlarm(root, "bmsInternal", _alarmBmsInternal);
 }
 
 void JkBmsBatteryStats::getLiveViewData(JsonVariant& root) const
 {
+    BatteryStats::getLiveViewData(root);
+
     using Label = JkBms::DataPointLabel;
 
     auto oVoltage = _dataPoints.get<Label::BatteryVoltageMilliVolt>();
     if (oVoltage.has_value()) {
-        root[F("voltage")]["v"] = static_cast<float>(*oVoltage) / 1000;
-        root[F("voltage")]["u"] = "V";
-        root[F("voltage")]["d"] = 2;
+        addLiveViewValue(root, "voltage",
+                static_cast<float>(*oVoltage) / 1000, "V", 2);
     }
 
     auto oCurrent = _dataPoints.get<Label::BatteryCurrentMilliAmps>();
     if (oCurrent.has_value()) {
-        root[F("current")]["v"] = static_cast<float>(*oCurrent) / 1000;
-        root[F("current")]["u"] = "A";
-        root[F("current")]["d"] = 2;
+        addLiveViewValue(root, "current",
+                static_cast<float>(*oCurrent) / 1000, "A", 2);
     }
 
     auto oTemperature = _dataPoints.get<Label::BatteryTempOneCelsius>();
     if (oTemperature.has_value()) {
-        root[F("temperature")]["v"] = *oTemperature;
-        root[F("temperature")]["u"] = "°C";
-        root[F("temperature")]["d"] = 0;
+        addLiveViewValue(root, "temperature", *oTemperature, "°C", 0);
     }
 }
 
