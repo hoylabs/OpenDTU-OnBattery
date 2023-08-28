@@ -21,6 +21,8 @@ private:
     float scaleValue(int16_t value, float factor);
     bool getBit(uint8_t value, uint8_t bit);
 
+    void dummyData();
+
     bool _verboseLogging = true;
     std::shared_ptr<PylontechBatteryStats> _stats =
         std::make_shared<PylontechBatteryStats>();

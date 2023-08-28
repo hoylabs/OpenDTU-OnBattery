@@ -6,6 +6,8 @@
 #include <driver/twai.h>
 #include <ctime>
 
+//#define PYLONTECH_DUMMY
+
 bool PylontechCanReceiver::init(bool verboseLogging)
 {
     _verboseLogging = verboseLogging;
@@ -91,6 +93,10 @@ void PylontechCanReceiver::deinit()
 
 void PylontechCanReceiver::loop()
 {
+#ifdef PYLONTECH_DUMMY
+    return dummyData();
+#endif
+
     // Check for messages. twai_receive is blocking when there is no data so we return if there are no frames in the buffer
     twai_status_info_t status_info;
     esp_err_t twaiLastResult = twai_get_status_info(&status_info);
@@ -259,3 +265,80 @@ bool PylontechCanReceiver::getBit(uint8_t value, uint8_t bit)
 {
     return (value & (1 << bit)) >> bit;
 }
+
+#ifdef PYLONTECH_DUMMY
+void PylontechCanReceiver::dummyData()
+{
+    static uint32_t lastUpdate = millis();
+    static uint8_t issues = 0;
+
+    if (millis() < (lastUpdate + 5 * 1000)) { return; }
+
+    lastUpdate = millis();
+    _stats->setLastUpdate(lastUpdate);
+
+    auto dummyFloat = [](int offset) -> float {
+        return offset + (static_cast<float>((lastUpdate + offset) % 10) / 10);
+    };
+
+    _stats->setManufacturer("Pylontech US3000C");
+    _stats->setSoC(42);
+    _stats->_chargeVoltage = dummyFloat(50);
+    _stats->_chargeCurrentLimitation = dummyFloat(33);
+    _stats->_dischargeCurrentLimitation = dummyFloat(12);
+    _stats->_stateOfHealth = 99;
+    _stats->_voltage = 48.67;
+    _stats->_current = dummyFloat(-1);
+    _stats->_temperature = dummyFloat(20);
+
+    _stats->_chargeEnabled = true;
+    _stats->_dischargeEnabled = true;
+    _stats->_chargeImmediately = false;
+
+    _stats->_warningHighCurrentDischarge = false;
+    _stats->_warningHighCurrentCharge = false;
+    _stats->_warningLowTemperature = false;
+    _stats->_warningHighTemperature = false;
+    _stats->_warningLowVoltage = false;
+    _stats->_warningHighVoltage = false;
+    _stats->_warningBmsInternal = false;
+
+    _stats->_alarmOverCurrentDischarge = false;
+    _stats->_alarmOverCurrentCharge = false;
+    _stats->_alarmUnderTemperature = false;
+    _stats->_alarmOverTemperature = false;
+    _stats->_alarmUnderVoltage = false;
+    _stats->_alarmOverVoltage = false;
+    _stats->_alarmBmsInternal = false;
+
+    if (issues == 1 || issues == 3) {
+        _stats->_warningHighCurrentDischarge = true;
+        _stats->_warningHighCurrentCharge = true;
+        _stats->_warningLowTemperature = true;
+        _stats->_warningHighTemperature = true;
+        _stats->_warningLowVoltage = true;
+        _stats->_warningHighVoltage = true;
+        _stats->_warningBmsInternal = true;
+    }
+
+    if (issues == 2 || issues == 3) {
+        _stats->_alarmOverCurrentDischarge = true;
+        _stats->_alarmOverCurrentCharge = true;
+        _stats->_alarmUnderTemperature = true;
+        _stats->_alarmOverTemperature = true;
+        _stats->_alarmUnderVoltage = true;
+        _stats->_alarmOverVoltage = true;
+        _stats->_alarmBmsInternal = true;
+    }
+
+    if (issues == 4) {
+        _stats->_warningHighCurrentCharge = true;
+        _stats->_warningLowTemperature = true;
+        _stats->_alarmUnderVoltage = true;
+        _stats->_dischargeEnabled = false;
+        _stats->_chargeImmediately = true;
+    }
+
+    issues = (issues + 1) % 5;
+}
+#endif
