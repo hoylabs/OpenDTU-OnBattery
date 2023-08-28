@@ -51,7 +51,7 @@ void WebApiWsBatteryLiveClass::loop()
         String buffer;
         // free JsonDocument as soon as possible
         {
-            DynamicJsonDocument root(1024);
+            DynamicJsonDocument root(_responseSize);
             JsonVariant var = root;
             generateJsonResponse(var);
             serializeJson(root, buffer);
@@ -91,7 +91,7 @@ void WebApiWsBatteryLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
         return;
     }
     try {
-        AsyncJsonResponse* response = new AsyncJsonResponse(false, 1024U);
+        AsyncJsonResponse* response = new AsyncJsonResponse(false, _responseSize);
         JsonVariant root = response->getRoot().as<JsonVariant>();
         generateJsonResponse(root);
 
