@@ -12,6 +12,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <array>
 
 #ifndef VICTRON_PIN_TX
 #define VICTRON_PIN_TX 21      // HardwareSerial TX Pin
@@ -101,6 +102,7 @@ public:
 
 private:
     void setLastUpdate();                     // set timestampt after successful frame read
+    void dumpDebugBuffer();
     void rxData(uint8_t inbyte);              // byte of serial data
     void textRxEvent(char *, char *);
     void frameEndEvent(bool);                 // copy temp struct to public struct
@@ -117,6 +119,8 @@ private:
     char _value[VE_MAX_VALUE_LEN];             // buffer for the field value
     veStruct _tmpFrame{};                        // private struct for received name and value pairs
     MovingAverage<double, 5> _efficiency;
+    std::array<uint8_t, 512> _debugBuffer;
+    unsigned _debugIn;
     uint32_t _lastByteMillis;
     uint32_t _lastUpdate;
 };

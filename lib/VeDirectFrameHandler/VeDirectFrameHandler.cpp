@@ -70,6 +70,7 @@ VeDirectFrameHandler::VeDirectFrameHandler() :
 	_name(""),
 	_value(""),
 	_tmpFrame(),
+	_debugIn(0),
 	_lastByteMillis(0),
 	_lastUpdate(0)
 {
@@ -80,6 +81,18 @@ void VeDirectFrameHandler::init(int8_t rx, int8_t tx, Print* msgOut)
     VedirectSerial.begin(19200, SERIAL_8N1, rx, tx);
     VedirectSerial.flush();
 	_msgOut = msgOut;
+}
+
+void VeDirectFrameHandler::dumpDebugBuffer() {
+	_msgOut->printf("[VE.Direct] serial input (%d Bytes):", _debugIn);
+	for (int i = 0; i < _debugIn; ++i) {
+		if (i % 16 == 0) {
+			_msgOut->printf("\r\n[VE.Direct]");
+		}
+		_msgOut->printf(" %02x", _debugBuffer[i]);
+	}
+	_msgOut->println("");
+	_debugIn = 0;
 }
 
 void VeDirectFrameHandler::loop()
@@ -94,6 +107,7 @@ void VeDirectFrameHandler::loop()
 	// to decode a new frame once more data arrives.
 	if (IDLE != _state && _lastByteMillis + 500 < millis()) {
 		_msgOut->printf("[VE.Direct] Resetting state machine (was %d) after timeout\r\n", _state);
+		dumpDebugBuffer();
 		_checksum = 0;
 		_state = IDLE;
 		_tmpFrame = { };
@@ -107,6 +121,12 @@ void VeDirectFrameHandler::loop()
  */
 void VeDirectFrameHandler::rxData(uint8_t inbyte)
 {
+	_debugBuffer[_debugIn] = inbyte;
+	_debugIn = (_debugIn + 1) % _debugBuffer.size();
+	if (0 == _debugIn) {
+		_msgOut->println("[VE.Direct] ERROR: debug buffer overrun!");
+	}
+
 	//if (mStop) return;
 	if ( (inbyte == ':') && (_state != CHECKSUM) ) {
 		_prevState = _state; //hex frame can interrupt TEXT
@@ -268,6 +288,9 @@ void VeDirectFrameHandler::textRxEvent(char * name, char * value) {
  *  is created in the public buffer.
  */
 void VeDirectFrameHandler::frameEndEvent(bool valid) {
+	// TODO this should be toggled by a "verbose logging" switch
+	dumpDebugBuffer();
+
 	if ( valid ) {
 		_tmpFrame.P = _tmpFrame.V * _tmpFrame.I;
 
