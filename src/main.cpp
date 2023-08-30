@@ -165,7 +165,7 @@ void setup()
     MessageOutput.println(F("Initialize ve.direct interface... "));
     if (PinMapping.isValidVictronConfig()) {
         MessageOutput.printf("ve.direct rx = %d, tx = %d\r\n", pin.victron_rx, pin.victron_tx);
-        VeDirect.init(pin.victron_rx, pin.victron_tx);
+        VeDirect.init(pin.victron_rx, pin.victron_tx, &MessageOutput);
         MessageOutput.println(F("done"));
     } else {
         MessageOutput.println(F("Invalid pin config"));

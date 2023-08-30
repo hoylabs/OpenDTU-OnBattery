@@ -36,27 +36,33 @@
 #include <Arduino.h>
 #include "VeDirectFrameHandler.h"
 
-char MODULE[] = "VE.Frame";	// Victron seems to use this to find out where logging messages were generated
-
 // The name of the record that contains the checksum.
 static constexpr char checksumTagName[] = "CHECKSUM";
 
 // state machine
-enum States {                               
-	IDLE,
-	RECORD_BEGIN,
-	RECORD_NAME,
-	RECORD_VALUE,
-	CHECKSUM,
-	RECORD_HEX
+enum States {
+	IDLE = 1,
+	RECORD_BEGIN = 2,
+	RECORD_NAME = 3,
+	RECORD_VALUE = 4,
+	CHECKSUM = 5,
+	RECORD_HEX = 6
 };
 
 HardwareSerial VedirectSerial(1);
 
 VeDirectFrameHandler VeDirect;
 
+class Silent : public Print {
+    public:
+        size_t write(uint8_t c) final { return 0; }
+};
+
+static Silent MessageOutputDummy;
+
 VeDirectFrameHandler::VeDirectFrameHandler() :
 	//mStop(false),	// don't know what Victron uses this for, not using
+	_msgOut(&MessageOutputDummy),
 	_state(IDLE),
 	_checksum(0),
 	_textPointer(0),
@@ -69,10 +75,11 @@ VeDirectFrameHandler::VeDirectFrameHandler() :
 {
 }
 
-void VeDirectFrameHandler::init(int8_t rx, int8_t tx)
+void VeDirectFrameHandler::init(int8_t rx, int8_t tx, Print* msgOut)
 {
     VedirectSerial.begin(19200, SERIAL_8N1, rx, tx);
     VedirectSerial.flush();
+	_msgOut = msgOut;
 }
 
 void VeDirectFrameHandler::loop()
@@ -86,6 +93,7 @@ void VeDirectFrameHandler::loop()
 	// if such a large gap is observed, reset the state machine so it tries
 	// to decode a new frame once more data arrives.
 	if (IDLE != _state && _lastByteMillis + 500 < millis()) {
+		_msgOut->printf("[VE.Direct] Resetting state machine (was %d) after timeout\r\n", _state);
 		_checksum = 0;
 		_state = IDLE;
 		_tmpFrame = { };
@@ -173,8 +181,9 @@ void VeDirectFrameHandler::rxData(uint8_t inbyte)
 	case CHECKSUM:
 	{
 		bool valid = _checksum == 0;
-		if (!valid)
-			logE(MODULE,"[CHECKSUM] Invalid frame");
+		if (!valid) {
+			_msgOut->printf("[VE.Direct] checksum 0x%02x != 0, invalid frame\r\n", _checksum);
+		}
 		_checksum = 0;
 		_state = IDLE;
 		frameEndEvent(valid);
@@ -280,18 +289,6 @@ void VeDirectFrameHandler::frameEndEvent(bool valid) {
 }
 
 /*
- *	logE
- *  This function included for continuity and possible future use.	
- */
-void VeDirectFrameHandler::logE(const char * module, const char * error) {
-	Serial.print("MODULE: ");
-    Serial.println(module);
-    Serial.print("ERROR: ");
-    Serial.println(error);
-	return;
-}
-
-/*
  *	hexRxEvent
  *  This function records hex answers or async messages	
  */
@@ -307,7 +304,7 @@ int VeDirectFrameHandler::hexRxEvent(uint8_t inbyte) {
 	default:
 		_hexSize++;
 		if (_hexSize>=VE_MAX_HEX_LEN) { // oops -buffer overflow - something went wrong, we abort
-			logE(MODULE,"hexRx buffer overflow - aborting read");
+			_msgOut->println("[VE.Direct] hexRx buffer overflow - aborting read");
 			_hexSize=0;
 			ret=IDLE;
 		}

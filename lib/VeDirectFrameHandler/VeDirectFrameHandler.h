@@ -87,7 +87,7 @@ class VeDirectFrameHandler {
 public:
 
     VeDirectFrameHandler();
-    void init(int8_t rx, int8_t tx);             // initialize HardewareSerial
+    void init(int8_t rx, int8_t tx, Print* msgOut);
     void loop();                                 // main loop to read ve.direct data
     unsigned long getLastUpdate();               // timestamp of last successful frame read
     bool isDataValid();                          // return true if data valid and not outdated
@@ -104,10 +104,10 @@ private:
     void rxData(uint8_t inbyte);              // byte of serial data
     void textRxEvent(char *, char *);
     void frameEndEvent(bool);                 // copy temp struct to public struct
-    void logE(const char *, const char *);    
     int hexRxEvent(uint8_t);
 
     //bool mStop;                               // not sure what Victron uses this for, not using
+    Print* _msgOut;
     int _state;                                // current state
     int _prevState;                            // previous state
     uint8_t	_checksum;                         // checksum value
