@@ -117,7 +117,8 @@ private:
     char _value[VE_MAX_VALUE_LEN];             // buffer for the field value
     veStruct _tmpFrame{};                        // private struct for received name and value pairs
     MovingAverage<double, 5> _efficiency;
-    unsigned long _lastUpdate;
+    uint32_t _lastByteMillis;
+    uint32_t _lastUpdate;
 };
 
 extern VeDirectFrameHandler VeDirect;

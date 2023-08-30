@@ -64,6 +64,7 @@ VeDirectFrameHandler::VeDirectFrameHandler() :
 	_name(""),
 	_value(""),
 	_tmpFrame(),
+	_lastByteMillis(0),
 	_lastUpdate(0)
 {
 }
@@ -78,6 +79,16 @@ void VeDirectFrameHandler::loop()
 {
 	while ( VedirectSerial.available()) {
 		rxData(VedirectSerial.read());
+		_lastByteMillis = millis();
+	}
+
+	// there will never be a large gap between two bytes of the same frame.
+	// if such a large gap is observed, reset the state machine so it tries
+	// to decode a new frame once more data arrives.
+	if (IDLE != _state && _lastByteMillis + 500 < millis()) {
+		_checksum = 0;
+		_state = IDLE;
+		_tmpFrame = { };
 	}
 }
 
