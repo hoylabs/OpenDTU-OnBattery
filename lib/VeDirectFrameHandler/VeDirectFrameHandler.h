@@ -88,7 +88,8 @@ class VeDirectFrameHandler {
 public:
 
     VeDirectFrameHandler();
-    void init(int8_t rx, int8_t tx, Print* msgOut);
+    void setVerboseLogging(bool verboseLogging);
+    void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging);
     void loop();                                 // main loop to read ve.direct data
     unsigned long getLastUpdate();               // timestamp of last successful frame read
     bool isDataValid();                          // return true if data valid and not outdated
@@ -110,6 +111,7 @@ private:
 
     //bool mStop;                               // not sure what Victron uses this for, not using
     Print* _msgOut;
+    bool _verboseLogging;
     int _state;                                // current state
     int _prevState;                            // previous state
     uint8_t	_checksum;                         // checksum value

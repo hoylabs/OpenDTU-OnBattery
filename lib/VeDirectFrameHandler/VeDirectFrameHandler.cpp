@@ -76,11 +76,17 @@ VeDirectFrameHandler::VeDirectFrameHandler() :
 {
 }
 
-void VeDirectFrameHandler::init(int8_t rx, int8_t tx, Print* msgOut)
+void VeDirectFrameHandler::setVerboseLogging(bool verboseLogging)
 {
-    VedirectSerial.begin(19200, SERIAL_8N1, rx, tx);
-    VedirectSerial.flush();
+	_verboseLogging = verboseLogging;
+}
+
+void VeDirectFrameHandler::init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging)
+{
+	VedirectSerial.begin(19200, SERIAL_8N1, rx, tx);
+	VedirectSerial.flush();
 	_msgOut = msgOut;
+	setVerboseLogging(verboseLogging);
 }
 
 void VeDirectFrameHandler::dumpDebugBuffer() {
@@ -107,7 +113,7 @@ void VeDirectFrameHandler::loop()
 	// to decode a new frame once more data arrives.
 	if (IDLE != _state && _lastByteMillis + 500 < millis()) {
 		_msgOut->printf("[VE.Direct] Resetting state machine (was %d) after timeout\r\n", _state);
-		dumpDebugBuffer();
+		if (_verboseLogging) { dumpDebugBuffer(); }
 		_checksum = 0;
 		_state = IDLE;
 		_tmpFrame = { };
@@ -204,6 +210,7 @@ void VeDirectFrameHandler::rxData(uint8_t inbyte)
 		if (!valid) {
 			_msgOut->printf("[VE.Direct] checksum 0x%02x != 0, invalid frame\r\n", _checksum);
 		}
+		if (_verboseLogging) { dumpDebugBuffer(); }
 		_checksum = 0;
 		_state = IDLE;
 		frameEndEvent(valid);
@@ -288,9 +295,6 @@ void VeDirectFrameHandler::textRxEvent(char * name, char * value) {
  *  is created in the public buffer.
  */
 void VeDirectFrameHandler::frameEndEvent(bool valid) {
-	// TODO this should be toggled by a "verbose logging" switch
-	dumpDebugBuffer();
-
 	if ( valid ) {
 		_tmpFrame.P = _tmpFrame.V * _tmpFrame.I;
 
