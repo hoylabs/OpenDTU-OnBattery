@@ -14,18 +14,8 @@
 #include <Arduino.h>
 #include <array>
 
-#ifndef VICTRON_PIN_TX
-#define VICTRON_PIN_TX 21      // HardwareSerial TX Pin
-#endif
-
-#ifndef VICTRON_PIN_RX
-#define VICTRON_PIN_RX 22      // HardwareSerial RX Pin
-#endif
-
-#define VE_MAX_NAME_LEN 9   // VE.Direct Protocol: max name size is 9 including /0
 #define VE_MAX_VALUE_LEN 33 // VE.Direct Protocol: max value size is 33 including /0
 #define VE_MAX_HEX_LEN 100 // Maximum size of hex frame - max payload 34 byte (=68 char) + safe buffer
-
 
 typedef struct {
     uint16_t PID;                   // product id
