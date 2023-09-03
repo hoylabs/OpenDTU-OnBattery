@@ -61,7 +61,6 @@ class Silent : public Print {
 static Silent MessageOutputDummy;
 
 VeDirectFrameHandler::VeDirectFrameHandler() :
-	//mStop(false),	// don't know what Victron uses this for, not using
 	_msgOut(&MessageOutputDummy),
 	_state(IDLE),
 	_checksum(0),
@@ -133,7 +132,6 @@ void VeDirectFrameHandler::rxData(uint8_t inbyte)
 		_msgOut->println("[VE.Direct] ERROR: debug buffer overrun!");
 	}
 
-	//if (mStop) return;
 	if ( (inbyte == ':') && (_state != CHECKSUM) ) {
 		_prevState = _state; //hex frame can interrupt TEXT
 		_state = RECORD_HEX; 

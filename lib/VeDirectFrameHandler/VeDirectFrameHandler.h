@@ -99,7 +99,6 @@ private:
     void frameEndEvent(bool);                 // copy temp struct to public struct
     int hexRxEvent(uint8_t);
 
-    //bool mStop;                               // not sure what Victron uses this for, not using
     Print* _msgOut;
     bool _verboseLogging;
     int _state;                                // current state
