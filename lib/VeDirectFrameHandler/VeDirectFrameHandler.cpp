@@ -49,9 +49,7 @@ enum States {
 	RECORD_HEX = 6
 };
 
-HardwareSerial VedirectSerial(1);
 
-VeDirectFrameHandler VeDirect;
 
 class Silent : public Print {
 	public:
@@ -81,10 +79,8 @@ void VeDirectFrameHandler::setVerboseLogging(bool verboseLogging)
 	if (!_verboseLogging) { _debugIn = 0; }
 }
 
-void VeDirectFrameHandler::init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging)
+void VeDirectFrameHandler::init(Print* msgOut, bool verboseLogging)
 {
-	VedirectSerial.begin(19200, SERIAL_8N1, rx, tx);
-	VedirectSerial.flush();
 	_msgOut = msgOut;
 	setVerboseLogging(verboseLogging);
 }
@@ -103,8 +99,8 @@ void VeDirectFrameHandler::dumpDebugBuffer() {
 
 void VeDirectFrameHandler::loop()
 {
-	while ( VedirectSerial.available()) {
-		rxData(VedirectSerial.read());
+	while ( _vedirectSerial->available()) {
+		rxData(_vedirectSerial->read());
 		_lastByteMillis = millis();
 	}
 
@@ -263,28 +259,7 @@ void VeDirectFrameHandler::textRxEvent(char * name, char * value) {
 	}
 	else if (strcmp(name, "I") == 0) {
 		_tmpFrame.I = round(atof(value) / 10.0) / 100.0;
-	}
-	else if (strcmp(name, "VPV") == 0) {
-		_tmpFrame.VPV = round(atof(value) / 10.0) / 100.0;
-	}
-	else if (strcmp(name, "PPV") == 0) {
-		_tmpFrame.PPV = atoi(value);
-	}
-	else if (strcmp(name, "H19") == 0) {
-		_tmpFrame.H19 = atof(value) / 100.0;
-	}
-	else if (strcmp(name, "H20") == 0) {
-		_tmpFrame.H20 = atof(value) / 100.0;
-	}
-	else if (strcmp(name, "H21") == 0) {
-		_tmpFrame.H21 = atoi(value);
-	}
-	else if (strcmp(name, "H22") == 0) {
-		_tmpFrame.H22 = atof(value) / 100.0;
-	}
-	else if (strcmp(name, "H23") == 0) {
-		_tmpFrame.H23 = atoi(value);
-	}
+	}	
 }
 
 

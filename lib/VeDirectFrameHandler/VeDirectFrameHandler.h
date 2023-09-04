@@ -17,6 +17,19 @@
 #define VE_MAX_VALUE_LEN 33 // VE.Direct Protocol: max value size is 33 including /0
 #define VE_MAX_HEX_LEN 100 // Maximum size of hex frame - max payload 34 byte (=68 char) + safe buffer
 
+/*
+typedef struct {
+    uint16_t PID;                   // product id
+    char SER[VE_MAX_VALUE_LEN];     // serial number
+    char FW[VE_MAX_VALUE_LEN];      // firmware release number
+    int32_t P;                      // battery output power in W (calculated)
+    double V;                       // battery voltage in V
+    double I;                       // battery current in A
+    double E;                       // efficiency in percent (calculated, moving average)
+    double IPV;                     // panel current in A (calculated)
+} veStruct;
+*/
+
 typedef struct {
     uint16_t PID;                   // product id
     char SER[VE_MAX_VALUE_LEN];     // serial number
@@ -66,6 +79,9 @@ public:
         return static_cast<double>(_sum) / _count;
     }
 
+   
+ 
+
 private:
     std::array<T, WINDOW_SIZE> _window;
     T _sum;
@@ -79,7 +95,7 @@ public:
 
     VeDirectFrameHandler();
     void setVerboseLogging(bool verboseLogging);
-    void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging);
+    virtual void init( Print* msgOut, bool verboseLogging);
     void loop();                                 // main loop to read ve.direct data
     unsigned long getLastUpdate();               // timestamp of last successful frame read
     bool isDataValid();                          // return true if data valid and not outdated
@@ -90,15 +106,19 @@ public:
     String getMpptAsString(uint8_t mppt);    // state of mppt as string
 
     veStruct veFrame{};                      // public struct for received name and value pairs
+    
+    void setMessageOutput(Print* output);
+    Print* getMessageOutput();
 
-private:
+protected:
     void setLastUpdate();                     // set timestampt after successful frame read
     void dumpDebugBuffer();
     void rxData(uint8_t inbyte);              // byte of serial data
-    void textRxEvent(char *, char *);
+    virtual void textRxEvent(char *, char *);
     void frameEndEvent(bool);                 // copy temp struct to public struct
     int hexRxEvent(uint8_t);
 
+    HardwareSerial* _vedirectSerial;
     Print* _msgOut;
     bool _verboseLogging;
     int _state;                                // current state
@@ -114,7 +134,8 @@ private:
     unsigned _debugIn;
     uint32_t _lastByteMillis;
     uint32_t _lastUpdate;
+
 };
 
-extern VeDirectFrameHandler VeDirect;
+//extern VeDirectFrameHandler VeDirect;
 

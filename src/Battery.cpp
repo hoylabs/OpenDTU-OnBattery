@@ -42,6 +42,11 @@ void BatteryClass::init()
             _upProvider = std::make_unique<JkBms::Controller>();
             if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
             break;
+        case 3:
+            MessageOutput.printf("TODO: Implement Victron Shunt Battery Provider\n");
+            //_upProvider = std::make_unique<VeDirectShuntController>();
+            //if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
+            break;
         default:
             MessageOutput.printf("Unknown battery provider: %d\r\n", config.Battery_Provider);
             break;

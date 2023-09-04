@@ -10,7 +10,7 @@
 #include "Battery.h"
 #include "Huawei_can.h"
 #include "PowerMeter.h"
-#include "VeDirectFrameHandler.h"
+#include "VeDirectMpptController.h"
 #include "defaults.h"
 #include <AsyncJson.h>
 

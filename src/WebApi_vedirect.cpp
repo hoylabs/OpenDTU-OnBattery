@@ -3,7 +3,7 @@
  * Copyright (C) 2022 Thomas Basler and others
  */
 #include "WebApi_vedirect.h"
-#include "VeDirectFrameHandler.h"
+#include "VeDirectMpptController.h"
 #include "ArduinoJson.h"
 #include "AsyncJson.h"
 #include "Configuration.h"

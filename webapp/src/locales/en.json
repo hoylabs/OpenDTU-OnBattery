@@ -608,6 +608,7 @@
         "Provider": "Data Provider",
         "ProviderPylontechCan": "Pylontech using CAN bus",
         "ProviderJkBmsSerial": "Jikong (JK) BMS using serial connection",
+        "ProviderVictron": "Victron SMartShunt using VE.Direct Interface",
         "JkBmsConfiguration": "JK BMS Settings",
         "JkBmsInterface": "Interface Type",
         "JkBmsInterfaceUart": "TTL-UART on MCU",

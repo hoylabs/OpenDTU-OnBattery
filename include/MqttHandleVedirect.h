@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
-#include "VeDirectFrameHandler.h"
+#include "VeDirectMpptController.h"
 #include "Configuration.h"
 #include <Arduino.h>
 
