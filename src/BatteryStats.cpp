@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <vector>
+#include <algorithm>
 #include "BatteryStats.h"
 #include "MqttSettings.h"
 #include "JkBmsDataPoints.h"
@@ -145,6 +147,22 @@ void PylontechBatteryStats::mqttPublish() const
 void JkBmsBatteryStats::mqttPublish() const
 {
     BatteryStats::mqttPublish();
+
+    using Label = JkBms::DataPointLabel;
+
+    static std::vector<Label> mqttSkip = {
+        Label::CellsMilliVolt, // complex data format
+        Label::ModificationPassword, // sensitive data
+        Label::BatterySoCPercent // already published by base class
+    };
+
+    for (auto iter = _dataPoints.cbegin(); iter != _dataPoints.cend(); ++iter) {
+        auto skipMatch = std::find(mqttSkip.begin(), mqttSkip.end(), iter->first);
+        if (skipMatch != mqttSkip.end()) { continue; }
+
+        String topic((std::string("battery/") + iter->second.getLabelText()).c_str());
+        MqttSettings.publish(topic, iter->second.getValueText().c_str());
+    }
 }
 
 void JkBmsBatteryStats::updateFrom(JkBms::DataPointContainer const& dp)
