@@ -66,7 +66,6 @@ VeDirectFrameHandler::VeDirectFrameHandler() :
 	_hexSize(0),
 	_name(""),
 	_value(""),
-	_tmpFrame(),
 	_debugIn(0),
 	_lastByteMillis(0),
 	_lastUpdate(0)
@@ -112,7 +111,6 @@ void VeDirectFrameHandler::loop()
 		if (_verboseLogging) { dumpDebugBuffer(); }
 		_checksum = 0;
 		_state = IDLE;
-		_tmpFrame = { };
 	}
 }
 
@@ -223,15 +221,15 @@ void VeDirectFrameHandler::rxData(uint8_t inbyte)
  * textRxEvent
  * This function is called every time a new name/value is successfully parsed.  It writes the values to the temporary buffer.
  */
-void VeDirectFrameHandler::textRxEvent(char * name, char * value) {
+void VeDirectFrameHandler::textRxEvent(char * name, char * value, veStruct& frame) {
 	if (strcmp(name, "PID") == 0) {
-		_tmpFrame.PID = strtol(value, nullptr, 0);
+		frame.PID = strtol(value, nullptr, 0);
 	}
 	else if (strcmp(name, "SER") == 0) {
-		strcpy(_tmpFrame.SER, value);
+		strcpy(frame.SER, value);
 	}
 	else if (strcmp(name, "FW") == 0) {
-		strcpy(_tmpFrame.FW, value);
+		strcpy(frame.FW, value);
 	}
 	else if (strcmp(name, "LOAD") == 0) {
 		if (strcmp(value, "ON") == 0)
@@ -255,40 +253,14 @@ void VeDirectFrameHandler::textRxEvent(char * name, char * value) {
 		_tmpFrame.HSDS = atoi(value);
 	}
 	else if (strcmp(name, "V") == 0) {
-		_tmpFrame.V = round(atof(value) / 10.0) / 100.0;
+		frame.V = round(atof(value) / 10.0) / 100.0;
 	}
 	else if (strcmp(name, "I") == 0) {
-		_tmpFrame.I = round(atof(value) / 10.0) / 100.0;
+		frame.I = round(atof(value) / 10.0) / 100.0;
 	}	
 }
 
 
-/*
- *  frameEndEvent
- *  This function is called at the end of the received frame.  If the checksum is valid, the temp buffer is read line by line.
- *  If the name exists in the public buffer, the new value is copied to the public buffer.	If not, a new name/value entry
- *  is created in the public buffer.
- */
-void VeDirectFrameHandler::frameEndEvent(bool valid) {
-	if ( valid ) {
-		_tmpFrame.P = _tmpFrame.V * _tmpFrame.I;
-
-		_tmpFrame.IPV = 0;
-		if ( _tmpFrame.VPV > 0) {
-			_tmpFrame.IPV = _tmpFrame.PPV / _tmpFrame.VPV;
-		}
-
-		_tmpFrame.E = 0;
-		if ( _tmpFrame.PPV > 0) {
-			_efficiency.addNumber(static_cast<double>(_tmpFrame.P * 100) / _tmpFrame.PPV);
-			_tmpFrame.E = _efficiency.getAverage();
-		}
-
-		veFrame = _tmpFrame;
-		_lastUpdate = millis();
-	}
-	_tmpFrame = {};
-}
 
 /*
  *  hexRxEvent
@@ -315,11 +287,11 @@ int VeDirectFrameHandler::hexRxEvent(uint8_t inbyte) {
 	return ret;
 }
 
-bool VeDirectFrameHandler::isDataValid() {
+bool VeDirectFrameHandler::isDataValid(veStruct frame) {
 	if (_lastUpdate == 0) {
 		return false;
 	}
-	if (strlen(veFrame.SER) == 0) {
+	if (strlen(frame.SER) == 0) {
 		return false;
 	}
 	return true;
@@ -549,53 +521,34 @@ String VeDirectFrameHandler::getPidAsString(uint16_t pid)
 		case 0XA116:
 			strPID =  "SmartSolar MPPT VE.Can 250|85 rev2";
 			break;
+		case 0xA381:
+			strPID =  "BMV-712 Smart";
+			break;
+		case 0xA382:
+			strPID =  "BMV-710H Smart";
+			break;
+		case 0xA383:
+			strPID =  "BMV-712 Smart Rev2";
+			break;
+		case 0xA389:
+			strPID =  "SmartShunt 500A/50mV";
+			break;
+		case 0xA38A:
+			strPID =  "SmartShunt 1000A/50mV";
+			break;
+		case 0xA38B:
+			strPID =  "SmartShunt 2000A/50mV";
+			break;
+		case 0xA3F0:
+			strPID =  "SmartShunt 2000A/50mV" ;
+			break;
 		default:
 			strPID = pid;
 	}
 	return strPID;
 }
 
-/*
- * getCsAsString
- * This function returns the state of operations (CS) as readable text.
- */
-String VeDirectFrameHandler::getCsAsString(uint8_t cs)
-{
-	String strCS ="";
 
-	switch(cs) {
-		case 0:
-			strCS =  "OFF";
-			break;
-		case 2:
-			strCS =  "Fault";
-			break;
-		case 3:
-			strCS =  "Bulk";
-			break;
-		case 4:
-			strCS =  "Absorbtion";
-			break;
-		case 5:
-			strCS =  "Float";
-			break;
-		case 7:
-			strCS =  "Equalize (manual)";
-			break;
-		case 245:
-			strCS =  "Starting-up";
-			break;
-		case 247:
-			strCS =  "Auto equalize / Recondition";
-			break;
-		case 252:
-			strCS =  "External Control";
-			break;
-		default:
-			strCS = cs;
-	}
-	return strCS;
-}
 
 /*
  * getErrAsString
@@ -717,26 +670,4 @@ String VeDirectFrameHandler::getOrAsString(uint32_t offReason)
 	return strOR;
 }
 
-/*
- * getMpptAsString
- * This function returns the state of MPPT (MPPT) as readable text.
- */
-String VeDirectFrameHandler::getMpptAsString(uint8_t mppt)
-{
-	String strMPPT ="";
 
-	switch(mppt) {
-		case 0:
-			strMPPT =  "OFF";
-			break;
-		case 1:
-			strMPPT =  "Voltage or current limited";
-			break;
-		case 2:
-			strMPPT =  "MPP Tracker active";
-			break;
-		default:
-			strMPPT = mppt;
-	}
-	return strMPPT;
-}

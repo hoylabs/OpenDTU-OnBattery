@@ -117,7 +117,7 @@ void WebApiVedirectClass::onVedirectAdminPost(AsyncWebServerRequest* request)
     config.Vedirect_UpdatesOnly = root[F("vedirect_updatesonly")].as<bool>();
     Configuration.write();
 
-    VeDirect.setVerboseLogging(config.Vedirect_VerboseLogging);
+    VeDirectMppt.setVerboseLogging(config.Vedirect_VerboseLogging);
 
     retMsg[F("type")] = F("success");
     retMsg[F("message")] = F("Settings saved!");

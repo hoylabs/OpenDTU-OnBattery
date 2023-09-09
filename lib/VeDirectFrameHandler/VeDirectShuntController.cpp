@@ -13,9 +13,10 @@ void VeDirectShuntController::init(int8_t rx, int8_t tx, Print* msgOut, bool ver
 	VeDirectFrameHandler::init(msgOut, verboseLogging);
 	_msgOut->println("Finished init ShuntController");
 }
+
 void VeDirectShuntController::textRxEvent(char* name, char* value)
 {
-    VeDirectFrameHandler::textRxEvent(name, value);
+    VeDirectFrameHandler::textRxEvent(name, value, _tmpFrame);
 	if (strcmp(name, "T") == 0) {
 			//_tmpFrame.T = atoi(value);
 	}

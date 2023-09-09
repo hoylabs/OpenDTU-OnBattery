@@ -18,7 +18,8 @@ public:
     void init();
     void loop();
 private:
-    veStruct _kvFrame{};
+
+    VeDirectMpptController::veMpptStruct _kvFrame{};
 
     // point of time in millis() when updated values will be published
     uint32_t _nextPublishUpdatesOnly = 0;

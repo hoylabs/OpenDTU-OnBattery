@@ -17,7 +17,6 @@
 #define VE_MAX_VALUE_LEN 33 // VE.Direct Protocol: max value size is 33 including /0
 #define VE_MAX_HEX_LEN 100 // Maximum size of hex frame - max payload 34 byte (=68 char) + safe buffer
 
-/*
 typedef struct {
     uint16_t PID;                   // product id
     char SER[VE_MAX_VALUE_LEN];     // serial number
@@ -26,32 +25,6 @@ typedef struct {
     double V;                       // battery voltage in V
     double I;                       // battery current in A
     double E;                       // efficiency in percent (calculated, moving average)
-    double IPV;                     // panel current in A (calculated)
-} veStruct;
-*/
-
-typedef struct {
-    uint16_t PID;                   // product id
-    char SER[VE_MAX_VALUE_LEN];     // serial number
-    char FW[VE_MAX_VALUE_LEN];      // firmware release number
-    bool LOAD;                      // virtual load output state (on if battery voltage reaches upper limit, off if battery reaches lower limit)
-    uint8_t  CS;                    // current state of operation e. g. OFF or Bulk
-    uint8_t ERR;                    // error code
-    uint32_t OR;                    // off reason
-    uint8_t  MPPT;                  // state of MPP tracker
-    uint32_t HSDS;                  // day sequence number 1...365
-    int32_t P;                      // battery output power in W (calculated)
-    double V;                       // battery voltage in V
-    double I;                       // battery current in A
-    double E;                       // efficiency in percent (calculated, moving average)
-    int32_t PPV;                    // panel power in W
-    double VPV;                     // panel voltage in V
-    double IPV;                     // panel current in A (calculated)
-    double H19;                     // yield total kWh
-    double H20;                     // yield today kWh
-    int32_t H21;                   // maximum power today W
-    double H22;                     // yield yesterday kWh
-    int32_t H23;                   // maximum power yesterday W
 } veStruct;
 
 template<typename T, size_t WINDOW_SIZE>
@@ -98,14 +71,12 @@ public:
     virtual void init( Print* msgOut, bool verboseLogging);
     void loop();                                 // main loop to read ve.direct data
     unsigned long getLastUpdate();               // timestamp of last successful frame read
-    bool isDataValid();                          // return true if data valid and not outdated
+    bool isDataValid(veStruct frame);                          // return true if data valid and not outdated
     String getPidAsString(uint16_t pid);      // product id as string
-    String getCsAsString(uint8_t cs);        // current state as string
     String getErrAsString(uint8_t err);      // errer state as string
     String getOrAsString(uint32_t offReason); // off reason as string
-    String getMpptAsString(uint8_t mppt);    // state of mppt as string
-
-    veStruct veFrame{};                      // public struct for received name and value pairs
+  
+    //veStruct veFrame;                      // public struct for received name and value pairs
     
     void setMessageOutput(Print* output);
     Print* getMessageOutput();
@@ -114,8 +85,9 @@ protected:
     void setLastUpdate();                     // set timestampt after successful frame read
     void dumpDebugBuffer();
     void rxData(uint8_t inbyte);              // byte of serial data
-    virtual void textRxEvent(char *, char *);
-    void frameEndEvent(bool);                 // copy temp struct to public struct
+    void textRxEvent(char *, char *, veStruct& );
+    virtual void textRxEvent(char *, char *) = 0;
+    virtual void frameEndEvent(bool) = 0;                 // copy temp struct to public struct
     int hexRxEvent(uint8_t);
 
     HardwareSerial* _vedirectSerial;
@@ -128,7 +100,7 @@ protected:
     int _hexSize;                               // length of hex buffer
     char _name[VE_MAX_VALUE_LEN];              // buffer for the field name
     char _value[VE_MAX_VALUE_LEN];             // buffer for the field value
-    veStruct _tmpFrame{};                        // private struct for received name and value pairs
+    //veStruct _tmpFrame;                        // private struct for received name and value pairs
     MovingAverage<double, 5> _efficiency;
     std::array<uint8_t, 512> _debugBuffer;
     unsigned _debugIn;
