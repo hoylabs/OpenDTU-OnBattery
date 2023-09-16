@@ -4,6 +4,7 @@
 #include "MqttSettings.h"
 #include "PylontechCanReceiver.h"
 #include "JkBmsController.h"
+#include "VictronSmartShunt.h"
 
 BatteryClass Battery;
 
@@ -43,9 +44,8 @@ void BatteryClass::init()
             if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
             break;
         case 3:
-            MessageOutput.printf("TODO: Implement Victron Shunt Battery Provider\n");
-            //_upProvider = std::make_unique<VeDirectShuntController>();
-            //if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
+            _upProvider = std::make_unique<VictronSmartShunt>();
+            if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
             break;
         default:
             MessageOutput.printf("Unknown battery provider: %d\r\n", config.Battery_Provider);

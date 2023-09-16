@@ -203,3 +203,36 @@ void JkBmsBatteryStats::updateFrom(JkBms::DataPointContainer const& dp)
 
     _lastUpdate = millis();
 }
+
+void VictronSmartShuntStats::updateFrom(VeDirectShuntController::veShuntStruct const& shuntData) {
+    _SoC = shuntData.SOC / 10;
+    _voltage = shuntData.V;
+    _current = shuntData.I;
+    //_temperature = shuntData.T;
+    _modelName = VeDirectShunt.getPidAsString(shuntData.PID);
+    _nrChargedCycles = shuntData.H4;
+    _timeToGo = shuntData.TTG / 60;
+    _chargedEnergy = shuntData.H18 / 100;
+    _dischargedEnergy = shuntData.H17 / 100;
+    _manufacturer = "Victron " + _modelName;
+
+    _lastUpdate = VeDirectShunt.getLastUpdate();
+    _lastUpdateSoC = VeDirectShunt.getLastUpdate();
+    //_lastUpdate = millis();
+}
+
+void VictronSmartShuntStats::getLiveViewData(JsonVariant& root) const {
+    BatteryStats::getLiveViewData(root);
+
+    // values go into the "Status" card of the web application
+    addLiveViewValue(root, "voltage", _voltage, "V", 2);
+    addLiveViewValue(root, "current", _current, "A", 1);   
+    addLiveViewValue(root, "nrChargedCycles", _nrChargedCycles, "", 0);
+    addLiveViewValue(root, "chargedEnergy", _chargedEnergy, "KWh", 1);
+    addLiveViewValue(root, "dischargedEnergy", _dischargedEnergy, "KWh", 1);
+    //addLiveViewText(root, "model", _modelName.c_str());
+    //addLiveViewValue(root, "temperature", _temperature, "°C", 1);
+}
+void VictronSmartShuntStats::mqttPublish() const {
+    BatteryStats::mqttPublish();
+}

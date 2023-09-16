@@ -21,7 +21,7 @@ void VeDirectMpptController::init(int8_t rx, int8_t tx, Print* msgOut, bool verb
 	_vedirectSerial->begin(19200, SERIAL_8N1, rx, tx);
     _vedirectSerial->flush();
 	VeDirectFrameHandler::init(msgOut, verboseLogging);
-	_msgOut->println("Finished init MPPTCOntroller");
+	if (_verboseLogging) _msgOut->println("Finished init MPPTCOntroller");
 }
 
 bool VeDirectMpptController::isDataValid() {
@@ -31,7 +31,7 @@ bool VeDirectMpptController::isDataValid() {
 
 
 void VeDirectMpptController::textRxEvent(char * name, char * value) {
-    //_msgOut->printf("Received Text Event %s: Value: %s\r\n", name, value );
+    if (_verboseLogging) _msgOut->printf("[Victron MPPT] Received Text Event %s: Value: %s\r\n", name, value );
 	VeDirectFrameHandler::textRxEvent(name, value, _tmpFrame);
 	if (strcmp(name, "LOAD") == 0) {
 		if (strcmp(value, "ON") == 0)
@@ -101,7 +101,7 @@ void VeDirectMpptController::frameEndEvent(bool valid) {
 		veFrame = _tmpFrame;
 		_lastUpdate = millis();
 	}
-	_tmpFrame = {};
+	//_tmpFrame = {};
 }
 
 

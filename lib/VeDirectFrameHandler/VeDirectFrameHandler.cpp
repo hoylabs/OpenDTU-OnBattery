@@ -231,27 +231,6 @@ void VeDirectFrameHandler::textRxEvent(char * name, char * value, veStruct& fram
 	else if (strcmp(name, "FW") == 0) {
 		strcpy(frame.FW, value);
 	}
-	else if (strcmp(name, "LOAD") == 0) {
-		if (strcmp(value, "ON") == 0)
-			_tmpFrame.LOAD = true;
-		else
-			_tmpFrame.LOAD = false;
-	}
-	else if (strcmp(name, "CS") == 0) {
-		_tmpFrame.CS = atoi(value);
-	}
-	else if (strcmp(name, "ERR") == 0) {
-		_tmpFrame.ERR = atoi(value);
-	}
-	else if (strcmp(name, "OR") == 0) {
-		_tmpFrame.OR = strtol(value, nullptr, 0);
-	}
-	else if (strcmp(name, "MPPT") == 0) {
-		_tmpFrame.MPPT = atoi(value);
-	}
-	else if (strcmp(name, "HSDS") == 0) {
-		_tmpFrame.HSDS = atoi(value);
-	}
 	else if (strcmp(name, "V") == 0) {
 		frame.V = round(atof(value) / 10.0) / 100.0;
 	}

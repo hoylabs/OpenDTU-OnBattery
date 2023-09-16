@@ -772,6 +772,10 @@
         "underVoltage": "Undervoltage",
         "highVoltage": "High voltage",
         "overVoltage": "Overvoltage",
-        "bmsInternal": "BMS internal"
+        "bmsInternal": "BMS internal",
+        "nrChargedCycles": "Number of charged cycles",
+        "chargedEnergy": "Charged energy",
+        "dischargedEnergy": "Discharged energy",
+        "model": "Model"
       }
 }

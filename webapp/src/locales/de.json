@@ -599,7 +599,7 @@
         "Provider": "Datenanbieter",
         "ProviderPylontechCan": "Pylontech per CAN-Bus",
         "ProviderJkBmsSerial": "Jikong (JK) BMS per serieller Verbindung",
-        "ProviderVictron": "Victron SMartShunt per VE.Direct Interface",
+        "ProviderVictron": "Victron SmartShunt per VE.Direct Interface",
         "JkBmsConfiguration": "JK BMS Einstellungen",
         "JkBmsInterface": "Schnittstellentyp",
         "JkBmsInterfaceUart": "TTL-UART an der MCU",
@@ -826,6 +826,10 @@
         "underVoltage": "Unterspannung",
         "highVoltage": "Hohe Spannung",
         "overVoltage": "Überspannung",
-        "bmsInternal": "BMS intern"
+        "bmsInternal": "BMS intern",
+        "nrChargedCycles": "Anzahl Ladezyklen",
+        "chargedEnergy": "Geladene Energie",
+        "dischargedEnergy": "Entladene Energie",
+        "model": "Modell"
       }
 }

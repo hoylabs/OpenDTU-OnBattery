@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include "VeDirectFrameHandler.h"
 
-class VeDirectShuntController : VeDirectFrameHandler {
+class VeDirectShuntController : public VeDirectFrameHandler {
 
 public:
 
@@ -21,7 +21,8 @@ public:
         uint32_t AR;                    // Alarm Reason
         int32_t H1;                     // Depth of the deepest discharge
         int32_t H2;                     // Depth of the last discharge
-        int32_t H3;                     // Number of charge cycles
+        int32_t H3;                     // Depth of the average discharge
+        int32_t H4;                     // Number of charge cycles
         int32_t H5;                     // Number of full discharges
         int32_t H6;                     // Cumulative Amp Hours drawn
         int32_t H7;                     // Minimum main (battery) voltage
@@ -32,7 +33,7 @@ public:
         int32_t H12;                    // Number of high main voltage alarms
         int32_t H13;                    // Number of low auxiliary voltage alarms
         int32_t H14;                    // Number of high auxiliary voltage alarms
-        int32_t H15;                    //Minimum auxiliary (battery) voltage
+        int32_t H15;                    // Minimum auxiliary (battery) voltage
         int32_t H16;                    // Maximum auxiliary (battery) voltage
         double H17;                     // Amount of discharged energy
         double H18;                     // Amount of charged energy
@@ -48,4 +49,6 @@ private:
     veShuntStruct _tmpFrame{};                        // private struct for received name and value pairs
 
 };
+
+extern VeDirectShuntController VeDirectShunt;
 
