@@ -1,14 +1,6 @@
 #include <Arduino.h>
 #include "VeDirectMpptController.h"
 
-#ifndef VICTRON_PIN_TX
-#define VICTRON_PIN_TX 26      // HardwareSerial TX Pin
-#endif
-
-#ifndef VICTRON_PIN_RX
-#define VICTRON_PIN_RX 25      // HardwareSerial RX Pin
-#endif
-
 VeDirectMpptController VeDirectMppt;
 
 VeDirectMpptController::VeDirectMpptController() 
@@ -17,21 +9,16 @@ VeDirectMpptController::VeDirectMpptController()
 
 void VeDirectMpptController::init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging)
 {
-    _vedirectSerial = new HardwareSerial(1);
-	_vedirectSerial->begin(19200, SERIAL_8N1, rx, tx);
-    _vedirectSerial->flush();
-	VeDirectFrameHandler::init(msgOut, verboseLogging);
-	if (_verboseLogging) _msgOut->println("Finished init MPPTCOntroller");
+	VeDirectFrameHandler::init(msgOut, verboseLogging, rx, tx, 1);
+	if (_verboseLogging) { _msgOut->println("Finished init MPPTController"); }
 }
 
 bool VeDirectMpptController::isDataValid() {
 	return VeDirectFrameHandler::isDataValid(veFrame);
 }
 
-
-
 void VeDirectMpptController::textRxEvent(char * name, char * value) {
-    if (_verboseLogging) _msgOut->printf("[Victron MPPT] Received Text Event %s: Value: %s\r\n", name, value );
+	if (_verboseLogging) { _msgOut->printf("[Victron MPPT] Received Text Event %s: Value: %s\r\n", name, value ); }
 	VeDirectFrameHandler::textRxEvent(name, value, _tmpFrame);
 	if (strcmp(name, "LOAD") == 0) {
 		if (strcmp(value, "ON") == 0)
@@ -84,11 +71,11 @@ void VeDirectMpptController::textRxEvent(char * name, char * value) {
  *  is created in the public buffer.
  */
 void VeDirectMpptController::frameEndEvent(bool valid) {
-	if ( valid ) {
+	if (valid) {
 		_tmpFrame.P = _tmpFrame.V * _tmpFrame.I;
 
 		_tmpFrame.IPV = 0;
-		if ( _tmpFrame.VPV > 0) {
+		if (_tmpFrame.VPV > 0) {
 			_tmpFrame.IPV = _tmpFrame.PPV / _tmpFrame.VPV;
 		}
 
@@ -99,11 +86,10 @@ void VeDirectMpptController::frameEndEvent(bool valid) {
 		}
 
 		veFrame = _tmpFrame;
+		_tmpFrame = {};
 		_lastUpdate = millis();
 	}
-	//_tmpFrame = {};
 }
-
 
 /*
  * getCsAsString
@@ -146,6 +132,7 @@ String VeDirectMpptController::getCsAsString(uint8_t cs)
 	}
 	return strCS;
 }
+
 /*
  * getMpptAsString
  * This function returns the state of MPPT (MPPT) as readable text.

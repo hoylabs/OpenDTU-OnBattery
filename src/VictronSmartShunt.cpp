@@ -16,7 +16,7 @@ bool VictronSmartShunt::init(bool verboseLogging)
             pin.battery_rx, pin.battery_tx);
 
     if (pin.battery_rx < 0 || pin.battery_tx < 0) {
-        MessageOutput.println(F("[Pylontech] Invalid pin config"));
+        MessageOutput.println(F("[VictronSmartShunt] Invalid pin config"));
         return false;
     }
 
@@ -27,14 +27,13 @@ bool VictronSmartShunt::init(bool verboseLogging)
     return true;
 }
 
-void VictronSmartShunt::deinit() {
-
+void VictronSmartShunt::deinit() 
+{
 }
 
 void VictronSmartShunt::loop()
 {
     VeDirectShunt.loop();
     _stats->updateFrom(VeDirectShunt.veFrame);
-    //_stats->setLastUpdate(millis());
 }
 

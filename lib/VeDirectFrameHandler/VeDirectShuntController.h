@@ -44,11 +44,10 @@ public:
     
 private:
 
-    virtual void textRxEvent(char * name, char * value);
-    void frameEndEvent(bool) override;                 // copy temp struct to public struct
+    void textRxEvent(char * name, char * value) final;
+    void frameEndEvent(bool) final;                   // copy temp struct to public struct
     veShuntStruct _tmpFrame{};                        // private struct for received name and value pairs
 
 };
 
 extern VeDirectShuntController VeDirectShunt;
-

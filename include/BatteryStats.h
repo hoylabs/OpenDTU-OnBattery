@@ -107,16 +107,13 @@ class VictronSmartShuntStats : public BatteryStats {
 
         void updateFrom(VeDirectShuntController::veShuntStruct const& shuntData);
 
-        void setSoC(uint8_t SoC) { _SoC = SoC; _lastUpdateSoC = millis(); }
-        void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
-
+    private:    
         float _voltage; 
         float _current;
         float _temperature;
-        uint8_t _nrChargedCycles;
+        uint8_t _chargeCycles;
         uint32_t _timeToGo;
         float _chargedEnergy;
         float _dischargedEnergy;
         String _modelName;
-
 };

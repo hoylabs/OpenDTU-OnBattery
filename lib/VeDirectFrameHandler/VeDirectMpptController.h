@@ -12,7 +12,7 @@ public:
     void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging);
     String getMpptAsString(uint8_t mppt);    // state of mppt as string
     String getCsAsString(uint8_t cs);        // current state as string
-    bool isDataValid();                          // return true if data valid and not outdated
+    bool isDataValid();                      // return true if data valid and not outdated
  
     struct veMpptStruct : veStruct {
         uint8_t  MPPT;                  // state of MPP tracker
@@ -35,11 +35,9 @@ public:
 
 private:
 
-    virtual void textRxEvent(char * name, char * value);
-    void frameEndEvent(bool) override;                 // copy temp struct to public struct
+    void textRxEvent(char * name, char * value) final;
+    void frameEndEvent(bool) final;                  // copy temp struct to public struct
     veMpptStruct _tmpFrame{};                        // private struct for received name and value pairs
-
-
 };
 
 extern VeDirectMpptController VeDirectMppt;

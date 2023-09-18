@@ -18,13 +18,13 @@
 #define VE_MAX_HEX_LEN 100 // Maximum size of hex frame - max payload 34 byte (=68 char) + safe buffer
 
 typedef struct {
-    uint16_t PID;                   // product id
+    uint16_t PID = 0;               // product id
     char SER[VE_MAX_VALUE_LEN];     // serial number
     char FW[VE_MAX_VALUE_LEN];      // firmware release number
-    int32_t P;                      // battery output power in W (calculated)
-    double V;                       // battery voltage in V
-    double I;                       // battery current in A
-    double E;                       // efficiency in percent (calculated, moving average)
+    int32_t P = 0;                  // battery output power in W (calculated)
+    double V = 0;                   // battery voltage in V
+    double I = 0;                   // battery current in A
+    double E = 0;                   // efficiency in percent (calculated, moving average)
 } veStruct;
 
 template<typename T, size_t WINDOW_SIZE>
@@ -52,9 +52,6 @@ public:
         return static_cast<double>(_sum) / _count;
     }
 
-   
- 
-
 private:
     std::array<T, WINDOW_SIZE> _window;
     T _sum;
@@ -68,19 +65,14 @@ public:
 
     VeDirectFrameHandler();
     void setVerboseLogging(bool verboseLogging);
-    virtual void init( Print* msgOut, bool verboseLogging);
+    virtual void init( Print* msgOut, bool verboseLogging, uint16_t rx, uint16_t tx, uint16_t hwSerialPort);
     void loop();                                 // main loop to read ve.direct data
     unsigned long getLastUpdate();               // timestamp of last successful frame read
     bool isDataValid(veStruct frame);                          // return true if data valid and not outdated
     String getPidAsString(uint16_t pid);      // product id as string
     String getErrAsString(uint8_t err);      // errer state as string
     String getOrAsString(uint32_t offReason); // off reason as string
-  
-    //veStruct veFrame;                      // public struct for received name and value pairs
-    
-    void setMessageOutput(Print* output);
-    Print* getMessageOutput();
-
+      
 protected:
     void setLastUpdate();                     // set timestampt after successful frame read
     void dumpDebugBuffer();
@@ -100,7 +92,6 @@ protected:
     int _hexSize;                               // length of hex buffer
     char _name[VE_MAX_VALUE_LEN];              // buffer for the field name
     char _value[VE_MAX_VALUE_LEN];             // buffer for the field value
-    //veStruct _tmpFrame;                        // private struct for received name and value pairs
     MovingAverage<double, 5> _efficiency;
     std::array<uint8_t, 512> _debugBuffer;
     unsigned _debugIn;
@@ -108,6 +99,3 @@ protected:
     uint32_t _lastUpdate;
 
 };
-
-//extern VeDirectFrameHandler VeDirect;
-

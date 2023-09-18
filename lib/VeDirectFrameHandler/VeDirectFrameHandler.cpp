@@ -78,8 +78,11 @@ void VeDirectFrameHandler::setVerboseLogging(bool verboseLogging)
 	if (!_verboseLogging) { _debugIn = 0; }
 }
 
-void VeDirectFrameHandler::init(Print* msgOut, bool verboseLogging)
+void VeDirectFrameHandler::init(Print* msgOut, bool verboseLogging, uint16_t rx, uint16_t tx, uint16_t hwSerialPort)
 {
+	_vedirectSerial = new HardwareSerial(hwSerialPort);
+	_vedirectSerial->begin(19200, SERIAL_8N1, rx, tx);
+    _vedirectSerial->flush();
 	_msgOut = msgOut;
 	setVerboseLogging(verboseLogging);
 }
