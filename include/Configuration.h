@@ -178,10 +178,13 @@ struct CONFIG_T {
 
     bool Huawei_Enabled;
     bool Huawei_Auto_Power_Enabled;
+    bool Huawei_Auto_Power_Reduce_On_BatterySoC_Enabled;
     float Huawei_Auto_Power_Voltage_Limit;
     float Huawei_Auto_Power_Enable_Voltage_Limit;
     float Huawei_Auto_Power_Lower_Power_Limit;
     float Huawei_Auto_Power_Upper_Power_Limit;   
+    uint8_t Huawei_Auto_Power_BatterySoC_Threshold;
+    float Huawei_Auto_Power_Reduced_Upper_Power_Limit;
 
     char Security_Password[WIFI_MAX_PASSWORD_STRLEN + 1];
     bool Security_AllowReadonly;

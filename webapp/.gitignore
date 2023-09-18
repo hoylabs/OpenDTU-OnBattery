@@ -14,6 +14,8 @@ dist-ssr
 coverage
 *.local
 vite.user.ts
+.yarn
+.yarnrc.yml
 
 /cypress/videos/
 /cypress/screenshots/

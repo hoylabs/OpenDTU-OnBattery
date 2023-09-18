@@ -7,6 +7,7 @@
 #include "PowerMeter.h"
 #include "PowerLimiter.h"
 #include "Configuration.h"
+#include "Battery.h"
 #include <SPI.h>
 #include <mcp_can.h>
 
@@ -230,7 +231,7 @@ void HuaweiCanClass::loop()
       // Calculate new power limit
       float newPowerLimit = -1 * round(PowerMeter.getPowerTotal());
       newPowerLimit += _rp.output_power;
-      MessageOutput.printf("[HuaweiCanClass::loop] PL: %f, OP: %f \r\n", newPowerLimit, _rp.output_power);
+      MessageOutput.printf("[HuaweiCanClass::loop] newPowerLimit: %f, output_power: %f \r\n", newPowerLimit, _rp.output_power);
 
       if (newPowerLimit > config.Huawei_Auto_Power_Lower_Power_Limit) {
 
@@ -249,8 +250,15 @@ void HuaweiCanClass::loop()
           _autoPowerEnabled = 10;
         }
 
-        // Limit power to maximum
-        if (newPowerLimit > config.Huawei_Auto_Power_Upper_Power_Limit) {
+        if (config.Battery_Enabled && config.Huawei_Auto_Power_Reduce_On_BatterySoC_Enabled){
+          uint8_t _batterySoC = Battery.getStats()->getSoC();
+          if (_batterySoC >= config.Huawei_Auto_Power_BatterySoC_Threshold && newPowerLimit > config.Huawei_Auto_Power_Reduced_Upper_Power_Limit){
+              MessageOutput.printf("[HuaweiCanClass::loop] Current battery SoC %i reached threshold %i, reducing output power to %f \r\n", _batterySoC, config.Huawei_Auto_Power_BatterySoC_Threshold, config.Huawei_Auto_Power_Reduced_Upper_Power_Limit);
+              newPowerLimit = config.Huawei_Auto_Power_Reduced_Upper_Power_Limit;
+          }
+        }
+        else if (newPowerLimit > config.Huawei_Auto_Power_Upper_Power_Limit) {
+          // Limit power to maximum
           newPowerLimit = config.Huawei_Auto_Power_Upper_Power_Limit;
         }
 

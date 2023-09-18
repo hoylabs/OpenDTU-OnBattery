@@ -191,10 +191,13 @@ void WebApiHuaweiClass::onAdminGet(AsyncWebServerRequest* request)
 
     root[F("enabled")] = config.Huawei_Enabled;
     root[F("auto_power_enabled")] = config.Huawei_Auto_Power_Enabled;
+    root[F("auto_power_reduce_on_batterysoc_enabled")] = config.Huawei_Auto_Power_Reduce_On_BatterySoC_Enabled;
     root[F("voltage_limit")] = static_cast<int>(config.Huawei_Auto_Power_Voltage_Limit * 100) / 100.0;
     root[F("enable_voltage_limit")] = static_cast<int>(config.Huawei_Auto_Power_Enable_Voltage_Limit * 100) / 100.0;
     root[F("lower_power_limit")] = config.Huawei_Auto_Power_Lower_Power_Limit;
     root[F("upper_power_limit")] = config.Huawei_Auto_Power_Upper_Power_Limit;   
+    root[F("batterysoc_threshold")] = config.Huawei_Auto_Power_BatterySoC_Threshold;
+    root[F("reduced_upper_power_limit")] = config.Huawei_Auto_Power_Reduced_Upper_Power_Limit;
 
     response->setLength();
     request->send(response);
@@ -251,13 +254,18 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
+
+
     CONFIG_T& config = Configuration.get();
     config.Huawei_Enabled = root[F("enabled")].as<bool>();
     config.Huawei_Auto_Power_Enabled = root[F("auto_power_enabled")].as<bool>();
+    config.Huawei_Auto_Power_Reduce_On_BatterySoC_Enabled = root[F("auto_power_reduce_on_batterysoc_enabled")].as<bool>();
     config.Huawei_Auto_Power_Voltage_Limit = root[F("voltage_limit")].as<float>();
     config.Huawei_Auto_Power_Enable_Voltage_Limit = root[F("enable_voltage_limit")].as<float>();
     config.Huawei_Auto_Power_Lower_Power_Limit = root[F("lower_power_limit")].as<float>();
     config.Huawei_Auto_Power_Upper_Power_Limit = root[F("upper_power_limit")].as<float>();    
+    config.Huawei_Auto_Power_BatterySoC_Threshold = root[F("batterysoc_threshold")].as<uint8_t>();    
+    config.Huawei_Auto_Power_Reduced_Upper_Power_Limit = root[F("reduced_upper_power_limit")].as<float>();    
     Configuration.write();
 
     retMsg[F("type")] = F("success");
