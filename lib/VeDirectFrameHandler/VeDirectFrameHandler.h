@@ -38,7 +38,6 @@ public:
     bool isDataValid(veStruct frame);                          // return true if data valid and not outdated
     String getPidAsString(uint16_t pid);      // product id as string
     String getErrAsString(uint8_t err);      // errer state as string
-    String getOrAsString(uint32_t offReason); // off reason as string
 
 protected:
     void textRxEvent(char *, char *, veStruct& );
