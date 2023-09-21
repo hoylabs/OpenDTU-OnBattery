@@ -3,6 +3,38 @@
 #include <Arduino.h>
 #include "VeDirectFrameHandler.h"
 
+template<typename T, size_t WINDOW_SIZE>
+class MovingAverage {
+public:
+    MovingAverage()
+      : _sum(0)
+      , _index(0)
+      , _count(0) { }
+
+    void addNumber(T num) {
+        if (_count < WINDOW_SIZE) {
+            _count++;
+        } else {
+            _sum -= _window[_index];
+        }
+
+        _window[_index] = num;
+        _sum += num;
+        _index = (_index + 1) % WINDOW_SIZE;
+    }
+
+    double getAverage() const {
+        if (_count == 0) { return 0.0; }
+        return static_cast<double>(_sum) / _count;
+    }
+
+private:
+    std::array<T, WINDOW_SIZE> _window;
+    T _sum;
+    size_t _index;
+    size_t _count;
+};
+
 class VeDirectMpptController : public VeDirectFrameHandler {
 public:
     VeDirectMpptController();
@@ -35,6 +67,7 @@ private:
     void textRxEvent(char * name, char * value) final;
     void frameEndEvent(bool) final;                  // copy temp struct to public struct
     veMpptStruct _tmpFrame{};                        // private struct for received name and value pairs
+    MovingAverage<double, 5> _efficiency;
 };
 
 extern VeDirectMpptController VeDirectMppt;

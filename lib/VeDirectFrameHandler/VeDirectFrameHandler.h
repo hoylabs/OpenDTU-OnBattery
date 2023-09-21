@@ -28,38 +28,6 @@ typedef struct {
     double E = 0;                   // efficiency in percent (calculated, moving average)
 } veStruct;
 
-template<typename T, size_t WINDOW_SIZE>
-class MovingAverage {
-public:
-    MovingAverage()
-      : _sum(0)
-      , _index(0)
-      , _count(0) { }
-
-    void addNumber(T num) {
-        if (_count < WINDOW_SIZE) {
-            _count++;
-        } else {
-            _sum -= _window[_index];
-        }
-
-        _window[_index] = num;
-        _sum += num;
-        _index = (_index + 1) % WINDOW_SIZE;
-    }
-
-    double getAverage() const {
-        if (_count == 0) { return 0.0; }
-        return static_cast<double>(_sum) / _count;
-    }
-
-private:
-    std::array<T, WINDOW_SIZE> _window;
-    T _sum;
-    size_t _index;
-    size_t _count;
-};
-
 class VeDirectFrameHandler {
 public:
     VeDirectFrameHandler();
@@ -91,7 +59,6 @@ protected:
     int _hexSize;                               // length of hex buffer
     char _name[VE_MAX_VALUE_LEN];              // buffer for the field name
     char _value[VE_MAX_VALUE_LEN];             // buffer for the field value
-    MovingAverage<double, 5> _efficiency;
     std::array<uint8_t, 512> _debugBuffer;
     unsigned _debugIn;
     uint32_t _lastByteMillis;
