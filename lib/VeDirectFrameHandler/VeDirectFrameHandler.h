@@ -41,17 +41,21 @@ public:
     String getOrAsString(uint32_t offReason); // off reason as string
 
 protected:
+    void textRxEvent(char *, char *, veStruct& );
+
+    bool _verboseLogging;
+    Print* _msgOut;
+    uint32_t _lastUpdate;
+
+private:
     void setLastUpdate();                     // set timestampt after successful frame read
     void dumpDebugBuffer();
     void rxData(uint8_t inbyte);              // byte of serial data
-    void textRxEvent(char *, char *, veStruct& );
     virtual void textRxEvent(char *, char *) = 0;
     virtual void frameEndEvent(bool) = 0;                 // copy temp struct to public struct
     int hexRxEvent(uint8_t);
 
     std::unique_ptr<HardwareSerial> _vedirectSerial;
-    Print* _msgOut;
-    bool _verboseLogging;
     int _state;                                // current state
     int _prevState;                            // previous state
     uint8_t _checksum;                         // checksum value
@@ -62,5 +66,4 @@ protected:
     std::array<uint8_t, 512> _debugBuffer;
     unsigned _debugIn;
     uint32_t _lastByteMillis;
-    uint32_t _lastUpdate;
 };

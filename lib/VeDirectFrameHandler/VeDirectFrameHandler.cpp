@@ -60,6 +60,7 @@ static Silent MessageOutputDummy;
 
 VeDirectFrameHandler::VeDirectFrameHandler() :
 	_msgOut(&MessageOutputDummy),
+	_lastUpdate(0),
 	_state(IDLE),
 	_checksum(0),
 	_textPointer(0),
@@ -67,8 +68,7 @@ VeDirectFrameHandler::VeDirectFrameHandler() :
 	_name(""),
 	_value(""),
 	_debugIn(0),
-	_lastByteMillis(0),
-	_lastUpdate(0)
+	_lastByteMillis(0)
 {
 }
 
