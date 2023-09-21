@@ -32,7 +32,7 @@ class VeDirectFrameHandler {
 public:
     VeDirectFrameHandler();
     void setVerboseLogging(bool verboseLogging);
-    virtual void init( Print* msgOut, bool verboseLogging, uint16_t rx, uint16_t tx, uint16_t hwSerialPort);
+    virtual void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging, uint16_t hwSerialPort);
     void loop();                                 // main loop to read ve.direct data
     unsigned long getLastUpdate();               // timestamp of last successful frame read
     bool isDataValid(veStruct frame);                          // return true if data valid and not outdated

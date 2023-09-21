@@ -9,7 +9,7 @@ VeDirectMpptController::VeDirectMpptController()
 
 void VeDirectMpptController::init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging)
 {
-	VeDirectFrameHandler::init(msgOut, verboseLogging, rx, tx, 1);
+	VeDirectFrameHandler::init(rx, tx, msgOut, verboseLogging, 1);
 	if (_verboseLogging) { _msgOut->println("Finished init MPPTController"); }
 }
 

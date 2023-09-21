@@ -78,7 +78,7 @@ void VeDirectFrameHandler::setVerboseLogging(bool verboseLogging)
 	if (!_verboseLogging) { _debugIn = 0; }
 }
 
-void VeDirectFrameHandler::init(Print* msgOut, bool verboseLogging, uint16_t rx, uint16_t tx, uint16_t hwSerialPort)
+void VeDirectFrameHandler::init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging, uint16_t hwSerialPort)
 {
 	_vedirectSerial = std::make_unique<HardwareSerial>(hwSerialPort);
 	_vedirectSerial->begin(19200, SERIAL_8N1, rx, tx);
