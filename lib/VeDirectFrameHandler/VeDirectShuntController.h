@@ -10,12 +10,12 @@ public:
     void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging);
 
     struct veShuntStruct : veStruct {
-        double T;                       // Battery temperature
-        double P;                       // Instantaneous power
-        double CE;                      // Consumed Amp Hours
-        double SOC;                     // State-of-charge
+        int32_t T;                      // Battery temperature
+        int32_t P;                      // Instantaneous power
+        int32_t CE;                     // Consumed Amp Hours
+        int32_t SOC;                    // State-of-charge
         uint32_t TTG;                   // Time-to-go
-        int32_t Alarm;                  // Alarm condition active
+        bool ALARM;                     // Alarm condition active
         uint32_t AR;                    // Alarm Reason
         int32_t H1;                     // Depth of the deepest discharge
         int32_t H2;                     // Depth of the last discharge
@@ -33,8 +33,8 @@ public:
         int32_t H14;                    // Number of high auxiliary voltage alarms
         int32_t H15;                    // Minimum auxiliary (battery) voltage
         int32_t H16;                    // Maximum auxiliary (battery) voltage
-        double H17;                     // Amount of discharged energy
-        double H18;                     // Amount of charged energy
+        int32_t H17;                    // Amount of discharged energy
+        int32_t H18;                    // Amount of charged energy
     };
 
     veShuntStruct veFrame{};

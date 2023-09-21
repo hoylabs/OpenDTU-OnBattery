@@ -786,6 +786,7 @@
         "highTemperature": "High temperature",
         "overTemperature": "Overtemperature",
         "lowVoltage": "Low voltage",
+        "lowSOC": "Low state of charge",
         "underVoltage": "Undervoltage",
         "highVoltage": "High voltage",
         "overVoltage": "Overvoltage",

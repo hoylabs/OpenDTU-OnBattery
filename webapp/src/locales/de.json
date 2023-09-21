@@ -822,6 +822,7 @@
         "underTemperature": "Untertemperatur",
         "highTemperature": "Hohe Temperatur",
         "overTemperature": "Übertemperatur",
+        "lowSOC": "Geringer Ladezustand",
         "lowVoltage": "Niedrige Spannung",
         "underVoltage": "Unterspannung",
         "highVoltage": "Hohe Spannung",
