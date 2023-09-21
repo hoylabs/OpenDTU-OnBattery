@@ -13,6 +13,7 @@
 
 #include <Arduino.h>
 #include <array>
+#include <memory>
 
 #define VE_MAX_VALUE_LEN 33 // VE.Direct Protocol: max value size is 33 including /0
 #define VE_MAX_HEX_LEN 100 // Maximum size of hex frame - max payload 34 byte (=68 char) + safe buffer
@@ -80,7 +81,7 @@ protected:
     virtual void frameEndEvent(bool) = 0;                 // copy temp struct to public struct
     int hexRxEvent(uint8_t);
 
-    HardwareSerial* _vedirectSerial;
+    std::unique_ptr<HardwareSerial> _vedirectSerial;
     Print* _msgOut;
     bool _verboseLogging;
     int _state;                                // current state
