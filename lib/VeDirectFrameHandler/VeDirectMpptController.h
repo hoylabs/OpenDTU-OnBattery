@@ -4,16 +4,14 @@
 #include "VeDirectFrameHandler.h"
 
 class VeDirectMpptController : public VeDirectFrameHandler {
-
 public:
-
     VeDirectMpptController();
 
     void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging);
     String getMpptAsString(uint8_t mppt);    // state of mppt as string
     String getCsAsString(uint8_t cs);        // current state as string
     bool isDataValid();                      // return true if data valid and not outdated
- 
+
     struct veMpptStruct : veStruct {
         uint8_t  MPPT;                  // state of MPP tracker
         int32_t PPV;                    // panel power in W
@@ -31,10 +29,9 @@ public:
         int32_t H23;                    // maximum power yesterday W
     };
 
-    veMpptStruct veFrame{}; 
+    veMpptStruct veFrame{};
 
 private:
-
     void textRxEvent(char * name, char * value) final;
     void frameEndEvent(bool) final;                  // copy temp struct to public struct
     veMpptStruct _tmpFrame{};                        // private struct for received name and value pairs

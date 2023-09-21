@@ -60,9 +60,7 @@ private:
 };
 
 class VeDirectFrameHandler {
-
 public:
-
     VeDirectFrameHandler();
     void setVerboseLogging(bool verboseLogging);
     virtual void init( Print* msgOut, bool verboseLogging, uint16_t rx, uint16_t tx, uint16_t hwSerialPort);
@@ -72,7 +70,7 @@ public:
     String getPidAsString(uint16_t pid);      // product id as string
     String getErrAsString(uint8_t err);      // errer state as string
     String getOrAsString(uint32_t offReason); // off reason as string
-      
+
 protected:
     void setLastUpdate();                     // set timestampt after successful frame read
     void dumpDebugBuffer();
@@ -97,5 +95,4 @@ protected:
     unsigned _debugIn;
     uint32_t _lastByteMillis;
     uint32_t _lastUpdate;
-
 };

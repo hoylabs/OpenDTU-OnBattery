@@ -3,7 +3,7 @@
 
 VeDirectMpptController VeDirectMppt;
 
-VeDirectMpptController::VeDirectMpptController() 
+VeDirectMpptController::VeDirectMpptController()
 {
 }
 
@@ -23,7 +23,7 @@ void VeDirectMpptController::textRxEvent(char * name, char * value) {
 	if (strcmp(name, "LOAD") == 0) {
 		if (strcmp(value, "ON") == 0)
 			_tmpFrame.LOAD = true;
-		else	
+		else
 			_tmpFrame.LOAD = false;
 	}
 	else if (strcmp(name, "CS") == 0) {

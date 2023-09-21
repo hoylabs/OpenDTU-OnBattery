@@ -10,9 +10,9 @@ VeDirectShuntController::VeDirectShuntController()
 void VeDirectShuntController::init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging)
 {
 	VeDirectFrameHandler::init(msgOut, verboseLogging, rx, tx, 2);
-	if (_verboseLogging) { 
+	if (_verboseLogging) {
 		_msgOut->println("Finished init ShuntController");
-	}	
+	}
 }
 
 void VeDirectShuntController::textRxEvent(char* name, char* value)

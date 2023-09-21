@@ -4,9 +4,7 @@
 #include "VeDirectFrameHandler.h"
 
 class VeDirectShuntController : public VeDirectFrameHandler {
-
 public:
-
     VeDirectShuntController();
 
     void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging);
@@ -39,15 +37,12 @@ public:
         double H18;                     // Amount of charged energy
     };
 
-    veShuntStruct veFrame{}; 
+    veShuntStruct veFrame{};
 
-    
 private:
-
     void textRxEvent(char * name, char * value) final;
     void frameEndEvent(bool) final;                   // copy temp struct to public struct
     veShuntStruct _tmpFrame{};                        // private struct for received name and value pairs
-
 };
 
 extern VeDirectShuntController VeDirectShunt;

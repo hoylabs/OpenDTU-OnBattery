@@ -82,7 +82,7 @@ void VeDirectFrameHandler::init(Print* msgOut, bool verboseLogging, uint16_t rx,
 {
 	_vedirectSerial = new HardwareSerial(hwSerialPort);
 	_vedirectSerial->begin(19200, SERIAL_8N1, rx, tx);
-    _vedirectSerial->flush();
+	_vedirectSerial->flush();
 	_msgOut = msgOut;
 	setVerboseLogging(verboseLogging);
 }
@@ -239,7 +239,7 @@ void VeDirectFrameHandler::textRxEvent(char * name, char * value, veStruct& fram
 	}
 	else if (strcmp(name, "I") == 0) {
 		frame.I = round(atof(value) / 10.0) / 100.0;
-	}	
+	}
 }
 
 
@@ -651,5 +651,3 @@ String VeDirectFrameHandler::getOrAsString(uint32_t offReason)
 	}
 	return strOR;
 }
-
-
