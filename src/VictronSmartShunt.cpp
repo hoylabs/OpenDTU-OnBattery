@@ -7,8 +7,6 @@
 
 bool VictronSmartShunt::init(bool verboseLogging)
 {
-    _verboseLogging = verboseLogging;
-
     MessageOutput.println(F("[VictronSmartShunt] Initialize interface..."));
 
     const PinMapping_t& pin = PinMapping.get();
@@ -27,13 +25,8 @@ bool VictronSmartShunt::init(bool verboseLogging)
     return true;
 }
 
-void VictronSmartShunt::deinit() 
-{
-}
-
 void VictronSmartShunt::loop()
 {
     VeDirectShunt.loop();
     _stats->updateFrom(VeDirectShunt.veFrame);
 }
-
