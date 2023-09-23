@@ -788,7 +788,7 @@
         "EnableHuawei": "Enable Huawei R4850G2 on CAN Bus Interface",
         "EnableAutoPower": "Automatic power control",
         "EnableReducePowerOnBatterySoC": "Reduce power based on battery SoC",
-        "EnableReducePowerOnBatterySoCHint": "If a CAN bus battery is connected, the maximum power output can be reduced when a certain SoC is reached",
+        "EnableReducePowerOnBatterySoCHint": "If a battery interface is connected, the maximum power output can be reduced when a certain SoC is reached",
         "Limits": "Limits",
         "BatterySoCLimits": "Battery SoC Limits",
         "VoltageLimit": "Charge Voltage limit",

@@ -257,7 +257,8 @@ void HuaweiCanClass::loop()
               newPowerLimit = config.Huawei_Auto_Power_Reduced_Upper_Power_Limit;
           }
         }
-          // Limit power to maximum
+
+        // Limit power to maximum
         if (newPowerLimit > config.Huawei_Auto_Power_Upper_Power_Limit) {
           newPowerLimit = config.Huawei_Auto_Power_Upper_Power_Limit;
         }

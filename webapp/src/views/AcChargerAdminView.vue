@@ -13,82 +13,81 @@
                               :label="$t('acchargeradmin.EnableAutoPower')"
                               v-model="acChargerConfigList.auto_power_enabled"
                               type="checkbox" wide/>
-                <InputElement v-show="acChargerConfigList.auto_power_enabled"
-                              :label="$t('acchargeradmin.EnableReducePowerOnBatterySoC')"
-                              v-model="acChargerConfigList.auto_power_reduce_on_batterysoc_enabled"
-                              type="checkbox" wide>
-                              <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.EnableReducePowerOnBatterySoCHint')" />
+                <InputElement v-show="acChargerConfigList.enabled&&acChargerConfigList.auto_power_enabled"
+                    :label="$t('acchargeradmin.EnableReducePowerOnBatterySoC')"
+                    v-model="acChargerConfigList.auto_power_reduce_on_batterysoc_enabled"
+                    type="checkbox" wide>
+                    <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.EnableReducePowerOnBatterySoCHint')" />
                 </InputElement>
-
-                <CardElement :text="$t('acchargeradmin.Limits')" textVariant="text-bg-primary" add-space
+                <div v-show="acChargerConfigList.enabled">
+                    <CardElement :text="$t('acchargeradmin.Limits')" textVariant="text-bg-primary" add-space
                               v-show="acChargerConfigList.auto_power_enabled">
-                    <div class="row mb-3">
-                        <label for="voltageLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.VoltageLimit') }}:</label>
-                        <div class="col-sm-10">
-                            <div class="input-group">
-                                <input type="number" step="0.01" class="form-control" id="voltageLimit"
-                                    placeholder="42" v-model="acChargerConfigList.voltage_limit"
-                                    aria-describedby="voltageLimitDescription" min="42" max="58.5" required/>
-                                    <span class="input-group-text" id="voltageLimitDescription">V</span>
-                            </div>
-                        </div>
-                        <label for="enableVoltageLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.enableVoltageLimit') }}:
-                          <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.enableVoltageLimitHint')" />
-                        </label>
-                        <div class="col-sm-10">
-                            <div class="input-group">
-                                <input type="number" step="0.01" class="form-control" id="enableVoltageLimit"
-                                    placeholder="42" v-model="acChargerConfigList.enable_voltage_limit"
-                                    aria-describedby="enableVoltageLimitDescription" min="42" max="58.5" required/>
-                                    <span class="input-group-text" id="enableVoltageLimitDescription">V</span>
-                            </div>
-                        </div>
-                        <label for="lowerPowerLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.lowerPowerLimit') }}:</label>
-                        <div class="col-sm-10">
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="lowerPowerLimit"
-                                    placeholder="150" v-model="acChargerConfigList.lower_power_limit"
-                                    aria-describedby="lowerPowerLimitDescription" min="100" max="3000" required/>
-                                    <span class="input-group-text" id="lowerPowerLimitDescription">W</span>
-                            </div>
-                        </div>
-                        <label for="upperPowerLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.upperPowerLimit') }}:</label>
-                        <div class="col-sm-10">
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="upperPowerLimit"
-                                    placeholder="2000" v-model="acChargerConfigList.upper_power_limit"
-                                    aria-describedby="upperPowerLimitDescription" min="100" max="3000" required/>
-                                    <span class="input-group-text" id="upperPowerLimitDescription">W</span>
-                            </div>
-                        </div>
-                    </div>
-                </CardElement>
-                <CardElement :text="$t('acchargeradmin.BatterySoCLimits')" textVariant="text-bg-primary" add-space
-                                        v-show="acChargerConfigList.auto_power_reduce_on_batterysoc_enabled">
-                                <div class="row mb-3">
-                                    <label for="batterySoCThreshold" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.BatterySoCThreshold') }}:</label>
-                                    <div class="col-sm-10">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="batterySoCThreshold"
-                                                placeholder="90" v-model="acChargerConfigList.batterysoc_threshold"
-                                                aria-describedby="batterySoCThresholdDescription" min="1" max="99" required/>
-                                                <span class="input-group-text" id="batterySoCThresholdDescription">%</span>
-                                        </div>
-                                    </div>
-                                    <label for="reducedUpperPowerLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.ReducedUpperPowerLimit') }}:</label>
-                                    <div class="col-sm-10">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="reducedUpperPowerLimit"
-                                                placeholder="500" v-model="acChargerConfigList.reduced_upper_power_limit"
-                                                aria-describedby="reducedUpperPowerLimitDescription" min="100" max="3000" required/>
-                                                <span class="input-group-text" id="reducedUpperPowerLimitDescription">W</span>
-                                        </div>
-                                    </div>
-                                    
+                        <div class="row mb-3">
+                            <label for="voltageLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.VoltageLimit') }}:</label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input type="number" step="0.01" class="form-control" id="voltageLimit"
+                                        placeholder="42" v-model="acChargerConfigList.voltage_limit"
+                                        aria-describedby="voltageLimitDescription" min="42" max="58.5" required/>
+                                        <span class="input-group-text" id="voltageLimitDescription">V</span>
                                 </div>
-                </CardElement>
+                            </div>
+                            <label for="enableVoltageLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.enableVoltageLimit') }}:
+                            <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.enableVoltageLimitHint')" />
+                            </label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input type="number" step="0.01" class="form-control" id="enableVoltageLimit"
+                                        placeholder="42" v-model="acChargerConfigList.enable_voltage_limit"
+                                        aria-describedby="enableVoltageLimitDescription" min="42" max="58.5" required/>
+                                        <span class="input-group-text" id="enableVoltageLimitDescription">V</span>
+                                </div>
+                            </div>
+                            <label for="lowerPowerLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.lowerPowerLimit') }}:</label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="lowerPowerLimit"
+                                        placeholder="150" v-model="acChargerConfigList.lower_power_limit"
+                                        aria-describedby="lowerPowerLimitDescription" min="100" max="3000" required/>
+                                        <span class="input-group-text" id="lowerPowerLimitDescription">W</span>
+                                </div>
+                            </div>
+                            <label for="upperPowerLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.upperPowerLimit') }}:</label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="upperPowerLimit"
+                                        placeholder="2000" v-model="acChargerConfigList.upper_power_limit"
+                                        aria-describedby="upperPowerLimitDescription" min="100" max="3000" required/>
+                                        <span class="input-group-text" id="upperPowerLimitDescription">W</span>
+                                </div>
+                            </div>                       
+                        </div>
+                    </CardElement>
+                    <CardElement :text="$t('acchargeradmin.BatterySoCLimits')" textVariant="text-bg-primary" add-space
+                                            v-show="acChargerConfigList.auto_power_enabled&&acChargerConfigList.auto_power_reduce_on_batterysoc_enabled">
+                        <div class="row mb-3">
+                            <label for="batterySoCThreshold" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.BatterySoCThreshold') }}:</label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="batterySoCThreshold"
+                                        placeholder="90" v-model="acChargerConfigList.batterysoc_threshold"
+                                        aria-describedby="batterySoCThresholdDescription" min="1" max="99" required/>
+                                        <span class="input-group-text" id="batterySoCThresholdDescription">%</span>
+                                </div>
+                            </div>
+                            <label for="reducedUpperPowerLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.ReducedUpperPowerLimit') }}:</label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="reducedUpperPowerLimit"
+                                        placeholder="500" v-model="acChargerConfigList.reduced_upper_power_limit"
+                                        aria-describedby="reducedUpperPowerLimitDescription" min="100" max="3000" required/>
+                                        <span class="input-group-text" id="reducedUpperPowerLimitDescription">W</span>
+                                </div>
+                            </div>
+                        </div>
+                    </CardElement>
+                </div>
             </CardElement>
-
             <button type="submit" class="btn btn-primary mb-3">{{ $t('acchargeradmin.Save') }}</button>
         </form>
     </BasePage>
