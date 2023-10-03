@@ -83,13 +83,25 @@ void MqttHandleVedirectClass::loop()
             value = VeDirectMppt.veFrame.I;
             MqttSettings.publish(topic + "I", value);
         }
+        if (_PublishFull || VeDirectMppt.veFrame.P != _kvFrame.P) {
+            value = VeDirectMppt.veFrame.P;
+            MqttSettings.publish(topic + "P", value);
+        }
         if (_PublishFull || VeDirectMppt.veFrame.VPV != _kvFrame.VPV) {
             value = VeDirectMppt.veFrame.VPV;
             MqttSettings.publish(topic + "VPV", value);
         }
+        if (_PublishFull || VeDirectMppt.veFrame.IPV != _kvFrame.IPV) {
+            value = VeDirectMppt.veFrame.IPV;
+            MqttSettings.publish(topic + "IPV", value);
+        }
         if (_PublishFull || VeDirectMppt.veFrame.PPV != _kvFrame.PPV) {
             value = VeDirectMppt.veFrame.PPV;
             MqttSettings.publish(topic + "PPV", value);
+        }
+        if (_PublishFull || VeDirectMppt.veFrame.E != _kvFrame.E) {
+            value = VeDirectMppt.veFrame.E;
+            MqttSettings.publish(topic + "E", value);
         }
         if (_PublishFull || VeDirectMppt.veFrame.H19 != _kvFrame.H19) {
             value = VeDirectMppt.veFrame.H19;
