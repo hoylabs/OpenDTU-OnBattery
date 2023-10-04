@@ -10,15 +10,17 @@
                               v-model="acChargerConfigList.enabled"
                               type="checkbox" wide/>
                 <InputElement v-show="acChargerConfigList.enabled"
+                              :label="$t('acchargeradmin.VerboseLogging')"
+                              v-model="acChargerConfigList.verbose_logging"
+                              type="checkbox" wide/>
+                <InputElement v-show="acChargerConfigList.enabled"
                               :label="$t('acchargeradmin.EnableAutoPower')"
                               v-model="acChargerConfigList.auto_power_enabled"
                               type="checkbox" wide/>
                 <InputElement v-show="acChargerConfigList.enabled&&acChargerConfigList.auto_power_enabled"
-                    :label="$t('acchargeradmin.EnableReducePowerOnBatterySoC')"
-                    v-model="acChargerConfigList.auto_power_reduce_on_batterysoc_enabled"
-                    type="checkbox" wide>
-                    <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.EnableReducePowerOnBatterySoCHint')" />
-                </InputElement>
+                              :label="$t('acchargeradmin.EnableBatterySoCLimits')"
+                              v-model="acChargerConfigList.auto_power_batterysoc_limits_enabled"
+                              type="checkbox" wide />
                 <div v-show="acChargerConfigList.enabled">
                     <CardElement :text="$t('acchargeradmin.Limits')" textVariant="text-bg-primary" add-space
                               v-show="acChargerConfigList.auto_power_enabled">
@@ -64,24 +66,37 @@
                         </div>
                     </CardElement>
                     <CardElement :text="$t('acchargeradmin.BatterySoCLimits')" textVariant="text-bg-primary" add-space
-                                            v-show="acChargerConfigList.auto_power_enabled&&acChargerConfigList.auto_power_reduce_on_batterysoc_enabled">
+                                v-show="acChargerConfigList.auto_power_enabled&&acChargerConfigList.auto_power_batterysoc_limits_enabled">
                         <div class="row mb-3">
-                            <label for="batterySoCThreshold" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.BatterySoCThreshold') }}:</label>
-                            <div class="col-sm-10">
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="batterySoCThreshold"
-                                        placeholder="90" v-model="acChargerConfigList.batterysoc_threshold"
-                                        aria-describedby="batterySoCThresholdDescription" min="1" max="99" required/>
-                                        <span class="input-group-text" id="batterySoCThresholdDescription">%</span>
-                                </div>
-                            </div>
-                            <label for="reducedUpperPowerLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.ReducedUpperPowerLimit') }}:</label>
+                            <label for="reducedUpperPowerLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.ReducedUpperPowerLimit') }}:
+                                <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ReducedUpperPowerLimitHint')" />
+                            </label>
                             <div class="col-sm-10">
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="reducedUpperPowerLimit"
                                         placeholder="500" v-model="acChargerConfigList.reduced_upper_power_limit"
                                         aria-describedby="reducedUpperPowerLimitDescription" min="100" max="3000" required/>
                                         <span class="input-group-text" id="reducedUpperPowerLimitDescription">W</span>
+                                </div>
+                            </div>
+                            <label for="reducedBatterySoCThreshold" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.ReducedBatterySoCThreshold') }}:</label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="reducedBatterySoCThreshold"
+                                        placeholder="90" v-model="acChargerConfigList.reduced_batterysoc_threshold"
+                                        aria-describedby="reducedBatterySoCThresholdDescription" min="1" max="99" required/>
+                                        <span class="input-group-text" id="reducedBatterySoCThresholdDescription">%</span>
+                                </div>
+                            </div>
+                            <label for="stopBatterySoCThreshold" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.StopBatterySoCThreshold') }}:
+                                <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.StopBatterySoCThresholdHint')" />
+                            </label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="stopBatterySoCThreshold"
+                                        placeholder="95" v-model="acChargerConfigList.stop_batterysoc_threshold"
+                                        aria-describedby="stopBatterySoCThresholdDescription" min="2" max="100" required/>
+                                        <span class="input-group-text" id="stopBatterySoCThresholdDescription">%</span>
                                 </div>
                             </div>
                         </div>

@@ -256,6 +256,8 @@ void HuaweiCanClass::loop()
       return;
   }
 
+  bool verboseLogging = config.Huawei_VerboseLogging;
+
   processReceivedParameters();
 
   uint8_t com_error = HuaweiCanComm.getErrorCode(true);
@@ -267,7 +269,7 @@ void HuaweiCanClass::loop()
   }
 
   // Print updated data
-  if (HuaweiCanComm.gotNewRxDataFrame(false)) {
+  if (HuaweiCanComm.gotNewRxDataFrame(false) && verboseLogging) {
     MessageOutput.printf("[HuaweiCanClass::loop] In:  %.02fV, %.02fA, %.02fW\n", _rp.input_voltage, _rp.input_current, _rp.input_power);
     MessageOutput.printf("[HuaweiCanClass::loop] Out: %.02fV, %.02fA of %.02fA, %.02fW\n", _rp.output_voltage, _rp.output_current, _rp.max_output_current, _rp.output_power);
     MessageOutput.printf("[HuaweiCanClass::loop] Eff : %.01f%%, Temp in: %.01fC, Temp out: %.01fC\n", _rp.efficiency * 100, _rp.input_temp, _rp.output_temp);
@@ -290,7 +292,9 @@ void HuaweiCanClass::loop()
 
     // Set voltage limit in periodic intervals
     if ( _nextAutoModePeriodicIntMillis < millis()) {
-      MessageOutput.printf("[HuaweiCanClass::loop] Periodically setting voltage limit: %f \r\n", config.Huawei_Auto_Power_Voltage_Limit);
+      if (verboseLogging){
+        MessageOutput.printf("[HuaweiCanClass::loop] Periodically setting voltage limit: %f \r\n", config.Huawei_Auto_Power_Voltage_Limit);
+      }
       setValue(config.Huawei_Auto_Power_Voltage_Limit, HUAWEI_ONLINE_VOLTAGE);
       _nextAutoModePeriodicIntMillis = millis() + 60000;
     }
@@ -305,7 +309,6 @@ void HuaweiCanClass::loop()
     if(_rp.output_voltage < config.Huawei_Auto_Power_Enable_Voltage_Limit ) {
       _autoPowerEnabledCounter = 10;
     }
-
 
     // Check if inverter used by the power limiter is active
     std::shared_ptr<InverterAbstract> inverter =
@@ -322,19 +325,35 @@ void HuaweiCanClass::loop()
     }
 
     if (PowerMeter.getLastPowerMeterUpdate() > _lastPowerMeterUpdateReceivedMillis &&
-        _autoPowerEnabledCounter > 0) {
-        // We have received a new PowerMeter value. Also we're _autoPowerEnabled
-        // So we're good to calculate a new limit
-
+      _autoPowerEnabledCounter > 0) {
+      // We have received a new PowerMeter value. Also we're _autoPowerEnabled
+      // So we're good to calculate a new limit
       _lastPowerMeterUpdateReceivedMillis = PowerMeter.getLastPowerMeterUpdate();
 
       // Calculate new power limit
       float newPowerLimit = -1 * round(PowerMeter.getPowerTotal());
       newPowerLimit += _rp.output_power;
-      MessageOutput.printf("[HuaweiCanClass::loop] newPowerLimit: %f, output_power: %f \r\n", newPowerLimit, _rp.output_power);
+      if (verboseLogging){
+        MessageOutput.printf("[HuaweiCanClass::loop] newPowerLimit: %f, output_power: %f \r\n", newPowerLimit, _rp.output_power);
+      }
+
+      if (config.Battery_Enabled && config.Huawei_Auto_Power_BatterySoC_Limits_Enabled){
+        uint8_t _batterySoC = Battery.getStats()->getSoC();
+        if (_batterySoC >= config.Huawei_Auto_Power_Stop_BatterySoC_Threshold){
+          newPowerLimit = 0;
+          if (verboseLogging){
+            MessageOutput.printf("[HuaweiCanClass::loop] Current battery SoC %i reached stop threshold %i, set newPowerLimit to %f \r\n", _batterySoC, config.Huawei_Auto_Power_Stop_BatterySoC_Threshold, newPowerLimit);
+          }
+        }
+        else if (_batterySoC >= config.Huawei_Auto_Power_Reduced_BatterySoC_Threshold && newPowerLimit > config.Huawei_Auto_Power_Reduced_Upper_Power_Limit){
+          newPowerLimit = config.Huawei_Auto_Power_Reduced_Upper_Power_Limit;
+          if (verboseLogging){
+            MessageOutput.printf("[HuaweiCanClass::loop] Current battery SoC %i reached reduced threshold %i, set newPowerLimit to %f \r\n", _batterySoC, config.Huawei_Auto_Power_Reduced_BatterySoC_Threshold, newPowerLimit);
+          }
+        }
+      }
 
       if (newPowerLimit > config.Huawei_Auto_Power_Lower_Power_Limit) {
-
         // Check if the output power has dropped below the lower limit (i.e. the battery is full)
         // and if the PSU should be turned off. Also we use a simple counter mechanism here to be able
         // to ramp up from zero output power when starting up
@@ -350,15 +369,6 @@ void HuaweiCanClass::loop()
           _autoPowerEnabledCounter = 10;
         }
 
-        //Check battery SoC if feature is enabled
-        if (config.Battery_Enabled && config.Huawei_Auto_Power_Reduce_On_BatterySoC_Enabled){
-          uint8_t _batterySoC = Battery.getStats()->getSoC();
-          if (_batterySoC >= config.Huawei_Auto_Power_BatterySoC_Threshold && newPowerLimit > config.Huawei_Auto_Power_Reduced_Upper_Power_Limit){
-              MessageOutput.printf("[HuaweiCanClass::loop] Current battery SoC %i reached threshold %i, reducing output power to %f \r\n", _batterySoC, config.Huawei_Auto_Power_BatterySoC_Threshold, config.Huawei_Auto_Power_Reduced_Upper_Power_Limit);
-              newPowerLimit = config.Huawei_Auto_Power_Reduced_Upper_Power_Limit;
-          }
-        }
-
         // Limit power to maximum
         if (newPowerLimit > config.Huawei_Auto_Power_Upper_Power_Limit) {
           newPowerLimit = config.Huawei_Auto_Power_Upper_Power_Limit;
@@ -367,7 +377,9 @@ void HuaweiCanClass::loop()
         // Set the actual output limit
         float efficiency =  (_rp.efficiency > 0.5 ? _rp.efficiency : 1.0); 
         float outputCurrent = efficiency * (newPowerLimit / _rp.output_voltage);
-        MessageOutput.printf("[HuaweiCanClass::loop] Output current %f \r\n", outputCurrent);
+        if (verboseLogging){
+          MessageOutput.printf("[HuaweiCanClass::loop] Output current %f \r\n", outputCurrent);
+        } 
         _autoPowerEnabled = true;
         setValue(outputCurrent, HUAWEI_ONLINE_CURRENT);
 
