@@ -350,6 +350,7 @@ void HuaweiCanClass::loop()
           _autoPowerEnabledCounter = 10;
         }
 
+        //Check battery SoC if feature is enabled
         if (config.Battery_Enabled && config.Huawei_Auto_Power_Reduce_On_BatterySoC_Enabled){
           uint8_t _batterySoC = Battery.getStats()->getSoC();
           if (_batterySoC >= config.Huawei_Auto_Power_BatterySoC_Threshold && newPowerLimit > config.Huawei_Auto_Power_Reduced_Upper_Power_Limit){
