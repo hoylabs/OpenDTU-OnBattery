@@ -37,13 +37,13 @@ private:
 
 class VeDirectMpptController : public VeDirectFrameHandler {
 public:
-    VeDirectMpptController();
+    VeDirectMpptController() = default;
 
     void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging);
-    String getMpptAsString(uint8_t mppt);    // state of mppt as string
-    String getCsAsString(uint8_t cs);        // current state as string
-    String getOrAsString(uint32_t offReason); // off reason as string
-    bool isDataValid();                      // return true if data valid and not outdated
+    static String getMpptAsString(uint8_t mppt);     // state of mppt as string
+    static String getCsAsString(uint8_t cs);         // current state as string
+    static String getOrAsString(uint32_t offReason); // off reason as string
+    bool isDataValid() const;                        // return true if data valid and not outdated
 
     struct veMpptStruct : veStruct {
         uint8_t  MPPT;                  // state of MPP tracker
@@ -70,5 +70,3 @@ private:
     veMpptStruct _tmpFrame{};                        // private struct for received name and value pairs
     MovingAverage<double, 5> _efficiency;
 };
-
-extern VeDirectMpptController VeDirectMppt;

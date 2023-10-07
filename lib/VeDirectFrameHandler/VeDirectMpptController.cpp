@@ -1,19 +1,13 @@
 #include <Arduino.h>
 #include "VeDirectMpptController.h"
 
-VeDirectMpptController VeDirectMppt;
-
-VeDirectMpptController::VeDirectMpptController()
-{
-}
-
 void VeDirectMpptController::init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging)
 {
 	VeDirectFrameHandler::init(rx, tx, msgOut, verboseLogging, 1);
 	if (_verboseLogging) { _msgOut->println("Finished init MPPTController"); }
 }
 
-bool VeDirectMpptController::isDataValid() {
+bool VeDirectMpptController::isDataValid() const {
 	return VeDirectFrameHandler::isDataValid(veFrame);
 }
 

@@ -31,13 +31,12 @@ typedef struct {
 class VeDirectFrameHandler {
 public:
     VeDirectFrameHandler();
-    void setVerboseLogging(bool verboseLogging);
     virtual void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging, uint16_t hwSerialPort);
     void loop();                                 // main loop to read ve.direct data
-    unsigned long getLastUpdate();               // timestamp of last successful frame read
-    bool isDataValid(veStruct frame);                          // return true if data valid and not outdated
-    String getPidAsString(uint16_t pid);      // product id as string
-    String getErrAsString(uint8_t err);      // errer state as string
+    uint32_t getLastUpdate() const;              // timestamp of last successful frame read
+    bool isDataValid(veStruct frame) const;      // return true if data valid and not outdated
+    static String getPidAsString(uint16_t pid);  // product id as string
+    static String getErrAsString(uint8_t err);   // errer state as string
 
 protected:
     void textRxEvent(char *, char *, veStruct& );

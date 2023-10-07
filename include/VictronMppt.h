@@ -1,0 +1,38 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+#pragma once
+
+#include <mutex>
+#include <memory>
+
+#include "VeDirectMpptController.h"
+
+class VictronMpptClass {
+public:
+    VictronMpptClass() = default;
+    ~VictronMpptClass() = default;
+
+    void init();
+    void loop();
+
+    bool isDataValid() const;
+    uint32_t getLastUpdate() const;
+
+    VeDirectMpptController::veMpptStruct const& getData(size_t idx = 0) const;
+    String getPidAsString(size_t idx = 0) const;
+    String getCsAsString(size_t idx = 0) const;
+    String getErrAsString(size_t idx = 0) const;
+    String getOrAsString(size_t idx = 0) const;
+    String getMpptAsString(size_t idx = 0) const;
+
+private:
+    VictronMpptClass(VictronMpptClass const& other) = delete;
+    VictronMpptClass(VictronMpptClass&& other) = delete;
+    VictronMpptClass& operator=(VictronMpptClass const& other) = delete;
+    VictronMpptClass& operator=(VictronMpptClass&& other) = delete;
+
+    mutable std::mutex _mutex;
+    using controller_t = std::unique_ptr<VeDirectMpptController>;
+    std::vector<controller_t> _controllers;
+};
+
+extern VictronMpptClass VictronMppt;

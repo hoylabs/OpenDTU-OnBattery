@@ -72,19 +72,14 @@ VeDirectFrameHandler::VeDirectFrameHandler() :
 {
 }
 
-void VeDirectFrameHandler::setVerboseLogging(bool verboseLogging)
-{
-	_verboseLogging = verboseLogging;
-	if (!_verboseLogging) { _debugIn = 0; }
-}
-
 void VeDirectFrameHandler::init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging, uint16_t hwSerialPort)
 {
 	_vedirectSerial = std::make_unique<HardwareSerial>(hwSerialPort);
 	_vedirectSerial->begin(19200, SERIAL_8N1, rx, tx);
 	_vedirectSerial->flush();
 	_msgOut = msgOut;
-	setVerboseLogging(verboseLogging);
+	_verboseLogging = verboseLogging;
+	_debugIn = 0;
 }
 
 void VeDirectFrameHandler::dumpDebugBuffer() {
@@ -269,7 +264,7 @@ int VeDirectFrameHandler::hexRxEvent(uint8_t inbyte) {
 	return ret;
 }
 
-bool VeDirectFrameHandler::isDataValid(veStruct frame) {
+bool VeDirectFrameHandler::isDataValid(veStruct frame) const {
 	if (_lastUpdate == 0) {
 		return false;
 	}
@@ -279,7 +274,7 @@ bool VeDirectFrameHandler::isDataValid(veStruct frame) {
 	return true;
 }
 
-unsigned long VeDirectFrameHandler::getLastUpdate()
+uint32_t VeDirectFrameHandler::getLastUpdate() const
 {
 	return _lastUpdate;
 }
