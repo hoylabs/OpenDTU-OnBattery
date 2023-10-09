@@ -18,11 +18,6 @@ public:
     uint32_t getLastUpdate() const;
 
     VeDirectMpptController::veMpptStruct const& getData(size_t idx = 0) const;
-    String getPidAsString(size_t idx = 0) const;
-    String getCsAsString(size_t idx = 0) const;
-    String getErrAsString(size_t idx = 0) const;
-    String getOrAsString(size_t idx = 0) const;
-    String getMpptAsString(size_t idx = 0) const;
 
 private:
     VictronMpptClass(VictronMpptClass const& other) = delete;

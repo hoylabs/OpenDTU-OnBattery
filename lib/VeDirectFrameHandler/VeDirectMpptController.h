@@ -40,9 +40,6 @@ public:
     VeDirectMpptController() = default;
 
     void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging);
-    static String getMpptAsString(uint8_t mppt);     // state of mppt as string
-    static String getCsAsString(uint8_t cs);         // current state as string
-    static String getOrAsString(uint32_t offReason); // off reason as string
     bool isDataValid() const;                        // return true if data valid and not outdated
 
     struct veMpptStruct : veStruct {
@@ -60,6 +57,11 @@ public:
         int32_t H21;                    // maximum power today W
         double H22;                     // yield yesterday kWh
         int32_t H23;                    // maximum power yesterday W
+
+        String getMpptAsString() const; // state of mppt as string
+        String getCsAsString() const;   // current state as string
+        String getErrAsString() const;  // error state as string
+        String getOrAsString() const;   // off reason as string
     };
 
     veMpptStruct veFrame{};

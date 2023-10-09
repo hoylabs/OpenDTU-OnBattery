@@ -283,11 +283,11 @@ uint32_t VeDirectFrameHandler::getLastUpdate() const
  * getPidAsString
  * This function returns the product id (PID) as readable text.
  */
-String VeDirectFrameHandler::getPidAsString(uint16_t pid)
+String VeDirectFrameHandler::veStruct::getPidAsString() const
 {
 	String strPID ="";
 
-	switch(pid) {
+	switch(PID) {
 		case 0x0300:
 			strPID =  "BlueSolar MPPT 70|15";
 			break;
@@ -520,84 +520,7 @@ String VeDirectFrameHandler::getPidAsString(uint16_t pid)
 			strPID =  "SmartShunt 2000A/50mV" ;
 			break;
 		default:
-			strPID = pid;
+			strPID = PID;
 	}
 	return strPID;
-}
-
-
-
-/*
- * getErrAsString
- * This function returns error state (ERR) as readable text.
- */
-String VeDirectFrameHandler::getErrAsString(uint8_t err)
-{
-	String strERR ="";
-
-	switch(err) {
-		case 0:
-			strERR =  "No error";
-			break;
-		case 2:
-			strERR =  "Battery voltage too high";
-			break;
-		case 17:
-			strERR =  "Charger temperature too high";
-			break;
-		case 18:
-			strERR =  "Charger over current";
-			break;
-		case 19:
-			strERR =  "Charger current reversed";
-			break;
-		case 20:
-			strERR =  "Bulk time limit exceeded";
-			break;
-		case 21:
-			strERR =  "Current sensor issue(sensor bias/sensor broken)";
-			break;
-		case 26:
-			strERR =  "Terminals overheated";
-			break;
-		case 28:
-			strERR =  "Converter issue (dual converter models only)";
-			break;
-		case 33:
-			strERR =  "Input voltage too high (solar panel)";
-			break;
-		case 34:
-			strERR =  "Input current too high (solar panel)";
-			break;
-		case 38:
-			strERR =  "Input shutdown (due to excessive battery voltage)";
-			break;
-		case 39:
-			strERR =  "Input shutdown (due to current flow during off mode)";
-			break;
-		case 40:
-			strERR =  "Input";
-			break;
-		case 65:
-			strERR =  "Lost communication with one of devices";
-			break;
-		case 67:
-			strERR =  "Synchronisedcharging device configuration issue";
-			break;
-		case 68:
-			strERR =  "BMS connection lost";
-			break;
-		case 116:
-			strERR =  "Factory calibration data lost";
-			break;
-		case 117:
-			strERR =  "Invalid/incompatible firmware";
-			break;
-		case 118:
-			strERR =  "User settings invalid";
-			break;
-		default:
-			strERR = err;
-	}
-	return strERR;
 }

@@ -173,12 +173,13 @@ void MqttHandleVedirectHassClass::publishBinarySensor(const char* caption, const
 
 void MqttHandleVedirectHassClass::createDeviceInfo(JsonObject& object)
 {
-    String serial = VictronMppt.getData().SER;
+    auto const& mpptData = VictronMppt.getData();
+    String serial = mpptData.SER;
     object[F("name")] = "Victron(" + serial + ")";
     object[F("ids")] = serial;
     object[F("cu")] = String(F("http://")) + NetworkSettings.localIP().toString();
     object[F("mf")] = F("OpenDTU");
-    object[F("mdl")] = VictronMppt.getPidAsString();
+    object[F("mdl")] = mpptData.getPidAsString();
     object[F("sw")] = AUTO_GIT_HASH;
 }
 

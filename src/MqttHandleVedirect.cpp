@@ -57,7 +57,7 @@ void MqttHandleVedirectClass::loop()
         topic.concat("/");
 
         if (_PublishFull || mpptData.PID != _kvFrame.PID)
-            MqttSettings.publish(topic + "PID", VictronMppt.getPidAsString());
+            MqttSettings.publish(topic + "PID", mpptData.getPidAsString());
         if (_PublishFull || strcmp(mpptData.SER, _kvFrame.SER) != 0)
             MqttSettings.publish(topic + "SER", mpptData.SER );
         if (_PublishFull || strcmp(mpptData.FW, _kvFrame.FW) != 0)
@@ -65,13 +65,13 @@ void MqttHandleVedirectClass::loop()
         if (_PublishFull || mpptData.LOAD != _kvFrame.LOAD)
             MqttSettings.publish(topic + "LOAD", mpptData.LOAD == true ? "ON": "OFF");
         if (_PublishFull || mpptData.CS != _kvFrame.CS)
-            MqttSettings.publish(topic + "CS", VictronMppt.getCsAsString());
+            MqttSettings.publish(topic + "CS", mpptData.getCsAsString());
         if (_PublishFull || mpptData.ERR != _kvFrame.ERR)
-            MqttSettings.publish(topic + "ERR", VictronMppt.getErrAsString());
+            MqttSettings.publish(topic + "ERR", mpptData.getErrAsString());
         if (_PublishFull || mpptData.OR != _kvFrame.OR)
-            MqttSettings.publish(topic + "OR", VictronMppt.getOrAsString());
+            MqttSettings.publish(topic + "OR", mpptData.getOrAsString());
         if (_PublishFull || mpptData.MPPT != _kvFrame.MPPT)
-            MqttSettings.publish(topic + "MPPT", VictronMppt.getMpptAsString());
+            MqttSettings.publish(topic + "MPPT", mpptData.getMpptAsString());
         if (_PublishFull || mpptData.HSDS != _kvFrame.HSDS) {
             value = mpptData.HSDS;
             MqttSettings.publish(topic + "HSDS", value);

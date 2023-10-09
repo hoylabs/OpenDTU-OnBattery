@@ -18,32 +18,32 @@
 #define VE_MAX_VALUE_LEN 33 // VE.Direct Protocol: max value size is 33 including /0
 #define VE_MAX_HEX_LEN 100 // Maximum size of hex frame - max payload 34 byte (=68 char) + safe buffer
 
-typedef struct {
-    uint16_t PID = 0;               // product id
-    char SER[VE_MAX_VALUE_LEN];     // serial number
-    char FW[VE_MAX_VALUE_LEN];      // firmware release number
-    int32_t P = 0;                  // battery output power in W (calculated)
-    double V = 0;                   // battery voltage in V
-    double I = 0;                   // battery current in A
-    double E = 0;                   // efficiency in percent (calculated, moving average)
-} veStruct;
-
 class VeDirectFrameHandler {
 public:
     VeDirectFrameHandler();
     virtual void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging, uint16_t hwSerialPort);
     void loop();                                 // main loop to read ve.direct data
     uint32_t getLastUpdate() const;              // timestamp of last successful frame read
-    bool isDataValid(veStruct frame) const;      // return true if data valid and not outdated
-    static String getPidAsString(uint16_t pid);  // product id as string
-    static String getErrAsString(uint8_t err);   // errer state as string
 
 protected:
-    void textRxEvent(char *, char *, veStruct& );
-
     bool _verboseLogging;
     Print* _msgOut;
     uint32_t _lastUpdate;
+
+    typedef struct {
+        uint16_t PID = 0;               // product id
+        char SER[VE_MAX_VALUE_LEN];     // serial number
+        char FW[VE_MAX_VALUE_LEN];      // firmware release number
+        int32_t P = 0;                  // battery output power in W (calculated)
+        double V = 0;                   // battery voltage in V
+        double I = 0;                   // battery current in A
+        double E = 0;                   // efficiency in percent (calculated, moving average)
+
+        String getPidAsString() const;  // product id as string
+    } veStruct;
+
+    void textRxEvent(char *, char *, veStruct& );
+    bool isDataValid(veStruct frame) const;      // return true if data valid and not outdated
 
 private:
     void setLastUpdate();                     // set timestampt after successful frame read

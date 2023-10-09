@@ -93,14 +93,14 @@ void WebApiWsVedirectLiveClass::generateJsonResponse(JsonVariant& root)
     // device info
     root["device"]["data_age"] = (millis() - VictronMppt.getLastUpdate() ) / 1000;
     root["device"]["age_critical"] = !VictronMppt.isDataValid();
-    root["device"]["PID"] = VictronMppt.getPidAsString();
+    root["device"]["PID"] = mpptData.getPidAsString();
     root["device"]["SER"] = mpptData.SER;
     root["device"]["FW"] = mpptData.FW;
     root["device"]["LOAD"] = mpptData.LOAD == true ? "ON" : "OFF";
-    root["device"]["CS"] = VictronMppt.getCsAsString();
-    root["device"]["ERR"] = VictronMppt.getErrAsString();
-    root["device"]["OR"] = VictronMppt.getOrAsString();
-    root["device"]["MPPT"] = VictronMppt.getMpptAsString();
+    root["device"]["CS"] = mpptData.getCsAsString();
+    root["device"]["ERR"] = mpptData.getErrAsString();
+    root["device"]["OR"] = mpptData.getOrAsString();
+    root["device"]["MPPT"] = mpptData.getMpptAsString();
     root["device"]["HSDS"]["v"] = mpptData.HSDS;
     root["device"]["HSDS"]["u"] = "d";
 

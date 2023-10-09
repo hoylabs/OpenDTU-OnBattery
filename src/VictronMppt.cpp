@@ -90,28 +90,3 @@ VeDirectMpptController::veMpptStruct const& VictronMpptClass::getData(size_t idx
     // return a shared_ptr to that structure here.
     return _controllers[idx]->veFrame;
 }
-
-String VictronMpptClass::getPidAsString(size_t idx) const
-{
-    return VeDirectMpptController::getPidAsString(getData(idx).PID);
-}
-
-String VictronMpptClass::getCsAsString(size_t idx) const
-{
-    return VeDirectMpptController::getCsAsString(getData(idx).CS);
-}
-
-String VictronMpptClass::getErrAsString(size_t idx) const
-{
-    return VeDirectMpptController::getErrAsString(getData(idx).ERR);
-}
-
-String VictronMpptClass::getOrAsString(size_t idx) const
-{
-    return VeDirectMpptController::getOrAsString(getData(idx).OR);
-}
-
-String VictronMpptClass::getMpptAsString(size_t idx) const
-{
-    return VeDirectMpptController::getMpptAsString(getData(idx).MPPT);
-}
