@@ -68,7 +68,7 @@ public:
     veMpptStruct veFrame{};
 
 private:
-    void textRxEvent(char * name, char * value) final;
+    void textRxEvent(char* name, char* value) final;
     void frameEndEvent(bool) final;                  // copy temp struct to public struct
     veMpptStruct _tmpFrame{};                        // private struct for received name and value pairs
     MovingAverage<double, 5> _efficiency;

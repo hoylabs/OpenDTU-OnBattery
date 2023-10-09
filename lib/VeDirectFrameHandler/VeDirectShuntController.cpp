@@ -17,10 +17,7 @@ void VeDirectShuntController::init(int8_t rx, int8_t tx, Print* msgOut, bool ver
 
 void VeDirectShuntController::textRxEvent(char* name, char* value)
 {
-	VeDirectFrameHandler::textRxEvent(name, value, _tmpFrame);
-	if (_verboseLogging) { 
-		_msgOut->printf("[Victron SmartShunt] Received Text Event %s: Value: %s\r\n", name, value ); 
-	}
+	VeDirectFrameHandler::textRxEvent("SmartShunt", name, value, _tmpFrame);
 	if (strcmp(name, "T") == 0) {
 		_tmpFrame.T = atoi(value);
 	}

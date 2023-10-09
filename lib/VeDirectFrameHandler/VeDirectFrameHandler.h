@@ -42,7 +42,7 @@ protected:
         String getPidAsString() const;  // product id as string
     } veStruct;
 
-    void textRxEvent(char *, char *, veStruct& );
+    void textRxEvent(std::string const& who, char* name, char* value, veStruct& frame);
     bool isDataValid(veStruct const& frame) const;      // return true if data valid and not outdated
 
     template<typename T>

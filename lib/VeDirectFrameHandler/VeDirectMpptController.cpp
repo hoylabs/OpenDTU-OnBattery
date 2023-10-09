@@ -12,9 +12,9 @@ bool VeDirectMpptController::isDataValid() const {
 	return VeDirectFrameHandler::isDataValid(veFrame);
 }
 
-void VeDirectMpptController::textRxEvent(char * name, char * value) {
-	if (_verboseLogging) { _msgOut->printf("[Victron MPPT] Received Text Event %s: Value: %s\r\n", name, value ); }
-	VeDirectFrameHandler::textRxEvent(name, value, _tmpFrame);
+void VeDirectMpptController::textRxEvent(char* name, char* value)
+{
+	VeDirectFrameHandler::textRxEvent("MPPT", name, value, _tmpFrame);
 	if (strcmp(name, "LOAD") == 0) {
 		if (strcmp(value, "ON") == 0)
 			_tmpFrame.LOAD = true;
