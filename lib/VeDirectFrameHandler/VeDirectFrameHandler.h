@@ -13,6 +13,7 @@
 
 #include <Arduino.h>
 #include <array>
+#include <map>
 #include <memory>
 
 #define VE_MAX_VALUE_LEN 33 // VE.Direct Protocol: max value size is 33 including /0
@@ -44,6 +45,9 @@ protected:
 
     void textRxEvent(char *, char *, veStruct& );
     bool isDataValid(veStruct frame) const;      // return true if data valid and not outdated
+
+    template<typename T>
+    static String const& getAsString(std::map<T, String> const& values, T val);
 
 private:
     void setLastUpdate();                     // set timestampt after successful frame read
