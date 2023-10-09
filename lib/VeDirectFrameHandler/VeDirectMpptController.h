@@ -45,6 +45,7 @@ public:
     struct veMpptStruct : veStruct {
         uint8_t  MPPT;                  // state of MPP tracker
         int32_t PPV;                    // panel power in W
+        int32_t P;                      // battery output power in W (calculated)
         double VPV;                     // panel voltage in V
         double IPV;                     // panel current in A (calculated)
         bool LOAD;                      // virtual load output state (on if battery voltage reaches upper limit, off if battery reaches lower limit)

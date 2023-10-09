@@ -35,7 +35,6 @@ protected:
         uint16_t PID = 0;               // product id
         char SER[VE_MAX_VALUE_LEN];     // serial number
         char FW[VE_MAX_VALUE_LEN];      // firmware release number
-        int32_t P = 0;                  // battery output power in W (calculated)
         double V = 0;                   // battery voltage in V
         double I = 0;                   // battery current in A
         double E = 0;                   // efficiency in percent (calculated, moving average)
