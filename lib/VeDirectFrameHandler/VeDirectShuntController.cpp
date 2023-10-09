@@ -17,7 +17,10 @@ void VeDirectShuntController::init(int8_t rx, int8_t tx, Print* msgOut, bool ver
 
 void VeDirectShuntController::textRxEvent(char* name, char* value)
 {
-	VeDirectFrameHandler::textRxEvent("SmartShunt", name, value, _tmpFrame);
+	if (VeDirectFrameHandler::textRxEvent("SmartShunt", name, value, _tmpFrame)) {
+		return;
+	}
+
 	if (strcmp(name, "T") == 0) {
 		_tmpFrame.T = atoi(value);
 	}

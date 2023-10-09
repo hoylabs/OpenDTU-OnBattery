@@ -219,7 +219,7 @@ void VeDirectFrameHandler::rxData(uint8_t inbyte)
  * textRxEvent
  * This function is called every time a new name/value is successfully parsed.  It writes the values to the temporary buffer.
  */
-void VeDirectFrameHandler::textRxEvent(std::string const& who, char* name, char* value, veStruct& frame) {
+bool VeDirectFrameHandler::textRxEvent(std::string const& who, char* name, char* value, veStruct& frame) {
 	if (_verboseLogging) {
 		_msgOut->printf("[Victron %s] Text Event %s: Value: %s\r\n",
 				who.c_str(), name, value );
@@ -227,19 +227,30 @@ void VeDirectFrameHandler::textRxEvent(std::string const& who, char* name, char*
 
 	if (strcmp(name, "PID") == 0) {
 		frame.PID = strtol(value, nullptr, 0);
+		return true;
 	}
-	else if (strcmp(name, "SER") == 0) {
+
+	if (strcmp(name, "SER") == 0) {
 		strcpy(frame.SER, value);
+		return true;
 	}
-	else if (strcmp(name, "FW") == 0) {
+
+	if (strcmp(name, "FW") == 0) {
 		strcpy(frame.FW, value);
+		return true;
 	}
-	else if (strcmp(name, "V") == 0) {
+
+	if (strcmp(name, "V") == 0) {
 		frame.V = round(atof(value) / 10.0) / 100.0;
+		return true;
 	}
-	else if (strcmp(name, "I") == 0) {
+
+	if (strcmp(name, "I") == 0) {
 		frame.I = round(atof(value) / 10.0) / 100.0;
+		return true;
 	}
+
+	return false;
 }
 
 

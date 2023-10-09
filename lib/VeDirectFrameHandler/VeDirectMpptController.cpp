@@ -14,7 +14,10 @@ bool VeDirectMpptController::isDataValid() const {
 
 void VeDirectMpptController::textRxEvent(char* name, char* value)
 {
-	VeDirectFrameHandler::textRxEvent("MPPT", name, value, _tmpFrame);
+	if (VeDirectFrameHandler::textRxEvent("MPPT", name, value, _tmpFrame)) {
+		return;
+	}
+
 	if (strcmp(name, "LOAD") == 0) {
 		if (strcmp(value, "ON") == 0)
 			_tmpFrame.LOAD = true;
