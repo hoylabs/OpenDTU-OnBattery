@@ -264,7 +264,7 @@ int VeDirectFrameHandler::hexRxEvent(uint8_t inbyte) {
 	return ret;
 }
 
-bool VeDirectFrameHandler::isDataValid(veStruct frame) const {
+bool VeDirectFrameHandler::isDataValid(veStruct const& frame) const {
 	if (_lastUpdate == 0) {
 		return false;
 	}

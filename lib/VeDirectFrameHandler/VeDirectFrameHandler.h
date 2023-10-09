@@ -43,7 +43,7 @@ protected:
     } veStruct;
 
     void textRxEvent(char *, char *, veStruct& );
-    bool isDataValid(veStruct frame) const;      // return true if data valid and not outdated
+    bool isDataValid(veStruct const& frame) const;      // return true if data valid and not outdated
 
     template<typename T>
     static String const& getAsString(std::map<T, String> const& values, T val);
