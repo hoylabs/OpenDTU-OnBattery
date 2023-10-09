@@ -369,7 +369,7 @@ void PowerLimiterClass::unconditionalSolarPassthrough(std::shared_ptr<InverterAb
         return;
     }
 
-    int32_t solarPower = VictronMppt.getData().V * VictronMppt.getData().I;
+    int32_t solarPower = VictronMppt.getPowerOutputWatts();
     setNewPowerLimit(inverter, inverterPowerDcToAc(inverter, solarPower));
     announceStatus(Status::UnconditionalSolarPassthrough);
 }
@@ -408,7 +408,7 @@ bool PowerLimiterClass::canUseDirectSolarPower()
         return false;
     }
 
-    return VictronMppt.getData().PPV >= 20; // enough power?
+    return VictronMppt.getPowerOutputWatts() >= 20; // enough power?
 }
 
 
@@ -573,7 +573,7 @@ int32_t PowerLimiterClass::getSolarChargePower()
         return 0;
     }
 
-    return VictronMppt.getData().V * VictronMppt.getData().I;
+    return VictronMppt.getPowerOutputWatts();
 }
 
 float PowerLimiterClass::getLoadCorrectedVoltage()

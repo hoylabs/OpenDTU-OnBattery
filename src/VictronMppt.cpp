@@ -90,3 +90,14 @@ VeDirectMpptController::veMpptStruct const& VictronMpptClass::getData(size_t idx
     // return a shared_ptr to that structure here.
     return _controllers[idx]->veFrame;
 }
+
+int32_t VictronMpptClass::getPowerOutputWatts() const
+{
+    int32_t sum = 0;
+
+    for (const auto& upController : _controllers) {
+        sum += upController->veFrame.P;
+    }
+
+    return sum;
+}
