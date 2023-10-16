@@ -51,25 +51,24 @@ bool VictronMpptClass::isDataValid() const
     return !_controllers.empty();
 }
 
-uint32_t VictronMpptClass::getLastUpdate() const
+uint32_t VictronMpptClass::getDataAgeMillis() const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
     if (_controllers.empty()) { return 0; }
 
+    auto now = millis();
+
     auto iter = _controllers.cbegin();
-    uint32_t lastUpdate = (*iter)->getLastUpdate();
+    uint32_t age = now - (*iter)->getLastUpdate();
     ++iter;
 
     while (iter != _controllers.end()) {
-        // TODO(schlimmchen): this breaks when millis() wraps around. this
-        // function would be much simpler if it returned data age instead
-        // (return max of all millis() - getLastUpdate()).
-        lastUpdate = std::min(lastUpdate, (*iter)->getLastUpdate());
+        age = std::min<uint32_t>(age, now - (*iter)->getLastUpdate());
         ++iter;
     }
 
-    return lastUpdate;
+    return age;
 }
 
 VeDirectMpptController::spData_t VictronMpptClass::getData(size_t idx) const

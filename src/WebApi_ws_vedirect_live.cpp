@@ -45,18 +45,14 @@ void WebApiWsVedirectLiveClass::loop()
         return;
     }
 
-    if (millis() - _lastVedirectUpdateCheck < 1000) {
-        return;
-    }
-    _lastVedirectUpdateCheck = millis();
-
-    uint32_t maxTimeStamp = 0;
-    if (VictronMppt.getLastUpdate() > maxTimeStamp) {
-        maxTimeStamp = VictronMppt.getLastUpdate();
-    }
+    // we assume this loop to be running at least twice for every
+    // update from a VE.Direct MPPT data producer, so _dataAgeMillis
+    // acutally grows in between updates.
+    auto lastDataAgeMillis = _dataAgeMillis;
+    _dataAgeMillis = VictronMppt.getDataAgeMillis();
 
     // Update on ve.direct change or at least after 10 seconds
-    if (millis() - _lastWsPublish > (10 * 1000) || (maxTimeStamp != _newestVedirectTimestamp)) {
+    if (millis() - _lastWsPublish > (10 * 1000) || lastDataAgeMillis > _dataAgeMillis) {
         
         try {
             String buffer;
@@ -91,7 +87,7 @@ void WebApiWsVedirectLiveClass::generateJsonResponse(JsonVariant& root)
     auto spMpptData = VictronMppt.getData();
 
     // device info
-    root["device"]["data_age"] = (millis() - VictronMppt.getLastUpdate() ) / 1000;
+    root["device"]["data_age"] = VictronMppt.getDataAgeMillis() / 1000;
     root["device"]["age_critical"] = !VictronMppt.isDataValid();
     root["device"]["PID"] = spMpptData->getPidAsString();
     root["device"]["SER"] = spMpptData->SER;
@@ -149,12 +145,6 @@ void WebApiWsVedirectLiveClass::generateJsonResponse(JsonVariant& root)
     if (Configuration.get().PowerLimiter_Enabled)
         root["dpl"]["PLSTATE"] = PowerLimiter.getPowerLimiterState();
     root["dpl"]["PLLIMIT"] = PowerLimiter.getLastRequestedPowerLimit();
-
-    // TODO(schlimmchen): this breaks when millis() wraps around, i.e.,
-    // _newestVedirectTimestamp will eventually be close to max(uint32_t) forever.
-    if (VictronMppt.getLastUpdate() > _newestVedirectTimestamp) {
-        _newestVedirectTimestamp = VictronMppt.getLastUpdate();
-    }
 }
 
 void WebApiWsVedirectLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
