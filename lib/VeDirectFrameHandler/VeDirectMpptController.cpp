@@ -5,11 +5,12 @@
 void VeDirectMpptController::init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging)
 {
 	VeDirectFrameHandler::init(rx, tx, msgOut, verboseLogging, 1);
+	_spData = std::make_shared<veMpptStruct>();
 	if (_verboseLogging) { _msgOut->println("Finished init MPPTController"); }
 }
 
 bool VeDirectMpptController::isDataValid() const {
-	return VeDirectFrameHandler::isDataValid(veFrame);
+	return VeDirectFrameHandler::isDataValid(*_spData);
 }
 
 void VeDirectMpptController::textRxEvent(char* name, char* value)
@@ -83,7 +84,7 @@ void VeDirectMpptController::frameEndEvent(bool valid) {
 			_tmpFrame.E = _efficiency.getAverage();
 		}
 
-		veFrame = _tmpFrame;
+		_spData = std::make_shared<veMpptStruct>(_tmpFrame);
 		_tmpFrame = {};
 		_lastUpdate = millis();
 	}

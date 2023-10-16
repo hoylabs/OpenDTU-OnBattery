@@ -65,11 +65,13 @@ public:
         String getOrAsString() const;   // off reason as string
     };
 
-    veMpptStruct veFrame{};
+    using spData_t = std::shared_ptr<veMpptStruct const>;
+    spData_t getData() const { return _spData; }
 
 private:
     void textRxEvent(char* name, char* value) final;
-    void frameEndEvent(bool) final;                  // copy temp struct to public struct
+    void frameEndEvent(bool) final;
+    spData_t _spData = nullptr;
     veMpptStruct _tmpFrame{};                        // private struct for received name and value pairs
     MovingAverage<double, 5> _efficiency;
 };

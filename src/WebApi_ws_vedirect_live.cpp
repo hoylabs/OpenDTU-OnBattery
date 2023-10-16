@@ -88,59 +88,59 @@ void WebApiWsVedirectLiveClass::loop()
 
 void WebApiWsVedirectLiveClass::generateJsonResponse(JsonVariant& root)
 {
-    auto const& mpptData = VictronMppt.getData();
+    auto spMpptData = VictronMppt.getData();
 
     // device info
     root["device"]["data_age"] = (millis() - VictronMppt.getLastUpdate() ) / 1000;
     root["device"]["age_critical"] = !VictronMppt.isDataValid();
-    root["device"]["PID"] = mpptData.getPidAsString();
-    root["device"]["SER"] = mpptData.SER;
-    root["device"]["FW"] = mpptData.FW;
-    root["device"]["LOAD"] = mpptData.LOAD == true ? "ON" : "OFF";
-    root["device"]["CS"] = mpptData.getCsAsString();
-    root["device"]["ERR"] = mpptData.getErrAsString();
-    root["device"]["OR"] = mpptData.getOrAsString();
-    root["device"]["MPPT"] = mpptData.getMpptAsString();
-    root["device"]["HSDS"]["v"] = mpptData.HSDS;
+    root["device"]["PID"] = spMpptData->getPidAsString();
+    root["device"]["SER"] = spMpptData->SER;
+    root["device"]["FW"] = spMpptData->FW;
+    root["device"]["LOAD"] = spMpptData->LOAD == true ? "ON" : "OFF";
+    root["device"]["CS"] = spMpptData->getCsAsString();
+    root["device"]["ERR"] = spMpptData->getErrAsString();
+    root["device"]["OR"] = spMpptData->getOrAsString();
+    root["device"]["MPPT"] = spMpptData->getMpptAsString();
+    root["device"]["HSDS"]["v"] = spMpptData->HSDS;
     root["device"]["HSDS"]["u"] = "d";
 
     // battery info    
-    root["output"]["P"]["v"] = mpptData.P;
+    root["output"]["P"]["v"] = spMpptData->P;
     root["output"]["P"]["u"] = "W";
     root["output"]["P"]["d"] = 0;
-    root["output"]["V"]["v"] = mpptData.V;
+    root["output"]["V"]["v"] = spMpptData->V;
     root["output"]["V"]["u"] = "V";
     root["output"]["V"]["d"] = 2;
-    root["output"]["I"]["v"] = mpptData.I;
+    root["output"]["I"]["v"] = spMpptData->I;
     root["output"]["I"]["u"] = "A";
     root["output"]["I"]["d"] = 2;
-    root["output"]["E"]["v"] = mpptData.E;
+    root["output"]["E"]["v"] = spMpptData->E;
     root["output"]["E"]["u"] = "%";
     root["output"]["E"]["d"] = 1;
 
     // panel info
-    root["input"]["PPV"]["v"] = mpptData.PPV;
+    root["input"]["PPV"]["v"] = spMpptData->PPV;
     root["input"]["PPV"]["u"] = "W";
     root["input"]["PPV"]["d"] = 0;
-    root["input"]["VPV"]["v"] = mpptData.VPV;
+    root["input"]["VPV"]["v"] = spMpptData->VPV;
     root["input"]["VPV"]["u"] = "V";
     root["input"]["VPV"]["d"] = 2;
-    root["input"]["IPV"]["v"] = mpptData.IPV;
+    root["input"]["IPV"]["v"] = spMpptData->IPV;
     root["input"]["IPV"]["u"] = "A";
     root["input"]["IPV"]["d"] = 2;
-    root["input"]["YieldToday"]["v"] = mpptData.H20;
+    root["input"]["YieldToday"]["v"] = spMpptData->H20;
     root["input"]["YieldToday"]["u"] = "kWh";
     root["input"]["YieldToday"]["d"] = 3;
-    root["input"]["YieldYesterday"]["v"] = mpptData.H22;
+    root["input"]["YieldYesterday"]["v"] = spMpptData->H22;
     root["input"]["YieldYesterday"]["u"] = "kWh";
     root["input"]["YieldYesterday"]["d"] = 3;
-    root["input"]["YieldTotal"]["v"] = mpptData.H19;
+    root["input"]["YieldTotal"]["v"] = spMpptData->H19;
     root["input"]["YieldTotal"]["u"] = "kWh";
     root["input"]["YieldTotal"]["d"] = 3;
-    root["input"]["MaximumPowerToday"]["v"] = mpptData.H21;
+    root["input"]["MaximumPowerToday"]["v"] = spMpptData->H21;
     root["input"]["MaximumPowerToday"]["u"] = "W";
     root["input"]["MaximumPowerToday"]["d"] = 0;
-    root["input"]["MaximumPowerYesterday"]["v"] = mpptData.H23;
+    root["input"]["MaximumPowerYesterday"]["v"] = spMpptData->H23;
     root["input"]["MaximumPowerYesterday"]["u"] = "W";
     root["input"]["MaximumPowerYesterday"]["d"] = 0;
 

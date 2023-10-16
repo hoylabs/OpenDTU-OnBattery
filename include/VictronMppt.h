@@ -17,7 +17,7 @@ public:
     bool isDataValid() const;
     uint32_t getLastUpdate() const;
 
-    VeDirectMpptController::veMpptStruct const& getData(size_t idx = 0) const;
+    VeDirectMpptController::spData_t getData(size_t idx = 0) const;
 
     // total output of all MPPT charge controllers in Watts
     int32_t getPowerOutputWatts() const;

@@ -50,82 +50,82 @@ void MqttHandleVedirectClass::loop()
         }
         #endif
 
-        auto const& mpptData = VictronMppt.getData();
+        auto spMpptData = VictronMppt.getData();
         String value;
         String topic = "victron/";
-        topic.concat(mpptData.SER);
+        topic.concat(spMpptData->SER);
         topic.concat("/");
 
-        if (_PublishFull || mpptData.PID != _kvFrame.PID)
-            MqttSettings.publish(topic + "PID", mpptData.getPidAsString());
-        if (_PublishFull || strcmp(mpptData.SER, _kvFrame.SER) != 0)
-            MqttSettings.publish(topic + "SER", mpptData.SER );
-        if (_PublishFull || strcmp(mpptData.FW, _kvFrame.FW) != 0)
-            MqttSettings.publish(topic + "FW", mpptData.FW);
-        if (_PublishFull || mpptData.LOAD != _kvFrame.LOAD)
-            MqttSettings.publish(topic + "LOAD", mpptData.LOAD == true ? "ON": "OFF");
-        if (_PublishFull || mpptData.CS != _kvFrame.CS)
-            MqttSettings.publish(topic + "CS", mpptData.getCsAsString());
-        if (_PublishFull || mpptData.ERR != _kvFrame.ERR)
-            MqttSettings.publish(topic + "ERR", mpptData.getErrAsString());
-        if (_PublishFull || mpptData.OR != _kvFrame.OR)
-            MqttSettings.publish(topic + "OR", mpptData.getOrAsString());
-        if (_PublishFull || mpptData.MPPT != _kvFrame.MPPT)
-            MqttSettings.publish(topic + "MPPT", mpptData.getMpptAsString());
-        if (_PublishFull || mpptData.HSDS != _kvFrame.HSDS) {
-            value = mpptData.HSDS;
+        if (_PublishFull || spMpptData->PID != _kvFrame.PID)
+            MqttSettings.publish(topic + "PID", spMpptData->getPidAsString());
+        if (_PublishFull || strcmp(spMpptData->SER, _kvFrame.SER) != 0)
+            MqttSettings.publish(topic + "SER", spMpptData->SER );
+        if (_PublishFull || strcmp(spMpptData->FW, _kvFrame.FW) != 0)
+            MqttSettings.publish(topic + "FW", spMpptData->FW);
+        if (_PublishFull || spMpptData->LOAD != _kvFrame.LOAD)
+            MqttSettings.publish(topic + "LOAD", spMpptData->LOAD == true ? "ON": "OFF");
+        if (_PublishFull || spMpptData->CS != _kvFrame.CS)
+            MqttSettings.publish(topic + "CS", spMpptData->getCsAsString());
+        if (_PublishFull || spMpptData->ERR != _kvFrame.ERR)
+            MqttSettings.publish(topic + "ERR", spMpptData->getErrAsString());
+        if (_PublishFull || spMpptData->OR != _kvFrame.OR)
+            MqttSettings.publish(topic + "OR", spMpptData->getOrAsString());
+        if (_PublishFull || spMpptData->MPPT != _kvFrame.MPPT)
+            MqttSettings.publish(topic + "MPPT", spMpptData->getMpptAsString());
+        if (_PublishFull || spMpptData->HSDS != _kvFrame.HSDS) {
+            value = spMpptData->HSDS;
             MqttSettings.publish(topic + "HSDS", value);
         }
-        if (_PublishFull || mpptData.V != _kvFrame.V) {
-            value = mpptData.V;
+        if (_PublishFull || spMpptData->V != _kvFrame.V) {
+            value = spMpptData->V;
             MqttSettings.publish(topic + "V", value);
         }
-        if (_PublishFull || mpptData.I != _kvFrame.I) {
-            value = mpptData.I;
+        if (_PublishFull || spMpptData->I != _kvFrame.I) {
+            value = spMpptData->I;
             MqttSettings.publish(topic + "I", value);
         }
-        if (_PublishFull || mpptData.P != _kvFrame.P) {
-            value = mpptData.P;
+        if (_PublishFull || spMpptData->P != _kvFrame.P) {
+            value = spMpptData->P;
             MqttSettings.publish(topic + "P", value);
         }
-        if (_PublishFull || mpptData.VPV != _kvFrame.VPV) {
-            value = mpptData.VPV;
+        if (_PublishFull || spMpptData->VPV != _kvFrame.VPV) {
+            value = spMpptData->VPV;
             MqttSettings.publish(topic + "VPV", value);
         }
-        if (_PublishFull || mpptData.IPV != _kvFrame.IPV) {
-            value = mpptData.IPV;
+        if (_PublishFull || spMpptData->IPV != _kvFrame.IPV) {
+            value = spMpptData->IPV;
             MqttSettings.publish(topic + "IPV", value);
         }
-        if (_PublishFull || mpptData.PPV != _kvFrame.PPV) {
-            value = mpptData.PPV;
+        if (_PublishFull || spMpptData->PPV != _kvFrame.PPV) {
+            value = spMpptData->PPV;
             MqttSettings.publish(topic + "PPV", value);
         }
-        if (_PublishFull || mpptData.E != _kvFrame.E) {
-            value = mpptData.E;
+        if (_PublishFull || spMpptData->E != _kvFrame.E) {
+            value = spMpptData->E;
             MqttSettings.publish(topic + "E", value);
         }
-        if (_PublishFull || mpptData.H19 != _kvFrame.H19) {
-            value = mpptData.H19;
+        if (_PublishFull || spMpptData->H19 != _kvFrame.H19) {
+            value = spMpptData->H19;
             MqttSettings.publish(topic + "H19", value);
         }
-        if (_PublishFull || mpptData.H20 != _kvFrame.H20) {
-            value = mpptData.H20;
+        if (_PublishFull || spMpptData->H20 != _kvFrame.H20) {
+            value = spMpptData->H20;
             MqttSettings.publish(topic + "H20", value);
         }
-        if (_PublishFull || mpptData.H21 != _kvFrame.H21) {
-            value = mpptData.H21;
+        if (_PublishFull || spMpptData->H21 != _kvFrame.H21) {
+            value = spMpptData->H21;
             MqttSettings.publish(topic + "H21", value);
         }
-        if (_PublishFull || mpptData.H22 != _kvFrame.H22) {
-            value = mpptData.H22;
+        if (_PublishFull || spMpptData->H22 != _kvFrame.H22) {
+            value = spMpptData->H22;
             MqttSettings.publish(topic + "H22", value);
         }
-        if (_PublishFull || mpptData.H23 != _kvFrame.H23) {
-            value = mpptData.H23;
+        if (_PublishFull || spMpptData->H23 != _kvFrame.H23) {
+            value = spMpptData->H23;
             MqttSettings.publish(topic + "H23", value);
         }
         if (!_PublishFull) {
-            _kvFrame = mpptData;
+            _kvFrame = *spMpptData;
         }
 
         // now calculate next points of time to publish

@@ -83,7 +83,7 @@ void MqttHandleVedirectHassClass::publishConfig()
 
 void MqttHandleVedirectHassClass::publishSensor(const char* caption, const char* icon, const char* subTopic, const char* deviceClass, const char* stateClass, const char* unitOfMeasurement )
 {
-    String serial = VictronMppt.getData().SER;
+    String serial = VictronMppt.getData()->SER;
 
     String sensorId = caption;
     sensorId.replace(" ", "_");
@@ -134,7 +134,7 @@ void MqttHandleVedirectHassClass::publishSensor(const char* caption, const char*
 }
 void MqttHandleVedirectHassClass::publishBinarySensor(const char* caption, const char* icon, const char* subTopic, const char* payload_on, const char* payload_off)
 {
-    String serial = VictronMppt.getData().SER;
+    String serial = VictronMppt.getData()->SER;
 
     String sensorId = caption;
     sensorId.replace(" ", "_");
@@ -173,13 +173,13 @@ void MqttHandleVedirectHassClass::publishBinarySensor(const char* caption, const
 
 void MqttHandleVedirectHassClass::createDeviceInfo(JsonObject& object)
 {
-    auto const& mpptData = VictronMppt.getData();
-    String serial = mpptData.SER;
+    auto spMpptData = VictronMppt.getData();
+    String serial = spMpptData->SER;
     object[F("name")] = "Victron(" + serial + ")";
     object[F("ids")] = serial;
     object[F("cu")] = String(F("http://")) + NetworkSettings.localIP().toString();
     object[F("mf")] = F("OpenDTU");
-    object[F("mdl")] = mpptData.getPidAsString();
+    object[F("mdl")] = spMpptData->getPidAsString();
     object[F("sw")] = AUTO_GIT_HASH;
 }
 

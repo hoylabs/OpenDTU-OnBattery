@@ -72,23 +72,17 @@ uint32_t VictronMpptClass::getLastUpdate() const
     return lastUpdate;
 }
 
-VeDirectMpptController::veMpptStruct const& VictronMpptClass::getData(size_t idx) const
+VeDirectMpptController::spData_t VictronMpptClass::getData(size_t idx) const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
     if (_controllers.empty() || idx >= _controllers.size()) {
         MessageOutput.printf("ERROR: MPPT controller index %d is out of bounds (%d controllers)\r\n",
                 idx, _controllers.size());
-        static VeDirectMpptController::veMpptStruct dummy;
-        return dummy;
+        return VeDirectMpptController::spData_t{};
     }
 
-    // TODO(schlimmchen): this returns a reference to a struct that is part
-    // of a class instance, whose lifetime is managed by a unique_ptr and may
-    // disappear. the VeDirectMpptController should manage the struct in a
-    // shared_ptr and only allow accessing it via a shared_ptr copy, so we can
-    // return a shared_ptr to that structure here.
-    return _controllers[idx]->veFrame;
+    return _controllers[idx]->getData();
 }
 
 int32_t VictronMpptClass::getPowerOutputWatts() const
@@ -96,7 +90,7 @@ int32_t VictronMpptClass::getPowerOutputWatts() const
     int32_t sum = 0;
 
     for (const auto& upController : _controllers) {
-        sum += upController->veFrame.P;
+        sum += upController->getData()->P;
     }
 
     return sum;
