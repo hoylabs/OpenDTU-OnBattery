@@ -96,18 +96,16 @@ void VeDirectShuntController::textRxEvent(char* name, char* value)
 }
 
 /*
- *  frameEndEvent
- *  This function is called at the end of the received frame.  If the checksum is valid, the temp buffer is read line by line.
- *  If the name exists in the public buffer, the new value is copied to the public buffer.	If not, a new name/value entry
- *  is created in the public buffer.
+ *  frameValidEvent
+ *  This function is called at the end of the received frame.
  */
-void VeDirectShuntController::frameEndEvent(bool valid) {
+void VeDirectShuntController::frameValidEvent() {
 	// other than in the MPPT controller, the SmartShunt seems to split all data
 	// into two seperate messagesas. Thus we update veFrame only every second message
 	// after a value for PID has been received
-	if (valid && _tmpFrame.PID != 0) {
-		veFrame = _tmpFrame;
-		_tmpFrame = {};
-		_lastUpdate = millis();
-	}
+	if (_tmpFrame.PID == 0) { return; }
+
+	veFrame = _tmpFrame;
+	_tmpFrame = {};
+	_lastUpdate = millis();
 }

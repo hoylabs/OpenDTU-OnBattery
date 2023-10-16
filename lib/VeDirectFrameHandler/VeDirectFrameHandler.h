@@ -53,7 +53,7 @@ private:
     void dumpDebugBuffer();
     void rxData(uint8_t inbyte);              // byte of serial data
     virtual void textRxEvent(char *, char *) = 0;
-    virtual void frameEndEvent(bool) = 0;                 // copy temp struct to public struct
+    virtual void frameValidEvent() = 0;
     int hexRxEvent(uint8_t);
 
     std::unique_ptr<HardwareSerial> _vedirectSerial;

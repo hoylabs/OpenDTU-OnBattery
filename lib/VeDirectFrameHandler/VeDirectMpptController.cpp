@@ -64,30 +64,26 @@ void VeDirectMpptController::textRxEvent(char* name, char* value)
 }
 
 /*
- *  frameEndEvent
- *  This function is called at the end of the received frame.  If the checksum is valid, the temp buffer is read line by line.
- *  If the name exists in the public buffer, the new value is copied to the public buffer.	If not, a new name/value entry
- *  is created in the public buffer.
+ *  frameValidEvent
+ *  This function is called at the end of the received frame.
  */
-void VeDirectMpptController::frameEndEvent(bool valid) {
-	if (valid) {
-		_tmpFrame.P = _tmpFrame.V * _tmpFrame.I;
+void VeDirectMpptController::frameValidEvent() {
+	_tmpFrame.P = _tmpFrame.V * _tmpFrame.I;
 
-		_tmpFrame.IPV = 0;
-		if (_tmpFrame.VPV > 0) {
-			_tmpFrame.IPV = _tmpFrame.PPV / _tmpFrame.VPV;
-		}
-
-		_tmpFrame.E = 0;
-		if ( _tmpFrame.PPV > 0) {
-			_efficiency.addNumber(static_cast<double>(_tmpFrame.P * 100) / _tmpFrame.PPV);
-			_tmpFrame.E = _efficiency.getAverage();
-		}
-
-		_spData = std::make_shared<veMpptStruct>(_tmpFrame);
-		_tmpFrame = {};
-		_lastUpdate = millis();
+	_tmpFrame.IPV = 0;
+	if (_tmpFrame.VPV > 0) {
+		_tmpFrame.IPV = _tmpFrame.PPV / _tmpFrame.VPV;
 	}
+
+	_tmpFrame.E = 0;
+	if ( _tmpFrame.PPV > 0) {
+		_efficiency.addNumber(static_cast<double>(_tmpFrame.P * 100) / _tmpFrame.PPV);
+		_tmpFrame.E = _efficiency.getAverage();
+	}
+
+	_spData = std::make_shared<veMpptStruct>(_tmpFrame);
+	_tmpFrame = {};
+	_lastUpdate = millis();
 }
 
 /*

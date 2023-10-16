@@ -206,7 +206,7 @@ void VeDirectFrameHandler::rxData(uint8_t inbyte)
 		if (_verboseLogging) { dumpDebugBuffer(); }
 		_checksum = 0;
 		_state = IDLE;
-		frameEndEvent(valid);
+		if (valid) { frameValidEvent(); }
 		break;
 	}
 	case RECORD_HEX:

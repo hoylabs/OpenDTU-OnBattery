@@ -70,7 +70,7 @@ public:
 
 private:
     void textRxEvent(char* name, char* value) final;
-    void frameEndEvent(bool) final;
+    void frameValidEvent() final;
     spData_t _spData = nullptr;
     veMpptStruct _tmpFrame{};                        // private struct for received name and value pairs
     MovingAverage<double, 5> _efficiency;
