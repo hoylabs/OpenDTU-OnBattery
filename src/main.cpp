@@ -32,6 +32,7 @@
 #include "defaults.h"
 #include <Arduino.h>
 #include <LittleFS.h>
+#include <SMA_HM.h>
 
 void setup()
 {
@@ -188,11 +189,14 @@ void setup()
     }
 
     Battery.init();
+    SMA_HM.init();
 }
 
 void loop()
 {
     NetworkSettings.loop();
+    yield();
+    SMA_HM.loop();
     yield();
     PowerMeter.loop();
     yield();
