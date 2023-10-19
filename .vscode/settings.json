@@ -3,5 +3,6 @@
     "files.associations": {
         "*.tcc": "cpp",
         "algorithm": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": false
 }
