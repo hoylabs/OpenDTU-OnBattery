@@ -4,6 +4,4 @@
         "*.tcc": "cpp",
         "algorithm": "cpp"
     },
-    "cmake.configureOnOpen": false,
-    "C_Cpp.errorSquiggles": "disabled"
 }
