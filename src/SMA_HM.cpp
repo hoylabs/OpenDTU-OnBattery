@@ -9,7 +9,7 @@ unsigned int multicastPort = 9522;  // local port to listen on
 IPAddress multicastIP(239, 12, 255, 254);
 WiFiUDP SMAUdp;
 
-const long interval = 5000; 
+const long interval = 1000; 
 
 static void Soutput(int kanal, int index, int art, int tarif, String Bezeichnung, double value, int timestamp){
   MessageOutput.print(Bezeichnung);
@@ -37,14 +37,19 @@ void SMA_HMClass::loop()
 
 void SMA_HMClass::event1() 
 {  
-    
-    //emeter.loop();  
     uint8_t buffer[1024];
     int packetSize = SMAUdp.parsePacket();
-    double Pbezug,L1bezug,L2bezug,L3bezug = 0;
-    double Peinspeisung,L1einspeisung,L2einspeisung,L3einspeisung = 0;
-    double Leistung,L1Leistung,L2Leistung,L3Leistung = 0;
-    bool output = false;
+    float Pbezug,BezugL1,BezugL2,BezugL3;
+    Pbezug = 0;
+    BezugL1 = 0;
+    BezugL2 = 0;
+    BezugL3 = 0;
+    float Peinspeisung,EinspeisungL1,EinspeisungL2,EinspeisungL3;
+    Peinspeisung = 0;
+    EinspeisungL1 = 0;
+    EinspeisungL2 = 0;
+    EinspeisungL3 = 0;
+    int count =0;
     if (packetSize) {
         int rSize = SMAUdp.read(buffer, 1024);
         if (buffer[0] != 'S' || buffer[1] != 'M' || buffer[2] != 'A') {
@@ -97,46 +102,49 @@ void SMA_HMClass::event1()
                       switch (index) {
                       case (1):
                         Pbezug = data * 0.1;
+                        count +=1;
                         break;
                       case (2):
-                        output = true;
                         Peinspeisung = data * 0.1;
+                        count +=1;
                         break;
                       case (21):
-                        L1bezug = data * 0.1;
+                        BezugL1 = data * 0.1;
+                        count +=1;
                         break;
                       case (22):
-                        output = true;
-                        L1einspeisung = data * 0.1;
+                        EinspeisungL1 = data * 0.1;
+                        count +=1;
                         break;
                       case (41):
-                        L2bezug = data * 0.1;
+                        BezugL2 = data * 0.1;
+                        count +=1;
                         break;
                       case (42):
-                        output = true;
-                        L2einspeisung = data * 0.1;
+                        EinspeisungL2 = data * 0.1;
+                        count +=1;
                         break;
                       case (61):
-                        L3bezug = data * 0.1;
+                        BezugL3 = data * 0.1;
+                        count +=1;
                         break;
                       case (62):
-                        output = true;
-                        L3einspeisung = data * 0.1;
+                        count +=1;
+                        EinspeisungL3 = data * 0.1;
                         break;
                       default:
                         break; // Wird nicht benötigt, wenn Statement(s) vorhanden sind
                       }
-                        if (output == true){
-                        Leistung = Peinspeisung - Pbezug;
-                        L1Leistung=L1einspeisung-L1bezug;
-                        L2Leistung=L2einspeisung-L2bezug;
-                        L3Leistung=L3einspeisung-L3bezug;
-                        _powerMeterPower = Leistung;
-                        _powerMeterL1=L1Leistung;
-                        _powerMeterL2=L2Leistung;
-                        _powerMeterL3=L3Leistung;
-                        Soutput(kanal, index, art, tarif, "Leistung", Leistung, timestamp);
-                        output = false;
+                      if (count == 8){
+                        _powerMeterPower = Peinspeisung - Pbezug;
+                        _powerMeterL1=EinspeisungL1-BezugL1;
+                        _powerMeterL2=EinspeisungL2-BezugL2;
+                        _powerMeterL3=EinspeisungL3-BezugL3;
+                        Soutput(kanal, index, art, tarif, "Leistung", _powerMeterPower, timestamp);
+                        Soutput(kanal, index, art, tarif, "Leistung L1", _powerMeterL1, timestamp);
+                        Soutput(kanal, index, art, tarif, "Leistung L2", _powerMeterL2, timestamp);
+                        Soutput(kanal, index, art, tarif, "Leistung L3", _powerMeterL3, timestamp);
+                        count=0;
                       }
                     } else if (kanal==144) {
                       // Optional: Versionsnummer auslesen... aber interessiert die?
@@ -171,7 +179,7 @@ float SMA_HMClass::getPowerL2()
 {
     return _powerMeterL2;
 }
-float SMA_HMClass::getPowerL2()
+float SMA_HMClass::getPowerL3()
 {
     return _powerMeterL3;
 }

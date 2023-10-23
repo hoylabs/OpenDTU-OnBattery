@@ -234,6 +234,7 @@ export default defineComponent({
                 { key: 2, value: this.$t('powermeteradmin.typeSDM3ph') },
                 { key: 3, value: this.$t('powermeteradmin.typeHTTP') },
                 { key: 4, value: this.$t('powermeteradmin.typeSML') },
+                { key: 5, value: this.$t('powermeteradmin.typeSMAHM2') },
             ],
             powerMeterAuthList: [
                 { key: 0, value: "None" },
