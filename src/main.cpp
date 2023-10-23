@@ -33,7 +33,6 @@
 #include <Arduino.h>
 #include <LittleFS.h>
 
-
 void setup()
 {
     // Initialize serial output
