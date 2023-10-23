@@ -11,6 +11,7 @@
 #include "MessageOutput.h"
 #include <ctime>
 #include <SoftwareSerial.h>
+#include <SMA_HM.h>
 
 PowerMeterClass PowerMeter;
 
@@ -66,6 +67,10 @@ void PowerMeterClass::init()
         inputSerial.enableRx(true);
         inputSerial.enableTx(false);
         inputSerial.flush();
+        break;
+
+    case SOURCE_SMAHM2:
+        SMA_HM.init();
         break;
     }
 }
@@ -189,6 +194,12 @@ void PowerMeterClass::readPowerMeter()
             _powerMeter3Power = HttpPowerMeter.getPower(3);
             _lastPowerMeterUpdate = millis();
         }
+    else if (config.PowerMeter_Source == SOURCE_SMAHM2) {
+        SMA_HM.event1();
+        _powerMeter1Power = SMA_HM.getPowerL1();
+        _powerMeter2Power = SMA_HM.getPowerL2();
+        _powerMeter3Power = SMA_HM.getPowerL3();
+        _lastPowerMeterUpdate = millis();
     }
 }
 

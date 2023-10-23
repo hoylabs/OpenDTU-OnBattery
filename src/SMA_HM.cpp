@@ -41,9 +41,9 @@ void SMA_HMClass::event1()
     //emeter.loop();  
     uint8_t buffer[1024];
     int packetSize = SMAUdp.parsePacket();
-    double Pbezug = 0;
-    double Peinspeisung = 0;
-    double Leistung = 0;
+    double Pbezug,L1bezug,L2bezug,L3bezug = 0;
+    double Peinspeisung,L1einspeisung,L2einspeisung,L3einspeisung = 0;
+    double Leistung,L1Leistung,L2Leistung,L3Leistung = 0;
     bool output = false;
     if (packetSize) {
         int rSize = SMAUdp.read(buffer, 1024);
@@ -102,12 +102,39 @@ void SMA_HMClass::event1()
                         output = true;
                         Peinspeisung = data * 0.1;
                         break;
+                      case (21):
+                        L1bezug = data * 0.1;
+                        break;
+                      case (22):
+                        output = true;
+                        L1einspeisung = data * 0.1;
+                        break;
+                      case (41):
+                        L2bezug = data * 0.1;
+                        break;
+                      case (42):
+                        output = true;
+                        L2einspeisung = data * 0.1;
+                        break;
+                      case (61):
+                        L3bezug = data * 0.1;
+                        break;
+                      case (62):
+                        output = true;
+                        L3einspeisung = data * 0.1;
+                        break;
                       default:
                         break; // Wird nicht benötigt, wenn Statement(s) vorhanden sind
                       }
                         if (output == true){
                         Leistung = Peinspeisung - Pbezug;
+                        L1Leistung=L1einspeisung-L1bezug;
+                        L2Leistung=L2einspeisung-L2bezug;
+                        L3Leistung=L3einspeisung-L3bezug;
                         _powerMeterPower = Leistung;
+                        _powerMeterL1=L1Leistung;
+                        _powerMeterL2=L2Leistung;
+                        _powerMeterL3=L3Leistung;
                         Soutput(kanal, index, art, tarif, "Leistung", Leistung, timestamp);
                         output = false;
                       }
@@ -135,4 +162,16 @@ void SMA_HMClass::event1()
 float SMA_HMClass::getPowerTotal()
 {
     return _powerMeterPower;
+}
+float SMA_HMClass::getPowerL1()
+{
+    return _powerMeterL1;
+}
+float SMA_HMClass::getPowerL2()
+{
+    return _powerMeterL2;
+}
+float SMA_HMClass::getPowerL2()
+{
+    return _powerMeterL3;
 }
