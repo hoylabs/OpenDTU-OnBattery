@@ -4,6 +4,8 @@
  */
 #include "Display_Graphic.h"
 #include "Datastore.h"
+#include "PowerMeter.h"
+#include "Configuration.h"
 #include <NetworkSettings.h>
 #include <map>
 #include <time.h>
@@ -30,6 +32,9 @@ const uint8_t languages[] = {
 static const char* const i18n_offline[] = { "Offline", "Offline", "Offline" };
 static const char* const i18n_current_power_w[] = { "%.0f W", "%.0f W", "%.0f W" };
 static const char* const i18n_current_power_kw[] = { "%.1f kW", "%.1f kW", "%.1f kW" };
+static const char* const i18n_meter_power_w[] = { "%.0f W", "%.0f W", "%.0f W" };
+static const char* const i18n_meter_power_kw[] = { "%.1f kW", "%.1f kW", "%.1f kW" };
+static const char* const i18n_meter_header[] = { "Grid Usage", "Netzbezug", "Util. Reseau" };
 static const char* const i18n_yield_today_wh[] = { "today: %4.0f Wh", "Heute: %4.0f Wh", "auj.: %4.0f Wh" };
 static const char* const i18n_yield_total_kwh[] = { "total: %.1f kWh", "Ges.: %.1f kWh", "total: %.1f kWh" };
 static const char* const i18n_date_format[] = { "%m/%d/%Y %H:%M", "%d.%m.%Y %H:%M", "%d/%m/%Y %H:%M" };
@@ -246,6 +251,34 @@ void DisplayGraphicClass::loop()
             strftime(_fmtText, sizeof(_fmtText), i18n_date_format[_display_language], localtime(&now));
             printText(_fmtText, 3);
         }
+    }
+
+    // the IP and time info in the third line use three-second slots. the
+    // timing for the power meter is chosen such that every third of those
+    // three-second slots is used to display the grid usage.
+    bool timing = (_mExtra % 9) >= 6;
+
+    if (Configuration.get().PowerMeter.Enabled && timing && !displayPowerSave) {
+        _display->clearBuffer();
+
+        auto acPower = PowerMeter.getPowerTotal(false);
+        if (acPower > 999) {
+            snprintf(_fmtText, sizeof(_fmtText), i18n_meter_power_kw[_display_language], (acPower / 1000));
+        } else {
+            snprintf(_fmtText, sizeof(_fmtText), i18n_meter_power_w[_display_language], acPower);
+        }
+
+        auto previousDiagramMode = _diagram_mode;
+        _diagram_mode = DiagramMode_t::Off; // force center text on line 0
+        printText(_fmtText, 0);
+
+        // hack header to appear with font for line 0 and centered, but lower
+        auto previousLineOffset = _lineOffsets[0];
+        _lineOffsets[0] = _lineOffsets[1] + 10;
+        printText(i18n_meter_header[_display_language], 0);
+
+        _diagram_mode = previousDiagramMode;
+        _lineOffsets[0] = previousLineOffset;
     }
 
     _display->sendBuffer();
