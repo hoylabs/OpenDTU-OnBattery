@@ -98,6 +98,7 @@ export default defineComponent({
                 { key: 1, value: 'JkBmsSerial' },
                 { key: 2, value: 'Mqtt' },
                 { key: 3, value: 'Victron' },
+                { key: 4, value: 'DalyBmsSerial' },
             ],
             jkBmsInterfaceTypeList: [
                 { key: 0, value: 'Uart' },

@@ -99,6 +99,31 @@ void PylontechBatteryStats::getLiveViewData(JsonVariant& root) const
     addLiveViewAlarm(root, "bmsInternal", _alarmBmsInternal);
 }
 
+void DalyBatteryStats::getLiveViewData(JsonVariant& root) const
+{
+    BatteryStats::getLiveViewData(root);
+
+    // values go into the "Status" card of the web application
+    addLiveViewValue(root, "voltage", _voltage, "V", 2);
+    addLiveViewValue(root, "current", _current, "A", 1);
+    addLiveViewValue(root, "temperature", _temperature, "°C", 1);
+    addLiveViewValue(root, "cells", _numberOfCells, "", 0);
+    addLiveViewValue(root, "cellMaxVoltage", _maxCellmV, "mV", 1);
+    addLiveViewValue(root, "cellMaxVoltageNum", _maxCellVNum, "", 0);
+    addLiveViewValue(root, "cellMinVoltage", _minCellmV, "mV", 1);
+    addLiveViewValue(root, "cellMinVoltageNum", _minCellVNum, "", 0);
+    addLiveViewValue(root, "cellDiffVoltage", _cellDiff, "mV", 1);
+    addLiveViewTextValue(root, "status", _dischargechargemosstate);
+    addLiveViewValue(root, "chargeEnabled", _chargeFetState, "", 0);
+    addLiveViewValue(root, "dischargeEnabled", _dischargeFetState, "", 0);
+    addLiveViewValue(root, "chargeCycles", _bmsCycles,"",0);
+    for (uint8_t c = 0; c<_numberOfCells;c++){
+        std::string str = "cellmv_" + std::to_string(c);
+        addLiveViewValue(root, str, _cellVmV[c], "mV", 0);
+    }
+
+}
+
 void JkBmsBatteryStats::getJsonData(JsonVariant& root, bool verbose) const
 {
     BatteryStats::getLiveViewData(root);
@@ -248,6 +273,31 @@ void PylontechBatteryStats::mqttPublish() const
     MqttSettings.publish(F("battery/charging/chargeEnabled"), String(_chargeEnabled));
     MqttSettings.publish(F("battery/charging/dischargeEnabled"), String(_dischargeEnabled));
     MqttSettings.publish(F("battery/charging/chargeImmediately"), String(_chargeImmediately));
+}
+
+void DalyBatteryStats::mqttPublish() const
+{
+    BatteryStats::mqttPublish();
+
+    MqttSettings.publish(F("battery/soc"), String(_SoC));
+    MqttSettings.publish(F("battery/voltage"), String(_voltage));
+    MqttSettings.publish(F("battery/current"), String(_current));
+    MqttSettings.publish(F("battery/temperature"), String(_temperature));
+    MqttSettings.publish(F("battery/minCellmV"), String(_minCellmV));
+    MqttSettings.publish(F("battery/minCellmVNum"), String(_minCellVNum));
+    MqttSettings.publish(F("battery/maxCellmV"), String(_maxCellmV));
+    MqttSettings.publish(F("battery/maxCellmVNum"), String(_maxCellVNum));
+    MqttSettings.publish(F("battery/cellmVDrift"), String(_cellDiff));
+    //MqttSettings.publish(F("battery/status"), String(_dischargechargemosstate));
+    MqttSettings.publish(F("battery/chargeFetState"), String(_chargeFetState));
+    MqttSettings.publish(F("battery/dischargeFetState"), String(_dischargeFetState));
+    MqttSettings.publish(F("battery/numberOfCells"), String(_numberOfCells));
+    MqttSettings.publish(F("battery/numOfTempSensors"), String(_numOfTempSensors));
+    MqttSettings.publish(F("battery/chargeState"), String(_cellDiff));
+    MqttSettings.publish(F("battery/loadState"), String(_loadState));
+    for (uint8_t c = 0; c<_numberOfCells;c++){
+        MqttSettings.publish("battery/cell_" + String(c), String(_cellVmV[c]));
+    }
 }
 
 void JkBmsBatteryStats::mqttPublish() const

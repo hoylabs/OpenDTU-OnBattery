@@ -806,7 +806,7 @@
         "Close": "Schließen",
         "SetVoltageLimit": "Spannungslimit:",
         "SetCurrentLimit": "Stromlimit:",
-        "CurrentLimit": "Aktuelles Limit: "  
+        "CurrentLimit": "Aktuelles Limit: "
       },
       "acchargeradmin": {
         "ChargerSettings": "AC Ladegerät Einstellungen",
@@ -852,6 +852,8 @@
         "cellAvgVoltage": "Durchschnittliche Zellspannung",
         "cellMaxVoltage": "Höchste Zellspannung",
         "cellDiffVoltage": "Zellspannungsdifferenz",
+        "cellMaxVoltageNum": "Zelle mit höchst. Spannung",
+        "cellMinVoltageNum": "Zelle mit nied. Spannung",
         "balancingActive": "Ausgleichen aktiv",
         "issues": "Meldungen",
         "noIssues": "Keine Meldungen",

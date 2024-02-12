@@ -3,6 +3,7 @@
 #include "MessageOutput.h"
 #include "PylontechCanReceiver.h"
 #include "JkBmsController.h"
+#include "DalyBms.h"
 #include "VictronSmartShunt.h"
 #include "MqttBattery.h"
 
@@ -59,6 +60,10 @@ void BatteryClass::updateSettings()
             break;
         case 3:
             _upProvider = std::make_unique<VictronSmartShunt>();
+            if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
+            break;
+         case 4:
+            _upProvider = std::make_unique<DalyBms>();
             if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
             break;
         default:
