@@ -24,6 +24,7 @@ bool DalyBms::init(bool verboseLogging)
 
     memset(this->my_txBuffer, 0x00, XFER_BUFFER_LENGTH);
     clearGet();
+    get.chargeDischargeStatus = "DalyOffline";
 
     return true;
 }
@@ -35,100 +36,105 @@ void DalyBms::deinit()
 
 void DalyBms::loop()
 {
-    if (millis() - previousTime >= DELAYTINME)
-    {
-        _stats->setManufacturer("Daly BMS");
-        MessageOutput.printf("[Daly BMS] Request counter = %d\r\n", requestCounter );
-        switch (requestCounter)
+    if (millis() > _lastRequest + _pollInterval * 1000 + 250) {
+
+        if (millis() - previousTime >= DELAYTINME)
         {
-        case 0:
-            // requestCounter = sendCommand() ? (requestCounter + 1) : 0;
-            requestCounter++;
-            break;
-        case 1:
-            if (getPackMeasurements())
+            _stats->setManufacturer("Daly BMS");
+            MessageOutput.printf("[Daly BMS] Request counter = %d\r\n", requestCounter );
+            switch (requestCounter)
             {
-                get.connectionState = true;
-                errorCounter = 0;
+            case 0:
+                // requestCounter = sendCommand() ? (requestCounter + 1) : 0;
                 requestCounter++;
-                _stats->_voltage = get.packVoltage;
-                _stats->_current = get.packCurrent;
-                _stats->setSoC(get.packSOC);
-                _stats->setLastUpdate(millis());
-            }
-            else
-            {
-                requestCounter = 0;
-                if (errorCounter < ERRORCOUNTER)
+                break;
+            case 1:
+                if (getPackMeasurements())
                 {
-                    errorCounter++;
+                    get.connectionState = true;
+                    errorCounter = 0;
+                    requestCounter++;
+                    _stats->_voltage = get.packVoltage;
+                    _stats->_current = get.packCurrent;
+                    _stats->setSoC(get.packSOC);
+                    _stats->setLastUpdate(millis());
                 }
                 else
                 {
-                    get.connectionState = false;
-                    errorCounter = 0;
-                    requestCallback();
-                    // clearGet();
+                    requestCounter = 0;
+                    if (errorCounter < ERRORCOUNTER)
+                    {
+                        errorCounter++;
+                    }
+                    else
+                    {
+                        errorCounter = 0;
+                        //requestCallback();
+                        clearGet();
+                        get.connectionState = false;
+                        get.chargeDischargeStatus = "DalyOffline";
+                    }
                 }
-            }
-            break;
-        case 2:
-            requestCounter = getMinMaxCellVoltage() ? (requestCounter + 1) : 0;
-            _stats->_minCellmV = get.minCellmV;
-            _stats->_maxCellmV = get.maxCellmV;
-            _stats->_minCellVNum = get.minCellVNum;
-            _stats->_maxCellVNum = get.maxCellVNum;
-            _stats->_cellDiff = get.cellDiff;
-            break;
-        case 3:
-            requestCounter = getPackTemp() ? (requestCounter + 1) : 0;
-            _stats->_temperature = get.tempAverage;
-            break;
-        case 4:
-            requestCounter = getDischargeChargeMosStatus() ? (requestCounter + 1) : 0;
-            _stats->_dischargechargemosstate = get.chargeDischargeStatus;
-            break;
-        case 5:
-            requestCounter = getStatusInfo() ? (requestCounter + 1) : 0;
-            _stats->_numberOfCells = get.numberOfCells;
-            _stats->_numOfTempSensors = get.numOfTempSensors;
-            _stats->_loadState = get.loadState;
-            _stats->_chargeState = get.chargeState;
-            break;
-        case 6:
-            requestCounter = getCellVoltages() ? (requestCounter + 1) : 0;
-            std::copy(get.cellVmV, get.cellVmV+get.numberOfCells, _stats->_cellVmV);
-            break;
-        case 7:
-            requestCounter = getCellTemperature() ? (requestCounter + 1) : 0;
-            break;
-        case 8:
-            requestCounter = getCellBalanceState() ? (requestCounter + 1) : 0;
-            _stats->_cellBalanceActive = get.cellBalanceState;
-            break;
-        case 9:
-            //requestCounter = getFailureCodes() ? (requestCounter + 1) : 0;
-            //if (getStaticData)
-                requestCounter = 0;
-            //requestCallback();
-            break;
-        case 10:
-            //if (!getStaticData)
-            //    requestCounter = getVoltageThreshold() ? (requestCounter + 1) : 0;
-            //requestCallback();
-            break;
-        case 11:
-            //if (!getStaticData)
-            //    requestCounter = getPackVoltageThreshold() ? (requestCounter + 1) : 0;
-            //requestCounter = 0;
-            //requestCallback();
-            //getStaticData = true;
-            break;
+                break;
+            case 2:
+                requestCounter = getMinMaxCellVoltage() ? (requestCounter + 1) : 0;
+                _stats->_minCellmV = get.minCellmV;
+                _stats->_maxCellmV = get.maxCellmV;
+                _stats->_minCellVNum = get.minCellVNum;
+                _stats->_maxCellVNum = get.maxCellVNum;
+                _stats->_cellDiff = get.cellDiff;
+                break;
+            case 3:
+                requestCounter = getPackTemp() ? (requestCounter + 1) : 0;
+                _stats->_temperature = get.tempAverage;
+                break;
+            case 4:
+                requestCounter = getDischargeChargeMosStatus() ? (requestCounter + 1) : 0;
+                _stats->_dischargechargemosstate = get.chargeDischargeStatus;
+                break;
+            case 5:
+                requestCounter = getStatusInfo() ? (requestCounter + 1) : 0;
+                _stats->_numberOfCells = get.numberOfCells;
+                _stats->_numOfTempSensors = get.numOfTempSensors;
+                _stats->_loadState = get.loadState;
+                _stats->_chargeState = get.chargeState;
+                break;
+            case 6:
+                requestCounter = getCellVoltages() ? (requestCounter + 1) : 0;
+                std::copy(get.cellVmV, get.cellVmV+get.numberOfCells, _stats->_cellVmV);
+                break;
+            case 7:
+                requestCounter = getCellTemperature() ? (requestCounter + 1) : 0;
+                break;
+            case 8:
+                requestCounter = getCellBalanceState() ? (requestCounter + 1) : 0;
+                _stats->_cellBalanceActive = get.cellBalanceState;
+                break;
+            case 9:
+                requestCounter = getFailureCodes() ? (requestCounter + 1) : 0;
+                if (getStaticData)
+                    requestCounter = 0;
+                _lastRequest = millis();
+                 requestCounter = 0;
+                //requestCallback();
+                break;
+            case 10:
+                //if (!getStaticData)
+                //    requestCounter = getVoltageThreshold() ? (requestCounter + 1) : 0;
+                //requestCallback();
+                break;
+            case 11:
+                //if (!getStaticData)
+                //    requestCounter = getPackVoltageThreshold() ? (requestCounter + 1) : 0;
+                //requestCounter = 0;
+                //requestCallback();
+                break;
 
-        default:
-            break;
+            default:
+                break;
+            }
+            previousTime = millis();
         }
-        previousTime = millis();
     }
 }
 
@@ -235,13 +241,13 @@ bool DalyBms::getDischargeChargeMosStatus() // 0x93
     switch (this->frameBuff[0][4])
     {
     case 0:
-        get.chargeDischargeStatus = "Stationary";
+        get.chargeDischargeStatus = "DalyStationary";
         break;
     case 1:
-        get.chargeDischargeStatus = "Charge";
+        get.chargeDischargeStatus = "DalyCharge";
         break;
     case 2:
-        get.chargeDischargeStatus = "Discharge";
+        get.chargeDischargeStatus = "DalyDischarge";
         break;
     }
 
@@ -393,7 +399,7 @@ bool DalyBms::getFailureCodes() // 0x98
 
     if (!this->requestData(COMMAND::FAILURE_CODES, 1))
     {
-         MessageOutput.printf("<DALY-BMS DEBUG> Receive failed, Failure Flags won't be modified!\n");
+        MessageOutput.printf("<DALY-BMS DEBUG> Receive failed, Failure Flags won't be modified!\n");
         return false;
     }
     failCodeArr = "";
@@ -878,7 +884,7 @@ void DalyBms::clearGet(void)
     // get.tempAverage = 0; // Avergae Temperature
 
     // data from 0x93
-    get.chargeDischargeStatus = "offline"; // charge/discharge status (0 stationary ,1 charge ,2 discharge)
+    get.chargeDischargeStatus = "DalyOffline"; // charge/discharge status (0 stationary ,1 charge ,2 discharge)
 
     // get.chargeFetState = false;    // charging MOS tube status
     // get.disChargeFetState = false; // discharge MOS tube state

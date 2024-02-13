@@ -121,6 +121,7 @@ class DalyBatteryStats : public BatteryStats {
         bool _cellBalanceState[48];
         bool _cellBalanceActive;
         bool _connectionState;
+        String _failCodeString;
 };
 
 class JkBmsBatteryStats : public BatteryStats {

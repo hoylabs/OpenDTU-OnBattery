@@ -240,6 +240,8 @@ private:
     bool getStaticData = false;
     unsigned int errorCounter = 0;
     unsigned int requestCount = 0;
+    uint32_t _lastRequest = 0;
+    uint8_t _pollInterval = 5;
     unsigned int commandQueue[5] = {0x100, 0x100, 0x100, 0x100, 0x100};
     /**
      * @brief send the command id, and return true if data complete read or false by crc error

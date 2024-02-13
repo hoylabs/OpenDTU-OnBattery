@@ -107,19 +107,26 @@ void DalyBatteryStats::getLiveViewData(JsonVariant& root) const
     addLiveViewValue(root, "voltage", _voltage, "V", 2);
     addLiveViewValue(root, "current", _current, "A", 1);
     addLiveViewValue(root, "temperature", _temperature, "°C", 1);
-    addLiveViewValue(root, "cells", _numberOfCells, "", 0);
-    addLiveViewValue(root, "cellMaxVoltage", _maxCellmV, "mV", 1);
-    addLiveViewValue(root, "cellMaxVoltageNum", _maxCellVNum, "", 0);
-    addLiveViewValue(root, "cellMinVoltage", _minCellmV, "mV", 1);
-    addLiveViewValue(root, "cellMinVoltageNum", _minCellVNum, "", 0);
+    addLiveViewValue(root, "cellMaxVoltage", _maxCellmV, "mV", 0);
+    addLiveViewValue(root, "cellMinVoltage", _minCellmV, "mV", 0);
     addLiveViewValue(root, "cellDiffVoltage", _cellDiff, "mV", 1);
     addLiveViewTextValue(root, "status", _dischargechargemosstate);
     addLiveViewValue(root, "chargeEnabled", _chargeFetState, "", 0);
     addLiveViewValue(root, "dischargeEnabled", _dischargeFetState, "", 0);
     addLiveViewValue(root, "chargeCycles", _bmsCycles,"",0);
-    for (uint8_t c = 0; c<_numberOfCells;c++){
-        std::string str = "cellmv_" + std::to_string(c);
-        addLiveViewValue(root, str, _cellVmV[c], "mV", 0);
+    if (_numberOfCells<9){
+        for (uint8_t c = 0; c<_numberOfCells;c++){
+            std::string str = "cellmv_" + std::to_string(c);
+            addLiveViewValue(root, str, _cellVmV[c], "mV", 0);
+        }
+    } else {
+        addLiveViewValue(root, "cells", _numberOfCells, "", 0);
+        addLiveViewValue(root, "cellMaxVoltageNum", _maxCellVNum, "", 0);
+        addLiveViewValue(root, "cellMinVoltageNum", _minCellVNum, "", 0);
+    }
+    if (!_failCodeString.isEmpty()){
+        addLiveViewWarning(root, "dalyWarning", true);
+        addLiveViewTextValue(root, "dalyFailures", _failCodeString.c_str());
     }
 
 }
@@ -295,6 +302,8 @@ void DalyBatteryStats::mqttPublish() const
     MqttSettings.publish(F("battery/numOfTempSensors"), String(_numOfTempSensors));
     MqttSettings.publish(F("battery/chargeState"), String(_cellDiff));
     MqttSettings.publish(F("battery/loadState"), String(_loadState));
+    MqttSettings.publish(F("battery/cycles"), String(_bmsCycles));
+    MqttSettings.publish(F("battery/failures"), _failCodeString);
     for (uint8_t c = 0; c<_numberOfCells;c++){
         MqttSettings.publish("battery/cell_" + String(c), String(_cellVmV[c]));
     }
