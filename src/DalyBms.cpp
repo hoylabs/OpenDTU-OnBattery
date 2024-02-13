@@ -91,6 +91,8 @@ void DalyBms::loop()
             case 4:
                 requestCounter = getDischargeChargeMosStatus() ? (requestCounter + 1) : 0;
                 _stats->_dischargechargemosstate = get.chargeDischargeStatus;
+                _stats->_resCapacityAh = get.resCapacityAh;
+                _stats->_bmsHeartBeat=get.bmsHeartBeat;
                 break;
             case 5:
                 requestCounter = getStatusInfo() ? (requestCounter + 1) : 0;
@@ -112,22 +114,8 @@ void DalyBms::loop()
                 break;
             case 9:
                 requestCounter = getFailureCodes() ? (requestCounter + 1) : 0;
-                if (getStaticData)
-                    requestCounter = 0;
                 _lastRequest = millis();
-                 requestCounter = 0;
-                //requestCallback();
-                break;
-            case 10:
-                //if (!getStaticData)
-                //    requestCounter = getVoltageThreshold() ? (requestCounter + 1) : 0;
-                //requestCallback();
-                break;
-            case 11:
-                //if (!getStaticData)
-                //    requestCounter = getPackVoltageThreshold() ? (requestCounter + 1) : 0;
-                //requestCounter = 0;
-                //requestCallback();
+                requestCounter = 0;
                 break;
 
             default:
@@ -274,13 +262,6 @@ bool DalyBms::getStatusInfo() // 0x94
     get.numOfTempSensors = this->frameBuff[0][5];
     get.chargeState = this->frameBuff[0][6];
     get.loadState = this->frameBuff[0][7];
-
-    // Parse the 8 bits into 8 booleans that represent the states of the Digital IO
-    for (size_t i = 0; i < 8; i++)
-    {
-        get.dIO[i] = bitRead(this->frameBuff[0][8], i);
-    }
-
     get.bmsCycles = ((uint16_t)this->frameBuff[0][9] << 0x08) | (uint16_t)this->frameBuff[0][10];
 
     return true;
@@ -685,11 +666,6 @@ bool DalyBms::setSOC(float val) // 0x21 last two byte is SOC
 bool DalyBms::getState() // Function to return the state of connection
 {
     return get.connectionState;
-}
-
-void DalyBms::callback(std::function<void()> func) // callback function when finnish request
-{
-    requestCallback = func;
 }
 
 //----------------------------------------------------------------------

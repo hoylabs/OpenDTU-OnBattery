@@ -117,8 +117,6 @@ class DalyBatteryStats : public BatteryStats {
         float _resCapacityAh;
         int _bmsCycles;
         float _cellVmV[48];
-        uint8_t _cellTemperature[16];
-        bool _cellBalanceState[48];
         bool _cellBalanceActive;
         bool _connectionState;
         String _failCodeString;

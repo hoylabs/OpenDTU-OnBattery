@@ -99,7 +99,6 @@ public:
         unsigned int numOfTempSensors; // amount of temp sensors
         bool chargeState;     // charger status 0=disconnected 1=connected
         bool loadState;       // Load Status 0=disconnected 1=connected
-        bool dIO[8];          // No information about this
         int bmsCycles;        // charge / discharge cycles
 
         // data from 0x95
@@ -116,9 +115,6 @@ public:
         bool connectionState;
 
     } get;
-
-    void callback(std::function<void()> func);
-    std::function<void()> requestCallback;
 
     /**
      * @brief Gets Voltage, Current, and SOC measurements from the BMS
