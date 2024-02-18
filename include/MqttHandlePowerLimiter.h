@@ -15,6 +15,7 @@ public:
 private:
     void loop();
     void onCmdMode(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total);
+    void onCmdThreshold(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total);
 
     Task _loopTask;
 
