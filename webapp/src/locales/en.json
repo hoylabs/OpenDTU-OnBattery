@@ -632,6 +632,7 @@
         "ProviderJkBmsSerial": "Jikong (JK) BMS using serial connection",
         "ProviderMqtt": "State of Charge (SoC) value from MQTT broker",
         "ProviderVictron": "Victron SmartShunt using VE.Direct interface",
+        "ProviderDalyBmsSerial": "Daly BMS using serial connection",
         "MqttConfiguration": "MQTT Settings",
         "MqttTopic": "SoC value topic",
         "JkBmsConfiguration": "JK BMS Settings",
@@ -816,7 +817,7 @@
         "Close": "close",
         "SetVoltageLimit": "Voltage limit:",
         "SetCurrentLimit": "Current limit:",
-        "CurrentLimit": "Current limit:"  
+        "CurrentLimit": "Current limit:"
       },
       "acchargeradmin": {
         "ChargerSettings": "AC Charger Settings",
@@ -899,6 +900,11 @@
         "bmsInternal": "BMS internal",
         "chargeCycles": "Charge cycles",
         "chargedEnergy": "Charged energy",
-        "dischargedEnergy": "Discharged energy"
+        "dischargedEnergy": "Discharged energy",
+        "DalyStationary": "Standby",
+        "DalyOffline": "Offline",
+        "DalyCharge": "Charge",
+        "DalyDischarge": "Discharge",
+        "remainingAh": "Remaining capacity"
       }
 }

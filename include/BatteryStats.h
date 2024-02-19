@@ -86,6 +86,42 @@ class PylontechBatteryStats : public BatteryStats {
         bool _chargeImmediately;
 };
 
+class DalyBatteryStats : public BatteryStats {
+    friend class DalyBms;
+
+    public:
+        void getLiveViewData(JsonVariant& root) const final;
+        void mqttPublish() const final;
+
+    private:
+        void setManufacturer(String&& m) { _manufacturer = std::move(m); }
+        void setSoC(uint8_t SoC) { _SoC = SoC; _lastUpdateSoC = millis(); }
+        void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
+
+        float _voltage;
+        float _current;
+        float _temperature;
+        float _maxCellmV;
+        uint8_t _maxCellVNum;
+        float _minCellmV;
+        uint8_t _minCellVNum;
+        float _cellDiff;
+        std::string _dischargechargemosstate;
+        uint8_t _numberOfCells;
+        uint8_t _numOfTempSensors;
+        uint8_t _chargeState;
+        uint8_t _loadState;
+        uint8_t _chargeFetState;
+        uint8_t _dischargeFetState;
+        int _bmsHeartBeat;
+        float _resCapacityAh;
+        int _bmsCycles;
+        float _cellVmV[48];
+        bool _cellBalanceActive;
+        bool _connectionState;
+        String _failCodeString;
+};
+
 class JkBmsBatteryStats : public BatteryStats {
     public:
         void getLiveViewData(JsonVariant& root) const final {

@@ -623,6 +623,7 @@
         "ProviderJkBmsSerial": "Jikong (JK) BMS per serieller Verbindung",
         "ProviderMqtt": "State of Charge (SoC) Wert aus MQTT Broker",
         "ProviderVictron": "Victron SmartShunt per VE.Direct Schnittstelle",
+        "ProviderDalyBmsSerial": "Daly BMS per serieller Verbindung",
         "MqttConfiguration": "MQTT Einstellungen",
         "MqttTopic": "SoC-Wert Topic",
         "JkBmsConfiguration": "JK BMS Einstellungen",
@@ -806,7 +807,7 @@
         "Close": "Schließen",
         "SetVoltageLimit": "Spannungslimit:",
         "SetCurrentLimit": "Stromlimit:",
-        "CurrentLimit": "Aktuelles Limit: "  
+        "CurrentLimit": "Aktuelles Limit: "
       },
       "acchargeradmin": {
         "ChargerSettings": "AC Ladegerät Einstellungen",
@@ -852,6 +853,8 @@
         "cellAvgVoltage": "Durchschnittliche Zellspannung",
         "cellMaxVoltage": "Höchste Zellspannung",
         "cellDiffVoltage": "Zellspannungsdifferenz",
+        "cellMaxVoltageNum": "Zelle mit höchst. Spannung",
+        "cellMinVoltageNum": "Zelle mit nied. Spannung",
         "balancingActive": "Ausgleichen aktiv",
         "issues": "Meldungen",
         "noIssues": "Keine Meldungen",
@@ -889,6 +892,11 @@
         "bmsInternal": "BMS intern",
         "chargeCycles": "Ladezyklen",
         "chargedEnergy": "Geladene Energie",
-        "dischargedEnergy": "Entladene Energie"
+        "dischargedEnergy": "Entladene Energie",
+        "DalyStationary": "Standby",
+        "DalyOffline": "Offline",
+        "DalyCharge": "Laden",
+        "DalyDischarge": "Entladen",
+        "remainingAh": "Verbleibende Kapazität"
       }
 }
