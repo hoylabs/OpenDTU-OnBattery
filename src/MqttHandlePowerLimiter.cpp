@@ -148,59 +148,65 @@ void MqttHandlePowerLimiterClass::onCmdThreshold(const espMqttClientTypes::Messa
     char* strlimit = new char[len + 1];
     memcpy(strlimit, payload, len);
     strlimit[len] = '\0';
-//    const int32_t payload_val = strtol(strlimit, NULL, 10);
-//    delete[] strlimit;
 
-/*
-    if (payload_val < 0) {
+    float floatValue = -1.0;
+    try {
+        floatValue = std::stof(strlimit, NULL);
+    }
+    catch (std::invalid_argument const& e) {
+        MessageOutput.printf("PowerLimiter MQTT handler: cannot parse payload of topic '%s' as int: %s\r\n",
+                topic, strlimit);
+        return;
+    }
+    delete[] strlimit;
+
+    if (floatValue < 0.0) {
         MessageOutput.printf("MQTT payload < 0 received --> ignoring\r\n");
         return;
     }
-*/
 
     if (!strcmp(setting, "battery_soc_start_threshold")) {
         // Set Battery SoC start threshold
-        const int32_t payload_val = static_cast<uint32_t>(std::stoul(strlimit, NULL, 10));
+        const int32_t payload_val = static_cast<uint32_t>(floatValue);
         MessageOutput.printf("Setting battery SoC start threshold to: %d %%\r\n", payload_val);
         config.PowerLimiter.BatterySocStartThreshold = payload_val;
 
     } else if (!strcmp(setting, "battery_soc_stop_threshold")) {
         // Set Battery SoC stop threshold
-        const int32_t payload_val = static_cast<uint32_t>(std::stoul(strlimit, NULL, 10));
+        const int32_t payload_val = static_cast<uint32_t>(floatValue);
         MessageOutput.printf("Setting battery SoC stop threshold to: %d %%\r\n", payload_val);
         config.PowerLimiter.BatterySocStopThreshold = payload_val;
 
     } else if (!strcmp(setting, "full_solar_passthrough_soc")) {
         // Set Full solar passthrough SoC
-        const int32_t payload_val = static_cast<uint32_t>(std::stoul(strlimit, NULL, 10));
+        const int32_t payload_val = static_cast<uint32_t>(floatValue);
         MessageOutput.printf("Setting full solar passthrough SoC to: %d %%\r\n", payload_val);
         config.PowerLimiter.BatterySocStopThreshold = payload_val;
 
     } else if (!strcmp(setting, "voltage_start_threshold")) {
         // Set Voltage start threshold
-        const float payload_val = std::stof(strlimit, NULL);
+        const float payload_val = floatValue;
         MessageOutput.printf("Setting voltage start threshold to: %.2f %%\r\n", payload_val);
         config.PowerLimiter.BatterySocStopThreshold = payload_val;
 
     } else if (!strcmp(setting, "voltage_stop_threshold")) {
         // Set Voltage stop threshold
-        const float payload_val = std::stof(strlimit, NULL);
+        const float payload_val = floatValue;
         MessageOutput.printf("Setting voltage stop threshold to: %.2f %%\r\n", payload_val);
         config.PowerLimiter.BatterySocStopThreshold = payload_val;
 
     } else if (!strcmp(setting, "full_solar_passthrough_start_voltage")) {
         // Set Full solar passthrough start voltage
-        const float payload_val = std::stof(strlimit, NULL);
+        const float payload_val = floatValue;
         MessageOutput.printf("Setting full solar passthrough start voltage to: %.2f %%\r\n", payload_val);
         config.PowerLimiter.BatterySocStopThreshold = payload_val;
 
     } else if (!strcmp(setting, "full_solar_passthrough_stop_voltage")) {
         // Set Full solar passthrough stop voltage
-        const float payload_val = std::stof(strlimit, NULL);
+        const float payload_val = floatValue;
         MessageOutput.printf("Setting full solar passthrough stop voltage to: %.2f %%\r\n", payload_val);
         config.PowerLimiter.BatterySocStopThreshold = payload_val;
     }
 
     Configuration.write();
-    delete[] strlimit;
 }
