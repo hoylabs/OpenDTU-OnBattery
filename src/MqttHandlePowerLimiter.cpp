@@ -210,4 +210,3 @@ void MqttHandlePowerLimiterClass::onCmdThreshold(const espMqttClientTypes::Messa
 
     Configuration.write();
 }
-
