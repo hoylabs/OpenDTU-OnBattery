@@ -46,8 +46,7 @@ void MqttHandlePowerLimiterHassClass::forceUpdate()
 
 void MqttHandlePowerLimiterHassClass::publishConfig()
 {
-    if ((!Configuration.get().Mqtt.Hass.Enabled) ||
-       (!Configuration.get().Vedirect.Enabled)) {
+    if (!Configuration.get().Mqtt.Hass.Enabled) {
         return;
     }
 
@@ -55,25 +54,19 @@ void MqttHandlePowerLimiterHassClass::publishConfig()
         return;
     }
 
-/*
-    publishSensor("DPL battery SoC start threshold", "mdi:battery-charging", "battery_soc_start_threshold", "battery", "measurement", "%");
-    publishSensor("DPL battery SoC stop threshold", "mdi:battery-charging", "battery_soc_stop_threshold", "battery", "measurement", "%");
-    publishSensor("DPL full solar passthrough SoC", "mdi:transmission-tower-import", "full_solar_passthrough_soc", "battery", "measurement", "%");
-    publishSensor("DPL battery voltage start threshold", "mdi:battery-charging", "voltage_start_threshold", "voltage", "measurement", "V");
-    publishSensor("DPL battery voltage stop threshold", "mdi:battery-charging", "voltage_stop_threshold", "voltage", "measurement", "V");
-    publishSensor("DPL full solar passthrough start voltage", "mdi:transmission-tower-import", "full_solar_passthrough_start_voltage", "voltage", "measurement", "V");
-    publishSensor("DPL full solar passthrough stop voltage", "mdi:transmission-tower-import", "full_solar_passthrough_stop_voltage", "voltage", "measurement", "V");
-*/
-
     publishSelect("DPL Mode", "mdi:gauge", "config", "mode", "mode");
 
     publishNumber("DPL battery SoC start threshold", "mdi:battery-charging", "config", "battery_soc_start_threshold", "battery_soc_start_threshold", "%", 0, 100);
     publishNumber("DPL battery SoC stop threshold", "mdi:battery-charging", "config", "battery_soc_stop_threshold", "battery_soc_stop_threshold", "%", 0, 100);
-    publishNumber("DPL full solar passthrough SoC", "mdi:transmission-tower-import", "config", "full_solar_passthrough_soc", "full_solar_passthrough_soc", "%", 0, 100);
+    if (!Configuration.get().Vedirect.Enabled) {
+        publishNumber("DPL full solar passthrough SoC", "mdi:transmission-tower-import", "config", "full_solar_passthrough_soc", "full_solar_passthrough_soc", "%", 0, 100);
+    }
+    /*
     publishNumber("DPL battery voltage start threshold", "mdi:battery-charging", "config", "voltage_start_threshold", "voltage_start_threshold", "V", 0, 100);
     publishNumber("DPL battery voltage stop threshold", "mdi:battery-charging", "config", "voltage_stop_threshold", "voltage_stop_threshold", "V", 0, 100);
     publishNumber("DPL full solar passthrough start voltage", "mdi:transmission-tower-import", "config", "full_solar_passthrough_start_voltage", "full_solar_passthrough_start_voltage", "V", 0, 100);
     publishNumber("DPL full solar passthrough stop voltage", "mdi:transmission-tower-import", "config", "full_solar_passthrough_stop_voltage", "full_solar_passthrough_stop_voltage", "V", 0, 100);
+    */
 
     yield();
 }
