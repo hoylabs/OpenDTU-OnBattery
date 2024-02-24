@@ -103,18 +103,22 @@ void DalyBatteryStats::getLiveViewData(JsonVariant& root) const
 {
     BatteryStats::getLiveViewData(root);
 
+    if (_connectionState==true){
     // values go into the "Status" card of the web application
-    addLiveViewValue(root, "voltage", _voltage, "V", 2);
-    addLiveViewValue(root, "current", _current, "A", 1);
-    addLiveViewValue(root, "temperature", _temperature, "°C", 1);
-    addLiveViewTextValue(root, "status", _dischargechargemosstate);
-    addLiveViewValue(root, "cellMaxVoltage", _maxCellmV, "mV", 0);
-    addLiveViewValue(root, "cellMinVoltage", _minCellmV, "mV", 0);
-    addLiveViewValue(root, "cellDiffVoltage", _cellDiff, "mV", 0);
-    addLiveViewValue(root, "chargeEnabled", _chargeFetState, "", 0);
-    addLiveViewValue(root, "dischargeEnabled", _dischargeFetState, "", 0);
-    addLiveViewValue(root, "chargeCycles", _bmsCycles,"",0);
-    addLiveViewValue(root, "remainingAh", _resCapacityAh,"Ah",1);
+        addLiveViewValue(root, "voltage", _voltage, "V", 2);
+        addLiveViewValue(root, "current", _current, "A", 1);
+        addLiveViewValue(root, "temperature", _temperature, "°C", 1);
+        addLiveViewTextValue(root, "status", _state);
+        addLiveViewValue(root, "cellMaxVoltage", _maxCellmV, "mV", 0);
+        addLiveViewValue(root, "cellMinVoltage", _minCellmV, "mV", 0);
+        addLiveViewValue(root, "cellDiffVoltage", _cellDiff, "mV", 0);
+        addLiveViewTextValue(root, "chargeEnabled", (_chargeFetState?"yes":"no"));
+        addLiveViewTextValue(root, "dischargeEnabled", (_dischargeFetState?"yes":"no"));
+        addLiveViewValue(root, "chargeCycles", _bmsCycles,"",0);
+        addLiveViewValue(root, "remainingAh", _resCapacityAh,"Ah",1);
+    } else {
+
+    }
 }
 
 void JkBmsBatteryStats::getJsonData(JsonVariant& root, bool verbose) const
@@ -281,7 +285,7 @@ void DalyBatteryStats::mqttPublish() const
     MqttSettings.publish(F("battery/maxCellmV"), String(_maxCellmV));
     MqttSettings.publish(F("battery/maxCellmVNum"), String(_maxCellVNum));
     MqttSettings.publish(F("battery/cellmVDrift"), String(_cellDiff));
-    //MqttSettings.publish(F("battery/status"), String(_dischargechargemosstate));
+    MqttSettings.publish(F("battery/status"), _state.c_str());
     MqttSettings.publish(F("battery/chargeFetState"), String(_chargeFetState));
     MqttSettings.publish(F("battery/dischargeFetState"), String(_dischargeFetState));
     MqttSettings.publish(F("battery/numberOfCells"), String(_numberOfCells));
@@ -289,7 +293,6 @@ void DalyBatteryStats::mqttPublish() const
     MqttSettings.publish(F("battery/chargeState"), String(_cellDiff));
     MqttSettings.publish(F("battery/loadState"), String(_loadState));
     MqttSettings.publish(F("battery/cycles"), String(_bmsCycles));
-    MqttSettings.publish(F("battery/failures"), _failCodeString);
     MqttSettings.publish(F("battery/remainingAh"), String(_resCapacityAh));
     MqttSettings.publish(F("battery/bmsHeartBeat"), String(_bmsHeartBeat));
     for (uint8_t c = 0; c<_numberOfCells;c++){

@@ -106,20 +106,19 @@ class DalyBatteryStats : public BatteryStats {
         float _minCellmV;
         uint8_t _minCellVNum;
         float _cellDiff;
-        std::string _dischargechargemosstate;
+        std::string _state;
         uint8_t _numberOfCells;
         uint8_t _numOfTempSensors;
         uint8_t _chargeState;
         uint8_t _loadState;
-        uint8_t _chargeFetState;
-        uint8_t _dischargeFetState;
+        bool _chargeFetState;
+        bool _dischargeFetState;
         int _bmsHeartBeat;
         float _resCapacityAh;
         int _bmsCycles;
         float _cellVmV[48];
         bool _cellBalanceActive;
         bool _connectionState;
-        String _failCodeString;
 };
 
 class JkBmsBatteryStats : public BatteryStats {

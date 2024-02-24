@@ -55,84 +55,12 @@ public:
         //after request the pc soft hangs a 0xD8 as last request, its empty, dont know what it means?
     };
 
-    /**
-     * @brief get struct holds all the data collected from the BMS and is populated using the update() API
-     */
-    struct
-    {
-        // data from 0x59
-        float maxCellThreshold1; // Level-1 alarm threshold for High Voltage in Millivolts
-        float minCellThreshold1; // Level-1 alarm threshold for low Voltage in Millivolts
-        float maxCellThreshold2; // Level-2 alarm threshold for High Voltage in Millivolts
-        float minCellThreshold2; // Level-2 alarm threshold for low Voltage in Millivolts
-
-        // data from 0x5A
-        float maxPackThreshold1; // Level-1 alarm threshold for high voltage in decivolts
-        float minPackThreshold1; // Level-1 alarm threshold for low voltage in decivolts
-        float maxPackThreshold2; // Level-2 alarm threshold for high voltage in decivolts
-        float minPackThreshold2; // Level-2 alarm threshold for low voltage in decivolts
-
-        // data from 0x90
-        float packVoltage; // pressure (0.1 V)
-        float packCurrent; // acquisition (0.1 V)
-        float packSOC;     // State Of Charge
-
-        // data from 0x91
-        float maxCellmV; // maximum monomer voltage (mV)
-        int maxCellVNum; // Maximum Unit Voltage cell No.
-        float minCellmV; // minimum monomer voltage (mV)
-        int minCellVNum; // Minimum Unit Voltage cell No.
-        int cellDiff;  // difference betwen cells
-
-        // data from 0x92
-        int tempAverage; // Avergae Temperature
-
-        // data from 0x93
-        const char *chargeDischargeStatus; // charge/discharge status (0 stationary ,1 charge ,2 discharge)
-        bool chargeFetState;          // charging MOS tube status
-        bool disChargeFetState;       // discharge MOS tube state
-        int bmsHeartBeat;             // BMS life(0~255 cycles)
-        float resCapacityAh;           // residual capacity mAH
-
-        // data from 0x94
-        unsigned int numberOfCells;    // amount of cells
-        unsigned int numOfTempSensors; // amount of temp sensors
-        bool chargeState;     // charger status 0=disconnected 1=connected
-        bool loadState;       // Load Status 0=disconnected 1=connected
-        int bmsCycles;        // charge / discharge cycles
-
-        // data from 0x95
-        float cellVmV[48]; // Store Cell Voltages in mV
-
-        // data from 0x96
-        int cellTemperature[16]; // array of cell Temperature sensors
-
-        // data from 0x97
-        bool cellBalanceState[48]; // bool array of cell balance states
-        bool cellBalanceActive;    // bool is cell balance active
-
-        // get a state of the connection
-        bool connectionState;
-
-    } get;
 
     /**
      * @brief Gets Voltage, Current, and SOC measurements from the BMS
      * @return True on successful aquisition, false otherwise
      */
     bool getPackMeasurements();
-
-    /**
-     * @brief Gets Voltage thresholds
-     * @return True on successful aquisition, false otherwise
-     */
-    bool getVoltageThreshold();
-
-    /**
-     * @brief Gets pack voltage thresholds
-     * @return True on successful aquisition, false otherwise
-     */
-    bool getPackVoltageThreshold();
 
     /**
      * @brief Gets the pack temperature from the min and max of all the available temperature sensors
@@ -159,32 +87,6 @@ public:
      *
      */
     bool getCellVoltages();
-
-    /**
-     * @brief   Each temperature accounts for 1 byte, according to the
-                actual number of temperature send, the maximum 21
-                byte, send in 3 frames
-                Byte0:frame number, starting at 0
-                Byte1~byte7:cell temperature(40 Offset ,℃)
-     *
-     */
-    bool getCellTemperature();
-
-    /**
-     * @brief   0： Closed 1： Open
-                Bit0: Cell 1 balance state
-                ...
-                Bit47:Cell 48 balance state
-                Bit48~Bit63：reserved
-     *
-     */
-    bool getCellBalanceState();
-
-    /**
-     * @brief Get the Failure Codes
-     *
-     */
-    bool getFailureCodes();
 
     /**
      * @brief
