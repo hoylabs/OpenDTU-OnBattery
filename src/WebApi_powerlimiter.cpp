@@ -7,10 +7,7 @@
 #include "ArduinoJson.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
-#include "MqttHandleHass.h"
-#include "MqttHandleVedirectHass.h"
-#include "MqttSettings.h"
-#include "PowerMeter.h"
+#include "MqttHandlePowerLimiterHass.h"
 #include "PowerLimiter.h"
 #include "WebApi.h"
 #include "helper.h"
@@ -39,6 +36,7 @@ void WebApiPowerLimiterClass::onStatus(AsyncWebServerRequest* request)
     root["solar_passthrough_losses"] = config.PowerLimiter.SolarPassThroughLosses;
     root["battery_drain_strategy"] = config.PowerLimiter.BatteryDrainStategy;
     root["is_inverter_behind_powermeter"] = config.PowerLimiter.IsInverterBehindPowerMeter;
+    root["is_inverter_solar_powered"] = config.PowerLimiter.IsInverterSolarPowered;
     root["inverter_id"] = config.PowerLimiter.InverterId;
     root["inverter_channel_id"] = config.PowerLimiter.InverterChannelId;
     root["target_power_consumption"] = config.PowerLimiter.TargetPowerConsumption;
@@ -128,6 +126,7 @@ void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
     config.PowerLimiter.SolarPassThroughLosses = root["solar_passthrough_losses"].as<uint8_t>();
     config.PowerLimiter.BatteryDrainStategy= root["battery_drain_strategy"].as<uint8_t>();
     config.PowerLimiter.IsInverterBehindPowerMeter = root["is_inverter_behind_powermeter"].as<bool>();
+    config.PowerLimiter.IsInverterSolarPowered = root["is_inverter_solar_powered"].as<bool>();
     config.PowerLimiter.InverterId = root["inverter_id"].as<uint8_t>();
     config.PowerLimiter.InverterChannelId = root["inverter_channel_id"].as<uint8_t>();
     config.PowerLimiter.TargetPowerConsumption = root["target_power_consumption"].as<int32_t>();
@@ -153,4 +152,7 @@ void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
     request->send(response);
 
     PowerLimiter.calcNextInverterRestart();
+
+    // potentially make thresholds auto-discoverable
+    MqttHandlePowerLimiterHass.forceUpdate();
 }
