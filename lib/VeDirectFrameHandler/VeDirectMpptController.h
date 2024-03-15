@@ -68,7 +68,7 @@ public:
     using spData_t = std::shared_ptr<veMpptStruct const>;
     spData_t getData() const { return _spData; }
 
-    void loop();                        // main loop to read ve.direct data
+    virtual void loop() final;                        // main loop to read ve.direct data
 
     struct veMPPTExStruct {
         double T;                       // temperature [°C] from internal MPPT sensor
@@ -82,7 +82,7 @@ public:
     veMPPTExStruct const *getExData() const { return &_ExData; }
 
 protected:
-    virtual void hexDataHandler(VeDirectHexData const &data) override;
+    virtual void hexDataHandler(VeDirectHexData const &data) final;
 
 private:
     void textRxEvent(char* name, char* value) final;

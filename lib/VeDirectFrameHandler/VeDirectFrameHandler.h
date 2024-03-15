@@ -59,7 +59,7 @@ class VeDirectFrameHandler {
 public:
     VeDirectFrameHandler();
     virtual void init(int8_t rx, int8_t tx, Print* msgOut, bool verboseLogging, uint16_t hwSerialPort);
-    void loop();                                 // main loop to read ve.direct data
+    virtual void loop();                         // main loop to read ve.direct data
     uint32_t getLastUpdate() const;              // timestamp of last successful frame read
     bool sendHexCommand(VeDirectHexCommand cmd, uint16_t id = 0, uint32_t value = 0, uint8_t valunibble = 0);   // send hex commands via ve.direct
 
