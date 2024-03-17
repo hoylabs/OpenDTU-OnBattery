@@ -817,7 +817,7 @@
         "Close": "Schließen",
         "SetVoltageLimit": "Spannungslimit:",
         "SetCurrentLimit": "Stromlimit:",
-        "CurrentLimit": "Aktuelles Limit: "  
+        "CurrentLimit": "Aktuelles Limit: "
       },
       "acchargeradmin": {
         "ChargerSettings": "AC Ladegerät Einstellungen",
@@ -900,6 +900,9 @@
         "bmsInternal": "BMS intern",
         "chargeCycles": "Ladezyklen",
         "chargedEnergy": "Geladene Energie",
-        "dischargedEnergy": "Entladene Energie"
+        "dischargedEnergy": "Entladene Energie",
+        "instantaneousPower": "Aktuelle Leistung",
+        "consumedAmpHours": "Verbrauche Amperestunden",
+        "lastFullCharge": "Letztes mal Vollgeladen"
       }
 }

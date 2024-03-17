@@ -824,7 +824,7 @@
         "Close": "close",
         "SetVoltageLimit": "Voltage limit:",
         "SetCurrentLimit": "Current limit:",
-        "CurrentLimit": "Current limit:"  
+        "CurrentLimit": "Current limit:"
       },
       "acchargeradmin": {
         "ChargerSettings": "AC Charger Settings",
@@ -907,6 +907,9 @@
         "bmsInternal": "BMS internal",
         "chargeCycles": "Charge cycles",
         "chargedEnergy": "Charged energy",
-        "dischargedEnergy": "Discharged energy"
+        "dischargedEnergy": "Discharged energy",
+        "instantaneousPower": "Instantaneous Power",
+        "consumedAmpHours": "Consumed Amp Hours",
+        "lastFullCharge": "Last full Charge"
       }
 }
