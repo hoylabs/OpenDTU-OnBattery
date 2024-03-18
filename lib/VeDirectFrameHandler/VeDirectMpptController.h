@@ -71,11 +71,11 @@ public:
     virtual void loop() final;                        // main loop to read ve.direct data
 
     struct veMPPTExStruct {
-        double T;                       // temperature [°C] from internal MPPT sensor
+        int32_t T;                      // temperature [m°C] from internal MPPT sensor
         unsigned long Tts;              // time of last recieved value
-        double TSBS;                    // temperature [°C] from the "Smart Battery Sense"
+        int32_t TSBS;                   // temperature [m°C] from the "Smart Battery Sense"
         unsigned long TSBSts;           // time of last recieved value
-        double TDCP;                    // total DC input power [W]
+        uint32_t TDCP;                  // total DC input power [mW]
         unsigned long TDCPts;           // time of last recieved value
     };
     veMPPTExStruct _ExData{}; 

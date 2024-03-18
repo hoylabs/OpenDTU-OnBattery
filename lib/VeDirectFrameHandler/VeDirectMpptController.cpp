@@ -2,7 +2,7 @@
  *
  * 
  * 2020.08.20 - 0.0 - ???
- * 2024.03.14 - 0.1 - add of: - temperature from "Smart Battery Sense" connected over VE.Smart network
+ * 2024.03.18 - 0.1 - add of: - temperature from "Smart Battery Sense" connected over VE.Smart network
  * 					  		  - temperature from internal MPPT sensor
  * 					  		  - "total DC input power" from MPPT's connected over VE.Smart network
  */
@@ -230,32 +230,32 @@ void VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 
 		// check if MPPT internal temperature is available
 		if(data.id == 0xEDDB) {
-			_ExData.T = data.value / 100.0;
+			_ExData.T = static_cast<int32_t>(data.value) * 10;	// conversion from unit [0.01°C] to unit [m°C]
 			_ExData.Tts = millis();
 			state = true;
 			
 			if constexpr(MODUL_DEBUG == 1)
-				_msgOut->printf("[VE.Direct] debug: hexDataHandler(), MTTP Temperature: %.2f°C\r\n", _ExData.T);
+				_msgOut->printf("[VE.Direct] debug: hexDataHandler(), MTTP Temperature: %.2f°C\r\n", _ExData.T/1000.0);
 		}
 
 		// check if temperature from "Smart Battery Sense" is available
 		if(data.id == 0xEDEC) {
-			_ExData.TSBS = data.value / 100.0 - 272.15;  // from unit 'K' to unit '°C';
+			_ExData.TSBS = static_cast<int32_t>(data.value) * 10 - 272150;  // conversion from unit [0.01K] to unit [m°C]
 			_ExData.TSBSts = millis();
 			state = true;
 			
 			if constexpr(MODUL_DEBUG == 1)
-				_msgOut->printf("[VE.Direct] debug: hexDataHandler(), Battery Temperature: %.2f°C\r\n", _ExData.TSBS);
+				_msgOut->printf("[VE.Direct] debug: hexDataHandler(), Battery Temperature: %.2f°C\r\n", _ExData.TSBS/1000.0);
 		}
 
 		// check if "Total DC power" is available
 		if(data.id == 0x2027) {
-			_ExData.TDCP = data.value / 100.0;
+			_ExData.TDCP = data.value * 10;		// conversion from unit [0.01W] to unit [mW]
 			_ExData.TDCPts = millis();
 			state = true;
 
 			if constexpr(MODUL_DEBUG == 1)
-				_msgOut->printf("[VE.Direct] debug: hexDataHandler(), Total Power: %.2fW\r\n", _ExData.TDCP);
+				_msgOut->printf("[VE.Direct] debug: hexDataHandler(), Total Power: %.2fW\r\n", _ExData.TDCP/1000.0);
 		}
 
 		// check if connected MPPT is charge instance master
