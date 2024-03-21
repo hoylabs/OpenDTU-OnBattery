@@ -198,17 +198,17 @@ struct CONFIG_T {
         bool HttpIndividualRequests;
         POWERMETER_HTTP_PHASE_CONFIG_T Http_Phase[POWERMETER_MAX_PHASES];
     } PowerMeter;
-    
+
     struct {
         bool Enabled;
         bool VerboseLogging;
         bool SolarPassThroughEnabled;
         uint8_t SolarPassThroughLosses;
-        uint8_t BatteryDrainStategy;
+        bool BatteryAlwaysUseAtNight;
         uint32_t Interval;
         bool IsInverterBehindPowerMeter;
         bool IsInverterSolarPowered;
-        uint8_t InverterId;
+        uint64_t InverterId;
         uint8_t InverterChannelId;
         int32_t TargetPowerConsumption;
         int32_t TargetPowerConsumptionHysteresis;
@@ -225,7 +225,7 @@ struct CONFIG_T {
         float FullSolarPassThroughStartVoltage;
         float FullSolarPassThroughStopVoltage;
     } PowerLimiter;
-    
+
     struct {
         bool Enabled;
         bool VerboseLogging;
@@ -243,7 +243,7 @@ struct CONFIG_T {
         float Auto_Power_Voltage_Limit;
         float Auto_Power_Enable_Voltage_Limit;
         float Auto_Power_Lower_Power_Limit;
-        float Auto_Power_Upper_Power_Limit;   
+        float Auto_Power_Upper_Power_Limit;
     } Huawei;
 
 
@@ -261,6 +261,7 @@ public:
 
     INVERTER_CONFIG_T* getFreeInverterSlot();
     INVERTER_CONFIG_T* getInverterConfig(const uint64_t serial);
+    void deleteInverterById(const uint8_t id);
 };
 
 extern ConfigurationClass Configuration;
