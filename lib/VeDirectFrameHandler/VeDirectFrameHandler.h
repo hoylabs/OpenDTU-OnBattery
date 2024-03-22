@@ -6,8 +6,8 @@
  * 2020.05.05 - 0.2 - initial release
  * 2021.02.23 - 0.3 - change frameLen to 22 per VE.Direct Protocol version 3.30
  * 2022.08.20 - 0.4 - changes for OpenDTU
- * 2024.03.08 - 0.4 - adds the ability to send hex commands and disassemble hex messages
- *
+ * 2024.03.08 - 0.5 - adds the ability to send hex commands and disassemble hex messages
+ * 2024.03.21 - 0.6 - handles fragmented messages
  */
 
 #pragma once
@@ -67,6 +67,9 @@ protected:
     bool _verboseLogging;
     Print* _msgOut;
     uint32_t _lastUpdate;
+    uint32_t _fieldCheck;               // every bit is connected to one value of veStruct
+    uint8_t  _frameCounter;             // count the frames to get all necessary values 
+    uint16_t _fwVersion;                // fw version needed for some checks
 
     typedef struct {
         uint16_t PID = 0;               // product id

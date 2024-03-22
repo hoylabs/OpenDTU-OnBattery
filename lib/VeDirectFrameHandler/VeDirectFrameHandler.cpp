@@ -31,6 +31,7 @@
  * 2020.06.21 - 0.2 - add MIT license, no code changes
  * 2020.08.20 - 0.3 - corrected #include reference
  * 2024.03.08 - 0.4 - adds the ability to send hex commands and disassemble hex messages
+ * 2024.03.21 - 0.6 - handles fragmented messages
  */
 
 #include <Arduino.h>
@@ -104,11 +105,13 @@ void VeDirectFrameHandler::loop()
 	// there will never be a large gap between two bytes of the same frame.
 	// if such a large gap is observed, reset the state machine so it tries
 	// to decode a new frame once more data arrives.
-	if (IDLE != _state && _lastByteMillis + 500 < millis()) {
+	if ((IDLE != _state) && (_lastByteMillis - millis() > 500)) {
 		_msgOut->printf("[VE.Direct] Resetting state machine (was %d) after timeout\r\n", _state);
 		if (_verboseLogging) { dumpDebugBuffer(); }
 		_checksum = 0;
 		_state = IDLE;
+		_fieldCheck = 0;
+		_frameCounter = 0;
 	}
 }
 
@@ -206,7 +209,15 @@ void VeDirectFrameHandler::rxData(uint8_t inbyte)
 		if (_verboseLogging) { dumpDebugBuffer(); }
 		_checksum = 0;
 		_state = IDLE;
-		if (valid) { frameValidEvent(); }
+		_frameCounter++;
+		if (valid) { 
+			frameValidEvent(); 
+		} else {
+			_frameCounter = 0;
+			_fieldCheck = 0;
+		}
+
+
 		break;
 	}
 	case RECORD_HEX:
@@ -225,28 +236,35 @@ bool VeDirectFrameHandler::textRxEvent(std::string const& who, char* name, char*
 				who.c_str(), name, value );
 	}
 
+
 	if (strcmp(name, "PID") == 0) {
 		frame.PID = strtol(value, nullptr, 0);
+		_fieldCheck |= 0x00000001;
 		return true;
 	}
 
 	if (strcmp(name, "SER") == 0) {
 		strcpy(frame.SER, value);
+		_fieldCheck |= 0x00000002;
 		return true;
 	}
 
 	if (strcmp(name, "FW") == 0) {
 		strcpy(frame.FW, value);
+		_fwVersion = atoi(value); 
+		_fieldCheck |= 0x00000004;
 		return true;
 	}
 
 	if (strcmp(name, "V") == 0) {
 		frame.V = round(atof(value) / 10.0) / 100.0;
+		_fieldCheck |= 0x00000008;
 		return true;
 	}
 
 	if (strcmp(name, "I") == 0) {
 		frame.I = round(atof(value) / 10.0) / 100.0;
+		_fieldCheck |= 0x00000010;
 		return true;
 	}
 

@@ -5,6 +5,7 @@
  * 2024.03.18 - 0.1 - add of: - temperature from "Smart Battery Sense" connected over VE.Smart network
  * 					  		  - temperature from internal MPPT sensor
  * 					  		  - "total DC input power" from MPPT's connected over VE.Smart network
+ * 2024.03.21 - 0.6 - handles fragmented messages
  */
 
 #include <Arduino.h>
@@ -32,6 +33,7 @@ void VeDirectMpptController::textRxEvent(char* name, char* value)
 		return;
 	}
 
+	// No _fieldCheck for LOAD because not all MPPT do have an load output
 	if (strcmp(name, "LOAD") == 0) {
 		if (strcmp(value, "ON") == 0)
 			_tmpFrame.LOAD = true;
@@ -40,39 +42,51 @@ void VeDirectMpptController::textRxEvent(char* name, char* value)
 	}
 	else if (strcmp(name, "CS") == 0) {
 		_tmpFrame.CS = atoi(value);
+		_fieldCheck |= 0x00000020;
 	}
 	else if (strcmp(name, "ERR") == 0) {
 		_tmpFrame.ERR = atoi(value);
+		_fieldCheck |= 0x00000040;
 	}
 	else if (strcmp(name, "OR") == 0) {
 		_tmpFrame.OR = strtol(value, nullptr, 0);
+		_fieldCheck |= 0x00000080;
 	}
 	else if (strcmp(name, "MPPT") == 0) {
 		_tmpFrame.MPPT = atoi(value);
+		_fieldCheck |= 0x00000100;
 	}
 	else if (strcmp(name, "HSDS") == 0) {
 		_tmpFrame.HSDS = atoi(value);
+		_fieldCheck |= 0x00000200;
 	}
 	else if (strcmp(name, "VPV") == 0) {
 		_tmpFrame.VPV = round(atof(value) / 10.0) / 100.0;
+		_fieldCheck |= 0x00000400;
 	}
 	else if (strcmp(name, "PPV") == 0) {
 		_tmpFrame.PPV = atoi(value);
+		_fieldCheck |= 0x00000800;
 	}
 	else if (strcmp(name, "H19") == 0) {
 		_tmpFrame.H19 = atof(value) / 100.0;
+		_fieldCheck |= 0x00001000;
 	}
 	else if (strcmp(name, "H20") == 0) {
 		_tmpFrame.H20 = atof(value) / 100.0;
+		_fieldCheck |= 0x00002000;
 	}
 	else if (strcmp(name, "H21") == 0) {
 		_tmpFrame.H21 = atoi(value);
+		_fieldCheck |= 0x00004000;
 	}
 	else if (strcmp(name, "H22") == 0) {
 		_tmpFrame.H22 = atof(value) / 100.0;
+		_fieldCheck |= 0x00008000;
 	}
 	else if (strcmp(name, "H23") == 0) {
 		_tmpFrame.H23 = atoi(value);
+		_fieldCheck |= 0x00010000;
 	}
 }
 
@@ -81,22 +95,33 @@ void VeDirectMpptController::textRxEvent(char* name, char* value)
  *  This function is called at the end of the received frame.
  */
 void VeDirectMpptController::frameValidEvent() {
-	_tmpFrame.P = _tmpFrame.V * _tmpFrame.I;
 
-	_tmpFrame.IPV = 0;
-	if (_tmpFrame.VPV > 0) {
-		_tmpFrame.IPV = _tmpFrame.PPV / _tmpFrame.VPV;
+	// _fieldCheck helps to avoid sharing incomplete data as text data can be split into different frames
+	// Victron fw older as 1.44 is currently not supported to avoid incomplete data
+	if (((_fwVersion >= 144) && (_fieldCheck == 0x0001FFFF)) || (_fwVersion < 144)) {
+		_tmpFrame.P = _tmpFrame.V * _tmpFrame.I;
+
+		_tmpFrame.IPV = 0;
+		if (_tmpFrame.VPV > 0) {
+			_tmpFrame.IPV = _tmpFrame.PPV / _tmpFrame.VPV;
+		}
+
+		_tmpFrame.E = 0;
+		if ( _tmpFrame.PPV > 0) {
+			_efficiency.addNumber(static_cast<double>(_tmpFrame.P * 100) / _tmpFrame.PPV);
+			_tmpFrame.E = _efficiency.getAverage();
+		}
+
+		_spData = std::make_shared<veMpptStruct>(_tmpFrame);
+		_tmpFrame = {};
+		_lastUpdate = millis();
+
+		if constexpr(MODUL_DEBUG == 1)
+			_msgOut->printf("[VE.Direct] debug: frameValidEvent(), Frame Counter: %i, Field Check: 0x%08X\r\n", _frameCounter, _fieldCheck);
+
+		_fieldCheck = 0;
+		_frameCounter = 0;
 	}
-
-	_tmpFrame.E = 0;
-	if ( _tmpFrame.PPV > 0) {
-		_efficiency.addNumber(static_cast<double>(_tmpFrame.P * 100) / _tmpFrame.PPV);
-		_tmpFrame.E = _efficiency.getAverage();
-	}
-
-	_spData = std::make_shared<veMpptStruct>(_tmpFrame);
-	_tmpFrame = {};
-	_lastUpdate = millis();
 }
 
 /*
