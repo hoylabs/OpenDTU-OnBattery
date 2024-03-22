@@ -116,8 +116,8 @@ void VeDirectMpptController::frameValidEvent() {
 		_tmpFrame = {};
 		_lastUpdate = millis();
 
-		if constexpr(MODUL_DEBUG == 1)
-			_msgOut->printf("[VE.Direct] debug: frameValidEvent(), Frame Counter: %i, Field Check: 0x%08X\r\n", _frameCounter, _fieldCheck);
+		if (_verboseLogging)
+			_msgOut->printf("[VE.Direct] Frame Counter: %i, Field Check: 0x%08X\r\n", _frameCounter, _fieldCheck);
 
 		_fieldCheck = 0;
 		_frameCounter = 0;
