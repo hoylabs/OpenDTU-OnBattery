@@ -525,6 +525,3 @@ bool HuaweiCanClass::getAutoPowerStatus() {
   return _autoPowerEnabled;
 }
 
-uint8_t HuaweiCanClass::getMode() {
-  return _mode;
-}

@@ -127,7 +127,7 @@ public:
     RectifierParameters_t * get();
     uint32_t getLastUpdate();
     bool getAutoPowerStatus();
-    uint8_t getMode();
+    uint8_t getMode() const { return _mode; };
 
 private:
     void loop();
