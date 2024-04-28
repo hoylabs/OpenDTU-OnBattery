@@ -32,6 +32,8 @@ public:
     float getPowerTotal(bool forceUpdate = true);
     uint32_t getLastPowerMeterUpdate();
     bool isDataValid();
+    void setReadDelay(uint16_t delay_ms);   // Delay reading of the powermeter
+    void forceReadNextLoop(void);           // Read powermeter on the next loop
 
 private:
     void loop();

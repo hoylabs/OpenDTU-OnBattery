@@ -20,8 +20,8 @@
 
 PowerLimiterClass PowerLimiter;
 
-void PowerLimiterClass::init(Scheduler& scheduler) 
-{ 
+void PowerLimiterClass::init(Scheduler& scheduler)
+{
     scheduler.addTask(_loopTask);
     _loopTask.setCallback(std::bind(&PowerLimiterClass::loop, this));
     _loopTask.setIterations(TASK_FOREVER);
@@ -192,6 +192,9 @@ void PowerLimiterClass::loop()
         }
 
         _oInverterStatsMillis = lastStats;
+
+        // power meter limit update done. time to start reading the power meter
+        PowerMeter.forceReadNextLoop();
     }
 
     // if the power meter is being used, i.e., if its data is valid, we want to
@@ -782,6 +785,9 @@ bool PowerLimiterClass::setNewPowerLimit(std::shared_ptr<InverterAbstract> inver
 
     if (diff > hysteresis) {
         _oTargetPowerLimitWatts = effPowerLimit;
+
+        // power meter limit update necessary, time to delay reading the power meter
+        PowerMeter.setReadDelay(20*1000);
     }
 
     _oTargetPowerState = true;

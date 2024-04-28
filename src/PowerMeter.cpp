@@ -19,7 +19,6 @@ void PowerMeterClass::init(Scheduler& scheduler)
     scheduler.addTask(_loopTask);
     _loopTask.setCallback(std::bind(&PowerMeterClass::loop, this));
     _loopTask.setIterations(TASK_FOREVER);
-    _loopTask.enable();
 
     _lastPowerMeterCheck = 0;
     _lastPowerMeterUpdate = 0;
@@ -28,6 +27,10 @@ void PowerMeterClass::init(Scheduler& scheduler)
     _mqttSubscriptions.clear();
 
     CONFIG_T& config = Configuration.get();
+
+    // set powermeter loop to configured time
+    _loopTask.setInterval(config.PowerMeter.Interval * 1000);
+    _loopTask.enable();
 
     if (!config.PowerMeter.Enabled) {
         return;
@@ -122,7 +125,8 @@ float PowerMeterClass::getPowerTotal(bool forceUpdate)
         CONFIG_T& config = Configuration.get();
         if (config.PowerMeter.Enabled
                 && (millis() - _lastPowerMeterUpdate) > (1000)) {
-            readPowerMeter();
+            // why do we overrule the configured value?
+            // readPowerMeter();
         }
     }
 
@@ -185,10 +189,6 @@ void PowerMeterClass::loop()
         _lastPowerMeterUpdate = millis();
     }
 
-    if ((millis() - _lastPowerMeterCheck) < (config.PowerMeter.Interval * 1000)) {
-        return;
-    }
-
     readPowerMeter();
 
     MessageOutput.printf("PowerMeterClass: TotalPower: %5.2f\r\n", getPowerTotal());
@@ -204,6 +204,9 @@ void PowerMeterClass::readPowerMeter()
 
     uint8_t _address = config.PowerMeter.SdmAddress;
     Source configuredSource = static_cast<Source>(config.PowerMeter.Source);
+
+    // we use the start time to set the age of the power data
+    auto startReadMillis = millis();
 
     if (configuredSource == Source::SDM1PH) {
         if (!_upSdm) { return; }
@@ -257,7 +260,7 @@ void PowerMeterClass::readPowerMeter()
             _powerMeter1Power = HttpPowerMeter.getPower(1);
             _powerMeter2Power = HttpPowerMeter.getPower(2);
             _powerMeter3Power = HttpPowerMeter.getPower(3);
-            _lastPowerMeterUpdate = millis();
+            _lastPowerMeterUpdate = startReadMillis;
         }
     }
     else if (configuredSource == Source::SMAHM2) {
@@ -289,3 +292,25 @@ bool PowerMeterClass::smlReadLoop()
 
     return false;
 }
+
+
+/*
+ * setReadDelay()
+ * Schedules the powermeter task for execution after a delay
+ */
+void PowerMeterClass::setReadDelay(uint16_t delay_ms)
+{
+    _loopTask.delay(delay_ms);
+}
+
+
+/*
+ * forceReadNextLoop()
+ * Schedules the powermeter task for execution on next loop
+ */
+void PowerMeterClass::forceReadNextLoop(void)
+{
+   _loopTask.delay(0);
+   _loopTask.forceNextIteration();
+}
+
