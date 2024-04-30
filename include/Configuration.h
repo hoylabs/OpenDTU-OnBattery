@@ -39,8 +39,6 @@
 #define POWERMETER_MAX_HTTP_JSON_PATH_STRLEN 256
 #define POWERMETER_HTTP_TIMEOUT 1000
 
-#define JSON_BUFFER_SIZE 15360
-
 struct CHANNEL_CONFIG_T {
     uint16_t MaxChannelPower;
     char Name[CHAN_MAX_NAME_STRLEN];
@@ -62,8 +60,9 @@ struct INVERTER_CONFIG_T {
     CHANNEL_CONFIG_T channel[INV_MAX_CHAN_COUNT];
 };
 
-enum Auth { none, basic, digest };
 struct POWERMETER_HTTP_PHASE_CONFIG_T {
+    enum Auth { None, Basic, Digest };
+    enum Unit { Watts = 0, MilliWatts = 1, KiloWatts = 2 };
     bool Enabled;
     char Url[POWERMETER_MAX_HTTP_URL_STRLEN + 1];
     Auth AuthType;
@@ -73,7 +72,10 @@ struct POWERMETER_HTTP_PHASE_CONFIG_T {
     char HeaderValue[POWERMETER_MAX_HTTP_HEADER_VALUE_STRLEN + 1];
     uint16_t Timeout;
     char JsonPath[POWERMETER_MAX_HTTP_JSON_PATH_STRLEN + 1];
+    Unit PowerUnit;
+    bool SignInverted;
 };
+using PowerMeterHttpConfig = struct POWERMETER_HTTP_PHASE_CONFIG_T;
 
 struct CONFIG_T {
     struct {
@@ -196,7 +198,7 @@ struct CONFIG_T {
         uint32_t SdmAddress;
         uint32_t HttpInterval;
         bool HttpIndividualRequests;
-        POWERMETER_HTTP_PHASE_CONFIG_T Http_Phase[POWERMETER_MAX_PHASES];
+        PowerMeterHttpConfig Http_Phase[POWERMETER_MAX_PHASES];
     } PowerMeter;
 
     struct {
@@ -213,6 +215,7 @@ struct CONFIG_T {
         int32_t TargetPowerConsumption;
         int32_t TargetPowerConsumptionHysteresis;
         int32_t LowerPowerLimit;
+        int32_t BaseLoadLimit;
         int32_t UpperPowerLimit;
         bool IgnoreSoc;
         uint32_t BatterySocStartThreshold;
@@ -248,6 +251,7 @@ struct CONFIG_T {
         float Auto_Power_Lower_Power_Limit;
         float Auto_Power_Upper_Power_Limit;
         uint8_t Auto_Power_Stop_BatterySoC_Threshold;
+        float Auto_Power_Target_Power_Consumption;
     } Huawei;
 
 

@@ -85,6 +85,17 @@ void MqttHandleVedirectHassClass::publishConfig()
         publishSensor("Panel maximum power today", NULL, "H21", "power", "measurement", "W", *optMpptData);
         publishSensor("Panel yield yesterday", NULL, "H22", "energy", "total", "kWh", *optMpptData);
         publishSensor("Panel maximum power yesterday", NULL, "H23", "power", "measurement", "W", *optMpptData);
+
+        // optional info, provided only if TX is connected to charge controller
+        if (optMpptData->NetworkTotalDcInputPowerMilliWatts.first != 0) {
+            publishSensor("VE.Smart network total DC input power", "mdi:solar-power", "NetworkTotalDcInputPower", "power", "measurement", "W", *optMpptData);
+        }
+        if (optMpptData->MpptTemperatureMilliCelsius.first != 0) {
+            publishSensor("MPPT temperature", "mdi:temperature-celsius", "MpptTemperature", "temperature", "measurement", "W", *optMpptData);
+        }
+        if (optMpptData->SmartBatterySenseTemperatureMilliCelsius.first != 0) {
+            publishSensor("Smart Battery Sense temperature", "mdi:temperature-celsius", "SmartBatterySenseTemperature", "temperature", "measurement", "W", *optMpptData);
+        }
     }
 
     yield();
@@ -113,10 +124,8 @@ void MqttHandleVedirectHassClass::publishSensor(const char *caption, const char 
     statTopic.concat("/");
     statTopic.concat(subTopic);
 
-    DynamicJsonDocument root(1024);
-    if (!Utils::checkJsonAlloc(root, __FUNCTION__, __LINE__)) {
-        return;
-    }
+    JsonDocument root;
+
     root["name"] = caption;
     root["stat_t"] = statTopic;
     root["uniq_id"] = serial + "_" + sensorId;
@@ -129,7 +138,7 @@ void MqttHandleVedirectHassClass::publishSensor(const char *caption, const char 
         root["unit_of_meas"] = unitOfMeasurement;
     }
 
-    JsonObject deviceObj = root.createNestedObject("dev");
+    JsonObject deviceObj = root["dev"].to<JsonObject>();
     createDeviceInfo(deviceObj, mpptData);
 
     if (Configuration.get().Mqtt.Hass.Expire) {
@@ -142,7 +151,9 @@ void MqttHandleVedirectHassClass::publishSensor(const char *caption, const char 
         root["stat_cla"] = stateClass;
     }
 
-    if (Utils::checkJsonOverflow(root, __FUNCTION__, __LINE__)) { return; }
+    if (!Utils::checkJsonAlloc(root, __FUNCTION__, __LINE__)) {
+        return;
+    }
 
     char buffer[512];
     serializeJson(root, buffer);
@@ -171,10 +182,7 @@ void MqttHandleVedirectHassClass::publishBinarySensor(const char *caption, const
     statTopic.concat("/");
     statTopic.concat(subTopic);
 
-    DynamicJsonDocument root(1024);
-    if (!Utils::checkJsonAlloc(root, __FUNCTION__, __LINE__)) {
-        return;
-    }
+    JsonDocument root;
     root["name"] = caption;
     root["uniq_id"] = serial + "_" + sensorId;
     root["stat_t"] = statTopic;
@@ -185,10 +193,12 @@ void MqttHandleVedirectHassClass::publishBinarySensor(const char *caption, const
         root["icon"] = icon;
     }
 
-    JsonObject deviceObj = root.createNestedObject("dev");
+    JsonObject deviceObj = root["dev"].to<JsonObject>();
     createDeviceInfo(deviceObj, mpptData);
 
-    if (Utils::checkJsonOverflow(root, __FUNCTION__, __LINE__)) { return; }
+    if (!Utils::checkJsonAlloc(root, __FUNCTION__, __LINE__)) {
+        return;
+    }
 
     char buffer[512];
     serializeJson(root, buffer);

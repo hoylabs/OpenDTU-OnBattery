@@ -72,40 +72,16 @@ void WebApiHuaweiClass::onPost(AsyncWebServerRequest* request)
     }
 
     AsyncJsonResponse* response = new AsyncJsonResponse();
-    auto& retMsg = response->getRoot();
-    retMsg["type"] = "warning";
-
-    if (!request->hasParam("data", true)) {
-        retMsg["message"] = "No values found!";
-        retMsg["code"] = WebApiError::GenericNoValueFound;
-        response->setLength();
-        request->send(response);
+    JsonDocument root;
+    if (!WebApi.parseRequestData(request, response, root)) {
         return;
     }
 
-    String json = request->getParam("data", true)->value();
-
-    if (json.length() > 1024) {
-        retMsg["message"] = "Data too large!";
-        retMsg["code"] = WebApiError::GenericDataTooLarge;
-        response->setLength();
-        request->send(response);
-        return;
-    }
-
-    DynamicJsonDocument root(1024);
-    DeserializationError error = deserializeJson(root, json);
     float value;
     uint8_t online = true;
     float minimal_voltage;
 
-    if (error) {
-        retMsg["message"] = "Failed to parse data!";
-        retMsg["code"] = WebApiError::GenericParseError;
-        response->setLength();
-        request->send(response);
-        return;
-    }
+    auto& retMsg = response->getRoot();
 
     if (root.containsKey("online")) {
         online = root["online"].as<bool>();
@@ -164,12 +140,9 @@ void WebApiHuaweiClass::onPost(AsyncWebServerRequest* request)
         }
     }
 
-    retMsg["type"] = "success";
-    retMsg["message"] = "Settings saved!";
-    retMsg["code"] = WebApiError::GenericSuccess;
+    WebApi.writeConfig(retMsg);
 
-    response->setLength();
-    request->send(response);
+    WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
 
@@ -196,6 +169,7 @@ void WebApiHuaweiClass::onAdminGet(AsyncWebServerRequest* request)
     root["lower_power_limit"] = config.Huawei.Auto_Power_Lower_Power_Limit;
     root["upper_power_limit"] = config.Huawei.Auto_Power_Upper_Power_Limit;   
     root["stop_batterysoc_threshold"] = config.Huawei.Auto_Power_Stop_BatterySoC_Threshold;
+    root["target_power_consumption"] = config.Huawei.Auto_Power_Target_Power_Consumption;
 
     response->setLength();
     request->send(response);
@@ -206,39 +180,14 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
     if (!WebApi.checkCredentials(request)) {
         return;
     }
-    
+
     AsyncJsonResponse* response = new AsyncJsonResponse();
+    JsonDocument root;
+    if (!WebApi.parseRequestData(request, response, root)) {
+        return;
+    }
+
     auto& retMsg = response->getRoot();
-    retMsg["type"] = "warning";
-
-    if (!request->hasParam("data", true)) {
-        retMsg["message"] = "No values found!";
-        retMsg["code"] = WebApiError::GenericNoValueFound;
-        response->setLength();
-        request->send(response);
-        return;
-    }
-
-    String json = request->getParam("data", true)->value();
-
-    if (json.length() > 1024) {
-        retMsg["message"] = "Data too large!";
-        retMsg["code"] = WebApiError::GenericDataTooLarge;
-        response->setLength();
-        request->send(response);
-        return;
-    }
-
-    DynamicJsonDocument root(1024);
-    DeserializationError error = deserializeJson(root, json);
-
-    if (error) {
-        retMsg["message"] = "Failed to parse data!";
-        retMsg["code"] = WebApiError::GenericParseError;
-        response->setLength();
-        request->send(response);
-        return;
-    }
 
     if (!(root.containsKey("enabled")) ||
         !(root.containsKey("can_controller_frequency")) ||
@@ -266,10 +215,11 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
     config.Huawei.Auto_Power_Lower_Power_Limit = root["lower_power_limit"].as<float>();
     config.Huawei.Auto_Power_Upper_Power_Limit = root["upper_power_limit"].as<float>();    
     config.Huawei.Auto_Power_Stop_BatterySoC_Threshold = root["stop_batterysoc_threshold"];
+    config.Huawei.Auto_Power_Target_Power_Consumption = root["target_power_consumption"];
+
     WebApi.writeConfig(retMsg);
 
-    response->setLength();
-    request->send(response);
+    WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 
     // TODO(schlimmchen): HuaweiCan has no real concept of the fact that the
     // config might change. at least not regarding CAN parameters. until that
