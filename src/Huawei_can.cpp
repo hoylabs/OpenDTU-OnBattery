@@ -242,10 +242,6 @@ RectifierParameters_t * HuaweiCanClass::get()
     return &_rp;
 }
 
-uint32_t HuaweiCanClass::getLastUpdate()
-{
-    return _lastUpdateReceivedMillis;
-}
 
 void HuaweiCanClass::processReceivedParameters()
 {
@@ -524,7 +520,5 @@ void HuaweiCanClass::setMode(uint8_t mode) {
   }
 }
 
-bool HuaweiCanClass::getAutoPowerStatus() {
-  return _autoPowerEnabled;
-}
+
 
