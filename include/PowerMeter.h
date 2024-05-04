@@ -47,12 +47,16 @@ private:
     // Used in Power limiter for safety check
     uint32_t _lastPowerMeterUpdate;
 
+    float _powerMeterTotalPower = 0.0;
     float _powerMeter1Power = 0.0;
     float _powerMeter2Power = 0.0;
     float _powerMeter3Power = 0.0;
     float _powerMeter1Voltage = 0.0;
     float _powerMeter2Voltage = 0.0;
     float _powerMeter3Voltage = 0.0;
+    float _powerMeter1Current = 0.0;
+    float _powerMeter2Current = 0.0;
+    float _powerMeter3Current = 0.0;
     float _powerMeterImport = 0.0;
     float _powerMeterExport = 0.0;
 
@@ -67,9 +71,18 @@ private:
 
     bool smlReadLoop();
     const std::list<OBISHandler> smlHandlerList{
-        {{0x01, 0x00, 0x10, 0x07, 0x00, 0xff}, &smlOBISW, &_powerMeter1Power},
+        {{0x01, 0x00, 0x10, 0x07, 0x00, 0xff}, &smlOBISW, &_powerMeterTotalPower},
+        {{0x01, 0x00, 0x24, 0x07, 0x00, 0xff}, &smlOBISW, &_powerMeter1Power}, 
+        {{0x01, 0x00, 0x38, 0x07, 0x00, 0xff}, &smlOBISW, &_powerMeter2Power}, 
+        {{0x01, 0x00, 0x4c, 0x07, 0x00, 0xff}, &smlOBISW, &_powerMeter3Power},
         {{0x01, 0x00, 0x01, 0x08, 0x00, 0xff}, &smlOBISWh, &_powerMeterImport},
-        {{0x01, 0x00, 0x02, 0x08, 0x00, 0xff}, &smlOBISWh, &_powerMeterExport}
+        {{0x01, 0x00, 0x02, 0x08, 0x00, 0xff}, &smlOBISWh, &_powerMeterExport}, 
+        {{0x01, 0x00, 0x20, 0x07, 0x00, 0xff}, &smlOBISVolt, &_powerMeter1Voltage}, 
+        {{0x01, 0x00, 0x34, 0x07, 0x00, 0xff}, &smlOBISVolt, &_powerMeter2Voltage}, 
+        {{0x01, 0x00, 0x48, 0x07, 0x00, 0xff}, &smlOBISVolt, &_powerMeter3Voltage},
+        {{0x01, 0x00, 0x1f, 0x07, 0x00, 0xff}, &smlOBISAmpere, &_powerMeter1Current}, 
+        {{0x01, 0x00, 0x33, 0x07, 0x00, 0xff}, &smlOBISAmpere, &_powerMeter2Current}, 
+        {{0x01, 0x00, 0x47, 0x07, 0x00, 0xff}, &smlOBISAmpere, &_powerMeter3Current}
     };
 };
 

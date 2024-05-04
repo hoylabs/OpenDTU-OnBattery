@@ -158,18 +158,20 @@ void PowerMeterClass::mqtt()
     if (!MqttSettings.getConnected()) { return; }
 
     String topic = "powermeter";
-    auto totalPower = getPowerTotal();
 
     std::lock_guard<std::mutex> l(_mutex);
     MqttSettings.publish(topic + "/power1", String(_powerMeter1Power));
     MqttSettings.publish(topic + "/power2", String(_powerMeter2Power));
     MqttSettings.publish(topic + "/power3", String(_powerMeter3Power));
-    MqttSettings.publish(topic + "/powertotal", String(totalPower));
+    MqttSettings.publish(topic + "/powertotal", String(_powerMeterTotalPower));
     MqttSettings.publish(topic + "/voltage1", String(_powerMeter1Voltage));
     MqttSettings.publish(topic + "/voltage2", String(_powerMeter2Voltage));
     MqttSettings.publish(topic + "/voltage3", String(_powerMeter3Voltage));
-    MqttSettings.publish(topic + "/import", String(_powerMeterImport));
-    MqttSettings.publish(topic + "/export", String(_powerMeterExport));
+    MqttSettings.publish(topic + "/potential1", String(_powerMeter1Current));
+    MqttSettings.publish(topic + "/potential2", String(_powerMeter2Current));
+    MqttSettings.publish(topic + "/potential3", String(_powerMeter3Current));
+    MqttSettings.publish(topic + "/import", String(_powerMeterImport * 0.001));
+    MqttSettings.publish(topic + "/export", String(_powerMeterExport * 0.001));
 }
 
 void PowerMeterClass::loop()
