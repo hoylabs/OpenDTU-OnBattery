@@ -178,8 +178,8 @@ bool ConfigurationClass::write()
     JsonObject powerlimiter = doc["powerlimiter"].to<JsonObject>();
     powerlimiter["enabled"] = config.PowerLimiter.Enabled;
     powerlimiter["verbose_logging"] = config.PowerLimiter.VerboseLogging;
-    powerlimiter["solar_passtrough_enabled"] = config.PowerLimiter.SolarPassThroughEnabled;
-    powerlimiter["solar_passtrough_losses"] = config.PowerLimiter.SolarPassThroughLosses;
+    powerlimiter["solar_passthrough_enabled"] = config.PowerLimiter.SolarPassThroughEnabled;
+    powerlimiter["solar_passthrough_losses"] = config.PowerLimiter.SolarPassThroughLosses;
     powerlimiter["battery_always_use_at_night"] = config.PowerLimiter.BatteryAlwaysUseAtNight;
     powerlimiter["interval"] = config.PowerLimiter.Interval;
     powerlimiter["is_inverter_behind_powermeter"] = config.PowerLimiter.IsInverterBehindPowerMeter;
