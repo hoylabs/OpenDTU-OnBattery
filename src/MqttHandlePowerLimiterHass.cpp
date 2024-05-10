@@ -108,7 +108,7 @@ void MqttHandlePowerLimiterHassClass::publishSelect(
     selectId.replace(" ", "_");
     selectId.toLowerCase();
 
-    const String configTopic = "select/powerlimiter/" + selectId + "/config";
+    const String configTopic = "select/" + getDtuUniqueId() + "/powerlimiter/" + selectId + "/config";
 
     const String cmdTopic = MqttSettings.getPrefix() + "powerlimiter/cmd/" + commandTopic;
     const String statTopic = MqttSettings.getPrefix() + "powerlimiter/status/" + stateTopic;
@@ -116,7 +116,7 @@ void MqttHandlePowerLimiterHassClass::publishSelect(
     JsonDocument root;
 
     root["name"] = caption;
-    root["uniq_id"] = selectId;
+    root["uniq_id"] = getDtuUniqueId() + "_" + selectId;
     if (strcmp(icon, "")) {
         root["ic"] = icon;
     }
@@ -150,7 +150,7 @@ void MqttHandlePowerLimiterHassClass::publishNumber(
     numberId.replace(" ", "_");
     numberId.toLowerCase();
 
-    const String configTopic = "number/powerlimiter/" + numberId + "/config";
+    const String configTopic = "number/" + getDtuUniqueId() + "/powerlimiter/" + numberId + "/config";
 
     const String cmdTopic = MqttSettings.getPrefix() + "powerlimiter/cmd/" + commandTopic;
     const String statTopic = MqttSettings.getPrefix() + "powerlimiter/status/" + stateTopic;
@@ -158,7 +158,7 @@ void MqttHandlePowerLimiterHassClass::publishNumber(
     JsonDocument root;
 
     root["name"] = caption;
-    root["uniq_id"] = numberId;
+    root["uniq_id"] = getDtuUniqueId() + "_" + numberId;
     if (strcmp(icon, "")) {
         root["ic"] = icon;
     }
@@ -190,11 +190,16 @@ void MqttHandlePowerLimiterHassClass::publishNumber(
 void MqttHandlePowerLimiterHassClass::createDeviceInfo(JsonObject& object)
 {
     object["name"] = "Dynamic Power Limiter";
-    object["ids"] = "0002";
+    object["ids"] = getDtuUniqueId();
     object["cu"] = String("http://") + NetworkSettings.localIP().toString();
     object["mf"] = "OpenDTU";
     object["mdl"] = "Dynamic Power Limiter";
     object["sw"] = __COMPILED_GIT_HASH__;
+}
+
+String MqttHandlePowerLimiterHassClass::getDtuUniqueId()
+{
+    return NetworkSettings.getHostname() + "_" + Utils::getChipId();
 }
 
 void MqttHandlePowerLimiterHassClass::publish(const String& subtopic, const String& payload)
