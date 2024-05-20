@@ -389,7 +389,7 @@ void HuaweiCanClass::loop()
         MessageOutput.printf("[HuaweiCanClass::loop] newPowerLimit: %f, output_power: %f \r\n", newPowerLimit, _rp.output_power);
       }
 
-      if (config.Battery.Enabled && config.Huawei.Auto_Power_BatterySoC_Limits_Enabled) {
+      if (config.Battery.Enabled && config.Huawei.Auto_Power_BatterySoC_Limits_Enabled && config.Huawei.Auto_Power_Stop_BatterySoC_Threshold < 100) {
         uint8_t _batterySoC = Battery.getStats()->getSoC();
         if (_batterySoC >= config.Huawei.Auto_Power_Stop_BatterySoC_Threshold) {
           newPowerLimit = 0;
