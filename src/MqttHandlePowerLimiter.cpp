@@ -178,9 +178,9 @@ void MqttHandlePowerLimiterClass::onMqttCmd(MqttPowerLimiterCommand command, con
             config.PowerLimiter.FullSolarPassThroughStopVoltage = payload_val;
             break;
         case MqttPowerLimiterCommand::UpperPowerLimit:
-            if (config.PowerLimiter.UpperPowerLimit == payload_val) { return; }
-            MessageOutput.printf("Setting upper power limit to: %.0f W\r\n", payload_val);
-            config.PowerLimiter.UpperPowerLimit = payload_val;
+            if (config.PowerLimiter.UpperPowerLimit == intValue) { return; }
+            MessageOutput.printf("Setting upper power limit to: %d W\r\n", intValue);
+            config.PowerLimiter.UpperPowerLimit = intValue;
             break;
     }
 
