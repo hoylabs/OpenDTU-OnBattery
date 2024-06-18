@@ -123,7 +123,7 @@ void SBSCanReceiver::loop()
         case 0x610: {
             _stats->setVoltage(this->readUnsignedInt16(rx_message.data)* 0.001, millis());
             _stats->_current =(this->readSignedInt24(rx_message.data + 3)) * 0.001;
-            _stats->setSoC(static_cast<uint8_t>(this->readUnsignedInt16(rx_message.data + 6)), 1, millis());
+            _stats->setSoC(static_cast<float>(this->readUnsignedInt16(rx_message.data + 6)), 1, millis());
             if (_verboseLogging) {
                 MessageOutput.printf("[SBS Unipower XL 1552] SoC: %i Voltage: %f Current: %f\n", this->readUnsignedInt16(rx_message.data + 6), this->readUnsignedInt16(rx_message.data + 0)*0.001, _stats->_current);
             }
