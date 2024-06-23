@@ -4,7 +4,7 @@
 #include "PinMapping.h"
 #include <driver/twai.h>
 
-bool BatteryCanReceiver::init(bool verboseLogging, char* providerName)
+bool BatteryCanReceiver::init(bool verboseLogging, char const* providerName)
 {
     _verboseLogging = verboseLogging;
     _providerName = providerName;

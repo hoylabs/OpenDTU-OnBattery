@@ -7,7 +7,7 @@
 
 bool PylontechCanReceiver::init(bool verboseLogging)
 {
-    return BatteryCanReceiver::init(verboseLogging, const_cast<char*>("Pylontech"));
+    return BatteryCanReceiver::init(verboseLogging, "Pylontech");
 }
 
 

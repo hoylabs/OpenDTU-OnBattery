@@ -7,7 +7,7 @@
 
 class BatteryCanReceiver : public BatteryProvider {
 public:
-    bool init(bool verboseLogging, char* providerName);
+    bool init(bool verboseLogging, char const* providerName);
     void deinit() final;
     void loop() final;
 
@@ -22,5 +22,5 @@ protected:
     bool _verboseLogging = true;
 
 private:
-    char* _providerName = const_cast<char*>("Battery CAN");
+    char const* _providerName = "Battery CAN";
 };
