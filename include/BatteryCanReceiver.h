@@ -24,5 +24,5 @@ protected:
     bool _verboseLogging = true;
 
 private:
-    char* _providerName = (char*) "Battery CAN";
+    char* _providerName = const_cast<char*>("Battery CAN");
 };
