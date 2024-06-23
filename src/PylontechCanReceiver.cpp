@@ -125,13 +125,6 @@ void PylontechCanReceiver::onMessage(twai_message_t rx_message)
             _stats->_dischargeEnabled = this->getBit(chargeStatusBits, 6);
             _stats->_chargeImmediately = this->getBit(chargeStatusBits, 5);
 
-            MessageOutput.printf("[Pylontech] received charge status bits message: identifier %04x\r\n",
-                    rx_message.identifier);
-
-                    for (int i = 0; i < rx_message.data_length_code; i++) {
-                        MessageOutput.printf("Data byte %d = %d\r\n", i, rx_message.data[i]);
-                    }
-
             if (_verboseLogging) {
                 MessageOutput.printf("[Pylontech] chargeStatusBits: %d %d %d\r\n",
                     _stats->_chargeEnabled,
@@ -143,15 +136,6 @@ void PylontechCanReceiver::onMessage(twai_message_t rx_message)
         }
 
         default:
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pylontech] received unknown message: identifier %X\r\n",
-                    rx_message.identifier);
-
-                    for (int i = 0; i < rx_message.data_length_code; i++) {
-                        MessageOutput.printf("Data byte %d = %X\r\n", i, rx_message.data[i]);
-                    }
-            }
-
             return; // do not update last update timestamp
             break;
     }
