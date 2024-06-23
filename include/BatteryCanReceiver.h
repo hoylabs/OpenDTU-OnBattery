@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
-#include "Configuration.h"
 #include "Battery.h"
 #include <driver/twai.h>
 #include <Arduino.h>
-#include <memory>
 
-struct BatteryCanReceiver : public BatteryProvider {
+class BatteryCanReceiver : public BatteryProvider {
 public:
     bool init(bool verboseLogging, char* providerName);
     void deinit() final;

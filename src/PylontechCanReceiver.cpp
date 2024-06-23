@@ -1,27 +1,18 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "PylontechCanReceiver.h"
-#include "Configuration.h"
 #include "MessageOutput.h"
 #include "PinMapping.h"
 #include <driver/twai.h>
 #include <ctime>
 
-//#define PYLONTECH_DUMMY
-
 bool PylontechCanReceiver::init(bool verboseLogging)
 {
-    BatteryCanReceiver::init(verboseLogging, const_cast<char*>("Pylontech"));
-    return true;
+    return BatteryCanReceiver::init(verboseLogging, const_cast<char*>("Pylontech"));
 }
 
 
 void PylontechCanReceiver::onMessage(twai_message_t rx_message)
 {
-    // TODO(AndreasBoehm): where should we put the dummy data now? If there won't be any CAN message the dummy data will never appear.
-#ifdef PYLONTECH_DUMMY
-    return dummyData();
-#endif
-
     switch (rx_message.identifier) {
         case 0x351: {
             _stats->_chargeVoltage = this->scaleValue(this->readUnsignedInt16(rx_message.data), 0.1);
@@ -143,6 +134,7 @@ void PylontechCanReceiver::onMessage(twai_message_t rx_message)
     _stats->setLastUpdate(millis());
 }
 
+// Currently not called because there is no nice way to integrate it right now
 #ifdef PYLONTECH_DUMMY
 void PylontechCanReceiver::dummyData()
 {

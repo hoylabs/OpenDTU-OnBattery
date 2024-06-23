@@ -6,7 +6,6 @@
 #include "BatteryCanReceiver.h"
 #include <driver/twai.h>
 #include <Arduino.h>
-#include <memory>
 
 class PylontechCanReceiver : public BatteryCanReceiver {
 public:
