@@ -18,6 +18,9 @@
                 <div style="padding-right: 2em;">
                   {{ $t('battery.battery') }}: {{ batteryData.manufacturer }}
                 </div>
+                <div style="padding-right: 2em;" v-if="'serial' in batteryData">
+                  {{ $t('home.SerialNumber') }}: {{ batteryData.serial }}
+                </div>
                 <div style="padding-right: 2em;" v-if="'fwversion' in batteryData">
                   {{ $t('battery.FwVersion') }}: {{ batteryData.fwversion }}
                 </div>

@@ -4,6 +4,7 @@ type BatteryData = (ValueObject | string)[];
 
 export interface Battery {
     manufacturer: string;
+    serial: string;
     fwversion: string;
     hwversion: string;
     data_age: number;
