@@ -66,7 +66,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
         }
         case 0x650: {
             byte temp = rx_message.data[0];
-            _stats->_temperature = (float(temp)-32) /1.8;
+            _stats->_temperature = (static_cast<float>(temp)-32) /1.8;
             if (_verboseLogging) {
                 MessageOutput.printf("[SBS] 1616  Temp %f \n",_stats->_temperature);
             }
