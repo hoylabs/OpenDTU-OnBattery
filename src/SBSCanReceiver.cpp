@@ -19,7 +19,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
             _stats->_current =(this->readSignedInt24(rx_message.data + 3)) * 0.001;
             _stats->setSoC(static_cast<float>(this->readUnsignedInt16(rx_message.data + 6)), 1, millis());
             if (_verboseLogging) {
-                MessageOutput.printf("[SBS Unipower XL] 1552 SoC: %i Voltage: %f Current: %f\n", _stats->getSoC(), _stats->getVoltage(), _stats->_current);
+                MessageOutput.printf("[SBS Unipower XL] 1552 SoC: %i Voltage: %f Current: %f\r\n", _stats->getSoC(), _stats->getVoltage(), _stats->_current);
             }
             break;
         }
@@ -52,7 +52,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
             }
             _stats->setManufacturer(std::move("SBS UniPower XL " + state));
             if (_verboseLogging) {
-                MessageOutput.printf("[SBS] 1584 chargeStatusBits: %d %d\n", _stats->_chargeEnabled, _stats->_dischargeEnabled);
+                MessageOutput.printf("[SBS] 1584 chargeStatusBits: %d %d\r\n", _stats->_chargeEnabled, _stats->_dischargeEnabled);
             }
             break;
         }
@@ -60,7 +60,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
             _stats->_chargeCurrentLimitation = (this->readSignedInt24(rx_message.data + 3) * 0.001);
             _stats->_dischargeCurrentLimitation = (this->readSignedInt24(rx_message.data)) * 0.001;
             if (_verboseLogging) {
-                MessageOutput.printf("[SBS] 1600  %f, %f \n", _stats->_chargeCurrentLimitation, _stats->_dischargeCurrentLimitation);
+                MessageOutput.printf("[SBS] 1600  %f, %f \r\n", _stats->_chargeCurrentLimitation, _stats->_dischargeCurrentLimitation);
             }
             break;
         }
@@ -68,7 +68,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
             byte temp = rx_message.data[0];
             _stats->_temperature = (static_cast<float>(temp)-32) /1.8;
             if (_verboseLogging) {
-                MessageOutput.printf("[SBS] 1616  Temp %f \n",_stats->_temperature);
+                MessageOutput.printf("[SBS] 1616  Temp %f \r\n",_stats->_temperature);
             }
             break;
         }
@@ -81,7 +81,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
 
             _stats->_alarmBmsInternal= this->getBit(rx_message.data[1], 2);
             if (_verboseLogging) {
-                MessageOutput.printf("[SBS] 1632 Alarms: %d %d %d %d \n ", _stats->_alarmUnderTemperature, _stats->_alarmOverTemperature, _stats->_alarmUnderVoltage,  _stats->_alarmOverVoltage);
+                MessageOutput.printf("[SBS] 1632 Alarms: %d %d %d %d \r\n ", _stats->_alarmUnderTemperature, _stats->_alarmOverTemperature, _stats->_alarmUnderVoltage,  _stats->_alarmOverVoltage);
             }
             break;
         }
@@ -91,7 +91,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
             _stats->_warningHighCurrentCharge = this->getBit(warningBits, 0);
 
              if (_verboseLogging) {
-                MessageOutput.printf("[SBS] 1648 Warnings: %d %d \n", _stats->_warningHighCurrentDischarge, _stats->_warningHighCurrentCharge);
+                MessageOutput.printf("[SBS] 1648 Warnings: %d %d \r\n", _stats->_warningHighCurrentDischarge, _stats->_warningHighCurrentCharge);
             }
             break;
         }
