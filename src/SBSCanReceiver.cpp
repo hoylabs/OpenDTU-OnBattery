@@ -19,7 +19,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
             _stats->_current =(this->readSignedInt24(rx_message.data + 3)) * 0.001;
             _stats->setSoC(static_cast<float>(this->readUnsignedInt16(rx_message.data + 6)), 1, millis());
             if (_verboseLogging) {
-                MessageOutput.printf("[SBS Unipower XL] 1552 SoC: %i Voltage: %f Current: %f\n", _stats->getSoC(), _stats->getVoltage(), _stats->_current);
+                MessageOutput.printf("[SBS Unipower XL] 1552 SoC: %i Voltage: %f Current: %f\r\n", _stats->getSoC(), _stats->getVoltage(), _stats->_current);
             }
             break;
         }
