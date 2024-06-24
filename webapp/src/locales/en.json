@@ -557,6 +557,7 @@
         "PowerMeterEnable": "Enable Power Meter",
         "VerboseLogging": "@:base.VerboseLogging",
         "PowerMeterParameter": "Power Meter Parameter",
+        "ProviderSBSCan": "SBS Unipower using CAN bus",
         "PowerMeterSource": "Power Meter type",
         "MQTT": "MQTT Parameter",
         "typeMQTT": "MQTT",
