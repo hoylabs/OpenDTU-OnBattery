@@ -146,6 +146,11 @@ int16_t BatteryCanReceiver::readSignedInt16(uint8_t *data)
     return this->readUnsignedInt16(data);
 }
 
+int32_t BatteryCanReceiver::readSignedInt24(uint8_t *data)
+{
+return data[1] | data[1] << 8 | data[2] << 16 ;
+}
+
 float BatteryCanReceiver::scaleValue(int16_t value, float factor)
 {
     return value * factor;
@@ -155,3 +160,63 @@ bool BatteryCanReceiver::getBit(uint8_t value, uint8_t bit)
 {
     return (value & (1 << bit)) >> bit;
 }
+
+
+#ifdef SBSCanReceiver_DUMMY
+void SBSCanReceiver::dummyData()
+{
+    static uint32_t lastUpdate = millis();
+    static uint8_t issues = 0;
+
+    if (millis() < (lastUpdate + 5 * 1000)) { return; }
+
+    lastUpdate = millis();
+    _stats->setLastUpdate(lastUpdate);
+
+    auto dummyFloat = [](int offset) -> float {
+        return offset + (static_cast<float>((lastUpdate + offset) % 10) / 10);
+    };
+
+    _stats->setManufacturer("SBS Unipower XL");
+    _stats->setSoC(42, 0/*precision*/, millis());
+    _stats->_chargeVoltage = dummyFloat(50);
+    _stats->_chargeCurrentLimitation = dummyFloat(33);
+    _stats->_dischargeCurrentLimitation = dummyFloat(12);
+    _stats->_stateOfHealth = 99;
+    _stats->setVoltage(48.67, millis());
+    _stats->_current = dummyFloat(-1);
+    _stats->_temperature = dummyFloat(20);
+
+    _stats->_chargeEnabled = true;
+    _stats->_dischargeEnabled = true;
+
+    _stats->_warningHighCurrentDischarge = false;
+    _stats->_warningHighCurrentCharge = false;
+
+    _stats->_alarmOverCurrentDischarge = false;
+    _stats->_alarmOverCurrentCharge = false;
+    _stats->_alarmUnderVoltage = false;
+    _stats->_alarmOverVoltage = false;
+
+
+    if (issues == 1 || issues == 3) {
+        _stats->_warningHighCurrentDischarge = true;
+        _stats->_warningHighCurrentCharge = true;
+    }
+
+    if (issues == 2 || issues == 3) {
+        _stats->_alarmOverCurrentDischarge = true;
+        _stats->_alarmOverCurrentCharge = true;
+        _stats->_alarmUnderVoltage = true;
+        _stats->_alarmOverVoltage = true;
+    }
+
+    if (issues == 4) {
+        _stats->_warningHighCurrentCharge = true;
+        _stats->_alarmUnderVoltage = true;
+        _stats->_dischargeEnabled = false;
+    }
+
+    issues = (issues + 1) % 5;
+}
+#endif

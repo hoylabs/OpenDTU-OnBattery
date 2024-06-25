@@ -16,6 +16,7 @@ public:
 protected:
     uint16_t readUnsignedInt16(uint8_t *data);
     int16_t readSignedInt16(uint8_t *data);
+    int32_t readSignedInt24(uint8_t *data);
     float scaleValue(int16_t value, float factor);
     bool getBit(uint8_t value, uint8_t bit);
 
