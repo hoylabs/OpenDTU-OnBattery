@@ -4,7 +4,7 @@
 #include "PinMapping.h"
 #include <driver/twai.h>
 
-// #define PRINT_ALL_MESSAGES
+#define PRINT_ALL_MESSAGES
 
 bool BatteryCanReceiver::init(bool verboseLogging, char const* providerName)
 {
@@ -133,14 +133,15 @@ void BatteryCanReceiver::loop()
     }
 
 #ifdef PRINT_ALL_MESSAGES
-    MessageOutput.printf("[%s] Received CAN message: identifier 0x%04X\r\n",
-            _providerName,
-            rx_message.identifier);
+    MessageOutput.printf("[%s] Received CAN message: 0x%03X - ",
+            _providerName, rx_message.identifier);
 
     for (int i = 0; i < rx_message.data_length_code; i++) {
-        MessageOutput.printf("Data byte %d = %02X\r\n", i, rx_message.data[i]);
+        MessageOutput.printf("%02X ",
+            rx_message.data[i]);
     }
 
+    MessageOutput.printf("\r\n"),
 #endif
 
     onMessage(rx_message);
