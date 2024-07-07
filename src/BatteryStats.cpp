@@ -132,8 +132,13 @@ void PytesBatteryStats::getLiveViewData(JsonVariant& root) const
     addLiveViewValue(root, "capacity", _totalCapacity, "Ah", 0);
     addLiveViewValue(root, "availableCapacity", _availableCapacity, "Ah", 0);
 
-    addLiveViewValue(root, "chargedEnergy", _chargedEnergy, "kWh", 2);
-    addLiveViewValue(root, "dischargedEnergy", _dischargedEnergy, "kWh", 2);
+    if (_chargedEnergy != -1) {
+        addLiveViewValue(root, "chargedEnergy", _chargedEnergy, "kWh", 2);
+    }
+
+    if (_dischargedEnergy != -1) {
+        addLiveViewValue(root, "dischargedEnergy", _dischargedEnergy, "kWh", 2);
+    }
 
     addLiveViewInSection(root, "cells", "cellMinVoltage", static_cast<float>(_cellMinMilliVolt)/1000, "V", 3);
     addLiveViewInSection(root, "cells", "cellMaxVoltage", static_cast<float>(_cellMaxMilliVolt)/1000, "V", 3);
@@ -342,8 +347,13 @@ void PytesBatteryStats::mqttPublish() const
     MqttSettings.publish("battery/current", String(_current));
     MqttSettings.publish("battery/temperature", String(_temperature));
 
-    MqttSettings.publish("battery/chargedEnergy", String(_chargedEnergy));
-    MqttSettings.publish("battery/dischargedEnergy", String(_dischargedEnergy));
+    if (_chargedEnergy != -1) {
+        MqttSettings.publish("battery/chargedEnergy", String(_chargedEnergy));
+    }
+
+    if (_dischargedEnergy != -1) {
+        MqttSettings.publish("battery/dischargedEnergy", String(_dischargedEnergy));
+    }
 
     MqttSettings.publish("battery/capacity", String(_totalCapacity));
     MqttSettings.publish("battery/availableCapacity", String(_availableCapacity));

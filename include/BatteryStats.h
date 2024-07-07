@@ -168,8 +168,8 @@ class PytesBatteryStats : public BatteryStats {
         uint16_t _totalCapacity;
         uint16_t _availableCapacity;
 
-        float _chargedEnergy;
-        float _dischargedEnergy;
+        float _chargedEnergy = -1;
+        float _dischargedEnergy = -1;
 
         bool _alarmUnderVoltage;
         bool _alarmOverVoltage;
