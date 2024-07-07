@@ -258,7 +258,7 @@ void PytesCanReceiver::onMessage(twai_message_t rx_message)
             String snPart1(reinterpret_cast<char*>(rx_message.data),
                     rx_message.data_length_code);
 
-            if (snPart1.isEmpty()) { break; }
+            if (snPart1.isEmpty() || !isgraph(snPart1.charAt(0))) { break; }
 
             if (_verboseLogging) {
                 MessageOutput.printf("[Pytes] snPart1: %s\r\n", snPart1.c_str());
@@ -273,7 +273,7 @@ void PytesCanReceiver::onMessage(twai_message_t rx_message)
             String snPart2(reinterpret_cast<char*>(rx_message.data),
                     rx_message.data_length_code);
 
-            if (snPart2.isEmpty()) { break; }
+            if (snPart2.isEmpty() || !isgraph(snPart2.charAt(0))) { break; }
 
             if (_verboseLogging) {
                 MessageOutput.printf("[Pytes] snPart2: %s\r\n", snPart2.c_str());
