@@ -26,9 +26,12 @@ static void addLiveViewValue(JsonVariant& root, std::string const& name,
 }
 
 static void addLiveViewTextInSection(JsonVariant& root,
-    std::string const& section, std::string const& name, std::string const& text)
+    std::string const& section, std::string const& name,
+    std::string const& text, bool translate = true)
 {
-    root["values"][section][name] = text;
+    auto jsonValue = root["values"][section][name];
+    jsonValue["value"] = text;
+    jsonValue["translate"] = translate;
 }
 
 static void addLiveViewTextValue(JsonVariant& root, std::string const& name,
@@ -146,10 +149,10 @@ void PytesBatteryStats::getLiveViewData(JsonVariant& root) const
     addLiveViewInSection(root, "cells", "cellMinTemperature", _cellMinTemperature, "°C", 0);
     addLiveViewInSection(root, "cells", "cellMaxTemperature", _cellMaxTemperature, "°C", 0);
 
-    addLiveViewTextInSection(root, "cells", "cellMinVoltageName", _cellMinVoltageName.c_str());
-    addLiveViewTextInSection(root, "cells", "cellMaxVoltageName", _cellMaxVoltageName.c_str());
-    addLiveViewTextInSection(root, "cells", "cellMinTemperatureName", _cellMinTemperatureName.c_str());
-    addLiveViewTextInSection(root, "cells", "cellMaxTemperatureName", _cellMaxTemperatureName.c_str());
+    addLiveViewTextInSection(root, "cells", "cellMinVoltageName", _cellMinVoltageName.c_str(), false);
+    addLiveViewTextInSection(root, "cells", "cellMaxVoltageName", _cellMaxVoltageName.c_str(), false);
+    addLiveViewTextInSection(root, "cells", "cellMinTemperatureName", _cellMinTemperatureName.c_str(), false);
+    addLiveViewTextInSection(root, "cells", "cellMaxTemperatureName", _cellMaxTemperatureName.c_str(), false);
 
     addLiveViewInSection(root, "modules", "online", _moduleCountOnline, "", 0);
     addLiveViewInSection(root, "modules", "offline", _moduleCountOffline, "", 0);
