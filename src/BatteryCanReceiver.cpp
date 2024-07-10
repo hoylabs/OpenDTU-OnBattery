@@ -146,17 +146,12 @@ void BatteryCanReceiver::loop()
 
 uint8_t BatteryCanReceiver::readUnsignedInt8(uint8_t *data)
 {
-    uint8_t bytes[1];
-    bytes[0] = *data;
-    return bytes[0];
+    return data[0];
 }
 
 uint16_t BatteryCanReceiver::readUnsignedInt16(uint8_t *data)
 {
-    uint8_t bytes[2];
-    bytes[0] = *data;
-    bytes[1] = *(data + 1);
-    return (bytes[1] << 8) + bytes[0];
+    return (data[1] << 8) | data[0];
 }
 
 int16_t BatteryCanReceiver::readSignedInt16(uint8_t *data)
@@ -166,12 +161,7 @@ int16_t BatteryCanReceiver::readSignedInt16(uint8_t *data)
 
 uint32_t BatteryCanReceiver::readUnsignedInt32(uint8_t *data)
 {
-    uint8_t bytes[4];
-    bytes[0] = *data;
-    bytes[1] = *(data + 1);
-    bytes[2] = *(data + 2);
-    bytes[3] = *(data + 3);
-    return (bytes[3] << 24) + (bytes[2] << 16) + (bytes[1] << 8) + bytes[0];
+    return (data[3] << 24) | (data[2] << 16) | (data[1] << 8) | data[0];
 }
 
 float BatteryCanReceiver::scaleValue(int16_t value, float factor)
