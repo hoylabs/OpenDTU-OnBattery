@@ -108,7 +108,7 @@ void MqttHandlePowerLimiterHassClass::publishSelect(
     selectId.replace(" ", "_");
     selectId.toLowerCase();
 
-    const String configTopic = "select/" + getDtuUniqueId() + "/powerlimiter/" + selectId + "/config";
+    const String configTopic = "select/" + getDtuUniqueId() + "/" + selectId + "/config";
 
     const String cmdTopic = MqttSettings.getPrefix() + "powerlimiter/cmd/" + commandTopic;
     const String statTopic = MqttSettings.getPrefix() + "powerlimiter/status/" + stateTopic;
@@ -150,7 +150,7 @@ void MqttHandlePowerLimiterHassClass::publishNumber(
     numberId.replace(" ", "_");
     numberId.toLowerCase();
 
-    const String configTopic = "number/" + getDtuUniqueId() + "/powerlimiter/" + numberId + "/config";
+    const String configTopic = "number/" + getDtuUniqueId() + "/" + numberId + "/config";
 
     const String cmdTopic = MqttSettings.getPrefix() + "powerlimiter/cmd/" + commandTopic;
     const String statTopic = MqttSettings.getPrefix() + "powerlimiter/status/" + stateTopic;
@@ -190,11 +190,12 @@ void MqttHandlePowerLimiterHassClass::publishNumber(
 void MqttHandlePowerLimiterHassClass::createDeviceInfo(JsonObject& object)
 {
     object["name"] = "Dynamic Power Limiter";
-    object["ids"] = getDtuUniqueId();
+    object["ids"] = getDtuUniqueId() + "_DPL";
     object["cu"] = String("http://") + NetworkSettings.localIP().toString();
     object["mf"] = "OpenDTU";
     object["mdl"] = "Dynamic Power Limiter";
     object["sw"] = __COMPILED_GIT_HASH__;
+    object["via_device"] = getDtuUniqueId();
 }
 
 String MqttHandlePowerLimiterHassClass::getDtuUniqueId()
