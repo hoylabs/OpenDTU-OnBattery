@@ -3,6 +3,7 @@
  * Copyright (C) 2022 Thomas Basler and others
  */
 #include "MqttHandlePowerLimiterHass.h"
+#include "MqttHandleHass.h"
 #include "Configuration.h"
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
@@ -108,7 +109,7 @@ void MqttHandlePowerLimiterHassClass::publishSelect(
     selectId.replace(" ", "_");
     selectId.toLowerCase();
 
-    const String configTopic = "select/" + getDtuUniqueId() + "/" + selectId + "/config";
+    const String configTopic = "select/" + MqttHandleHass.getDtuUniqueId() + "/" + selectId + "/config";
 
     const String cmdTopic = MqttSettings.getPrefix() + "powerlimiter/cmd/" + commandTopic;
     const String statTopic = MqttSettings.getPrefix() + "powerlimiter/status/" + stateTopic;
@@ -116,7 +117,7 @@ void MqttHandlePowerLimiterHassClass::publishSelect(
     JsonDocument root;
 
     root["name"] = caption;
-    root["uniq_id"] = getDtuUniqueId() + "_" + selectId;
+    root["uniq_id"] = MqttHandleHass.getDtuUniqueId() + "_" + selectId;
     if (strcmp(icon, "")) {
         root["ic"] = icon;
     }
@@ -128,8 +129,7 @@ void MqttHandlePowerLimiterHassClass::publishSelect(
     options.add("1");
     options.add("2");
 
-    JsonObject deviceObj = root["dev"].to<JsonObject>();
-    createDeviceInfo(deviceObj);
+    createDeviceInfo(root);
 
     if (!Utils::checkJsonAlloc(root, __FUNCTION__, __LINE__)) {
         return;
@@ -150,7 +150,7 @@ void MqttHandlePowerLimiterHassClass::publishNumber(
     numberId.replace(" ", "_");
     numberId.toLowerCase();
 
-    const String configTopic = "number/" + getDtuUniqueId() + "/" + numberId + "/config";
+    const String configTopic = "number/" + MqttHandleHass.getDtuUniqueId() + "/" + numberId + "/config";
 
     const String cmdTopic = MqttSettings.getPrefix() + "powerlimiter/cmd/" + commandTopic;
     const String statTopic = MqttSettings.getPrefix() + "powerlimiter/status/" + stateTopic;
@@ -158,7 +158,7 @@ void MqttHandlePowerLimiterHassClass::publishNumber(
     JsonDocument root;
 
     root["name"] = caption;
-    root["uniq_id"] = getDtuUniqueId() + "_" + numberId;
+    root["uniq_id"] = MqttHandleHass.getDtuUniqueId() + "_" + numberId;
     if (strcmp(icon, "")) {
         root["ic"] = icon;
     }
@@ -175,8 +175,7 @@ void MqttHandlePowerLimiterHassClass::publishNumber(
         root["exp_aft"] = config.Mqtt.PublishInterval * 3;
     }
 
-    JsonObject deviceObj = root["dev"].to<JsonObject>();
-    createDeviceInfo(deviceObj);
+    createDeviceInfo(root);
 
     if (!Utils::checkJsonAlloc(root, __FUNCTION__, __LINE__)) {
         return;
@@ -187,20 +186,16 @@ void MqttHandlePowerLimiterHassClass::publishNumber(
     publish(configTopic, buffer);
 }
 
-void MqttHandlePowerLimiterHassClass::createDeviceInfo(JsonObject& object)
+void MqttHandlePowerLimiterHassClass::createDeviceInfo(JsonDocument& root)
 {
+    JsonObject object = root["dev"].to<JsonObject>();
     object["name"] = "Dynamic Power Limiter";
-    object["ids"] = getDtuUniqueId() + "_DPL";
-    object["cu"] = String("http://") + NetworkSettings.localIP().toString();
+    object["ids"] = MqttHandleHass.getDtuUniqueId() + "_DPL";
+    object["cu"] = MqttHandleHass.getDtuUrl();
     object["mf"] = "OpenDTU";
     object["mdl"] = "Dynamic Power Limiter";
     object["sw"] = __COMPILED_GIT_HASH__;
-    object["via_device"] = getDtuUniqueId();
-}
-
-String MqttHandlePowerLimiterHassClass::getDtuUniqueId()
-{
-    return NetworkSettings.getHostname() + "_" + Utils::getChipId();
+    object["via_device"] = MqttHandleHass.getDtuUniqueId();
 }
 
 void MqttHandlePowerLimiterHassClass::publish(const String& subtopic, const String& payload)
