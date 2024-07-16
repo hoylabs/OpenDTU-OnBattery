@@ -13,7 +13,7 @@ public:
 private:
     void loop();
     void publish(const String& subtopic, const String& payload);
-    void publishNumber(const char* caption, const char* icon, const char* category, const char* commandTopic, const char* stateTopic, const char* unitOfMeasure, const int16_t min, const int16_t max);
+    void publishNumber(const char* caption, const char* icon, const char* category, const char* commandTopic, const char* stateTopic, const char* unitOfMeasure, const int16_t min, const int16_t max, const double_t step);
     void publishSelect(const char* caption, const char* icon, const char* category, const char* commandTopic, const char* stateTopic);
     void createDeviceInfo(JsonDocument& root);
 
