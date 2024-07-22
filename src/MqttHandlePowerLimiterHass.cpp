@@ -62,37 +62,37 @@ void MqttHandlePowerLimiterHassClass::publishConfig()
         return;
     }
 
-    publishSelect("DPL Mode", "mdi:gauge", "config", "mode", "mode");
+    publishSelect("Mode", "mdi:gauge", "config", "mode", "mode");
 
     if (config.PowerLimiter.IsInverterSolarPowered) {
         return;
     }
 
     // as this project revolves around Hoymiles inverters, 16 - 60 V is a reasonable voltage range
-    publishNumber("DPL battery voltage start threshold", "mdi:battery-charging",
+    publishNumber("battery voltage start threshold", "mdi:battery-charging",
             "config", "threshold/voltage/start", "threshold/voltage/start", "V", 16, 60, 0.1);
-    publishNumber("DPL battery voltage stop threshold", "mdi:battery-charging",
+    publishNumber("battery voltage stop threshold", "mdi:battery-charging",
             "config", "threshold/voltage/stop", "threshold/voltage/stop", "V", 16, 60, 0.1);
 
     if (config.Vedirect.Enabled) {
-        publishNumber("DPL full solar passthrough start voltage",
+        publishNumber("full solar passthrough start voltage",
                 "mdi:transmission-tower-import", "config",
                 "threshold/voltage/full_solar_passthrough_start",
                 "threshold/voltage/full_solar_passthrough_start", "V", 16, 60, 0.1);
-        publishNumber("DPL full solar passthrough stop voltage",
+        publishNumber("full solar passthrough stop voltage",
                 "mdi:transmission-tower-import", "config",
                 "threshold/voltage/full_solar_passthrough_stop",
                 "threshold/voltage/full_solar_passthrough_stop", "V", 16, 60, 0.1);
     }
 
     if (config.Battery.Enabled && !config.PowerLimiter.IgnoreSoc) {
-        publishNumber("DPL battery SoC start threshold", "mdi:battery-charging",
+        publishNumber("battery SoC start threshold", "mdi:battery-charging",
                 "config", "threshold/soc/start", "threshold/soc/start", "%", 0, 100, 1.0);
-        publishNumber("DPL battery SoC stop threshold", "mdi:battery-charging",
+        publishNumber("battery SoC stop threshold", "mdi:battery-charging",
                 "config", "threshold/soc/stop", "threshold/soc/stop", "%", 0, 100, 1.0);
 
         if (config.Vedirect.Enabled) {
-            publishNumber("DPL full solar passthrough SoC",
+            publishNumber("full solar passthrough SoC",
                     "mdi:transmission-tower-import", "config",
                     "threshold/soc/full_solar_passthrough",
                     "threshold/soc/full_solar_passthrough", "%", 0, 100, 1.0);
