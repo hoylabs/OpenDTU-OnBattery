@@ -143,7 +143,7 @@ void MqttHandlePowerLimiterHassClass::publishSelect(
 void MqttHandlePowerLimiterHassClass::publishNumber(
     const char* caption, const char* icon, const char* category,
     const char* commandTopic, const char* stateTopic, const char* unitOfMeasure,
-    const int16_t min, const int16_t max, const double_t step)
+    const int16_t min, const int16_t max, const float step)
 {
 
     String numberId = caption;
