@@ -98,10 +98,14 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
 
             if (spStats->isVoltageValid()) {
                 addTotalField(batteryObj, "voltage", spStats->getVoltage(), "V", 2);
+            }
 
-                if (spStats->isCurrentValid()) {
-                   addTotalField(batteryObj, "power", spStats->getVoltage() * spStats->getChargeCurrent(), "W", 1);
-                }
+            if (spStats->isCurrentValid()) {
+                addTotalField(batteryObj, "current", spStats->getChargeCurrent(), "A", 1);
+            }
+
+            if (spStats->isVoltageValid() && spStats->isCurrentValid()) {
+                addTotalField(batteryObj, "power", spStats->getVoltage() * spStats->getChargeCurrent(), "W", 1);
             }
         }
 

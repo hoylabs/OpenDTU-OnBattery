@@ -64,6 +64,7 @@ export interface Battery {
   soc?: ValueObject;
   voltage?: ValueObject;
   power?: ValueObject;
+  current?: ValueObject;
 }
 
 export interface PowerMeter {

@@ -66,43 +66,54 @@
                 </h2>
             </CardElement>
         </div>
-        <div class="col" v-if="totalBattData.enabled">
-            <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.Battery')">
-                <h2>
-                    <template v-if="totalBattData.soc">
-                        {{ $n(totalBattData.soc.v, 'decimal', {
-                            minimumFractionDigits: totalBattData.soc.d,
-                            maximumFractionDigits: totalBattData.soc.d
-                        }) }}
-                        <small class="text-muted">{{ totalBattData.soc.u }}</small>
-                    </template>
+        <template v-if="totalBattData.enabled">
+            <div class="col">
+                <CardElement centerContent flexChildern textVariant="text-bg-success" :text="$t('invertertotalinfo.BatteryCharge')">
+                    <div class="flex-fill" v-if="totalBattData.soc">
+                        <h2>
+                            {{ $n(totalBattData.soc.v, 'decimal', {
+                                minimumFractionDigits: totalBattData.soc.d,
+                                maximumFractionDigits: totalBattData.soc.d
+                            }) }}
+                            <small class="text-muted">{{ totalBattData.soc.u }}</small>
+                        </h2>
+                    </div>
 
-                    <template v-if="totalBattData.soc && totalBattData.voltage">
-                        /
-                    </template>
+                    <div class="flex-fill" v-if="totalBattData.voltage">
+                        <h2>
+                            {{ $n(totalBattData.voltage.v, 'decimal', {
+                                minimumFractionDigits: totalBattData.voltage.d,
+                                maximumFractionDigits: totalBattData.voltage.d
+                            }) }}
+                            <small class="text-muted">{{ totalBattData.voltage.u }}</small>
+                        </h2>
+                    </div>
+                </CardElement>
+            </div>
+            <div class="col" v-if="totalBattData.power || totalBattData.current">
+                <CardElement centerContent flexChildern textVariant="text-bg-success" :text="$t('invertertotalinfo.BatteryPower')">
+                    <div class="flex-fill" v-if="totalBattData.power">
+                        <h2>
+                            {{ $n(totalBattData.power.v, 'decimal', {
+                                minimumFractionDigits: totalBattData.power.d,
+                                maximumFractionDigits: totalBattData.power.d
+                            }) }}
+                            <small class="text-muted">{{ totalBattData.power.u }}</small>
+                        </h2>
+                    </div>
 
-                    <template v-if="totalBattData.voltage">
-                        {{ $n(totalBattData.voltage.v, 'decimal', {
-                            minimumFractionDigits: totalBattData.voltage.d,
-                            maximumFractionDigits: totalBattData.voltage.d
-                        }) }}
-                        <small class="text-muted">{{ totalBattData.voltage.u }}</small>
-                    </template>
-
-                    <template v-if="totalBattData.power">
-                        /
-                    </template>
-
-                    <template v-if="totalBattData.power">
-                        {{ $n(totalBattData.power.v, 'decimal', {
-                            minimumFractionDigits: totalBattData.power.d,
-                            maximumFractionDigits: totalBattData.power.d
-                        }) }}
-                        <small class="text-muted">{{ totalBattData.power.u }}</small>
-                    </template>
-                </h2>
-            </CardElement>
-        </div>
+                    <div class="flex-fill" v-if="totalBattData.current">
+                        <h2>
+                            {{ $n(totalBattData.current.v, 'decimal', {
+                                minimumFractionDigits: totalBattData.current.d,
+                                maximumFractionDigits: totalBattData.current.d
+                            }) }}
+                            <small class="text-muted">{{ totalBattData.current.u }}</small>
+                        </h2>
+                    </div>
+                </CardElement>
+            </div>
+        </template>
         <div class="col" v-if="powerMeterData.enabled">
             <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.HomePower')">
                 <h2>
