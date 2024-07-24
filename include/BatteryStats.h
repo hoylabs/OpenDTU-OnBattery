@@ -14,7 +14,7 @@ class BatteryStats {
     public:
         String const& getManufacturer() const { return _manufacturer; }
 
-        // the last time *any* datum was updated
+        // the last time *any* data was updated
         uint32_t getAgeSeconds() const { return (millis() - _lastUpdate) / 1000; }
         bool updateAvailable(uint32_t since) const;
 
@@ -31,7 +31,7 @@ class BatteryStats {
 
         void mqttLoop();
 
-        // the interval at which all battery datums will be re-published, even
+        // the interval at which all battery data will be re-published, even
         // if they did not change. used to calculate Home Assistent expiration.
         virtual uint32_t getMqttFullPublishIntervalMs() const;
 
@@ -59,8 +59,9 @@ class BatteryStats {
             _lastUpdateVoltage = _lastUpdate = timestamp;
         }
 
-        void setCurrent(float current, uint32_t timestamp) {
+        void setCurrent(float current, uint8_t precision, uint32_t timestamp) {
             _current = current;
+            _currentPrecision = precision;
             _lastUpdateCurrent = _lastUpdate = timestamp;
         }
 
@@ -81,6 +82,7 @@ class BatteryStats {
         // total current into (positive) or from (negative)
         // the battery, i.e., the charging current
         float _current = 0;
+        uint8_t _currentPrecision = 0; // decimal places
         uint32_t _lastUpdateCurrent = 0;
 };
 
@@ -262,7 +264,7 @@ class MqttBatteryStats : public BatteryStats {
         // we do NOT publish the same data under a different topic.
         void mqttPublish() const final { }
 
-        // if the voltage is subscribed to at all, it alone does not warrant a
-        // card in the live view, since the SoC and voltage is already displayed at the top
+        // we don't need a card in the liveview, since the SoC and
+        // voltage (if available) is already displayed at the top.
         void getLiveViewData(JsonVariant& root) const final { }
 };

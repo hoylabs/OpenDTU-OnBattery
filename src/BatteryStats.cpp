@@ -78,7 +78,7 @@ void BatteryStats::getLiveViewData(JsonVariant& root) const
 
     addLiveViewValue(root, "SoC", _soc, "%", _socPrecision);
     addLiveViewValue(root, "voltage", _voltage, "V", 2);
-    addLiveViewValue(root, "current", _current, "A", 1);
+    addLiveViewValue(root, "current", _current, "A", _currentPrecision);
 }
 
 void PylontechBatteryStats::getLiveViewData(JsonVariant& root) const
@@ -501,7 +501,7 @@ void JkBmsBatteryStats::updateFrom(JkBms::DataPointContainer const& dp)
     auto oCurrent = dp.get<Label::BatteryCurrentMilliAmps>();
     if (oCurrent.has_value()) {
         auto oCurrentDataPoint = dp.getDataPointFor<Label::BatteryCurrentMilliAmps>();
-        BatteryStats::setCurrent(static_cast<float>(*oCurrent) / 1000,
+        BatteryStats::setCurrent(static_cast<float>(*oCurrent) / 1000, 2/*precision*/,
                 oCurrentDataPoint->getTimestamp());
     }
 
@@ -545,7 +545,7 @@ void JkBmsBatteryStats::updateFrom(JkBms::DataPointContainer const& dp)
 void VictronSmartShuntStats::updateFrom(VeDirectShuntController::data_t const& shuntData) {
     BatteryStats::setVoltage(shuntData.batteryVoltage_V_mV / 1000.0, millis());
     BatteryStats::setSoC(static_cast<float>(shuntData.SOC) / 10, 1/*precision*/, millis());
-    BatteryStats::setCurrent(static_cast<float>(shuntData.batteryCurrent_I_mA) / 1000, millis());
+    BatteryStats::setCurrent(static_cast<float>(shuntData.batteryCurrent_I_mA) / 1000, 2/*precision*/, millis());
     _fwversion = shuntData.getFwVersionFormatted();
 
     _chargeCycles = shuntData.H4;

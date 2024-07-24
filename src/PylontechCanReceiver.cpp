@@ -39,7 +39,7 @@ void PylontechCanReceiver::onMessage(twai_message_t rx_message)
 
         case 0x356: {
             _stats->setVoltage(this->scaleValue(this->readSignedInt16(rx_message.data), 0.01), millis());
-            _stats->setCurrent(this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1), millis());
+            _stats->setCurrent(this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1), 1/*precision*/, millis());
             _stats->_temperature = this->scaleValue(this->readSignedInt16(rx_message.data + 4), 0.1);
 
             if (_verboseLogging) {
@@ -157,7 +157,7 @@ void PylontechCanReceiver::dummyData()
     _stats->_dischargeCurrentLimitation = dummyFloat(12);
     _stats->_stateOfHealth = 99;
     _stats->setVoltage(48.67, millis());
-    _stats->setCurrent(dummyFloat(-1), millis());
+    _stats->setCurrent(dummyFloat(-1), 1/*precision*/, millis());
     _stats->_temperature = dummyFloat(20);
 
     _stats->_chargeEnabled = true;
