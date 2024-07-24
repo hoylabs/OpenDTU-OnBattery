@@ -395,7 +395,7 @@
         "MpptTotalYieldTotal": "MPPT Gesamtertrag Insgesamt",
         "MpptTotalYieldDay": "MPPT Gesamtertrag Heute",
         "MpptTotalPower": "MPPT Gesamtleistung",
-        "BatterySoc": "Ladezustand",
+        "Battery": "Batterie",
         "HomePower": "Leistung / Netz",
         "HuaweiPower": "Huawei AC Leistung"
     },

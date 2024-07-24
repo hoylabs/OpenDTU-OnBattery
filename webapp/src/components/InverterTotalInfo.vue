@@ -67,13 +67,39 @@
             </CardElement>
         </div>
         <div class="col" v-if="totalBattData.enabled">
-            <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.BatterySoc')">
+            <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.Battery')">
                 <h2>
-                    {{ $n(totalBattData.soc.v, 'decimal', {
-                        minimumFractionDigits: totalBattData.soc.d,
-                        maximumFractionDigits: totalBattData.soc.d
-                    }) }}
-                    <small class="text-muted">{{ totalBattData.soc.u }}</small>
+                    <template v-if="totalBattData.soc">
+                        {{ $n(totalBattData.soc.v, 'decimal', {
+                            minimumFractionDigits: totalBattData.soc.d,
+                            maximumFractionDigits: totalBattData.soc.d
+                        }) }}
+                        <small class="text-muted">{{ totalBattData.soc.u }}</small>
+                    </template>
+
+                    <template v-if="totalBattData.soc && totalBattData.voltage">
+                        /
+                    </template>
+
+                    <template v-if="totalBattData.voltage">
+                        {{ $n(totalBattData.voltage.v, 'decimal', {
+                            minimumFractionDigits: totalBattData.voltage.d,
+                            maximumFractionDigits: totalBattData.voltage.d
+                        }) }}
+                        <small class="text-muted">{{ totalBattData.voltage.u }}</small>
+                    </template>
+
+                    <template v-if="totalBattData.power">
+                        /
+                    </template>
+
+                    <template v-if="totalBattData.power">
+                        {{ $n(totalBattData.power.v, 'decimal', {
+                            minimumFractionDigits: totalBattData.power.d,
+                            maximumFractionDigits: totalBattData.power.d
+                        }) }}
+                        <small class="text-muted">{{ totalBattData.power.u }}</small>
+                    </template>
                 </h2>
             </CardElement>
         </div>

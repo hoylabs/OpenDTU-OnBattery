@@ -24,6 +24,8 @@ class BatteryStats {
         float getVoltage() const { return _voltage; }
         uint32_t getVoltageAgeSeconds() const { return (millis() - _lastUpdateVoltage) / 1000; }
 
+        float getChargeCurrent() const { return _current; };
+
         // convert stats to JSON for web application live view
         virtual void getLiveViewData(JsonVariant& root) const;
 
@@ -35,12 +37,12 @@ class BatteryStats {
 
         bool isSoCValid() const { return _lastUpdateSoC > 0; }
         bool isVoltageValid() const { return _lastUpdateVoltage > 0; }
+        bool isCurrentValid() const { return _lastUpdateCurrent > 0; }
 
         // returns true if the battery reached a critically low voltage/SoC,
         // such that it is in need of charging to prevent degredation.
         virtual bool getImmediateChargingRequest() const { return false; };
 
-        virtual float getChargeCurrent() const { return 0; };
         virtual float getChargeCurrentLimitation() const { return FLT_MAX; };
 
     protected:
@@ -57,6 +59,11 @@ class BatteryStats {
             _lastUpdateVoltage = _lastUpdate = timestamp;
         }
 
+        void setCurrent(float current, uint32_t timestamp) {
+            _current = current;
+            _lastUpdateCurrent = _lastUpdate = timestamp;
+        }
+
         String _manufacturer = "unknown";
         String _hwversion = "";
         String _fwversion = "";
@@ -70,6 +77,11 @@ class BatteryStats {
         uint32_t _lastUpdateSoC = 0;
         float _voltage = 0; // total battery pack voltage
         uint32_t _lastUpdateVoltage = 0;
+
+        // total current into (positive) or from (negative)
+        // the battery, i.e., the charging current
+        float _current = 0;
+        uint32_t _lastUpdateCurrent = 0;
 };
 
 class PylontechBatteryStats : public BatteryStats {
@@ -79,7 +91,6 @@ class PylontechBatteryStats : public BatteryStats {
         void getLiveViewData(JsonVariant& root) const final;
         void mqttPublish() const final;
         bool getImmediateChargingRequest() const { return _chargeImmediately; } ;
-        float getChargeCurrent() const { return _current; } ;
         float getChargeCurrentLimitation() const { return _chargeCurrentLimitation; } ;
 
     private:
@@ -90,9 +101,6 @@ class PylontechBatteryStats : public BatteryStats {
         float _chargeCurrentLimitation;
         float _dischargeCurrentLimitation;
         uint16_t _stateOfHealth;
-        // total current into (positive) or from (negative)
-        // the battery, i.e., the charging current
-        float _current;
         float _temperature;
 
         bool _alarmOverCurrentDischarge;
@@ -122,7 +130,6 @@ class PytesBatteryStats : public BatteryStats {
     public:
         void getLiveViewData(JsonVariant& root) const final;
         void mqttPublish() const final;
-        float getChargeCurrent() const { return _current; } ;
         float getChargeCurrentLimitation() const { return _chargeCurrentLimit; } ;
 
     private:
@@ -144,9 +151,6 @@ class PytesBatteryStats : public BatteryStats {
 
         uint16_t _stateOfHealth;
 
-        // total current into (positive) or from (negative)
-        // the battery, i.e., the charging current
-        float _current;
         float _temperature;
 
         uint16_t _cellMinMilliVolt;
@@ -231,7 +235,6 @@ class VictronSmartShuntStats : public BatteryStats {
         void updateFrom(VeDirectShuntController::data_t const& shuntData);
 
     private:
-        float _current;
         float _temperature;
         bool _tempPresent;
         uint8_t _chargeCycles;
@@ -260,6 +263,6 @@ class MqttBatteryStats : public BatteryStats {
         void mqttPublish() const final { }
 
         // if the voltage is subscribed to at all, it alone does not warrant a
-        // card in the live view, since the SoC is already displayed at the top
+        // card in the live view, since the SoC and voltage is already displayed at the top
         void getLiveViewData(JsonVariant& root) const final { }
 };
