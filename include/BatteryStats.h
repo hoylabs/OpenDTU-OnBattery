@@ -20,11 +20,13 @@ class BatteryStats {
 
         uint8_t getSoC() const { return _soc; }
         uint32_t getSoCAgeSeconds() const { return (millis() - _lastUpdateSoC) / 1000; }
+        uint8_t getSoCPrecision() const { return _socPrecision; }
 
         float getVoltage() const { return _voltage; }
         uint32_t getVoltageAgeSeconds() const { return (millis() - _lastUpdateVoltage) / 1000; }
 
         float getChargeCurrent() const { return _current; };
+        uint8_t getChargeCurrentPrecision() const { return _currentPrecision; }
 
         // convert stats to JSON for web application live view
         virtual void getLiveViewData(JsonVariant& root) const;

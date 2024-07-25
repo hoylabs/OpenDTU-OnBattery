@@ -93,7 +93,7 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
 
         if (config.Battery.Enabled) {
             if (spStats->isSoCValid()) {
-                addTotalField(batteryObj, "soc", spStats->getSoC(), "%", 0);
+                addTotalField(batteryObj, "soc", spStats->getSoC(), "%", spStats->getSoCPrecision());
             }
 
             if (spStats->isVoltageValid()) {
@@ -101,7 +101,7 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
             }
 
             if (spStats->isCurrentValid()) {
-                addTotalField(batteryObj, "current", spStats->getChargeCurrent(), "A", 1);
+                addTotalField(batteryObj, "current", spStats->getChargeCurrent(), "A", spStats->getChargeCurrentPrecision());
             }
 
             if (spStats->isVoltageValid() && spStats->isCurrentValid()) {
