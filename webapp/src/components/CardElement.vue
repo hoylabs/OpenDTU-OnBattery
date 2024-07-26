@@ -1,7 +1,7 @@
 <template>
     <div :class="['card', addSpace ? 'mt-5' : '' ]">
         <div :class="['card-header', textVariant]">{{ text }}</div>
-        <div :class="['card-body', 'card-text', centerContent ? 'text-center' : '', flexChildern ? 'd-flex' : '']">
+        <div :class="['card-body', 'card-text', centerContent ? 'text-center' : '', flexChildren ? 'd-flex' : '']">
             <slot />
         </div>
     </div>
@@ -16,7 +16,7 @@ export default defineComponent({
         'textVariant': String,
         'addSpace': Boolean,
         'centerContent': Boolean,
-        'flexChildern': Boolean,
+        'flexChildren': Boolean,
     },
 });
 </script>

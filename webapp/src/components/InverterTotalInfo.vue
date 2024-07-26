@@ -68,7 +68,7 @@
         </div>
         <template v-if="totalBattData.enabled">
             <div class="col">
-                <CardElement centerContent flexChildern textVariant="text-bg-success" :text="$t('invertertotalinfo.BatteryCharge')">
+                <CardElement centerContent flexChildren textVariant="text-bg-success" :text="$t('invertertotalinfo.BatteryCharge')">
                     <div class="flex-fill" v-if="totalBattData.soc">
                         <h2>
                             {{ $n(totalBattData.soc.v, 'decimal', {
@@ -91,7 +91,7 @@
                 </CardElement>
             </div>
             <div class="col" v-if="totalBattData.power || totalBattData.current">
-                <CardElement centerContent flexChildern textVariant="text-bg-success" :text="$t('invertertotalinfo.BatteryPower')">
+                <CardElement centerContent flexChildren textVariant="text-bg-success" :text="$t('invertertotalinfo.BatteryPower')">
                     <div class="flex-fill" v-if="totalBattData.power">
                         <h2>
                             {{ $n(totalBattData.power.v, 'decimal', {
