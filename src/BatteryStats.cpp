@@ -298,9 +298,15 @@ void BatteryStats::mqttPublish() const
 {
     MqttSettings.publish("battery/manufacturer", _manufacturer);
     MqttSettings.publish("battery/dataAge", String(getAgeSeconds()));
-    MqttSettings.publish("battery/stateOfCharge", String(_soc));
-    MqttSettings.publish("battery/voltage", String(_voltage));
-    MqttSettings.publish("battery/current", String(_current));
+    if (isSoCValid()) {
+        MqttSettings.publish("battery/stateOfCharge", String(_soc));
+    }
+    if (isVoltageValid()) {
+        MqttSettings.publish("battery/voltage", String(_voltage));
+    }
+    if (isCurrentValid()) {
+        MqttSettings.publish("battery/current", String(_current));
+    }
 }
 
 void PylontechBatteryStats::mqttPublish() const
