@@ -9,15 +9,20 @@
 /**
  * SPI# to SPI ID and SPI_HOST mapping
  *
+ * ESP32
+ * | SPI # | SPI ID | SPI_HOST |
+ * | 2     | 2      | 1        |
+ * | 3     | 3      | 2        |
+ *
  * ESP32-S3
  * | SPI # | SPI ID | SPI_HOST |
  * | 2     | 0      | 1        |
  * | 3     | 1      | 2        |
  *
- * ESP32
+ * ESP32-C3
  * | SPI # | SPI ID | SPI_HOST |
- * | 2     | 2      | 1        |
- * | 3     | 3      | 2        |
+ * | 2     | 0      | 1        |
+ *
  */
 
 class SPIPortManagerClass {
