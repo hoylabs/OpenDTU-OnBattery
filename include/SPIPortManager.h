@@ -11,15 +11,13 @@
  *
  * ESP32-S3
  * | SPI # | SPI ID | SPI_HOST |
- * | 0     | 0      | 0        |
- * | 1     | 1      | 1        |
- * | 2     | 3      | 2        |
+ * | 2     | 0      | 1        |
+ * | 3     | 1      | 2        |
  *
  * ESP32
  * | SPI # | SPI ID | SPI_HOST |
- * | 0     | 1      | 0        |
- * | 1     | 2      | 1        |
- * | 2     | 3      | 2        |
+ * | 2     | 2      | 1        |
+ * | 3     | 3      | 2        |
  */
 
 class SPIPortManagerClass {
@@ -33,11 +31,7 @@ public:
 
 private:
     // the amount of SPIs available on supported ESP32 chips
-    #if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
-    static size_t constexpr _num_controllers = 2;
-    #else
-    static size_t constexpr _num_controllers = 1;
-    #endif
+    static size_t constexpr _num_controllers = SOC_SPI_PERIPH_NUM - 1; // minus one because SPI1 can't be used
 
     #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S3
     static int8_t constexpr _offset_spi_num = 0;  // FSPI=0, HSPI=1
