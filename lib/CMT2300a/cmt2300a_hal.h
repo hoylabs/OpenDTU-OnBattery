@@ -36,7 +36,7 @@ extern "C" {
 #define CMT2300A_GetTickCount() millis()
 /* ************************************************************************ */
 
-void CMT2300A_InitSpi(const int8_t pin_sdio, const int8_t pin_clk, const int8_t pin_cs, const int8_t pin_fcs, const uint32_t spi_speed);
+void CMT2300A_InitSpi(const int8_t spi_host, const int8_t pin_sdio, const int8_t pin_clk, const int8_t pin_cs, const int8_t pin_fcs, const uint32_t spi_speed);
 
 uint8_t CMT2300A_ReadReg(const uint8_t addr);
 void CMT2300A_WriteReg(const uint8_t addr, const uint8_t dat);

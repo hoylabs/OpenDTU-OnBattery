@@ -41,7 +41,7 @@ struct CountryFrequencyList_t {
 
 class HoymilesRadio_CMT : public HoymilesRadio {
 public:
-    void init(const int8_t pin_sdio, const int8_t pin_clk, const int8_t pin_cs, const int8_t pin_fcs, const int8_t pin_gpio2, const int8_t pin_gpio3);
+    void init(const int8_t spi_host, const int8_t pin_sdio, const int8_t pin_clk, const int8_t pin_cs, const int8_t pin_fcs, const int8_t pin_gpio2, const int8_t pin_gpio3);
     void loop();
     void setPALevel(const int8_t paLevel);
     void setInverterTargetFrequency(const uint32_t frequency);

@@ -7,21 +7,8 @@
 #include "MessageOutput.h"
 #include "PinMapping.h"
 #include "SunPosition.h"
+#include "SPIPortManager.h"
 #include <Hoymiles.h>
-
-// the NRF shall use the second externally usable HW SPI controller
-// for ESP32 that is the so-called VSPI, for ESP32-S2/S3 it is now called implicitly
-// HSPI, as it has shifted places for these chip generations
-// for all generations, this is equivalent to SPI3_HOST in the lower level driver
-// For ESP32-C2, the only externally usable HW SPI controller is SPI2, its signal names
-// being prefixed with FSPI.
-#if CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
-#define SPI_NRF HSPI
-#elif CONFIG_IDF_TARGET_ESP32C3
-#define SPI_NRF FSPI
-#else
-#define SPI_NRF VSPI
-#endif
 
 InverterSettingsClass InverterSettings;
 
@@ -44,18 +31,30 @@ void InverterSettingsClass::init(Scheduler& scheduler)
 
     if (PinMapping.isValidNrf24Config() || PinMapping.isValidCmt2300Config()) {
         if (PinMapping.isValidNrf24Config()) {
-            SPIClass* spiClass = new SPIClass(SPI_NRF);
-            spiClass->begin(pin.nrf24_clk, pin.nrf24_miso, pin.nrf24_mosi, pin.nrf24_cs);
-            Hoymiles.initNRF(spiClass, pin.nrf24_en, pin.nrf24_irq);
+            auto oSPInum = SPIPortManager.allocatePort("NRF24");
+
+            if (oSPInum) {
+                SPIClass* spiClass = new SPIClass(*oSPInum); // 0 gut, 1 gut, 2 schlecht
+                spiClass->begin(pin.nrf24_clk, pin.nrf24_miso, pin.nrf24_mosi, pin.nrf24_cs);
+                Hoymiles.initNRF(spiClass, pin.nrf24_en, pin.nrf24_irq);
+            }
         }
 
         if (PinMapping.isValidCmt2300Config()) {
-            Hoymiles.initCMT(pin.cmt_sdio, pin.cmt_clk, pin.cmt_cs, pin.cmt_fcs, pin.cmt_gpio2, pin.cmt_gpio3);
-            MessageOutput.println("  Setting country mode... ");
-            Hoymiles.getRadioCmt()->setCountryMode(static_cast<CountryModeId_t>(config.Dtu.Cmt.CountryMode));
-            MessageOutput.println("  Setting CMT target frequency... ");
-            Hoymiles.getRadioCmt()->setInverterTargetFrequency(config.Dtu.Cmt.Frequency);
+            auto oSPInum = SPIPortManager.allocatePort("CMT2300A");
+
+            if (oSPInum) {
+                // TODO(AndreasBoehm): this only works on an ESP32-S3 like this, we need to find a different way to also make this work on an ESP32
+                // oSPInum + 1 to make it work
+                Hoymiles.initCMT(*oSPInum + 1, pin.cmt_sdio, pin.cmt_clk, pin.cmt_cs, pin.cmt_fcs, pin.cmt_gpio2, pin.cmt_gpio3);
+                MessageOutput.println("  Setting country mode... ");
+                Hoymiles.getRadioCmt()->setCountryMode(static_cast<CountryModeId_t>(config.Dtu.Cmt.CountryMode));
+                MessageOutput.println("  Setting CMT target frequency... ");
+                Hoymiles.getRadioCmt()->setInverterTargetFrequency(config.Dtu.Cmt.Frequency);
+            }
         }
+
+        // TODO(AndreasBoehm): do something when we could not allocate the port for any of the valid configured pin mappings
 
         MessageOutput.println("  Setting radio PA level... ");
         Hoymiles.getRadioNrf()->setPALevel((rf24_pa_dbm_e)config.Dtu.Nrf.PaLevel);
