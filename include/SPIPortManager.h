@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
-#include <SPI.h>
 #include <array>
 #include <optional>
 #include <string>
+#include <driver/spi_master.h>
 
 /**
  * SPI# to SPI ID and SPI_HOST mapping
@@ -29,12 +29,24 @@ public:
     std::optional<uint8_t> allocatePort(std::string const& owner);
     void freePort(std::string const& owner);
 
+    spi_host_device_t SPIhostNum(uint8_t spi_num) { return (spi_host_device_t)(spi_num + _offset_spi_num); }
+
 private:
     // the amount of SPIs available on supported ESP32 chips
-    // TODO(AndreasBoehm): this does not work as expected on non S3 ESPs
-    static size_t constexpr _num_controllers = SOC_SPI_PERIPH_NUM;
+    #if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+    static size_t constexpr _num_controllers = 2;
+    #else
+    static size_t constexpr _num_controllers = 1;
+    #endif
 
-    // TODO(AndreasBoehm): using a simple array like this does not work well when we want to support ESP32 and ESP32-S3
+    #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S3
+    static int8_t constexpr _offset_spi_num = 0;  // FSPI=0, HSPI=1
+    static int8_t constexpr _offset_spi_host = 1; // SPI1_HOST=0 but not usable, SPI2_HOST=1 and SPI3_HOST=2, first usable is SPI2_HOST
+    #else
+    static int8_t constexpr _offset_spi_num = 2; // HSPI=2, VSPI=3
+    static int8_t constexpr _offset_spi_host = -1; // SPI1_HOST=0 but not usable, SPI2_HOST=1 and SPI3_HOST=2, first usable is SPI2_HOST
+    #endif
+
     std::array<std::string, _num_controllers> _ports = { "" };
 };
 

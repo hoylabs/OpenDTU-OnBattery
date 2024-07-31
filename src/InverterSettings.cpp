@@ -24,7 +24,7 @@ void InverterSettingsClass::init(Scheduler& scheduler)
     const PinMapping_t& pin = PinMapping.get();
 
     // Initialize inverter communication
-    MessageOutput.print("Initialize Hoymiles interface... ");
+    MessageOutput.println("Initialize Hoymiles interface... ");
 
     Hoymiles.setMessageOutput(&MessageOutput);
     Hoymiles.init();
@@ -34,7 +34,7 @@ void InverterSettingsClass::init(Scheduler& scheduler)
             auto oSPInum = SPIPortManager.allocatePort("NRF24");
 
             if (oSPInum) {
-                SPIClass* spiClass = new SPIClass(*oSPInum); // 0 gut, 1 gut, 2 schlecht
+                SPIClass* spiClass = new SPIClass(*oSPInum);
                 spiClass->begin(pin.nrf24_clk, pin.nrf24_miso, pin.nrf24_mosi, pin.nrf24_cs);
                 Hoymiles.initNRF(spiClass, pin.nrf24_en, pin.nrf24_irq);
             }
@@ -44,9 +44,7 @@ void InverterSettingsClass::init(Scheduler& scheduler)
             auto oSPInum = SPIPortManager.allocatePort("CMT2300A");
 
             if (oSPInum) {
-                // TODO(AndreasBoehm): this only works on an ESP32-S3 like this, we need to find a different way to also make this work on an ESP32
-                // oSPInum + 1 to make it work
-                Hoymiles.initCMT(*oSPInum + 1, pin.cmt_sdio, pin.cmt_clk, pin.cmt_cs, pin.cmt_fcs, pin.cmt_gpio2, pin.cmt_gpio3);
+                Hoymiles.initCMT(SPIPortManager.SPIhostNum(*oSPInum), pin.cmt_sdio, pin.cmt_clk, pin.cmt_cs, pin.cmt_fcs, pin.cmt_gpio2, pin.cmt_gpio3);
                 MessageOutput.println("  Setting country mode... ");
                 Hoymiles.getRadioCmt()->setCountryMode(static_cast<CountryModeId_t>(config.Dtu.Cmt.CountryMode));
                 MessageOutput.println("  Setting CMT target frequency... ");

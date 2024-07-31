@@ -1,6 +1,5 @@
 #include "cmt_spi3.h"
 #include <Arduino.h>
-#include <driver/spi_master.h>
 #include <esp_rom_gpio.h> // for esp_rom_gpio_connect_out_signal
 
 SemaphoreHandle_t paramLock = NULL;
@@ -11,7 +10,7 @@ SemaphoreHandle_t paramLock = NULL;
 
 spi_device_handle_t spi_reg, spi_fifo;
 
-void cmt_spi3_init(const int8_t spi_host, const int8_t pin_sdio, const int8_t pin_clk, const int8_t pin_cs, const int8_t pin_fcs, const uint32_t spi_speed)
+void cmt_spi3_init(const spi_host_device_t spi_host, const int8_t pin_sdio, const int8_t pin_clk, const int8_t pin_cs, const int8_t pin_fcs, const uint32_t spi_speed)
 {
     paramLock = xSemaphoreCreateMutex();
 

@@ -7,7 +7,7 @@
 #include "cmt2300a_params_860.h"
 #include "cmt2300a_params_900.h"
 
-CMT2300A::CMT2300A(const int8_t spi_host, const uint8_t pin_sdio, const uint8_t pin_clk, const uint8_t pin_cs, const uint8_t pin_fcs, const uint32_t spi_speed)
+CMT2300A::CMT2300A(const spi_host_device_t spi_host, const uint8_t pin_sdio, const uint8_t pin_clk, const uint8_t pin_cs, const uint8_t pin_fcs, const uint32_t spi_speed)
 {
     _spi_host = spi_host;
     _pin_sdio = pin_sdio;
