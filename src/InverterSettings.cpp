@@ -52,8 +52,6 @@ void InverterSettingsClass::init(Scheduler& scheduler)
             }
         }
 
-        // TODO(AndreasBoehm): do something when we could not allocate the port for any of the valid configured pin mappings
-
         MessageOutput.println("  Setting radio PA level... ");
         Hoymiles.getRadioNrf()->setPALevel((rf24_pa_dbm_e)config.Dtu.Nrf.PaLevel);
         Hoymiles.getRadioCmt()->setPALevel(config.Dtu.Cmt.PaLevel);
