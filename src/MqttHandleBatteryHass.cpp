@@ -5,7 +5,6 @@
 #include "MqttHandleBatteryHass.h"
 #include "Configuration.h"
 #include "MqttSettings.h"
-#include "MqttHandleHass.h"
 #include "Utils.h"
 #include "__compiled_constants.h"
 
@@ -159,7 +158,9 @@ void MqttHandleBatteryHassClass::loop()
             publishSensor("Modules Blocking Charge", "mdi:counter", "modulesBlockingCharge");
             publishSensor("Modules Blocking Discharge", "mdi:counter", "modulesBlockingDischarge");
 
-            publishBinarySensor("Alarm Discharge current", "mdi:alert", "alarm/overCurrentDischarge", "1", "0");
+         // publishBinarySensor("Alarm Discharge current", "mdi:alert", "alarm/overCurrentDischarge", "1", "0");
+            publishBinarySensor2("Alarm Discharge current", "mdi:alert", "alarm_discharge_current", "battery/alarm/overCurrentDischarge");
+
             publishBinarySensor("Alarm High charge current", "mdi:alert", "alarm/overCurrentCharge", "1", "0");
             publishBinarySensor("Alarm Voltage low", "mdi:alert", "alarm/underVoltage", "1", "0");
             publishBinarySensor("Alarm Voltage high", "mdi:alert", "alarm/overVoltage", "1", "0");
@@ -218,8 +219,7 @@ void MqttHandleBatteryHassClass::publishSensor(const char* caption, const char* 
         root["unit_of_meas"] = unitOfMeasurement;
     }
 
-    JsonObject deviceObj = root["dev"].to<JsonObject>();
-    createDeviceInfo(deviceObj);
+    root["dev"] = createDeviceInfo();
 
     if (Configuration.get().Mqtt.Hass.Expire) {
         root["exp_aft"] = Battery.getStats()->getMqttFullPublishIntervalMs() / 1000 * 3;
@@ -235,10 +235,28 @@ void MqttHandleBatteryHassClass::publishSensor(const char* caption, const char* 
         return;
     }
 
-    char buffer[512];
-    serializeJson(root, buffer);
-    publish(configTopic, buffer);
+    MqttHassPublisher::publish(configTopic, root);
+}
 
+String MqttHandleBatteryHassClass::uniqueIdentifier(const char* sensorId)
+{
+    return serial + "_" + sensorId;
+}
+
+String MqttHandleBatteryHassClass::configTopicPrefix()
+{
+    return "dtu_battery_" + serial;
+}
+
+void MqttHandleBatteryHassClass::publishBinarySensor2(const char* caption, const char* icon, const char* sensorId, const char* subTopic)
+{
+    MqttHassPublisher::publishBinarySensor(
+        uniqueIdentifier(sensorId),
+        caption,
+        icon,
+        sensorId,
+        subTopic
+    );
 }
 
 void MqttHandleBatteryHassClass::publishBinarySensor(const char* caption, const char* icon, const char* subTopic, const char* payload_on, const char* payload_off)
@@ -251,60 +269,48 @@ void MqttHandleBatteryHassClass::publishBinarySensor(const char* caption, const 
     sensorId.replace(":", "");
     sensorId.toLowerCase();
 
-    String configTopic = "binary_sensor/dtu_battery_" + serial
+    String configTopic = "dtu_battery_" + serial
         + "/" + sensorId
         + "/config";
 
-    String statTopic = MqttSettings.getPrefix() + "battery/";
+    String statTopic = "battery/";
     // omit serial to avoid a breaking change
     // statTopic.concat(serial);
     // statTopic.concat("/");
     statTopic.concat(subTopic);
 
-    JsonDocument root;
-
-    root["name"] = caption;
-    root["uniq_id"] = serial + "_" + sensorId;
-    root["stat_t"] = statTopic;
-    root["pl_on"] = payload_on;
-    root["pl_off"] = payload_off;
-
-    if (icon != NULL) {
-        root["icon"] = icon;
-    }
-
-    auto deviceObj = root["dev"].to<JsonObject>();
-    createDeviceInfo(deviceObj);
-
-    if (!Utils::checkJsonAlloc(root, __FUNCTION__, __LINE__)) {
-        return;
-    }
-
-    char buffer[512];
-    serializeJson(root, buffer);
-    publish(configTopic, buffer);
+    // MqttHassPublisher::publishBinarySensor(
+    //     serial + "_" + sensorId,
+    //     caption,
+    //     icon,
+    //     configTopic,
+    //     statTopic,
+    //     payload_on,
+    //     payload_off,
+    //     createDeviceInfo()
+    // );
 }
 
-void MqttHandleBatteryHassClass::createDeviceInfo(JsonObject& object)
+JsonObject MqttHandleBatteryHassClass::createDeviceInfo()
 {
-    object["name"] = "Battery(" + serial + ")";
+    String name = "Battery(" + serial + ")";
 
     auto& config = Configuration.get();
     if (config.Battery.Provider == 1) {
-        object["name"] = "JK BMS (" + Battery.getStats()->getManufacturer() + ")";
+        name = "JK BMS (" + Battery.getStats()->getManufacturer() + ")";
     }
 
-    object["ids"] = serial;
-    object["cu"] = MqttHandleHass.getDtuUrl();
-    object["mf"] = "OpenDTU";
-    object["mdl"] = Battery.getStats()->getManufacturer();
-    object["sw"] = __COMPILED_GIT_HASH__;
-    object["via_device"] = MqttHandleHass.getDtuUniqueId();
-}
+    String firmareVersion = Battery.getStats()->getFwVersion();
 
-void MqttHandleBatteryHassClass::publish(const String& subtopic, const String& payload)
-{
-    String topic = Configuration.get().Mqtt.Hass.Topic;
-    topic += subtopic;
-    MqttSettings.publishGeneric(topic.c_str(), payload.c_str(), Configuration.get().Mqtt.Hass.Retain);
+    if (firmareVersion == "") {
+        firmareVersion = __COMPILED_GIT_HASH__;
+    }
+
+    return MqttHassPublisher::createDeviceInfo(
+        name,
+        serial,
+        Battery.getStats()->getManufacturer(),
+        firmareVersion,
+        true
+    );
 }

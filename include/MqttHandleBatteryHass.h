@@ -2,19 +2,22 @@
 #pragma once
 
 #include <ArduinoJson.h>
-#include <TaskSchedulerDeclarations.h>
+#include "MqttHassPublisher.h"
 
-class MqttHandleBatteryHassClass {
+class MqttHandleBatteryHassClass : public MqttHassPublisher {
 public:
     void init(Scheduler& scheduler);
     void forceUpdate() { _doPublish = true; }
 
 private:
     void loop();
-    void publish(const String& subtopic, const String& payload);
     void publishBinarySensor(const char* caption, const char* icon, const char* subTopic, const char* payload_on, const char* payload_off);
     void publishSensor(const char* caption, const char* icon, const char* subTopic, const char* deviceClass = NULL, const char* stateClass = NULL, const char* unitOfMeasurement = NULL);
-    void createDeviceInfo(JsonObject& object);
+
+    void publishBinarySensor2(const char* caption, const char* icon, const char* sensorId, const char* subTopic);
+    JsonObject createDeviceInfo();
+
+    String configTopicPrefix();
 
     Task _loopTask;
 
