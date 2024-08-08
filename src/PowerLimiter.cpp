@@ -240,8 +240,7 @@ void PowerLimiterClass::loop()
     auto getBatteryPower = [this,&config]() -> bool {
         if (config.PowerLimiter.IsInverterSolarPowered) { return false; }
 
-        auto isDayPeriod = (SunPosition.isSunsetAvailable() && SunPosition.isDayPeriod())
-            || getSolarPower() > 0;
+        auto isDayPeriod = SunPosition.isSunsetAvailable() ? SunPosition.isDayPeriod() : getSolarPower() > 0;
 
         if (_nighttimeDischarging && isDayPeriod) {
             _nighttimeDischarging = false;
