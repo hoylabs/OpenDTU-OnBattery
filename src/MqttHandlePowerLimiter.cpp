@@ -25,6 +25,18 @@ void MqttHandlePowerLimiterClass::init(Scheduler& scheduler)
     using std::placeholders::_5;
     using std::placeholders::_6;
 
+    subscribeTopics();
+
+    _lastPublish = millis();
+}
+
+void MqttHandlePowerLimiterClass::forceUpdate()
+{
+    _lastPublish = 0;
+}
+
+void MqttHandlePowerLimiterClass::subscribeTopics()
+{
     String const& prefix = MqttSettings.getPrefix();
 
     auto subscribe = [&prefix, this](char const* subTopic, MqttPowerLimiterCommand command) {
@@ -46,10 +58,22 @@ void MqttHandlePowerLimiterClass::init(Scheduler& scheduler)
     subscribe("mode", MqttPowerLimiterCommand::Mode);
     subscribe("upper_power_limit", MqttPowerLimiterCommand::UpperPowerLimit);
     subscribe("target_power_consumption", MqttPowerLimiterCommand::TargetPowerConsumption);
-
-    _lastPublish = millis();
 }
 
+void MqttHandlePowerLimiterClass::unsubscribeTopics()
+{
+    String const& prefix = MqttSettings.getPrefix();
+    MqttSettings.unsubscribe(String(prefix + "powerlimiter/cmd/threshold/soc/start"));
+    MqttSettings.unsubscribe(String(prefix + "powerlimiter/cmd/threshold/soc/stop"));
+    MqttSettings.unsubscribe(String(prefix + "powerlimiter/cmd/threshold/soc/full_solar_passthrough"));
+    MqttSettings.unsubscribe(String(prefix + "powerlimiter/cmd/threshold/voltage/start"));
+    MqttSettings.unsubscribe(String(prefix + "powerlimiter/cmd/threshold/voltage/stop"));
+    MqttSettings.unsubscribe(String(prefix + "powerlimiter/cmd/threshold/voltage/full_solar_passthrough_start"));
+    MqttSettings.unsubscribe(String(prefix + "powerlimiter/cmd/threshold/voltage/full_solar_passthrough_stop"));
+    MqttSettings.unsubscribe(String(prefix + "powerlimiter/cmd/mode"));
+    MqttSettings.unsubscribe(String(prefix + "powerlimiter/cmd/upper_power_limit"));
+    MqttSettings.unsubscribe(String(prefix + "powerlimiter/cmd/target_power_consumption"));
+}
 
 void MqttHandlePowerLimiterClass::loop()
 {

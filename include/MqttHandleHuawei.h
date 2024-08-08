@@ -13,6 +13,11 @@ class MqttHandleHuaweiClass {
 public:
     void init(Scheduler& scheduler);
 
+    void forceUpdate();
+
+    void subscribeTopics();
+    void unsubscribeTopics();
+
 private:
     void loop();
 

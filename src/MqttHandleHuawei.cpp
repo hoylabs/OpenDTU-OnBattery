@@ -6,7 +6,6 @@
 #include "MessageOutput.h"
 #include "MqttSettings.h"
 #include "Huawei_can.h"
-// #include "Failsafe.h"
 #include "WebApi_Huawei.h"
 #include <ctime>
 
@@ -19,6 +18,18 @@ void MqttHandleHuaweiClass::init(Scheduler& scheduler)
     _loopTask.setIterations(TASK_FOREVER);
     _loopTask.enable();
 
+    subscribeTopics();
+
+    _lastPublish = millis();
+}
+
+void MqttHandleHuaweiClass::forceUpdate()
+{
+    _lastPublish = 0;
+}
+
+void MqttHandleHuaweiClass::subscribeTopics()
+{
     String const& prefix = MqttSettings.getPrefix();
 
     auto subscribe = [&prefix, this](char const* subTopic, Topic t) {
@@ -35,11 +46,17 @@ void MqttHandleHuaweiClass::init(Scheduler& scheduler)
     subscribe("limit_offline_voltage", Topic::LimitOfflineVoltage);
     subscribe("limit_offline_current", Topic::LimitOfflineCurrent);
     subscribe("mode", Topic::Mode);
-
-    _lastPublish = millis();
-
 }
 
+void MqttHandleHuaweiClass::unsubscribeTopics()
+{
+    String const& prefix = MqttSettings.getPrefix();
+    MqttSettings.unsubscribe(String(prefix + "huawei/cmd/limit_online_voltage"));
+    MqttSettings.unsubscribe(String(prefix + "huawei/cmd/limit_online_current"));
+    MqttSettings.unsubscribe(String(prefix + "huawei/cmd/limit_offline_voltage"));
+    MqttSettings.unsubscribe(String(prefix + "huawei/cmd/limit_offline_current"));
+    MqttSettings.unsubscribe(String(prefix + "huawei/cmd/mode"));
+}
 
 void MqttHandleHuaweiClass::loop()
 {
