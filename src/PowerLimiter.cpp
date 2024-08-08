@@ -17,6 +17,7 @@
 #include <ctime>
 #include <cmath>
 #include <frozen/map.h>
+#include "SunPosition.h"
 
 PowerLimiterClass PowerLimiter;
 
@@ -239,7 +240,10 @@ void PowerLimiterClass::loop()
     auto getBatteryPower = [this,&config]() -> bool {
         if (config.PowerLimiter.IsInverterSolarPowered) { return false; }
 
-        if (_nighttimeDischarging && getSolarPower() > 0) {
+        auto isDayPeriod = (SunPosition.isSunsetAvailable() && SunPosition.isDayPeriod())
+            || getSolarPower() > 0;
+
+        if (_nighttimeDischarging && isDayPeriod) {
             _nighttimeDischarging = false;
             return isStartThresholdReached();
         }
@@ -248,12 +252,10 @@ void PowerLimiterClass::loop()
 
         if (isStartThresholdReached()) { return true; }
 
-        // TODO(schlimmchen): should be supported by sunrise and sunset, such
-        // that a thunderstorm or other events that drastically lower the solar
-        // power do not cause the start of a discharge cycle during the day.
         if (config.PowerLimiter.SolarPassThroughEnabled &&
                 config.PowerLimiter.BatteryAlwaysUseAtNight &&
-                getSolarPower() == 0 && !_batteryDischargeEnabled) {
+                !isDayPeriod &&
+                !_batteryDischargeEnabled) {
             _nighttimeDischarging = true;
             return true;
         }
