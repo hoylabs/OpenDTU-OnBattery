@@ -236,7 +236,7 @@ void HuaweiCanClass::updateSettings(uint8_t huawei_miso, uint8_t huawei_mosi, ui
       _mode = HUAWEI_MODE_AUTO_INT;
     }
 
-    xTaskCreate(HuaweiCanCommunicationTask,"HUAWEI_CAN_0",1000,NULL,0,&_HuaweiCanCommunicationTaskHdl);
+    xTaskCreate(HuaweiCanCommunicationTask,"HUAWEI_CAN_0",2000,NULL,0,&_HuaweiCanCommunicationTaskHdl);
 
     MessageOutput.println("[HuaweiCanClass::init] MCP2515 Initialized Successfully!");
     _initialized = true;
