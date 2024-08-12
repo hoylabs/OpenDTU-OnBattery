@@ -36,13 +36,17 @@ public:
 
 private:
     // the amount of SPIs available on supported ESP32 chips
-    static size_t constexpr _num_controllers = SOC_SPI_PERIPH_NUM - 1; // minus one because SPI1 can't be used
+    #if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S3
+    static size_t constexpr _num_controllers = 4;
+    #else
+    static size_t constexpr _num_controllers = 3;
+    #endif
 
     #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S3
-    static int8_t constexpr _offset_spi_num = 0;  // FSPI=0, HSPI=1
+    static int8_t constexpr _offset_spi_num = -2;  // FSPI=0, HSPI=1
     static int8_t constexpr _offset_spi_host = 1; // SPI1_HOST=0 but not usable, SPI2_HOST=1 and SPI3_HOST=2, first usable is SPI2_HOST
     #else
-    static int8_t constexpr _offset_spi_num = 2; // HSPI=2, VSPI=3
+    static int8_t constexpr _offset_spi_num = 0; // HSPI=2, VSPI=3
     static int8_t constexpr _offset_spi_host = -1; // SPI1_HOST=0 but not usable, SPI2_HOST=1 and SPI3_HOST=2, first usable is SPI2_HOST
     #endif
 

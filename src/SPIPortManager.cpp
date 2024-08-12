@@ -5,23 +5,25 @@
 SPIPortManagerClass SPIPortManager;
 static constexpr char  TAG[] = "[SPIPortManager]";
 
-void SPIPortManagerClass::init() {}
+void SPIPortManagerClass::init() {
+    MessageOutput.printf("%s SPI0 and SPI1 reserved by 'Flash and PSRAM'\r\n", TAG);
+    _ports[0] = "Flash";
+    _ports[1] = "PSRAM";
+}
 
 std::optional<uint8_t> SPIPortManagerClass::allocatePort(std::string const& owner)
 {
     for (size_t i = 0; i < _ports.size(); ++i) {
-        auto spiNum = i + _offset_spi_num;
-
         if (_ports[i] != "") {
-            MessageOutput.printf("%s SPI%d already in use by '%s'\r\n", TAG, spiNum, _ports[i].c_str());
+            MessageOutput.printf("%s SPI%d already in use by '%s'\r\n", TAG, i, _ports[i].c_str());
             continue;
         }
 
         _ports[i] = owner;
 
-        MessageOutput.printf("%s SPI%d now in use by '%s'\r\n", TAG, spiNum, owner.c_str());
+        MessageOutput.printf("%s SPI%d now in use by '%s'\r\n", TAG, i, owner.c_str());
 
-        return spiNum;
+        return i + _offset_spi_num;
     }
 
     MessageOutput.printf("%s Cannot assign another SPI port to '%s'\r\n", TAG, owner.c_str());
