@@ -31,8 +31,7 @@ public:
 
     std::optional<uint8_t> allocatePort(std::string const& owner);
     void freePort(std::string const& owner);
-
-    spi_host_device_t SPIhostNum(uint8_t spi_num) { return (spi_host_device_t)(spi_num + _offset_spi_host); }
+    spi_host_device_t SPIhostNum(uint8_t spi_num);
 
 private:
     // the amount of SPIs available on supported ESP32 chips

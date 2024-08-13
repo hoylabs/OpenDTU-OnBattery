@@ -39,3 +39,8 @@ void SPIPortManagerClass::freePort(std::string const& owner)
         _ports[i] = "";
     }
 }
+
+spi_host_device_t SPIPortManagerClass::SPIhostNum(uint8_t spi_num)
+{
+    return (spi_host_device_t)(spi_num + _offset_spi_host);
+}
