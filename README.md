@@ -32,7 +32,6 @@ designs](https://opendtu-onbattery.net/3rd_party/cases/) available for you to
 print yourself.
 
 ### Ready-To-Use
-
 If you are interested in ready-to-use hardware available for sale, the
 OpenDTU-OnBattery project endorses the **[OpenDTU Fusion
 board](https://opendtu-onbattery.net/3rd_party/opendtu_fusion/)**.
@@ -102,8 +101,6 @@ To find out what's new or improved have a look at the
 [releases](https://github.com/hoylabs/OpenDTU-OnBattery/releases).
 
 ## Project State
-
-OpenDTU-OnBattery is actively maintained. Please note that OpenDTU-OnBattery
 may change significantly during its development. Bug reports, comments, feature
 requests and pull requests are welcome!
 
