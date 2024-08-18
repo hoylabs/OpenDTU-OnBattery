@@ -496,8 +496,7 @@ export default defineComponent({
         },
         canUseBatteryDischargeAtNight() {
             const cfg = this.powerLimiterConfigList;
-            const meta = this.powerLimiterMetaData;
-            return this.isEnabled() && meta.battery_enabled && !cfg.is_inverter_solar_powered;
+            return !cfg.is_inverter_solar_powered;
         },
         canUseSolarPassthrough() {
             const cfg = this.powerLimiterConfigList;
