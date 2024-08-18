@@ -153,7 +153,6 @@ void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
     if (config.Vedirect.Enabled) {
         config.PowerLimiter.SolarPassThroughEnabled = root["solar_passthrough_enabled"].as<bool>();
         config.PowerLimiter.SolarPassThroughLosses = root["solar_passthrough_losses"].as<uint8_t>();
-        config.PowerLimiter.BatteryAlwaysUseAtNight= root["battery_always_use_at_night"].as<bool>();
         config.PowerLimiter.FullSolarPassThroughStartVoltage = static_cast<int>(root["full_solar_passthrough_start_voltage"].as<float>() * 100) / 100.0;
         config.PowerLimiter.FullSolarPassThroughStopVoltage = static_cast<int>(root["full_solar_passthrough_stop_voltage"].as<float>() * 100) / 100.0;
     }
@@ -173,6 +172,8 @@ void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
         config.PowerLimiter.IgnoreSoc = root["ignore_soc"].as<bool>();
         config.PowerLimiter.BatterySocStartThreshold = root["battery_soc_start_threshold"].as<uint32_t>();
         config.PowerLimiter.BatterySocStopThreshold = root["battery_soc_stop_threshold"].as<uint32_t>();
+        config.PowerLimiter.BatteryAlwaysUseAtNight = root["battery_always_use_at_night"].as<bool>();
+
         if (config.Vedirect.Enabled) {
             config.PowerLimiter.FullSolarPassThroughSoc = root["full_solar_passthrough_soc"].as<uint32_t>();
         }
