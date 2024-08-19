@@ -33,7 +33,7 @@ void MqttHandleHuaweiClass::subscribeTopics()
     String const& prefix = MqttSettings.getPrefix();
 
     auto subscribe = [&prefix, this](char const* subTopic, Topic t) {
-        String fullTopic(prefix + "huawei/cmd/" + subTopic);
+        String fullTopic(prefix + _cmdtopic.data() + subTopic);
         MqttSettings.subscribe(fullTopic.c_str(), 0,
                 std::bind(&MqttHandleHuaweiClass::onMqttMessage, this, t,
                     std::placeholders::_1, std::placeholders::_2,
@@ -41,21 +41,17 @@ void MqttHandleHuaweiClass::subscribeTopics()
                     std::placeholders::_5, std::placeholders::_6));
     };
 
-    subscribe("limit_online_voltage", Topic::LimitOnlineVoltage);
-    subscribe("limit_online_current", Topic::LimitOnlineCurrent);
-    subscribe("limit_offline_voltage", Topic::LimitOfflineVoltage);
-    subscribe("limit_offline_current", Topic::LimitOfflineCurrent);
-    subscribe("mode", Topic::Mode);
+    for (auto const& s : _subscriptions) {
+        subscribe(s.first.data(), s.second);
+    }
 }
 
 void MqttHandleHuaweiClass::unsubscribeTopics()
 {
-    String const& prefix = MqttSettings.getPrefix();
-    MqttSettings.unsubscribe(String(prefix + "huawei/cmd/limit_online_voltage"));
-    MqttSettings.unsubscribe(String(prefix + "huawei/cmd/limit_online_current"));
-    MqttSettings.unsubscribe(String(prefix + "huawei/cmd/limit_offline_voltage"));
-    MqttSettings.unsubscribe(String(prefix + "huawei/cmd/limit_offline_current"));
-    MqttSettings.unsubscribe(String(prefix + "huawei/cmd/mode"));
+    String const prefix = MqttSettings.getPrefix() + _cmdtopic.data();
+    for (auto const& s : _subscriptions) {
+        MqttSettings.unsubscribe(prefix + s.first.data());
+    }
 }
 
 void MqttHandleHuaweiClass::loop()
