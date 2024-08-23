@@ -148,7 +148,7 @@ int16_t BatteryCanReceiver::readSignedInt16(uint8_t *data)
 
 int32_t BatteryCanReceiver::readSignedInt24(uint8_t *data)
 {
-return data[1] | data[1] << 8 | data[2] << 16 ;
+return data[0] | data[1] << 8 | data[2] << 16 ;
 }
 
 float BatteryCanReceiver::scaleValue(int16_t value, float factor)
