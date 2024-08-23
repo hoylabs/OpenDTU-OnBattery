@@ -28,8 +28,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
 
          case 0x630: {
             String state = "";
-            _stats->_dischargeEnabled = 0;
-            _stats->_chargeEnabled = 0;
+
             int clusterstate = rx_message.data[0];
             switch (clusterstate) {
                 case 0:
@@ -58,6 +57,8 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
                     break;
 
                 default:
+                    _stats->_dischargeEnabled = 0;
+                    _stats->_chargeEnabled = 0;
                     break;
             }
             _stats->setManufacturer("SBS UniPower ");
