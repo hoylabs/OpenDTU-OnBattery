@@ -60,7 +60,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
                 default:
                     break;
             }
-            _stats->setManufacturer(String("SBS UniPower " + state));
+            _stats->setManufacturer("SBS UniPower ");
 
             if (_verboseLogging) {
                 MessageOutput.printf("[SBS Unipower] 1584 chargeStatusBits: %d %d\r\n", _stats->_chargeEnabled, _stats->_dischargeEnabled);
@@ -112,7 +112,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
             }
             break;
         }
-        
+
         default:
             return; // do not update last update timestamp
             break;
