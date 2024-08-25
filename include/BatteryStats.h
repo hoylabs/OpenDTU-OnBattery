@@ -46,6 +46,7 @@ class BatteryStats {
         virtual bool getImmediateChargingRequest() const { return false; };
 
         virtual float getChargeCurrentLimitation() const { return FLT_MAX; };
+        virtual float getDischargeCurrentLimitation() const { return FLT_MAX; };
 
     protected:
         virtual void mqttPublish() const;
@@ -96,6 +97,7 @@ class PylontechBatteryStats : public BatteryStats {
         void mqttPublish() const final;
         bool getImmediateChargingRequest() const { return _chargeImmediately; } ;
         float getChargeCurrentLimitation() const { return _chargeCurrentLimitation; } ;
+        float getDischargeCurrentLimitation() const { return _dischargeCurrentLimitation; } ;
 
     private:
         void setManufacturer(String&& m) { _manufacturer = std::move(m); }
@@ -135,6 +137,7 @@ class PytesBatteryStats : public BatteryStats {
         void getLiveViewData(JsonVariant& root) const final;
         void mqttPublish() const final;
         float getChargeCurrentLimitation() const { return _chargeCurrentLimit; } ;
+        float getDischargeCurrentLimitation() const { return _dischargeCurrentLimit; } ;
 
     private:
         void setManufacturer(String&& m) { _manufacturer = std::move(m); }
