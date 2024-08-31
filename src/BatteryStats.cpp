@@ -7,6 +7,7 @@
 #include "JkBmsDataPoints.h"
 #include "MqttSettings.h"
 
+
 template<typename T>
 static void addLiveViewInSection(JsonVariant& root,
     std::string const& section, std::string const& name,
@@ -610,4 +611,27 @@ void VictronSmartShuntStats::mqttPublish() const {
     MqttSettings.publish("battery/lastFullCharge", String(_lastFullCharge));
     MqttSettings.publish("battery/midpointVoltage", String(_midpointVoltage));
     MqttSettings.publish("battery/midpointDeviation", String(_midpointDeviation));
+}
+
+
+void VictronSmartBatterySenseStats::updateFrom(uint32_t volt, int32_t temp, uint32_t timeStamp) {
+
+    // we just get battery voltage and temperature from the "Smart Battery Sense" device
+    BatteryStats::setVoltage(volt/ 1000.0f, timeStamp);
+    _temperature = temp / 1000.0f;
+}
+
+void VictronSmartBatterySenseStats::getLiveViewData(JsonVariant& root) const {
+
+    // the smart battery sense measures only voltage and temperature
+    root["manufacturer"] = _manufacturer;
+    root["data_age"] = getAgeSeconds();
+
+    // values go into the "Status" card of the web application
+    addLiveViewValue(root, "voltage", getVoltage(), "V", 2);
+    addLiveViewValue(root, "temperature", _temperature, "°C", 1);
+}
+
+void VictronSmartBatterySenseStats::mqttPublish() const {
+    BatteryStats::mqttPublish();
 }

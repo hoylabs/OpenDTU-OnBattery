@@ -6,6 +6,7 @@
 #include "VictronSmartShunt.h"
 #include "MqttBattery.h"
 #include "PytesCanReceiver.h"
+#include "VictronSmartBatterySense.h"
 
 BatteryClass Battery;
 
@@ -60,6 +61,9 @@ void BatteryClass::updateSettings()
             break;
         case 4:
             _upProvider = std::make_unique<PytesCanReceiver>();
+            break;
+        case 6:
+            _upProvider = std::make_unique<VictronSmartBatterySense>();
             break;
         default:
             MessageOutput.printf("[Battery] Unknown provider: %d\r\n", config.Battery.Provider);

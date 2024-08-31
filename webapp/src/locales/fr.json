@@ -598,6 +598,7 @@
         "ProviderJkBmsSerial": "Jikong (JK) BMS using serial connection",
         "ProviderMqtt": "Battery data from MQTT broker",
         "ProviderVictron": "Victron SmartShunt using VE.Direct interface",
+        "ProviderSmartSense": "Victron SmartBatterySense en utilisant une MPPT",
         "MqttSocConfiguration": "SoC Settings",
         "MqttVoltageConfiguration": "Voltage Settings",
         "MqttJsonPath": "Optional: JSON Path",

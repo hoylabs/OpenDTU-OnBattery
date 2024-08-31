@@ -7,6 +7,7 @@
 #include "Arduino.h"
 #include "JkBmsDataPoints.h"
 #include "VeDirectShuntController.h"
+#include "VictronMppt.h"
 #include <cfloat>
 
 // mandatory interface for all kinds of batteries
@@ -269,4 +270,15 @@ class MqttBatteryStats : public BatteryStats {
         // we don't need a card in the liveview, since the SoC and
         // voltage (if available) is already displayed at the top.
         void getLiveViewData(JsonVariant& root) const final { }
+};
+
+class VictronSmartBatterySenseStats : public BatteryStats {
+    public:
+        void getLiveViewData(JsonVariant& root) const final;
+        void mqttPublish() const final;
+
+        void updateFrom(uint32_t volt, int32_t temp, uint32_t timeStamp);
+
+    private:
+        float _temperature;
 };
