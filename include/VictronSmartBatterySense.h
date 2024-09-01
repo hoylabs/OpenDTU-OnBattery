@@ -11,8 +11,6 @@ public:
     std::shared_ptr<BatteryStats> getStats() const final { return _stats; }
 
 private:
-    // static char constexpr _serialPortOwner[] = "SmartBatterySense";
-
     uint32_t _lastUpdate = 0;
     std::shared_ptr<VictronSmartBatterySenseStats> _stats =
         std::make_shared<VictronSmartBatterySenseStats>();

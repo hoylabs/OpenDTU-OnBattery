@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-
 #include "VictronMppt.h"
 #include "MessageOutput.h"
 #include "VictronSmartBatterySense.h"
@@ -36,10 +35,10 @@ void VictronSmartBatterySense::loop()
         if ((mpptData->SmartBatterySenseTemperatureMilliCelsius.first != 0) && (VictronMppt.isDataValid(idx))) {
             volt = mpptData->batteryVoltage_V_mV;
             temp = mpptData->SmartBatterySenseTemperatureMilliCelsius.second;
-            _lastUpdate = VictronMppt.getDataAgeMillis(idx) + millis();
+            _lastUpdate = millis() - VictronMppt.getDataAgeMillis(idx);
             break;
         }
     }
 
-     _stats->updateFrom(volt, temp, _lastUpdate);
+    _stats->updateFrom(volt, temp, _lastUpdate);
 }

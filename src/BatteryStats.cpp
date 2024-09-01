@@ -617,8 +617,9 @@ void VictronSmartShuntStats::mqttPublish() const {
 void VictronSmartBatterySenseStats::updateFrom(uint32_t volt, int32_t temp, uint32_t timeStamp) {
 
     // we just get battery voltage and temperature from the "Smart Battery Sense" device
-    BatteryStats::setVoltage(volt/ 1000.0f, timeStamp);
+    BatteryStats::setVoltage(volt / 1000.0f, timeStamp);
     _temperature = temp / 1000.0f;
+    _manufacturer = "Smart Battery Sense";
 }
 
 void VictronSmartBatterySenseStats::getLiveViewData(JsonVariant& root) const {
