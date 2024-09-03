@@ -155,8 +155,8 @@ export default defineComponent({
                 { key: 1, value: 'JkBmsSerial' },
                 { key: 2, value: 'Mqtt' },
                 { key: 3, value: 'Victron' },
-                { key: 6, value: 'SmartSense' },
                 { key: 4, value: 'PytesCan' },
+                { key: 5, value: 'SmartSense' },
             ],
             jkBmsInterfaceTypeList: [
                 { key: 0, value: 'Uart' },

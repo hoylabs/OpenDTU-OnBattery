@@ -671,7 +671,7 @@
         "ProviderJkBmsSerial": "Jikong (JK) BMS per serieller Verbindung",
         "ProviderMqtt": "Batteriewerte aus MQTT Broker",
         "ProviderVictron": "Victron SmartShunt per VE.Direct Schnittstelle",
-        "ProviderSmartSense": "Victron SmartBatterySense per MPPT Schnittstelle",
+        "ProviderSmartSense": "Victron Smart Battery Sense per VE.Direct charge controller",
         "ProviderPytesCan": "Pytes per CAN-Bus",
         "MqttSocConfiguration": "Einstellungen SoC",
         "MqttVoltageConfiguration": "Einstellungen Spannung",

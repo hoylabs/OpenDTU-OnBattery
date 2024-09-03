@@ -7,7 +7,6 @@
 #include "JkBmsDataPoints.h"
 #include "MqttSettings.h"
 
-
 template<typename T>
 static void addLiveViewInSection(JsonVariant& root,
     std::string const& section, std::string const& name,
@@ -613,13 +612,11 @@ void VictronSmartShuntStats::mqttPublish() const {
     MqttSettings.publish("battery/midpointDeviation", String(_midpointDeviation));
 }
 
-
 void VictronSmartBatterySenseStats::updateFrom(uint32_t volt, int32_t temp, uint32_t timeStamp) {
 
     // we just get battery voltage and temperature from the "Smart Battery Sense" device
     BatteryStats::setVoltage(volt / 1000.0f, timeStamp);
     _temperature = temp / 1000.0f;
-    _manufacturer = "Smart Battery Sense";
 }
 
 void VictronSmartBatterySenseStats::getLiveViewData(JsonVariant& root) const {
@@ -635,4 +632,5 @@ void VictronSmartBatterySenseStats::getLiveViewData(JsonVariant& root) const {
 
 void VictronSmartBatterySenseStats::mqttPublish() const {
     BatteryStats::mqttPublish();
+    MqttSettings.publish("battery/temperature", String(_temperature));
 }

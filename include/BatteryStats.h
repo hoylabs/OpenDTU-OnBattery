@@ -274,11 +274,12 @@ class MqttBatteryStats : public BatteryStats {
 
 class VictronSmartBatterySenseStats : public BatteryStats {
     public:
+        VictronSmartBatterySenseStats() { _manufacturer = "Smart Battery Sense"; };
         void getLiveViewData(JsonVariant& root) const final;
         void mqttPublish() const final;
 
         void updateFrom(uint32_t volt, int32_t temp, uint32_t timeStamp);
 
     private:
-        float _temperature;
+        float _temperature = 0.0f;
 };

@@ -5,8 +5,8 @@
 
 class VictronSmartBatterySense : public BatteryProvider {
 public:
-    bool init(bool verboseLogging) final;
-    void deinit() final;
+    bool init(bool verboseLogging) final { return true; };
+    void deinit() final {}; // nothing to deinitialize, we use the MPPT interface
     void loop() final;
     std::shared_ptr<BatteryStats> getStats() const final { return _stats; }
 

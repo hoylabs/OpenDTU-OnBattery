@@ -62,7 +62,7 @@ void BatteryClass::updateSettings()
         case 4:
             _upProvider = std::make_unique<PytesCanReceiver>();
             break;
-        case 6:
+        case 5:
             _upProvider = std::make_unique<VictronSmartBatterySense>();
             break;
         default:
