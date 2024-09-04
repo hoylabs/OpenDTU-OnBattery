@@ -27,33 +27,29 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
         }
 
          case 0x630: {
-            String state = "";
-
             int clusterstate = rx_message.data[0];
             switch (clusterstate) {
                 case 0:
-                    state = "Inactive";
+                    _stats->_dischargeEnabled = 0;
                     break;
 
-                case 1: {
-                    state = "Discharge";
+                case 1:
                     _stats->_chargeEnabled = 1;
                     _stats->_dischargeEnabled = 1;
                     break;
-                }
 
-                case 2: {
-                    state = "Charge";
+                case 2:
                     _stats->_chargeEnabled = 1;
                     break;
-                }
 
                 case 4:
-                    state = "Fault";
+                    _stats->_chargeEnabled = 0;
+                    _stats->_dischargeEnabled = 0;
                     break;
 
                 case 8:
-                    state = "Deepsleep";
+                    _stats->_chargeEnabled = 0;
+                    _stats->_dischargeEnabled = 0;
                     break;
 
                 default:
