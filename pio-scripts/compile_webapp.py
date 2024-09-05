@@ -62,7 +62,7 @@ def main():
         return 0
 
     directory = 'webapp'
-    hash_file = ".webapp_hashes.pkl"
+    hash_file = "webapp_dist/.hashes.pkl"
 
     print("checke webapp")
     check_files(directory, hash_file)
