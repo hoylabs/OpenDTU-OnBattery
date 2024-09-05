@@ -21,27 +21,31 @@ def check_files(directories, filepaths, hash_file):
         with open(hash_file, 'rb') as f:
             old_file_hashes = pickle.load(f)
 
+    update = False
     for file_path, file_hash in file_hashes.items():
         if file_path not in old_file_hashes or old_file_hashes[file_path] != file_hash:
-            print("compiling webapp (hang on, this can take a while and there might be little output)...")
+            update = True
+            break
 
-            try:
-                # if these commands fail, an exception will prevent us from
-                # persisting the current hashes => commands will be executed again
-                subprocess.run(["yarn", "--cwd", "webapp", "install", "--frozen-lockfile"],
-                               check=True)
+    if not update:
+        print("webapp artifacts should be up-to-date")
+        return
 
-                subprocess.run(["yarn", "--cwd", "webapp", "build"], check=True)
+    print("compiling webapp (hang on, this can take a while and there might be little output)...")
 
-            except FileNotFoundError:
-                raise Exception("it seems 'yarn' is not installed/available on your system")
+    try:
+        # if these commands fail, an exception will prevent us from
+        # persisting the current hashes => commands will be executed again
+        subprocess.run(["yarn", "--cwd", "webapp", "install", "--frozen-lockfile"],
+                       check=True)
 
-            with open(hash_file, 'wb') as f:
-                pickle.dump(file_hashes, f)
+        subprocess.run(["yarn", "--cwd", "webapp", "build"], check=True)
 
-            return
+    except FileNotFoundError:
+        raise Exception("it seems 'yarn' is not installed/available on your system")
 
-    print("webapp artifacts should be up-to-date")
+    with open(hash_file, 'wb') as f:
+        pickle.dump(file_hashes, f)
 
 def main():
     if os.getenv('GITHUB_ACTIONS') == 'true':
