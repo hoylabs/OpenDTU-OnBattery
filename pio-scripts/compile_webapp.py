@@ -20,7 +20,7 @@ def check_files(directory, hash_file):
         for file in files:
             file_path = os.path.join(root, file)
             file_hashes[file_path] = calculate_hash(file_path)
-    
+
     # Laden der vorherigen Hash-Werte
     if os.path.exists(hash_file):
         with open(hash_file, 'rb') as f:
@@ -40,7 +40,7 @@ def check_files(directory, hash_file):
     else:
         print(f"webapp changed.")
         execute_command(directory)
-    
+
     # Speichern der aktuellen Hash-Werte
     with open(hash_file, 'wb') as f:
         pickle.dump(file_hashes, f)
