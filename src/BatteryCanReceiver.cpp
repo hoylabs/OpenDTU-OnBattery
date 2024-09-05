@@ -170,7 +170,7 @@ int16_t BatteryCanReceiver::readSignedInt16(uint8_t *data)
 
 int32_t BatteryCanReceiver::readSignedInt24(uint8_t *data)
 {
-    return data[0] | data[1] << 8 | data[2] << 16 ;
+    return (data[2] << 16) | (data[1] << 8) | data[0];
 }
 
 uint32_t BatteryCanReceiver::readUnsignedInt32(uint8_t *data)
