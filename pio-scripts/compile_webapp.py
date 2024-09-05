@@ -67,10 +67,14 @@ def execute_command(directory):
     # move back to old directory
     os.chdir("..")
 
-# Pfad zum Ordner und zur Hash-Datei
-directory = 'webapp'
-hash_file = ".webapp_hashes.pkl"
+def main():
+    # Pfad zum Ordner und zur Hash-Datei
+    directory = 'webapp'
+    hash_file = ".webapp_hashes.pkl"
 
-# Überprüfung der Dateien
-print("checke webapp")
-check_files(directory, hash_file)
+    # Überprüfung der Dateien
+    print("checke webapp")
+    check_files(directory, hash_file)
+
+if __name__ == '__main__':
+    main()
