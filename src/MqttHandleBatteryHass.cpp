@@ -182,7 +182,7 @@ void MqttHandleBatteryHassClass::loop()
             publishBinarySensor("Warning Cell Imbalance", "mdi:alert-outline", "warning/cellImbalance", "1", "0");
             break;
 
-case 5: // SBS Unipower XL Battery
+        case 5: // SBS Unipower
             publishSensor("Battery voltage", NULL, "voltage", "voltage", "measurement", "V");
             publishSensor("Battery current", NULL, "current", "current", "measurement", "A");
             publishSensor("Temperature", NULL, "temperature", "temperature", "measurement", "°C");
