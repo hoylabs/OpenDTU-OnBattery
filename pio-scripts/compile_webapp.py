@@ -10,24 +10,8 @@ def calculate_hash(file_path):
         hasher.update(buf)
     return hasher.hexdigest()
 
-def do_compile(directory):
-    print("Webapp changed, rebuilding...")
-    print(f"Changing directory to: {directory}")
-    os.chdir(directory)
-    result = subprocess.run(["yarn", "install"], shell=True)
-    if result.returncode != 0:
-        print("Error during yarn install.")
-        return
-    result = subprocess.run(["yarn", "build"], shell=True, capture_output=True, text=True)
-    if result.returncode != 0:
-        print("Error during yarn build:")
-        print(result.stdout)
-        print(result.stderr)
-    else:
-        print("Build completed successfully.")
-    os.chdir("..")
-
 def check_files(directory, hash_file):
+    old_file_hashes = {}
     file_hashes = {}
 
     for root, dirs, files in os.walk(directory):
@@ -38,23 +22,24 @@ def check_files(directory, hash_file):
     if os.path.exists(hash_file):
         with open(hash_file, 'rb') as f:
             old_file_hashes = pickle.load(f)
-    else:
-        old_file_hashes = {}
 
-    changed = False
     for file_path, file_hash in file_hashes.items():
         if file_path not in old_file_hashes or old_file_hashes[file_path] != file_hash:
-            changed = True
-            break
+            print("compiling webapp (hang on, this can take a while and there might be little output)...")
 
-    if not changed:
-        print("No changes detected.")
-    else:
-        print(f"webapp changed.")
-        do_compile(directory)
+            # if these commands fail, an exception will prevent us from
+            # persisting the current hashes => commands will be executed again
+            subprocess.run(["yarn", "--cwd", "webapp", "install", "--frozen-lockfile"],
+                           check=True)
 
-    with open(hash_file, 'wb') as f:
-        pickle.dump(file_hashes, f)
+            subprocess.run(["yarn", "--cwd", "webapp", "build"], check=True)
+
+            with open(hash_file, 'wb') as f:
+                pickle.dump(file_hashes, f)
+
+            return
+
+    print("webapp artifacts should be up-to-date")
 
 def main():
     if os.getenv('GITHUB_ACTIONS') == 'true':
