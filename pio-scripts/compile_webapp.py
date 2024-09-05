@@ -3,13 +3,6 @@ import hashlib
 import pickle
 import subprocess
 
-def calculate_hash(file_path):
-    hasher = hashlib.md5()
-    with open(file_path, 'rb') as f:
-        buf = f.read()
-        hasher.update(buf)
-    return hasher.hexdigest()
-
 def check_files(directories, filepaths, hash_file):
     old_file_hashes = {}
     file_hashes = {}
@@ -20,7 +13,9 @@ def check_files(directories, filepaths, hash_file):
                 filepaths.append(os.path.join(root, file))
 
     for file_path in filepaths:
-        file_hashes[file_path] = calculate_hash(file_path)
+        with open(file_path, 'rb') as f:
+            file_data = f.read()
+        file_hashes[file_path] = hashlib.md5(file_data).hexdigest()
 
     if os.path.exists(hash_file):
         with open(hash_file, 'rb') as f:
