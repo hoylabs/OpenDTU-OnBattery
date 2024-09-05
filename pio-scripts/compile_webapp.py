@@ -67,5 +67,4 @@ def main():
     print("checke webapp")
     check_files(directory, hash_file)
 
-if __name__ == '__main__':
-    main()
+main()
