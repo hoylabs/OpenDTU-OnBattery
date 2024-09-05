@@ -10,14 +10,17 @@ def calculate_hash(file_path):
         hasher.update(buf)
     return hasher.hexdigest()
 
-def check_files(directory, hash_file):
+def check_files(directories, filepaths, hash_file):
     old_file_hashes = {}
     file_hashes = {}
 
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            file_path = os.path.join(root, file)
-            file_hashes[file_path] = calculate_hash(file_path)
+    for directory in directories:
+        for root, dirs, filenames in os.walk(directory):
+            for file in filenames:
+                filepaths.append(os.path.join(root, file))
+
+    for file_path in filepaths:
+        file_hashes[file_path] = calculate_hash(file_path)
 
     if os.path.exists(hash_file):
         with open(hash_file, 'rb') as f:
@@ -48,9 +51,12 @@ def main():
 
     print("INFO: testing for up-to-date webapp artifacts")
 
-    directory = 'webapp/src/'
+    directories = ["webapp/src/", "webapp/public/"]
+    files = ["webapp/index.html", "webapp/tsconfig.config.json",
+             "webapp/tsconfig.json", "webapp/vite.config.ts",
+             "webapp/yarn.lock"]
     hash_file = "webapp_dist/.hashes.pkl"
 
-    check_files(directory, hash_file)
+    check_files(directories, files, hash_file)
 
 main()
