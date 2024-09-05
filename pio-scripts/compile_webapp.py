@@ -30,12 +30,16 @@ def check_files(directories, filepaths, hash_file):
         if file_path not in old_file_hashes or old_file_hashes[file_path] != file_hash:
             print("compiling webapp (hang on, this can take a while and there might be little output)...")
 
-            # if these commands fail, an exception will prevent us from
-            # persisting the current hashes => commands will be executed again
-            subprocess.run(["yarn", "--cwd", "webapp", "install", "--frozen-lockfile"],
-                           check=True)
+            try:
+                # if these commands fail, an exception will prevent us from
+                # persisting the current hashes => commands will be executed again
+                subprocess.run(["yarn", "--cwd", "webapp", "install", "--frozen-lockfile"],
+                               check=True)
 
-            subprocess.run(["yarn", "--cwd", "webapp", "build"], check=True)
+                subprocess.run(["yarn", "--cwd", "webapp", "build"], check=True)
+
+            except FileNotFoundError:
+                raise Exception("it seems 'yarn' is not installed/available on your system")
 
             with open(hash_file, 'wb') as f:
                 pickle.dump(file_hashes, f)
