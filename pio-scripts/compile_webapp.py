@@ -46,10 +46,11 @@ def main():
         print("INFO: not testing for up-to-date webapp artifacts when running as Github action")
         return 0
 
-    directory = 'webapp'
+    print("INFO: testing for up-to-date webapp artifacts")
+
+    directory = 'webapp/src/'
     hash_file = "webapp_dist/.hashes.pkl"
 
-    print("checke webapp")
     check_files(directory, hash_file)
 
 main()
