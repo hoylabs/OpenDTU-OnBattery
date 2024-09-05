@@ -57,7 +57,7 @@ def check_files(directory, hash_file):
         pickle.dump(file_hashes, f)
 
 def main():
-    if os.getenv('GITHUB_ACTIONS') != 'true':
+    if os.getenv('GITHUB_ACTIONS') == 'true':
         print("INFO: not testing for up-to-date webapp artifacts when running as Github action")
         return 0
 
