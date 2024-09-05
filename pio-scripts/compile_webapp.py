@@ -68,6 +68,10 @@ def execute_command(directory):
     os.chdir("..")
 
 def main():
+    if os.getenv('GITHUB_ACTIONS') != 'true':
+        print("INFO: not testing for up-to-date webapp artifacts when running as Github action")
+        return 0
+
     # Pfad zum Ordner und zur Hash-Datei
     directory = 'webapp'
     hash_file = ".webapp_hashes.pkl"
