@@ -279,5 +279,5 @@ class MqttBatteryStats : public BatteryStats {
         // we don't need a card in the liveview, since the SoC and
         // voltage (if available) is already displayed at the top.
         void getLiveViewData(JsonVariant& root) const final { }
-        // TODO: we could show the discharge current limit if available
+        // TODO(AndreasBoehm): we could show the discharge current limit if available
 };
