@@ -610,7 +610,14 @@
         "JkBmsInterfaceUart": "TTL-UART on MCU",
         "JkBmsInterfaceTransceiver": "RS-485 Transceiver on MCU",
         "PollingInterval": "Polling Interval",
-        "Seconds": "@:base.Seconds"
+        "Seconds": "@:base.Seconds",
+        "DischargeCurrentLimitConfiguration": "Discharge Current Limit Settings",
+        "LimitDischargeCurrent": "Limit Discharge Current",
+        "DischargeCurrentLimit": "max. Discharge Current",
+        "UseBatteryReportedDischargeCurrentLimit": "Use Battery-Reported limit",
+        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hint:</b> The battery-reported discharge current limit is only used if we received an update in the last minute. Otherwise the limit specified above will be used as fallback.",
+        "MqttDischargeCurrentTopic": "Discharge Current Limit Value Topic",
+        "MqttAmperageUnit": "Unit"
     },
     "inverteradmin": {
         "InverterSettings": "Paramètres des onduleurs",

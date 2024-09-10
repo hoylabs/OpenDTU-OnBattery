@@ -92,6 +92,10 @@ void BatteryStats::getLiveViewData(JsonVariant& root) const
     addLiveViewValue(root, "SoC", _soc, "%", _socPrecision);
     addLiveViewValue(root, "voltage", _voltage, "V", 2);
     addLiveViewValue(root, "current", _current, "A", _currentPrecision);
+
+    if (isDischargeCurrentLimitValid()) {
+        addLiveViewValue(root, "dischargeCurrentLimitation", _dischargeCurrentLimit, "A", 1);
+    }
 }
 
 void PylontechBatteryStats::getLiveViewData(JsonVariant& root) const
@@ -101,7 +105,6 @@ void PylontechBatteryStats::getLiveViewData(JsonVariant& root) const
     // values go into the "Status" card of the web application
     addLiveViewValue(root, "chargeVoltage", _chargeVoltage, "V", 1);
     addLiveViewValue(root, "chargeCurrentLimitation", _chargeCurrentLimitation, "A", 1);
-    addLiveViewValue(root, "dischargeCurrentLimitation", _dischargeCurrentLimitation, "A", 1);
     addLiveViewValue(root, "stateOfHealth", _stateOfHealth, "%", 0);
     addLiveViewValue(root, "temperature", _temperature, "°C", 1);
 
@@ -140,7 +143,6 @@ void PytesBatteryStats::getLiveViewData(JsonVariant& root) const
     addLiveViewValue(root, "chargeVoltage", _chargeVoltageLimit, "V", 1);
     addLiveViewValue(root, "chargeCurrentLimitation", _chargeCurrentLimit, "A", 1);
     addLiveViewValue(root, "dischargeVoltageLimitation", _dischargeVoltageLimit, "V", 1);
-    addLiveViewValue(root, "dischargeCurrentLimitation", _dischargeCurrentLimit, "A", 1);
     addLiveViewValue(root, "stateOfHealth", _stateOfHealth, "%", 0);
     addLiveViewValue(root, "temperature", _temperature, "°C", 1);
 
@@ -311,14 +313,21 @@ void BatteryStats::mqttPublish() const
 {
     MqttSettings.publish("battery/manufacturer", _manufacturer);
     MqttSettings.publish("battery/dataAge", String(getAgeSeconds()));
+
     if (isSoCValid()) {
         MqttSettings.publish("battery/stateOfCharge", String(_soc));
     }
+
     if (isVoltageValid()) {
         MqttSettings.publish("battery/voltage", String(_voltage));
     }
+
     if (isCurrentValid()) {
         MqttSettings.publish("battery/current", String(_current));
+    }
+
+    if (isDischargeCurrentLimitValid()) {
+        MqttSettings.publish("battery/settings/dischargeCurrentLimitation", String(_dischargeCurrentLimit));
     }
 }
 
@@ -328,7 +337,6 @@ void PylontechBatteryStats::mqttPublish() const
 
     MqttSettings.publish("battery/settings/chargeVoltage", String(_chargeVoltage));
     MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimitation));
-    MqttSettings.publish("battery/settings/dischargeCurrentLimitation", String(_dischargeCurrentLimitation));
     MqttSettings.publish("battery/stateOfHealth", String(_stateOfHealth));
     MqttSettings.publish("battery/temperature", String(_temperature));
     MqttSettings.publish("battery/alarm/overCurrentDischarge", String(_alarmOverCurrentDischarge));
@@ -356,7 +364,6 @@ void PytesBatteryStats::mqttPublish() const
 
     MqttSettings.publish("battery/settings/chargeVoltage", String(_chargeVoltageLimit));
     MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimit));
-    MqttSettings.publish("battery/settings/dischargeCurrentLimitation", String(_dischargeCurrentLimit));
     MqttSettings.publish("battery/settings/dischargeVoltageLimitation", String(_dischargeVoltageLimit));
 
     MqttSettings.publish("battery/stateOfHealth", String(_stateOfHealth));

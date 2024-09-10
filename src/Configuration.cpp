@@ -261,6 +261,12 @@ bool ConfigurationClass::write()
     battery["mqtt_voltage_topic"] = config.Battery.MqttVoltageTopic;
     battery["mqtt_voltage_json_path"] = config.Battery.MqttVoltageJsonPath;
     battery["mqtt_voltage_unit"] = config.Battery.MqttVoltageUnit;
+    battery["enableDischargeCurrentLimit"] = config.Battery.EnableDischargeCurrentLimit;
+    battery["dischargeCurrentLimit"] = config.Battery.DischargeCurrentLimit;
+    battery["useBatteryReportedDischargeCurrentLimit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
+    battery["mqtt_discharge_current_topic"] = config.Battery.MqttDischargeCurrentTopic;
+    battery["mqtt_discharge_current_json_path"] = config.Battery.MqttDischargeCurrentJsonPath;
+    battery["mqtt_amperage_unit"] = config.Battery.MqttAmperageUnit;
 
     JsonObject huawei = doc["huawei"].to<JsonObject>();
     huawei["enabled"] = config.Huawei.Enabled;
@@ -611,6 +617,12 @@ bool ConfigurationClass::read()
     strlcpy(config.Battery.MqttVoltageTopic, battery["mqtt_voltage_topic"] | "", sizeof(config.Battery.MqttVoltageTopic));
     strlcpy(config.Battery.MqttVoltageJsonPath, battery["mqtt_voltage_json_path"] | "", sizeof(config.Battery.MqttVoltageJsonPath));
     config.Battery.MqttVoltageUnit = battery["mqtt_voltage_unit"] | BatteryVoltageUnit::Volts;
+    config.Battery.EnableDischargeCurrentLimit = battery["enableDischargeCurrentLimit"] | BATTERY_ENABLE_DISCHARGE_CURRENT_LIMIT;
+    config.Battery.DischargeCurrentLimit = battery["dischargeCurrentLimit"] | BATTERY_DISCHARGE_CURRENT_LIMIT;
+    config.Battery.UseBatteryReportedDischargeCurrentLimit = battery["useBatteryReportedDischargeCurrentLimit"] | BATTERY_USE_BATTERY_REPORTED_DISCHARGE_CURRENT_LIMIT;
+    strlcpy(config.Battery.MqttDischargeCurrentTopic, battery["mqtt_discharge_current_topic"] | "", sizeof(config.Battery.MqttDischargeCurrentTopic));
+    strlcpy(config.Battery.MqttDischargeCurrentJsonPath, battery["mqtt_discharge_current_json_path"] | "", sizeof(config.Battery.MqttDischargeCurrentJsonPath));
+    config.Battery.MqttAmperageUnit = battery["mqtt_amperage_unit"] | BatteryAmperageUnit::Amps;
 
     JsonObject huawei = doc["huawei"];
     config.Huawei.Enabled = huawei["enabled"] | HUAWEI_ENABLED;

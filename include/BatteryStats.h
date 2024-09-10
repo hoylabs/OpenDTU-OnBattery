@@ -28,6 +28,9 @@ class BatteryStats {
         float getChargeCurrent() const { return _current; };
         uint8_t getChargeCurrentPrecision() const { return _currentPrecision; }
 
+        float getDischargeCurrentLimit() const { return _dischargeCurrentLimit; };
+        uint32_t getDischargeCurrentLimitAgeSeconds() const { return (millis() - _lastUpdateDischargeCurrentLimit) / 1000; }
+
         // convert stats to JSON for web application live view
         virtual void getLiveViewData(JsonVariant& root) const;
 
@@ -40,13 +43,13 @@ class BatteryStats {
         bool isSoCValid() const { return _lastUpdateSoC > 0; }
         bool isVoltageValid() const { return _lastUpdateVoltage > 0; }
         bool isCurrentValid() const { return _lastUpdateCurrent > 0; }
+        bool isDischargeCurrentLimitValid() const { return _lastUpdateDischargeCurrentLimit > 0; }
 
         // returns true if the battery reached a critically low voltage/SoC,
         // such that it is in need of charging to prevent degredation.
         virtual bool getImmediateChargingRequest() const { return false; };
 
         virtual float getChargeCurrentLimitation() const { return FLT_MAX; };
-        virtual float getDischargeCurrentLimitation() const { return FLT_MAX; };
 
     protected:
         virtual void mqttPublish() const;
@@ -66,6 +69,11 @@ class BatteryStats {
             _current = current;
             _currentPrecision = precision;
             _lastUpdateCurrent = _lastUpdate = timestamp;
+        }
+
+        void setDischargeCurrentLimit(float dischargeCurrentLimit, uint32_t timestamp) {
+            _dischargeCurrentLimit = dischargeCurrentLimit;
+            _lastUpdateDischargeCurrentLimit = _lastUpdate = timestamp;
         }
 
         void setManufacturer(const String& m);
@@ -89,6 +97,9 @@ class BatteryStats {
         float _current = 0;
         uint8_t _currentPrecision = 0; // decimal places
         uint32_t _lastUpdateCurrent = 0;
+
+        float _dischargeCurrentLimit = 0;
+        uint32_t _lastUpdateDischargeCurrentLimit = 0;
 };
 
 class PylontechBatteryStats : public BatteryStats {
@@ -99,14 +110,12 @@ class PylontechBatteryStats : public BatteryStats {
         void mqttPublish() const final;
         bool getImmediateChargingRequest() const { return _chargeImmediately; } ;
         float getChargeCurrentLimitation() const { return _chargeCurrentLimitation; } ;
-        float getDischargeCurrentLimitation() const { return _dischargeCurrentLimitation; } ;
 
     private:
         void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
 
         float _chargeVoltage;
         float _chargeCurrentLimitation;
-        float _dischargeCurrentLimitation;
         uint16_t _stateOfHealth;
         float _temperature;
 
@@ -138,7 +147,6 @@ class PytesBatteryStats : public BatteryStats {
         void getLiveViewData(JsonVariant& root) const final;
         void mqttPublish() const final;
         float getChargeCurrentLimitation() const { return _chargeCurrentLimit; } ;
-        float getDischargeCurrentLimitation() const { return _dischargeCurrentLimit; } ;
 
     private:
         void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
@@ -154,7 +162,6 @@ class PytesBatteryStats : public BatteryStats {
         float _chargeVoltageLimit;
         float _chargeCurrentLimit;
         float _dischargeVoltageLimit;
-        float _dischargeCurrentLimit;
 
         uint16_t _stateOfHealth;
 
@@ -272,4 +279,5 @@ class MqttBatteryStats : public BatteryStats {
         // we don't need a card in the liveview, since the SoC and
         // voltage (if available) is already displayed at the top.
         void getLiveViewData(JsonVariant& root) const final { }
+        // TODO: we could show the discharge current limit if available
 };

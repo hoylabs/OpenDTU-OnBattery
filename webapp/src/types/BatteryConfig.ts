@@ -9,4 +9,10 @@ export interface BatteryConfig {
     mqtt_voltage_topic: string;
     mqtt_voltage_json_path: string;
     mqtt_voltage_unit: number;
+    enableDischargeCurrentLimit: boolean;
+    dischargeCurrentLimit: number;
+    useBatteryReportedDischargeCurrentLimit: boolean;
+    mqtt_discharge_current_topic: string;
+    mqtt_discharge_current_json_path: string;
+    mqtt_amperage_unit: number;
 }
