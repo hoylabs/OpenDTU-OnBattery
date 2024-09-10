@@ -689,7 +689,7 @@
         "LimitDischargeCurrent": "Entladestrom limitieren",
         "DischargeCurrentLimit": "max. Entladestrom",
         "UseBatteryReportedDischargeCurrentLimit": "Von der Batterie übermitteltes Limit verwenden",
-        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hinweis:</b> Das von der Batterie übermittelte Entladestromlimit wird nur verwendet, wenn wir in der letzten Minute ein Update erhalten haben. Andernfalls wird das oben angegebene Limit als Fallback verwendet.",
+        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hinweis:</b> Das niedrigste Limit wird angewendet, wobei das von der Batterie übermittelte Entladestromlimit nur verwendet wird, wenn in der letzten Minute ein Update eingegangen ist; andernfalls dient das zuvor festgelegte Limit als Fallback.",
         "MqttDischargeCurrentTopic": "Topic für Entladestromlimit",
         "MqttAmperageUnit": "Einheit"
     },
