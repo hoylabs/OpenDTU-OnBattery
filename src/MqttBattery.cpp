@@ -9,6 +9,7 @@
 bool MqttBattery::init(bool verboseLogging)
 {
     _verboseLogging = verboseLogging;
+    _stats->setManufacturer("MQTT");
 
     auto const& config = Configuration.get();
 

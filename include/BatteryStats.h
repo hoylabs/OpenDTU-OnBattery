@@ -51,6 +51,8 @@ class BatteryStats {
 
         virtual float getChargeCurrentLimitation() const { return FLT_MAX; };
 
+        virtual bool supportsAlarmsAndWarnings() const { return false; };
+
     protected:
         virtual void mqttPublish() const;
 
@@ -110,6 +112,7 @@ class PylontechBatteryStats : public BatteryStats {
         void mqttPublish() const final;
         bool getImmediateChargingRequest() const { return _chargeImmediately; } ;
         float getChargeCurrentLimitation() const { return _chargeCurrentLimitation; } ;
+        bool supportsAlarmsAndWarnings() const final { return true; }
 
     private:
         void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
@@ -146,7 +149,8 @@ class PytesBatteryStats : public BatteryStats {
     public:
         void getLiveViewData(JsonVariant& root) const final;
         void mqttPublish() const final;
-        float getChargeCurrentLimitation() const { return _chargeCurrentLimit; } ;
+        float getChargeCurrentLimitation() const { return _chargeCurrentLimit; };
+        bool supportsAlarmsAndWarnings() const final { return true; }
 
     private:
         void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
@@ -228,6 +232,8 @@ class JkBmsBatteryStats : public BatteryStats {
 
         void updateFrom(JkBms::DataPointContainer const& dp);
 
+        bool supportsAlarmsAndWarnings() const final { return true; }
+
     private:
         void getJsonData(JsonVariant& root, bool verbose) const;
 
@@ -247,6 +253,7 @@ class VictronSmartShuntStats : public BatteryStats {
         void mqttPublish() const final;
 
         void updateFrom(VeDirectShuntController::data_t const& shuntData);
+        bool supportsAlarmsAndWarnings() const final { return true; }
 
     private:
         float _temperature;
@@ -276,8 +283,7 @@ class MqttBatteryStats : public BatteryStats {
         // we do NOT publish the same data under a different topic.
         void mqttPublish() const final { }
 
-        // we don't need a card in the liveview, since the SoC and
-        // voltage (if available) is already displayed at the top.
-        void getLiveViewData(JsonVariant& root) const final { }
-        // TODO(AndreasBoehm): we could show the discharge current limit if available
+        void getLiveViewData(JsonVariant& root) const final;
+
+        bool supportsAlarmsAndWarnings() const final { return false; }
 };

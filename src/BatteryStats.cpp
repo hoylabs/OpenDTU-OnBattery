@@ -89,12 +89,29 @@ void BatteryStats::getLiveViewData(JsonVariant& root) const
     }
     root["data_age"] = getAgeSeconds();
 
-    addLiveViewValue(root, "SoC", _soc, "%", _socPrecision);
-    addLiveViewValue(root, "voltage", _voltage, "V", 2);
-    addLiveViewValue(root, "current", _current, "A", _currentPrecision);
+    if (isSoCValid()) {
+        addLiveViewValue(root, "SoC", _soc, "%", _socPrecision);
+    }
+
+    if (isVoltageValid()) {
+        addLiveViewValue(root, "voltage", _voltage, "V", 2);
+    }
+
+    if (isCurrentValid()) {
+        addLiveViewValue(root, "current", _current, "A", _currentPrecision);
+    }
 
     if (isDischargeCurrentLimitValid()) {
         addLiveViewValue(root, "dischargeCurrentLimitation", _dischargeCurrentLimit, "A", 1);
+    }
+
+    root["showIssues"] = supportsAlarmsAndWarnings();
+}
+
+void MqttBatteryStats::getLiveViewData(JsonVariant& root) const
+{
+    if (isDischargeCurrentLimitValid()) {
+        BatteryStats::getLiveViewData(root);
     }
 }
 
