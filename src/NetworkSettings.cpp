@@ -32,6 +32,22 @@ void NetworkSettingsClass::init(Scheduler& scheduler)
     WiFi.disconnect(true, true);
 
     WiFi.onEvent(std::bind(&NetworkSettingsClass::NetworkEvent, this, _1));
+
+    if (PinMapping.isValidEthConfig()) {
+        PinMapping_t& pin = PinMapping.get();
+        ETH.begin(pin.eth_phy_addr, pin.eth_power, pin.eth_mdc, pin.eth_mdio, pin.eth_type, pin.eth_clk_mode);
+    } else if (PinMapping.isValidW5500Config()) {
+        auto oSPInum = SPIPortManager.allocatePort("ETHSPI");
+
+        if (oSPInum) {
+            spi_host_device_t host_id = SPIPortManager.SPIhostNum(*oSPInum);
+            PinMapping_t& pin = PinMapping.get();
+            ETHSPI.begin(pin.w5500_sclk, pin.w5500_mosi, pin.w5500_miso, pin.w5500_cs, pin.w5500_int, pin.w5500_rst,
+                         host_id);
+            _spiEth = true;
+        }
+    }
+
     setupMode();
 
     scheduler.addTask(_loopTask);
@@ -167,21 +183,6 @@ void NetworkSettingsClass::setupMode()
             WiFi.mode(WIFI_STA);
         } else {
             WiFi.mode(WIFI_MODE_NULL);
-        }
-    }
-
-    if (PinMapping.isValidEthConfig()) {
-        PinMapping_t& pin = PinMapping.get();
-        ETH.begin(pin.eth_phy_addr, pin.eth_power, pin.eth_mdc, pin.eth_mdio, pin.eth_type, pin.eth_clk_mode);
-    } else if (PinMapping.isValidW5500Config()) {
-        auto oSPInum = SPIPortManager.allocatePort("ETHSPI");
-
-        if (oSPInum) {
-            spi_host_device_t host_id = SPIPortManager.SPIhostNum(*oSPInum);
-            PinMapping_t& pin = PinMapping.get();
-            ETHSPI.begin(pin.w5500_sclk, pin.w5500_mosi, pin.w5500_miso, pin.w5500_cs, pin.w5500_int, pin.w5500_rst,
-                         host_id);
-            _spiEth = true;
         }
     }
 }
