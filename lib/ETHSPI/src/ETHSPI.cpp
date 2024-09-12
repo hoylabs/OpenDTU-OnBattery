@@ -1,3 +1,9 @@
+//-----------------------------------------------------------------------------
+// 2024 Ahoy, https://ahoydtu.de
+// adapted to OpenDTU-OnBattery
+// Creative Commons - https://creativecommons.org/licenses/by-nc-sa/4.0/deed
+//-----------------------------------------------------------------------------
+
 #include "ETHSPI.h"
 
 #include <driver/spi_master.h>
