@@ -413,9 +413,8 @@ String NetworkSettingsClass::macAddress() const
     case network_mode::Ethernet:
         if (_spiEth) {
             return ETHSPI.macAddress();
-        } else {
-            return ETH.macAddress();
         }
+        return ETH.macAddress();
         break;
     case network_mode::WiFi:
         return WiFi.macAddress();
