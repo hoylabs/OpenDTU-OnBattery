@@ -30,24 +30,31 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
             int clusterstate = rx_message.data[0];
             switch (clusterstate) {
                 case 0:
+                    //Battery inactive
                     _stats->_dischargeEnabled = 0;
+                    _stats->_chargeEnabled = 0;
                     break;
 
                 case 1:
+                    //Battery Discharge mode (recuperation enabled)
                     _stats->_chargeEnabled = 1;
                     _stats->_dischargeEnabled = 1;
                     break;
 
                 case 2:
+                    //Battery in charge Mode (discharge with half current possible (45A))
                     _stats->_chargeEnabled = 1;
+                    _stats->_dischargeEnabled = 1;
                     break;
 
                 case 4:
+                    //Battery Fault
                     _stats->_chargeEnabled = 0;
                     _stats->_dischargeEnabled = 0;
                     break;
 
                 case 8:
+                    //Battery Deepsleep
                     _stats->_chargeEnabled = 0;
                     _stats->_dischargeEnabled = 0;
                     break;
