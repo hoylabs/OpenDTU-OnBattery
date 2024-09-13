@@ -110,6 +110,8 @@ void BatteryStats::getLiveViewData(JsonVariant& root) const
 
 void MqttBatteryStats::getLiveViewData(JsonVariant& root) const
 {
+    // as we don't want to repeat the data that is already shown in the live data card
+    // we only add the live view data here when the discharge current limit can be shown
     if (isDischargeCurrentLimitValid()) {
         BatteryStats::getLiveViewData(root);
     }
