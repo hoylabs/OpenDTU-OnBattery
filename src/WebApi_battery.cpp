@@ -32,28 +32,12 @@ void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
     }
 
     AsyncJsonResponse* response = new AsyncJsonResponse();
-    auto& root = response->getRoot();
-    const CONFIG_T& config = Configuration.get();
+    auto root = response->getRoot().as<JsonObject>();
+    auto& config = Configuration.get();
 
-    root["enabled"] = config.Battery.Enabled;
-    root["verbose_logging"] = config.Battery.VerboseLogging;
-    root["provider"] = config.Battery.Provider;
-    root["jkbms_interface"] = config.Battery.JkBmsInterface;
-    root["jkbms_polling_interval"] = config.Battery.JkBmsPollingInterval;
-    root["mqtt_soc_topic"] = config.Battery.MqttSocTopic;
-    root["mqtt_soc_json_path"] = config.Battery.MqttSocJsonPath;
-    root["mqtt_voltage_topic"] = config.Battery.MqttVoltageTopic;
-    root["mqtt_voltage_json_path"] = config.Battery.MqttVoltageJsonPath;
-    root["mqtt_voltage_unit"] = config.Battery.MqttVoltageUnit;
-    root["enable_discharge_current_limit"] = config.Battery.EnableDischargeCurrentLimit;
-    root["discharge_current_limit"] = static_cast<int>(config.Battery.DischargeCurrentLimit * 100 +0.5) / 100.0;
-    root["use_battery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
-    root["mqtt_discharge_current_topic"] = config.Battery.MqttDischargeCurrentTopic;
-    root["mqtt_discharge_current_json_path"] = config.Battery.MqttDischargeCurrentJsonPath;
-    root["mqtt_amperage_unit"] = config.Battery.MqttAmperageUnit;
+    ConfigurationClass::serializeBatteryConfig(config.Battery, root);
 
-    response->setLength();
-    request->send(response);
+    WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
 void WebApiBatteryClass::onAdminGet(AsyncWebServerRequest* request)
@@ -86,23 +70,8 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
-    CONFIG_T& config = Configuration.get();
-    config.Battery.Enabled = root["enabled"].as<bool>();
-    config.Battery.VerboseLogging = root["verbose_logging"].as<bool>();
-    config.Battery.Provider = root["provider"].as<uint8_t>();
-    config.Battery.JkBmsInterface = root["jkbms_interface"].as<uint8_t>();
-    config.Battery.JkBmsPollingInterval = root["jkbms_polling_interval"].as<uint8_t>();
-    strlcpy(config.Battery.MqttSocTopic, root["mqtt_soc_topic"].as<String>().c_str(), sizeof(config.Battery.MqttSocTopic));
-    strlcpy(config.Battery.MqttSocJsonPath, root["mqtt_soc_json_path"].as<String>().c_str(), sizeof(config.Battery.MqttSocJsonPath));
-    strlcpy(config.Battery.MqttVoltageTopic, root["mqtt_voltage_topic"].as<String>().c_str(), sizeof(config.Battery.MqttVoltageTopic));
-    strlcpy(config.Battery.MqttVoltageJsonPath, root["mqtt_voltage_json_path"].as<String>().c_str(), sizeof(config.Battery.MqttVoltageJsonPath));
-    config.Battery.MqttVoltageUnit = static_cast<BatteryVoltageUnit>(root["mqtt_voltage_unit"].as<uint8_t>());
-    config.Battery.EnableDischargeCurrentLimit = root["enable_discharge_current_limit"].as<bool>();
-    config.Battery.DischargeCurrentLimit = static_cast<int>(root["discharge_currentLimit"].as<float>() * 100) / 100.0;
-    config.Battery.UseBatteryReportedDischargeCurrentLimit = root["use_battery_reported_discharge_current_limit"].as<bool>();
-    strlcpy(config.Battery.MqttDischargeCurrentTopic, root["mqtt_discharge_current_topic"].as<String>().c_str(), sizeof(config.Battery.MqttDischargeCurrentTopic));
-    strlcpy(config.Battery.MqttDischargeCurrentJsonPath, root["mqtt_discharge_current_json_path"].as<String>().c_str(), sizeof(config.Battery.MqttDischargeCurrentJsonPath));
-    config.Battery.MqttAmperageUnit = static_cast<BatteryAmperageUnit>(root["mqtt_amperage_unit"].as<uint8_t>());
+    auto& config = Configuration.get();
+    ConfigurationClass::deserializeBatteryConfig(root.as<JsonObject>(), config.Battery);
 
     WebApi.writeConfig(retMsg);
 
