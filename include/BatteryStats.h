@@ -51,7 +51,7 @@ class BatteryStats {
 
         virtual float getChargeCurrentLimitation() const { return FLT_MAX; };
 
-        virtual bool supportsAlarmsAndWarnings() const { return false; };
+        virtual bool supportsAlarmsAndWarnings() const { return true; };
 
     protected:
         virtual void mqttPublish() const;
@@ -112,7 +112,6 @@ class PylontechBatteryStats : public BatteryStats {
         void mqttPublish() const final;
         bool getImmediateChargingRequest() const { return _chargeImmediately; } ;
         float getChargeCurrentLimitation() const { return _chargeCurrentLimitation; } ;
-        bool supportsAlarmsAndWarnings() const final { return true; }
 
     private:
         void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
@@ -150,7 +149,6 @@ class PytesBatteryStats : public BatteryStats {
         void getLiveViewData(JsonVariant& root) const final;
         void mqttPublish() const final;
         float getChargeCurrentLimitation() const { return _chargeCurrentLimit; };
-        bool supportsAlarmsAndWarnings() const final { return true; }
 
     private:
         void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
@@ -232,8 +230,6 @@ class JkBmsBatteryStats : public BatteryStats {
 
         void updateFrom(JkBms::DataPointContainer const& dp);
 
-        bool supportsAlarmsAndWarnings() const final { return true; }
-
     private:
         void getJsonData(JsonVariant& root, bool verbose) const;
 
@@ -253,7 +249,6 @@ class VictronSmartShuntStats : public BatteryStats {
         void mqttPublish() const final;
 
         void updateFrom(VeDirectShuntController::data_t const& shuntData);
-        bool supportsAlarmsAndWarnings() const final { return true; }
 
     private:
         float _temperature;
