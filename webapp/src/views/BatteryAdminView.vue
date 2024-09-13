@@ -127,14 +127,14 @@
             >
                 <InputElement
                     :label="$t('batteryadmin.LimitDischargeCurrent')"
-                    v-model="batteryConfigList.enableDischargeCurrentLimit"
+                    v-model="batteryConfigList.enable_discharge_current_limit"
                     type="checkbox"
                 />
 
-                <template v-if="batteryConfigList.enableDischargeCurrentLimit">
+                <template v-if="batteryConfigList.enable_discharge_current_limit">
                     <InputElement
                         :label="$t('batteryadmin.DischargeCurrentLimit')"
-                        v-model="batteryConfigList.dischargeCurrentLimit"
+                        v-model="batteryConfigList.discharge_current_limit"
                         type="number"
                         min="0"
                         step="0.1"
@@ -143,12 +143,12 @@
 
                     <InputElement
                         :label="$t('batteryadmin.UseBatteryReportedDischargeCurrentLimit')"
-                        v-model="batteryConfigList.useBatteryReportedDischargeCurrentLimit"
+                        v-model="batteryConfigList.use_battery_reported_discharge_current_limit"
                         type="checkbox"
                     />
                 </template>
 
-                <template v-if="batteryConfigList.enableDischargeCurrentLimit && batteryConfigList.useBatteryReportedDischargeCurrentLimit">
+                <template v-if="batteryConfigList.enable_discharge_current_limit && batteryConfigList.use_battery_reported_discharge_current_limit">
                     <div
                         class="alert alert-secondary"
                         role="alert"

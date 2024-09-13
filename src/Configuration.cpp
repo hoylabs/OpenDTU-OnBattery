@@ -263,7 +263,7 @@ bool ConfigurationClass::write()
     battery["mqtt_voltage_unit"] = config.Battery.MqttVoltageUnit;
     battery["enable_discharge_current_limit"] = config.Battery.EnableDischargeCurrentLimit;
     battery["discharge_current_limit"] = config.Battery.DischargeCurrentLimit;
-    battery["useBattery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
+    battery["use_battery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
     battery["mqtt_discharge_current_topic"] = config.Battery.MqttDischargeCurrentTopic;
     battery["mqtt_discharge_current_json_path"] = config.Battery.MqttDischargeCurrentJsonPath;
     battery["mqtt_amperage_unit"] = config.Battery.MqttAmperageUnit;

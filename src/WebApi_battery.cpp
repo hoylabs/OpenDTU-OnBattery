@@ -45,9 +45,9 @@ void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
     root["mqtt_voltage_topic"] = config.Battery.MqttVoltageTopic;
     root["mqtt_voltage_json_path"] = config.Battery.MqttVoltageJsonPath;
     root["mqtt_voltage_unit"] = config.Battery.MqttVoltageUnit;
-    root["enableDischargeCurrentLimit"] = config.Battery.EnableDischargeCurrentLimit;
-    root["dischargeCurrentLimit"] = static_cast<int>(config.Battery.DischargeCurrentLimit * 100 +0.5) / 100.0;
-    root["useBatteryReportedDischargeCurrentLimit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
+    root["enable_discharge_current_limit"] = config.Battery.EnableDischargeCurrentLimit;
+    root["discharge_current_limit"] = static_cast<int>(config.Battery.DischargeCurrentLimit * 100 +0.5) / 100.0;
+    root["use_battery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
     root["mqtt_discharge_current_topic"] = config.Battery.MqttDischargeCurrentTopic;
     root["mqtt_discharge_current_json_path"] = config.Battery.MqttDischargeCurrentJsonPath;
     root["mqtt_amperage_unit"] = config.Battery.MqttAmperageUnit;
@@ -97,9 +97,9 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
     strlcpy(config.Battery.MqttVoltageTopic, root["mqtt_voltage_topic"].as<String>().c_str(), sizeof(config.Battery.MqttVoltageTopic));
     strlcpy(config.Battery.MqttVoltageJsonPath, root["mqtt_voltage_json_path"].as<String>().c_str(), sizeof(config.Battery.MqttVoltageJsonPath));
     config.Battery.MqttVoltageUnit = static_cast<BatteryVoltageUnit>(root["mqtt_voltage_unit"].as<uint8_t>());
-    config.Battery.EnableDischargeCurrentLimit = root["enableDischargeCurrentLimit"].as<bool>();
-    config.Battery.DischargeCurrentLimit = static_cast<int>(root["dischargeCurrentLimit"].as<float>() * 100) / 100.0;
-    config.Battery.UseBatteryReportedDischargeCurrentLimit = root["useBatteryReportedDischargeCurrentLimit"].as<bool>();
+    config.Battery.EnableDischargeCurrentLimit = root["enable_discharge_current_limit"].as<bool>();
+    config.Battery.DischargeCurrentLimit = static_cast<int>(root["discharge_currentLimit"].as<float>() * 100) / 100.0;
+    config.Battery.UseBatteryReportedDischargeCurrentLimit = root["use_battery_reported_discharge_current_limit"].as<bool>();
     strlcpy(config.Battery.MqttDischargeCurrentTopic, root["mqtt_discharge_current_topic"].as<String>().c_str(), sizeof(config.Battery.MqttDischargeCurrentTopic));
     strlcpy(config.Battery.MqttDischargeCurrentJsonPath, root["mqtt_discharge_current_json_path"].as<String>().c_str(), sizeof(config.Battery.MqttDischargeCurrentJsonPath));
     config.Battery.MqttAmperageUnit = static_cast<BatteryAmperageUnit>(root["mqtt_amperage_unit"].as<uint8_t>());
