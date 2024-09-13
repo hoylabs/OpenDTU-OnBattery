@@ -152,7 +152,6 @@ class SBSBatteryStats : public BatteryStats {
         float getChargeCurrentLimitation() const { return _chargeCurrentLimitation; } ;
 
     private:
-        void setManufacturer(String&& m) { _manufacturer = std::move(m); }
         void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
 
         float _chargeVoltage;
