@@ -54,6 +54,19 @@ static void addLiveViewAlarm(JsonVariant& root, std::string const& name,
     root["issues"][name] = 2;
 }
 
+void BatteryStats::setManufacturer(const String& m)
+{
+    String sanitized(m);
+    for (int i = 0; i < sanitized.length(); i++) {
+        char c = sanitized[i];
+        if (c < 0x20 || c >= 0x80) {
+            sanitized.remove(i); // Truncate string
+            break;
+        }
+    }
+    _manufacturer = std::move(sanitized);
+}
+
 bool BatteryStats::updateAvailable(uint32_t since) const
 {
     if (_lastUpdate == 0) { return false; } // no data at all processed yet
@@ -76,9 +89,32 @@ void BatteryStats::getLiveViewData(JsonVariant& root) const
     }
     root["data_age"] = getAgeSeconds();
 
-    addLiveViewValue(root, "SoC", _soc, "%", _socPrecision);
-    addLiveViewValue(root, "voltage", _voltage, "V", 2);
-    addLiveViewValue(root, "current", _current, "A", _currentPrecision);
+    if (isSoCValid()) {
+        addLiveViewValue(root, "SoC", _soc, "%", _socPrecision);
+    }
+
+    if (isVoltageValid()) {
+        addLiveViewValue(root, "voltage", _voltage, "V", 2);
+    }
+
+    if (isCurrentValid()) {
+        addLiveViewValue(root, "current", _current, "A", _currentPrecision);
+    }
+
+    if (isDischargeCurrentLimitValid()) {
+        addLiveViewValue(root, "dischargeCurrentLimitation", _dischargeCurrentLimit, "A", 1);
+    }
+
+    root["showIssues"] = supportsAlarmsAndWarnings();
+}
+
+void MqttBatteryStats::getLiveViewData(JsonVariant& root) const
+{
+    // as we don't want to repeat the data that is already shown in the live data card
+    // we only add the live view data here when the discharge current limit can be shown
+    if (isDischargeCurrentLimitValid()) {
+        BatteryStats::getLiveViewData(root);
+    }
 }
 
 void PylontechBatteryStats::getLiveViewData(JsonVariant& root) const
@@ -88,7 +124,6 @@ void PylontechBatteryStats::getLiveViewData(JsonVariant& root) const
     // values go into the "Status" card of the web application
     addLiveViewValue(root, "chargeVoltage", _chargeVoltage, "V", 1);
     addLiveViewValue(root, "chargeCurrentLimitation", _chargeCurrentLimitation, "A", 1);
-    addLiveViewValue(root, "dischargeCurrentLimitation", _dischargeCurrentLimitation, "A", 1);
     addLiveViewValue(root, "stateOfHealth", _stateOfHealth, "%", 0);
     addLiveViewValue(root, "temperature", _temperature, "°C", 1);
 
@@ -151,7 +186,6 @@ void PytesBatteryStats::getLiveViewData(JsonVariant& root) const
     addLiveViewValue(root, "chargeVoltage", _chargeVoltageLimit, "V", 1);
     addLiveViewValue(root, "chargeCurrentLimitation", _chargeCurrentLimit, "A", 1);
     addLiveViewValue(root, "dischargeVoltageLimitation", _dischargeVoltageLimit, "V", 1);
-    addLiveViewValue(root, "dischargeCurrentLimitation", _dischargeCurrentLimit, "A", 1);
     addLiveViewValue(root, "stateOfHealth", _stateOfHealth, "%", 0);
     addLiveViewValue(root, "temperature", _temperature, "°C", 1);
 
@@ -322,14 +356,21 @@ void BatteryStats::mqttPublish() const
 {
     MqttSettings.publish("battery/manufacturer", _manufacturer);
     MqttSettings.publish("battery/dataAge", String(getAgeSeconds()));
+
     if (isSoCValid()) {
         MqttSettings.publish("battery/stateOfCharge", String(_soc));
     }
+
     if (isVoltageValid()) {
         MqttSettings.publish("battery/voltage", String(_voltage));
     }
+
     if (isCurrentValid()) {
         MqttSettings.publish("battery/current", String(_current));
+    }
+
+    if (isDischargeCurrentLimitValid()) {
+        MqttSettings.publish("battery/settings/dischargeCurrentLimitation", String(_dischargeCurrentLimit));
     }
 }
 
@@ -339,7 +380,6 @@ void PylontechBatteryStats::mqttPublish() const
 
     MqttSettings.publish("battery/settings/chargeVoltage", String(_chargeVoltage));
     MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimitation));
-    MqttSettings.publish("battery/settings/dischargeCurrentLimitation", String(_dischargeCurrentLimitation));
     MqttSettings.publish("battery/stateOfHealth", String(_stateOfHealth));
     MqttSettings.publish("battery/temperature", String(_temperature));
     MqttSettings.publish("battery/alarm/overCurrentDischarge", String(_alarmOverCurrentDischarge));
@@ -386,7 +426,6 @@ void PytesBatteryStats::mqttPublish() const
 
     MqttSettings.publish("battery/settings/chargeVoltage", String(_chargeVoltageLimit));
     MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimit));
-    MqttSettings.publish("battery/settings/dischargeCurrentLimitation", String(_dischargeCurrentLimit));
     MqttSettings.publish("battery/settings/dischargeVoltageLimitation", String(_dischargeVoltageLimit));
 
     MqttSettings.publish("battery/stateOfHealth", String(_stateOfHealth));
@@ -518,7 +557,7 @@ void JkBmsBatteryStats::updateFrom(JkBms::DataPointContainer const& dp)
 {
     using Label = JkBms::DataPointLabel;
 
-    _manufacturer = "JKBMS";
+    setManufacturer("JKBMS");
     auto oProductId = dp.get<Label::ProductId>();
     if (oProductId.has_value()) {
         // the first twelve chars are expected to be the "User Private Data"
@@ -526,10 +565,10 @@ void JkBmsBatteryStats::updateFrom(JkBms::DataPointContainer const& dp)
         // name, which can be changed at will using the smartphone app. so
         // there is not always a "JK" in this string. if there is, we still cut
         // the string there to avoid possible regressions.
-        _manufacturer = oProductId->substr(12).c_str();
+        setManufacturer(String(oProductId->substr(12).c_str()));
         auto pos = oProductId->rfind("JK");
         if (pos != std::string::npos) {
-            _manufacturer = oProductId->substr(pos).c_str();
+            setManufacturer(String(oProductId->substr(pos).c_str()));
         }
     }
 
@@ -601,7 +640,7 @@ void VictronSmartShuntStats::updateFrom(VeDirectShuntController::data_t const& s
     _timeToGo = shuntData.TTG / 60;
     _chargedEnergy = static_cast<float>(shuntData.H18) / 100;
     _dischargedEnergy = static_cast<float>(shuntData.H17) / 100;
-    _manufacturer = String("Victron ") + shuntData.getPidAsString().data();
+    setManufacturer(String("Victron ") + shuntData.getPidAsString().data());
     _temperature = shuntData.T;
     _tempPresent = shuntData.tempPresent;
     _midpointVoltage = static_cast<float>(shuntData.VM) / 1000;
