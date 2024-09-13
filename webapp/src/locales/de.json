@@ -635,7 +635,7 @@
         "TargetPowerConsumptionHint": "Angestrebter erlaubter Stromverbrauch aus dem Netz. Wert darf negativ sein.",
         "TargetPowerConsumptionHysteresis": "Hysterese",
         "TargetPowerConsumptionHysteresisHint": "Neu berechnetes Limit nur dann an den Inverter senden, wenn es vom zurückgemeldeten Limit um mindestens diesen Betrag abweicht.",
-        "LowerPowerLimit": "Minmales Leistungslimit",
+        "LowerPowerLimit": "Minimales Leistungslimit",
         "LowerPowerLimitHint": "Dieser Wert muss so gewählt werden, dass ein stabiler Betrieb mit diesem Limit möglich ist. Falls der Wechselrichter nur mit einem kleineren Limit betrieben werden könnte, wird er stattdessen in Standby versetzt.",
         "BaseLoadLimit": "Grundlast",
         "BaseLoadLimitHint": "Relevant beim Betrieb ohne oder beim Ausfall des Stromzählers. Solange es die sonstigen Bedinungen zulassen (insb. Batterieladung) wird dieses Limit am Wechselrichter eingestellt.",
@@ -685,7 +685,14 @@
         "JkBmsInterfaceUart": "TTL-UART an der MCU",
         "JkBmsInterfaceTransceiver": "RS-485 Transceiver an der MCU",
         "PollingInterval": "Abfrageintervall",
-        "Seconds": "@:base.Seconds"
+        "Seconds": "@:base.Seconds",
+        "DischargeCurrentLimitConfiguration": "Einstellungen Entladestromlimit",
+        "LimitDischargeCurrent": "Entladestrom limitieren",
+        "DischargeCurrentLimit": "max. Entladestrom",
+        "UseBatteryReportedDischargeCurrentLimit": "Von der Batterie übermitteltes Limit verwenden",
+        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hinweis:</b> Das niedrigste Limit wird angewendet, wobei das von der Batterie übermittelte Entladestromlimit nur verwendet wird, wenn in der letzten Minute ein Update eingegangen ist; andernfalls dient das zuvor festgelegte Limit als Fallback.",
+        "MqttDischargeCurrentTopic": "Topic für Entladestromlimit",
+        "MqttAmperageUnit": "Einheit"
     },
     "inverteradmin": {
         "InverterSettings": "Wechselrichter Einstellungen",
