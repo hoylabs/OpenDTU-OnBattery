@@ -21,7 +21,7 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
             _stats->setSoC(static_cast<float>(this->readUnsignedInt16(rx_message.data + 6)), 1, millis());
 
             if (_verboseLogging) {
-                MessageOutput.printf("[SBS Unipower] 1552 SoC: %i Voltage: %f Current: %f\r\n", _stats->getSoC(), _stats->getVoltage(), _stats->_current);
+                MessageOutput.printf("[SBS Unipower] 1552 SoC: %f Voltage: %f Current: %f\r\n", _stats->getSoC(), _stats->getVoltage(), _stats->_current);
             }
             break;
         }
@@ -30,31 +30,31 @@ void SBSCanReceiver::onMessage(twai_message_t rx_message)
             int clusterstate = rx_message.data[0];
             switch (clusterstate) {
                 case 0:
-                    //Battery inactive
+                    // Battery inactive
                     _stats->_dischargeEnabled = 0;
                     _stats->_chargeEnabled = 0;
                     break;
 
                 case 1:
-                    //Battery Discharge mode (recuperation enabled)
+                    // Battery Discharge mode (recuperation enabled)
                     _stats->_chargeEnabled = 1;
                     _stats->_dischargeEnabled = 1;
                     break;
 
                 case 2:
-                    //Battery in charge Mode (discharge with half current possible (45A))
+                    // Battery in charge Mode (discharge with half current possible (45A))
                     _stats->_chargeEnabled = 1;
                     _stats->_dischargeEnabled = 1;
                     break;
 
                 case 4:
-                    //Battery Fault
+                    // Battery Fault
                     _stats->_chargeEnabled = 0;
                     _stats->_dischargeEnabled = 0;
                     break;
 
                 case 8:
-                    //Battery Deepsleep
+                    // Battery Deepsleep
                     _stats->_chargeEnabled = 0;
                     _stats->_dischargeEnabled = 0;
                     break;
