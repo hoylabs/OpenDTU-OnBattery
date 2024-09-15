@@ -208,6 +208,14 @@
     },
     {
         "name": "OpenDTU Fusion v2 with CMT2300A and W5500 ethernet",
+        "nrf24": {
+            "miso": -1,
+            "mosi": -1,
+            "clk": -1,
+            "irq": -1,
+            "en": -1,
+            "cs": -1
+        },
         "cmt": {
             "clk": 6,
             "cs": 4,
