@@ -140,7 +140,7 @@ void BatteryCanReceiver::loop()
     }
 
     if (_verboseLogging) {
-        MessageOutput.printf("[%s] Received CAN message: 0x%04X -",
+        MessageOutput.printf("[%s] Received CAN message: 0x%X -",
                 _providerName, rx_message.identifier);
 
         for (int i = 0; i < rx_message.data_length_code; i++) {
