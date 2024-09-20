@@ -170,6 +170,14 @@
 #define POWERMETER_PIN_DERE -1
 #endif
 
+#ifndef POWERMETER_PIN_TXEN
+#define POWERMETER_PIN_TXEN -1
+#endif
+
+#ifndef POWERMETER_PIN_RXEN
+#define POWERMETER_PIN_RXEN -1
+#endif
+
 PinMappingClass PinMapping;
 
 PinMappingClass::PinMappingClass()
@@ -236,6 +244,8 @@ PinMappingClass::PinMappingClass()
     _pinMapping.powermeter_rx = POWERMETER_PIN_RX;
     _pinMapping.powermeter_tx = POWERMETER_PIN_TX;
     _pinMapping.powermeter_dere = POWERMETER_PIN_DERE;
+    _pinMapping.powermeter_rxen = POWERMETER_PIN_RXEN;
+    _pinMapping.powermeter_txen = POWERMETER_PIN_TXEN;
 }
 
 PinMapping_t& PinMappingClass::get()
@@ -321,6 +331,8 @@ bool PinMappingClass::init(const String& deviceMapping)
             _pinMapping.powermeter_rx = doc[i]["powermeter"]["rx"] | POWERMETER_PIN_RX;
             _pinMapping.powermeter_tx = doc[i]["powermeter"]["tx"] | POWERMETER_PIN_TX;
             _pinMapping.powermeter_dere = doc[i]["powermeter"]["dere"] | POWERMETER_PIN_DERE;
+            _pinMapping.powermeter_rxen = doc[i]["powermeter"]["rxen"] | POWERMETER_PIN_RXEN;
+            _pinMapping.powermeter_txen = doc[i]["powermeter"]["txen"] | POWERMETER_PIN_TXEN;
 
             return true;
         }
