@@ -48,7 +48,7 @@ jobs:
       environments: ${{ steps.envs.outputs.environments }}
 
   build:
-    name: Build Enviornments
+    name: Build Environments
     runs-on: ubuntu-latest
     needs: get_default_envs
     strategy:
@@ -93,6 +93,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install --upgrade platformio setuptools
 
+      - name: Enable Corepack
+        run: |
+            cd webapp
+            corepack enable
+
       - name: Setup Node.js and yarn
         uses: actions/setup-node@v4
         with:
@@ -101,10 +106,14 @@ jobs:
           cache-dependency-path: "webapp/yarn.lock"
 
       - name: Install WebApp dependencies
-        run: yarn --cwd webapp install --frozen-lockfile
+        run: |
+            cd webapp
+            yarn install --frozen-lockfile
 
       - name: Build WebApp
-        run: yarn --cwd webapp build
+        run: |
+            cd webapp
+            yarn build
 
       - name: Build firmware
         run: pio run -e ${{ matrix.environment }}
@@ -130,7 +139,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/2')
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Get tags
         run: git fetch --force --tags origin
@@ -139,15 +148,18 @@ jobs:
         run: |
           echo "OPEN_DTU_CORE_RELEASE=$(git for-each-ref --sort=creatordate --format '%(refname) %(creatordate)' refs/tags | grep 'refs/tags/v' | tail -1 | sed 's#.*/##' | sed 's/ .*//')" >> $GITHUB_ENV
 
-      - name: Create openDTU-core-release-Badge
-        uses: schneegans/dynamic-badges-action@v1.6.0
-        with:
-          auth: ${{ secrets.GIST_SECRET }}
-          gistID: 68b47cc8c8994d04ab3a4fa9d8aee5e6
-          filename: openDTUcoreRelease.json
-          label: based on original OpenDTU
-          message: ${{ env.OPEN_DTU_CORE_RELEASE }}
-          color: lightblue
+# disabled as uploading the changed gist failed repeatedly.
+# maybe the token in secrets.GIST_SECRET has expired?
+# need help from repo owner @helgeerbe to fix this.
+#      - name: Create openDTU-core-release-Badge
+#        uses: schneegans/dynamic-badges-action@v1.6.0
+#        with:
+#          auth: ${{ secrets.GIST_SECRET }}
+#          gistID: 68b47cc8c8994d04ab3a4fa9d8aee5e6
+#          filename: openDTUcoreRelease.json
+#          label: based on original OpenDTU
+#          message: ${{ env.OPEN_DTU_CORE_RELEASE }}
+#          color: lightblue
 
       - name: Build Changelog
         id: github_release

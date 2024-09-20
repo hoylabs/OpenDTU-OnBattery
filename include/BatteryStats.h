@@ -18,7 +18,7 @@ class BatteryStats {
         uint32_t getAgeSeconds() const { return (millis() - _lastUpdate) / 1000; }
         bool updateAvailable(uint32_t since) const;
 
-        uint8_t getSoC() const { return _soc; }
+        float getSoC() const { return _soc; }
         uint32_t getSoCAgeSeconds() const { return (millis() - _lastUpdateSoC) / 1000; }
         uint8_t getSoCPrecision() const { return _socPrecision; }
 
@@ -27,6 +27,9 @@ class BatteryStats {
 
         float getChargeCurrent() const { return _current; };
         uint8_t getChargeCurrentPrecision() const { return _currentPrecision; }
+
+        float getDischargeCurrentLimit() const { return _dischargeCurrentLimit; };
+        uint32_t getDischargeCurrentLimitAgeSeconds() const { return (millis() - _lastUpdateDischargeCurrentLimit) / 1000; }
 
         // convert stats to JSON for web application live view
         virtual void getLiveViewData(JsonVariant& root) const;
@@ -40,12 +43,15 @@ class BatteryStats {
         bool isSoCValid() const { return _lastUpdateSoC > 0; }
         bool isVoltageValid() const { return _lastUpdateVoltage > 0; }
         bool isCurrentValid() const { return _lastUpdateCurrent > 0; }
+        bool isDischargeCurrentLimitValid() const { return _lastUpdateDischargeCurrentLimit > 0; }
 
         // returns true if the battery reached a critically low voltage/SoC,
         // such that it is in need of charging to prevent degredation.
         virtual bool getImmediateChargingRequest() const { return false; };
 
         virtual float getChargeCurrentLimitation() const { return FLT_MAX; };
+
+        virtual bool supportsAlarmsAndWarnings() const { return true; };
 
     protected:
         virtual void mqttPublish() const;
@@ -67,13 +73,20 @@ class BatteryStats {
             _lastUpdateCurrent = _lastUpdate = timestamp;
         }
 
-        String _manufacturer = "unknown";
+        void setDischargeCurrentLimit(float dischargeCurrentLimit, uint32_t timestamp) {
+            _dischargeCurrentLimit = dischargeCurrentLimit;
+            _lastUpdateDischargeCurrentLimit = _lastUpdate = timestamp;
+        }
+
+        void setManufacturer(const String& m);
+
         String _hwversion = "";
         String _fwversion = "";
         String _serial = "";
         uint32_t _lastUpdate = 0;
 
     private:
+        String _manufacturer = "unknown";
         uint32_t _lastMqttPublish = 0;
         float _soc = 0;
         uint8_t _socPrecision = 0; // decimal places
@@ -86,6 +99,9 @@ class BatteryStats {
         float _current = 0;
         uint8_t _currentPrecision = 0; // decimal places
         uint32_t _lastUpdateCurrent = 0;
+
+        float _dischargeCurrentLimit = 0;
+        uint32_t _lastUpdateDischargeCurrentLimit = 0;
 };
 
 class PylontechBatteryStats : public BatteryStats {
@@ -98,12 +114,10 @@ class PylontechBatteryStats : public BatteryStats {
         float getChargeCurrentLimitation() const { return _chargeCurrentLimitation; } ;
 
     private:
-        void setManufacturer(String&& m) { _manufacturer = std::move(m); }
         void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
 
         float _chargeVoltage;
         float _chargeCurrentLimitation;
-        float _dischargeCurrentLimitation;
         uint16_t _stateOfHealth;
         float _temperature;
 
@@ -128,16 +142,47 @@ class PylontechBatteryStats : public BatteryStats {
         bool _chargeImmediately;
 };
 
+class SBSBatteryStats : public BatteryStats {
+    friend class SBSCanReceiver;
+
+    public:
+        void getLiveViewData(JsonVariant& root) const final;
+        void mqttPublish() const final;
+        float getChargeCurrent() const { return _current; } ;
+        float getChargeCurrentLimitation() const { return _chargeCurrentLimitation; } ;
+
+    private:
+        void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
+
+        float _chargeVoltage;
+        float _chargeCurrentLimitation;
+        float _dischargeCurrentLimitation;
+        uint16_t _stateOfHealth;
+        float _current;
+        float _temperature;
+
+        bool _alarmUnderTemperature;
+        bool _alarmOverTemperature;
+        bool _alarmUnderVoltage;
+        bool _alarmOverVoltage;
+        bool _alarmBmsInternal;
+
+        bool _warningHighCurrentDischarge;
+        bool _warningHighCurrentCharge;
+
+        bool _chargeEnabled;
+        bool _dischargeEnabled;
+};
+
 class PytesBatteryStats : public BatteryStats {
     friend class PytesCanReceiver;
 
     public:
         void getLiveViewData(JsonVariant& root) const final;
         void mqttPublish() const final;
-        float getChargeCurrentLimitation() const { return _chargeCurrentLimit; } ;
+        float getChargeCurrentLimitation() const { return _chargeCurrentLimit; };
 
     private:
-        void setManufacturer(String&& m) { _manufacturer = std::move(m); }
         void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
         void updateSerial() {
             if (!_serialPart1.isEmpty() && !_serialPart2.isEmpty()) {
@@ -151,7 +196,6 @@ class PytesBatteryStats : public BatteryStats {
         float _chargeVoltageLimit;
         float _chargeCurrentLimit;
         float _dischargeVoltageLimit;
-        float _dischargeCurrentLimit;
 
         uint16_t _stateOfHealth;
 
@@ -266,7 +310,7 @@ class MqttBatteryStats : public BatteryStats {
         // we do NOT publish the same data under a different topic.
         void mqttPublish() const final { }
 
-        // we don't need a card in the liveview, since the SoC and
-        // voltage (if available) is already displayed at the top.
-        void getLiveViewData(JsonVariant& root) const final { }
+        void getLiveViewData(JsonVariant& root) const final;
+
+        bool supportsAlarmsAndWarnings() const final { return false; }
 };

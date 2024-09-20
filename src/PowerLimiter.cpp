@@ -17,6 +17,7 @@
 #include <ctime>
 #include <cmath>
 #include <frozen/map.h>
+#include "SunPosition.h"
 
 PowerLimiterClass PowerLimiter;
 
@@ -239,19 +240,22 @@ void PowerLimiterClass::loop()
     auto getBatteryPower = [this,&config]() -> bool {
         if (config.PowerLimiter.IsInverterSolarPowered) { return false; }
 
+        auto isDayPeriod = SunPosition.isSunsetAvailable() ? SunPosition.isDayPeriod() : getSolarPower() > 0;
+
+        if (_nighttimeDischarging && isDayPeriod) {
+            _nighttimeDischarging = false;
+            return isStartThresholdReached();
+        }
+
         if (isStopThresholdReached()) { return false; }
 
         if (isStartThresholdReached()) { return true; }
 
-        // with solar passthrough, and the respective switch enabled, we
-        // may start discharging the battery when it is nighttime. we also
-        // stop the discharge cycle if it becomes daytime again.
-        // TODO(schlimmchen): should be supported by sunrise and sunset, such
-        // that a thunderstorm or other events that drastically lower the solar
-        // power do not cause the start of a discharge cycle during the day.
-        if (config.PowerLimiter.SolarPassThroughEnabled &&
-                config.PowerLimiter.BatteryAlwaysUseAtNight) {
-            return getSolarPower() == 0;
+        if (config.PowerLimiter.BatteryAlwaysUseAtNight &&
+                !isDayPeriod &&
+                !_batteryDischargeEnabled) {
+            _nighttimeDischarging = true;
+            return true;
         }
 
         // we are between start and stop threshold and keep the state that was
@@ -262,7 +266,7 @@ void PowerLimiterClass::loop()
     _batteryDischargeEnabled = getBatteryPower();
 
     if (_verboseLogging && !config.PowerLimiter.IsInverterSolarPowered) {
-        MessageOutput.printf("[DPL::loop] battery interface %s, SoC: %d %%, StartTH: %d %%, StopTH: %d %%, SoC age: %d s, ignore: %s\r\n",
+        MessageOutput.printf("[DPL::loop] battery interface %s, SoC: %f %%, StartTH: %d %%, StopTH: %d %%, SoC age: %d s, ignore: %s\r\n",
                 (config.Battery.Enabled?"enabled":"disabled"),
                 Battery.getStats()->getSoC(),
                 config.PowerLimiter.BatterySocStartThreshold,
@@ -284,7 +288,7 @@ void PowerLimiterClass::loop()
     };
 
     // Calculate and set Power Limit (NOTE: might reset _inverter to nullptr!)
-    bool limitUpdated = calcPowerLimit(_inverter, getSolarPower(), _batteryDischargeEnabled);
+    bool limitUpdated = calcPowerLimit(_inverter, getSolarPower(), getBatteryDischargeLimit(), _batteryDischargeEnabled);
 
     _lastCalculation = millis();
 
@@ -419,17 +423,17 @@ uint8_t PowerLimiterClass::getPowerLimiterState() {
 }
 
 // Logic table ("PowerMeter value" can be "base load setting" as a fallback)
-// | Case # | batteryPower | solarPower     | useFullSolarPassthrough | Resulting inverter limit                               |
-// | 1      | false        |  < 20 W        | doesn't matter          | 0 (inverter off)                                       |
-// | 2      | false        | >= 20 W        | doesn't matter          | min(PowerMeter value, solarPower)                      |
-// | 3      | true         | doesn't matter | false                   | PowerMeter value (Battery can supply unlimited energy) |
-// | 4      | true         | fully passed   | true                    | max(PowerMeter value, solarPower)                      |
+// | Case # | batteryPower | solarPower     | batteryLimit   | useFullSolarPassthrough | Resulting inverter limit                               |
+// | 1      | false        |  < 20 W        | doesn't matter | doesn't matter          | 0 (inverter off)                                       |
+// | 2      | false        | >= 20 W        | doesn't matter | doesn't matter          | min(PowerMeter value, solarPower)                      |
+// | 3      | true         | fully passed   | applied        | false                   | min(PowerMeter value  batteryLimit+solarPower)         |
+// | 4      | true         | fully passed   | doesn't matter | true                    | max(PowerMeter value, solarPower)                      |
 
-bool PowerLimiterClass::calcPowerLimit(std::shared_ptr<InverterAbstract> inverter, int32_t solarPowerDC, bool batteryPower)
+bool PowerLimiterClass::calcPowerLimit(std::shared_ptr<InverterAbstract> inverter, int32_t solarPowerDC, int32_t batteryPowerLimitDC, bool batteryPower)
 {
     if (_verboseLogging) {
-        MessageOutput.printf("[DPL::calcPowerLimit] battery use %s, solar power (DC): %d W\r\n",
-                (batteryPower?"allowed":"prevented"), solarPowerDC);
+        MessageOutput.printf("[DPL::calcPowerLimit] battery use %s, solar power (DC): %d W, battery limit (DC): %d W\r\n",
+                (batteryPower?"allowed":"prevented"), solarPowerDC, batteryPowerLimitDC);
     }
 
     // Case 1:
@@ -454,6 +458,7 @@ bool PowerLimiterClass::calcPowerLimit(std::shared_ptr<InverterAbstract> inverte
     // old and unreliable. TODO(schlimmchen): is this comment outdated?
     auto inverterOutput = static_cast<int32_t>(inverter->Statistics()->getChannelFieldValue(TYPE_AC, CH0, FLD_PAC));
 
+    auto batteryPowerLimitAC = inverterPowerDcToAc(inverter, batteryPowerLimitDC);
     auto solarPowerAC = inverterPowerDcToAc(inverter, solarPowerDC);
 
     auto const& config = Configuration.get();
@@ -469,11 +474,12 @@ bool PowerLimiterClass::calcPowerLimit(std::shared_ptr<InverterAbstract> inverte
                 (meterIncludesInv?"":"NOT "));
 
         MessageOutput.printf("[DPL::calcPowerLimit] power meter value: %d W, "
-                "power meter valid: %s, inverter output: %d W, solar power (AC): %d W\r\n",
+                "power meter valid: %s, inverter output: %d W, solar power (AC): %d W, battery limit (AC): %d W\r\n",
                 meterValue,
                 (meterValid?"yes":"no"),
                 inverterOutput,
-                solarPowerAC);
+                solarPowerAC,
+                batteryPowerLimitAC);
     }
 
     auto newPowerLimit = baseLoad;
@@ -503,6 +509,15 @@ bool PowerLimiterClass::calcPowerLimit(std::shared_ptr<InverterAbstract> inverte
         }
 
         return setNewPowerLimit(inverter, newPowerLimit);
+    } else { // on batteryPower
+        // Apply battery-provided discharge power limit.
+        if (newPowerLimit > batteryPowerLimitAC + solarPowerAC) {
+            newPowerLimit = batteryPowerLimitAC + solarPowerAC;
+            if (_verboseLogging) {
+                MessageOutput.printf("[DPL::calcPowerLimit] limited by battery to: %d W\r\n",
+                newPowerLimit);
+            }
+        }
     }
 
     // Case 4:
@@ -882,6 +897,26 @@ int32_t PowerLimiterClass::getSolarPower()
     if (solarPower < 20) { return 0; } // too little to work with
 
     return solarPower;
+}
+
+int32_t PowerLimiterClass::getBatteryDischargeLimit()
+{
+    auto currentLimit = Battery.getDischargeCurrentLimit();
+
+    if (currentLimit == FLT_MAX) {
+        // the returned value is arbitrary, as long as it's
+        // greater than the inverters max DC power consumption.
+        return 10 * 1000;
+    }
+
+    // This uses inverter voltage since there is a voltage drop between
+    // battery and inverter, so since we are regulating the inverter
+    // power we should use its voltage.
+    auto const& config = Configuration.get();
+    auto channel = static_cast<ChannelNum_t>(config.PowerLimiter.InverterChannelId);
+    float inverterVoltage = _inverter->Statistics()->getChannelFieldValue(TYPE_DC, channel, FLD_UDC);
+
+    return static_cast<int32_t>(inverterVoltage * currentLimit);
 }
 
 float PowerLimiterClass::getLoadCorrectedVoltage()

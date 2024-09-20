@@ -75,6 +75,7 @@ private:
     Mode _mode = Mode::Normal;
     std::shared_ptr<InverterAbstract> _inverter = nullptr;
     bool _batteryDischargeEnabled = false;
+    bool _nighttimeDischarging = false;
     uint32_t _nextInverterRestart = 0; // Values: 0->not calculated / 1->no restart configured / >1->time of next inverter restart in millis()
     uint32_t _nextCalculateCheck = 5000; // time in millis for next NTP check to calulate restart
     bool _fullSolarPassThroughEnabled = false;
@@ -89,10 +90,11 @@ private:
     int32_t inverterPowerDcToAc(std::shared_ptr<InverterAbstract> inverter, int32_t dcPower);
     void unconditionalSolarPassthrough(std::shared_ptr<InverterAbstract> inverter);
     bool canUseDirectSolarPower();
-    bool calcPowerLimit(std::shared_ptr<InverterAbstract> inverter, int32_t solarPower, bool batteryPower);
+    bool calcPowerLimit(std::shared_ptr<InverterAbstract> inverter, int32_t solarPower, int32_t batteryPowerLimit, bool batteryPower);
     bool updateInverter();
     bool setNewPowerLimit(std::shared_ptr<InverterAbstract> inverter, int32_t newPowerLimit);
     int32_t getSolarPower();
+    int32_t getBatteryDischargeLimit();
     float getLoadCorrectedVoltage();
     bool testThreshold(float socThreshold, float voltThreshold,
             std::function<bool(float, float)> compare);

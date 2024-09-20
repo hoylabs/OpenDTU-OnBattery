@@ -670,6 +670,7 @@
         "VerboseLogging": "@:base.VerboseLogging",
         "Provider": "Data Provider",
         "ProviderPylontechCan": "Pylontech using CAN bus",
+        "ProviderSBSCan": "SBS Unipower using CAN bus",
         "ProviderJkBmsSerial": "Jikong (JK) BMS using serial connection",
         "ProviderMqtt": "Battery data from MQTT broker",
         "ProviderVictron": "Victron SmartShunt using VE.Direct interface",
@@ -687,7 +688,14 @@
         "JkBmsInterfaceUart": "TTL-UART on MCU",
         "JkBmsInterfaceTransceiver": "RS-485 Transceiver on MCU",
         "PollingInterval": "Polling Interval",
-        "Seconds": "@:base.Seconds"
+        "Seconds": "@:base.Seconds",
+        "DischargeCurrentLimitConfiguration": "Discharge Current Limit Settings",
+        "LimitDischargeCurrent": "Limit Discharge Current",
+        "DischargeCurrentLimit": "max. Discharge Current",
+        "UseBatteryReportedDischargeCurrentLimit": "Use Battery-Reported limit",
+        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hint:</b> The lowest limit will be applied, with the battery-reported discharge current limit used only if an update was received in the last minute; otherwise, the previously specified limit will act as a fallback.",
+        "MqttDischargeCurrentTopic": "Discharge Current Limit Value Topic",
+        "MqttAmperageUnit": "Unit"
     },
     "inverteradmin": {
         "InverterSettings": "Inverter Settings",
@@ -781,7 +789,7 @@
     "about": {
         "AboutOpendtu": "About OpenDTU-OnBattery",
         "Documentation": "Documentation",
-        "DocumentationBody": "The firmware and hardware documentation of the <b>upstream</b> project can be found here: <a href=\"https://www.opendtu.solar\" target=\"_blank\">https://www.opendtu.solar</a><br>Additional information, especially regarding OpenDTU-OnBattery-specific features, can be accessed at the <a href=\"https://github.com/helgeerbe/OpenDTU-OnBattery/wiki\" target=\"_blank\">Github Wiki</a>.",
+        "DocumentationBody": "The canonical firmware and hardware documentation is accessible at <a href=\"https://opendtu-onbattery.net\" target=\"_blank\">https://opendtu-onbattery.net</a>.",
         "ProjectOrigin": "Project Origin",
         "ProjectOriginBody1": "OpenDTU-OnBattery is a fork of OpenDTU. The upstream project OpenDTU was started from <a href=\"https://www.mikrocontroller.net/topic/525778\" target=\"_blank\">this discussion. (Mikrocontroller.net)</a>",
         "ProjectOriginBody2": "The Hoymiles protocol was decrypted through the voluntary efforts of many participants. OpenDTU, among others, was developed based on this work. The project is licensed under an Open Source License (<a href=\"https://www.gnu.de/documents/gpl-2.0.de.html\" target=\"_blank\">GNU General Public License version 2</a>).",

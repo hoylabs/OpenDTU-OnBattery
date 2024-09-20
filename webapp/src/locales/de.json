@@ -635,7 +635,7 @@
         "TargetPowerConsumptionHint": "Angestrebter erlaubter Stromverbrauch aus dem Netz. Wert darf negativ sein.",
         "TargetPowerConsumptionHysteresis": "Hysterese",
         "TargetPowerConsumptionHysteresisHint": "Neu berechnetes Limit nur dann an den Inverter senden, wenn es vom zurückgemeldeten Limit um mindestens diesen Betrag abweicht.",
-        "LowerPowerLimit": "Minmales Leistungslimit",
+        "LowerPowerLimit": "Minimales Leistungslimit",
         "LowerPowerLimitHint": "Dieser Wert muss so gewählt werden, dass ein stabiler Betrieb mit diesem Limit möglich ist. Falls der Wechselrichter nur mit einem kleineren Limit betrieben werden könnte, wird er stattdessen in Standby versetzt.",
         "BaseLoadLimit": "Grundlast",
         "BaseLoadLimitHint": "Relevant beim Betrieb ohne oder beim Ausfall des Stromzählers. Solange es die sonstigen Bedinungen zulassen (insb. Batterieladung) wird dieses Limit am Wechselrichter eingestellt.",
@@ -668,6 +668,7 @@
         "VerboseLogging": "@:base.VerboseLogging",
         "Provider": "Datenanbieter",
         "ProviderPylontechCan": "Pylontech per CAN-Bus",
+        "ProviderSBSCan": "SBS Unipower per CAN-Bus",
         "ProviderJkBmsSerial": "Jikong (JK) BMS per serieller Verbindung",
         "ProviderMqtt": "Batteriewerte aus MQTT Broker",
         "ProviderVictron": "Victron SmartShunt per VE.Direct Schnittstelle",
@@ -684,7 +685,14 @@
         "JkBmsInterfaceUart": "TTL-UART an der MCU",
         "JkBmsInterfaceTransceiver": "RS-485 Transceiver an der MCU",
         "PollingInterval": "Abfrageintervall",
-        "Seconds": "@:base.Seconds"
+        "Seconds": "@:base.Seconds",
+        "DischargeCurrentLimitConfiguration": "Einstellungen Entladestromlimit",
+        "LimitDischargeCurrent": "Entladestrom limitieren",
+        "DischargeCurrentLimit": "max. Entladestrom",
+        "UseBatteryReportedDischargeCurrentLimit": "Von der Batterie übermitteltes Limit verwenden",
+        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hinweis:</b> Das niedrigste Limit wird angewendet, wobei das von der Batterie übermittelte Entladestromlimit nur verwendet wird, wenn in der letzten Minute ein Update eingegangen ist; andernfalls dient das zuvor festgelegte Limit als Fallback.",
+        "MqttDischargeCurrentTopic": "Topic für Entladestromlimit",
+        "MqttAmperageUnit": "Einheit"
     },
     "inverteradmin": {
         "InverterSettings": "Wechselrichter Einstellungen",
@@ -778,7 +786,7 @@
     "about": {
         "AboutOpendtu": "Über OpenDTU-OnBattery",
         "Documentation": "Dokumentation",
-        "DocumentationBody": "Die Firmware- und Hardware-Dokumentation des <b>Basis-Projektes</b> ist hier zu finden: <a href=\"https://www.opendtu.solar\" target=\"_blank\">https://www.opendtu.solar</a><br>Zusätzliche Informationen, insbesondere zu OpenDTU-OnBattery-spezifischen Funktionen, gibt es im <a href=\"https://github.com/helgeerbe/OpenDTU-OnBattery/wiki\" target=\"_blank\">Wiki auf Github</a>.",
+        "DocumentationBody": "Die maßgebliche Firmware- und Hardware-Dokumentation ist erreichbar unter <a href=\"https://opendtu-onbattery.net\" target=\"_blank\">https://opendtu-onbattery.net</a>.",
         "ProjectOrigin": "Projekt Ursprung",
         "ProjectOriginBody1": "OpenDTU-OnBattery ist eine Erweiterung von OpenDTU. Das Basis-Projekt OpenDTU wurde aus <a href=\"https://www.mikrocontroller.net/topic/525778\" target=\"_blank\">dieser Diskussion (mikrocontroller.net)</a> heraus gestartet.",
         "ProjectOriginBody2": "Das Hoymiles-Protokoll wurde durch die freiwilligen Bemühungen vieler Teilnehmer entschlüsselt. OpenDTU wurde unter anderem auf der Grundlage dieser Arbeit entwickelt. Das Projekt ist unter einer Open-Source-Lizenz lizenziert (<a href=\"https://www.gnu.de/documents/gpl-2.0.de.html\" target=\"_blank\">GNU General Public License version 2</a>).",
