@@ -160,7 +160,7 @@ jobs:
 
       - name: Build Changelog
         id: github_release
-        uses: mikepenz/release-changelog-builder-action@v4
+        uses: mikepenz/release-changelog-builder-action@v5.2.0
         with:
           failOnError: true
           commitMode: true
