@@ -325,13 +325,10 @@ class SDM {
 #if defined ( USE_HARDWARESERIAL )                                              //  hardware serial
   #if defined ( ESP8266 )                                                       //  on esp8266
     SDM(HardwareSerial& serial, long baud = SDM_UART_BAUD, int dere_pin = DERE_PIN, int config = SDM_UART_CONFIG, bool swapuart = SWAPHWSERIAL);
-    SDM(HardwareSerial& serial, long baud = SDM_UART_BAUD, int dere_pin = DERE_PIN, int re_pin = RE_PIN, int config = SDM_UART_CONFIG, bool swapuart = SWAPHWSERIAL);
   #elif defined ( ESP32 )                                                       //  on esp32
     SDM(HardwareSerial& serial, long baud = SDM_UART_BAUD, int dere_pin = DERE_PIN, int config = SDM_UART_CONFIG, int8_t rx_pin = SDM_RX_PIN, int8_t tx_pin = SDM_TX_PIN);
-    SDM(HardwareSerial& serial, long baud = SDM_UART_BAUD, int dere_pin = DERE_PIN, int re_pin = RE_PIN, int config = SDM_UART_CONFIG, int8_t rx_pin = SDM_RX_PIN, int8_t tx_pin = SDM_TX_PIN);
   #else                                                                         //  on avr
     SDM(HardwareSerial& serial, long baud = SDM_UART_BAUD, int dere_pin = DERE_PIN, int config = SDM_UART_CONFIG);
-    SDM(HardwareSerial& serial, long baud = SDM_UART_BAUD, int dere_pin = DERE_PIN, int re_pin = RE_PIN, int config = SDM_UART_CONFIG);
   #endif
 #else                                                                           //  software serial
   #if defined ( ESP8266 ) || defined ( ESP32 )                                  //  on esp8266/esp32
@@ -339,7 +336,6 @@ class SDM {
     SDM(SoftwareSerial& serial, long baud = SDM_UART_BAUD, int dere_pin = DERE_PIN, int re_pin = RE_PIN, int config = SDM_UART_CONFIG, int8_t rx_pin = SDM_RX_PIN, int8_t tx_pin = SDM_TX_PIN);
   #else                                                                         //  on avr
     SDM(SoftwareSerial& serial, long baud = SDM_UART_BAUD, int dere_pin = DERE_PIN);
-    SDM(SoftwareSerial& serial, long baud = SDM_UART_BAUD, int dere_pin = DERE_PIN, int re_pin = RE_PIN);
   #endif
 #endif
     virtual ~SDM();
