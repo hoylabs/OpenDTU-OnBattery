@@ -79,12 +79,10 @@ void SDM::begin(void) {
   if (_swapuart)
     sdmSer.swap();
 #endif
-  if (_dere_pin != NOT_A_PIN)
-  {
+  if (_dere_pin != NOT_A_PIN) {
     pinMode(_dere_pin, OUTPUT);                                                 //set output pin mode for DE/RE pin when used (for control MAX485)
   }
-  if (_re_pin != NOT_A_PIN)
-  {
+  if (_re_pin != NOT_A_PIN) {
     pinMode(_re_pin, OUTPUT);                                                   // set output pin mode /RE pin when used (for control MAX485)
   }
   dereSet(LOW);                                                                 //set init state to receive from SDM -> DE Disable, /RE Enable (for control MAX485)
