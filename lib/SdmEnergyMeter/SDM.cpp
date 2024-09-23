@@ -81,13 +81,13 @@ void SDM::begin(void) {
 #endif
   if (_dere_pin != NOT_A_PIN)
   {
-    pinMode(_dere_pin, OUTPUT);                                                 // set output pin mode for DE/RE pin when used (for control MAX485)
+    pinMode(_dere_pin, OUTPUT);                                                 //set output pin mode for DE/RE pin when used (for control MAX485)
   }
   if (_re_pin != NOT_A_PIN)
   {
     pinMode(_re_pin, OUTPUT);                                                   // set output pin mode /RE pin when used (for control MAX485)
   }
-  dereSet(LOW);                                                                 // set init state to receive from SDM -> DE Disable, /RE Enable (for control MAX485)
+  dereSet(LOW);                                                                 //set init state to receive from SDM -> DE Disable, /RE Enable (for control MAX485)
 }
 
 float SDM::readVal(uint16_t reg, uint8_t node) {
@@ -373,9 +373,9 @@ void SDM::flush(unsigned long _flushtime) {
 
 void SDM::dereSet(bool _state) {
   if (_dere_pin != NOT_A_PIN)
-    digitalWrite(_dere_pin, _state); // receive from SDM -> DE Disable, /RE Enable (for control MAX485)
+    digitalWrite(_dere_pin, _state);                                            //receive from SDM -> DE Disable, /RE Enable (for control MAX485)
   if (_re_pin != NOT_A_PIN)
-    digitalWrite(_re_pin, _state); // receive from SDM -> /RE Enable (for control MAX485)
+    digitalWrite(_re_pin, _state);                                              //receive from SDM -> /RE Enable (for control MAX485)
 }
 
 bool SDM::validChecksum(const uint8_t* data, size_t messageLength) const {
