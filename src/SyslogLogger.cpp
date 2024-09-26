@@ -49,8 +49,8 @@ void SyslogLogger::updateSettings(const String&& hostname)
     _header += hostname;
     _header += " OpenDTU ";
     _header += _proc_id;
-    // NIL values for message id and structured // data; utf-8 BOM.
-    _header += " - - \xEF\xBB\xBF";
+    // NIL values for message id and structured data
+    _header += " - - ";
 
     // Enable logger.
     enable();
