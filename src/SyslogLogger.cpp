@@ -45,7 +45,7 @@ void SyslogLogger::updateSettings(const String&& hostname)
 
     MessageOutput.printf("[SyslogLogger] Logging to %s!\r\n", _syslog_hostname.c_str());
 
-    _header = "<7>1 - ";  // RFC5424: Facility KERNEL, severity DEBUG, version 1, NIL timestamp.
+    _header = "<14>1 - ";  // RFC5424: Facility USER, severity INFO, version 1, NIL timestamp.
     _header += hostname;
     _header += " OpenDTU ";
     _header += _proc_id;
