@@ -128,6 +128,12 @@ struct POWERMETER_HTTP_SML_CONFIG_T {
 };
 using PowerMeterHttpSmlConfig = struct POWERMETER_HTTP_SML_CONFIG_T;
 
+struct ShellyACPlug_HTTP_CONFIG_T {
+    uint32_t PollingInterval;
+    HttpRequestConfig HttpRequest;
+};
+using ShellyACPlugConfig = struct ShellyACPlug_HTTP_CONFIG_T ;
+
 enum BatteryVoltageUnit { Volts = 0, DeciVolts = 1, CentiVolts = 2, MilliVolts = 3 };
 
 enum BatteryAmperageUnit { Amps = 0, MilliAmps = 1 };
@@ -323,6 +329,15 @@ struct CONFIG_T {
         uint8_t Auto_Power_Stop_BatterySoC_Threshold;
         float Auto_Power_Target_Power_Consumption;
     } Huawei;
+
+    struct {
+        bool Enabled;
+        bool VerboseLogging;
+        bool Auto_Power_BatterySoC_Limits_Enabled;
+        bool Emergency_Charge_Enabled;
+        uint8_t stop_batterysoc_threshold;
+        char ip[15];
+    } Shelly;
 
 
     INVERTER_CONFIG_T Inverter[INV_MAX_COUNT];

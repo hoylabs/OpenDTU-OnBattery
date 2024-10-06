@@ -12,6 +12,12 @@
                     type="checkbox"
                     wide
                 />
+                <InputElement
+                    :label="$t('acchargeradmin.EnableShelly')"
+                    v-model="acChargerShellyConfigList.enabled"
+                    type="checkbox"
+                    wide
+                />
 
                 <div class="row mb-3" v-show="acChargerConfigList.enabled">
                     <label class="col-sm-4 col-form-label">
@@ -202,6 +208,81 @@
                         </div>
                     </div>
                 </CardElement>
+
+                <CardElement
+                    :text="$t('acchargeradmin.ShellySettings')"
+                    textVariant="text-bg-primary"
+                    add-space
+                    v-show="acChargerShellyConfigList.enabled"
+                >
+                    <InputElement
+                        :label="$t('acchargeradmin.VerboseLogging')"
+                        v-model="acChargerShellyConfigList.verbose_logging"
+                        type="checkbox"
+                        wide
+                    />
+                    <InputElement
+                        :label="$t('acchargeradmin.EnableEmergencyCharge')"
+                        v-model="acChargerShellyConfigList.emergency_charge_enabled"
+                        type="checkbox"
+                        wide
+                    />
+                    <InputElement
+                        :label="$t('acchargeradmin.EnableBatterySoCLimits')"
+                        v-model="acChargerShellyConfigList.auto_power_batterysoc_limits_enabled"
+                        type="checkbox"
+                        wide
+                    />
+                    <div class="row mb-3">
+                        <label for="ip" class="col-sm-2 col-form-label"
+                            >{{ $t('acchargeradmin.ShellyAddress') }}:
+                            <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyAddressHint')" />
+                        </label>
+                        <div class="col-sm-10">
+                            <div class="input-group">
+                                <input
+                                    type="string"
+                                    class="form-control"
+                                    id="ip"
+                                    placeholder="192.168.2.100"
+                                    v-model="acChargerShellyConfigList.ip"
+                                    aria-describedby="ipDescription"
+                                    required
+                                />
+                                <span class="input-group-text" id="ipDescription"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <CardElement
+                        :text="$t('acchargeradmin.BatterySoCLimits')"
+                        textVariant="text-bg-primary"
+                        add-space
+                        v-show="acChargerShellyConfigList.auto_power_batterysoc_limits_enabled"
+                        >
+                        <div class="row mb-3">
+                            <label for="stopBatterySoCThreshold" class="col-sm-2 col-form-label"
+                                >{{ $t('acchargeradmin.StopBatterySoCThreshold') }}:
+                                <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.StopBatterySoCThresholdHint')" />
+                            </label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="Shelly_stopBatterySoCThreshold"
+                                        placeholder="95"
+                                        v-model="acChargerShellyConfigList.stop_batterysoc_threshold"
+                                        aria-describedby="Shelly_stopBatterySoCThresholdDescription"
+                                        min="2"
+                                        max="99"
+                                        required
+                                    />
+                                    <span class="input-group-text" id="Shelly_stopBatterySoCThresholdDescription">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </CardElement>
+                </CardElement>
             </CardElement>
 
             <FormFooter @reload="getChargerConfig" />
@@ -217,6 +298,7 @@ import FormFooter from '@/components/FormFooter.vue';
 import InputElement from '@/components/InputElement.vue';
 import { BIconInfoCircle } from 'bootstrap-icons-vue';
 import type { AcChargerConfig } from '@/types/AcChargerConfig';
+import type { AcChargerShellyConfig } from '@/types/AcChargerConfig';
 import { authHeader, handleResponse } from '@/utils/authentication';
 import { defineComponent } from 'vue';
 
@@ -233,6 +315,7 @@ export default defineComponent({
         return {
             dataLoading: true,
             acChargerConfigList: {} as AcChargerConfig,
+            acChargerShellyConfigList: {} as AcChargerShellyConfig,
             alertMessage: '',
             alertType: 'info',
             showAlert: false,
@@ -254,12 +337,32 @@ export default defineComponent({
                     this.acChargerConfigList = data;
                     this.dataLoading = false;
                 });
+            fetch('/api/shelly/config', { headers: authHeader() })
+                .then((response) => handleResponse(response, this.$emitter, this.$router))
+                .then((data) => {
+                    this.acChargerShellyConfigList = data;
+                    this.dataLoading = false;
+                });
         },
         saveChargerConfig(e: Event) {
             e.preventDefault();
 
             const formData = new FormData();
+            const formDataShelly = new FormData();
             formData.append('data', JSON.stringify(this.acChargerConfigList));
+            formDataShelly.append('data', JSON.stringify(this.acChargerShellyConfigList));
+
+            fetch('/api/shelly/config', {
+                method: 'POST',
+                headers: authHeader(),
+                body: formDataShelly,
+            })
+                .then((response) => handleResponse(response, this.$emitter, this.$router))
+                .then((response) => {
+                    this.alertMessage = this.$t('apiresponse.' + response.code, response.param);
+                    this.alertType = response.type;
+                    this.showAlert = true;
+                });
 
             fetch('/api/huawei/config', {
                 method: 'POST',
@@ -272,6 +375,7 @@ export default defineComponent({
                     this.alertType = response.type;
                     this.showAlert = true;
                 });
+
         },
     },
 });

@@ -12,3 +12,12 @@ export interface AcChargerConfig {
     stop_batterysoc_threshold: number;
     target_power_consumption: number;
 }
+
+export interface AcChargerShellyConfig {
+    enabled: boolean;
+    verbose_logging: boolean;
+    auto_power_batterysoc_limits_enabled: boolean;
+    emergency_charge_enabled: boolean;
+    stop_batterysoc_threshold: number;
+    ip: String;
+}

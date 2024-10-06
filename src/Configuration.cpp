@@ -292,6 +292,14 @@ bool ConfigurationClass::write()
     huawei["stop_batterysoc_threshold"] = config.Huawei.Auto_Power_Stop_BatterySoC_Threshold;
     huawei["target_power_consumption"] = config.Huawei.Auto_Power_Target_Power_Consumption;
 
+    JsonObject shelly = doc["shelly"].to<JsonObject>();
+    shelly["enabled"] = config.Shelly.Enabled;
+    shelly["verbose_logging"] =config.Shelly.VerboseLogging;
+    shelly["auto_power_batterysoc_limits_enabled"]=config.Shelly.Auto_Power_BatterySoC_Limits_Enabled ;
+    shelly["emergency_charge_enabled"]=config.Shelly.Emergency_Charge_Enabled;
+    shelly["stop_batterysoc_threshold"] =config.Shelly.stop_batterysoc_threshold;
+    shelly["ip"] =config.Shelly.ip;
+
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
     }
@@ -656,6 +664,14 @@ bool ConfigurationClass::read()
     config.Huawei.Auto_Power_Upper_Power_Limit = huawei["upper_power_limit"] | HUAWEI_AUTO_POWER_UPPER_POWER_LIMIT;
     config.Huawei.Auto_Power_Stop_BatterySoC_Threshold = huawei["stop_batterysoc_threshold"] | HUAWEI_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
     config.Huawei.Auto_Power_Target_Power_Consumption = huawei["target_power_consumption"] | HUAWEI_AUTO_POWER_TARGET_POWER_CONSUMPTION;
+
+    JsonObject shelly = doc["shelly"];
+    config.Shelly.Enabled = shelly["enabled"] | SHELLY_ENABLED;
+    config.Shelly.VerboseLogging = shelly["verbose_logging"] | VERBOSE_LOGGING;
+    config.Shelly.Auto_Power_BatterySoC_Limits_Enabled = shelly["auto_power_batterysoc_limits_enabled"] | false;
+    config.Shelly.Emergency_Charge_Enabled = shelly["emergency_charge_enabled"] | false;
+    config.Shelly.stop_batterysoc_threshold = shelly["stop_batterysoc_threshold"] | SHELLY_STOP_BATTERYSOC_THRESHOLD;
+    strlcpy(config.Shelly.ip, shelly["ip"] | SHELLY_IPADDRESS, sizeof(config.Shelly.ip));
 
     f.close();
     return true;
