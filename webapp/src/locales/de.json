@@ -187,7 +187,8 @@
             "P": "Leistung (berechnet)",
             "V": "Spannung",
             "I": "Strom",
-            "E": "Effizienz (berechnet)"
+            "E": "Effizienz (berechnet)",
+            "SBSTemperature": "SBS Temperatur"
         },
         "section_input": "Eingang (Solarpanele)",
         "input": {
@@ -285,6 +286,24 @@
         "LargestFreeBlock": "Größter zusammenhängender freier Block",
         "MaxUsage": "Maximale Speichernutzung seit Start",
         "Fragmentation": "Grad der Fragmentierung"
+    },
+    "taskdetails": {
+        "TaskDetails": "Detailinformationen zu Tasks",
+        "Name": "Name",
+        "StackFree": "Stack Frei",
+        "Priority": "Priorität",
+        "Task_idle0": "Leerlauf (CPU-Kern 0)",
+        "Task_idle1": "Leerlauf (CPU-Kern 1)",
+        "Task_wifi": "Wi-Fi",
+        "Task_tit": "TCP/IP",
+        "Task_looptask": "Arduino Hauptschleife (loop)",
+        "Task_asynctcp": "Async TCP",
+        "Task_mqttclient": "MQTT Client",
+        "Task_huaweican0": "AC Ladegerät CAN",
+        "Task_pmsdm": "Stromzähler (SDM)",
+        "Task_pmhttpjson": "Stromzähler (HTTP+JSON)",
+        "Task_pmsml": "Stromzähler (Serial SML)",
+        "Task_pmhttpsml": "Stromzähler (HTTP+SML)"
     },
     "radioinfo": {
         "RadioInformation": "Funkmodulinformationen",
@@ -433,7 +452,7 @@
         "Cancel": "@:base.Cancel",
         "RebootOpenDTU": "OpenDTU neu starten",
         "RebootQuestion": "Möchten Sie das Gerät wirklich neu starten?",
-        "RebootHint": "<b>Hinweis:</b> Ein manueller Neustart muss normalerweise nicht durchgeführt werden. OpenDTU führt jeden erforderlichen Neustart (z. B. nach einem Firmware-Update) automatisch durch. Einstellungen werden auch ohne Neustart übernommen. Wenn Sie aufgrund eines Fehlers einen Neustart durchführen müssen, denken Sie bitte daran, diesen unter <a href=\"https://github.com/helgeerbe/OpenDTU-OnBattery/issues\" class=\"alert-link\" target=\"_blank\">Github</a> zu melden."
+        "RebootHint": "<b>Hinweis:</b> Ein manueller Neustart muss normalerweise nicht durchgeführt werden. OpenDTU führt jeden erforderlichen Neustart (z. B. nach einem Firmware-Update) automatisch durch. Einstellungen werden auch ohne Neustart übernommen. Wenn Sie aufgrund eines Fehlers einen Neustart durchführen müssen, denken Sie bitte daran, diesen unter <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/issues\" class=\"alert-link\" target=\"_blank\">Github</a> zu melden."
     },
     "dtuadmin": {
         "DtuSettings": "DTU-Einstellungen",
@@ -809,11 +828,11 @@
         "ProjectOriginBody3": "Die Software wurde nach bestem Wissen und Gewissen entwickelt. Dennoch kann keine Haftung für eine Fehlfunktion oder einen Garantieverlust des Wechselrichters übernommen werden.",
         "ProjectOriginBody4": "OpenDTU ist frei verfügbar. Wenn Sie Geld für die Software bezahlt haben, wurden Sie wahrscheinlich abgezockt.",
         "NewsUpdates": "Neuigkeiten und Updates",
-        "NewsUpdatesBody": "Neue Updates sind auf <a href=\"https://github.com/helgeerbe/OpenDTU-OnBattery/releases\" target=\"_blank\">Github</a> zu finden.",
+        "NewsUpdatesBody": "Neue Updates sind auf <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/releases\" target=\"_blank\">Github</a> zu finden.",
         "ErrorReporting": "Fehlerberichte",
-        "ErrorReportingBody": "Bitte melden Sie Probleme über die Ticketverwaltung von <a href=\"https://github.com/helgeerbe/OpenDTU-OnBattery/issues\" target=\"_blank\">Github</a>.",
+        "ErrorReportingBody": "Bitte melden Sie Probleme über die Ticketverwaltung von <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/issues\" target=\"_blank\">Github</a>.",
         "Discussion": "Diskussion",
-        "DiscussionBody": "Diskutieren Sie mit uns auf <a href=\"https://discord.gg/WzhxEY62mB\" target=\"_blank\">Discord</a> oder <a href=\"https://github.com/helgeerbe/OpenDTU-OnBattery/discussions\" target=\"_blank\">Github</a>."
+        "DiscussionBody": "Diskutieren Sie mit uns auf <a href=\"https://discord.gg/WzhxEY62mB\" target=\"_blank\">Discord</a> oder <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/discussions\" target=\"_blank\">Github</a>."
     },
     "hints": {
         "RadioProblem": "Es konnte keine Verbindung zu einem der konfigurierten Funkmodule hergestellt werden. Bitte überprüfen Sie die Verdrahtung.",
