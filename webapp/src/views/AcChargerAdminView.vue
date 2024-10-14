@@ -253,6 +253,46 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row mb-3">
+                            <label for="ShellyStartThreshold" class="col-sm-2 col-form-label"
+                                >{{ $t('acchargeradmin.ShellyStartThreshold') }}:
+                                <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyStartThresholdHint')" />
+                            </label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="ShellyStartThreshold"
+                                        placeholder="-500"
+                                        v-model="acChargerShellyConfigList.power_on_threshold"
+                                        aria-describedby="ShellyStartThresholdDescription"
+                                        required
+                                    />
+                                    <span class="input-group-text" id="ShellyStartThresholdDescription">W</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="ShellyStopThreshold" class="col-sm-2 col-form-label"
+                                >{{ $t('acchargeradmin.ShellyStopThreshold') }}:
+                                <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyStopThresholdHint')" />
+                            </label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="ShellyStopThreshold"
+                                        placeholder="-100"
+                                        v-model="acChargerShellyConfigList.power_off_threshold"
+                                        aria-describedby="ShellyStopThresholdDescription"
+                                        required
+                                    />
+                                    <span class="input-group-text" id="ShellyStopThresholdDescription">W</span>
+                                </div>
+                            </div>
+                        </div>
                     <CardElement
                         :text="$t('acchargeradmin.BatterySoCLimits')"
                         textVariant="text-bg-primary"

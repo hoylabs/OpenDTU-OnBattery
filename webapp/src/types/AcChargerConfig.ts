@@ -20,4 +20,6 @@ export interface AcChargerShellyConfig {
     emergency_charge_enabled: boolean;
     stop_batterysoc_threshold: number;
     ip: String;
+    power_on_threshold: number;
+    power_off_threshold: number;
 }

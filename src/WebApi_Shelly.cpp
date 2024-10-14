@@ -50,6 +50,9 @@ void WebApiShellyClass::onAdminGet(AsyncWebServerRequest* request)
     root["emergency_charge_enabled"] = config.Shelly.Emergency_Charge_Enabled;
     root["stop_batterysoc_threshold"] = config.Shelly.stop_batterysoc_threshold;
     root["ip"] = config.Shelly.ip;
+    root["power_on_threshold"] = config.Shelly.POWER_ON_threshold;
+    root["power_off_threshold"] = config.Shelly.POWER_OFF_threshold;
+
     response->setLength();
     request->send(response);
     MessageOutput.println("Read Shelly AC charger config... ");
@@ -86,6 +89,8 @@ void WebApiShellyClass::onAdminPost(AsyncWebServerRequest* request)
     config.Shelly.Emergency_Charge_Enabled = root["emergency_charge_enabled"].as<bool>();
     config.Shelly.stop_batterysoc_threshold = root["stop_batterysoc_threshold"];
     strlcpy( config.Shelly.ip, root["ip"].as<String>().c_str(), sizeof(config.Shelly.ip));
+    config.Shelly.POWER_ON_threshold = root["power_on_threshold"];
+    config.Shelly.POWER_OFF_threshold = root["power_off_threshold"];
     MessageOutput.println("Write Shelly AC charger config... 2 ");
     WebApi.writeConfig(retMsg);
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);

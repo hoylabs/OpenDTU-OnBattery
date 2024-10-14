@@ -294,11 +294,15 @@ bool ConfigurationClass::write()
 
     JsonObject shelly = doc["shelly"].to<JsonObject>();
     shelly["enabled"] = config.Shelly.Enabled;
-    shelly["verbose_logging"] =config.Shelly.VerboseLogging;
-    shelly["auto_power_batterysoc_limits_enabled"]=config.Shelly.Auto_Power_BatterySoC_Limits_Enabled ;
-    shelly["emergency_charge_enabled"]=config.Shelly.Emergency_Charge_Enabled;
-    shelly["stop_batterysoc_threshold"] =config.Shelly.stop_batterysoc_threshold;
-    shelly["ip"] =config.Shelly.ip;
+    shelly["verbose_logging"] = config.Shelly.VerboseLogging;
+    shelly["auto_power_batterysoc_limits_enabled"]= config.Shelly.Auto_Power_BatterySoC_Limits_Enabled ;
+    shelly["emergency_charge_enabled"]= config.Shelly.Emergency_Charge_Enabled;
+    shelly["stop_batterysoc_threshold"] = config.Shelly.stop_batterysoc_threshold;
+    shelly["ip"] = config.Shelly.ip;
+    shelly["power_on_threshold"] = config.Shelly.POWER_ON_threshold;
+    shelly["power_off_threshold"] = config.Shelly.POWER_OFF_threshold;
+    shelly["power_on"] = config.Shelly.POWER_ON;
+    shelly["power_off"] = config.Shelly.POWER_OFF;
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
@@ -672,6 +676,10 @@ bool ConfigurationClass::read()
     config.Shelly.Emergency_Charge_Enabled = shelly["emergency_charge_enabled"] | false;
     config.Shelly.stop_batterysoc_threshold = shelly["stop_batterysoc_threshold"] | SHELLY_STOP_BATTERYSOC_THRESHOLD;
     strlcpy(config.Shelly.ip, shelly["ip"] | SHELLY_IPADDRESS, sizeof(config.Shelly.ip));
+    config.Shelly.POWER_ON_threshold = shelly["power_on_threshold"] | SHELLY_POWER_ON_THRESHOLD;
+    config.Shelly.POWER_OFF_threshold = shelly["power_off_threshold"] | SHELLY_POWER_OFF_THRESHOLD;
+    config.Shelly.POWER_ON = shelly["power_on"] | false;
+    config.Shelly.POWER_OFF = shelly["power_off"] | false;
 
     f.close();
     return true;

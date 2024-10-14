@@ -128,12 +128,6 @@ struct POWERMETER_HTTP_SML_CONFIG_T {
 };
 using PowerMeterHttpSmlConfig = struct POWERMETER_HTTP_SML_CONFIG_T;
 
-struct ShellyACPlug_HTTP_CONFIG_T {
-    uint32_t PollingInterval;
-    HttpRequestConfig HttpRequest;
-};
-using ShellyACPlugConfig = struct ShellyACPlug_HTTP_CONFIG_T ;
-
 enum BatteryVoltageUnit { Volts = 0, DeciVolts = 1, CentiVolts = 2, MilliVolts = 3 };
 
 enum BatteryAmperageUnit { Amps = 0, MilliAmps = 1 };
@@ -337,6 +331,10 @@ struct CONFIG_T {
         bool Emergency_Charge_Enabled;
         uint8_t stop_batterysoc_threshold;
         char ip[15];
+        int32_t POWER_ON_threshold;
+        int32_t POWER_OFF_threshold;
+        bool POWER_ON;
+        bool POWER_OFF;
     } Shelly;
 
 

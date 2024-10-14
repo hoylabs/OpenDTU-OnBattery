@@ -6,25 +6,26 @@
 #include "Configuration.h"
 #include <TaskSchedulerDeclarations.h>
 #include <stdint.h>
-#include "PowerMeterProvider.h"
-
-
 #include <atomic>
 #include <array>
 #include <variant>
 #include <mutex>
 
-
-class ShellyACPlug : public PowerMeterProvider  {
-public:
-    explicit ShellyACPlug(ShellyACPlugConfig const& cfg)
-        : _cfg(cfg) { }
-    ~ShellyACPlug();
-    bool init();
-    void loop();
-
-private:
-    std::unique_ptr<HttpGetter> _upHttpGetter;
-    ShellyACPlugConfig const& _cfg;
-    std::condition_variable _cv;
+class ShellyACPlugClass {
+    public:
+        bool init(Scheduler& scheduler);
+        void loop();
+        void PowerON();
+        void PowerOFF();
+    private:
+        bool _initialized = false;
+        Task _loopTask;
+        const uint16_t _period = 2000;
+        float _acPower;
+        float _SoC;
+        bool _emergcharge;
+        void send_http(String uri);
+        std::unique_ptr<HttpGetter> _upHttpGetter;
 };
+
+extern ShellyACPlugClass ShellyACPlug;
