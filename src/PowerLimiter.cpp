@@ -225,6 +225,7 @@ void PowerLimiterClass::loop()
 
     // Check if NTP time is set and next inverter restart not calculated yet
     if ((config.PowerLimiter.RestartHour >= 0)  && (_nextInverterRestart == 0) ) {
+        MessageOutput.printf("[DPL::loop] Setting next restart \r\n");
         // check every 5 seconds
         if (_nextCalculateCheck < millis()) {
             struct tm timeinfo;
@@ -739,15 +740,17 @@ static int32_t scalePowerLimit(std::shared_ptr<InverterAbstract> inverter, int32
     // overscalling allows us to compensate for shaded panels by increasing the
     // total power limit, if the inverter is solar powered.
     if (allowOverscaling && isInverterSolarPowered) {
-        auto inverterOutputAC = inverter->Statistics()->getChannelFieldValue(TYPE_AC, CH0, FLD_PAC);
         float inverterEfficiencyFactor = getInverterEfficiency(inverter);
 
-        // 98% of the expected power is good enough
-        auto expectedAcPowerPerChannel = (currentLimitWatts / dcTotalChnls) * 0.98;
+        // defined % of the expected power is good enough
+        auto factor_shaded = static_cast<float>(config.PowerLimiter.ShadedFactor)/static_cast<float>(100);
+        auto expectedAcPowerPerChannel = (currentLimitWatts / dcTotalChnls) * static_cast<float>(factor_shaded);
 
         if (log) {
+            MessageOutput.printf("[DPL::scalePowerLimit] shaded factor raw %d, adapted %f \r\n",
+                config.PowerLimiter.ShadedFactor, factor_shaded);
             MessageOutput.printf("[DPL::scalePowerLimit] expected AC power per channel %f W\r\n",
-                    expectedAcPowerPerChannel);
+                expectedAcPowerPerChannel);
         }
 
         size_t dcShadedChnls = 0;
@@ -771,32 +774,36 @@ static int32_t scalePowerLimit(std::shared_ptr<InverterAbstract> inverter, int32
         // we currently need.
         if (dcShadedChnls == 0 || shadedChannelACPowerSum >= newLimit) { return newLimit; }
 
-        if (dcShadedChnls == dcTotalChnls) {
-            // keep the currentLimit when:
-            // - all channels are shaded
-            // - currentLimit >= newLimit
-            // - we get the expected AC power or less and
-            if (currentLimitWatts >= newLimit && inverterOutputAC <= newLimit) {
-                if (log) {
-                    MessageOutput.printf("[DPL::scalePowerLimit] all channels are shaded, "
-                            "keeping the current limit of %d W\r\n", currentLimitWatts);
-                }
+        size_t dcNonShadedChnls = dcTotalChnls - dcShadedChnls;
 
-                return currentLimitWatts;
-
-            } else {
-                return newLimit;
-            }
+        if (log) {
+            MessageOutput.printf("[DPL::scalePowerLimit] shadedChannelACPowerSum %d W, newLimit %d W\r\n",
+                static_cast<int>(shadedChannelACPowerSum), newLimit);
+            MessageOutput.printf("[DPL::scalePowerLimit] dcNonShadedChnls %d ch, dcTotalChnls %d ch\r\n",
+                dcNonShadedChnls, dcTotalChnls);
         }
 
-        size_t dcNonShadedChnls = dcTotalChnls - dcShadedChnls;
-        auto overScaledLimit = static_cast<int32_t>((newLimit - shadedChannelACPowerSum) / dcNonShadedChnls * dcTotalChnls);
+        // if all channels are shaded, hopefully 1 can patch-up
+        if (dcNonShadedChnls == 0) {
+            dcNonShadedChnls=1;
+            if (log) {
+                MessageOutput.printf("[DPL::scalePowerLimit] all channels are shaded, hopefully 1 can patch-up\r\n");
+             }
+         }
+
+        // newly calculated limit minus the production of the shaded panels
+        auto newLeanLimit = static_cast<float>(newLimit - static_cast<int>(shadedChannelACPowerSum));
+
+        // prorata of the shadedChannels number versus total
+        auto prorataShadedChs = (static_cast<float>(dcNonShadedChnls) / static_cast<float>(dcTotalChnls));
+
+        auto overScaledLimit = newLeanLimit / prorataShadedChs;
 
         if (overScaledLimit <= newLimit) { return newLimit; }
 
         if (log) {
             MessageOutput.printf("[DPL::scalePowerLimit] %d/%d channels are shaded, "
-                    "scaling %d W\r\n", dcShadedChnls, dcTotalChnls, overScaledLimit);
+                    "scaling %f W\r\n", dcShadedChnls, dcTotalChnls, overScaledLimit);
         }
 
         return overScaledLimit;
@@ -1002,12 +1009,6 @@ void PowerLimiterClass::calcNextInverterRestart()
     if (config.PowerLimiter.RestartHour < 0) {
         _nextInverterRestart = 1;
         MessageOutput.println("[DPL::calcNextInverterRestart] _nextInverterRestart disabled");
-        return;
-    }
-
-    if (config.PowerLimiter.IsInverterSolarPowered) {
-        _nextInverterRestart = 1;
-        MessageOutput.println("[DPL::calcNextInverterRestart] not restarting solar-powered inverters");
         return;
     }
 

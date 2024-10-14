@@ -264,6 +264,7 @@ bool ConfigurationClass::write()
     powerlimiter["lower_power_limit"] = config.PowerLimiter.LowerPowerLimit;
     powerlimiter["base_load_limit"] = config.PowerLimiter.BaseLoadLimit;
     powerlimiter["upper_power_limit"] = config.PowerLimiter.UpperPowerLimit;
+    powerlimiter["shaded_factor"] = config.PowerLimiter.ShadedFactor;
     powerlimiter["ignore_soc"] = config.PowerLimiter.IgnoreSoc;
     powerlimiter["battery_soc_start_threshold"] = config.PowerLimiter.BatterySocStartThreshold;
     powerlimiter["battery_soc_stop_threshold"] = config.PowerLimiter.BatterySocStopThreshold;
@@ -630,6 +631,7 @@ bool ConfigurationClass::read()
     config.PowerLimiter.LowerPowerLimit = powerlimiter["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
     config.PowerLimiter.BaseLoadLimit = powerlimiter["base_load_limit"] | POWERLIMITER_BASE_LOAD_LIMIT;
     config.PowerLimiter.UpperPowerLimit = powerlimiter["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+    config.PowerLimiter.ShadedFactor = powerlimiter["shaded_factor"] | POWERLIMITER_SHADED_FACTOR;
     config.PowerLimiter.IgnoreSoc = powerlimiter["ignore_soc"] | POWERLIMITER_IGNORE_SOC;
     config.PowerLimiter.BatterySocStartThreshold = powerlimiter["battery_soc_start_threshold"] | POWERLIMITER_BATTERY_SOC_START_THRESHOLD;
     config.PowerLimiter.BatterySocStopThreshold = powerlimiter["battery_soc_stop_threshold"] | POWERLIMITER_BATTERY_SOC_STOP_THRESHOLD;

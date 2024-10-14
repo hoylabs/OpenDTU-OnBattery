@@ -46,6 +46,7 @@ void WebApiPowerLimiterClass::onStatus(AsyncWebServerRequest* request)
     root["lower_power_limit"] = config.PowerLimiter.LowerPowerLimit;
     root["base_load_limit"] = config.PowerLimiter.BaseLoadLimit;
     root["upper_power_limit"] = config.PowerLimiter.UpperPowerLimit;
+    root["shaded_factor"] = config.PowerLimiter.ShadedFactor;
     root["ignore_soc"] = config.PowerLimiter.IgnoreSoc;
     root["battery_soc_start_threshold"] = config.PowerLimiter.BatterySocStartThreshold;
     root["battery_soc_stop_threshold"] = config.PowerLimiter.BatterySocStopThreshold;
@@ -168,6 +169,7 @@ void WebApiPowerLimiterClass::onAdminPost(AsyncWebServerRequest* request)
     config.PowerLimiter.LowerPowerLimit = root["lower_power_limit"].as<int32_t>();
     config.PowerLimiter.BaseLoadLimit = root["base_load_limit"].as<int32_t>();
     config.PowerLimiter.UpperPowerLimit = root["upper_power_limit"].as<int32_t>();
+    config.PowerLimiter.ShadedFactor = root["shaded_factor"].as<int32_t>();
 
     if (config.Battery.Enabled) {
         config.PowerLimiter.IgnoreSoc = root["ignore_soc"].as<bool>();

@@ -187,7 +187,19 @@
                     wide
                 />
 
-                <div class="row mb-3" v-if="!powerLimiterConfigList.is_inverter_solar_powered">
+                <InputElement
+                    :label="$t('powerlimiteradmin.ShadedFactor')"
+                    v-model="powerLimiterConfigList.shaded_factor"
+                    :tooltip="$t('powerlimiteradmin.ShadedFactorHint')"
+                    placeholder="60"
+                    :min="(0).toString()"
+                    :max="(100).toString()"
+                    postfix="%"
+                    type="number"
+                    wide
+                />
+
+                <div class="row mb-3">
                     <label for="inverter_restart" class="col-sm-4 col-form-label">
                         {{ $t('powerlimiteradmin.InverterRestartHour') }}
                         <BIconInfoCircle v-tooltip :title="$t('powerlimiteradmin.InverterRestartHint')" />
