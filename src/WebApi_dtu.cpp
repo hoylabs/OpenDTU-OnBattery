@@ -27,7 +27,7 @@ void WebApiDtuClass::init(AsyncWebServer& server, Scheduler& scheduler)
 void WebApiDtuClass::applyDataTaskCb()
 {
     // Execute stuff in main thread to avoid busy SPI bus
-    CONFIG_T& config = Configuration.get();
+    auto const& config = Configuration.get();
     Hoymiles.getRadioNrf()->setPALevel((rf24_pa_dbm_e)config.Dtu.Nrf.PaLevel);
     Hoymiles.getRadioCmt()->setPALevel(config.Dtu.Cmt.PaLevel);
     Hoymiles.getRadioNrf()->setDtuSerial(config.Dtu.Serial);
@@ -90,6 +90,33 @@ void WebApiDtuClass::onDtuAdminPost(AsyncWebServerRequest* request)
     }
 
     auto& retMsg = response->getRoot();
+
+    auto foo = [&retMsg,&request,&response](char const* what) {
+        retMsg["message"] = String("Value missing: ") + what;
+        retMsg["code"] = WebApiError::GenericValueMissing;
+        WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
+    };
+
+    if (!root["serial"].is<String>())
+    { return foo("serial"); }
+
+    if (!root["pollinterval"].is<uint32_t>())
+    { return foo("pollinterval"); }
+
+    if (!root["verbose_logging"].is<bool>())
+    { return foo("verbose_logging"); }
+
+    if (!root["nrf_palevel"].is<uint8_t>())
+    { return foo("nrf_palevel"); }
+
+    if (!root["cmt_palevel"].is<int8_t>())
+    { return foo("cmt_palevel"); }
+
+    if (!root["cmt_frequency"].is<uint32_t>())
+    { return foo("cmt_frequency"); }
+
+    if (root["cmt_country"].is<uint8_t>())
+    { return foo("cmt_country"); }
 
     if (!(root["serial"].is<String>()
             && root["pollinterval"].is<uint32_t>()
@@ -155,15 +182,17 @@ void WebApiDtuClass::onDtuAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
-    CONFIG_T& config = Configuration.get();
-
-    config.Dtu.Serial = serial;
-    config.Dtu.PollInterval = root["pollinterval"].as<uint32_t>();
-    config.Dtu.VerboseLogging = root["verbose_logging"].as<bool>();
-    config.Dtu.Nrf.PaLevel = root["nrf_palevel"].as<uint8_t>();
-    config.Dtu.Cmt.PaLevel = root["cmt_palevel"].as<int8_t>();
-    config.Dtu.Cmt.Frequency = root["cmt_frequency"].as<uint32_t>();
-    config.Dtu.Cmt.CountryMode = root["cmt_country"].as<CountryModeId_t>();
+    {
+        auto guard = Configuration.getWriteGuard();
+        auto& config = guard.getConfig();
+        config.Dtu.Serial = serial;
+        config.Dtu.PollInterval = root["pollinterval"].as<uint32_t>();
+        config.Dtu.VerboseLogging = root["verbose_logging"].as<bool>();
+        config.Dtu.Nrf.PaLevel = root["nrf_palevel"].as<uint8_t>();
+        config.Dtu.Cmt.PaLevel = root["cmt_palevel"].as<int8_t>();
+        config.Dtu.Cmt.Frequency = root["cmt_frequency"].as<uint32_t>();
+        config.Dtu.Cmt.CountryMode = root["cmt_country"].as<CountryModeId_t>();
+    }
 
     WebApi.writeConfig(retMsg);
 

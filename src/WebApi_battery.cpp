@@ -70,8 +70,11 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
-    auto& config = Configuration.get();
-    ConfigurationClass::deserializeBatteryConfig(root.as<JsonObject>(), config.Battery);
+    {
+        auto guard = Configuration.getWriteGuard();
+        auto& config = guard.getConfig();
+        ConfigurationClass::deserializeBatteryConfig(root.as<JsonObject>(), config.Battery);
+    }
 
     WebApi.writeConfig(retMsg);
 

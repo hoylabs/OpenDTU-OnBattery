@@ -4,6 +4,9 @@
 #include "PinMapping.h"
 #include <cstdint>
 #include <ArduinoJson.h>
+#include <TaskSchedulerDeclarations.h>
+#include <mutex>
+#include <condition_variable>
 
 #define CONFIG_FILENAME "/config.json"
 #define CONFIG_VERSION 0x00011c00 // 0.1.28 // make sure to clean all after change
@@ -333,11 +336,23 @@ struct CONFIG_T {
 
 class ConfigurationClass {
 public:
-    void init();
+    void init(Scheduler& scheduler);
     bool read();
     bool write();
     void migrate();
-    CONFIG_T& get();
+    CONFIG_T const& get();
+
+    class WriteGuard {
+    public:
+        WriteGuard();
+        CONFIG_T& getConfig();
+        ~WriteGuard();
+
+    private:
+        std::unique_lock<std::mutex> _lock;
+    };
+
+    WriteGuard getWriteGuard();
 
     INVERTER_CONFIG_T* getFreeInverterSlot();
     INVERTER_CONFIG_T* getInverterConfig(const uint64_t serial);
@@ -356,6 +371,11 @@ public:
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);
     static void deserializePowerMeterHttpSmlConfig(JsonObject const& source, PowerMeterHttpSmlConfig& target);
     static void deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target);
+
+private:
+    void loop();
+
+    Task _loopTask;
 };
 
 extern ConfigurationClass Configuration;

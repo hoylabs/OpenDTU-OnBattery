@@ -83,10 +83,13 @@ void WebApiVedirectClass::onVedirectAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
-    CONFIG_T& config = Configuration.get();
-    config.Vedirect.Enabled = root["vedirect_enabled"].as<bool>();
-    config.Vedirect.VerboseLogging = root["verbose_logging"].as<bool>();
-    config.Vedirect.UpdatesOnly = root["vedirect_updatesonly"].as<bool>();
+    {
+        auto guard = Configuration.getWriteGuard();
+        auto& config = guard.getConfig();
+        config.Vedirect.Enabled = root["vedirect_enabled"].as<bool>();
+        config.Vedirect.VerboseLogging = root["verbose_logging"].as<bool>();
+        config.Vedirect.UpdatesOnly = root["vedirect_updatesonly"].as<bool>();
+    }
 
     WebApi.writeConfig(retMsg);
 

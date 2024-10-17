@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2022-2024 Thomas Basler and others
  */
+#include "MessageOutput.h"
 #include "WebApi_ntp.h"
 #include "Configuration.h"
 #include "NtpSettings.h"
@@ -135,13 +136,16 @@ void WebApiNtpClass::onNtpAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
-    CONFIG_T& config = Configuration.get();
-    strlcpy(config.Ntp.Server, root["ntp_server"].as<String>().c_str(), sizeof(config.Ntp.Server));
-    strlcpy(config.Ntp.Timezone, root["ntp_timezone"].as<String>().c_str(), sizeof(config.Ntp.Timezone));
-    strlcpy(config.Ntp.TimezoneDescr, root["ntp_timezone_descr"].as<String>().c_str(), sizeof(config.Ntp.TimezoneDescr));
-    config.Ntp.Latitude = root["latitude"].as<double>();
-    config.Ntp.Longitude = root["longitude"].as<double>();
-    config.Ntp.SunsetType = root["sunsettype"].as<uint8_t>();
+    {
+        auto guard = Configuration.getWriteGuard();
+        auto& config = guard.getConfig();
+        strlcpy(config.Ntp.Server, root["ntp_server"].as<String>().c_str(), sizeof(config.Ntp.Server));
+        strlcpy(config.Ntp.Timezone, root["ntp_timezone"].as<String>().c_str(), sizeof(config.Ntp.Timezone));
+        strlcpy(config.Ntp.TimezoneDescr, root["ntp_timezone_descr"].as<String>().c_str(), sizeof(config.Ntp.TimezoneDescr));
+        config.Ntp.Latitude = root["latitude"].as<double>();
+        config.Ntp.Longitude = root["longitude"].as<double>();
+        config.Ntp.SunsetType = root["sunsettype"].as<uint8_t>();
+    }
 
     WebApi.writeConfig(retMsg);
 
