@@ -32,6 +32,7 @@
 #include "WebApi_Huawei.h"
 #include "WebApi_ws_battery.h"
 #include "WebApi_Shelly.h"
+#include "WebApi_ws_Shelly.h"
 #include <ESPAsyncWebServer.h>
 #include <TaskSchedulerDeclarations.h>
 
@@ -85,6 +86,7 @@ private:
     WebApiWsHuaweiLiveClass _webApiWsHuaweiLive;
     WebApiWsBatteryLiveClass _webApiWsBatteryLive;
     WebApiShellyClass _webApiShellyClass;
+    WebApiWsShellyLiveClass _webApiWsShellyLive;
 };
 
 extern WebApiClass WebApi;

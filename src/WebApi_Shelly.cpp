@@ -9,6 +9,7 @@
 #include "WebApi_errors.h"
 #include <AsyncJson.h>
 #include <Hoymiles.h>
+#include "ShellyACPlug.h"
 
 void WebApiShellyClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -28,7 +29,6 @@ void WebApiShellyClass::onStatus(AsyncWebServerRequest* request)
     }
 
     AsyncJsonResponse* response = new AsyncJsonResponse();
-    auto& root = response->getRoot();
 
     response->setLength();
     request->send(response);
@@ -49,7 +49,7 @@ void WebApiShellyClass::onAdminGet(AsyncWebServerRequest* request)
     root["auto_power_batterysoc_limits_enabled"] = config.Shelly.Auto_Power_BatterySoC_Limits_Enabled;
     root["emergency_charge_enabled"] = config.Shelly.Emergency_Charge_Enabled;
     root["stop_batterysoc_threshold"] = config.Shelly.stop_batterysoc_threshold;
-    root["ip"] = config.Shelly.ip;
+    root["url"] = config.Shelly.url;
     root["power_on_threshold"] = config.Shelly.POWER_ON_threshold;
     root["power_off_threshold"] = config.Shelly.POWER_OFF_threshold;
 
@@ -60,7 +60,6 @@ void WebApiShellyClass::onAdminGet(AsyncWebServerRequest* request)
 
 void WebApiShellyClass::onAdminPost(AsyncWebServerRequest* request)
 {
-    MessageOutput.println("Write Shelly AC charger config... 1");
     if (!WebApi.checkCredentials(request)) {
         return;
     }
@@ -88,10 +87,9 @@ void WebApiShellyClass::onAdminPost(AsyncWebServerRequest* request)
     config.Shelly.Auto_Power_BatterySoC_Limits_Enabled = root["auto_power_batterysoc_limits_enabled"].as<bool>();
     config.Shelly.Emergency_Charge_Enabled = root["emergency_charge_enabled"].as<bool>();
     config.Shelly.stop_batterysoc_threshold = root["stop_batterysoc_threshold"];
-    strlcpy( config.Shelly.ip, root["ip"].as<String>().c_str(), sizeof(config.Shelly.ip));
+    strlcpy( config.Shelly.url, root["url"].as<String>().c_str(), sizeof(config.Shelly.url));
     config.Shelly.POWER_ON_threshold = root["power_on_threshold"];
     config.Shelly.POWER_OFF_threshold = root["power_off_threshold"];
-    MessageOutput.println("Write Shelly AC charger config... 2 ");
     WebApi.writeConfig(retMsg);
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 
@@ -99,18 +97,13 @@ void WebApiShellyClass::onAdminPost(AsyncWebServerRequest* request)
     yield();
     delay(1000);
     yield();
-    //ESP.restart();
 
-    // Properly turn this on
     if (config.Shelly.Enabled) {
         MessageOutput.println("Initialize Shelly AC charger interface... ");
     }
 
-    // Properly turn this off
     if (!config.Shelly.Enabled) {
-      //HuaweiCan.setValue(0, HUAWEI_ONLINE_CURRENT);
-      delay(500);
-      //HuaweiCan.setMode(HUAWEI_MODE_OFF);
+        ShellyACPlug.PowerOFF();
       return;
     }
 }

@@ -17,6 +17,7 @@ class ShellyACPlugClass {
         void loop();
         void PowerON();
         void PowerOFF();
+        float _readpower;
     private:
         bool _initialized = false;
         Task _loopTask;
@@ -24,8 +25,9 @@ class ShellyACPlugClass {
         float _acPower;
         float _SoC;
         bool _emergcharge;
-        void send_http(String uri);
-        std::unique_ptr<HttpGetter> _upHttpGetter;
+        bool send_http(String uri);
+        float read_http(String uri);
+        std::unique_ptr<HttpGetter> _HttpGetter;
 };
 
 extern ShellyACPlugClass ShellyACPlug;

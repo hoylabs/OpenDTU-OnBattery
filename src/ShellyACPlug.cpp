@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "Utils.h"
 #include "ShellyACPlug.h"
 #include "MessageOutput.h"
 #include <WiFiClientSecure.h>
@@ -34,6 +35,7 @@ void ShellyACPlugClass::loop()
     _acPower = PowerMeter.getPowerTotal();
     _SoC = Battery.getStats()->getSoC();
     _emergcharge = Battery.getStats()->getImmediateChargingRequest();
+    _readpower = read_http("/rpc/Switch.GetStatus?id=0");
     if ((_acPower < config.Shelly.POWER_ON_threshold && !config.Shelly.POWER_ON && _SoC < config.Shelly.stop_batterysoc_threshold) || (_emergcharge && config.Shelly.Emergency_Charge_Enabled))
     {
         PowerON();
@@ -42,55 +44,111 @@ void ShellyACPlugClass::loop()
     {
         PowerOFF();
     }
-    bool _verboseLogging = config.Shelly.VerboseLogging;
-    if (_verboseLogging) {
+    if (config.Shelly.VerboseLogging) {
         MessageOutput.print("[ShellyACPlug] Loop \r\n");
         MessageOutput.printf("[ShellyACPlug] %f W \r\n", _acPower );
         MessageOutput.printf("[ShellyACPlug] ON: %d OFF: %d  \r\n", config.Shelly.POWER_ON, config.Shelly.POWER_OFF );
         MessageOutput.printf("[ShellyACPlug] Battery SoC %f  \r\n", _SoC);
+        MessageOutput.printf("[ShellyACPlug] Verbrauch %f W \r\n", _readpower );
     }
 }
 
 void ShellyACPlugClass::PowerON()
 {
+    if (!send_http("/relay/0?turn=on"))
+    {
+        return;
+    }
     CONFIG_T& config = Configuration.get();
     config.Shelly.POWER_ON = true;
     config.Shelly.POWER_OFF = false;
     Configuration.write();
-    send_http("http://192.168.2.153/relay/0?turn=on");
-    bool _verboseLogging = config.Shelly.VerboseLogging;
-    if (_verboseLogging) {
+    if (config.Shelly.VerboseLogging) {
         MessageOutput.print("[ShellyACPlug] Power ON \r\n");
     }
 }
 
 void ShellyACPlugClass::PowerOFF()
 {
+    if (!send_http("/relay/0?turn=off"))
+    {
+        return;
+    };
     CONFIG_T& config = Configuration.get();
     config.Shelly.POWER_ON = false;
     config.Shelly.POWER_OFF = true;
     Configuration.write();
-    send_http("http://192.168.2.153/relay/0?turn=off");
-    bool _verboseLogging = config.Shelly.VerboseLogging;
-    if (_verboseLogging) {
+    if (config.Shelly.VerboseLogging) {
         MessageOutput.print("[ShellyACPlug] Power OFF \r\n");
     }
 }
 
-void ShellyACPlugClass::send_http(String uri)
+bool ShellyACPlugClass::send_http(String uri)
 {
-    JsonDocument doc;
-    JsonObject obj = doc["http_request"].add<JsonObject>();
-    obj["Url"] = uri;
-    obj["Timeout"] = 60;
+    CONFIG_T& config = Configuration.get();
+    String url = config.Shelly.url;
+    url += uri;
     HttpRequestConfig HttpRequest;
-    JsonObject source_http_config = doc["http_request"];
-    strlcpy(HttpRequest.Url, source_http_config["url"], sizeof(HttpRequest.Url));
-    HttpRequest.Timeout = source_http_config["timeout"] | 60;
-    _upHttpGetter = std::make_unique<HttpGetter>(HttpRequest);
-    _upHttpGetter->init();
-    _upHttpGetter->performGetRequest();
-    MessageOutput.printf("[ShellyACPlug] Initializing:\r\n");
-    MessageOutput.printf("[ShellyACPlug] %s\r\n", _upHttpGetter->getErrorText());
-    _upHttpGetter = nullptr;
+    strlcpy(HttpRequest.Url, url.c_str(), sizeof(HttpRequest.Url));
+    HttpRequest.Timeout = 60;
+    _HttpGetter = std::make_unique<HttpGetter>(HttpRequest);
+    if (config.Shelly.VerboseLogging) {
+        MessageOutput.printf("[ShellyACPlug] send_http Initializing: %s\r\n",url.c_str());
+    }
+    if (!_HttpGetter->init()) {
+        MessageOutput.printf("[ShellyACPlug] INIT %s\r\n", _HttpGetter->getErrorText());
+        return false;
+    }
+        if (!_HttpGetter->performGetRequest()) {
+        MessageOutput.printf("[ShellyACPlug] GET %s\r\n", _HttpGetter->getErrorText());
+        return false;
+    }
+    _HttpGetter = nullptr;
+    return true;
 }
+float ShellyACPlugClass::read_http(String uri)
+{
+    CONFIG_T& config = Configuration.get();
+    String url = config.Shelly.url;
+    url += uri;
+    HttpRequestConfig HttpRequest;
+    JsonDocument jsonResponse;
+     strlcpy(HttpRequest.Url, url.c_str(), sizeof(HttpRequest.Url));
+    HttpRequest.Timeout = 60;
+    _HttpGetter = std::make_unique<HttpGetter>(HttpRequest);
+    if (config.Shelly.VerboseLogging) {
+        MessageOutput.printf("[ShellyACPlug] read_http Initializing: %s\r\n",url.c_str());
+    }
+    if (!_HttpGetter->init()) {
+        MessageOutput.printf("[ShellyACPlug] INIT %s\r\n", _HttpGetter->getErrorText());
+        return 0;
+    }
+    _HttpGetter->addHeader("Content-Type", "application/json");
+    _HttpGetter->addHeader("Accept", "application/json");
+    auto res = _HttpGetter->performGetRequest();
+    if (!res) {
+        MessageOutput.printf("[ShellyACPlug] GET %s\r\n", _HttpGetter->getErrorText());
+        return 0;
+    }
+    auto pStream = res.getStream();
+    if (!pStream) {
+        MessageOutput.printf("Programmer error: HTTP request yields no stream");
+        return 0;
+    }
+
+   const DeserializationError error = deserializeJson(jsonResponse, *pStream);
+        if (error) {
+            String msg("[ShellyACPlug] Unable to parse server response as JSON: ");
+            MessageOutput.printf((msg + error.c_str()).c_str());
+            return 0;
+        }
+    auto pathResolutionResult = Utils::getJsonValueByPath<float>(jsonResponse, "apower");
+        if (!pathResolutionResult.second.isEmpty()) {
+            MessageOutput.printf("[ShellyACPlug] second %s\r\n",pathResolutionResult.second.c_str());
+        }
+
+    _HttpGetter = nullptr;
+    return pathResolutionResult.first;
+}
+
+

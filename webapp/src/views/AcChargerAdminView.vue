@@ -243,13 +243,13 @@
                                 <input
                                     type="string"
                                     class="form-control"
-                                    id="ip"
-                                    placeholder="192.168.2.100"
-                                    v-model="acChargerShellyConfigList.ip"
-                                    aria-describedby="ipDescription"
+                                    id="url"
+                                    placeholder="http://192.168.2.100"
+                                    v-model="acChargerShellyConfigList.url"
+                                    aria-describedby="urlDescription"
                                     required
                                 />
-                                <span class="input-group-text" id="ipDescription"></span>
+                                <span class="input-group-text" id="urlDescription"></span>
                             </div>
                         </div>
                     </div>

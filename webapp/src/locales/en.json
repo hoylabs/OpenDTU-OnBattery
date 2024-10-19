@@ -431,7 +431,8 @@
         "BatteryCharge": "Battery Charge",
         "BatteryPower": "Battery Power",
         "HomePower": "Grid Power",
-        "HuaweiPower": "Huawei AC Power"
+        "HuaweiPower": "Huwawei AC Power",
+        "ShellyPower": "AC Charger Power"
     },
     "inverterchannelproperty": {
         "Power": "Power",
@@ -928,8 +929,8 @@
         "ShellyStartThreshold": "Powermeter Start-Threshold",
         "ShellyStopThreshold": "Powermeter Stop-Threshold",
         "ShellySettings": "Shelly Plug S configuration",
-        "ShellyAddress": "IP-Address or Hostname",
-        "ShellyAddressHint": "Ip or full Hostname of Shelly Plug S",
+        "ShellyAddress": "url with IP-Address or Hostname",
+        "ShellyAddressHint": "url with Ip or full Hostname of Shelly Plug S",
         "ShellyStartThresholdHint": "Value where AC Charger should start",
         "ShellyStopThresholdHint": "Value where AC Charger should stop",
         "VerboseLogging": "@:base.VerboseLogging",

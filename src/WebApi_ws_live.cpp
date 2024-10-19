@@ -13,6 +13,7 @@
 #include "VictronMppt.h"
 #include "defaults.h"
 #include <AsyncJson.h>
+#include "ShellyACPlug.h"
 
 WebApiWsLiveClass::WebApiWsLiveClass()
     : _ws("/livedata")
@@ -97,6 +98,16 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
         }
 
         if (!all) { _lastPublishHuawei = millis(); }
+    }
+
+    if (all || config.Shelly.Enabled ) {
+        auto shellyObj = root["shelly"].to<JsonObject>();
+        shellyObj["enabled"] = config.Shelly.Enabled;
+
+        if (config.Shelly.Enabled) {
+            addTotalField(shellyObj, "Power", ShellyACPlug._readpower, "W", 2);
+        }
+        if (!all) { _lastPublishShelly = millis(); }
     }
 
     auto spStats = Battery.getStats();
@@ -367,7 +378,7 @@ void WebApiWsLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
         generateOnBatteryJsonResponse(root, true);
 
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
-    
+
     } catch (const std::bad_alloc& bad_alloc) {
         MessageOutput.printf("Calling /api/livedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
         WebApi.sendTooManyRequests(request);
