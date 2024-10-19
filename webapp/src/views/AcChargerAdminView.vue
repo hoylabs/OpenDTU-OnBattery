@@ -6,10 +6,18 @@
 
         <form @submit="saveChargerConfig">
             <CardElement :text="$t('acchargeradmin.Configuration')" textVariant="text-bg-primary">
-                <InputElement :label="$t('acchargeradmin.EnableHuawei')" v-model="acChargerConfigList.enabled"
-                    type="checkbox" wide />
-                <InputElement :label="$t('acchargeradmin.EnableShelly')" v-model="acChargerShellyConfigList.enabled"
-                    type="checkbox" wide />
+                <InputElement
+                    :label="$t('acchargeradmin.EnableHuawei')"
+                    v-model="acChargerConfigList.enabled"
+                    type="checkbox"
+                    wide
+                />
+                <InputElement
+                    :label="$t('acchargeradmin.EnableShelly')"
+                    v-model="acChargerShellyConfigList.enabled"
+                    type="checkbox"
+                    wide
+                />
 
                 <div class="row mb-3" v-show="acChargerConfigList.enabled">
                     <label class="col-sm-4 col-form-label">
@@ -17,174 +25,301 @@
                     </label>
                     <div class="col-sm-8">
                         <select class="form-select" v-model="acChargerConfigList.can_controller_frequency">
-                            <option v-for="frequency in frequencyTypeList" :key="frequency.key"
-                                :value="frequency.value">
+                            <option
+                                v-for="frequency in frequencyTypeList"
+                                :key="frequency.key"
+                                :value="frequency.value"
+                            >
                                 {{ frequency.key }} MHz
                             </option>
                         </select>
                     </div>
                 </div>
 
-                <InputElement v-show="acChargerConfigList.enabled" :label="$t('acchargeradmin.VerboseLogging')"
-                    v-model="acChargerConfigList.verbose_logging" type="checkbox" wide />
+                <InputElement
+                    v-show="acChargerConfigList.enabled"
+                    :label="$t('acchargeradmin.VerboseLogging')"
+                    v-model="acChargerConfigList.verbose_logging"
+                    type="checkbox"
+                    wide
+                />
 
-                <InputElement v-show="acChargerConfigList.enabled" :label="$t('acchargeradmin.EnableAutoPower')"
-                    v-model="acChargerConfigList.auto_power_enabled" type="checkbox" wide />
+                <InputElement
+                    v-show="acChargerConfigList.enabled"
+                    :label="$t('acchargeradmin.EnableAutoPower')"
+                    v-model="acChargerConfigList.auto_power_enabled"
+                    type="checkbox"
+                    wide
+                />
 
-                <InputElement v-show="acChargerConfigList.enabled && acChargerConfigList.auto_power_enabled"
+                <InputElement
+                    v-show="acChargerConfigList.enabled && acChargerConfigList.auto_power_enabled"
                     :label="$t('acchargeradmin.EnableBatterySoCLimits')"
-                    v-model="acChargerConfigList.auto_power_batterysoc_limits_enabled" type="checkbox" wide />
+                    v-model="acChargerConfigList.auto_power_batterysoc_limits_enabled"
+                    type="checkbox"
+                    wide
+                />
 
-                <InputElement v-show="acChargerConfigList.enabled" :label="$t('acchargeradmin.EnableEmergencyCharge')"
-                    v-model="acChargerConfigList.emergency_charge_enabled" type="checkbox" wide />
+                <InputElement
+                    v-show="acChargerConfigList.enabled"
+                    :label="$t('acchargeradmin.EnableEmergencyCharge')"
+                    v-model="acChargerConfigList.emergency_charge_enabled"
+                    type="checkbox"
+                    wide
+                />
 
-                <CardElement :text="$t('acchargeradmin.Limits')" textVariant="text-bg-primary" add-space
-                    v-show="acChargerConfigList.auto_power_enabled || acChargerConfigList.emergency_charge_enabled">
+                <CardElement
+                    :text="$t('acchargeradmin.Limits')"
+                    textVariant="text-bg-primary"
+                    add-space
+                    v-show="acChargerConfigList.auto_power_enabled || acChargerConfigList.emergency_charge_enabled"
+                >
                     <div class="row mb-3">
-                        <label for="voltageLimit" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.VoltageLimit')
-                            }}:
+                        <label for="voltageLimit" class="col-sm-2 col-form-label"
+                            >{{ $t('acchargeradmin.VoltageLimit') }}:
                             <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.stopVoltageLimitHint')" />
                         </label>
                         <div class="col-sm-10">
                             <div class="input-group">
-                                <input type="number" step="0.01" class="form-control" id="voltageLimit" placeholder="42"
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    class="form-control"
+                                    id="voltageLimit"
+                                    placeholder="42"
                                     v-model="acChargerConfigList.voltage_limit"
-                                    aria-describedby="voltageLimitDescription" min="42" max="58.5" required />
+                                    aria-describedby="voltageLimitDescription"
+                                    min="42"
+                                    max="58.5"
+                                    required
+                                />
                                 <span class="input-group-text" id="voltageLimitDescription">V</span>
                             </div>
                         </div>
-                        <label for="enableVoltageLimit" class="col-sm-2 col-form-label">{{
-                            $t('acchargeradmin.enableVoltageLimit') }}:
+                        <label for="enableVoltageLimit" class="col-sm-2 col-form-label"
+                            >{{ $t('acchargeradmin.enableVoltageLimit') }}:
                             <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.enableVoltageLimitHint')" />
                         </label>
                         <div class="col-sm-10">
                             <div class="input-group">
-                                <input type="number" step="0.01" class="form-control" id="enableVoltageLimit"
-                                    placeholder="42" v-model="acChargerConfigList.enable_voltage_limit"
-                                    aria-describedby="enableVoltageLimitDescription" min="42" max="58.5" required />
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    class="form-control"
+                                    id="enableVoltageLimit"
+                                    placeholder="42"
+                                    v-model="acChargerConfigList.enable_voltage_limit"
+                                    aria-describedby="enableVoltageLimitDescription"
+                                    min="42"
+                                    max="58.5"
+                                    required
+                                />
                                 <span class="input-group-text" id="enableVoltageLimitDescription">V</span>
                             </div>
                         </div>
-                        <label for="lowerPowerLimit" class="col-sm-2 col-form-label">{{
-                            $t('acchargeradmin.lowerPowerLimit') }}:</label>
+                        <label for="lowerPowerLimit" class="col-sm-2 col-form-label"
+                            >{{ $t('acchargeradmin.lowerPowerLimit') }}:</label
+                        >
                         <div class="col-sm-10">
                             <div class="input-group">
-                                <input type="number" class="form-control" id="lowerPowerLimit" placeholder="150"
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="lowerPowerLimit"
+                                    placeholder="150"
                                     v-model="acChargerConfigList.lower_power_limit"
-                                    aria-describedby="lowerPowerLimitDescription" min="50" max="3000" required />
+                                    aria-describedby="lowerPowerLimitDescription"
+                                    min="50"
+                                    max="3000"
+                                    required
+                                />
                                 <span class="input-group-text" id="lowerPowerLimitDescription">W</span>
                             </div>
                         </div>
-                        <label for="upperPowerLimit" class="col-sm-2 col-form-label">{{
-                            $t('acchargeradmin.upperPowerLimit') }}:
+                        <label for="upperPowerLimit" class="col-sm-2 col-form-label"
+                            >{{ $t('acchargeradmin.upperPowerLimit') }}:
                             <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.upperPowerLimitHint')" />
                         </label>
                         <div class="col-sm-10">
                             <div class="input-group">
-                                <input type="number" class="form-control" id="upperPowerLimit" placeholder="2000"
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="upperPowerLimit"
+                                    placeholder="2000"
                                     v-model="acChargerConfigList.upper_power_limit"
-                                    aria-describedby="upperPowerLimitDescription" min="100" max="3000" required />
+                                    aria-describedby="upperPowerLimitDescription"
+                                    min="100"
+                                    max="3000"
+                                    required
+                                />
                                 <span class="input-group-text" id="upperPowerLimitDescription">W</span>
                             </div>
                         </div>
-                        <label for="targetPowerConsumption" class="col-sm-2 col-form-label">{{
-                            $t('acchargeradmin.targetPowerConsumption') }}:
+                        <label for="targetPowerConsumption" class="col-sm-2 col-form-label"
+                            >{{ $t('acchargeradmin.targetPowerConsumption') }}:
                             <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.targetPowerConsumptionHint')" />
                         </label>
                         <div class="col-sm-10">
                             <div class="input-group">
-                                <input type="number" class="form-control" id="targetPowerConsumption" placeholder="0"
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="targetPowerConsumption"
+                                    placeholder="0"
                                     v-model="acChargerConfigList.target_power_consumption"
-                                    aria-describedby="targetPowerConsumptionDescription" required />
+                                    aria-describedby="targetPowerConsumptionDescription"
+                                    required
+                                />
                                 <span class="input-group-text" id="targetPowerConsumptionDescription">W</span>
                             </div>
                         </div>
                     </div>
                 </CardElement>
-                <CardElement :text="$t('acchargeradmin.BatterySoCLimits')" textVariant="text-bg-primary" add-space
-                    v-show="acChargerConfigList.auto_power_enabled &&
+                <CardElement
+                    :text="$t('acchargeradmin.BatterySoCLimits')"
+                    textVariant="text-bg-primary"
+                    add-space
+                    v-show="
+                        acChargerConfigList.auto_power_enabled &&
                         acChargerConfigList.auto_power_batterysoc_limits_enabled
-                        ">
+                    "
+                >
                     <div class="row mb-3">
-                        <label for="stopBatterySoCThreshold" class="col-sm-2 col-form-label">{{
-                            $t('acchargeradmin.StopBatterySoCThreshold') }}:
+                        <label for="stopBatterySoCThreshold" class="col-sm-2 col-form-label"
+                            >{{ $t('acchargeradmin.StopBatterySoCThreshold') }}:
                             <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.StopBatterySoCThresholdHint')" />
                         </label>
                         <div class="col-sm-10">
                             <div class="input-group">
-                                <input type="number" class="form-control" id="stopBatterySoCThreshold" placeholder="95"
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="stopBatterySoCThreshold"
+                                    placeholder="95"
                                     v-model="acChargerConfigList.stop_batterysoc_threshold"
-                                    aria-describedby="stopBatterySoCThresholdDescription" min="2" max="99" required />
+                                    aria-describedby="stopBatterySoCThresholdDescription"
+                                    min="2"
+                                    max="99"
+                                    required
+                                />
                                 <span class="input-group-text" id="stopBatterySoCThresholdDescription">%</span>
                             </div>
                         </div>
                     </div>
                 </CardElement>
 
-                <CardElement :text="$t('acchargeradmin.ShellySettings')" textVariant="text-bg-primary" add-space
-                    v-show="acChargerShellyConfigList.enabled">
-                    <InputElement :label="$t('acchargeradmin.VerboseLogging')"
-                        v-model="acChargerShellyConfigList.verbose_logging" type="checkbox" wide />
-                    <InputElement :label="$t('acchargeradmin.EnableEmergencyCharge')"
-                        v-model="acChargerShellyConfigList.emergency_charge_enabled" type="checkbox" wide />
-                    <InputElement :label="$t('acchargeradmin.EnableBatterySoCLimits')"
-                        v-model="acChargerShellyConfigList.auto_power_batterysoc_limits_enabled" type="checkbox" wide />
+                <CardElement
+                    :text="$t('acchargeradmin.ShellySettings')"
+                    textVariant="text-bg-primary"
+                    add-space
+                    v-show="acChargerShellyConfigList.enabled"
+                >
+                    <InputElement
+                        :label="$t('acchargeradmin.VerboseLogging')"
+                        v-model="acChargerShellyConfigList.verbose_logging"
+                        type="checkbox"
+                        wide
+                    />
+                    <InputElement
+                        :label="$t('acchargeradmin.EnableEmergencyCharge')"
+                        v-model="acChargerShellyConfigList.emergency_charge_enabled"
+                        type="checkbox"
+                        wide
+                    />
+                    <InputElement
+                        :label="$t('acchargeradmin.EnableBatterySoCLimits')"
+                        v-model="acChargerShellyConfigList.auto_power_batterysoc_limits_enabled"
+                        type="checkbox"
+                        wide
+                    />
                     <div class="row mb-3">
-                        <label for="ip" class="col-sm-2 col-form-label">{{ $t('acchargeradmin.ShellyAddress') }}:
+                        <label for="ip" class="col-sm-2 col-form-label"
+                            >{{ $t('acchargeradmin.ShellyAddress') }}:
                             <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyAddressHint')" />
                         </label>
                         <div class="col-sm-10">
                             <div class="input-group">
-                                <input type="string" class="form-control" id="url" placeholder="http://192.168.2.100"
-                                    v-model="acChargerShellyConfigList.url" aria-describedby="urlDescription"
-                                    required />
+                                <input
+                                    type="string"
+                                    class="form-control"
+                                    id="url"
+                                    placeholder="http://192.168.2.100"
+                                    v-model="acChargerShellyConfigList.url"
+                                    aria-describedby="urlDescription"
+                                    required
+                                />
                                 <span class="input-group-text" id="urlDescription"></span>
                             </div>
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <label for="ShellyStartThreshold" class="col-sm-2 col-form-label">{{
-                            $t('acchargeradmin.ShellyStartThreshold') }}:
+                        <label for="ShellyStartThreshold" class="col-sm-2 col-form-label"
+                            >{{ $t('acchargeradmin.ShellyStartThreshold') }}:
                             <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyStartThresholdHint')" />
                         </label>
                         <div class="col-sm-10">
                             <div class="input-group">
-                                <input type="number" class="form-control" id="ShellyStartThreshold" placeholder="-500"
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="ShellyStartThreshold"
+                                    placeholder="-500"
                                     v-model="acChargerShellyConfigList.power_on_threshold"
-                                    aria-describedby="ShellyStartThresholdDescription" required />
+                                    aria-describedby="ShellyStartThresholdDescription"
+                                    required
+                                />
                                 <span class="input-group-text" id="ShellyStartThresholdDescription">W</span>
                             </div>
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <label for="ShellyStopThreshold" class="col-sm-2 col-form-label">{{
-                            $t('acchargeradmin.ShellyStopThreshold') }}:
+                        <label for="ShellyStopThreshold" class="col-sm-2 col-form-label"
+                            >{{ $t('acchargeradmin.ShellyStopThreshold') }}:
                             <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyStopThresholdHint')" />
                         </label>
                         <div class="col-sm-10">
                             <div class="input-group">
-                                <input type="number" class="form-control" id="ShellyStopThreshold" placeholder="-100"
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="ShellyStopThreshold"
+                                    placeholder="-100"
                                     v-model="acChargerShellyConfigList.power_off_threshold"
-                                    aria-describedby="ShellyStopThresholdDescription" required />
+                                    aria-describedby="ShellyStopThresholdDescription"
+                                    required
+                                />
                                 <span class="input-group-text" id="ShellyStopThresholdDescription">W</span>
                             </div>
                         </div>
                     </div>
-                    <CardElement :text="$t('acchargeradmin.BatterySoCLimits')" textVariant="text-bg-primary" add-space
-                        v-show="acChargerShellyConfigList.auto_power_batterysoc_limits_enabled">
+                    <CardElement
+                        :text="$t('acchargeradmin.BatterySoCLimits')"
+                        textVariant="text-bg-primary"
+                        add-space
+                        v-show="acChargerShellyConfigList.auto_power_batterysoc_limits_enabled"
+                    >
                         <div class="row mb-3">
-                            <label for="stopBatterySoCThreshold" class="col-sm-2 col-form-label">{{
-                                $t('acchargeradmin.StopBatterySoCThreshold') }}:
+                            <label for="stopBatterySoCThreshold" class="col-sm-2 col-form-label"
+                                >{{ $t('acchargeradmin.StopBatterySoCThreshold') }}:
                                 <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.StopBatterySoCThresholdHint')" />
                             </label>
                             <div class="col-sm-10">
                                 <div class="input-group">
-                                    <input type="number" class="form-control" id="Shelly_stopBatterySoCThreshold"
-                                        placeholder="95" v-model="acChargerShellyConfigList.stop_batterysoc_threshold"
-                                        aria-describedby="Shelly_stopBatterySoCThresholdDescription" min="2" max="99"
-                                        required />
-                                    <span class="input-group-text"
-                                        id="Shelly_stopBatterySoCThresholdDescription">%</span>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="Shelly_stopBatterySoCThreshold"
+                                        placeholder="95"
+                                        v-model="acChargerShellyConfigList.stop_batterysoc_threshold"
+                                        aria-describedby="Shelly_stopBatterySoCThresholdDescription"
+                                        min="2"
+                                        max="99"
+                                        required
+                                    />
+                                    <span class="input-group-text" id="Shelly_stopBatterySoCThresholdDescription"
+                                        >%</span
+                                    >
                                 </div>
                             </div>
                         </div>
