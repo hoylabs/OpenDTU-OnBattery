@@ -431,7 +431,8 @@
         "BatteryCharge": "Battery Charge",
         "BatteryPower": "Battery Power",
         "HomePower": "Grid Power",
-        "HuaweiPower": "Huawei AC Power"
+        "HuaweiPower": "Huwawei AC Power",
+        "ShellyPower": "AC Charger Power"
     },
     "inverterchannelproperty": {
         "Power": "Power",
@@ -924,6 +925,14 @@
         "ChargerSettings": "AC Charger Settings",
         "Configuration": "AC Charger Configuration",
         "EnableHuawei": "Enable Huawei R4850G2 on CAN Bus Interface",
+        "EnableShelly": "AC Charger with Shelly Plug S",
+        "ShellyStartThreshold": "Powermeter Start-Threshold",
+        "ShellyStopThreshold": "Powermeter Stop-Threshold",
+        "ShellySettings": "Shelly Plug S configuration",
+        "ShellyAddress": "url with IP-Address or Hostname",
+        "ShellyAddressHint": "url with Ip or full Hostname of Shelly Plug S",
+        "ShellyStartThresholdHint": "Value where AC Charger should start",
+        "ShellyStopThresholdHint": "Value where AC Charger should stop",
         "VerboseLogging": "@:base.VerboseLogging",
         "CanControllerFrequency": "CAN controller quarz frequency",
         "EnableAutoPower": "Automatic power control",
