@@ -128,6 +128,42 @@ struct POWERMETER_HTTP_SML_CONFIG_T {
 };
 using PowerMeterHttpSmlConfig = struct POWERMETER_HTTP_SML_CONFIG_T;
 
+struct POWERLIMITER_INVERTER_CONFIG_T {
+    uint64_t Serial;
+    bool IsBehindPowerMeter;
+    bool IsSolarPowered;
+    bool UseOverscalingToCompensateShading;
+    uint16_t LowerPowerLimit;
+    uint16_t UpperPowerLimit;
+};
+using PowerLimiterInverterConfig = struct POWERLIMITER_INVERTER_CONFIG_T;
+
+struct POWERLIMITER_CONFIG_T {
+    bool Enabled;
+    bool VerboseLogging;
+    bool SolarPassThroughEnabled;
+    uint8_t SolarPassThroughLosses;
+    bool BatteryAlwaysUseAtNight;
+    int16_t TargetPowerConsumption;
+    uint16_t TargetPowerConsumptionHysteresis;
+    uint16_t BaseLoadLimit;
+    bool IgnoreSoc;
+    uint16_t BatterySocStartThreshold;
+    uint16_t BatterySocStopThreshold;
+    float VoltageStartThreshold;
+    float VoltageStopThreshold;
+    float VoltageLoadCorrectionFactor;
+    uint16_t FullSolarPassThroughSoc;
+    float FullSolarPassThroughStartVoltage;
+    float FullSolarPassThroughStopVoltage;
+    uint64_t InverterSerialForDcVoltage;
+    uint8_t InverterChannelIdForDcVoltage;
+    int8_t RestartHour;
+    uint16_t TotalUpperPowerLimit;
+    PowerLimiterInverterConfig Inverters[INV_MAX_COUNT];
+};
+using PowerLimiterConfig = struct POWERLIMITER_CONFIG_T;
+
 enum BatteryVoltageUnit { Volts = 0, DeciVolts = 1, CentiVolts = 2, MilliVolts = 3 };
 
 enum BatteryAmperageUnit { Amps = 0, MilliAmps = 1 };
@@ -278,34 +314,7 @@ struct CONFIG_T {
         PowerMeterHttpSmlConfig HttpSml;
     } PowerMeter;
 
-    struct {
-        bool Enabled;
-        bool VerboseLogging;
-        bool SolarPassThroughEnabled;
-        uint8_t SolarPassThroughLosses;
-        bool BatteryAlwaysUseAtNight;
-        uint32_t Interval;
-        bool IsInverterBehindPowerMeter;
-        bool IsInverterSolarPowered;
-        bool UseOverscalingToCompensateShading;
-        uint64_t InverterId;
-        uint8_t InverterChannelId;
-        int32_t TargetPowerConsumption;
-        int32_t TargetPowerConsumptionHysteresis;
-        int32_t LowerPowerLimit;
-        int32_t BaseLoadLimit;
-        int32_t UpperPowerLimit;
-        bool IgnoreSoc;
-        uint32_t BatterySocStartThreshold;
-        uint32_t BatterySocStopThreshold;
-        float VoltageStartThreshold;
-        float VoltageStopThreshold;
-        float VoltageLoadCorrectionFactor;
-        int8_t RestartHour;
-        uint32_t FullSolarPassThroughSoc;
-        float FullSolarPassThroughStartVoltage;
-        float FullSolarPassThroughStopVoltage;
-    } PowerLimiter;
+    PowerLimiterConfig PowerLimiter;
 
     BatteryConfig Battery;
 
@@ -347,6 +356,7 @@ public:
     static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target);
     static void serializeBatteryConfig(BatteryConfig const& source, JsonObject& target);
+    static void serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target);
 
     static void deserializeHttpRequestConfig(JsonObject const& source, HttpRequestConfig& target);
     static void deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target);
@@ -354,6 +364,7 @@ public:
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);
     static void deserializePowerMeterHttpSmlConfig(JsonObject const& source, PowerMeterHttpSmlConfig& target);
     static void deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target);
+    static void deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target);
 };
 
 extern ConfigurationClass Configuration;
