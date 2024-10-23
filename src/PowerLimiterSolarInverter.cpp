@@ -23,24 +23,21 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
 
     if (!isProducing()) {
         // the inverter is not producing, we don't know how much we can increase
-        // TODO(AndreasBoehm): should we increas by only 100W in this case? Or go for the max?
-        return 100; // TODO(AndreasBoehm) or maxTotalIncrease
+        // the power, so we return the maximum possible increase
+        return maxTotalIncrease;
     }
 
     auto pStats = _spInverter->Statistics();
     std::vector<MpptNum_t> dcMppts = _spInverter->getMppts();
     size_t dcTotalMppts = dcMppts.size();
 
+    float inverterEfficiencyFactor = pStats->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF) / 100;
+
     // 98% of the expected power is good enough
     auto expectedAcPowerPerMppt = (getCurrentLimitWatts() / dcTotalMppts) * 0.98;
 
-    float inverterEfficiencyFactor = pStats->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF);
-
-    // fall back to hoymiles peak efficiency as per datasheet if inverter
-    // is currently not producing (efficiency is zero in that case)
-    inverterEfficiencyFactor = (inverterEfficiencyFactor > 0) ? inverterEfficiencyFactor/100 : 0.967;
-
     size_t dcNonShadedMppts = 0;
+    auto nonShadedMpptACPowerSum = 0.0;
 
     for (auto& m : dcMppts) {
         float mpptPowerAC = 0.0;
@@ -51,6 +48,7 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
         }
 
         if (mpptPowerAC >= expectedAcPowerPerMppt) {
+            nonShadedMpptACPowerSum += mpptPowerAC;
             dcNonShadedMppts++;
         }
     }
@@ -61,18 +59,18 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
     }
 
     if (dcNonShadedMppts == dcTotalMppts) {
-        // no mppt is shaded, we can increase the power by the maximum
-        // TODO(AndreasBoehm): If none of the mppts are shaded we assume that we can increase the power by the maximum. is this correct?
+        // no mppt is shaded, we assume that we can increase the power by the maximum
         return maxTotalIncrease;
     }
 
-    // maximum increase per mppt, required to calculate how much the non-shaded mppts can increase
-    int16_t maxIncreasePerMppt = maxTotalIncrease / dcTotalMppts;
+    int16_t maxPowerPerMppt = getConfiguredMaxPowerWatts() / dcTotalMppts;
+
+    int16_t currentPowerPerNonShadedMppt = nonShadedMpptACPowerSum / dcNonShadedMppts;
+
+    int16_t maxIncreasePerNonShadedMppt = maxPowerPerMppt - currentPowerPerNonShadedMppt;
 
     // maximum increase based on the non-shaded mppts
-    int16_t maxIncrease = maxIncreasePerMppt * dcNonShadedMppts;
-
-    return maxIncrease;
+    return maxIncreasePerNonShadedMppt * dcNonShadedMppts;
 }
 
 uint16_t PowerLimiterSolarInverter::applyReduction(uint16_t reduction, bool)
