@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "Configuration.h"
 #include "BatteryCanReceiver.h"
+#include "MqttSettings.h"
 #include "MessageOutput.h"
 #include "PinMapping.h"
 #include <driver/twai.h>
@@ -11,6 +13,24 @@ bool BatteryCanReceiver::init(bool verboseLogging, char const* providerName)
 
     MessageOutput.printf("[%s] Initialize interface...\r\n",
             _providerName);
+
+    auto const& config = Configuration.get();
+    _canTopic = config.Battery.MqttCANTopic;
+    _canInterface = static_cast<enum CanInterface>(config.Battery.CanInterface);
+    if (_canInterface == kMqtt) {
+        MqttSettings.subscribe(_canTopic, 0/*QoS*/,
+                std::bind(&BatteryCanReceiver::onMqttMessageCAN,
+                    this, std::placeholders::_1, std::placeholders::_2,
+                    std::placeholders::_3, std::placeholders::_4,
+                    std::placeholders::_5, std::placeholders::_6)
+                );
+
+        if (_verboseLogging) {
+            MessageOutput.printf("BatteryCanReceiver: Subscribed to '%s' for CAN messages\r\n",
+                _canTopic.c_str());
+        }
+        return true;
+    }
 
     const PinMapping_t& pin = PinMapping.get();
     MessageOutput.printf("[%s] Interface rx = %d, tx = %d\r\n",
@@ -82,6 +102,11 @@ bool BatteryCanReceiver::init(bool verboseLogging, char const* providerName)
 
 void BatteryCanReceiver::deinit()
 {
+    if (_canInterface == kMqtt) {
+        MqttSettings.unsubscribe(_canTopic);
+        return;
+    }
+
     // Stop TWAI driver
     esp_err_t twaiLastResult = twai_stop();
     switch (twaiLastResult) {
@@ -111,6 +136,10 @@ void BatteryCanReceiver::deinit()
 
 void BatteryCanReceiver::loop()
 {
+    if (_canInterface == kMqtt) {
+        return;  // Mqtt CAN messages are event-driven
+    }
+
     // Check for messages. twai_receive is blocking when there is no data so we return if there are no frames in the buffer
     twai_status_info_t status_info;
     esp_err_t twaiLastResult = twai_get_status_info(&status_info);
@@ -139,6 +168,80 @@ void BatteryCanReceiver::loop()
         return;
     }
 
+    postMessage(std::move(rx_message));
+}
+
+
+void BatteryCanReceiver::onMqttMessageCAN(espMqttClientTypes::MessageProperties const& properties,
+        char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)
+{
+    std::string value(reinterpret_cast<const char*>(payload), len);
+    JsonDocument json;
+
+    auto log = [this, topic](char const* format, auto&&... args) -> void {
+        MessageOutput.printf("[%s] Topic '%s': ", _providerName, topic);
+        MessageOutput.printf(format, args...);
+        MessageOutput.println();
+    };
+
+    const DeserializationError error = deserializeJson(json, value);
+    if (error) {
+        log("cannot parse payload '%s' as JSON", value.c_str());
+        return;
+    }
+
+    if (json.overflowed()) {
+        log("payload too large to process as JSON");
+        return;
+    }
+
+    int canID = json["id"] | -1;
+    if (canID == -1) {
+        log("JSON is missing message id");
+        return;
+    }
+
+    twai_message_t rx_message = {};
+    rx_message.identifier = canID;
+    int maxLen = sizeof(rx_message.data);
+
+    JsonVariant canData = json["data"];
+    if (canData.isNull()) {
+        log("JSON is missing message data");
+        return;
+    }
+
+    if (canData.is<char const*>()) {
+      String strData = canData.as<String>();
+      int len = strData.length();
+      if (len > maxLen) {
+          log("JSON data has more than %d elements", maxLen);
+          return;
+      }
+
+      rx_message.data_length_code = len;
+      for (int i = 0; i < len; i++) {
+        rx_message.data[i] = strData[i];
+      }
+    } else {
+      JsonArray arrayData = canData.as<JsonArray>();
+      int len = arrayData.size();
+      if (len > maxLen) {
+          log("JSON data has more than %d elements", maxLen);
+          return;
+      }
+
+      rx_message.data_length_code = len;
+      for (int i = 0; i < len; i++) {
+        rx_message.data[i] = arrayData[i];
+      }
+    }
+
+    postMessage(std::move(rx_message));
+}
+
+void BatteryCanReceiver::postMessage(twai_message_t&& rx_message)
+{
     if (_verboseLogging) {
         MessageOutput.printf("[%s] Received CAN message: 0x%04X -",
                 _providerName, rx_message.identifier);

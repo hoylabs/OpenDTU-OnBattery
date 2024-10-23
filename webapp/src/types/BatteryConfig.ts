@@ -4,6 +4,8 @@ export interface BatteryConfig {
     provider: number;
     jkbms_interface: number;
     jkbms_polling_interval: number;
+    can_interface: number;
+    mqtt_can_topic: string;
     mqtt_soc_topic: string;
     mqtt_soc_json_path: string;
     mqtt_voltage_topic: string;

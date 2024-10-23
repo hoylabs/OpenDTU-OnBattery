@@ -699,6 +699,12 @@
     "batteryadmin": {
         "BatterySettings": "Batterie Einstellungen",
         "BatteryConfiguration": "Generelle Schnittstelleneinstellungen",
+        "CanConfiguration": "CAN Einstellungen",
+        "CanInterface": "Schnittstellentyp",
+        "CanInterfaceTwai": "CAN-Transceiver an der MCU",
+        "CanInterfaceMqtt": "MQTT Broker",
+        "CanMqttTopic": "Topic für CAN-Nachrichten",
+        "CanMqttTopicHint": "Nachrichten sollte im JSON-Format mit 'id' und 'data' feldern sein.",
         "EnableBattery": "Aktiviere Schnittstelle",
         "VerboseLogging": "@:base.VerboseLogging",
         "Provider": "Datenanbieter",

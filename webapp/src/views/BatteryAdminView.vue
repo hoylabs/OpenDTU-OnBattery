@@ -34,6 +34,40 @@
             </CardElement>
 
             <CardElement
+                v-show="$route.query.debug && batteryConfigList.enabled && providerUsesCanList.includes(batteryConfigList.provider)"
+                :text="$t('batteryadmin.CanConfiguration')"
+                textVariant="text-bg-primary"
+                addSpace
+            >
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label">
+                        {{ $t('batteryadmin.CanInterface') }}
+                    </label>
+                    <div class="col-sm-10">
+                        <select class="form-select" v-model="batteryConfigList.can_interface">
+                            <option
+                                v-for="canInterface in canInterfaceTypeList"
+                                :key="canInterface.key"
+                                :value="canInterface.key"
+                            >
+                                {{ $t(`batteryadmin.CanInterface` + canInterface.value) }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <InputElement
+                    v-show="batteryConfigList.can_interface == 1"
+                    :label="$t('batteryadmin.CanMqttTopic')"
+                    v-model="batteryConfigList.mqtt_can_topic"
+                    type="text"
+                    maxlength="256"
+                >
+                    <div class="alert alert-secondary" role="alert" v-html="$t('batteryadmin.CanMqttTopicHint')"></div>
+                </InputElement>
+            </CardElement>
+
+            <CardElement
                 v-show="batteryConfigList.enabled && batteryConfigList.provider == 1"
                 :text="$t('batteryadmin.JkBmsConfiguration')"
                 textVariant="text-bg-primary"
@@ -234,6 +268,11 @@ export default defineComponent({
                 { key: 3, value: 'Victron' },
                 { key: 4, value: 'PytesCan' },
                 { key: 5, value: 'SBSCan' },
+            ],
+            providerUsesCanList: [0, 4, 5],
+            canInterfaceTypeList: [
+                { key: 0, value: 'Twai' },
+                { key: 1, value: 'Mqtt' },
             ],
             jkBmsInterfaceTypeList: [
                 { key: 0, value: 'Uart' },

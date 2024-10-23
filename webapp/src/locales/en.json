@@ -701,6 +701,12 @@
     "batteryadmin": {
         "BatterySettings": "Battery Settings",
         "BatteryConfiguration": "General Interface Settings",
+        "CanConfiguration": "CAN Interface Settings",
+        "CanInterface": "Interface Type",
+        "CanInterfaceTwai": "CAN Transceiver on MCU",
+        "CanInterfaceMqtt": "MQTT Topic",
+        "CanMqttTopic": "CAN Message Topic",
+        "CanMqttTopicHint": "Messages should be JSON with 'id' and 'data' fields.",
         "EnableBattery": "Enable Interface",
         "VerboseLogging": "@:base.VerboseLogging",
         "Provider": "Data Provider",

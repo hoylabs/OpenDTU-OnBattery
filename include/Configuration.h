@@ -136,12 +136,14 @@ struct BATTERY_CONFIG_T {
     bool Enabled;
     bool VerboseLogging;
     uint8_t Provider;
+    uint8_t CanInterface;
     uint8_t JkBmsInterface;
     uint8_t JkBmsPollingInterval;
     char MqttSocTopic[MQTT_MAX_TOPIC_STRLEN + 1];
     char MqttSocJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
     char MqttVoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
     char MqttVoltageJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
+    char MqttCANTopic[MQTT_MAX_TOPIC_STRLEN + 1];
     BatteryVoltageUnit MqttVoltageUnit;
     bool EnableDischargeCurrentLimit;
     float DischargeCurrentLimit;

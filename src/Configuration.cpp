@@ -92,6 +92,8 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["mqtt_discharge_current_topic"] = config.Battery.MqttDischargeCurrentTopic;
     target["mqtt_discharge_current_json_path"] = config.Battery.MqttDischargeCurrentJsonPath;
     target["mqtt_amperage_unit"] = config.Battery.MqttAmperageUnit;
+    target["can_interface"] = config.Battery.CanInterface;
+    target["mqtt_can_topic"] = config.Battery.MqttCANTopic;
 }
 
 bool ConfigurationClass::write()
@@ -380,6 +382,8 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     strlcpy(target.MqttSocJsonPath, source["mqtt_soc_json_path"] | source["mqtt_json_path"] | "", sizeof(config.Battery.MqttSocJsonPath)); // mqtt_soc_json_path was previously saved as mqtt_json_path. Be nice and also try old key.
     strlcpy(target.MqttVoltageTopic, source["mqtt_voltage_topic"] | "", sizeof(config.Battery.MqttVoltageTopic));
     strlcpy(target.MqttVoltageJsonPath, source["mqtt_voltage_json_path"] | "", sizeof(config.Battery.MqttVoltageJsonPath));
+    target.CanInterface = source["can_interface"] | BATTERY_CAN_INTERFACE;
+    strlcpy(target.MqttCANTopic, source["mqtt_can_topic"] | BATTERY_CAN_TOPIC, sizeof(config.Battery.MqttCANTopic));
     target.MqttVoltageUnit = source["mqtt_voltage_unit"] | BatteryVoltageUnit::Volts;
     target.EnableDischargeCurrentLimit = source["enable_discharge_current_limit"] | BATTERY_ENABLE_DISCHARGE_CURRENT_LIMIT;
     target.DischargeCurrentLimit = source["discharge_current_limit"] | BATTERY_DISCHARGE_CURRENT_LIMIT;

@@ -4,6 +4,7 @@
 #include "Battery.h"
 #include <driver/twai.h>
 #include <Arduino.h>
+#include <espMqttClient.h>
 
 class BatteryCanReceiver : public BatteryProvider {
 public:
@@ -26,4 +27,14 @@ protected:
 
 private:
     char const* _providerName = "Battery CAN";
+
+    enum CanInterface {
+      kTwai,
+      kMqtt,
+    } _canInterface;
+    String _canTopic;
+
+    void postMessage(twai_message_t&& rx_message);
+    void onMqttMessageCAN(espMqttClientTypes::MessageProperties const& properties,
+            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
 };
