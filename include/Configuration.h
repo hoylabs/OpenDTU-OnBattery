@@ -326,6 +326,19 @@ struct CONFIG_T {
         float Auto_Power_Target_Power_Consumption;
     } Huawei;
 
+    struct {
+        bool Enabled;
+        bool VerboseLogging;
+        bool Auto_Power_BatterySoC_Limits_Enabled;
+        bool Emergency_Charge_Enabled;
+        uint8_t stop_batterysoc_threshold;
+        char url[1025];
+        int32_t POWER_ON_threshold;
+        int32_t POWER_OFF_threshold;
+        bool POWER_ON;
+        bool POWER_OFF;
+    } Shelly;
+
 
     INVERTER_CONFIG_T Inverter[INV_MAX_COUNT];
     char Dev_PinMapping[DEV_MAX_MAPPING_NAME_STRLEN + 1];
