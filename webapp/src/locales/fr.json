@@ -746,6 +746,8 @@
         "VoltageLoadCorrectionFactor": "Load correction factor",
         "BatterySocInfo": "<b>Hint:</b> The battery SoC (State of Charge) values are only used if the battery communication interface reported SoC updates in the last minute. Otherwise the voltage thresholds will be used as fallback.",
         "InverterIsBehindPowerMeter": "PowerMeter reading includes inverter output",
+        "ShadedFactor": "Facteur d'ombrage",
+        "ShadedFactorHint": "Limite basse de puissance (%). Les canaux en dessous sont consideres comme ombrages et exclus du calcul.",
         "InverterIsBehindPowerMeterHint": "Enable this option if the power meter reading is reduced by the inverter's output when it produces power. This is typically true.",
         "InverterIsSolarPowered": "Inverter is powered by solar modules",
         "VoltageThresholds": "Battery Voltage Thresholds",

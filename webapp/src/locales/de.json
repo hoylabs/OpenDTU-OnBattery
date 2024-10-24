@@ -686,6 +686,8 @@
         "VoltageLoadCorrectionFactor": "Lastkorrekturfaktor",
         "BatterySocInfo": "<b>Hinweis:</b> Die Akku SoC (State of Charge) Werte werden nur benutzt, wenn die Batterie-Kommunikationsschnittstelle innerhalb der letzten Minute gültige Werte geschickt hat. Andernfalls werden als Fallback-Option die Spannungseinstellungen verwendet.",
         "InverterIsBehindPowerMeter": "Stromzählermessung beinhaltet Wechselrichter",
+        "ShadedFactor": "Shading factor",
+        "ShadedFactorHint": "Set the minimum power output threshold (%). Channels below this percentage are considered shaded and excluded from scaling.",
         "InverterIsBehindPowerMeterHint": "Aktivieren falls sich der Stromzähler-Messwert um die Ausgangsleistung des Wechselrichters verringert, wenn dieser Strom produziert. Normalerweise ist das zutreffend.",
         "InverterIsSolarPowered": "Wechselrichter wird von Solarmodulen gespeist",
         "UseOverscalingToCompensateShading": "Verschattung durch Überskalierung ausgleichen",

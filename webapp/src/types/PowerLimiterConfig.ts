@@ -34,6 +34,7 @@ export interface PowerLimiterConfig {
     lower_power_limit: number;
     base_load_limit: number;
     upper_power_limit: number;
+    shaded_factor: number;
     ignore_soc: boolean;
     battery_soc_start_threshold: number;
     battery_soc_stop_threshold: number;
