@@ -227,50 +227,38 @@ float VictronMpptClass::getOutputVoltage() const
     return min;
 }
 
-/*
- * getStateOfOperation()
- * return:  the state from the first available controller or
- *          -1 if data is not available
- */
-int16_t VictronMpptClass::getStateOfOperation() const
+std::optional<uint8_t> VictronMpptClass::getStateOfOperation() const
 {
     for (const auto& upController : _controllers) {
         if (upController->isDataValid()) {
-            return static_cast<int16_t>(upController->getData().currentState_CS);
+            return upController->getData().currentState_CS;
         }
     }
 
-    return -1;
+    return std::nullopt;
 }
 
-/*
- * getVoltage()
- * return:  the configured value from the first available controller in V or
- *          -1V if data is not available
- */
-float VictronMpptClass::getVoltage(MPPTVoltage kindOf) const
+std::optional<float> VictronMpptClass::getVoltage(MPPTVoltage kindOf) const
 {
-    std::pair<uint32_t, uint32_t> voltX {0,0};
-
     for (const auto& upController : _controllers) {
         switch (kindOf) {
-            case MPPTVoltage::ABSORPTION:
-                voltX = upController->getData().BatteryAbsorptionMilliVolt;
+            case MPPTVoltage::ABSORPTION: {
+                auto const& absorptionVoltage = upController->getData().BatteryAbsorptionMilliVolt;
+                if (absorptionVoltage.first > 0) { return absorptionVoltage.second; }
                 break;
-            case MPPTVoltage::FLOAT:
-                voltX = upController->getData().BatteryFloatMilliVolt;
+            }
+            case MPPTVoltage::FLOAT: {
+                auto const& floatVoltage = upController->getData().BatteryFloatMilliVolt;
+                if (floatVoltage.first > 0) { return floatVoltage.second; }
                 break;
-            case MPPTVoltage::BATTERY:
-                if (upController->isDataValid()) {
-                    voltX.first = 1;
-                    voltX.second = upController->getData().batteryVoltage_V_mV;
-                }
+            }
+            case MPPTVoltage::BATTERY: {
+                auto const& batteryVoltage = upController->getData().batteryVoltage_V_mV;
+                if (upController->isDataValid()) { return batteryVoltage; }
                 break;
-        }
-        if (voltX.first > 0) {
-            return static_cast<float>(voltX.second / 1000.0);
+            }
         }
     }
 
-    return -1.0f;
+    return std::nullopt;
 }

@@ -43,15 +43,15 @@ public:
     float getOutputVoltage() const;
 
     // returns the state of operation from the first available controller
-    int16_t getStateOfOperation() const;
+    std::optional<uint8_t> getStateOfOperation() const;
 
-    // the configured value from the first available controller in V
+    // returns the requested value from the first available controller in mV
     enum class MPPTVoltage : uint8_t {
             ABSORPTION = 0,
             FLOAT = 1,
             BATTERY = 2
     };
-    float getVoltage(MPPTVoltage kindOf) const;
+    std::optional<float> getVoltage(MPPTVoltage kindOf) const;
 
 private:
     void loop();
