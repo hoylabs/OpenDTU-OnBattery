@@ -175,6 +175,7 @@
         "section_device": "Device Info",
         "device": {
             "LOAD": "Load output state",
+            "LOADCurrent": "Load current",
             "CS": "State of operation",
             "MPPT": "Tracker operation mode",
             "OR": "Off reason",

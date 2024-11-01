@@ -164,7 +164,14 @@ void WebApiWsVedirectLiveClass::populateJson(const JsonObject &root, const VeDir
     const JsonObject values = root["values"].to<JsonObject>();
 
     const JsonObject device = values["device"].to<JsonObject>();
-    device["LOAD"] = mpptData.loadOutputState_LOAD ? "ON" : "OFF";
+    if (mpptData.loadOutputState_LOAD.first > 0) {
+        device["LOAD"] = mpptData.loadOutputState_LOAD.second ? "ON" : "OFF";
+    }
+    if (mpptData.loadCurrent_IL_mA.first > 0) {
+        device["LOADCurrent"]["v"] = mpptData.loadCurrent_IL_mA.second / 1000.0;
+        device["LOADCurrent"]["u"] = "A";
+        device["LOADCurrent"]["d"] = 2;
+    }
     device["CS"] = mpptData.getCsAsString();
     device["MPPT"] = mpptData.getMpptAsString();
     device["OR"] = mpptData.getOrAsString();
