@@ -260,9 +260,7 @@
                                     max="99"
                                     required
                                 />
-                                <span class="input-group-text" id="Shelly_stopBatterySoCThresholdDescription"
-                                    >%</span
-                                >
+                                <span class="input-group-text" id="Shelly_stopBatterySoCThresholdDescription">%</span>
                             </div>
                         </div>
                     </div>
