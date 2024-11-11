@@ -51,7 +51,7 @@
                     aria-labelledby="nav-pin-tab"
                     tabindex="0"
                 >
-                    <div class="card">
+                    <div class="card card-tabbed">
                         <div class="card-body">
                             <div class="row mb-3">
                                 <label for="inputPinProfile" class="col-sm-2 col-form-label">{{
@@ -78,19 +78,15 @@
                                 </div>
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-sm-2"></div>
-                                <div class="col-sm-10">
-                                    <div
-                                        class="btn-group mb-2 me-2"
-                                        v-for="(doc, index) in pinMappingList.find(
-                                            (i) => i.name === deviceConfigList.curPin.name
-                                        )?.links"
-                                        :key="index"
-                                    >
-                                        <a :href="doc.url" class="btn btn-primary" target="_blank">{{ doc.name }}</a>
-                                    </div>
-                                </div>
+                            <div class="mb-3 d-flex justify-content-end gap-3" v-if="docLinks.length">
+                                <a
+                                    v-for="(doc, index) in docLinks"
+                                    :key="index"
+                                    :href="doc.url"
+                                    class="btn btn-primary"
+                                    target="_blank"
+                                    >{{ doc.name }}</a
+                                >
                             </div>
 
                             <div
@@ -116,7 +112,7 @@
                     aria-labelledby="nav-display-tab"
                     tabindex="0"
                 >
-                    <div class="card">
+                    <div class="card card-tabbed">
                         <div class="card-body">
                             <InputElement
                                 :label="$t('deviceadmin.PowerSafe')"
@@ -217,7 +213,7 @@
                     aria-labelledby="nav-leds-tab"
                     tabindex="0"
                 >
-                    <div class="card">
+                    <div class="card card-tabbed">
                         <div class="card-body">
                             <InputElement
                                 :label="$t('deviceadmin.EqualBrightness')"
@@ -311,6 +307,12 @@ export default defineComponent({
                 return;
             }
             this.deviceConfigList.led.every((v) => (v.brightness = this.deviceConfigList.led[0].brightness));
+        },
+    },
+    computed: {
+        docLinks() {
+            const mapping = this.pinMappingList.find((i) => i.name === this.deviceConfigList.curPin.name);
+            return mapping?.links || [];
         },
     },
     methods: {
