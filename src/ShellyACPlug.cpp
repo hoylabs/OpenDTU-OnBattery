@@ -99,7 +99,7 @@ bool ShellyACPlugClass::send_http(String uri)
         MessageOutput.printf("[ShellyACPlug] INIT %s\r\n", _HttpGetter->getErrorText());
         return false;
     }
-        if (!_HttpGetter->performGetRequest()) {
+    if (!_HttpGetter->performGetRequest()) {
         MessageOutput.printf("[ShellyACPlug] GET %s\r\n", _HttpGetter->getErrorText());
         return false;
     }
@@ -137,15 +137,15 @@ float ShellyACPlugClass::read_http(String uri)
     }
 
    const DeserializationError error = deserializeJson(jsonResponse, *pStream);
-        if (error) {
-            String msg("[ShellyACPlug] Unable to parse server response as JSON: ");
-            MessageOutput.printf((msg + error.c_str()).c_str());
-            return 0;
-        }
+    if (error) {
+        String msg("[ShellyACPlug] Unable to parse server response as JSON: ");
+        MessageOutput.printf((msg + error.c_str()).c_str());
+        return 0;
+    }
     auto pathResolutionResult = Utils::getJsonValueByPath<float>(jsonResponse, "apower");
-        if (!pathResolutionResult.second.isEmpty()) {
-            MessageOutput.printf("[ShellyACPlug] second %s\r\n",pathResolutionResult.second.c_str());
-        }
+    if (!pathResolutionResult.second.isEmpty()) {
+        MessageOutput.printf("[ShellyACPlug] second %s\r\n",pathResolutionResult.second.c_str());
+    }
 
     _HttpGetter = nullptr;
     return pathResolutionResult.first;
