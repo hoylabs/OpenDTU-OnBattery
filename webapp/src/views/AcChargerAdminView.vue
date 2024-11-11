@@ -151,6 +151,7 @@
                     max="99"
                 />
                 </CardElement>
+            
                 <CardElement
                     :text="$t('acchargeradmin.ShellySettings')"
                     textVariant="text-bg-primary"
@@ -267,7 +268,6 @@
                         </div>
                     </CardElement>
                 </CardElement>
-            </CardElement>
 
             <FormFooter @reload="getChargerConfig" />
         </form>
