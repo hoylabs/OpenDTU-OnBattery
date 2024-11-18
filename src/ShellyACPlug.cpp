@@ -59,7 +59,8 @@ void ShellyACPlugClass::PowerON()
     {
         return;
     }
-    CONFIG_T& config = Configuration.get();
+    auto guard = Configuration.getWriteGuard();
+    auto& config = guard.getConfig();
     config.Shelly.POWER_ON = true;
     config.Shelly.POWER_OFF = false;
     Configuration.write();
@@ -74,7 +75,8 @@ void ShellyACPlugClass::PowerOFF()
     {
         return;
     };
-    CONFIG_T& config = Configuration.get();
+    auto guard = Configuration.getWriteGuard();
+    auto& config = guard.getConfig();
     config.Shelly.POWER_ON = false;
     config.Shelly.POWER_OFF = true;
     Configuration.write();
@@ -85,7 +87,8 @@ void ShellyACPlugClass::PowerOFF()
 
 bool ShellyACPlugClass::send_http(String uri)
 {
-    CONFIG_T& config = Configuration.get();
+    auto guard = Configuration.getWriteGuard();
+    auto& config = guard.getConfig();
     String url = config.Shelly.url;
     url += uri;
     HttpRequestConfig HttpRequest;
@@ -108,7 +111,8 @@ bool ShellyACPlugClass::send_http(String uri)
 }
 float ShellyACPlugClass::read_http(String uri)
 {
-    CONFIG_T& config = Configuration.get();
+    auto guard = Configuration.getWriteGuard();
+    auto& config = guard.getConfig();
     String url = config.Shelly.url;
     url += uri;
     HttpRequestConfig HttpRequest;

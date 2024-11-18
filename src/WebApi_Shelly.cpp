@@ -81,7 +81,8 @@ void WebApiShellyClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
-    CONFIG_T& config = Configuration.get();
+    auto guard = Configuration.getWriteGuard();
+    auto& config = guard.getConfig();
     config.Shelly.Enabled = root["enabled"].as<bool>();
     config.Shelly.VerboseLogging = root["verbose_logging"];
     config.Shelly.Auto_Power_BatterySoC_Limits_Enabled = root["auto_power_batterysoc_limits_enabled"].as<bool>();
