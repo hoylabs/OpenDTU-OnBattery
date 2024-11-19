@@ -28,6 +28,8 @@ class ShellyACPlugClass {
         bool send_http(String uri);
         float read_http(String uri);
         std::unique_ptr<HttpGetter> _HttpGetter;
+        bool powerstate = false;
+        bool verboselogging;
 };
 
 extern ShellyACPlugClass ShellyACPlug;

@@ -347,8 +347,6 @@ bool ConfigurationClass::write()
     shelly["url"] = config.Shelly.url;
     shelly["power_on_threshold"] = config.Shelly.POWER_ON_threshold;
     shelly["power_off_threshold"] = config.Shelly.POWER_OFF_threshold;
-    shelly["power_on"] = config.Shelly.POWER_ON;
-    shelly["power_off"] = config.Shelly.POWER_OFF;
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
@@ -792,8 +790,7 @@ bool ConfigurationClass::read()
     strlcpy(config.Shelly.url, shelly["url"] | SHELLY_IPADDRESS, sizeof(config.Shelly.url));
     config.Shelly.POWER_ON_threshold = shelly["power_on_threshold"] | SHELLY_POWER_ON_THRESHOLD;
     config.Shelly.POWER_OFF_threshold = shelly["power_off_threshold"] | SHELLY_POWER_OFF_THRESHOLD;
-    config.Shelly.POWER_ON = shelly["power_on"] | false;
-    config.Shelly.POWER_OFF = shelly["power_off"] | false;
+
 
     f.close();
 

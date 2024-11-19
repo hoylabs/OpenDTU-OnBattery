@@ -349,8 +349,6 @@ struct CONFIG_T {
         char url[1025];
         int32_t POWER_ON_threshold;
         int32_t POWER_OFF_threshold;
-        bool POWER_ON;
-        bool POWER_OFF;
     } Shelly;
 
 

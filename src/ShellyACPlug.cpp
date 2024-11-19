@@ -28,6 +28,7 @@ bool ShellyACPlugClass::init(Scheduler& scheduler)
 void ShellyACPlugClass::loop()
 {
     const CONFIG_T& config = Configuration.get();
+    verboselogging=config.Shelly.VerboseLogging;
     if (!config.Shelly.Enabled || !_initialized || !Configuration.get().PowerMeter.Enabled ) {
       return;
     }
@@ -36,18 +37,18 @@ void ShellyACPlugClass::loop()
     _SoC = Battery.getStats()->getSoC();
     _emergcharge = Battery.getStats()->getImmediateChargingRequest();
     _readpower = read_http("/rpc/Switch.GetStatus?id=0");
-    if ((_acPower < config.Shelly.POWER_ON_threshold && !config.Shelly.POWER_ON && _SoC < config.Shelly.stop_batterysoc_threshold) || (_emergcharge && config.Shelly.Emergency_Charge_Enabled))
+    if ((_acPower < config.Shelly.POWER_ON_threshold && powerstate && _SoC < config.Shelly.stop_batterysoc_threshold) || (_emergcharge && config.Shelly.Emergency_Charge_Enabled))
     {
         PowerON();
     }
-    else if ((_acPower > config.Shelly.POWER_OFF_threshold && !config.Shelly.POWER_OFF) || (_SoC >= config.Shelly.stop_batterysoc_threshold && !config.Shelly.POWER_OFF))
+    else if ((_acPower > config.Shelly.POWER_OFF_threshold && powerstate) || (_SoC >= config.Shelly.stop_batterysoc_threshold && powerstate))
     {
         PowerOFF();
     }
-    if (config.Shelly.VerboseLogging) {
+    if (verboselogging) {
         MessageOutput.print("[ShellyACPlug] Loop \r\n");
         MessageOutput.printf("[ShellyACPlug] %f W \r\n", _acPower );
-        MessageOutput.printf("[ShellyACPlug] ON: %d OFF: %d  \r\n", config.Shelly.POWER_ON, config.Shelly.POWER_OFF );
+        MessageOutput.printf("[ShellyACPlug] powerstate %d  \r\n", powerstate );
         MessageOutput.printf("[ShellyACPlug] Battery SoC %f  \r\n", _SoC);
         MessageOutput.printf("[ShellyACPlug] Verbrauch %f W \r\n", _readpower );
     }
@@ -59,12 +60,8 @@ void ShellyACPlugClass::PowerON()
     {
         return;
     }
-    auto guard = Configuration.getWriteGuard();
-    auto& config = guard.getConfig();
-    config.Shelly.POWER_ON = true;
-    config.Shelly.POWER_OFF = false;
-    Configuration.write();
-    if (config.Shelly.VerboseLogging) {
+    powerstate=true;
+    if (verboselogging) {
         MessageOutput.print("[ShellyACPlug] Power ON \r\n");
     }
 }
@@ -75,12 +72,8 @@ void ShellyACPlugClass::PowerOFF()
     {
         return;
     };
-    auto guard = Configuration.getWriteGuard();
-    auto& config = guard.getConfig();
-    config.Shelly.POWER_ON = false;
-    config.Shelly.POWER_OFF = true;
-    Configuration.write();
-    if (config.Shelly.VerboseLogging) {
+    powerstate=false;
+    if (verboselogging) {
         MessageOutput.print("[ShellyACPlug] Power OFF \r\n");
     }
 }
@@ -111,8 +104,7 @@ bool ShellyACPlugClass::send_http(String uri)
 }
 float ShellyACPlugClass::read_http(String uri)
 {
-    auto guard = Configuration.getWriteGuard();
-    auto& config = guard.getConfig();
+    const CONFIG_T& config = Configuration.get();
     String url = config.Shelly.url;
     url += uri;
     HttpRequestConfig HttpRequest;
