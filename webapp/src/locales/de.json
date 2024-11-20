@@ -22,7 +22,6 @@
         "NTP": "NTP",
         "MQTT": "MQTT",
         "Console": "Konsole",
-        "Vedirect": "VE.Direct",
         "About": "Über",
         "Logout": "Abmelden",
         "Login": "Anmelden"
@@ -412,17 +411,6 @@
         "ConnectionStatus": "Verbindungsstatus",
         "Connected": "verbunden",
         "Disconnected": "getrennt"
-    },
-    "vedirectinfo": {
-        "VedirectInformation": "VE.Direct Info",
-        "ConfigurationSummary": "@:ntpinfo.ConfigurationSummary",
-        "Status": "@:ntpinfo.Status",
-        "Enabled": "@:mqttinfo.Enabled",
-        "Disabled": "@:mqttinfo.Disabled",
-        "VerboseLogging": "@:base.VerboseLogging",
-        "UpdatesOnly": "@:vedirectadmin.UpdatesOnly",
-        "UpdatesEnabled": "@:mqttinfo.Enabled",
-        "UpdatesDisabled": "@:mqttinfo.Disabled"
     },
     "console": {
         "Console": "Konsole",

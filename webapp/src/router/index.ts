@@ -11,7 +11,6 @@ import HomeView from '@/views/HomeView.vue';
 import VedirectAdminView from '@/views/VedirectAdminView.vue';
 import PowerMeterAdminView from '@/views/PowerMeterAdminView.vue';
 import PowerLimiterAdminView from '@/views/PowerLimiterAdminView.vue';
-import VedirectInfoView from '@/views/VedirectInfoView.vue';
 import InverterAdminView from '@/views/InverterAdminView.vue';
 import LoginView from '@/views/LoginView.vue';
 import MaintenanceRebootView from '@/views/MaintenanceRebootView.vue';
@@ -81,11 +80,6 @@ const router = createRouter({
             path: '/info/console',
             name: 'Web Console',
             component: ConsoleInfoView,
-        },
-        {
-            path: '/info/vedirect',
-            name: 'VE.Direct',
-            component: VedirectInfoView,
         },
         {
             path: '/settings/network',
