@@ -6,7 +6,7 @@
         </div>
     </BootstrapAlert>
     <div class="row row-cols-1 row-cols-md-3 g-3" ref="totals-container">
-        <div class="col" v-if="totalVeData.enabled">
+        <div class="col" v-if="solarChargerData.enabled">
             <CardElement
                 centerContent
                 textVariant="text-bg-success"
@@ -14,38 +14,38 @@
             >
                 <h2>
                     {{
-                        $n(totalVeData.total.YieldTotal.v, 'decimal', {
-                            minimumFractionDigits: totalVeData.total.YieldTotal.d,
-                            maximumFractionDigits: totalVeData.total.YieldTotal.d,
+                        $n(solarChargerData.total.YieldTotal.v, 'decimal', {
+                            minimumFractionDigits: solarChargerData.total.YieldTotal.d,
+                            maximumFractionDigits: solarChargerData.total.YieldTotal.d,
                         })
                     }}
-                    <small class="text-muted">{{ totalVeData.total.YieldTotal.u }}</small>
+                    <small class="text-muted">{{ solarChargerData.total.YieldTotal.u }}</small>
                 </h2>
             </CardElement>
         </div>
-        <div class="col" v-if="totalVeData.enabled">
+        <div class="col" v-if="solarChargerData.enabled">
             <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.MpptTotalYieldDay')">
                 <h2>
                     {{
-                        $n(totalVeData.total.YieldDay.v, 'decimal', {
-                            minimumFractionDigits: totalVeData.total.YieldDay.d,
-                            maximumFractionDigits: totalVeData.total.YieldDay.d,
+                        $n(solarChargerData.total.YieldDay.v, 'decimal', {
+                            minimumFractionDigits: solarChargerData.total.YieldDay.d,
+                            maximumFractionDigits: solarChargerData.total.YieldDay.d,
                         })
                     }}
-                    <small class="text-muted">{{ totalVeData.total.YieldDay.u }}</small>
+                    <small class="text-muted">{{ solarChargerData.total.YieldDay.u }}</small>
                 </h2>
             </CardElement>
         </div>
-        <div class="col" v-if="totalVeData.enabled">
+        <div class="col" v-if="solarChargerData.enabled">
             <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.MpptTotalPower')">
                 <h2>
                     {{
-                        $n(totalVeData.total.Power.v, 'decimal', {
-                            minimumFractionDigits: totalVeData.total.Power.d,
-                            maximumFractionDigits: totalVeData.total.Power.d,
+                        $n(solarChargerData.total.Power.v, 'decimal', {
+                            minimumFractionDigits: solarChargerData.total.Power.d,
+                            maximumFractionDigits: solarChargerData.total.Power.d,
                         })
                     }}
-                    <small class="text-muted">{{ totalVeData.total.Power.u }}</small>
+                    <small class="text-muted">{{ solarChargerData.total.Power.u }}</small>
                 </h2>
             </CardElement>
         </div>
@@ -194,7 +194,7 @@
 <script lang="ts">
 import BootstrapAlert from '@/components/BootstrapAlert.vue';
 import { BIconGear } from 'bootstrap-icons-vue';
-import type { Battery, Total, Vedirect, Huawei, PowerMeter } from '@/types/LiveDataStatus';
+import type { Battery, Total, SolarCharger, Huawei, PowerMeter } from '@/types/LiveDataStatus';
 import CardElement from './CardElement.vue';
 import { defineComponent, type PropType, useTemplateRef } from 'vue';
 
@@ -207,7 +207,7 @@ export default defineComponent({
     props: {
         totalData: { type: Object as PropType<Total>, required: true },
         hasInverters: { type: Boolean, required: true },
-        totalVeData: { type: Object as PropType<Vedirect>, required: true },
+        solarChargerData: { type: Object as PropType<SolarCharger>, required: true },
         totalBattData: { type: Object as PropType<Battery>, required: true },
         powerMeterData: { type: Object as PropType<PowerMeter>, required: true },
         huaweiData: { type: Object as PropType<Huawei>, required: true },

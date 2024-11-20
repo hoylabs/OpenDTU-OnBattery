@@ -7,14 +7,6 @@
 #include <map>
 #include <TaskSchedulerDeclarations.h>
 
-#ifndef VICTRON_PIN_RX
-#define VICTRON_PIN_RX 22
-#endif
-
-#ifndef VICTRON_PIN_TX
-#define VICTRON_PIN_TX 21
-#endif
-
 class MqttHandleVedirectClass {
 public:
     void init(Scheduler& scheduler);

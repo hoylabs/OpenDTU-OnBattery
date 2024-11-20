@@ -3,7 +3,6 @@
  * Copyright (C) 2022-2024 Thomas Basler and others
  */
 #include "WebApi_powermeter.h"
-#include "VeDirectFrameHandler.h"
 #include "ArduinoJson.h"
 #include "AsyncJson.h"
 #include "Configuration.h"

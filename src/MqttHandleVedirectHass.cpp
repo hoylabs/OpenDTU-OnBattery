@@ -8,6 +8,7 @@
 #include "MqttHandleHass.h"
 #include "NetworkSettings.h"
 #include "MessageOutput.h"
+#include "SolarChargerProvider.h"
 #include "VictronMppt.h"
 #include "Utils.h"
 #include "__compiled_constants.h"
@@ -24,9 +25,12 @@ void MqttHandleVedirectHassClass::init(Scheduler& scheduler)
 
 void MqttHandleVedirectHassClass::loop()
 {
-    if (!Configuration.get().Vedirect.Enabled) {
+    if (!Configuration.get().Mqtt.Hass.Enabled
+        || !Configuration.get().SolarCharger.Enabled
+        || static_cast<SolarChargerProvider::Type>(Configuration.get().SolarCharger.Provider) != SolarChargerProvider::Type::VEDIRECT) {
         return;
     }
+
     if (_updateForced) {
         publishConfig();
         _updateForced = false;
@@ -49,11 +53,6 @@ void MqttHandleVedirectHassClass::forceUpdate()
 
 void MqttHandleVedirectHassClass::publishConfig()
 {
-    if ((!Configuration.get().Mqtt.Hass.Enabled) ||
-       (!Configuration.get().Vedirect.Enabled)) {
-        return;
-    }
-
     if (!MqttSettings.getConnected()) {
         return;
     }

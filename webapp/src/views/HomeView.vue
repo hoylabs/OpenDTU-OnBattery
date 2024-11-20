@@ -11,7 +11,7 @@
         <InverterTotalInfo
             :totalData="liveData.total"
             :hasInverters="hasInverters"
-            :totalVeData="liveData.vedirect"
+            :solarChargerData="liveData.solarcharger"
             :totalBattData="liveData.battery"
             :powerMeterData="liveData.power_meter"
             :huaweiData="liveData.huawei"
@@ -343,7 +343,7 @@
                 </div>
             </div>
         </div>
-        <VedirectView v-if="liveData.vedirect.enabled" />
+        <SolarChargerView v-if="liveData.solarcharger.enabled" />
         <BatteryView v-if="liveData.battery.enabled" />
         <HuaweiView v-if="liveData.huawei.enabled" />
     </BasePage>
@@ -511,7 +511,7 @@ import HintView from '@/components/HintView.vue';
 import InverterChannelInfo from '@/components/InverterChannelInfo.vue';
 import InverterTotalInfo from '@/components/InverterTotalInfo.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
-import VedirectView from '@/components/VedirectView.vue';
+import SolarChargerView from '@/components/SolarChargerView.vue';
 import HuaweiView from '@/components/HuaweiView.vue';
 import BatteryView from '@/components/BatteryView.vue';
 import type { DevInfoStatus } from '@/types/DevInfoStatus';
@@ -564,7 +564,7 @@ export default defineComponent({
         BIconToggleOff,
         BIconToggleOn,
         BIconXCircleFill,
-        VedirectView,
+        SolarChargerView,
         HuaweiView,
         BatteryView,
     },
@@ -713,8 +713,8 @@ export default defineComponent({
                 if (event.data != '{}') {
                     const newData = JSON.parse(event.data);
 
-                    if (typeof newData.vedirect !== 'undefined') {
-                        Object.assign(this.liveData.vedirect, newData.vedirect);
+                    if (typeof newData.solarcharger !== 'undefined') {
+                        Object.assign(this.liveData.solarcharger, newData.solarcharger);
                     }
                     if (typeof newData.huawei !== 'undefined') {
                         Object.assign(this.liveData.huawei, newData.huawei);

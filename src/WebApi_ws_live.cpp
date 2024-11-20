@@ -72,19 +72,19 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
     auto const& config = Configuration.get();
     auto constexpr halfOfAllMillis = std::numeric_limits<uint32_t>::max() / 2;
 
-    auto victronAge = VictronMppt.getDataAgeMillis();
-    if (all || (victronAge > 0 && (millis() - _lastPublishVictron) > victronAge)) {
-        auto vedirectObj = root["vedirect"].to<JsonObject>();
-        vedirectObj["enabled"] = config.Vedirect.Enabled;
+    auto solarChargerAge = VictronMppt.getDataAgeMillis();
+    if (all || (solarChargerAge > 0 && (millis() - _lastPublishSolarCharger) > solarChargerAge)) {
+        auto solarchargerObj = root["solarcharger"].to<JsonObject>();
+        solarchargerObj["solarcharger"] = config.SolarCharger.Enabled;
 
-        if (config.Vedirect.Enabled) {
-            auto totalVeObj = vedirectObj["total"].to<JsonObject>();
+        if (config.SolarCharger.Enabled) {
+            auto totalVeObj = solarchargerObj["total"].to<JsonObject>();
             addTotalField(totalVeObj, "Power", VictronMppt.getPanelPowerWatts(), "W", 1);
             addTotalField(totalVeObj, "YieldDay", VictronMppt.getYieldDay() * 1000, "Wh", 0);
             addTotalField(totalVeObj, "YieldTotal", VictronMppt.getYieldTotal(), "kWh", 2);
         }
 
-        if (!all) { _lastPublishVictron = millis(); }
+        if (!all) { _lastPublishSolarCharger = millis(); }
     }
 
     if (all || (HuaweiCan.getDataPoints().getLastUpdate() - _lastPublishHuawei) < halfOfAllMillis ) {
@@ -373,7 +373,7 @@ void WebApiWsLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
         generateOnBatteryJsonResponse(root, true);
 
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
-    
+
     } catch (const std::bad_alloc& bad_alloc) {
         MessageOutput.printf("Calling /api/livedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
         WebApi.sendTooManyRequests(request);

@@ -51,6 +51,14 @@ void ConfigurationClass::serializeHttpRequestConfig(HttpRequestConfig const& sou
     target_http_config["timeout"] = source.Timeout;
 }
 
+void ConfigurationClass::serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target)
+{
+    target["enabled"] = source.Enabled;
+    target["verbose_logging"] = source.VerboseLogging;
+    target["provider"] = source.Provider;
+    target["publish_updates_only"] = source.PublishUpdatesOnly;
+}
+
 void ConfigurationClass::serializePowerMeterMqttConfig(PowerMeterMqttConfig const& source, JsonObject& target)
 {
     JsonArray values = target["values"].to<JsonArray>();
@@ -316,10 +324,8 @@ bool ConfigurationClass::write()
         }
     }
 
-    JsonObject vedirect = doc["vedirect"].to<JsonObject>();
-    vedirect["enabled"] = config.Vedirect.Enabled;
-    vedirect["verbose_logging"] = config.Vedirect.VerboseLogging;
-    vedirect["updates_only"] = config.Vedirect.UpdatesOnly;
+    JsonObject solarcharger = doc["solarcharger"].to<JsonObject>();
+    serializeSolarChargerConfig(config.SolarCharger, solarcharger);
 
     JsonObject powermeter = doc["powermeter"].to<JsonObject>();
     powermeter["enabled"] = config.PowerMeter.Enabled;
@@ -370,6 +376,14 @@ void ConfigurationClass::deserializeHttpRequestConfig(JsonObject const& source_h
     strlcpy(target.HeaderKey, source_http_config["header_key"] | "", sizeof(target.HeaderKey));
     strlcpy(target.HeaderValue, source_http_config["header_value"] | "", sizeof(target.HeaderValue));
     target.Timeout = source_http_config["timeout"] | HTTP_REQUEST_TIMEOUT_MS;
+}
+
+void ConfigurationClass::deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target)
+{
+    target.Enabled = source["enabled"] | SOLAR_CHARGER_ENABLED;
+    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
+    target.Provider = source["provider"] | SOLAR_CHARGER_PROVIDER;
+    target.PublishUpdatesOnly = source["publish_updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
 }
 
 void ConfigurationClass::deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target)
@@ -680,10 +694,16 @@ bool ConfigurationClass::read()
         }
     }
 
-    JsonObject vedirect = doc["vedirect"];
-    config.Vedirect.Enabled = vedirect["enabled"] | VEDIRECT_ENABLED;
-    config.Vedirect.VerboseLogging = vedirect["verbose_logging"] | VEDIRECT_VERBOSE_LOGGING;
-    config.Vedirect.UpdatesOnly = vedirect["updates_only"] | VEDIRECT_UPDATESONLY;
+    deserializeSolarChargerConfig(doc["solarcharger"], config.SolarCharger);
+
+    // process settings from legacy config if they are present
+    // TODO(andreasboehm): remove end of 2025.
+    if (!doc["vedirect"].isNull()) {
+        JsonObject vedirect = doc["vedirect"];
+        config.SolarCharger.Enabled = vedirect["enabled"] | SOLAR_CHARGER_ENABLED;
+        config.SolarCharger.VerboseLogging = vedirect["verbose_logging"] | SOLAR_CHARGER_VERBOSE_LOGGING;
+        config.SolarCharger.PublishUpdatesOnly = vedirect["updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
+    }
 
     JsonObject powermeter = doc["powermeter"];
     config.PowerMeter.Enabled = powermeter["enabled"] | POWERMETER_ENABLED;
