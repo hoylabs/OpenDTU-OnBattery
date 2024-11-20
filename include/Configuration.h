@@ -196,6 +196,14 @@ struct BATTERY_CONFIG_T {
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
+struct SOLAR_CHARGER_CONFIG_T {
+    bool Enabled;
+    bool VerboseLogging;
+    uint8_t Provider;
+    bool PublishUpdatesOnly;
+};
+using SolarChargerConfig = struct SOLAR_CHARGER_CONFIG_T;
+
 struct CONFIG_T {
     struct {
         uint32_t Version;
@@ -307,11 +315,7 @@ struct CONFIG_T {
         uint8_t Brightness;
     } Led_Single[PINMAPPING_LED_COUNT];
 
-    struct {
-        bool Enabled;
-        bool VerboseLogging;
-        bool UpdatesOnly;
-    } Vedirect;
+    SolarChargerConfig SolarCharger;
 
     struct PowerMeterConfig {
         bool Enabled;
@@ -373,6 +377,7 @@ public:
     void deleteInverterById(const uint8_t id);
 
     static void serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target);
+    static void serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target);
     static void serializePowerMeterMqttConfig(PowerMeterMqttConfig const& source, JsonObject& target);
     static void serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target);
@@ -381,6 +386,7 @@ public:
     static void serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target);
 
     static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
+    static void deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target);
     static void deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target);
     static void deserializePowerMeterSerialSdmConfig(JsonObject const& source, PowerMeterSerialSdmConfig& target);
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);

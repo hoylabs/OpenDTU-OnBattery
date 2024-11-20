@@ -9,7 +9,7 @@
         "SecuritySettings": "Sicherheit",
         "DTUSettings": "DTU",
         "DeviceManager": "Hardware",
-        "VedirectSettings": "VE.Direct",
+        "SolarChargerSettings": "Solar Laderegler",
         "PowerMeterSettings": "Stromzähler",
         "BatterySettings": "Batterie",
         "AcChargerSettings": "AC Ladegerät",
@@ -168,7 +168,7 @@
         "RssiHint": "HM-Wechselrichter unterstützen nur RSSI-Werte  < -64 dBm und > -64 dBm. In diesem Fall wird -80 dBm und -30 dBm angezeigt.",
         "dBm": "{dbm} dBm"
     },
-    "vedirecthome": {
+    "solarchargerhome": {
         "SerialNumber": "Seriennummer",
         "FirmwareVersion": "Firmware-Version",
         "DataAge": "letzte Aktualisierung",
@@ -585,13 +585,15 @@
         "HassExpire": "Ablauffunktion aktivieren",
         "HassIndividual": "Einzelne Panels"
     },
-    "vedirectadmin": {
-        "VedirectSettings": "VE.Direct Einstellungen",
-        "VedirectConfiguration": "VE.Direct Konfiguration",
-        "EnableVedirect": "Aktiviere VE.Direct",
-        "VedirectParameter": "VE.Direct Parameter",
+    "solarchargeradmin": {
+        "SolarChargerSettings": "Solar Laderegler Einstellungen",
+        "SolarChargerConfiguration": "Solar Laderegler Konfiguration",
+        "EnableSolarCharger": "Aktiviere Solar Laderegler",
+        "Provider": "Datenanbieter",
+        "ProviderVeDirect": "Victron MPPT(s) per VE.Direct Schnittstelle",
+        "ProviderMqtt": "Ladereglerwerte aus MQTT Broker",
         "VerboseLogging": "@:base.VerboseLogging",
-        "UpdatesOnly": "Werte nur bei Änderung an MQTT broker senden"
+        "MqttPublishUpdatesOnly": "Werte nur bei Änderung an MQTT broker senden"
     },
     "powermeteradmin": {
         "PowerMeterSettings": "Stromzähler Einstellungen",

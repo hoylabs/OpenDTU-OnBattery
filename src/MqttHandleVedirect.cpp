@@ -6,9 +6,7 @@
 #include "MqttHandleVedirect.h"
 #include "MqttSettings.h"
 #include "MessageOutput.h"
-
-
-
+#include "SolarChargerProvider.h"
 
 MqttHandleVedirectClass MqttHandleVedirect;
 
@@ -36,8 +34,9 @@ void MqttHandleVedirectClass::forceUpdate()
 void MqttHandleVedirectClass::loop()
 {
     auto const& config = Configuration.get();
-
-    if (!MqttSettings.getConnected() || !config.Vedirect.Enabled) {
+    if (!MqttSettings.getConnected()
+        || !config.SolarCharger.Enabled
+        || static_cast<SolarChargerProvider::Type>(config.SolarCharger.Provider) != SolarChargerProvider::Type::VEDIRECT) {
         return;
     }
 
@@ -46,7 +45,7 @@ void MqttHandleVedirectClass::loop()
         if (_nextPublishFull <= _nextPublishUpdatesOnly) {
             _PublishFull = true;
         } else {
-            _PublishFull = !config.Vedirect.UpdatesOnly;
+            _PublishFull = !config.SolarCharger.PublishUpdatesOnly;
         }
 
         #ifdef MQTTHANDLEVEDIRECT_DEBUG
@@ -76,7 +75,7 @@ void MqttHandleVedirectClass::loop()
             // when Home Assistant MQTT-Auto-Discovery is active,
             // and "enable expiration" is active, all values must be published at
             // least once before the announced expiry interval is reached
-            if ((config.Vedirect.UpdatesOnly) && (config.Mqtt.Hass.Enabled) && (config.Mqtt.Hass.Expire)) {
+            if ((config.SolarCharger.PublishUpdatesOnly) && (config.Mqtt.Hass.Enabled) && (config.Mqtt.Hass.Expire)) {
                 _nextPublishFull = millis() + (((config.Mqtt.PublishInterval * 3) - 1) * 1000);
 
                 #ifdef MQTTHANDLEVEDIRECT_DEBUG

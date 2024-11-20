@@ -100,7 +100,7 @@ void MqttHandlePowerLimiterClass::loop()
     MqttSettings.publish("powerlimiter/status/threshold/voltage/start", String(config.PowerLimiter.VoltageStartThreshold));
     MqttSettings.publish("powerlimiter/status/threshold/voltage/stop", String(config.PowerLimiter.VoltageStopThreshold));
 
-    if (config.Vedirect.Enabled) {
+    if (config.SolarCharger.Enabled) {
         MqttSettings.publish("powerlimiter/status/full_solar_passthrough_active", String(PowerLimiter.getFullSolarPassThroughEnabled()));
         MqttSettings.publish("powerlimiter/status/threshold/voltage/full_solar_passthrough_start", String(config.PowerLimiter.FullSolarPassThroughStartVoltage));
         MqttSettings.publish("powerlimiter/status/threshold/voltage/full_solar_passthrough_stop", String(config.PowerLimiter.FullSolarPassThroughStopVoltage));
@@ -111,7 +111,7 @@ void MqttHandlePowerLimiterClass::loop()
     MqttSettings.publish("powerlimiter/status/threshold/soc/start", String(config.PowerLimiter.BatterySocStartThreshold));
     MqttSettings.publish("powerlimiter/status/threshold/soc/stop", String(config.PowerLimiter.BatterySocStopThreshold));
 
-    if (config.Vedirect.Enabled) {
+    if (config.SolarCharger.Enabled) {
         MqttSettings.publish("powerlimiter/status/threshold/soc/full_solar_passthrough", String(config.PowerLimiter.FullSolarPassThroughSoc));
     }
 }

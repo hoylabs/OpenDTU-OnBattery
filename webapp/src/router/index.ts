@@ -8,7 +8,7 @@ import DtuAdminView from '@/views/DtuAdminView.vue';
 import ErrorView from '@/views/ErrorView.vue';
 import FirmwareUpgradeView from '@/views/FirmwareUpgradeView.vue';
 import HomeView from '@/views/HomeView.vue';
-import VedirectAdminView from '@/views/VedirectAdminView.vue';
+import SolarChargerAdminView from '@/views/SolarChargerAdminView.vue';
 import PowerMeterAdminView from '@/views/PowerMeterAdminView.vue';
 import PowerLimiterAdminView from '@/views/PowerLimiterAdminView.vue';
 import InverterAdminView from '@/views/InverterAdminView.vue';
@@ -92,9 +92,9 @@ const router = createRouter({
             component: NtpAdminView,
         },
         {
-            path: '/settings/vedirect',
-            name: 'VE.Direct Settings',
-            component: VedirectAdminView,
+            path: '/settings/solarcharger',
+            name: 'Solar Charger Settings',
+            component: SolarChargerAdminView,
         },
         {
             path: '/settings/powermeter',

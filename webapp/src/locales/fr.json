@@ -9,7 +9,7 @@
         "SecuritySettings": "Sécurité",
         "DTUSettings": "DTU",
         "DeviceManager": "Périphériques",
-        "VedirectSettings": "VE.Direct",
+        "SolarChargerSettings": "Solar Charger",
         "PowerMeterSettings": "Power Meter",
         "BatterySettings": "Battery",
         "AcChargerSettings": "AC Charger",
@@ -168,7 +168,7 @@
         "RssiHint": "HM inverters only support RSSI values < -64 dBm and > -64 dBm. In this case, -80 dbm and -30 dbm is shown.",
         "dBm": "{dbm} dBm"
     },
-    "vedirecthome": {
+    "solarchargerhome": {
         "SerialNumber": "Numéro de série",
         "FirmwareVersion": "Version du Firmware",
         "DataAge": "Âge des données",
@@ -177,6 +177,14 @@
         "Value": "Value",
         "Unit": "Unit",
         "section_device": "Device Info",
+        "LoadOutputState": "Load output state",
+        "StateOfOperation": "State of operation",
+        "TrackerOperationMode": "Tracker operation mode",
+        "OffReason": "Off reason",
+        "ErrorCode": "Error code",
+        "DaySequenceNumber": "Day sequence number (0..364)",
+        "Battery": "Output (Battery)",
+        "Panel": "Input (Solar Panels)",
         "device": {
             "LOAD": "Load output state",
             "VIRTLOAD": "Virtual load output state",
@@ -202,41 +210,6 @@
         "section_input": "Input (Solar Panels)",
         "input": {
             "NetworkPower": "VE.Smart network total power",
-            "PPV": "Power",
-            "VPV": "Voltage",
-            "IPV": "Current (calculated)",
-            "YieldToday": "Yield today",
-            "YieldYesterday": "Yield yesterday",
-            "YieldTotal": "Yield total (user resettable counter)",
-            "MaximumPowerToday": "Maximum power today",
-            "MaximumPowerYesterday": "Maximum power yesterday"
-        },
-        "PowerLimiterState": "Power limiter state [off (charging), solar passthrough, on battery]"
-    },
-    "vedirecthome": {
-        "SerialNumber": "Serial Number: ",
-        "FirmwareNumber": "Firmware Number: ",
-        "DataAge": "Data Age: ",
-        "Seconds": "{val} seconds",
-        "DeviceInfo": "Device Info",
-        "Property": "Property",
-        "Value": "Value",
-        "Unit": "Unit",
-        "LoadOutputState": "Load output state",
-        "StateOfOperation": "State of operation",
-        "TrackerOperationMode": "Tracker operation mode",
-        "OffReason": "Off reason",
-        "ErrorCode": "Error code",
-        "DaySequenceNumber": "Day sequence number (0..364)",
-        "Battery": "Output (Battery)",
-        "output": {
-            "P": "Power (calculated)",
-            "V": "Voltage",
-            "I": "Current",
-            "E": "Efficiency (calculated)"
-        },
-        "Panel": "Input (Solar Panels)",
-        "input": {
             "PPV": "Power",
             "VPV": "Voltage",
             "IPV": "Current (calculated)",
@@ -598,13 +571,15 @@
         "HassExpire": "Activer l'expiration",
         "HassIndividual": "Panneaux individuels"
     },
-    "vedirectadmin": {
-        "VedirectSettings": "VE.Direct Settings",
-        "VedirectConfiguration": "VE.Direct Configuration",
-        "EnableVedirect": "Enable VE.Direct",
-        "VedirectParameter": "VE.Direct Parameter",
+    "solarchargeradmin": {
+        "SolarChargerSettings": "Solar Charger Settings",
+        "SolarChargerConfiguration": "Solar Charger Configuration",
+        "EnableSolarCharger": "Enable Solar Charger",
+        "Provider": "Data Provider",
+        "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
+        "ProviderMqtt": "Solar Charger data from MQTT broker",
         "VerboseLogging": "@:base.VerboseLogging",
-        "UpdatesOnly": "Publish values to MQTT only when they change"
+        "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change"
     },
     "batteryadmin": {
         "BatterySettings": "Battery Settings",

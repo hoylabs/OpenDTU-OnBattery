@@ -39,8 +39,8 @@ void WebApiClass::init(Scheduler& scheduler)
     _webApiBattery.init(_server, scheduler);
     _webApiPowerMeter.init(_server, scheduler);
     _webApiPowerLimiter.init(_server, scheduler);
-    _webApiWsVedirectLive.init(_server, scheduler);
-    _webApiVedirect.init(_server, scheduler);
+    _webApiWsSolarChargerLive.init(_server, scheduler);
+    _webApiSolarCharger.init(_server, scheduler);
     _webApiWsHuaweiLive.init(_server, scheduler);
     _webApiHuaweiClass.init(_server, scheduler);
     _webApiWsBatteryLive.init(_server, scheduler);
@@ -53,7 +53,7 @@ void WebApiClass::reload()
     _webApiWsConsole.reload();
     _webApiWsLive.reload();
     _webApiWsBatteryLive.reload();
-    _webApiWsVedirectLive.reload();
+    _webApiWsSolarChargerLive.reload();
     _webApiWsHuaweiLive.reload();
 }
 

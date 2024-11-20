@@ -28,18 +28,18 @@ void VictronMpptClass::updateSettings()
     _serialPortOwners.clear();
 
     auto const& config = Configuration.get();
-    if (!config.Vedirect.Enabled) { return; }
+    if (!config.SolarCharger.Enabled) { return; }
 
     const PinMapping_t& pin = PinMapping.get();
 
     initController(pin.victron_rx, pin.victron_tx,
-            config.Vedirect.VerboseLogging, 1);
+            config.SolarCharger.VerboseLogging, 1);
 
     initController(pin.victron_rx2, pin.victron_tx2,
-            config.Vedirect.VerboseLogging, 2);
+            config.SolarCharger.VerboseLogging, 2);
 
     initController(pin.victron_rx3, pin.victron_tx3,
-            config.Vedirect.VerboseLogging, 3);
+            config.SolarCharger.VerboseLogging, 3);
 }
 
 bool VictronMpptClass::initController(int8_t rx, int8_t tx, bool logging,

@@ -9,7 +9,7 @@
         "SecuritySettings": "Security",
         "DTUSettings": "DTU",
         "DeviceManager": "Device-Manager",
-        "VedirectSettings": "VE.Direct",
+        "SolarChargerSettings": "Solar Charger",
         "PowerMeterSettings": "Power Meter",
         "BatterySettings": "Battery",
         "AcChargerSettings": "AC Charger",
@@ -168,7 +168,7 @@
         "RssiHint": "HM inverters only support RSSI values < -64 dBm and > -64 dBm. In this case, -80 dbm and -30 dbm is shown.",
         "dBm": "{dbm} dBm"
     },
-    "vedirecthome": {
+    "solarchargerhome": {
         "SerialNumber": "Serial Number",
         "FirmwareVersion": "Firmware Version",
         "DataAge": "Data Age",
@@ -587,13 +587,15 @@
         "HassExpire": "Enable Expiration",
         "HassIndividual": "Individual Panels"
     },
-    "vedirectadmin": {
-        "VedirectSettings": "VE.Direct Settings",
-        "VedirectConfiguration": "VE.Direct Configuration",
-        "EnableVedirect": "Enable VE.Direct",
-        "VedirectParameter": "VE.Direct Parameter",
+    "solarchargeradmin": {
+        "SolarChargerSettings": "Solar Charger Settings",
+        "SolarChargerConfiguration": "Solar Charger Configuration",
+        "EnableSolarCharger": "Enable Solar Charger",
+        "Provider": "Data Provider",
+        "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
+        "ProviderMqtt": "Solar Charger data from MQTT broker",
         "VerboseLogging": "@:base.VerboseLogging",
-        "UpdatesOnly": "Publish values to MQTT only when they change"
+        "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change"
     },
     "powermeteradmin": {
         "PowerMeterSettings": "Power Meter Settings",

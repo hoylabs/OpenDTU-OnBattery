@@ -72,8 +72,8 @@
                                 }}</router-link>
                             </li>
                             <li>
-                                <router-link @click="onClick" class="dropdown-item" to="/settings/vedirect">{{
-                                    $t('menu.VedirectSettings')
+                                <router-link @click="onClick" class="dropdown-item" to="/settings/solarcharger">{{
+                                    $t('menu.SolarChargerSettings')
                                 }}</router-link>
                             </li>
                             <li>
