@@ -37,7 +37,11 @@ void ShellyACPlugClass::loop()
     _SoC = Battery.getStats()->getSoC();
     _emergcharge = Battery.getStats()->getImmediateChargingRequest();
     _readpower = read_http("/rpc/Switch.GetStatus?id=0");
-    if ((_acPower < config.Shelly.POWER_ON_threshold && powerstate && _SoC < config.Shelly.stop_batterysoc_threshold) || (_emergcharge && config.Shelly.Emergency_Charge_Enabled))
+    if (_readpower>0)
+    {
+        powerstate=true;
+    }
+    if ((_acPower < config.Shelly.POWER_ON_threshold && !powerstate && _SoC < config.Shelly.stop_batterysoc_threshold) || (_emergcharge && config.Shelly.Emergency_Charge_Enabled))
     {
         PowerON();
     }
@@ -80,8 +84,7 @@ void ShellyACPlugClass::PowerOFF()
 
 bool ShellyACPlugClass::send_http(String uri)
 {
-    auto guard = Configuration.getWriteGuard();
-    auto& config = guard.getConfig();
+    const CONFIG_T& config = Configuration.get();
     String url = config.Shelly.url;
     url += uri;
     HttpRequestConfig HttpRequest;
