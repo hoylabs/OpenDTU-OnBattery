@@ -2,11 +2,11 @@
 /*
  * Copyright (C) 2022 Helge Erbe and others
  */
-#include "VictronMppt.h"
 #include "MqttHandleVedirect.h"
 #include "MqttSettings.h"
 #include "MessageOutput.h"
 #include "SolarChargerProvider.h"
+#include <SolarCharger.h>
 
 MqttHandleVedirectClass MqttHandleVedirect;
 
@@ -57,8 +57,8 @@ void MqttHandleVedirectClass::loop()
         }
         #endif
 
-        for (int idx = 0; idx < VictronMppt.controllerAmount(); ++idx) {
-            std::optional<VeDirectMpptController::data_t> optMpptData = VictronMppt.getData(idx);
+        for (int idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
+            std::optional<VeDirectMpptController::data_t> optMpptData = SolarCharger.getData(idx);
             if (!optMpptData.has_value()) { continue; }
 
             auto const& kvFrame = _kvFrames[optMpptData->serialNr_SER];

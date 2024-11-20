@@ -9,9 +9,9 @@
 #include "NetworkSettings.h"
 #include "MessageOutput.h"
 #include "SolarChargerProvider.h"
-#include "VictronMppt.h"
 #include "Utils.h"
 #include "__compiled_constants.h"
+#include <SolarCharger.h>
 
 MqttHandleVedirectHassClass MqttHandleVedirectHass;
 
@@ -58,8 +58,8 @@ void MqttHandleVedirectHassClass::publishConfig()
     }
 
     // device info
-    for (int idx = 0; idx < VictronMppt.controllerAmount(); ++idx) {
-        auto optMpptData = VictronMppt.getData(idx);
+    for (int idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
+        auto optMpptData = SolarCharger.getData(idx);
         if (!optMpptData.has_value()) { continue; }
 
         publishSensor("MPPT serial number", "mdi:counter", "SER", nullptr, nullptr, nullptr, *optMpptData);

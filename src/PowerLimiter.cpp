@@ -10,7 +10,7 @@
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
 #include <gridcharger/huawei/Controller.h>
-#include <VictronMppt.h>
+#include <SolarCharger.h>
 #include "MessageOutput.h"
 #include <ctime>
 #include <cmath>
@@ -370,8 +370,8 @@ float PowerLimiterClass::getBatteryVoltage(bool log) {
     if (inverter.first > 0) { res = inverter.first; }
 
     float chargeControllerVoltage = -1;
-    if (VictronMppt.isDataValid()) {
-        res = chargeControllerVoltage = static_cast<float>(VictronMppt.getOutputVoltage());
+    if (SolarCharger.isDataValid()) {
+        res = chargeControllerVoltage = static_cast<float>(SolarCharger.getOutputVoltage());
     }
 
     float bmsVoltage = -1;
@@ -425,8 +425,8 @@ void PowerLimiterClass::fullSolarPassthrough(PowerLimiterClass::Status reason)
 
     uint16_t targetOutput = 0;
 
-    if (VictronMppt.isDataValid()) {
-        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, VictronMppt.getPowerOutputWatts()));
+    if (SolarCharger.isDataValid()) {
+        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, SolarCharger.getPowerOutputWatts()));
         targetOutput = dcPowerBusToInverterAc(targetOutput);
     }
 
@@ -679,11 +679,11 @@ uint16_t PowerLimiterClass::getSolarPassthroughPower()
     if (!config.Vedirect.Enabled
             || !config.PowerLimiter.SolarPassThroughEnabled
             || isBelowStopThreshold()
-            || !VictronMppt.isDataValid()) {
+            || !SolarCharger.isDataValid()) {
         return 0;
     }
 
-    return VictronMppt.getPowerOutputWatts();
+    return SolarCharger.getPowerOutputWatts();
 }
 
 float PowerLimiterClass::getBatteryInvertersOutputAcWatts()

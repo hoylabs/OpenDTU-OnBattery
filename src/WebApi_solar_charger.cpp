@@ -3,7 +3,6 @@
  * Copyright (C) 2022-2024 Thomas Basler and others
  */
 #include "WebApi_solarcharger.h"
-#include "VictronMppt.h"
 #include "ArduinoJson.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
@@ -11,6 +10,7 @@
 #include "WebApi_errors.h"
 #include "helper.h"
 #include "MqttHandlePowerLimiterHass.h"
+#include <SolarCharger.h>
 
 void WebApiSolarChargerlass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -81,7 +81,7 @@ void WebApiSolarChargerlass::onAdminPost(AsyncWebServerRequest* request)
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 
-    VictronMppt.updateSettings();
+    SolarCharger.updateSettings();
 
     // potentially make solar passthrough thresholds auto-discoverable
     MqttHandlePowerLimiterHass.forceUpdate();

@@ -10,7 +10,7 @@
 #include "WebApi.h"
 #include "defaults.h"
 #include "PowerLimiter.h"
-#include "VictronMppt.h"
+#include <SolarCharger.h>
 
 WebApiWsSolarChargerLiveClass::WebApiWsSolarChargerLiveClass()
     : _ws("/solarchargerlivedata")
@@ -74,7 +74,7 @@ void WebApiWsSolarChargerLiveClass::wsCleanupTaskCb()
 
 bool WebApiWsSolarChargerLiveClass::hasUpdate(size_t idx)
 {
-    auto dataAgeMillis = VictronMppt.getDataAgeMillis(idx);
+    auto dataAgeMillis = SolarCharger.getDataAgeMillis(idx);
     if (dataAgeMillis == 0) { return false; }
     auto publishAgeMillis = millis() - _lastPublish;
     return dataAgeMillis < publishAgeMillis;
@@ -83,7 +83,7 @@ bool WebApiWsSolarChargerLiveClass::hasUpdate(size_t idx)
 uint16_t WebApiWsSolarChargerLiveClass::responseSize() const
 {
     // estimated with ArduinoJson assistant
-    return VictronMppt.controllerAmount() * (1024 + 512) + 128/*DPL status and structure*/;
+    return SolarCharger.controllerAmount() * (1024 + 512) + 128/*DPL status and structure*/;
 }
 
 void WebApiWsSolarChargerLiveClass::sendDataTaskCb()
@@ -95,7 +95,7 @@ void WebApiWsSolarChargerLiveClass::sendDataTaskCb()
     bool fullUpdate = (millis() - _lastFullPublish > (10 * 1000));
     bool updateAvailable = false;
     if (!fullUpdate) {
-        for (size_t idx = 0; idx < VictronMppt.controllerAmount(); ++idx) {
+        for (size_t idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
             if (hasUpdate(idx)) {
                 updateAvailable = true;
                 break;
@@ -134,8 +134,8 @@ void WebApiWsSolarChargerLiveClass::generateCommonJsonResponse(JsonVariant& root
     auto array = root["solarcharger"]["instances"].to<JsonObject>();
     root["solarcharger"]["full_update"] = fullUpdate;
 
-    for (size_t idx = 0; idx < VictronMppt.controllerAmount(); ++idx) {
-        auto optMpptData = VictronMppt.getData(idx);
+    for (size_t idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
+        auto optMpptData = SolarCharger.getData(idx);
         if (!optMpptData.has_value()) { continue; }
 
         if (!fullUpdate && !hasUpdate(idx)) { continue; }
@@ -144,7 +144,7 @@ void WebApiWsSolarChargerLiveClass::generateCommonJsonResponse(JsonVariant& root
         if (serial.isEmpty()) { continue; } // serial required as index
 
         JsonObject nested = array[serial].to<JsonObject>();
-        nested["data_age_ms"] = VictronMppt.getDataAgeMillis(idx);
+        nested["data_age_ms"] = SolarCharger.getDataAgeMillis(idx);
         populateJson(nested, *optMpptData);
     }
 
