@@ -10,7 +10,6 @@
 #include "Led_Single.h"
 #include "MessageOutput.h"
 #include "SerialPortManager.h"
-#include "VictronMppt.h"
 #include "Battery.h"
 #include "Huawei_can.h"
 #include "MqttHandleDtu.h"
@@ -40,6 +39,7 @@
 #include <SpiManager.h>
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
+#include <SolarCharger.h>
 
 void setup()
 {
@@ -178,7 +178,8 @@ void setup()
     Datastore.init(scheduler);
     RestartHelper.init(scheduler);
 
-    VictronMppt.init(scheduler);
+    // Initialize Solar Charger
+    SolarCharger.init(scheduler);
 
     // Power meter
     PowerMeter.init(scheduler);

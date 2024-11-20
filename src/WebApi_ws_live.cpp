@@ -10,9 +10,9 @@
 #include "Battery.h"
 #include "Huawei_can.h"
 #include "PowerMeter.h"
-#include "VictronMppt.h"
 #include "defaults.h"
 #include <AsyncJson.h>
+#include <SolarCharger.h>
 
 WebApiWsLiveClass::WebApiWsLiveClass()
     : _ws("/livedata")
@@ -72,16 +72,16 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
     auto const& config = Configuration.get();
     auto constexpr halfOfAllMillis = std::numeric_limits<uint32_t>::max() / 2;
 
-    auto solarChargerAge = VictronMppt.getDataAgeMillis();
+    auto solarChargerAge = SolarCharger.getDataAgeMillis();
     if (all || (solarChargerAge > 0 && (millis() - _lastPublishSolarCharger) > solarChargerAge)) {
         auto solarchargerObj = root["solarcharger"].to<JsonObject>();
         solarchargerObj["solarcharger"] = config.SolarCharger.Enabled;
 
         if (config.SolarCharger.Enabled) {
             auto totalVeObj = solarchargerObj["total"].to<JsonObject>();
-            addTotalField(totalVeObj, "Power", VictronMppt.getPanelPowerWatts(), "W", 1);
-            addTotalField(totalVeObj, "YieldDay", VictronMppt.getYieldDay() * 1000, "Wh", 0);
-            addTotalField(totalVeObj, "YieldTotal", VictronMppt.getYieldTotal(), "kWh", 2);
+            addTotalField(totalVeObj, "Power", SolarCharger.getPanelPowerWatts(), "W", 1);
+            addTotalField(totalVeObj, "YieldDay", SolarCharger.getYieldDay() * 1000, "Wh", 0);
+            addTotalField(totalVeObj, "YieldTotal", SolarCharger.getYieldTotal(), "kWh", 2);
         }
 
         if (!all) { _lastPublishSolarCharger = millis(); }
