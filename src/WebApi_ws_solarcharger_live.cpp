@@ -283,10 +283,10 @@ void WebApiWsSolarChargerLiveClass::onLivedataStatus(AsyncWebServerRequest* requ
 
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
     } catch (std::bad_alloc& bad_alloc) {
-        MessageOutput.printf("Calling /api/solarcharger/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
+        MessageOutput.printf("Calling /api/solarchargerlivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
         WebApi.sendTooManyRequests(request);
     } catch (const std::exception& exc) {
-        MessageOutput.printf("Unknown exception in /api/solarcharger/status. Reason: \"%s\".\r\n", exc.what());
+        MessageOutput.printf("Unknown exception in /api/solarchargerlivedata/status. Reason: \"%s\".\r\n", exc.what());
         WebApi.sendTooManyRequests(request);
     }
 }
