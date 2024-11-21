@@ -75,7 +75,7 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
     auto solarChargerAge = SolarCharger.getDataAgeMillis();
     if (all || (solarChargerAge > 0 && (millis() - _lastPublishSolarCharger) > solarChargerAge)) {
         auto solarchargerObj = root["solarcharger"].to<JsonObject>();
-        solarchargerObj["solarcharger"] = config.SolarCharger.Enabled;
+        solarchargerObj["enabled"] = config.SolarCharger.Enabled;
 
         if (config.SolarCharger.Enabled) {
             auto totalVeObj = solarchargerObj["total"].to<JsonObject>();

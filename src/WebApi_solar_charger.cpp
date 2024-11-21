@@ -63,8 +63,7 @@ void WebApiSolarChargerlass::onAdminPost(AsyncWebServerRequest* request)
 
     if (!root["enabled"].is<bool>() ||
             !root["provider"].is<uint8_t>() ||
-            !root["verbose_logging"].is<bool>() ||
-            !root["updates_only"].is<bool>() ) {
+            !root["verbose_logging"].is<bool>()) {
         retMsg["message"] = "Values are missing!";
         retMsg["code"] = WebApiError::GenericValueMissing;
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
