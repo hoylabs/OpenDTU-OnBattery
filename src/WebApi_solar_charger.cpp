@@ -18,14 +18,13 @@ void WebApiSolarChargerlass::init(AsyncWebServer& server, Scheduler& scheduler)
 
     _server = &server;
 
-    _server->on("/api/solarcharger/status", HTTP_GET, std::bind(&WebApiSolarChargerlass::onStatus, this, _1));
     _server->on("/api/solarcharger/config", HTTP_GET, std::bind(&WebApiSolarChargerlass::onAdminGet, this, _1));
     _server->on("/api/solarcharger/config", HTTP_POST, std::bind(&WebApiSolarChargerlass::onAdminPost, this, _1));
 }
 
-void WebApiSolarChargerlass::onStatus(AsyncWebServerRequest* request)
+void WebApiSolarChargerlass::onAdminGet(AsyncWebServerRequest* request)
 {
-    if (!WebApi.checkCredentialsReadonly(request)) {
+    if (!WebApi.checkCredentials(request)) {
         return;
     }
 
@@ -36,15 +35,6 @@ void WebApiSolarChargerlass::onStatus(AsyncWebServerRequest* request)
     ConfigurationClass::serializeSolarChargerConfig(config.SolarCharger, root);
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
-}
-
-void WebApiSolarChargerlass::onAdminGet(AsyncWebServerRequest* request)
-{
-    if (!WebApi.checkCredentials(request)) {
-        return;
-    }
-
-    onStatus(request);
 }
 
 void WebApiSolarChargerlass::onAdminPost(AsyncWebServerRequest* request)
