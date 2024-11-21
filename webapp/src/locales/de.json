@@ -595,7 +595,6 @@
         "EnableSolarCharger": "Aktiviere Solar Laderegler",
         "Provider": "Datenanbieter",
         "ProviderVeDirect": "Victron MPPT(s) per VE.Direct Schnittstelle",
-        "ProviderMqtt": "Ladereglerwerte aus MQTT Broker",
         "VerboseLogging": "@:base.VerboseLogging",
         "MqttPublishUpdatesOnly": "Werte nur bei Änderung an MQTT broker senden"
     },
