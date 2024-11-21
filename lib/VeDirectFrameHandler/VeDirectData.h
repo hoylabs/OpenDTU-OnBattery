@@ -11,6 +11,8 @@ typedef struct {
     uint16_t productID_PID = 0;             // product id
     char serialNr_SER[VE_MAX_VALUE_LEN];    // serial number
     char firmwareVer_FW[VE_MAX_VALUE_LEN];  // firmware release number
+    // some devices use "FWE" instead of "FW" for the firmware version.
+    char firmwareVer_FWE[VE_MAX_VALUE_LEN]; // firmware release number (alternative field)
     uint32_t batteryVoltage_V_mV = 0;       // battery voltage in mV
     int32_t batteryCurrent_I_mA = 0;        // battery current in mA (can be negative)
     float mpptEfficiency_Percent = 0;       // efficiency in percent (calculated, moving average)
@@ -43,6 +45,7 @@ struct veMpptStruct : veStruct {
     std::pair<uint32_t, bool> loadOutputState_LOAD;     // physical load output or virtual load output state (on if battery voltage
                                                         // reaches upper limit, off if battery reaches lower limit)
     std::pair<uint32_t, uint32_t> loadCurrent_IL_mA;    // Load current in mA (Available only for models with a physical load output)
+    std::pair<uint32_t, bool> relayState_RELAY;         // relay alarm state. On=true, Off=false
 
     // these are values communicated through the HEX protocol. the pair's first
     // value is the timestamp the respective info was last received. if it is
