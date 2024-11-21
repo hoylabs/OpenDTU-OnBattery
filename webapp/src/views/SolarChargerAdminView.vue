@@ -37,7 +37,7 @@
                     <InputElement
                         :label="$t('solarchargeradmin.MqttPublishUpdatesOnly')"
                         v-model="solarChargerConfigList.publish_updates_only"
-                        v-show="solarChargerConfigList.provider === 0"
+                        v-if="solarChargerConfigList.provider === 0"
                         type="checkbox"
                         wide
                     />
