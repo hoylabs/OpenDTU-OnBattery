@@ -74,10 +74,7 @@ export default defineComponent({
             alertMessage: '',
             alertType: 'info',
             showAlert: false,
-            providerTypeList: [
-                { key: 0, value: 'VeDirect' },
-                { key: 1, value: 'Mqtt' },
-            ],
+            providerTypeList: [{ key: 0, value: 'VeDirect' }],
         };
     },
     created() {

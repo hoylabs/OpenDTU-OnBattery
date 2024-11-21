@@ -577,7 +577,6 @@
         "EnableSolarCharger": "Enable Solar Charger",
         "Provider": "Data Provider",
         "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
-        "ProviderMqtt": "Solar Charger data from MQTT broker",
         "VerboseLogging": "@:base.VerboseLogging",
         "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change"
     },
