@@ -7,21 +7,22 @@
 
 bool VictronMppt::init(bool verboseLogging)
 {
-    auto const& config = Configuration.get();
-
     const PinMapping_t& pin = PinMapping.get();
+    auto controllerCount = 0;
 
-    initController(pin.victron_rx, pin.victron_tx,
-            config.SolarCharger.VerboseLogging, 1);
+    if (initController(pin.victron_rx, pin.victron_tx, verboseLogging, 1)) {
+        controllerCount++;
+    }
 
-    initController(pin.victron_rx2, pin.victron_tx2,
-            config.SolarCharger.VerboseLogging, 2);
+    if (initController(pin.victron_rx2, pin.victron_tx2, verboseLogging, 2)) {
+        controllerCount++;
+    }
 
-    initController(pin.victron_rx3, pin.victron_tx3,
-            config.SolarCharger.VerboseLogging, 3);
+    if (initController(pin.victron_rx3, pin.victron_tx3, verboseLogging, 3)) {
+        controllerCount++;
+    }
 
-    // TODO(andreasboehm): return false if no controller was initialized
-    return true;
+    return controllerCount > 0;
 }
 
 void VictronMppt::deinit()
