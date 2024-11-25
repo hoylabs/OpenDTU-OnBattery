@@ -32,7 +32,6 @@ public:
         InverterCmdPending,
         ConfigReload,
         InverterStatsPending,
-        FullSolarPassthrough,
         UnconditionalSolarPassthrough,
         Stable,
     };
@@ -87,7 +86,7 @@ private:
     int16_t calcHouseholdConsumption();
     using inverter_filter_t = std::function<bool(PowerLimiterInverter const&)>;
     uint16_t updateInverterLimits(uint16_t powerRequested, inverter_filter_t filter, std::string const& filterExpression);
-    uint16_t calcBatteryAllowance(uint16_t powerRequested);
+    uint16_t calcPowerBusUsage(uint16_t powerRequested);
     bool updateInverters();
     uint16_t getSolarPassthroughPower();
     std::optional<uint16_t> getBatteryDischargeLimit();

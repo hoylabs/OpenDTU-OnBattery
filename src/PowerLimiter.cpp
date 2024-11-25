@@ -44,7 +44,7 @@ frozen::string const& PowerLimiterClass::getStatusText(PowerLimiterClass::Status
 {
     static const frozen::string missing = "programmer error: missing status text";
 
-    static const frozen::map<Status, frozen::string, 12> texts = {
+    static const frozen::map<Status, frozen::string, 11> texts = {
         { Status::Initializing, "initializing (should not see me)" },
         { Status::DisabledByConfig, "disabled by configuration" },
         { Status::DisabledByMqtt, "disabled by MQTT" },
@@ -54,7 +54,6 @@ frozen::string const& PowerLimiterClass::getStatusText(PowerLimiterClass::Status
         { Status::InverterCmdPending, "waiting for a start/stop/restart/limit command to complete" },
         { Status::ConfigReload, "reloading DPL configuration" },
         { Status::InverterStatsPending, "waiting for sufficiently recent inverter data" },
-        { Status::FullSolarPassthrough, "passing through all solar power (full solar passthrough)" },
         { Status::UnconditionalSolarPassthrough, "unconditionally passing through all solar power (MQTT override)" },
         { Status::Stable, "the system is stable, the last power limit is still valid" },
     };
@@ -188,12 +187,11 @@ void PowerLimiterClass::loop()
         latestInverterStats = std::max(*oStatsMillis, latestInverterStats);
     }
 
+    // note that we can only perform unconditional full solar-passthrough or any
+    // calculation at all after surviving the loop above, which ensures that we
+    // have inverter stats more recent than their respective last update command
     if (Mode::UnconditionalFullSolarPassthrough == _mode) {
         return fullSolarPassthrough(Status::UnconditionalSolarPassthrough);
-    }
-
-    if (isFullSolarPassthroughActive()) {
-        return fullSolarPassthrough(Status::FullSolarPassthrough);
     }
 
     // if the power meter is being used, i.e., if its data is valid, we want to
@@ -295,16 +293,16 @@ void PowerLimiterClass::loop()
 
     auto coveredBySolar = updateInverterLimits(inverterTotalPower, sSolarPoweredFilter, sSolarPoweredExpression);
     auto remaining = (inverterTotalPower >= coveredBySolar) ? inverterTotalPower - coveredBySolar : 0;
-    auto batteryAllowance = calcBatteryAllowance(remaining);
-    auto coveredByBattery = updateInverterLimits(batteryAllowance, sBatteryPoweredFilter, sBatteryPoweredExpression);
+    auto powerBusUsage = calcPowerBusUsage(remaining);
+    auto coveredByBattery = updateInverterLimits(powerBusUsage, sBatteryPoweredFilter, sBatteryPoweredExpression);
 
     if (_verboseLogging) {
         MessageOutput.printf("[DPL::loop] consumption: %d W, "
                 "target output: %u W (limited to %d W), "
-                "solar inverters output: %u W, battery allowance: "
+                "solar inverters output: %u W, DC power bus usage: "
                 "%u W, battery inverters output: %u W\r\n",
                 consumption, inverterTotalPower, totalAllowance,
-                coveredBySolar, batteryAllowance, coveredByBattery);
+                coveredBySolar, powerBusUsage, coveredByBattery);
     }
 
     _lastExpectedInverterOutput = coveredBySolar + coveredByBattery;
@@ -598,10 +596,13 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
     return covered;
 }
 
-uint16_t PowerLimiterClass::calcBatteryAllowance(uint16_t powerRequested)
+// calculates how much power the battery-powered inverters shall draw from the
+// power bus, which we call the part of the circuitry that is supplied by the
+// solar charge controller(s), possibly an AC charger, as well as the battery.
+uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested)
 {
     if (_verboseLogging) {
-        MessageOutput.printf("[DPL::calcBatteryAllowance] power requested: %d W\r\n",
+        MessageOutput.printf("[DPL::calcPowerBusUsage] power requested: %d W\r\n",
                 powerRequested);
     }
 
@@ -613,29 +614,35 @@ uint16_t PowerLimiterClass::calcBatteryAllowance(uint16_t powerRequested)
     // will shut down as a consequence.
     if (!isFullSolarPassthroughActive() && HuaweiCan.getAutoPowerStatus()) {
         if (_verboseLogging) {
-            MessageOutput.println("[DPL::calcBatteryAllowance] disabled "
+            MessageOutput.println("[DPL::calcPowerBusUsage] disabled "
                     "by HuaweiCan auto power");
         }
         return 0;
+    }
+
+    auto solarPowerAC = solarDcToInverterAc(getSolarPassthroughPower());
+    if (isFullSolarPassthroughActive() && solarPowerAC > powerRequested) {
+        if (_verboseLogging) {
+            MessageOutput.printf("[DPL::calcPowerBusUsage] using %d W "
+                    "due to full solar-passthrough\r\n", solarPowerAC);
+        }
+
+        return solarPowerAC;
     }
 
     auto oBatteryPowerDc = getBatteryDischargeLimit();
     if (!oBatteryPowerDc.has_value()) { return powerRequested; }
 
     auto batteryPowerAC = solarDcToInverterAc(*oBatteryPowerDc);
-    auto solarPowerAC = solarDcToInverterAc(getSolarPassthroughPower());
-
-    if (powerRequested > batteryPowerAC + solarPowerAC) {
-        // respect battery-provided discharge power limit
-        auto res = batteryPowerAC + solarPowerAC;
-
+    auto allowance = batteryPowerAC + solarPowerAC;
+    if (powerRequested > allowance) {
         if (_verboseLogging) {
-            MessageOutput.printf("[DPL::calcBatteryAllowance] limited by "
+            MessageOutput.printf("[DPL::calcPowerBusUsage] limited by "
                     "battery (%d W) and/or solar power (%d W): %d W\r\n",
-                    batteryPowerAC, solarPowerAC, res);
+                    batteryPowerAC, solarPowerAC, allowance);
         }
 
-        return res;
+        return allowance;
     }
 
     return powerRequested;
