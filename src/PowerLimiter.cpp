@@ -22,13 +22,13 @@ static auto sBatteryPoweredFilter = [](PowerLimiterInverter const& inv) {
     return !inv.isSolarPowered();
 };
 
-static const char sBatteryPoweredExpression[] = "battery-powered inverters";
+static const char sBatteryPoweredExpression[] = "battery-powered";
 
 static auto sSolarPoweredFilter = [](PowerLimiterInverter const& inv) {
     return inv.isSolarPowered();
 };
 
-static const char sSolarPoweredExpression[] = "solar-powered inverters";
+static const char sSolarPoweredExpression[] = "solar-powered";
 
 PowerLimiterClass PowerLimiter;
 
@@ -177,14 +177,6 @@ void PowerLimiterClass::loop()
         return announceStatus(Status::InverterInvalid);
     }
 
-    if (Mode::UnconditionalFullSolarPassthrough == _mode) {
-        return fullSolarPassthrough(Status::UnconditionalSolarPassthrough);
-    }
-
-    if (isFullSolarPassthroughActive()) {
-        return fullSolarPassthrough(Status::FullSolarPassthrough);
-    }
-
     uint32_t latestInverterStats = 0;
 
     for (auto const& upInv : _inverters) {
@@ -194,6 +186,14 @@ void PowerLimiterClass::loop()
         }
 
         latestInverterStats = std::max(*oStatsMillis, latestInverterStats);
+    }
+
+    if (Mode::UnconditionalFullSolarPassthrough == _mode) {
+        return fullSolarPassthrough(Status::UnconditionalSolarPassthrough);
+    }
+
+    if (isFullSolarPassthroughActive()) {
+        return fullSolarPassthrough(Status::FullSolarPassthrough);
     }
 
     // if the power meter is being used, i.e., if its data is valid, we want to
@@ -530,11 +530,12 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
     auto const& config = Configuration.get();
     uint16_t hysteresis = config.PowerLimiter.TargetPowerConsumptionHysteresis;
 
+    bool plural = matchingInverters.size() != 1;
     if (_verboseLogging) {
         MessageOutput.printf("[DPL::updateInverterLimits] requested: %d W, "
-                "producing: %d W using %d %s, diff: %i W, hysteresis: %d W\r\n",
+                "producing: %d W using %d %s inverter%s, diff: %i W, hysteresis: %d W\r\n",
                 powerRequested, producing, matchingInverters.size(),
-                filterExpression.c_str(), diff, hysteresis);
+                filterExpression.c_str(), (plural?"s":""), diff, hysteresis);
     }
 
     if (matchingInverters.empty()) { return 0; }
@@ -589,7 +590,8 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
 
     if (_verboseLogging) {
         MessageOutput.printf("[DPL::updateInverterLimits] will cover %d W using "
-                "%s\r\n", covered, filterExpression.c_str());
+                "%d %s inverter%s\r\n", covered, matchingInverters.size(),
+                filterExpression.c_str(), (plural?"s":""));
         for (auto pInv : matchingInverters) { pInv->debug(); }
     }
 
