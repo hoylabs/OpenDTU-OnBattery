@@ -344,6 +344,7 @@ bool ConfigurationClass::write()
     shelly["auto_power_batterysoc_limits_enabled"]= config.Shelly.Auto_Power_BatterySoC_Limits_Enabled ;
     shelly["emergency_charge_enabled"]= config.Shelly.Emergency_Charge_Enabled;
     shelly["stop_batterysoc_threshold"] = config.Shelly.stop_batterysoc_threshold;
+    shelly["start_batterysoc_threshold"] = config.Shelly.start_batterysoc_threshold;
     shelly["url"] = config.Shelly.url;
     shelly["power_on_threshold"] = config.Shelly.POWER_ON_threshold;
     shelly["power_off_threshold"] = config.Shelly.POWER_OFF_threshold;
@@ -787,6 +788,7 @@ bool ConfigurationClass::read()
     config.Shelly.Auto_Power_BatterySoC_Limits_Enabled = shelly["auto_power_batterysoc_limits_enabled"] | false;
     config.Shelly.Emergency_Charge_Enabled = shelly["emergency_charge_enabled"] | false;
     config.Shelly.stop_batterysoc_threshold = shelly["stop_batterysoc_threshold"] | SHELLY_STOP_BATTERYSOC_THRESHOLD;
+    config.Shelly.start_batterysoc_threshold = shelly["start_batterysoc_threshold"] | SHELLY_START_BATTERYSOC_THRESHOLD;
     strlcpy(config.Shelly.url, shelly["url"] | SHELLY_IPADDRESS, sizeof(config.Shelly.url));
     config.Shelly.POWER_ON_threshold = shelly["power_on_threshold"] | SHELLY_POWER_ON_THRESHOLD;
     config.Shelly.POWER_OFF_threshold = shelly["power_off_threshold"] | SHELLY_POWER_OFF_THRESHOLD;

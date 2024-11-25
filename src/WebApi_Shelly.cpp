@@ -49,6 +49,7 @@ void WebApiShellyClass::onAdminGet(AsyncWebServerRequest* request)
     root["auto_power_batterysoc_limits_enabled"] = config.Shelly.Auto_Power_BatterySoC_Limits_Enabled;
     root["emergency_charge_enabled"] = config.Shelly.Emergency_Charge_Enabled;
     root["stop_batterysoc_threshold"] = config.Shelly.stop_batterysoc_threshold;
+    root["start_batterysoc_threshold"] = config.Shelly.start_batterysoc_threshold;
     root["url"] = config.Shelly.url;
     root["power_on_threshold"] = config.Shelly.POWER_ON_threshold;
     root["power_off_threshold"] = config.Shelly.POWER_OFF_threshold;
@@ -88,6 +89,7 @@ void WebApiShellyClass::onAdminPost(AsyncWebServerRequest* request)
     config.Shelly.Auto_Power_BatterySoC_Limits_Enabled = root["auto_power_batterysoc_limits_enabled"].as<bool>();
     config.Shelly.Emergency_Charge_Enabled = root["emergency_charge_enabled"].as<bool>();
     config.Shelly.stop_batterysoc_threshold = root["stop_batterysoc_threshold"];
+    config.Shelly.start_batterysoc_threshold = root["start_batterysoc_threshold"];
     strlcpy( config.Shelly.url, root["url"].as<String>().c_str(), sizeof(config.Shelly.url));
     config.Shelly.POWER_ON_threshold = root["power_on_threshold"];
     config.Shelly.POWER_OFF_threshold = root["power_off_threshold"];

@@ -264,6 +264,28 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row mb-3">
+                        <label for="startBatterySoCThreshold" class="col-sm-2 col-form-label"
+                            >{{ $t('acchargeradmin.StartBatterySoCThreshold') }}:
+                            <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.StartBatterySoCThresholdHint')" />
+                        </label>
+                        <div class="col-sm-10">
+                            <div class="input-group">
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="Shelly_startBatterySoCThreshold"
+                                    placeholder="90"
+                                    v-model="acChargerShellyConfigList.start_batterysoc_threshold"
+                                    aria-describedby="Shelly_startBatterySoCThresholdDescription"
+                                    min="2"
+                                    max="99"
+                                    required
+                                />
+                                <span class="input-group-text" id="Shelly_startBatterySoCThresholdDescription">%</span>
+                            </div>
+                        </div>
+                    </div>
                 </CardElement>
             </CardElement>
 

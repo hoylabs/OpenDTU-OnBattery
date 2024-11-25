@@ -346,6 +346,7 @@ struct CONFIG_T {
         bool Auto_Power_BatterySoC_Limits_Enabled;
         bool Emergency_Charge_Enabled;
         uint8_t stop_batterysoc_threshold;
+        uint8_t start_batterysoc_threshold;
         char url[1025];
         int32_t POWER_ON_threshold;
         int32_t POWER_OFF_threshold;

@@ -21,7 +21,7 @@ class ShellyACPlugClass {
     private:
         bool _initialized = false;
         Task _loopTask;
-        const uint16_t _period = 2000;
+        const uint16_t _period = 2001;
         float _acPower;
         float _SoC;
         bool _emergcharge;

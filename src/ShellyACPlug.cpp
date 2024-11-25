@@ -29,7 +29,7 @@ void ShellyACPlugClass::loop()
 {
     const CONFIG_T& config = Configuration.get();
     verboselogging=config.Shelly.VerboseLogging;
-    if (!config.Shelly.Enabled || !_initialized || !Configuration.get().PowerMeter.Enabled ) {
+    if (!config.Shelly.Enabled || !_initialized || !config.PowerMeter.Enabled ) {
       return;
     }
     _loopTask.setInterval(_period);
@@ -41,7 +41,7 @@ void ShellyACPlugClass::loop()
     {
         powerstate=true;
     }
-    if ((_acPower < config.Shelly.POWER_ON_threshold && !powerstate && _SoC < config.Shelly.stop_batterysoc_threshold) || (_emergcharge && config.Shelly.Emergency_Charge_Enabled))
+    if ((_acPower < config.Shelly.POWER_ON_threshold && !powerstate && _SoC <= config.Shelly.start_batterysoc_threshold) || (_emergcharge && config.Shelly.Emergency_Charge_Enabled))
     {
         PowerON();
     }

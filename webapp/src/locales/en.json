@@ -987,6 +987,8 @@
         "upperPowerLimit": "Maximum output power",
         "StopBatterySoCThreshold": "Stop charging at SoC",
         "StopBatterySoCThresholdHint": "To prolong the battery's lifespan, charging can be stopped at a certain SoC level.\nHint: In order to keep the SoC reading accurate, some LiFePO cells must be charged to full capacity regularly.",
+        "StartBatterySoCThreshold": "Start charging at SoC",
+        "StartBatterySoCThresholdHint": "Leave a gap beetween start and stop to prevend ON/OFF situations\n Shoeld be 2-5% below STOP vlaue.",
         "Seconds": "@:base.Seconds",
         "EnableEmergencyCharge": "Emergency charge",
         "EnableEmergencyChargeHint": "Battery charged with maximum power if requested by Battery BMS",

@@ -19,6 +19,7 @@ export interface AcChargerShellyConfig {
     auto_power_batterysoc_limits_enabled: boolean;
     emergency_charge_enabled: boolean;
     stop_batterysoc_threshold: number;
+    start_batterysoc_threshold: number;
     url: string;
     power_on_threshold: number;
     power_off_threshold: number;
