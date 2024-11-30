@@ -35,22 +35,24 @@ PowerLimiterInverter::PowerLimiterInverter(bool verboseLogging, PowerLimiterInve
     snprintf(_logPrefix, sizeof(_logPrefix), "[DPL inverter %s]:", _serialStr);
 }
 
-bool PowerLimiterInverter::isEligible() const
+PowerLimiterInverter::Eligibility PowerLimiterInverter::isEligible() const
 {
-    if (!isReachable() || !isSendingCommandsEnabled()) { return false; }
+    if (!isReachable()) { return Eligibility::Unreachable; }
 
-    // after startup, the limit effective at the inverter is not known. the
-    // respective message to request this info is only sent after a significant
-    // backoff (4 minutes). this is to avoid error messages to appear in the
-    // inverter's event log. we will wait until the current limit is known.
-    if (getCurrentLimitWatts() == 0) { return false; }
+    if (!isSendingCommandsEnabled()) { return Eligibility::SendingCommandsDisabled; }
 
     // the model-dependent maximum AC power output is only known after the
     // first DevInfoSimpleCommand succeeded. we desperately need this info, so
     // the inverter is not eligible until this value is known.
-    if (getInverterMaxPowerWatts() == 0) { return false; }
+    if (getInverterMaxPowerWatts() == 0) { return Eligibility::MaxOutputUnknown; }
 
-    return true;
+    // after startup, the limit effective at the inverter is not known. the
+    // respective message to request this info is only sent after a significant
+    // backoff (~5 minutes, see upstream FAQ). this is to avoid error messages
+    // to appear in the inverter's event log.
+    if (getCurrentLimitWatts() == 0) { return Eligibility::CurrentLimitUnknown; }
+
+    return Eligibility::Eligible;
 }
 
 bool PowerLimiterInverter::update()
@@ -61,6 +63,27 @@ bool PowerLimiterInverter::update()
         _oUpdateStartMillis = std::nullopt;
         return false;
     };
+
+    switch (isEligible()) {
+        case Eligibility::Eligible:
+            break;
+
+        case Eligibility::CurrentLimitUnknown:
+            // we actually can and must do something about this: set the configured
+            // lower power limit. the inverter becomes eligible shortly and
+            // inverters whose current limit is not fetched for some reason (see
+            // #1427) are "woken up".
+            if (!_oTargetPowerLimitWatts.has_value()) {
+                MessageOutput.printf("%s bootstrapping by setting "
+                        "lower power limit\r\n", _logPrefix);
+                _oTargetPowerLimitWatts = _config.LowerPowerLimit;
+            }
+            break;
+
+        default:
+            return reset();
+            break;
+    }
 
     // do not reset _updateTimeouts below if no state change requested
     if (!_oTargetPowerState.has_value() && !_oTargetPowerLimitWatts.has_value()) {
@@ -286,6 +309,25 @@ void PowerLimiterInverter::debug() const
 {
     if (!_verboseLogging) { return; }
 
+    String eligibility("disqualified");
+    switch (isEligible()) {
+        case Eligibility::Unreachable:
+            eligibility += " (unreachable)";
+            break;
+        case Eligibility::SendingCommandsDisabled:
+            eligibility += " (sending commands disabled)";
+            break;
+        case Eligibility::MaxOutputUnknown:
+            eligibility += " (max output unknown)";
+            break;
+        case Eligibility::CurrentLimitUnknown:
+            eligibility += " (current limit unknown)";
+            break;
+        case Eligibility::Eligible:
+            eligibility = "eligible";
+            break;
+    }
+
     MessageOutput.printf(
         "%s\r\n"
         "    %s-powered, %s %d W\r\n"
@@ -299,8 +341,7 @@ void PowerLimiterInverter::debug() const
         _config.LowerPowerLimit, getCurrentLimitWatts(), _config.UpperPowerLimit,
         getInverterMaxPowerWatts(),
         (isSendingCommandsEnabled()?"enabled":"disabled"),
-        (isReachable()?"reachable":"offline"),
-        (isEligible()?"eligible":"disqualified"),
+        (isReachable()?"reachable":"offline"), eligibility.c_str(),
         getMaxReductionWatts(false), getMaxReductionWatts(true), getMaxIncreaseWatts(),
         (_oTargetPowerLimitWatts.has_value()?*_oTargetPowerLimitWatts:-1),
         (_oTargetPowerLimitWatts.has_value()?"update":"unchanged"),

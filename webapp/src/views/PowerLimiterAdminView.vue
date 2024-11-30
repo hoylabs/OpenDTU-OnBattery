@@ -158,11 +158,20 @@
                 </template>
 
                 <CardElement
-                    :text="$t('powerlimiteradmin.InverterSettings')"
+                    :text="$t('powerlimiteradmin.DcPowerBusSettings')"
                     textVariant="text-bg-primary"
                     add-space
                     v-if="governingBatteryPoweredInverters"
                 >
+                    <InputElement
+                        v-if="canUseSolarPassthrough"
+                        :label="$t('powerlimiteradmin.EnableSolarPassthrough')"
+                        :tooltip="$t('powerlimiteradmin.SolarPassthroughInfo')"
+                        v-model="powerLimiterConfigList.solar_passthrough_enabled"
+                        type="checkbox"
+                        wide
+                    />
+
                     <InputElement
                         :label="$t('powerlimiteradmin.BatteryDischargeAtNight')"
                         v-model="powerLimiterConfigList.battery_always_use_at_night"
@@ -238,45 +247,17 @@
                             </select>
                         </div>
                     </div>
-                </CardElement>
-
-                <CardElement
-                    :text="$t('powerlimiteradmin.SolarPassthrough')"
-                    textVariant="text-bg-primary"
-                    add-space
-                    v-if="canUseSolarPassthrough"
-                >
-                    <div
-                        class="alert alert-secondary"
-                        role="alert"
-                        v-html="$t('powerlimiteradmin.SolarpassthroughInfo')"
-                    ></div>
 
                     <InputElement
-                        :label="$t('powerlimiteradmin.EnableSolarPassthrough')"
-                        v-model="powerLimiterConfigList.solar_passthrough_enabled"
-                        type="checkbox"
+                        :label="$t('powerlimiteradmin.ConductionLosses')"
+                        :tooltip="$t('powerlimiteradmin.ConductionLossesInfo')"
+                        v-model="powerLimiterConfigList.conduction_losses"
+                        min="0"
+                        max="10"
+                        postfix="%"
+                        type="number"
                         wide
                     />
-
-                    <template v-if="powerLimiterConfigList.solar_passthrough_enabled">
-                        <InputElement
-                            :label="$t('powerlimiteradmin.SolarPassthroughLosses')"
-                            v-model="powerLimiterConfigList.solar_passthrough_losses"
-                            placeholder="3"
-                            min="0"
-                            max="10"
-                            postfix="%"
-                            type="number"
-                            wide
-                        />
-
-                        <div
-                            class="alert alert-secondary"
-                            role="alert"
-                            v-html="$t('powerlimiteradmin.SolarPassthroughLossesInfo')"
-                        ></div>
-                    </template>
                 </CardElement>
 
                 <CardElement

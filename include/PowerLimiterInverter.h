@@ -75,9 +75,17 @@ public:
 protected:
     PowerLimiterInverter(bool verboseLogging, PowerLimiterInverterConfig const& config);
 
+    enum class Eligibility : unsigned {
+        Unreachable,
+        SendingCommandsDisabled,
+        MaxOutputUnknown,
+        CurrentLimitUnknown,
+        Eligible
+    };
+
     // returns false if the inverter cannot participate
     // in achieving the requested change in power output
-    bool isEligible() const;
+    Eligibility isEligible() const;
 
     uint16_t getCurrentLimitWatts() const;
 

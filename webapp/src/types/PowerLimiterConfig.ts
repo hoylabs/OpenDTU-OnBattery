@@ -35,7 +35,7 @@ export interface PowerLimiterConfig {
     enabled: boolean;
     verbose_logging: boolean;
     solar_passthrough_enabled: boolean;
-    solar_passthrough_losses: number;
+    conduction_losses: number;
     battery_always_use_at_night: boolean;
     target_power_consumption: number;
     target_power_consumption_hysteresis: number;

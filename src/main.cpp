@@ -91,6 +91,10 @@ void setup()
         MessageOutput.print("migrated... ");
         Configuration.migrate();
     }
+    if (Configuration.get().Cfg.VersionOnBattery != CONFIG_VERSION_ONBATTERY) {
+        Configuration.migrateOnBattery();
+        MessageOutput.print("migrated OpenDTU-OnBattery-specific config... ");
+    }
     auto& config = Configuration.get();
     MessageOutput.println("done");
 

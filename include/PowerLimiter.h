@@ -91,7 +91,10 @@ private:
     uint16_t getSolarPassthroughPower();
     std::optional<uint16_t> getBatteryDischargeLimit();
     float getBatteryInvertersOutputAcWatts();
+
+    std::optional<float> _oLoadCorrectedVoltage = std::nullopt;
     float getLoadCorrectedVoltage();
+
     bool testThreshold(float socThreshold, float voltThreshold,
             std::function<bool(float, float)> compare);
     bool isStartThresholdReached();

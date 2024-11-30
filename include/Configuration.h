@@ -10,6 +10,7 @@
 
 #define CONFIG_FILENAME "/config.json"
 #define CONFIG_VERSION 0x00011d00 // 0.1.29 // make sure to clean all after change
+#define CONFIG_VERSION_ONBATTERY 2
 
 #define WIFI_MAX_SSID_STRLEN 32
 #define WIFI_MAX_PASSWORD_STRLEN 64
@@ -147,7 +148,7 @@ struct POWERLIMITER_CONFIG_T {
     bool Enabled;
     bool VerboseLogging;
     bool SolarPassThroughEnabled;
-    uint8_t SolarPassThroughLosses;
+    uint8_t ConductionLosses;
     bool BatteryAlwaysUseAtNight;
     int16_t TargetPowerConsumption;
     uint16_t TargetPowerConsumptionHysteresis;
@@ -198,6 +199,7 @@ using BatteryConfig = struct BATTERY_CONFIG_T;
 struct CONFIG_T {
     struct {
         uint32_t Version;
+        uint32_t VersionOnBattery;
         uint32_t SaveCount;
     } Cfg;
 
@@ -363,6 +365,7 @@ public:
     bool read();
     bool write();
     void migrate();
+    void migrateOnBattery();
     CONFIG_T const& get();
 
     class WriteGuard {
@@ -389,7 +392,7 @@ public:
     static void serializeBatteryConfig(BatteryConfig const& source, JsonObject& target);
     static void serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target);
 
-    static void deserializeHttpRequestConfig(JsonObject const& source, HttpRequestConfig& target);
+    static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
     static void deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target);
     static void deserializePowerMeterSerialSdmConfig(JsonObject const& source, PowerMeterSerialSdmConfig& target);
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);

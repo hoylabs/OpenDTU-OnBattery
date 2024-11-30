@@ -259,6 +259,9 @@ void PowerLimiterClass::loop()
 
     _batteryDischargeEnabled = getBatteryPower();
 
+    // re-calculate load-corrected voltage once (and only once) per DPL loop
+    _oLoadCorrectedVoltage = std::nullopt;
+
     if (_verboseLogging && usesBatteryPoweredInverter()) {
         MessageOutput.printf("[DPL] battery interface %sabled, SoC %.1f %% (%s), age %u s (%s)\r\n",
                 (config.Battery.Enabled?"en":"dis"),
@@ -294,9 +297,9 @@ void PowerLimiterClass::loop()
                 (config.PowerLimiter.SolarPassThroughEnabled?"en":"dis"),
                 (config.PowerLimiter.BatteryAlwaysUseAtNight?"yes":"no"));
 
-        MessageOutput.printf("[DPL] total max AC power is %u W, cabling losses are %u %%\r\n",
+        MessageOutput.printf("[DPL] total max AC power is %u W, conduction losses are %u %%\r\n",
             config.PowerLimiter.TotalUpperPowerLimit,
-            config.PowerLimiter.SolarPassThroughLosses);
+            config.PowerLimiter.ConductionLosses);
     };
 
     // this value is negative if we are exporting power to the grid
@@ -397,7 +400,7 @@ uint16_t PowerLimiterClass::dcPowerBusToInverterAc(uint16_t dcPower)
 {
     // account for losses between power bus and inverter (cables, junctions...)
     auto const& config = Configuration.get();
-    float lossesFactor = 1.00 - static_cast<float>(config.PowerLimiter.SolarPassThroughLosses)/100;
+    float lossesFactor = 1.00 - static_cast<float>(config.PowerLimiter.ConductionLosses)/100;
 
     // we cannot know the efficiency at the new limit. even if we could we
     // cannot know which inverter is assigned which limit. hence we use a
@@ -720,6 +723,8 @@ std::optional<uint16_t> PowerLimiterClass::getBatteryDischargeLimit()
 
 float PowerLimiterClass::getLoadCorrectedVoltage()
 {
+    if (_oLoadCorrectedVoltage) { return *_oLoadCorrectedVoltage; }
+
     auto const& config = Configuration.get();
 
     // TODO(schlimmchen): use the battery's data if available,
@@ -731,7 +736,9 @@ float PowerLimiterClass::getLoadCorrectedVoltage()
         return 0.0;
     }
 
-    return dcVoltage + (acPower * config.PowerLimiter.VoltageLoadCorrectionFactor);
+    _oLoadCorrectedVoltage = dcVoltage + (acPower * config.PowerLimiter.VoltageLoadCorrectionFactor);
+
+    return *_oLoadCorrectedVoltage;
 }
 
 bool PowerLimiterClass::testThreshold(float socThreshold, float voltThreshold,

@@ -6,7 +6,7 @@ PowerLimiterSolarInverter::PowerLimiterSolarInverter(bool verboseLogging, PowerL
 
 uint16_t PowerLimiterSolarInverter::getMaxReductionWatts(bool) const
 {
-    if (!isEligible()) { return 0; }
+    if (isEligible() != Eligibility::Eligible) { return 0; }
 
     auto low = std::min(getCurrentLimitWatts(), getCurrentOutputAcWatts());
     if (low <= _config.LowerPowerLimit) { return 0; }
@@ -16,7 +16,7 @@ uint16_t PowerLimiterSolarInverter::getMaxReductionWatts(bool) const
 
 uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
 {
-    if (!isEligible()) { return 0; }
+    if (isEligible() != Eligibility::Eligible) { return 0; }
 
     // the maximum increase possible for this inverter
     int16_t maxTotalIncrease = getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
@@ -75,7 +75,7 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
 
 uint16_t PowerLimiterSolarInverter::applyReduction(uint16_t reduction, bool)
 {
-    if (!isEligible()) { return 0; }
+    if (isEligible() != Eligibility::Eligible) { return 0; }
 
     if (reduction == 0) { return 0; }
 
@@ -90,7 +90,7 @@ uint16_t PowerLimiterSolarInverter::applyReduction(uint16_t reduction, bool)
 
 uint16_t PowerLimiterSolarInverter::applyIncrease(uint16_t increase)
 {
-    if (!isEligible()) { return 0; }
+    if (isEligible() != Eligibility::Eligible) { return 0; }
 
     if (increase == 0) { return 0; }
 

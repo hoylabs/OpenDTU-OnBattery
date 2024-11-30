@@ -130,7 +130,7 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
     target["enabled"] = source.Enabled;
     target["verbose_logging"] = source.VerboseLogging;
     target["solar_passthrough_enabled"] = source.SolarPassThroughEnabled;
-    target["solar_passthrough_losses"] = source.SolarPassThroughLosses;
+    target["conduction_losses"] = source.ConductionLosses;
     target["battery_always_use_at_night"] = source.BatteryAlwaysUseAtNight;
     target["target_power_consumption"] = source.TargetPowerConsumption;
     target["target_power_consumption_hysteresis"] = source.TargetPowerConsumptionHysteresis;
@@ -177,6 +177,7 @@ bool ConfigurationClass::write()
 
     JsonObject cfg = doc["cfg"].to<JsonObject>();
     cfg["version"] = config.Cfg.Version;
+    cfg["version_onbattery"] = config.Cfg.VersionOnBattery;
     cfg["save_count"] = config.Cfg.SaveCount;
 
     JsonObject wifi = doc["wifi"].to<JsonObject>();
@@ -363,14 +364,8 @@ bool ConfigurationClass::write()
     return true;
 }
 
-void ConfigurationClass::deserializeHttpRequestConfig(JsonObject const& source, HttpRequestConfig& target)
+void ConfigurationClass::deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target)
 {
-    JsonObject source_http_config = source["http_request"];
-
-    // http request parameters of HTTP/JSON power meter were previously stored
-    // alongside other settings. TODO(schlimmchen): remove in mid 2025.
-    if (source_http_config.isNull()) { source_http_config = source; }
-
     strlcpy(target.Url, source_http_config["url"] | "", sizeof(target.Url));
     target.AuthType = source_http_config["auth_type"] | HttpRequestConfig::Auth::None;
     strlcpy(target.Username, source_http_config["username"] | "", sizeof(target.Username));
@@ -409,7 +404,7 @@ void ConfigurationClass::deserializePowerMeterHttpJsonConfig(JsonObject const& s
         PowerMeterHttpJsonValue& t = target.Values[i];
         JsonObject s = values[i];
 
-        deserializeHttpRequestConfig(s, t.HttpRequest);
+        deserializeHttpRequestConfig(s["http_request"], t.HttpRequest);
 
         t.Enabled = s["enabled"] | false;
         strlcpy(t.JsonPath, s["json_path"] | "", sizeof(t.JsonPath));
@@ -423,7 +418,7 @@ void ConfigurationClass::deserializePowerMeterHttpJsonConfig(JsonObject const& s
 void ConfigurationClass::deserializePowerMeterHttpSmlConfig(JsonObject const& source, PowerMeterHttpSmlConfig& target)
 {
     target.PollingInterval = source["polling_interval"] | POWERMETER_POLLING_INTERVAL;
-    deserializeHttpRequestConfig(source, target.HttpRequest);
+    deserializeHttpRequestConfig(source["http_request"], target.HttpRequest);
 }
 
 void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target)
@@ -457,7 +452,7 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
     target.Enabled = source["enabled"] | POWERLIMITER_ENABLED;
     target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
     target.SolarPassThroughEnabled = source["solar_passthrough_enabled"] | POWERLIMITER_SOLAR_PASSTHROUGH_ENABLED;
-    target.SolarPassThroughLosses = source["solar_passthrough_losses"] | POWERLIMITER_SOLAR_PASSTHROUGH_LOSSES;
+    target.ConductionLosses = source["conduction_losses"] | POWERLIMITER_CONDUCTION_LOSSES;
     target.BatteryAlwaysUseAtNight = source["battery_always_use_at_night"] | POWERLIMITER_BATTERY_ALWAYS_USE_AT_NIGHT;
     target.TargetPowerConsumption = source["target_power_consumption"] | POWERLIMITER_TARGET_POWER_CONSUMPTION;
     target.TargetPowerConsumptionHysteresis = source["target_power_consumption_hysteresis"] | POWERLIMITER_TARGET_POWER_CONSUMPTION_HYSTERESIS;
@@ -496,18 +491,20 @@ bool ConfigurationClass::read()
     File f = LittleFS.open(CONFIG_FILENAME, "r", false);
     Utils::skipBom(f);
 
-    // skip Byte Order Mask (BOM). valid JSON docs always start with '{' or '['.
-    while (f.available() > 0) {
-        int c = f.peek();
-        if (c == '{' || c == '[') { break; }
-        f.read();
-    }
-
     JsonDocument doc;
+
+    // as OpenDTU-OnBattery was in use a long time without the version marker
+    // specific to OpenDTU-OnBattery, we must distinguish the cases (1) where a
+    // valid legacy config.json file was read and (2) where there was no config
+    // (or an error when reading occured). in the former case we want to
+    // perform a migration, whereas in the latter there is no need for a
+    // migration as the config is default-initialized to the current version.
+    uint32_t version_onbattery = 0;
 
     // Deserialize the JSON document
     const DeserializationError error = deserializeJson(doc, f);
     if (error) {
+        version_onbattery = CONFIG_VERSION_ONBATTERY;
         MessageOutput.println("Failed to read file, using default configuration");
     }
 
@@ -517,6 +514,7 @@ bool ConfigurationClass::read()
 
     JsonObject cfg = doc["cfg"];
     config.Cfg.Version = cfg["version"] | CONFIG_VERSION;
+    config.Cfg.VersionOnBattery = cfg["version_onbattery"] | version_onbattery;
     config.Cfg.SaveCount = cfg["save_count"] | 0;
 
     JsonObject wifi = doc["wifi"];
@@ -679,92 +677,13 @@ bool ConfigurationClass::read()
 
     deserializePowerMeterMqttConfig(powermeter["mqtt"], config.PowerMeter.Mqtt);
 
-    // process settings from legacy config if they are present
-    // TODO(schlimmchen): remove in mid 2025.
-    if (!powermeter["mqtt_topic_powermeter_1"].isNull()) {
-        auto& values = config.PowerMeter.Mqtt.Values;
-        strlcpy(values[0].Topic, powermeter["mqtt_topic_powermeter_1"], sizeof(values[0].Topic));
-        strlcpy(values[1].Topic, powermeter["mqtt_topic_powermeter_2"], sizeof(values[1].Topic));
-        strlcpy(values[2].Topic, powermeter["mqtt_topic_powermeter_3"], sizeof(values[2].Topic));
-    }
-
     deserializePowerMeterSerialSdmConfig(powermeter["serial_sdm"], config.PowerMeter.SerialSdm);
 
-    // process settings from legacy config if they are present
-    // TODO(schlimmchen): remove in mid 2025.
-    if (!powermeter["sdmaddress"].isNull()) {
-        config.PowerMeter.SerialSdm.Address = powermeter["sdmaddress"];
-    }
+    deserializePowerMeterHttpJsonConfig(powermeter["http_json"], config.PowerMeter.HttpJson);
 
-    JsonObject powermeter_http_json = powermeter["http_json"];
-    deserializePowerMeterHttpJsonConfig(powermeter_http_json, config.PowerMeter.HttpJson);
+    deserializePowerMeterHttpSmlConfig(powermeter["http_sml"], config.PowerMeter.HttpSml);
 
-    JsonObject powermeter_sml = powermeter["http_sml"];
-    deserializePowerMeterHttpSmlConfig(powermeter_sml, config.PowerMeter.HttpSml);
-
-    // process settings from legacy config if they are present
-    // TODO(schlimmchen): remove in mid 2025.
-    if (!powermeter["http_phases"].isNull()) {
-        auto& target = config.PowerMeter.HttpJson;
-
-        for (size_t i = 0; i < POWERMETER_HTTP_JSON_MAX_VALUES; ++i) {
-            PowerMeterHttpJsonValue& t = target.Values[i];
-            JsonObject s = powermeter["http_phases"][i];
-
-            deserializeHttpRequestConfig(s, t.HttpRequest);
-
-            t.Enabled = s["enabled"] | false;
-            strlcpy(t.JsonPath, s["json_path"] | "", sizeof(t.JsonPath));
-            t.PowerUnit = s["unit"] | PowerMeterHttpJsonValue::Unit::Watts;
-            t.SignInverted = s["sign_inverted"] | false;
-        }
-
-        target.IndividualRequests = powermeter["http_individual_requests"] | false;
-    }
-
-    JsonObject powerlimiter = doc["powerlimiter"];
-    deserializePowerLimiterConfig(powerlimiter, config.PowerLimiter);
-
-    if (powerlimiter["battery_drain_strategy"].as<uint8_t>() == 1) {
-        config.PowerLimiter.BatteryAlwaysUseAtNight = true; // convert legacy setting
-    }
-
-    if (!powerlimiter["solar_passtrough_enabled"].isNull()) {
-        // solar_passthrough_enabled was previously saved as
-        // solar_passtrough_enabled. be nice and also try misspelled key.
-        config.PowerLimiter.SolarPassThroughEnabled = powerlimiter["solar_passtrough_enabled"].as<bool>();
-    }
-
-    if (!powerlimiter["solar_passtrough_losses"].isNull()) {
-        // solar_passthrough_losses was previously saved as
-        // solar_passtrough_losses. be nice and also try misspelled key.
-        config.PowerLimiter.SolarPassThroughLosses = powerlimiter["solar_passtrough_losses"].as<uint8_t>();
-    }
-
-    // process settings from legacy config if they are present
-    // TODO(schlimmchen): remove in mid 2025.
-    if (!powerlimiter["inverter_id"].isNull()) {
-        config.PowerLimiter.InverterChannelIdForDcVoltage = powerlimiter["inverter_channel_id"] | POWERLIMITER_INVERTER_CHANNEL_ID;
-
-        auto& inv = config.PowerLimiter.Inverters[0];
-        uint64_t previousInverterSerial = powerlimiter["inverter_id"].as<uint64_t>();
-        if (previousInverterSerial < INV_MAX_COUNT) {
-            // we previously had an index (not a serial) saved as inverter_id.
-            previousInverterSerial = config.Inverter[inv.Serial].Serial; // still 0 if no inverters configured
-        }
-        inv.Serial = previousInverterSerial;
-        config.PowerLimiter.InverterSerialForDcVoltage = previousInverterSerial;
-        inv.IsGoverned = true;
-        inv.IsBehindPowerMeter = powerlimiter["is_inverter_behind_powermeter"] | POWERLIMITER_IS_INVERTER_BEHIND_POWER_METER;
-        inv.IsSolarPowered = powerlimiter["is_inverter_solar_powered"] | POWERLIMITER_IS_INVERTER_SOLAR_POWERED;
-        inv.UseOverscalingToCompensateShading = powerlimiter["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING_TO_COMPENSATE_SHADING;
-        inv.LowerPowerLimit = powerlimiter["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
-        inv.UpperPowerLimit = powerlimiter["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
-
-        config.PowerLimiter.TotalUpperPowerLimit = inv.UpperPowerLimit;
-
-        config.PowerLimiter.Inverters[1].Serial = 0;
-    }
+    deserializePowerLimiterConfig(doc["powerlimiter"], config.PowerLimiter);
 
     deserializeBatteryConfig(doc["battery"], config.Battery);
 
@@ -819,6 +738,8 @@ void ConfigurationClass::migrate()
         MessageOutput.println("Failed to open file, cancel migration");
         return;
     }
+
+    Utils::skipBom(f);
 
     JsonDocument doc;
 
@@ -893,6 +814,117 @@ void ConfigurationClass::migrate()
     f.close();
 
     config.Cfg.Version = CONFIG_VERSION;
+    write();
+    read();
+}
+
+void ConfigurationClass::migrateOnBattery()
+{
+    File f = LittleFS.open(CONFIG_FILENAME, "r", false);
+    if (!f) {
+        MessageOutput.println("Failed to open file, cancel OpenDTU-OnBattery migration");
+        return;
+    }
+
+    Utils::skipBom(f);
+
+    JsonDocument doc;
+
+    // Deserialize the JSON document
+    const DeserializationError error = deserializeJson(doc, f);
+    if (error) {
+        MessageOutput.printf("Failed to read file, cancel OpenDTU-OnBattery "
+                "migration: %s\r\n", error.c_str());
+        return;
+    }
+
+    if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
+        return;
+    }
+
+    if (config.Cfg.VersionOnBattery < 1) {
+        // all migrations in this block need to check whether or not the
+        // respective legacy setting is even present, as OpenDTU-OnBattery
+        // config version 0 identifies multiple different legacy versions of
+        // OpenDTU-OnBattery-specific settings, i.e., all before the
+        // OpenDTU-OnBattery config version value was introduced.
+
+        JsonObject powermeter = doc["powermeter"];
+
+        if (!powermeter["mqtt_topic_powermeter_1"].isNull()) {
+            auto& values = config.PowerMeter.Mqtt.Values;
+            strlcpy(values[0].Topic, powermeter["mqtt_topic_powermeter_1"], sizeof(values[0].Topic));
+            strlcpy(values[1].Topic, powermeter["mqtt_topic_powermeter_2"], sizeof(values[1].Topic));
+            strlcpy(values[2].Topic, powermeter["mqtt_topic_powermeter_3"], sizeof(values[2].Topic));
+        }
+
+        if (!powermeter["sdmaddress"].isNull()) {
+            config.PowerMeter.SerialSdm.Address = powermeter["sdmaddress"];
+        }
+
+        if (!powermeter["http_phases"].isNull()) {
+            auto& target = config.PowerMeter.HttpJson;
+
+            for (size_t i = 0; i < POWERMETER_HTTP_JSON_MAX_VALUES; ++i) {
+                PowerMeterHttpJsonValue& t = target.Values[i];
+                JsonObject s = powermeter["http_phases"][i];
+
+                deserializeHttpRequestConfig(s, t.HttpRequest);
+
+                t.Enabled = s["enabled"] | false;
+                strlcpy(t.JsonPath, s["json_path"] | "", sizeof(t.JsonPath));
+                t.PowerUnit = s["unit"] | PowerMeterHttpJsonValue::Unit::Watts;
+                t.SignInverted = s["sign_inverted"] | false;
+            }
+
+            target.IndividualRequests = powermeter["http_individual_requests"] | false;
+        }
+
+        JsonObject powerlimiter = doc["powerlimiter"];
+
+        if (powerlimiter["battery_drain_strategy"].as<uint8_t>() == 1) {
+            config.PowerLimiter.BatteryAlwaysUseAtNight = true;
+        }
+
+        if (!powerlimiter["solar_passtrough_enabled"].isNull()) {
+            config.PowerLimiter.SolarPassThroughEnabled = powerlimiter["solar_passtrough_enabled"].as<bool>();
+        }
+
+        if (!powerlimiter["solar_passtrough_losses"].isNull()) {
+            config.PowerLimiter.ConductionLosses = powerlimiter["solar_passtrough_losses"].as<uint8_t>();
+        }
+
+        if (!powerlimiter["inverter_id"].isNull()) {
+            config.PowerLimiter.InverterChannelIdForDcVoltage = powerlimiter["inverter_channel_id"] | POWERLIMITER_INVERTER_CHANNEL_ID;
+
+            auto& inv = config.PowerLimiter.Inverters[0];
+            uint64_t previousInverterSerial = powerlimiter["inverter_id"].as<uint64_t>();
+            if (previousInverterSerial < INV_MAX_COUNT) {
+                // we previously had an index (not a serial) saved as inverter_id.
+                previousInverterSerial = config.Inverter[inv.Serial].Serial; // still 0 if no inverters configured
+            }
+            inv.Serial = previousInverterSerial;
+            config.PowerLimiter.InverterSerialForDcVoltage = previousInverterSerial;
+            inv.IsGoverned = true;
+            inv.IsBehindPowerMeter = powerlimiter["is_inverter_behind_powermeter"] | POWERLIMITER_IS_INVERTER_BEHIND_POWER_METER;
+            inv.IsSolarPowered = powerlimiter["is_inverter_solar_powered"] | POWERLIMITER_IS_INVERTER_SOLAR_POWERED;
+            inv.UseOverscalingToCompensateShading = powerlimiter["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING_TO_COMPENSATE_SHADING;
+            inv.LowerPowerLimit = powerlimiter["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
+            inv.UpperPowerLimit = powerlimiter["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+
+            config.PowerLimiter.TotalUpperPowerLimit = inv.UpperPowerLimit;
+
+            config.PowerLimiter.Inverters[1].Serial = 0;
+        }
+    }
+
+    if (config.Cfg.VersionOnBattery < 2) {
+        config.PowerLimiter.ConductionLosses = doc["powerlimiter"]["solar_passthrough_losses"].as<uint8_t>();
+    }
+
+    f.close();
+
+    config.Cfg.VersionOnBattery = CONFIG_VERSION_ONBATTERY;
     write();
     read();
 }
