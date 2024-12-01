@@ -1,5 +1,8 @@
 <template>
-    <div class="row row-cols-1 row-cols-md-3 g-3">
+    <BootstrapAlert :show="noTotals" variant="info">
+        <BIconGear class="fs-4" /> {{ $t('hints.NoTotals') }}
+    </BootstrapAlert>
+    <div class="row row-cols-1 row-cols-md-3 g-3" ref="totals-container">
         <div class="col" v-if="totalVeData.enabled">
             <CardElement
                 centerContent
@@ -43,7 +46,7 @@
                 </h2>
             </CardElement>
         </div>
-        <div class="col">
+        <div class="col" v-if="hasInverters">
             <CardElement
                 centerContent
                 textVariant="text-bg-success"
@@ -60,7 +63,7 @@
                 </h2>
             </CardElement>
         </div>
-        <div class="col">
+        <div class="col" v-if="hasInverters">
             <CardElement
                 centerContent
                 textVariant="text-bg-success"
@@ -77,7 +80,7 @@
                 </h2>
             </CardElement>
         </div>
-        <div class="col">
+        <div class="col" v-if="hasInverters">
             <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.InverterTotalPower')">
                 <h2>
                     {{
@@ -199,21 +202,35 @@
 </template>
 
 <script lang="ts">
+import BootstrapAlert from '@/components/BootstrapAlert.vue';
+import { BIconGear } from 'bootstrap-icons-vue';
 import type { Battery, Total, Vedirect, Huawei, PowerMeter, Shelly } from '@/types/LiveDataStatus';
 import CardElement from './CardElement.vue';
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, type PropType, useTemplateRef } from 'vue';
 
 export default defineComponent({
     components: {
+        BootstrapAlert,
+        BIconGear,
         CardElement,
     },
     props: {
         totalData: { type: Object as PropType<Total>, required: true },
+        hasInverters: { type: Boolean, required: true },
         totalVeData: { type: Object as PropType<Vedirect>, required: true },
         totalBattData: { type: Object as PropType<Battery>, required: true },
         powerMeterData: { type: Object as PropType<PowerMeter>, required: true },
         huaweiData: { type: Object as PropType<Huawei>, required: true },
         shellyData: { type: Object as PropType<Shelly>, required: true },
+    },
+    data() {
+        return {
+            totalsContainer: useTemplateRef<HTMLDivElement>('totals-container'),
+            noTotals: false,
+        };
+    },
+    mounted() {
+        this.noTotals = this.totalsContainer?.children.length === 0 || false;
     },
 });
 </script>

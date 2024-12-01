@@ -829,6 +829,7 @@
         "DiscussionBody": "Discutez avec nous sur <a href=\"https://discord.gg/WzhxEY62mB\" target=\"_blank\">Discord</a> ou sur <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/discussions\" target=\"_blank\">Github</a>."
     },
     "hints": {
+        "NoTotals": "Enable and configure features, e.g., by registering an inverter, to show data.",
         "RadioProblem": "Impossible de se connecter à un module radio configuré.. Veuillez vérifier le câblage.",
         "TimeSync": "L'horloge n'a pas encore été synchronisée. Sans une horloge correctement réglée, aucune demande n'est adressée à l'onduleur. Ceci est normal peu de temps après le démarrage. Cependant, après un temps de fonctionnement plus long (>1 minute), cela indique que le serveur NTP n'est pas accessible.",
         "TimeSyncLink": "Veuillez vérifier vos paramètres horaires.",

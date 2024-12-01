@@ -877,6 +877,7 @@
         "DiscussionBody": "Discuss with us on <a href=\"https://discord.gg/WzhxEY62mB\" target=\"_blank\">Discord</a> or <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/discussions\" target=\"_blank\">Github</a>."
     },
     "hints": {
+        "NoTotals": "Enable and configure features, e.g., by registering an inverter, to show data.",
         "RadioProblem": "Could not connect to a configured radio module. Please check the wiring.",
         "TimeSync": "The clock has not yet been synchronised. Without a correctly set clock, no requests are made to the inverter. This is normal shortly after the start. However, after a longer runtime (>1 minute), it indicates that the NTP server is not accessible.",
         "TimeSyncLink": "Please check your time settings.",
