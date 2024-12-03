@@ -88,7 +88,7 @@ void HuaweiCanCommClass::loop()
     if((rxId & 0x80000000) == 0x80000000) {   // Determine if ID is standard (11 bits) or extended (29 bits)
       if ((rxId & 0x1FFFFFFF) == 0x1081407F && len == 8) {
 
-        uint32_t value = __bswap32(* reinterpret_cast<uint32_t*> (rxBuf + 4));
+        int32_t value = __bswap32(*reinterpret_cast<int32_t*>(rxBuf + 4));
 
         // Input power 0x70, Input frequency 0x71, Input current 0x72
         // Output power 0x73, Efficiency 0x74, Output Voltage 0x75 and Output Current 0x76
@@ -144,14 +144,13 @@ void HuaweiCanCommClass::loop()
 
 }
 
-uint32_t HuaweiCanCommClass::getParameterValue(uint8_t parameter)
+int32_t HuaweiCanCommClass::getParameterValue(uint8_t parameter)
 {
   std::lock_guard<std::mutex> lock(_mutex);
-  uint32_t v = 0;
   if (parameter < HUAWEI_OUTPUT_CURRENT1_IDX) {
-    v =  _recValues[parameter];
+    return _recValues[parameter];
   }
-  return v;
+  return 0;
 }
 
 bool HuaweiCanCommClass::gotNewRxDataFrame(bool clear)

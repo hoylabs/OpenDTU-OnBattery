@@ -18,7 +18,7 @@ on:
 jobs:
   get_default_envs:
     name: Gather Environments
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -49,7 +49,7 @@ jobs:
 
   build:
     name: Build Environments
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: get_default_envs
     strategy:
       matrix:
@@ -134,7 +134,7 @@ jobs:
 
   release:
     name: Create Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [get_default_envs, build]
     if: startsWith(github.ref, 'refs/tags/2')
     steps:

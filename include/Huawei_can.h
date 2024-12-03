@@ -96,7 +96,7 @@ public:
     void loop();
     bool gotNewRxDataFrame(bool clear);
     uint8_t  getErrorCode(bool clear);
-    uint32_t getParameterValue(uint8_t parameter);
+    int32_t getParameterValue(uint8_t parameter);
     void setParameterValue(uint16_t in, uint8_t parameterType);
 
 private:
@@ -109,7 +109,7 @@ private:
 
     std::mutex _mutex;
 
-    uint32_t _recValues[12];
+    int32_t _recValues[12];
     uint16_t _txValues[5];
     bool     _hasNewTxValue[5];
 

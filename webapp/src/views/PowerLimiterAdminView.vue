@@ -146,6 +146,23 @@
                             wide
                         />
 
+                        <div class="row">
+                            <div class="col-sm-4"></div>
+                            <div class="col-sm-8">
+                                <div
+                                    v-if="lowerLimitWarning(powerLimiterConfigList.inverters[idx])"
+                                    class="alert alert-warning"
+                                    role="alert"
+                                >
+                                    {{
+                                        $t('powerlimiteradmin.LowerPowerLimitWarning', {
+                                            min: getLowerLimitMinimum(powerLimiterConfigList.inverters[idx]),
+                                        })
+                                    }}
+                                </div>
+                            </div>
+                        </div>
+
                         <InputElement
                             :label="$t('powerlimiteradmin.UpperPowerLimit')"
                             v-model="powerLimiterConfigList.inverters[idx].upper_power_limit"
@@ -517,7 +534,13 @@ export default defineComponent({
                     ) {
                         continue;
                     }
-                    if (!(inv.poll_enable && inv.command_enable && inv.poll_enable_night && inv.command_enable_night)) {
+                    const commEnabled =
+                        inv.poll_enable && inv.command_enable && inv.poll_enable_night && inv.command_enable_night;
+                    const governed = this.governedInverters.some(
+                        (cfgInv: PowerLimiterInverterConfig) => cfgInv.serial === inv.serial
+                    );
+
+                    if (governed && !commEnabled) {
                         hints.push({ severity: 'requirement', subject: 'InverterCommunication' });
                         break;
                     }
@@ -590,6 +613,14 @@ export default defineComponent({
 
             return inverter.channels > 1;
         },
+        getLowerLimitMinimum(inv: PowerLimiterInverterConfig) {
+            // we can trust that the inverter info is actually available,
+            // as we only use this function in a context with a valid serial.
+            return this.getInverterInfo(inv.serial).channels * 13;
+        },
+        lowerLimitWarning(inv: PowerLimiterInverterConfig) {
+            return inv.lower_power_limit < this.getLowerLimitMinimum(inv);
+        },
         getMetaData() {
             this.dataLoading = true;
             fetch('/api/powerlimiter/metadata', { headers: authHeader() })
@@ -627,7 +658,7 @@ export default defineComponent({
                 newInv.serial = metaInv.serial;
                 newInv.is_governed = false;
                 newInv.is_behind_power_meter = true;
-                newInv.lower_power_limit = 10 * metaInv.channels;
+                newInv.lower_power_limit = this.getLowerLimitMinimum(newInv);
                 newInv.upper_power_limit = Math.max(metaInv.max_power, 300);
                 inverters.push(newInv);
             }
