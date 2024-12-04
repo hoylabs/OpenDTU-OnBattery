@@ -426,7 +426,7 @@ void PowerLimiterClass::fullSolarPassthrough(PowerLimiterClass::Status reason)
     uint16_t targetOutput = 0;
 
     if (SolarCharger.isDataValid()) {
-        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, SolarCharger.getPowerOutputWatts()));
+        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, SolarCharger.getOutputPowerWatts()));
         targetOutput = dcPowerBusToInverterAc(targetOutput);
     }
 
@@ -683,7 +683,7 @@ uint16_t PowerLimiterClass::getSolarPassthroughPower()
         return 0;
     }
 
-    return SolarCharger.getPowerOutputWatts();
+    return SolarCharger.getOutputPowerWatts();
 }
 
 float PowerLimiterClass::getBatteryInvertersOutputAcWatts()

@@ -20,7 +20,7 @@ public:
     virtual uint32_t getDataAgeMillis() const = 0;
     virtual uint32_t getDataAgeMillis(size_t idx) const = 0;
     // total output of all MPPT charge controllers in Watts
-    virtual int32_t getPowerOutputWatts() const = 0;
+    virtual int32_t getOutputPowerWatts() const = 0;
 
     // total panel input power of all MPPT charge controllers in Watts
     virtual int32_t getPanelPowerWatts() const = 0;

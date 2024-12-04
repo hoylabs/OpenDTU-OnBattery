@@ -97,12 +97,12 @@ uint32_t SolarChargerClass::getDataAgeMillis(size_t idx)
 
 
 // total output of all MPPT charge controllers in Watts
-int32_t SolarChargerClass::getPowerOutputWatts()
+int32_t SolarChargerClass::getOutputPowerWatts()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
     if (_upProvider) {
-        return _upProvider->getPowerOutputWatts();
+        return _upProvider->getOutputPowerWatts();
     }
 
     return 0;

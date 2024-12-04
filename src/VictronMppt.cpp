@@ -128,7 +128,7 @@ std::optional<VeDirectMpptController::data_t> VictronMppt::getData(size_t idx) c
     return _controllers[idx]->getData();
 }
 
-int32_t VictronMppt::getPowerOutputWatts() const
+int32_t VictronMppt::getOutputPowerWatts() const
 {
     int32_t sum = 0;
 
