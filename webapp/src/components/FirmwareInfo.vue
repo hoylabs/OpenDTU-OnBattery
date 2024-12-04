@@ -13,7 +13,7 @@
                     </tr>
                     <tr>
                         <th>{{ $t('firmwareinfo.ConfigVersion') }}</th>
-                        <td>{{ systemStatus.config_version }}</td>
+                        <td>{{ systemStatus.config_version }}-OnBattery-{{ systemStatus.config_version_onbattery }}</td>
                     </tr>
                     <tr>
                         <th>{{ $t('firmwareinfo.FirmwareVersion') }}</th>

@@ -18,6 +18,7 @@ export interface SystemStatus {
     hostname: string;
     sdkversion: string;
     config_version: string;
+    config_version_onbattery: string;
     git_hash: string;
     git_is_hash: boolean;
     git_branch: string;

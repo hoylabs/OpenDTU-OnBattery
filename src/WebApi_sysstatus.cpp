@@ -78,6 +78,7 @@ void WebApiSysstatusClass::onSystemStatus(AsyncWebServerRequest* request)
     char version[16];
     snprintf(version, sizeof(version), "%d.%d.%d", CONFIG_VERSION >> 24 & 0xff, CONFIG_VERSION >> 16 & 0xff, CONFIG_VERSION >> 8 & 0xff);
     root["config_version"] = version;
+    root["config_version_onbattery"] = CONFIG_VERSION_ONBATTERY;
     root["git_hash"] = __COMPILED_GIT_HASH__;
     root["git_branch"] = __COMPILED_GIT_BRANCH__;
     root["pioenv"] = PIOENV;

@@ -1,6 +1,9 @@
 <template>
     <BootstrapAlert :show="noTotals" variant="info">
-        <BIconGear class="fs-4" /> {{ $t('hints.NoTotals') }}
+        <div class="d-flex">
+            <div class="align-content-center"><BIconGear class="fs-4" /></div>
+            <div class="align-content-center ms-3">{{ $t('hints.NoTotals') }}</div>
+        </div>
     </BootstrapAlert>
     <div class="row row-cols-1 row-cols-md-3 g-3" ref="totals-container">
         <div class="col" v-if="totalVeData.enabled">
