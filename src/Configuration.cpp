@@ -696,15 +696,6 @@ bool ConfigurationClass::read()
 
     deserializeSolarChargerConfig(doc["solarcharger"], config.SolarCharger);
 
-    // process settings from legacy config if they are present
-    // TODO(andreasboehm): remove end of 2025.
-    if (!doc["vedirect"].isNull()) {
-        JsonObject vedirect = doc["vedirect"];
-        config.SolarCharger.Enabled = vedirect["enabled"] | SOLAR_CHARGER_ENABLED;
-        config.SolarCharger.VerboseLogging = vedirect["verbose_logging"] | SOLAR_CHARGER_VERBOSE_LOGGING;
-        config.SolarCharger.PublishUpdatesOnly = vedirect["updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
-    }
-
     JsonObject powermeter = doc["powermeter"];
     config.PowerMeter.Enabled = powermeter["enabled"] | POWERMETER_ENABLED;
     config.PowerMeter.VerboseLogging = powermeter["verbose_logging"] | VERBOSE_LOGGING;
@@ -935,6 +926,13 @@ void ConfigurationClass::migrateOnBattery()
 
     if (config.Cfg.VersionOnBattery < 3) {
         config.Dtu.PollInterval *= 1000; // new unit is milliseconds
+    }
+
+    if (config.Cfg.VersionOnBattery < 4) {
+        JsonObject vedirect = doc["vedirect"];
+        config.SolarCharger.Enabled = vedirect["enabled"] | SOLAR_CHARGER_ENABLED;
+        config.SolarCharger.VerboseLogging = vedirect["verbose_logging"] | SOLAR_CHARGER_VERBOSE_LOGGING;
+        config.SolarCharger.PublishUpdatesOnly = vedirect["updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
     }
 
     f.close();
