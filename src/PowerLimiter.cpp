@@ -17,6 +17,7 @@
 #include <limits>
 #include <frozen/map.h>
 #include "SunPosition.h"
+#include "SurplusPower.h"
 
 static auto sBatteryPoweredFilter = [](PowerLimiterInverter const& inv) {
     return !inv.isSolarPowered();
@@ -312,7 +313,12 @@ void PowerLimiterClass::loop()
     inverterTotalPower = std::min(inverterTotalPower, totalAllowance);
 
     auto coveredBySolar = updateInverterLimits(inverterTotalPower, sSolarPoweredFilter, sSolarPoweredExpression);
-    auto remaining = (inverterTotalPower >= coveredBySolar) ? inverterTotalPower - coveredBySolar : 0;
+    auto remaining = (inverterTotalPower >= coveredBySolar) ? inverterTotalPower - coveredBySolar : 0u;
+
+    // todo: not 100% sure if this is the right place to call the surplus-power-mode
+    // because surplus can only handel battery powered inverter
+    if (SurplusPower.isSurplusEnabled()) { remaining = SurplusPower.calculateSurplusPower(remaining); }
+
     auto powerBusUsage = calcPowerBusUsage(remaining);
     auto coveredByBattery = updateInverterLimits(powerBusUsage, sBatteryPoweredFilter, sBatteryPoweredExpression);
 
