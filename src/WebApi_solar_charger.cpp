@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-/*
- * Copyright (C) 2022-2024 Thomas Basler and others
- */
 #include "WebApi_solarcharger.h"
 #include "ArduinoJson.h"
 #include "AsyncJson.h"
@@ -10,7 +7,7 @@
 #include "WebApi_errors.h"
 #include "helper.h"
 #include "MqttHandlePowerLimiterHass.h"
-#include <SolarCharger.h>
+#include "SolarCharger.h"
 
 void WebApiSolarChargerlass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -53,7 +50,8 @@ void WebApiSolarChargerlass::onAdminPost(AsyncWebServerRequest* request)
 
     if (!root["enabled"].is<bool>() ||
             !root["provider"].is<uint8_t>() ||
-            !root["verbose_logging"].is<bool>()) {
+            !root["verbose_logging"].is<bool>() ||
+            !root["publish_updates_only"].is<bool>()) {
         retMsg["message"] = "Values are missing!";
         retMsg["code"] = WebApiError::GenericValueMissing;
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);

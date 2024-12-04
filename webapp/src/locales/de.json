@@ -9,7 +9,7 @@
         "SecuritySettings": "Sicherheit",
         "DTUSettings": "DTU",
         "DeviceManager": "Hardware",
-        "SolarChargerSettings": "Solar Laderegler",
+        "SolarChargerSettings": "Solarladeregler",
         "PowerMeterSettings": "Stromzähler",
         "BatterySettings": "Batterie",
         "AcChargerSettings": "AC Ladegerät",
@@ -590,9 +590,9 @@
         "HassIndividual": "Einzelne Panels"
     },
     "solarchargeradmin": {
-        "SolarChargerSettings": "Solar Laderegler Einstellungen",
-        "SolarChargerConfiguration": "Solar Laderegler Konfiguration",
-        "EnableSolarCharger": "Aktiviere Solar Laderegler",
+        "SolarChargerSettings": "Solarladeregler Einstellungen",
+        "SolarChargerConfiguration": "Solarladeregler Konfiguration",
+        "EnableSolarCharger": "Aktiviere Schnittstelle",
         "Provider": "Datenanbieter",
         "ProviderVeDirect": "Victron MPPT(s) per VE.Direct Schnittstelle",
         "VerboseLogging": "@:base.VerboseLogging",

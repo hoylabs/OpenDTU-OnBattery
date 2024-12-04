@@ -11,7 +11,7 @@
 #include "SolarChargerProvider.h"
 #include "Utils.h"
 #include "__compiled_constants.h"
-#include <SolarCharger.h>
+#include "SolarCharger.h"
 
 MqttHandleVedirectHassClass MqttHandleVedirectHass;
 

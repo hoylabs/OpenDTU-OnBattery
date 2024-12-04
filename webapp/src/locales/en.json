@@ -594,7 +594,7 @@
     "solarchargeradmin": {
         "SolarChargerSettings": "Solar Charger Settings",
         "SolarChargerConfiguration": "Solar Charger Configuration",
-        "EnableSolarCharger": "Enable Solar Charger",
+        "EnableSolarCharger": "Enable Interface",
         "Provider": "Data Provider",
         "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
         "VerboseLogging": "@:base.VerboseLogging",

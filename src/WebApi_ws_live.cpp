@@ -11,8 +11,8 @@
 #include <gridcharger/huawei/Controller.h>
 #include "PowerMeter.h"
 #include "defaults.h"
+#include "SolarCharger.h"
 #include <AsyncJson.h>
-#include <SolarCharger.h>
 
 WebApiWsLiveClass::WebApiWsLiveClass()
     : _ws("/livedata")

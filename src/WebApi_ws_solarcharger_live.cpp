@@ -10,7 +10,7 @@
 #include "WebApi.h"
 #include "defaults.h"
 #include "PowerLimiter.h"
-#include <SolarCharger.h>
+#include "SolarCharger.h"
 
 WebApiWsSolarChargerLiveClass::WebApiWsSolarChargerLiveClass()
     : _ws("/solarchargerlivedata")

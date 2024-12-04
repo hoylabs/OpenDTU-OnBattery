@@ -6,7 +6,7 @@
 #include "MqttSettings.h"
 #include "MessageOutput.h"
 #include "SolarChargerProvider.h"
-#include <SolarCharger.h>
+#include "SolarCharger.h"
 
 MqttHandleVedirectClass MqttHandleVedirect;
 

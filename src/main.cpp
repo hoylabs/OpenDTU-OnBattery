@@ -34,12 +34,12 @@
 #include "PowerMeter.h"
 #include "PowerLimiter.h"
 #include "defaults.h"
+#include "SolarCharger.h"
 #include <Arduino.h>
 #include <LittleFS.h>
 #include <SpiManager.h>
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
-#include <SolarCharger.h>
 
 void setup()
 {
