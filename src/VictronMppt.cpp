@@ -73,7 +73,7 @@ void VictronMppt::loop()
  * isDataValid()
  * return: true = if at least one of the MPPT controllers delivers valid data
  */
-bool VictronMppt::isDataValid()
+bool VictronMppt::isDataValid() const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -84,7 +84,7 @@ bool VictronMppt::isDataValid()
     return false;
 }
 
-uint32_t VictronMppt::getDataAgeMillis()
+uint32_t VictronMppt::getDataAgeMillis() const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -104,7 +104,7 @@ uint32_t VictronMppt::getDataAgeMillis()
     return age;
 }
 
-uint32_t VictronMppt::getDataAgeMillis(size_t idx)
+uint32_t VictronMppt::getDataAgeMillis(size_t idx) const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -113,7 +113,7 @@ uint32_t VictronMppt::getDataAgeMillis(size_t idx)
     return millis() - _controllers[idx]->getLastUpdate();
 }
 
-std::optional<VeDirectMpptController::data_t> VictronMppt::getData(size_t idx)
+std::optional<VeDirectMpptController::data_t> VictronMppt::getData(size_t idx) const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -128,7 +128,7 @@ std::optional<VeDirectMpptController::data_t> VictronMppt::getData(size_t idx)
     return _controllers[idx]->getData();
 }
 
-int32_t VictronMppt::getPowerOutputWatts()
+int32_t VictronMppt::getPowerOutputWatts() const
 {
     int32_t sum = 0;
 
@@ -151,7 +151,7 @@ int32_t VictronMppt::getPowerOutputWatts()
     return sum;
 }
 
-int32_t VictronMppt::getPanelPowerWatts()
+int32_t VictronMppt::getPanelPowerWatts() const
 {
     int32_t sum = 0;
 
@@ -172,7 +172,7 @@ int32_t VictronMppt::getPanelPowerWatts()
     return sum;
 }
 
-float VictronMppt::getYieldTotal()
+float VictronMppt::getYieldTotal() const
 {
     float sum = 0;
 
@@ -184,7 +184,7 @@ float VictronMppt::getYieldTotal()
     return sum;
 }
 
-float VictronMppt::getYieldDay()
+float VictronMppt::getYieldDay() const
 {
     float sum = 0;
 
@@ -196,7 +196,7 @@ float VictronMppt::getYieldDay()
     return sum;
 }
 
-float VictronMppt::getOutputVoltage()
+float VictronMppt::getOutputVoltage() const
 {
     float min = -1;
 

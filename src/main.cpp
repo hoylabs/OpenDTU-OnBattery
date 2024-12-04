@@ -34,12 +34,12 @@
 #include "PowerMeter.h"
 #include "PowerLimiter.h"
 #include "defaults.h"
+#include "SolarCharger.h"
 #include <Arduino.h>
 #include <LittleFS.h>
 #include <SpiManager.h>
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
-#include <SolarCharger.h>
 
 void setup()
 {
@@ -178,7 +178,6 @@ void setup()
     Datastore.init(scheduler);
     RestartHelper.init(scheduler);
 
-    // Initialize Solar Charger
     SolarCharger.init(scheduler);
 
     // Power meter

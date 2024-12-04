@@ -16,7 +16,7 @@
 #include <limits>
 #include <frozen/map.h>
 #include "SunPosition.h"
-#include <SolarCharger.h>
+#include "SolarCharger.h"
 
 static auto sBatteryPoweredFilter = [](PowerLimiterInverter const& inv) {
     return !inv.isSolarPowered();

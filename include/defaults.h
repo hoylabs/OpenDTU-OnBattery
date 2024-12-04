@@ -117,7 +117,7 @@
 // values specific to downstream project OpenDTU-OnBattery start here:
 #define SOLAR_CHARGER_ENABLED false
 #define SOLAR_CHARGER_VERBOSE_LOGGING false
-#define SOLAR_CHARGER_PROVIDER 0 // Victron MPPT(s) via Ve.Direct
+#define SOLAR_CHARGER_PROVIDER 0 // Victron MPPT(s) via VE.Direct
 #define SOLAR_CHARGER_PUBLISH_UPDATES_ONLY true
 
 #define POWERMETER_ENABLED false
