@@ -19,7 +19,7 @@ public:
     uint32_t getDataAgeMillis(size_t idx);
 
     // total output of all MPPT charge controllers in Watts
-    int32_t getPowerOutputWatts();
+    int32_t getOutputPowerWatts();
 
     // total panel input power of all MPPT charge controllers in Watts
     int32_t getPanelPowerWatts();

@@ -3,11 +3,11 @@
 
 #include <mutex>
 #include <memory>
-
-#include "VeDirectMpptController.h"
-#include "SolarChargerProvider.h"
-#include "Configuration.h"
 #include <TaskSchedulerDeclarations.h>
+
+#include "SolarChargerProvider.h"
+#include "VeDirectMpptController.h"
+#include "Configuration.h"
 
 class VictronMppt : public SolarChargerProvider {
 public:
@@ -29,7 +29,7 @@ public:
     std::optional<VeDirectMpptController::data_t> getData(size_t idx = 0) const final;
 
     // total output of all MPPT charge controllers in Watts
-    int32_t getPowerOutputWatts() const final;
+    int32_t getOutputPowerWatts() const final;
 
     // total panel input power of all MPPT charge controllers in Watts
     int32_t getPanelPowerWatts() const final;
