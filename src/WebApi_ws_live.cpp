@@ -238,7 +238,7 @@ void WebApiWsLiveClass::generateInverterCommonJsonResponse(JsonObject& root, std
     root["serial"] = inv->serialString();
     root["name"] = inv->name();
     root["order"] = inv_cfg->Order;
-    root["data_age"] = (millis() - inv->Statistics()->getLastUpdate()) / 1000;
+    root["data_age_ms"] = millis() - inv->Statistics()->getLastUpdate();
     root["poll_enabled"] = inv->getEnablePolling();
     root["reachable"] = inv->isReachable();
     root["producing"] = inv->isProducing();
