@@ -913,6 +913,10 @@ void ConfigurationClass::migrateOnBattery()
         config.PowerLimiter.ConductionLosses = doc["powerlimiter"]["solar_passthrough_losses"].as<uint8_t>();
     }
 
+    if (config.Cfg.VersionOnBattery < 3) {
+        config.Dtu.PollInterval *= 1000; // new unit is milliseconds
+    }
+
     f.close();
 
     config.Cfg.VersionOnBattery = CONFIG_VERSION_ONBATTERY;
