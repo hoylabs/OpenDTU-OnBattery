@@ -350,6 +350,7 @@ bool ConfigurationClass::write()
     shelly["uri_on"] = config.Shelly.uri_on;
     shelly["uri_off"] = config.Shelly.uri_off;
     shelly["uri_stats"] = config.Shelly.uri_stats;
+    shelly["uri_powerparam"] = config.Shelly.uri_powerparam;
     shelly["power_on_threshold"] = config.Shelly.POWER_ON_threshold;
     shelly["power_off_threshold"] = config.Shelly.POWER_OFF_threshold;
 
@@ -715,6 +716,7 @@ bool ConfigurationClass::read()
     strlcpy(config.Shelly.uri_on, shelly["uri_on"] | SHELLY_URION, sizeof(config.Shelly.uri_on));
     strlcpy(config.Shelly.uri_off, shelly["uri_off"] | SHELLY_URIOFF, sizeof(config.Shelly.uri_off));
     strlcpy(config.Shelly.uri_stats, shelly["uri_stats"] | SHELLY_URIOFF, sizeof(config.Shelly.uri_stats));
+    strlcpy(config.Shelly.uri_powerparam, shelly["uri_powerparam"] | SHELLY_URIOFF, sizeof(config.Shelly.uri_powerparam));
     config.Shelly.POWER_ON_threshold = shelly["power_on_threshold"] | SHELLY_POWER_ON_THRESHOLD;
     config.Shelly.POWER_OFF_threshold = shelly["power_off_threshold"] | SHELLY_POWER_OFF_THRESHOLD;
 

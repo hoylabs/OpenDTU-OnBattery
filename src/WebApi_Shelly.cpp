@@ -54,6 +54,7 @@ void WebApiShellyClass::onAdminGet(AsyncWebServerRequest* request)
     root["uri_on"] = config.Shelly.uri_on;
     root["uri_off"] = config.Shelly.uri_off;
     root["uri_stats"] = config.Shelly.uri_stats;
+    root["uri_powerparam"] = config.Shelly.uri_powerparam;
     root["power_on_threshold"] = config.Shelly.POWER_ON_threshold;
     root["power_off_threshold"] = config.Shelly.POWER_OFF_threshold;
 
@@ -97,6 +98,7 @@ void WebApiShellyClass::onAdminPost(AsyncWebServerRequest* request)
     strlcpy( config.Shelly.uri_on, root["uri_on"].as<String>().c_str(), sizeof(config.Shelly.uri_on));
     strlcpy( config.Shelly.uri_off, root["uri_off"].as<String>().c_str(), sizeof(config.Shelly.uri_off));
     strlcpy( config.Shelly.uri_stats, root["uri_stats"].as<String>().c_str(), sizeof(config.Shelly.uri_stats));
+    strlcpy( config.Shelly.uri_powerparam, root["uri_powerparam"].as<String>().c_str(), sizeof(config.Shelly.uri_powerparam));
     config.Shelly.POWER_ON_threshold = root["power_on_threshold"];
     config.Shelly.POWER_OFF_threshold = root["power_off_threshold"];
     WebApi.writeConfig(retMsg);

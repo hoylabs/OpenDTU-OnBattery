@@ -257,6 +257,26 @@
                     </div>
                 </div>
                 <div class="row mb-3">
+                    <label for="ip" class="col-sm-2 col-form-label"
+                        >{{ $t('acchargeradmin.ShellyuriPOWERPARAM') }}:
+                        <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyuriPOWERPARAMHint')" />
+                    </label>
+                    <div class="col-sm-10">
+                        <div class="input-group">
+                            <input
+                                type="string"
+                                class="form-control"
+                                id="uri_powerparam"
+                                placeholder="apower"
+                                v-model="acChargerShellyConfigList.uri_powerparam"
+                                aria-describedby="uriDescription"
+                                required
+                            />
+                            <span class="input-group-text" id="uriDescription"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
                     <label for="ShellyStartThreshold" class="col-sm-2 col-form-label"
                         >{{ $t('acchargeradmin.ShellyStartThreshold') }}:
                         <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyStartThresholdHint')" />

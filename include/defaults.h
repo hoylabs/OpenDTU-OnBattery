@@ -178,5 +178,6 @@
 #define SHELLY_URION "/relay/0?turn=on"
 #define SHELLY_URIOFF "/relay/0?turn=off"
 #define SHELLY_URISTATS "/rpc/Switch.GetStatus?id=0"
+#define SHELLY_URIPOWERPARAM "apower"
 
 #define VERBOSE_LOGGING true

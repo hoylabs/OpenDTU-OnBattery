@@ -353,6 +353,7 @@ struct CONFIG_T {
         char uri_on[1025];
         char uri_off[1025];
         char uri_stats[1025];
+        char uri_powerparam[256];
         int32_t POWER_ON_threshold;
         int32_t POWER_OFF_threshold;
     } Shelly;

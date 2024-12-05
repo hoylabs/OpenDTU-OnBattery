@@ -24,6 +24,7 @@ export interface AcChargerShellyConfig {
     uri_on: string;
     uri_off: string;
     uri_stats: string;
+    uri_powerparam: string;
     power_on_threshold: number;
     power_off_threshold: number;
 }

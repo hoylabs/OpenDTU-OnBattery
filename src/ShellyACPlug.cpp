@@ -142,7 +142,7 @@ float ShellyACPlugClass::read_http(String uri)
         MessageOutput.printf((msg + error.c_str()).c_str());
         return 0;
     }
-    auto pathResolutionResult = Utils::getJsonValueByPath<float>(jsonResponse, "apower");
+    auto pathResolutionResult = Utils::getJsonValueByPath<float>(jsonResponse, config.Shelly.uri_powerparam);
     if (!pathResolutionResult.second.isEmpty()) {
         MessageOutput.printf("[ShellyACPlug::read_http] ERROR reading AC Power from Smart Plug %s\r\n",pathResolutionResult.second.c_str());
     }
