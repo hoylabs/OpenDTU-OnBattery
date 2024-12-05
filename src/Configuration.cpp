@@ -347,6 +347,9 @@ bool ConfigurationClass::write()
     shelly["stop_batterysoc_threshold"] = config.Shelly.stop_batterysoc_threshold;
     shelly["start_batterysoc_threshold"] = config.Shelly.start_batterysoc_threshold;
     shelly["url"] = config.Shelly.url;
+    shelly["uri_on"] = config.Shelly.uri_on;
+    shelly["uri_off"] = config.Shelly.uri_off;
+    shelly["uri_stats"] = config.Shelly.uri_stats;
     shelly["power_on_threshold"] = config.Shelly.POWER_ON_threshold;
     shelly["power_off_threshold"] = config.Shelly.POWER_OFF_threshold;
 
@@ -709,6 +712,9 @@ bool ConfigurationClass::read()
     config.Shelly.stop_batterysoc_threshold = shelly["stop_batterysoc_threshold"] | SHELLY_STOP_BATTERYSOC_THRESHOLD;
     config.Shelly.start_batterysoc_threshold = shelly["start_batterysoc_threshold"] | SHELLY_START_BATTERYSOC_THRESHOLD;
     strlcpy(config.Shelly.url, shelly["url"] | SHELLY_IPADDRESS, sizeof(config.Shelly.url));
+    strlcpy(config.Shelly.uri_on, shelly["uri_on"] | SHELLY_URION, sizeof(config.Shelly.uri_on));
+    strlcpy(config.Shelly.uri_off, shelly["uri_off"] | SHELLY_URIOFF, sizeof(config.Shelly.uri_off));
+    strlcpy(config.Shelly.uri_stats, shelly["uri_stats"] | SHELLY_URIOFF, sizeof(config.Shelly.uri_stats));
     config.Shelly.POWER_ON_threshold = shelly["power_on_threshold"] | SHELLY_POWER_ON_THRESHOLD;
     config.Shelly.POWER_OFF_threshold = shelly["power_off_threshold"] | SHELLY_POWER_OFF_THRESHOLD;
 

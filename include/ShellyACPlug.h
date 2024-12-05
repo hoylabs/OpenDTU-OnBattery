@@ -30,6 +30,8 @@ class ShellyACPlugClass {
         std::unique_ptr<HttpGetter> _HttpGetter;
         bool powerstate = false;
         bool verboselogging;
+        String uri_on;
+        String uri_off;
 };
 
 extern ShellyACPlugClass ShellyACPlug;

@@ -15,7 +15,7 @@ ShellyACPlugClass ShellyACPlug;
 
 bool ShellyACPlugClass::init(Scheduler& scheduler)
 {
-    MessageOutput.printf("ShellyACPlug Initializing ... \r\n");
+    MessageOutput.printf("[ShellyACPlug::init] ShellyACPlug Initializing ...\r\n");
     _initialized = true;
     scheduler.addTask(_loopTask);
     _loopTask.setCallback([this] { loop(); });
@@ -29,6 +29,8 @@ void ShellyACPlugClass::loop()
 {
     const CONFIG_T& config = Configuration.get();
     verboselogging=config.Shelly.VerboseLogging;
+    uri_on=config.Shelly.uri_on;
+    uri_off=config.Shelly.uri_off;
     if (!config.Shelly.Enabled || !_initialized || !config.PowerMeter.Enabled ) {
       return;
     }
@@ -36,7 +38,7 @@ void ShellyACPlugClass::loop()
     _acPower = PowerMeter.getPowerTotal();
     _SoC = Battery.getStats()->getSoC();
     _emergcharge = Battery.getStats()->getImmediateChargingRequest();
-    _readpower = read_http("/rpc/Switch.GetStatus?id=0");
+    _readpower = read_http(config.Shelly.uri_stats);
     if (_readpower>0)
     {
         powerstate=true;
@@ -50,35 +52,34 @@ void ShellyACPlugClass::loop()
         PowerOFF();
     }
     if (verboselogging) {
-        MessageOutput.print("[ShellyACPlug] Loop \r\n");
-        MessageOutput.printf("[ShellyACPlug] %f W \r\n", _acPower );
-        MessageOutput.printf("[ShellyACPlug] powerstate %d  \r\n", powerstate );
-        MessageOutput.printf("[ShellyACPlug] Battery SoC %f  \r\n", _SoC);
-        MessageOutput.printf("[ShellyACPlug] Verbrauch %f W \r\n", _readpower );
+        MessageOutput.printf("[ShellyACPlug::loop] Power reported by the Smart Plug%f W\r\n", _acPower );
+        MessageOutput.printf("[ShellyACPlug::loop] State of the Smart Plug ON/OFF %d \r\n", powerstate );
+        MessageOutput.printf("[ShellyACPlug::loop] Current Battery SoC %f \r\n", _SoC);
+        MessageOutput.printf("[ShellyACPlug::loop] Current Power consumed by the household %f W\r\n", _readpower );
     }
 }
 
 void ShellyACPlugClass::PowerON()
 {
-    if (!send_http("/relay/0?turn=on"))
+    if (!send_http(uri_on))
     {
         return;
     }
     powerstate=true;
     if (verboselogging) {
-        MessageOutput.print("[ShellyACPlug] Power ON \r\n");
+        MessageOutput.print("[ShellyACPlug::PowerON] Power ON\r\n");
     }
 }
 
 void ShellyACPlugClass::PowerOFF()
 {
-    if (!send_http("/relay/0?turn=off"))
+    if (!send_http(uri_off))
     {
         return;
     };
     powerstate=false;
     if (verboselogging) {
-        MessageOutput.print("[ShellyACPlug] Power OFF \r\n");
+        MessageOutput.print("[ShellyACPlug::PowerOFF] Power OFF\r\n");
     }
 }
 
@@ -92,14 +93,14 @@ bool ShellyACPlugClass::send_http(String uri)
     HttpRequest.Timeout = 60;
     _HttpGetter = std::make_unique<HttpGetter>(HttpRequest);
     if (config.Shelly.VerboseLogging) {
-        MessageOutput.printf("[ShellyACPlug] send_http Initializing: %s\r\n",url.c_str());
+        MessageOutput.printf("[ShellyACPlug::send_http]] Start sending to URL: %s\r\n",url.c_str());
     }
     if (!_HttpGetter->init()) {
-        MessageOutput.printf("[ShellyACPlug] INIT %s\r\n", _HttpGetter->getErrorText());
+        MessageOutput.printf("[ShellyACPlug::send_http]] ERROR INIT HttpGetter %s\r\n", _HttpGetter->getErrorText());
         return false;
     }
     if (!_HttpGetter->performGetRequest()) {
-        MessageOutput.printf("[ShellyACPlug] GET %s\r\n", _HttpGetter->getErrorText());
+        MessageOutput.printf("[ShellyACPlug::send_http] ERROR GET HttpGetter %s\r\n", _HttpGetter->getErrorText());
         return false;
     }
     _HttpGetter = nullptr;
@@ -116,38 +117,36 @@ float ShellyACPlugClass::read_http(String uri)
     HttpRequest.Timeout = 60;
     _HttpGetter = std::make_unique<HttpGetter>(HttpRequest);
     if (config.Shelly.VerboseLogging) {
-        MessageOutput.printf("[ShellyACPlug] read_http Initializing: %s\r\n",url.c_str());
+        MessageOutput.printf("[ShellyACPlug::read_http] Start reading from URL: %s\r\n",url.c_str());
     }
     if (!_HttpGetter->init()) {
-        MessageOutput.printf("[ShellyACPlug] INIT %s\r\n", _HttpGetter->getErrorText());
+        MessageOutput.printf("[ShellyACPlug::read_http] ERROR INIT HttpGetter %s\r\n", _HttpGetter->getErrorText());
         return 0;
     }
     _HttpGetter->addHeader("Content-Type", "application/json");
     _HttpGetter->addHeader("Accept", "application/json");
     auto res = _HttpGetter->performGetRequest();
     if (!res) {
-        MessageOutput.printf("[ShellyACPlug] GET %s\r\n", _HttpGetter->getErrorText());
+        MessageOutput.printf("[ShellyACPlug::read_http] ERROR GET HttpGetter %s\r\n", _HttpGetter->getErrorText());
         return 0;
     }
     auto pStream = res.getStream();
     if (!pStream) {
-        MessageOutput.printf("Programmer error: HTTP request yields no stream");
+        MessageOutput.printf("[ShellyACPlug::read_http] Programmer error: HTTP request yields no stream");
         return 0;
     }
 
    const DeserializationError error = deserializeJson(jsonResponse, *pStream);
     if (error) {
-        String msg("[ShellyACPlug] Unable to parse server response as JSON: ");
+        String msg("[ShellyACPlug::read_http] Unable to parse server response as JSON: ");
         MessageOutput.printf((msg + error.c_str()).c_str());
         return 0;
     }
     auto pathResolutionResult = Utils::getJsonValueByPath<float>(jsonResponse, "apower");
     if (!pathResolutionResult.second.isEmpty()) {
-        MessageOutput.printf("[ShellyACPlug] second %s\r\n",pathResolutionResult.second.c_str());
+        MessageOutput.printf("[ShellyACPlug::read_http] ERROR reading AC Power from Smart Plug %s\r\n",pathResolutionResult.second.c_str());
     }
 
     _HttpGetter = nullptr;
     return pathResolutionResult.first;
 }
-
-

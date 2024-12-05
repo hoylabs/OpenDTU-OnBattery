@@ -197,6 +197,66 @@
                     </div>
                 </div>
                 <div class="row mb-3">
+                    <label for="ip" class="col-sm-2 col-form-label"
+                        >{{ $t('acchargeradmin.ShellyuriON') }}:
+                        <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyuriONHint')" />
+                    </label>
+                    <div class="col-sm-10">
+                        <div class="input-group">
+                            <input
+                                type="string"
+                                class="form-control"
+                                id="uri_on"
+                                placeholder="/relay/0?turn=on"
+                                v-model="acChargerShellyConfigList.uri_on"
+                                aria-describedby="uriDescription"
+                                required
+                            />
+                            <span class="input-group-text" id="uriDescription"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="ip" class="col-sm-2 col-form-label"
+                        >{{ $t('acchargeradmin.ShellyuriOFF') }}:
+                        <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyuriOFFHint')" />
+                    </label>
+                    <div class="col-sm-10">
+                        <div class="input-group">
+                            <input
+                                type="string"
+                                class="form-control"
+                                id="uri_off"
+                                placeholder="/relay/0?turn=off"
+                                v-model="acChargerShellyConfigList.uri_off"
+                                aria-describedby="uriDescription"
+                                required
+                            />
+                            <span class="input-group-text" id="uriDescription"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="ip" class="col-sm-2 col-form-label"
+                        >{{ $t('acchargeradmin.ShellyuriSTATS') }}:
+                        <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyuriSTATSHint')" />
+                    </label>
+                    <div class="col-sm-10">
+                        <div class="input-group">
+                            <input
+                                type="string"
+                                class="form-control"
+                                id="uri_stats"
+                                placeholder="/relay/0?turn=stats"
+                                v-model="acChargerShellyConfigList.uri_stats"
+                                aria-describedby="uriDescription"
+                                required
+                            />
+                            <span class="input-group-text" id="uriDescription"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
                     <label for="ShellyStartThreshold" class="col-sm-2 col-form-label"
                         >{{ $t('acchargeradmin.ShellyStartThreshold') }}:
                         <BIconInfoCircle v-tooltip :title="$t('acchargeradmin.ShellyStartThresholdHint')" />

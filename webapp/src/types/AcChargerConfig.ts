@@ -21,6 +21,9 @@ export interface AcChargerShellyConfig {
     stop_batterysoc_threshold: number;
     start_batterysoc_threshold: number;
     url: string;
+    uri_on: string;
+    uri_off: string;
+    uri_stats: string;
     power_on_threshold: number;
     power_off_threshold: number;
 }

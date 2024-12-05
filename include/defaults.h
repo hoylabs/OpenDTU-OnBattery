@@ -175,5 +175,8 @@
 #define SHELLY_STOP_BATTERYSOC_THRESHOLD 95
 #define SHELLY_START_BATTERYSOC_THRESHOLD 90
 #define SHELLY_IPADDRESS "http://192.168.2.100"
+#define SHELLY_URION "/relay/0?turn=on"
+#define SHELLY_URIOFF "/relay/0?turn=off"
+#define SHELLY_URISTATS "/rpc/Switch.GetStatus?id=0"
 
 #define VERBOSE_LOGGING true

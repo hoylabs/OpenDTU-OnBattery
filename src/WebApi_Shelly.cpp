@@ -51,6 +51,9 @@ void WebApiShellyClass::onAdminGet(AsyncWebServerRequest* request)
     root["stop_batterysoc_threshold"] = config.Shelly.stop_batterysoc_threshold;
     root["start_batterysoc_threshold"] = config.Shelly.start_batterysoc_threshold;
     root["url"] = config.Shelly.url;
+    root["uri_on"] = config.Shelly.uri_on;
+    root["uri_off"] = config.Shelly.uri_off;
+    root["uri_stats"] = config.Shelly.uri_stats;
     root["power_on_threshold"] = config.Shelly.POWER_ON_threshold;
     root["power_off_threshold"] = config.Shelly.POWER_OFF_threshold;
 
@@ -91,6 +94,9 @@ void WebApiShellyClass::onAdminPost(AsyncWebServerRequest* request)
     config.Shelly.stop_batterysoc_threshold = root["stop_batterysoc_threshold"];
     config.Shelly.start_batterysoc_threshold = root["start_batterysoc_threshold"];
     strlcpy( config.Shelly.url, root["url"].as<String>().c_str(), sizeof(config.Shelly.url));
+    strlcpy( config.Shelly.uri_on, root["uri_on"].as<String>().c_str(), sizeof(config.Shelly.uri_on));
+    strlcpy( config.Shelly.uri_off, root["uri_off"].as<String>().c_str(), sizeof(config.Shelly.uri_off));
+    strlcpy( config.Shelly.uri_stats, root["uri_stats"].as<String>().c_str(), sizeof(config.Shelly.uri_stats));
     config.Shelly.POWER_ON_threshold = root["power_on_threshold"];
     config.Shelly.POWER_OFF_threshold = root["power_off_threshold"];
     WebApi.writeConfig(retMsg);
@@ -102,7 +108,7 @@ void WebApiShellyClass::onAdminPost(AsyncWebServerRequest* request)
     yield();
 
     if (config.Shelly.Enabled) {
-        MessageOutput.println("Initialize Shelly AC charger interface... ");
+        MessageOutput.println("[ShellyACPlug::WebApi] Initialize Shelly AC charger interface... ");
     }
 
     if (!config.Shelly.Enabled) {
