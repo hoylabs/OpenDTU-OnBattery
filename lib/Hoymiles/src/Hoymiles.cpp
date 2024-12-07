@@ -47,7 +47,7 @@ void HoymilesClass::loop()
         return;
     }
 
-    if (millis() - _lastPoll > (_pollInterval * 1000)) {
+    if (millis() - _lastPoll > _pollInterval) {
         static uint8_t inverterPos = 0;
 
         std::shared_ptr<InverterAbstract> iv = getInverterByPos(inverterPos);
