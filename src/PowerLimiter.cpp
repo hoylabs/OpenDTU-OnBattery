@@ -234,7 +234,7 @@ void PowerLimiterClass::loop()
     auto getBatteryPower = [this,&config]() -> bool {
         if (!usesBatteryPoweredInverter()) { return false; }
 
-        auto isDayPeriod = SunPosition.isSunsetAvailable() ? SunPosition.isDayPeriod() : true;
+        auto isDayPeriod = SunPosition.isDayPeriod();
 
         if (_nighttimeDischarging && isDayPeriod) {
             _nighttimeDischarging = false;
