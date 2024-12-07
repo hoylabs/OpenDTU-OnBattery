@@ -5,7 +5,6 @@
 #include "MqttHandleVedirect.h"
 #include "MqttSettings.h"
 #include "MessageOutput.h"
-#include "SolarChargerProvider.h"
 #include "SolarCharger.h"
 
 MqttHandleVedirectClass MqttHandleVedirect;
@@ -36,7 +35,7 @@ void MqttHandleVedirectClass::loop()
     auto const& config = Configuration.get();
     if (!MqttSettings.getConnected()
         || !config.SolarCharger.Enabled
-        || static_cast<SolarChargerProvider::Type>(config.SolarCharger.Provider) != SolarChargerProvider::Type::VEDIRECT) {
+        || config.SolarCharger.Provider != SolarChargerProviderType::VEDIRECT) {
         return;
     }
 

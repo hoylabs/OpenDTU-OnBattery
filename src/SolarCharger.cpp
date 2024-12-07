@@ -30,8 +30,8 @@ void SolarChargerClass::updateSettings()
 
     bool verboseLogging = config.SolarCharger.VerboseLogging;
 
-    switch (static_cast<SolarChargerProvider::Type>(config.SolarCharger.Provider)) {
-        case SolarChargerProvider::Type::VEDIRECT:
+    switch (config.SolarCharger.Provider) {
+        case SolarChargerProviderType::VEDIRECT:
             _upProvider = std::make_unique<VictronMppt>();
             break;
         default:

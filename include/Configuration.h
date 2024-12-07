@@ -196,10 +196,12 @@ struct BATTERY_CONFIG_T {
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
+enum SolarChargerProviderType { VEDIRECT = 0 };
+
 struct SOLAR_CHARGER_CONFIG_T {
     bool Enabled;
     bool VerboseLogging;
-    uint8_t Provider;
+    SolarChargerProviderType Provider;
     bool PublishUpdatesOnly;
 };
 using SolarChargerConfig = struct SOLAR_CHARGER_CONFIG_T;
