@@ -19,6 +19,7 @@ private:
     String _voltageTopic;
     String _dischargeCurrentLimitTopic;
     std::shared_ptr<MqttBatteryStats> _stats = std::make_shared<MqttBatteryStats>();
+    uint8_t _socPrecision = 0;
 
     void onMqttMessageSoC(espMqttClientTypes::MessageProperties const& properties,
             char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,

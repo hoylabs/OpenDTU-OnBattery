@@ -98,11 +98,20 @@ void MqttBattery::onMqttMessageSoC(espMqttClientTypes::MessageProperties const& 
         return;
     }
 
-    _stats->setSoC(*soc, 0/*precision*/, millis());
+    unsigned factor = 10;
+    uint8_t precision = 0;
+    while (precision < 2) {
+        if (std::floor(*soc * factor) == std::floor(*soc) * factor) { break; }
+        ++precision;
+        factor *= 10;
+    }
+    _socPrecision = std::max(_socPrecision, precision);
+
+    _stats->setSoC(*soc, _socPrecision, millis());
 
     if (_verboseLogging) {
-        MessageOutput.printf("MqttBattery: Updated SoC to %d from '%s'\r\n",
-                static_cast<uint8_t>(*soc), topic);
+        MessageOutput.printf("MqttBattery: Updated SoC to %.*f from '%s'\r\n",
+                _socPrecision, *soc, topic);
     }
 }
 
