@@ -8,7 +8,6 @@
 #include "MqttHandleHass.h"
 #include "NetworkSettings.h"
 #include "MessageOutput.h"
-#include "SolarChargerProvider.h"
 #include "Utils.h"
 #include "__compiled_constants.h"
 #include "SolarCharger.h"
@@ -27,7 +26,7 @@ void MqttHandleVedirectHassClass::loop()
 {
     if (!Configuration.get().Mqtt.Hass.Enabled
         || !Configuration.get().SolarCharger.Enabled
-        || static_cast<SolarChargerProvider::Type>(Configuration.get().SolarCharger.Provider) != SolarChargerProvider::Type::VEDIRECT) {
+        || Configuration.get().SolarCharger.Provider != SolarChargerProviderType::VEDIRECT) {
         return;
     }
 

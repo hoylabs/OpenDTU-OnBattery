@@ -382,7 +382,7 @@ void ConfigurationClass::deserializeSolarChargerConfig(JsonObject const& source,
 {
     target.Enabled = source["enabled"] | SOLAR_CHARGER_ENABLED;
     target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
-    target.Provider = source["provider"] | SOLAR_CHARGER_PROVIDER;
+    target.Provider = source["provider"] | SolarChargerProviderType::VEDIRECT;
     target.PublishUpdatesOnly = source["publish_updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
 }
 
