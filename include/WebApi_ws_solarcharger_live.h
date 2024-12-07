@@ -8,9 +8,9 @@
 #include <VeDirectMpptController.h>
 #include <mutex>
 
-class WebApiWsVedirectLiveClass {
+class WebApiWsSolarChargerLiveClass {
 public:
-    WebApiWsVedirectLiveClass();
+    WebApiWsSolarChargerLiveClass();
     void init(AsyncWebServer& server, Scheduler& scheduler);
     void reload();
 
