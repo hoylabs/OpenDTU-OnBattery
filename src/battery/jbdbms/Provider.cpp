@@ -12,6 +12,10 @@
 
 namespace Batteries::JbdBms {
 
+Provider::Provider()
+    : _stats(std::make_shared<Stats>())
+    , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
+
 bool Provider::init(bool verboseLogging)
 {
     _verboseLogging = verboseLogging;

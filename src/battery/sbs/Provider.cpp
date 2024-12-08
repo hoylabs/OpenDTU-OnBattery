@@ -7,6 +7,10 @@
 
 namespace Batteries::SBS {
 
+Provider::Provider()
+    : _stats(std::make_shared<Stats>())
+    , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
+
 bool Provider::init(bool verboseLogging)
 {
     _stats->_chargeVoltage =58.4;

@@ -8,17 +8,19 @@
 #include <battery/jbdbms/Stats.h>
 #include <battery/jbdbms/DataPoints.h>
 #include <battery/jbdbms/SerialMessage.h>
+#include <battery/jbdbms/HassIntegration.h>
 
 namespace Batteries::JbdBms {
 
 class Provider : public ::Batteries::Provider {
 public:
-    Provider() = default;
+    Provider();
 
     bool init(bool verboseLogging) final;
     void deinit() final;
     void loop() final;
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
+    std::shared_ptr<::Batteries::HassIntegration> getHassIntegration() final { return _hassIntegration; }
 
 private:
     static char constexpr _serialPortOwner[] = "JBD BMS";
@@ -80,8 +82,8 @@ private:
     uint32_t _lastRequest = 0;
     uint8_t _dataLength = 0;
     JbdBms::SerialResponse::tData _buffer = {};
-    std::shared_ptr<Stats> _stats =
-        std::make_shared<Stats>();
+    std::shared_ptr<Stats> _stats;
+    std::shared_ptr<HassIntegration> _hassIntegration;
 };
 
 } // namespace Batteries::JbdBms

@@ -7,6 +7,10 @@
 
 namespace Batteries::Pytes {
 
+Provider::Provider()
+    : _stats(std::make_shared<Stats>())
+    , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
+
 static void pytesSetCellLabel(String& label, uint16_t value) {
     char name[8];
     snprintf(name, sizeof(name), "%02d%02d", value & 0xff, value >> 8);

@@ -15,6 +15,7 @@ public:
     void deinit() final;
     void loop() final { return; } // this class is event-driven
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
+    std::shared_ptr<HassIntegration> getHassIntegration() final { return nullptr; }
 
 private:
     bool _verboseLogging = false;

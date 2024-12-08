@@ -6,6 +6,10 @@
 
 namespace Batteries::VictronSmartShunt {
 
+Provider::Provider()
+    : _stats(std::make_shared<Stats>())
+    , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
+
 void Provider::deinit()
 {
     SerialPortManager.freePort(_serialPortOwner);

@@ -12,7 +12,7 @@ namespace Batteries {
 // mandatory interface for all kinds of batteries
 class Stats {
 public:
-    String const& getManufacturer() const { return _manufacturer; }
+    std::optional<String> const& getManufacturer() const { return _oManufacturer; }
 
     // the last time *any* data was updated
     uint32_t getAgeSeconds() const { return (millis() - _lastUpdate) / 1000; }
@@ -133,7 +133,7 @@ protected:
     uint32_t _lastUpdate = 0;
 
 private:
-    String _manufacturer = "unknown";
+    std::optional<String> _oManufacturer = std::nullopt;
     uint32_t _lastMqttPublish = 0;
     float _soc = 0;
     uint8_t _socPrecision = 0; // decimal places

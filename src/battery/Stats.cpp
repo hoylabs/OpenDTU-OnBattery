@@ -16,7 +16,7 @@ void Stats::setManufacturer(const String& m)
             break;
         }
     }
-    _manufacturer = std::move(sanitized);
+    _oManufacturer = std::move(sanitized);
 }
 
 bool Stats::updateAvailable(uint32_t since) const
@@ -29,7 +29,10 @@ bool Stats::updateAvailable(uint32_t since) const
 
 void Stats::getLiveViewData(JsonVariant& root) const
 {
-    root["manufacturer"] = _manufacturer;
+    String manufacturer = "unknown";
+    if (_oManufacturer.has_value()) { manufacturer = *_oManufacturer; }
+
+    root["manufacturer"] = manufacturer;
     if (!_serial.isEmpty()) {
         root["serial"] = _serial;
     }
@@ -87,7 +90,10 @@ uint32_t Stats::getMqttFullPublishIntervalMs() const
 
 void Stats::mqttPublish() const
 {
-    MqttSettings.publish("battery/manufacturer", _manufacturer);
+    if (_oManufacturer.has_value()) {
+        MqttSettings.publish("battery/manufacturer", *_oManufacturer);
+    }
+
     MqttSettings.publish("battery/dataAge", String(getAgeSeconds()));
 
     if (isSoCValid()) {

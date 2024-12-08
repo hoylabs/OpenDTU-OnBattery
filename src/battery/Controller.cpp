@@ -89,6 +89,9 @@ void Controller::loop()
     _upProvider->loop();
 
     _upProvider->getStats()->mqttLoop();
+
+    auto spHassIntegration = _upProvider->getHassIntegration();
+    if (spHassIntegration) { spHassIntegration->hassLoop(); }
 }
 
 float Controller::getDischargeCurrentLimit()
