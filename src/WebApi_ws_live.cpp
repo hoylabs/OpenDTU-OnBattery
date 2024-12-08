@@ -7,7 +7,8 @@
 #include "MessageOutput.h"
 #include "Utils.h"
 #include "WebApi.h"
-#include "Battery.h"
+#include <battery/Controller.h>
+#include <battery/Stats.h>
 #include <gridcharger/huawei/Controller.h>
 #include <powermeter/Controller.h>
 #include "defaults.h"
