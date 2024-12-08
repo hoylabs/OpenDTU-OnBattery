@@ -6,6 +6,7 @@
 #include "Configuration.h"
 #include "NetworkSettings.h"
 #include "PinMapping.h"
+#include "SerialPortManager.h"
 #include "WebApi.h"
 #include "__compiled_constants.h"
 #include <AsyncJson.h>
@@ -91,6 +92,13 @@ void WebApiSysstatusClass::onSystemStatus(AsyncWebServerRequest* request)
 
     root["cmt_configured"] = PinMapping.isValidCmt2300Config();
     root["cmt_connected"] = Hoymiles.getRadioCmt()->isConnected();
+
+    JsonArray uarts = root["uarts"].to<JsonArray>();
+    for (auto const& allocation : SerialPortManager.getAllocations()) {
+        JsonObject uart = uarts.add<JsonObject>();
+        uart["port"] = allocation.first;
+        uart["owner"] = allocation.second;
+    }
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }

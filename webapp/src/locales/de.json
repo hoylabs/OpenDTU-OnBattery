@@ -42,7 +42,7 @@
         "Close": "Schließen"
     },
     "wait": {
-        "NotReady": "OpenDTU ist noch nicht bereit",
+        "NotReady": "OpenDTU-OnBattery ist noch nicht bereit",
         "PleaseWait": "Bitte warten. Sie werden automatisch auf die Startseite weitergeleitet."
     },
     "Error": {
@@ -325,6 +325,13 @@
         "Configured": "konfiguriert",
         "NotConfigured": "nicht konfiguriert",
         "Unknown": "unbekannt"
+    },
+    "uartallocations": {
+        "Allocations": "Zuteilung Serieller Hardwareschnittstellen",
+        "Owner": "Komponente",
+        "Port": "Zugeteilte Schnittstelle",
+        "Free": "(Noch Verfügbar)",
+        "Rejected": "Keine Schnittstelle verfügbar"
     },
     "networkinfo": {
         "NetworkInformation": "Netzwerkinformationen"

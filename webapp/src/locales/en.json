@@ -42,7 +42,7 @@
         "Close": "Close"
     },
     "wait": {
-        "NotReady": "OpenDTU is not yet ready",
+        "NotReady": "OpenDTU-OnBattery is not yet ready",
         "PleaseWait": "Please wait. You will be automatically redirected to the home page."
     },
     "Error": {
@@ -326,6 +326,13 @@
         "Configured": "configured",
         "NotConfigured": "not configured",
         "Unknown": "Unknown"
+    },
+    "uartallocations": {
+        "Allocations": "Serial Hardware Interface Allocations",
+        "Owner": "Component",
+        "Port": "Allocated Port",
+        "Free": "(Still Available)",
+        "Rejected": "No UART available"
     },
     "networkinfo": {
         "NetworkInformation": "Network Information"
