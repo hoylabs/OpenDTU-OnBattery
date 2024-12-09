@@ -8,6 +8,7 @@
 #include "VictronSmartShunt.h"
 #include "MqttBattery.h"
 #include "PytesCanReceiver.h"
+#include "ZendureBattery.h"
 
 BatteryClass Battery;
 
@@ -68,6 +69,9 @@ void BatteryClass::updateSettings()
             break;
         case 6:
             _upProvider = std::make_unique<JbdBms::Controller>();
+            break;
+        case 7:
+            _upProvider = std::make_unique<ZendureBattery>();
             break;
         default:
             MessageOutput.printf("[Battery] Unknown provider: %d\r\n", config.Battery.Provider);
