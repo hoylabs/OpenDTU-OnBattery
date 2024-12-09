@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     # prevent push event from triggering if it's part of a local PR, see
     # https://github.com/orgs/community/discussions/57827#discussioncomment-6579237
@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install cpplint==1.6.1
+          pip install cpplint
       - name: Linting
         run: |
           cpplint --repository=. --recursive \

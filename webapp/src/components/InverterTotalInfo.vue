@@ -1,5 +1,11 @@
 <template>
-    <div class="row row-cols-1 row-cols-md-3 g-3">
+    <BootstrapAlert :show="noTotals" variant="info">
+        <div class="d-flex">
+            <div class="align-content-center"><BIconGear class="fs-4" /></div>
+            <div class="align-content-center ms-3">{{ $t('hints.NoTotals') }}</div>
+        </div>
+    </BootstrapAlert>
+    <div class="row row-cols-1 row-cols-md-3 g-3" ref="totals-container">
         <div class="col" v-if="totalVeData.enabled">
             <CardElement
                 centerContent
@@ -43,7 +49,7 @@
                 </h2>
             </CardElement>
         </div>
-        <div class="col">
+        <div class="col" v-if="hasInverters">
             <CardElement
                 centerContent
                 textVariant="text-bg-success"
@@ -60,7 +66,7 @@
                 </h2>
             </CardElement>
         </div>
-        <div class="col">
+        <div class="col" v-if="hasInverters">
             <CardElement
                 centerContent
                 textVariant="text-bg-success"
@@ -77,7 +83,7 @@
                 </h2>
             </CardElement>
         </div>
-        <div class="col">
+        <div class="col" v-if="hasInverters">
             <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.InverterTotalPower')">
                 <h2>
                     {{
@@ -99,7 +105,7 @@
                     :text="$t('invertertotalinfo.BatteryCharge')"
                 >
                     <div class="flex-fill" v-if="totalBattData.soc">
-                        <h2>
+                        <h2 class="mb-0">
                             {{
                                 $n(totalBattData.soc.v, 'decimal', {
                                     minimumFractionDigits: totalBattData.soc.d,
@@ -111,7 +117,7 @@
                     </div>
 
                     <div class="flex-fill" v-if="totalBattData.voltage">
-                        <h2>
+                        <h2 class="mb-0">
                             {{
                                 $n(totalBattData.voltage.v, 'decimal', {
                                     minimumFractionDigits: totalBattData.voltage.d,
@@ -131,7 +137,7 @@
                     :text="$t('invertertotalinfo.BatteryPower')"
                 >
                     <div class="flex-fill" v-if="totalBattData.power">
-                        <h2>
+                        <h2 class="mb-0">
                             {{
                                 $n(totalBattData.power.v, 'decimal', {
                                     minimumFractionDigits: totalBattData.power.d,
@@ -143,7 +149,7 @@
                     </div>
 
                     <div class="flex-fill" v-if="totalBattData.current">
-                        <h2>
+                        <h2 class="mb-0">
                             {{
                                 $n(totalBattData.current.v, 'decimal', {
                                     minimumFractionDigits: totalBattData.current.d,
@@ -186,20 +192,34 @@
 </template>
 
 <script lang="ts">
+import BootstrapAlert from '@/components/BootstrapAlert.vue';
+import { BIconGear } from 'bootstrap-icons-vue';
 import type { Battery, Total, Vedirect, Huawei, PowerMeter } from '@/types/LiveDataStatus';
 import CardElement from './CardElement.vue';
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, type PropType, useTemplateRef } from 'vue';
 
 export default defineComponent({
     components: {
+        BootstrapAlert,
+        BIconGear,
         CardElement,
     },
     props: {
         totalData: { type: Object as PropType<Total>, required: true },
+        hasInverters: { type: Boolean, required: true },
         totalVeData: { type: Object as PropType<Vedirect>, required: true },
         totalBattData: { type: Object as PropType<Battery>, required: true },
         powerMeterData: { type: Object as PropType<PowerMeter>, required: true },
         huaweiData: { type: Object as PropType<Huawei>, required: true },
+    },
+    data() {
+        return {
+            totalsContainer: useTemplateRef<HTMLDivElement>('totals-container'),
+            noTotals: false,
+        };
+    },
+    mounted() {
+        this.noTotals = this.totalsContainer?.children.length === 0 || false;
     },
 });
 </script>

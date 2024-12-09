@@ -45,7 +45,7 @@
                                 v-bind:key="section"
                                 class="col order-0"
                             >
-                                <div class="card" :class="{ 'border-info': true }">
+                                <div class="card card-table" :class="{ 'border-info': true }">
                                     <div class="card-header text-bg-info">
                                         <template v-if="section.toString().startsWith('_')">
                                             {{ section.toString().substring(1) }}
@@ -55,48 +55,50 @@
                                         </template>
                                     </div>
                                     <div class="card-body">
-                                        <table class="table table-striped table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th scope="col">{{ $t('battery.Property') }}</th>
-                                                    <th style="text-align: right" scope="col">
-                                                        {{ $t('battery.Value') }}
-                                                    </th>
-                                                    <th scope="col">{{ $t('battery.Unit') }}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="(prop, key) in values" v-bind:key="key">
-                                                    <th scope="row">{{ $t('battery.' + key) }}</th>
-                                                    <td style="text-align: right">
-                                                        <template v-if="isStringValue(prop) && prop.translate">
-                                                            {{ $t('battery.' + prop.value) }}
-                                                        </template>
-                                                        <template v-else-if="isStringValue(prop)">
-                                                            {{ prop.value }}
-                                                        </template>
-                                                        <template v-else>
-                                                            {{
-                                                                $n(prop.v, 'decimal', {
-                                                                    minimumFractionDigits: prop.d,
-                                                                    maximumFractionDigits: prop.d,
-                                                                })
-                                                            }}
-                                                        </template>
-                                                    </td>
-                                                    <td>
-                                                        <template v-if="!isStringValue(prop)">
-                                                            {{ prop.u }}
-                                                        </template>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">{{ $t('battery.Property') }}</th>
+                                                        <th class="value" scope="col">
+                                                            {{ $t('battery.Value') }}
+                                                        </th>
+                                                        <th scope="col">{{ $t('battery.Unit') }}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr v-for="(prop, key) in values" v-bind:key="key">
+                                                        <th scope="row">{{ $t('battery.' + key) }}</th>
+                                                        <td class="value">
+                                                            <template v-if="isStringValue(prop) && prop.translate">
+                                                                {{ $t('battery.' + prop.value) }}
+                                                            </template>
+                                                            <template v-else-if="isStringValue(prop)">
+                                                                {{ prop.value }}
+                                                            </template>
+                                                            <template v-else>
+                                                                {{
+                                                                    $n(prop.v, 'decimal', {
+                                                                        minimumFractionDigits: prop.d,
+                                                                        maximumFractionDigits: prop.d,
+                                                                    })
+                                                                }}
+                                                            </template>
+                                                        </td>
+                                                        <td>
+                                                            <template v-if="!isStringValue(prop)">
+                                                                {{ prop.u }}
+                                                            </template>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="col order-1" v-show="batteryData.showIssues">
-                                <div class="card">
+                                <div class="card card-table">
                                     <div :class="{ 'card-header': true, 'border-bottom-0': maxIssueValue === 0 }">
                                         <div class="d-flex flex-row justify-content-between align-items-baseline">
                                             {{ $t('battery.issues') }}

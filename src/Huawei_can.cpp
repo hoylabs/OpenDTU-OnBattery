@@ -88,7 +88,7 @@ void HuaweiCanCommClass::loop()
     if((rxId & 0x80000000) == 0x80000000) {   // Determine if ID is standard (11 bits) or extended (29 bits)
       if ((rxId & 0x1FFFFFFF) == 0x1081407F && len == 8) {
 
-        uint32_t value = __bswap32(* reinterpret_cast<uint32_t*> (rxBuf + 4));
+        int32_t value = __bswap32(*reinterpret_cast<int32_t*>(rxBuf + 4));
 
         // Input power 0x70, Input frequency 0x71, Input current 0x72
         // Output power 0x73, Efficiency 0x74, Output Voltage 0x75 and Output Current 0x76
@@ -144,14 +144,13 @@ void HuaweiCanCommClass::loop()
 
 }
 
-uint32_t HuaweiCanCommClass::getParameterValue(uint8_t parameter)
+int32_t HuaweiCanCommClass::getParameterValue(uint8_t parameter)
 {
   std::lock_guard<std::mutex> lock(_mutex);
-  uint32_t v = 0;
   if (parameter < HUAWEI_OUTPUT_CURRENT1_IDX) {
-    v =  _recValues[parameter];
+    return _recValues[parameter];
   }
-  return v;
+  return 0;
 }
 
 bool HuaweiCanCommClass::gotNewRxDataFrame(bool clear)
@@ -356,25 +355,12 @@ void HuaweiCanClass::loop()
       _autoPowerEnabledCounter = 10;
     }
 
-
-    // Check if inverter used by the power limiter is active
-    std::shared_ptr<InverterAbstract> inverter =
-        Hoymiles.getInverterBySerial(config.PowerLimiter.InverterId);
-
-    if (inverter == nullptr && config.PowerLimiter.InverterId < INV_MAX_COUNT) {
-        // we previously had an index saved as InverterId. fall back to the
-        // respective positional lookup if InverterId is not a known serial.
-        inverter = Hoymiles.getInverterByPos(config.PowerLimiter.InverterId);
-    }
-
-    if (inverter != nullptr) {
-        if(inverter->isProducing()) {
-          _setValue(0.0, HUAWEI_ONLINE_CURRENT);
-          // Don't run auto mode for a second now. Otherwise we may send too much over the CAN bus
-          _autoModeBlockedTillMillis = millis() + 1000;
-          MessageOutput.printf("[HuaweiCanClass::loop] Inverter is active, disable\r\n");
-          return;
-        }
+    if (PowerLimiter.isGovernedInverterProducing()) {
+      _setValue(0.0, HUAWEI_ONLINE_CURRENT);
+      // Don't run auto mode for a second now. Otherwise we may send too much over the CAN bus
+      _autoModeBlockedTillMillis = millis() + 1000;
+      MessageOutput.printf("[HuaweiCanClass::loop] Inverter is active, disable\r\n");
+      return;
     }
 
     if (PowerMeter.getLastUpdate() > _lastPowerMeterUpdateReceivedMillis &&
