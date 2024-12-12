@@ -167,6 +167,8 @@ struct POWERLIMITER_CONFIG_T {
     int8_t RestartHour;
     uint16_t TotalUpperPowerLimit;
     PowerLimiterInverterConfig Inverters[INV_MAX_COUNT];
+    bool SurplusPowerStageIEnabled;
+    bool SurplusPowerStageIIEnabled;
 };
 using PowerLimiterConfig = struct POWERLIMITER_CONFIG_T;
 

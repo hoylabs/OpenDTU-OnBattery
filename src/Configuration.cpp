@@ -148,6 +148,8 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
     target["inverter_channel_id_for_dc_voltage"] = source.InverterChannelIdForDcVoltage;
     target["inverter_restart_hour"] = source.RestartHour;
     target["total_upper_power_limit"] = source.TotalUpperPowerLimit;
+    target["surplus_stage_I_enabled"] = source.SurplusPowerStageIEnabled;
+    target["surplus_stage_II_enabled"] = source.SurplusPowerStageIIEnabled;
 
     JsonArray inverters = target["inverters"].to<JsonArray>();
     for (size_t i = 0; i < INV_MAX_COUNT; ++i) {
@@ -459,6 +461,8 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
     target.InverterChannelIdForDcVoltage = source["inverter_channel_id_for_dc_voltage"] | POWERLIMITER_INVERTER_CHANNEL_ID;
     target.RestartHour = source["inverter_restart_hour"] | POWERLIMITER_RESTART_HOUR;
     target.TotalUpperPowerLimit = source["total_upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+    target.SurplusPowerStageIEnabled = source["surplus_stage_I_enabled"] | false;
+    target.SurplusPowerStageIIEnabled = source["surplus_stage_II_enabled"] | false;
 
     JsonArray inverters = source["inverters"].as<JsonArray>();
     for (size_t i = 0; i < INV_MAX_COUNT; ++i) {
