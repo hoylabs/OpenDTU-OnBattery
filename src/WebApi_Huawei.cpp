@@ -3,7 +3,7 @@
  * Copyright (C) 2022-2024 Thomas Basler and others
  */
 #include "WebApi_Huawei.h"
-#include "Huawei_can.h"
+#include <gridcharger/huawei/Controller.h>
 #include "Configuration.h"
 #include "MessageOutput.h"
 #include "PinMapping.h"
@@ -25,7 +25,7 @@ void WebApiHuaweiClass::init(AsyncWebServer& server, Scheduler& scheduler)
 }
 
 void WebApiHuaweiClass::getJsonData(JsonVariant& root) {
-    const RectifierParameters_t * rp = HuaweiCan.get();
+    auto const* rp = HuaweiCan.get();
 
     root["data_age"] = (millis() - HuaweiCan.getLastUpdate()) / 1000;
     root["input_voltage"]["v"] = rp->input_voltage;

@@ -8,7 +8,7 @@
 #include "Utils.h"
 #include "WebApi.h"
 #include "Battery.h"
-#include "Huawei_can.h"
+#include <gridcharger/huawei/Controller.h>
 #include "PowerMeter.h"
 #include "VictronMppt.h"
 #include "defaults.h"
@@ -92,7 +92,7 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
         huaweiObj["enabled"] = config.Huawei.Enabled;
 
         if (config.Huawei.Enabled) {
-            const RectifierParameters_t * rp = HuaweiCan.get();
+            auto const* rp = HuaweiCan.get();
             addTotalField(huaweiObj, "Power", rp->input_power, "W", 2);
         }
 

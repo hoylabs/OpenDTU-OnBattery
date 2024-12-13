@@ -12,7 +12,7 @@
 #include "SerialPortManager.h"
 #include "VictronMppt.h"
 #include "Battery.h"
-#include "Huawei_can.h"
+#include <gridcharger/huawei/Controller.h>
 #include "MqttHandleDtu.h"
 #include "MqttHandleHass.h"
 #include "MqttHandleVedirectHass.h"

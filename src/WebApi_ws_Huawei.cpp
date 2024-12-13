@@ -5,7 +5,7 @@
 #include "WebApi_ws_Huawei.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
-#include "Huawei_can.h"
+#include <gridcharger/huawei/Controller.h>
 #include "MessageOutput.h"
 #include "Utils.h"
 #include "WebApi.h"
@@ -99,7 +99,7 @@ void WebApiWsHuaweiLiveClass::sendDataTaskCb()
 
 void WebApiWsHuaweiLiveClass::generateCommonJsonResponse(JsonVariant& root)
 {
-    const RectifierParameters_t * rp = HuaweiCan.get();
+    auto const* rp = HuaweiCan.get();
 
     root["data_age"] = (millis() - HuaweiCan.getLastUpdate()) / 1000;
     root["input_voltage"]["v"] = rp->input_voltage;
