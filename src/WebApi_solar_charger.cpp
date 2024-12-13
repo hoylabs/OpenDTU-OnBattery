@@ -7,7 +7,7 @@
 #include "WebApi_errors.h"
 #include "helper.h"
 #include "MqttHandlePowerLimiterHass.h"
-#include "SolarCharger.h"
+#include <solarcharger/Controller.h>
 
 void WebApiSolarChargerlass::init(AsyncWebServer& server, Scheduler& scheduler)
 {

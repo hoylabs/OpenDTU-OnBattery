@@ -4,10 +4,12 @@
 #include <memory>
 #include <mutex>
 #include <TaskSchedulerDeclarations.h>
-#include "SolarChargerProvider.h"
-#include "VeDirectMpptController.h"
+#include <solarcharger/Provider.h>
+#include <VeDirectMpptController.h>
 
-class SolarChargerClass {
+namespace SolarChargers {
+
+class Controller {
 public:
     void init(Scheduler&);
     void updateSettings();
@@ -42,7 +44,10 @@ private:
 
     Task _loopTask;
     mutable std::mutex _mutex;
-    std::unique_ptr<SolarChargerProvider> _upProvider = nullptr;
+    std::unique_ptr<Provider> _upProvider = nullptr;
+    bool _publishSensors = false;
 };
 
-extern SolarChargerClass SolarCharger;
+} // namespace SolarChargers
+
+extern SolarChargers::Controller SolarCharger;

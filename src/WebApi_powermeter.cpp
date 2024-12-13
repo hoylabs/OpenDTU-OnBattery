@@ -6,7 +6,6 @@
 #include "ArduinoJson.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
-#include "MqttHandleVedirectHass.h"
 #include "MqttHandleHass.h"
 #include "MqttSettings.h"
 #include "PowerLimiter.h"
