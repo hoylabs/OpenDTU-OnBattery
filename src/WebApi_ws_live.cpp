@@ -11,7 +11,7 @@
 #include <gridcharger/huawei/Controller.h>
 #include "PowerMeter.h"
 #include "defaults.h"
-#include "SolarCharger.h"
+#include <solarcharger/Controller.h>
 #include <AsyncJson.h>
 
 #ifndef PIN_MAPPING_REQUIRED

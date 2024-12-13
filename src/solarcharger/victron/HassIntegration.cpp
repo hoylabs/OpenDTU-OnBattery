@@ -2,7 +2,6 @@
 /*
  * Copyright (C) 2022 Thomas Basler and others
  */
-#include "MqttHandleVedirectHass.h"
 #include "Configuration.h"
 #include "MqttSettings.h"
 #include "MqttHandleHass.h"
@@ -10,52 +9,13 @@
 #include "MessageOutput.h"
 #include "Utils.h"
 #include "__compiled_constants.h"
-#include "SolarCharger.h"
+#include <solarcharger/Controller.h>
+#include <solarcharger/victron/HassIntegration.h>
 
-MqttHandleVedirectHassClass MqttHandleVedirectHass;
+namespace SolarChargers::Victron {
 
-void MqttHandleVedirectHassClass::init(Scheduler& scheduler)
+void HassIntegration::publishSensors() const
 {
-    scheduler.addTask(_loopTask);
-    _loopTask.setCallback([this] { loop(); });
-    _loopTask.setIterations(TASK_FOREVER);
-    _loopTask.enable();
-}
-
-void MqttHandleVedirectHassClass::loop()
-{
-    if (!Configuration.get().Mqtt.Hass.Enabled
-        || !Configuration.get().SolarCharger.Enabled
-        || Configuration.get().SolarCharger.Provider != SolarChargerProviderType::VEDIRECT) {
-        return;
-    }
-
-    if (_updateForced) {
-        publishConfig();
-        _updateForced = false;
-    }
-
-    if (MqttSettings.getConnected() && !_wasConnected) {
-        // Connection established
-        _wasConnected = true;
-        publishConfig();
-    } else if (!MqttSettings.getConnected() && _wasConnected) {
-        // Connection lost
-        _wasConnected = false;
-    }
-}
-
-void MqttHandleVedirectHassClass::forceUpdate()
-{
-    _updateForced = true;
-}
-
-void MqttHandleVedirectHassClass::publishConfig()
-{
-    if (!MqttSettings.getConnected()) {
-        return;
-    }
-
     // device info
     for (int idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
         auto optMpptData = SolarCharger.getData(idx);
@@ -120,10 +80,10 @@ void MqttHandleVedirectHassClass::publishConfig()
     yield();
 }
 
-void MqttHandleVedirectHassClass::publishSensor(const char *caption, const char *icon, const char *subTopic,
+void HassIntegration::publishSensor(const char *caption, const char *icon, const char *subTopic,
                                                 const char *deviceClass, const char *stateClass,
                                                 const char *unitOfMeasurement,
-                                                const VeDirectMpptController::data_t &mpptData)
+                                                const VeDirectMpptController::data_t &mpptData) const
 {
     String serial = mpptData.serialNr_SER;
 
@@ -179,9 +139,9 @@ void MqttHandleVedirectHassClass::publishSensor(const char *caption, const char 
     publish(configTopic, buffer);
 
 }
-void MqttHandleVedirectHassClass::publishBinarySensor(const char *caption, const char *icon, const char *subTopic,
+void HassIntegration::publishBinarySensor(const char *caption, const char *icon, const char *subTopic,
                                                       const char *payload_on, const char *payload_off,
-                                                      const VeDirectMpptController::data_t &mpptData)
+                                                      const VeDirectMpptController::data_t &mpptData) const
 {
     String serial = mpptData.serialNr_SER;
 
@@ -224,8 +184,8 @@ void MqttHandleVedirectHassClass::publishBinarySensor(const char *caption, const
     publish(configTopic, buffer);
 }
 
-void MqttHandleVedirectHassClass::createDeviceInfo(JsonObject &object,
-                                                   const VeDirectMpptController::data_t &mpptData)
+void HassIntegration::createDeviceInfo(JsonObject &object,
+                                                   const VeDirectMpptController::data_t &mpptData) const
 {
     String serial = mpptData.serialNr_SER;
     object["name"] = "Victron(" + serial + ")";
@@ -237,9 +197,4 @@ void MqttHandleVedirectHassClass::createDeviceInfo(JsonObject &object,
     object["via_device"] = MqttHandleHass.getDtuUniqueId();
 }
 
-void MqttHandleVedirectHassClass::publish(const String& subtopic, const String& payload)
-{
-    String topic = Configuration.get().Mqtt.Hass.Topic;
-    topic += subtopic;
-    MqttSettings.publishGeneric(topic.c_str(), payload.c_str(), Configuration.get().Mqtt.Hass.Retain);
-}
+} // namespace SolarChargers::Victron

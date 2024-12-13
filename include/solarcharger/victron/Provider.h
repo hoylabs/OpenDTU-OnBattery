@@ -5,18 +5,22 @@
 #include <memory>
 #include <TaskSchedulerDeclarations.h>
 
-#include "SolarChargerProvider.h"
-#include "VeDirectMpptController.h"
-#include "Configuration.h"
+#include <Configuration.h>
+#include <solarcharger/Provider.h>
+#include <solarcharger/victron/HassIntegration.h>
+#include <VeDirectMpptController.h>
 
-class VictronMppt : public SolarChargerProvider {
+namespace SolarChargers::Victron {
+
+class Provider : public ::SolarChargers::Provider {
 public:
-    VictronMppt() = default;
-    ~VictronMppt() = default;
+    Provider() = default;
+    ~Provider() = default;
 
     bool init(bool verboseLogging) final;
     void deinit() final;
     void loop() final;
+    ::SolarChargers::HassIntegration const& getHassIntegration() const final { return _hassIntegration; }
 
     bool isDataValid() const final;
 
@@ -55,16 +59,19 @@ public:
     std::optional<float> getVoltage(MPPTVoltage kindOf) const;
 
 private:
-    VictronMppt(VictronMppt const& other) = delete;
-    VictronMppt(VictronMppt&& other) = delete;
-    VictronMppt& operator=(VictronMppt const& other) = delete;
-    VictronMppt& operator=(VictronMppt&& other) = delete;
+    Provider(Provider const& other) = delete;
+    Provider(Provider&& other) = delete;
+    Provider& operator=(Provider const& other) = delete;
+    Provider& operator=(Provider&& other) = delete;
 
     mutable std::mutex _mutex;
     using controller_t = std::unique_ptr<VeDirectMpptController>;
     std::vector<controller_t> _controllers;
-
     std::vector<String> _serialPortOwners;
+    HassIntegration _hassIntegration;
+
     bool initController(int8_t rx, int8_t tx, bool logging,
         uint8_t instance);
 };
+
+} // namespace SolarChargers::Victron

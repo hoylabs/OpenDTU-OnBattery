@@ -10,7 +10,7 @@
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
 #include <gridcharger/huawei/Controller.h>
-#include <SolarCharger.h>
+#include <solarCharger/Controller.h>
 #include "MessageOutput.h"
 #include <ctime>
 #include <cmath>
