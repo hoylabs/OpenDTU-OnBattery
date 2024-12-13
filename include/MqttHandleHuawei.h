@@ -2,7 +2,6 @@
 #pragma once
 
 #include "Configuration.h"
-#include <Huawei_can.h>
 #include <espMqttClient.h>
 #include <TaskSchedulerDeclarations.h>
 #include <mutex>

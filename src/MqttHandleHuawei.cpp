@@ -5,7 +5,7 @@
 #include "MqttHandleHuawei.h"
 #include "MessageOutput.h"
 #include "MqttSettings.h"
-#include "Huawei_can.h"
+#include <gridcharger/huawei/Controller.h>
 #include "WebApi_Huawei.h"
 #include <ctime>
 
@@ -74,7 +74,7 @@ void MqttHandleHuaweiClass::loop()
         return;
     }
 
-    const RectifierParameters_t *rp = HuaweiCan.get();
+    auto const* rp = HuaweiCan.get();
 
     if ((millis() - _lastPublish) > (config.Mqtt.PublishInterval * 1000) ) {
       MqttSettings.publish("huawei/data_age", String((millis() - HuaweiCan.getLastUpdate()) / 1000));
@@ -118,25 +118,25 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic t,
     switch (t) {
         case Topic::LimitOnlineVoltage:
             MessageOutput.printf("Limit Voltage: %f V\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&HuaweiCanClass::setValue,
+            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setValue,
                         &HuaweiCan, payload_val, HUAWEI_ONLINE_VOLTAGE));
             break;
 
         case Topic::LimitOfflineVoltage:
             MessageOutput.printf("Offline Limit Voltage: %f V\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&HuaweiCanClass::setValue,
+            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setValue,
                         &HuaweiCan, payload_val, HUAWEI_OFFLINE_VOLTAGE));
             break;
 
         case Topic::LimitOnlineCurrent:
             MessageOutput.printf("Limit Current: %f A\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&HuaweiCanClass::setValue,
+            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setValue,
                         &HuaweiCan, payload_val, HUAWEI_ONLINE_CURRENT));
             break;
 
         case Topic::LimitOfflineCurrent:
             MessageOutput.printf("Offline Limit Current: %f A\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&HuaweiCanClass::setValue,
+            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setValue,
                         &HuaweiCan, payload_val, HUAWEI_OFFLINE_CURRENT));
             break;
 
@@ -144,25 +144,25 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic t,
             switch (static_cast<int>(payload_val)) {
                 case 3:
                     MessageOutput.println("[Huawei MQTT::] Received MQTT msg. New mode: Full internal control");
-                    _mqttCallbacks.push_back(std::bind(&HuaweiCanClass::setMode,
+                    _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setMode,
                                 &HuaweiCan, HUAWEI_MODE_AUTO_INT));
                     break;
 
                 case 2:
                     MessageOutput.println("[Huawei MQTT::] Received MQTT msg. New mode: Internal on/off control, external power limit");
-                    _mqttCallbacks.push_back(std::bind(&HuaweiCanClass::setMode,
+                    _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setMode,
                                 &HuaweiCan, HUAWEI_MODE_AUTO_EXT));
                     break;
 
                 case 1:
                     MessageOutput.println("[Huawei MQTT::] Received MQTT msg. New mode: Turned ON");
-                    _mqttCallbacks.push_back(std::bind(&HuaweiCanClass::setMode,
+                    _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setMode,
                                 &HuaweiCan, HUAWEI_MODE_ON));
                     break;
 
                 case 0:
                     MessageOutput.println("[Huawei MQTT::] Received MQTT msg. New mode: Turned OFF");
-                    _mqttCallbacks.push_back(std::bind(&HuaweiCanClass::setMode,
+                    _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setMode,
                                 &HuaweiCan, HUAWEI_MODE_OFF));
                     break;
 

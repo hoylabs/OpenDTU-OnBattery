@@ -1,35 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include <freertos/task.h>
 #include <cstdint>
-#include "SPI.h"
-#include <mcp_can.h>
 #include <mutex>
 #include <TaskSchedulerDeclarations.h>
 
-#ifndef HUAWEI_PIN_MISO
-#define HUAWEI_PIN_MISO 12
-#endif
-
-#ifndef HUAWEI_PIN_MOSI
-#define HUAWEI_PIN_MOSI 13
-#endif
-
-#ifndef HUAWEI_PIN_SCLK
-#define HUAWEI_PIN_SCLK 26
-#endif
-
-#ifndef HUAWEI_PIN_IRQ
-#define HUAWEI_PIN_IRQ 25
-#endif
-
-#ifndef HUAWEI_PIN_CS
-#define HUAWEI_PIN_CS 15
-#endif
-
-#ifndef HUAWEI_PIN_POWER
-#define HUAWEI_PIN_POWER 33
-#endif
+namespace GridCharger::Huawei {
 
 #define HUAWEI_MINIMAL_OFFLINE_VOLTAGE 48
 #define HUAWEI_MINIMAL_ONLINE_VOLTAGE 42
@@ -89,35 +66,7 @@ typedef struct RectifierParameters {
     float amp_hour;
 } RectifierParameters_t;
 
-class HuaweiCanCommClass {
-public:
-    bool init(uint8_t huawei_miso, uint8_t huawei_mosi, uint8_t huawei_clk,
-            uint8_t huawei_irq, uint8_t huawei_cs, uint32_t frequency);
-    void loop();
-    bool gotNewRxDataFrame(bool clear);
-    uint8_t  getErrorCode(bool clear);
-    int32_t getParameterValue(uint8_t parameter);
-    void setParameterValue(uint16_t in, uint8_t parameterType);
-
-private:
-    void sendRequest();
-
-    SPIClass *SPI;
-    MCP_CAN  *_CAN;
-    uint8_t  _huaweiIrq;                         // IRQ pin
-    uint32_t _nextRequestMillis = 0;              // When to send next data request to PSU
-
-    std::mutex _mutex;
-
-    int32_t _recValues[12];
-    uint16_t _txValues[5];
-    bool     _hasNewTxValue[5];
-
-    uint8_t _errorCode;
-    bool _completeUpdateReceived;
-};
-
-class HuaweiCanClass {
+class Controller {
 public:
     void init(Scheduler& scheduler, uint8_t huawei_miso, uint8_t huawei_mosi, uint8_t huawei_clk, uint8_t huawei_irq, uint8_t huawei_cs, uint8_t huawei_power);
     void updateSettings(uint8_t huawei_miso, uint8_t huawei_mosi, uint8_t huawei_clk, uint8_t huawei_irq, uint8_t huawei_cs, uint8_t huawei_power);
@@ -137,7 +86,7 @@ private:
     Task _loopTask;
 
     TaskHandle_t _HuaweiCanCommunicationTaskHdl = NULL;
-    bool    _initialized = false;
+    bool _initialized = false;
     uint8_t _huaweiPower;           // Power pin
     uint8_t _mode = HUAWEI_MODE_AUTO_EXT;
 
@@ -154,5 +103,6 @@ private:
     bool _batteryEmergencyCharging = false;
 };
 
-extern HuaweiCanClass HuaweiCan;
-extern HuaweiCanCommClass HuaweiCanComm;
+} // namespace GridCharger::Huawei
+
+extern GridCharger::Huawei::Controller HuaweiCan;
