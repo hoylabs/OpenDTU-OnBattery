@@ -14,11 +14,9 @@
 #include <gridcharger/huawei/Controller.h>
 #include "MqttHandleDtu.h"
 #include "MqttHandleHass.h"
-#include "MqttHandleVedirectHass.h"
 #include "MqttHandleBatteryHass.h"
 #include "MqttHandleInverter.h"
 #include "MqttHandleInverterTotal.h"
-#include "MqttHandleVedirect.h"
 #include "MqttHandleHuawei.h"
 #include "MqttHandlePowerLimiter.h"
 #include "MqttHandlePowerLimiterHass.h"
@@ -34,7 +32,7 @@
 #include "PowerMeter.h"
 #include "PowerLimiter.h"
 #include "defaults.h"
-#include "SolarCharger.h"
+#include <solarcharger/Controller.h>
 #include <Arduino.h>
 #include <LittleFS.h>
 #include <SpiManager.h>
@@ -136,9 +134,7 @@ void setup()
     MqttHandleDtu.init(scheduler);
     MqttHandleInverter.init(scheduler);
     MqttHandleInverterTotal.init(scheduler);
-    MqttHandleVedirect.init(scheduler);
     MqttHandleHass.init(scheduler);
-    MqttHandleVedirectHass.init(scheduler);
     MqttHandleBatteryHass.init(scheduler);
     MqttHandleHuawei.init(scheduler);
     MqttHandlePowerLimiter.init(scheduler);

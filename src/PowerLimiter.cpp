@@ -10,7 +10,7 @@
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
 #include <gridcharger/huawei/Controller.h>
-#include <SolarCharger.h>
+#include <solarcharger/Controller.h>
 #include "MessageOutput.h"
 #include <ctime>
 #include <cmath>
@@ -382,8 +382,10 @@ float PowerLimiterClass::getBatteryVoltage(bool log) {
     if (inverter.first > 0) { res = inverter.first; }
 
     float chargeControllerVoltage = -1;
-    if (SolarCharger.isDataValid()) {
-        res = chargeControllerVoltage = static_cast<float>(SolarCharger.getOutputVoltage());
+
+    auto chargerOutputVoltage = SolarCharger.getStats()->getOutputVoltage();
+    if (chargerOutputVoltage) {
+        res = chargeControllerVoltage = *chargerOutputVoltage;
     }
 
     float bmsVoltage = -1;
@@ -437,8 +439,9 @@ void PowerLimiterClass::fullSolarPassthrough(PowerLimiterClass::Status reason)
 
     uint16_t targetOutput = 0;
 
-    if (SolarCharger.isDataValid()) {
-        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, SolarCharger.getOutputPowerWatts()));
+    auto solarChargerOuput = SolarCharger.getStats()->getOutputPowerWatts();
+    if (solarChargerOuput) {
+        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, *solarChargerOuput));
         targetOutput = dcPowerBusToInverterAc(targetOutput);
     }
 
@@ -687,15 +690,17 @@ bool PowerLimiterClass::updateInverters()
 uint16_t PowerLimiterClass::getSolarPassthroughPower()
 {
     auto const& config = Configuration.get();
+    auto solarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
 
     if (!config.SolarCharger.Enabled
             || !config.PowerLimiter.SolarPassThroughEnabled
             || isBelowStopThreshold()
-            || !SolarCharger.isDataValid()) {
+            || !solarChargerOutput
+            ) {
         return 0;
     }
 
-    return SolarCharger.getOutputPowerWatts();
+    return *solarChargerOutput;
 }
 
 float PowerLimiterClass::getBatteryInvertersOutputAcWatts()

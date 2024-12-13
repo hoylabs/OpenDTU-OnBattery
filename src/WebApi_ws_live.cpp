@@ -11,7 +11,7 @@
 #include <gridcharger/huawei/Controller.h>
 #include "PowerMeter.h"
 #include "defaults.h"
-#include "SolarCharger.h"
+#include <solarcharger/Controller.h>
 #include <AsyncJson.h>
 
 #ifndef PIN_MAPPING_REQUIRED
@@ -76,16 +76,25 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
     auto const& config = Configuration.get();
     auto constexpr halfOfAllMillis = std::numeric_limits<uint32_t>::max() / 2;
 
-    auto solarChargerAge = SolarCharger.getDataAgeMillis();
+    auto solarChargerAge = SolarCharger.getStats()->getAgeMillis();
     if (all || (solarChargerAge > 0 && (millis() - _lastPublishSolarCharger) > solarChargerAge)) {
         auto solarchargerObj = root["solarcharger"].to<JsonObject>();
         solarchargerObj["enabled"] = config.SolarCharger.Enabled;
 
         if (config.SolarCharger.Enabled) {
             auto totalVeObj = solarchargerObj["total"].to<JsonObject>();
-            addTotalField(totalVeObj, "Power", SolarCharger.getPanelPowerWatts(), "W", 1);
-            addTotalField(totalVeObj, "YieldDay", SolarCharger.getYieldDay() * 1000, "Wh", 0);
-            addTotalField(totalVeObj, "YieldTotal", SolarCharger.getYieldTotal(), "kWh", 2);
+
+            auto power = SolarCharger.getStats()->getPanelPowerWatts();
+            auto outputPower = SolarCharger.getStats()->getOutputPowerWatts();
+
+            // use output power if available, because it is more accurate
+            if (outputPower) {
+                power = *outputPower;
+            }
+
+            addTotalField(totalVeObj, "Power", power, "W", 1);
+            addTotalField(totalVeObj, "YieldDay", SolarCharger.getStats()->getYieldDay(), "Wh", 0);
+            addTotalField(totalVeObj, "YieldTotal", SolarCharger.getStats()->getYieldTotal(), "kWh", 2);
         }
 
         if (!all) { _lastPublishSolarCharger = millis(); }

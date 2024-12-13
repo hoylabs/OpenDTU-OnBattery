@@ -10,7 +10,7 @@
 #include "WebApi.h"
 #include "defaults.h"
 #include "PowerLimiter.h"
-#include "SolarCharger.h"
+#include <solarcharger/Controller.h>
 
 WebApiWsSolarChargerLiveClass::WebApiWsSolarChargerLiveClass()
     : _ws("/solarchargerlivedata")
@@ -72,20 +72,6 @@ void WebApiWsSolarChargerLiveClass::wsCleanupTaskCb()
     _ws.cleanupClients();
 }
 
-bool WebApiWsSolarChargerLiveClass::hasUpdate(size_t idx)
-{
-    auto dataAgeMillis = SolarCharger.getDataAgeMillis(idx);
-    if (dataAgeMillis == 0) { return false; }
-    auto publishAgeMillis = millis() - _lastPublish;
-    return dataAgeMillis < publishAgeMillis;
-}
-
-uint16_t WebApiWsSolarChargerLiveClass::responseSize() const
-{
-    // estimated with ArduinoJson assistant
-    return SolarCharger.controllerAmount() * (1024 + 512) + 128/*DPL status and structure*/;
-}
-
 void WebApiWsSolarChargerLiveClass::sendDataTaskCb()
 {
     // do nothing if no WS client is connected
@@ -93,15 +79,9 @@ void WebApiWsSolarChargerLiveClass::sendDataTaskCb()
 
     // Update on ve.direct change or at least after 10 seconds
     bool fullUpdate = (millis() - _lastFullPublish > (10 * 1000));
-    bool updateAvailable = false;
-    if (!fullUpdate) {
-        for (size_t idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
-            if (hasUpdate(idx)) {
-                updateAvailable = true;
-                break;
-            }
-        }
-    }
+
+    auto publishAgeMillis = millis() - _lastPublish;
+    bool updateAvailable = SolarCharger.getStats()->getAgeMillis() < publishAgeMillis;
 
     if (fullUpdate || updateAvailable) {
         try {
@@ -131,127 +111,8 @@ void WebApiWsSolarChargerLiveClass::sendDataTaskCb()
 
 void WebApiWsSolarChargerLiveClass::generateCommonJsonResponse(JsonVariant& root, bool fullUpdate)
 {
-    auto array = root["solarcharger"]["instances"].to<JsonObject>();
-    root["solarcharger"]["full_update"] = fullUpdate;
-
-    for (size_t idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
-        auto optMpptData = SolarCharger.getData(idx);
-        if (!optMpptData.has_value()) { continue; }
-
-        if (!fullUpdate && !hasUpdate(idx)) { continue; }
-
-        String serial(optMpptData->serialNr_SER);
-        if (serial.isEmpty()) { continue; } // serial required as index
-
-        JsonObject nested = array[serial].to<JsonObject>();
-        nested["data_age_ms"] = SolarCharger.getDataAgeMillis(idx);
-        populateJson(nested, *optMpptData);
-    }
-
+    SolarCharger.getStats()->getLiveViewData(root, fullUpdate, _lastPublish);
     _lastPublish = millis();
-
-    // power limiter state
-    root["dpl"]["PLSTATE"] = -1;
-    if (Configuration.get().PowerLimiter.Enabled)
-        root["dpl"]["PLSTATE"] = PowerLimiter.getPowerLimiterState();
-    root["dpl"]["PLLIMIT"] = PowerLimiter.getInverterOutput();
-}
-
-void WebApiWsSolarChargerLiveClass::populateJson(const JsonObject &root, const VeDirectMpptController::data_t &mpptData) {
-    root["product_id"] = mpptData.getPidAsString();
-    root["firmware_version"] = mpptData.getFwVersionFormatted();
-
-    const JsonObject values = root["values"].to<JsonObject>();
-
-    const JsonObject device = values["device"].to<JsonObject>();
-
-    // LOAD     IL      UI label    result
-    // ------------------------------------
-    // false    false               Do not display LOAD and IL (device has no physical load output and virtual load is not configured)
-    // true     false   "VIRTLOAD"  We display just LOAD (device has no physical load output and virtual load is configured)
-    // true     true    "LOAD"      We display LOAD and IL (device has physical load output, regardless if virtual load is configured or not)
-    if (mpptData.loadOutputState_LOAD.first > 0) {
-        device[(mpptData.loadCurrent_IL_mA.first > 0) ? "LOAD" : "VIRTLOAD"] = mpptData.loadOutputState_LOAD.second ? "ON" : "OFF";
-    }
-    if (mpptData.loadCurrent_IL_mA.first > 0) {
-        device["IL"]["v"] = mpptData.loadCurrent_IL_mA.second / 1000.0;
-        device["IL"]["u"] = "A";
-        device["IL"]["d"] = 2;
-    }
-    device["CS"] = mpptData.getCsAsString();
-    device["MPPT"] = mpptData.getMpptAsString();
-    device["OR"] = mpptData.getOrAsString();
-    if (mpptData.relayState_RELAY.first > 0) {
-        device["RELAY"] = mpptData.relayState_RELAY.second ? "ON" : "OFF";
-    }
-    device["ERR"] = mpptData.getErrAsString();
-    device["HSDS"]["v"] = mpptData.daySequenceNr_HSDS;
-    device["HSDS"]["u"] = "d";
-    if (mpptData.MpptTemperatureMilliCelsius.first > 0) {
-        device["MpptTemperature"]["v"] = mpptData.MpptTemperatureMilliCelsius.second / 1000.0;
-        device["MpptTemperature"]["u"] = "°C";
-        device["MpptTemperature"]["d"] = "1";
-    }
-
-    const JsonObject output = values["output"].to<JsonObject>();
-    output["P"]["v"] = mpptData.batteryOutputPower_W;
-    output["P"]["u"] = "W";
-    output["P"]["d"] = 0;
-    output["V"]["v"] = mpptData.batteryVoltage_V_mV / 1000.0;
-    output["V"]["u"] = "V";
-    output["V"]["d"] = 2;
-    output["I"]["v"] = mpptData.batteryCurrent_I_mA / 1000.0;
-    output["I"]["u"] = "A";
-    output["I"]["d"] = 2;
-    output["E"]["v"] = mpptData.mpptEfficiency_Percent;
-    output["E"]["u"] = "%";
-    output["E"]["d"] = 1;
-    if (mpptData.SmartBatterySenseTemperatureMilliCelsius.first > 0) {
-        output["SBSTemperature"]["v"] = mpptData.SmartBatterySenseTemperatureMilliCelsius.second / 1000.0;
-        output["SBSTemperature"]["u"] = "°C";
-        output["SBSTemperature"]["d"] = "0";
-    }
-    if (mpptData.BatteryAbsorptionMilliVolt.first > 0) {
-        output["AbsorptionVoltage"]["v"] = mpptData.BatteryAbsorptionMilliVolt.second / 1000.0;
-        output["AbsorptionVoltage"]["u"] = "V";
-        output["AbsorptionVoltage"]["d"] = "2";
-    }
-    if (mpptData.BatteryFloatMilliVolt.first > 0) {
-        output["FloatVoltage"]["v"] = mpptData.BatteryFloatMilliVolt.second / 1000.0;
-        output["FloatVoltage"]["u"] = "V";
-        output["FloatVoltage"]["d"] = "2";
-    }
-
-    const JsonObject input = values["input"].to<JsonObject>();
-    if (mpptData.NetworkTotalDcInputPowerMilliWatts.first > 0) {
-        input["NetworkPower"]["v"] = mpptData.NetworkTotalDcInputPowerMilliWatts.second / 1000.0;
-        input["NetworkPower"]["u"] = "W";
-        input["NetworkPower"]["d"] = "0";
-    }
-    input["PPV"]["v"] = mpptData.panelPower_PPV_W;
-    input["PPV"]["u"] = "W";
-    input["PPV"]["d"] = 0;
-    input["VPV"]["v"] = mpptData.panelVoltage_VPV_mV / 1000.0;
-    input["VPV"]["u"] = "V";
-    input["VPV"]["d"] = 2;
-    input["IPV"]["v"] = mpptData.panelCurrent_mA / 1000.0;
-    input["IPV"]["u"] = "A";
-    input["IPV"]["d"] = 2;
-    input["YieldToday"]["v"] = mpptData.yieldToday_H20_Wh / 1000.0;
-    input["YieldToday"]["u"] = "kWh";
-    input["YieldToday"]["d"] = 2;
-    input["YieldYesterday"]["v"] = mpptData.yieldYesterday_H22_Wh / 1000.0;
-    input["YieldYesterday"]["u"] = "kWh";
-    input["YieldYesterday"]["d"] = 2;
-    input["YieldTotal"]["v"] = mpptData.yieldTotal_H19_Wh / 1000.0;
-    input["YieldTotal"]["u"] = "kWh";
-    input["YieldTotal"]["d"] = 2;
-    input["MaximumPowerToday"]["v"] = mpptData.maxPowerToday_H21_W;
-    input["MaximumPowerToday"]["u"] = "W";
-    input["MaximumPowerToday"]["d"] = 0;
-    input["MaximumPowerYesterday"]["v"] = mpptData.maxPowerYesterday_H23_W;
-    input["MaximumPowerYesterday"]["u"] = "W";
-    input["MaximumPowerYesterday"]["d"] = 0;
 }
 
 void WebApiWsSolarChargerLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)

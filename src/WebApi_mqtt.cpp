@@ -10,8 +10,6 @@
 #include "MqttHandleInverter.h"
 #include "MqttHandleHuawei.h"
 #include "MqttHandlePowerLimiter.h"
-#include "MqttHandleVedirectHass.h"
-#include "MqttHandleVedirect.h"
 #include "MqttSettings.h"
 #include "WebApi.h"
 #include "WebApi_errors.h"
@@ -19,6 +17,7 @@
 #include "PowerLimiter.h"
 #include "PowerMeter.h"
 #include <AsyncJson.h>
+#include <solarcharger/Controller.h>
 
 void WebApiMqttClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -334,11 +333,11 @@ void WebApiMqttClass::onMqttAdminPost(AsyncWebServerRequest* request)
     MqttHandleBatteryHass.forceUpdate();
     MqttHandleHass.forceUpdate();
     MqttHandlePowerLimiterHass.forceUpdate();
-    MqttHandleVedirectHass.forceUpdate();
 
     MqttHandleHuawei.forceUpdate();
     MqttHandlePowerLimiter.forceUpdate();
-    MqttHandleVedirect.forceUpdate();
+
+    SolarCharger.updateSettings();
 }
 
 String WebApiMqttClass::getTlsCertInfo(const char* cert)
