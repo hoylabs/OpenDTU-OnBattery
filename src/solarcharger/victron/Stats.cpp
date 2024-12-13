@@ -1,60 +1,23 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-/*
- * Copyright (C) 2022 Helge Erbe and others
- */
-#include "MqttHandleVedirect.h"
-#include "MqttSettings.h"
-#include "MessageOutput.h"
+#include <Configuration.h>
+#include <MqttSettings.h>
+#include <MessageOutput.h>
 #include <solarcharger/Controller.h>
+#include <solarcharger/victron/Stats.h>
 
-MqttHandleVedirectClass MqttHandleVedirect;
+namespace SolarChargers::Victron {
 
-// #define MQTTHANDLEVEDIRECT_DEBUG
-
-void MqttHandleVedirectClass::init(Scheduler& scheduler)
+void Stats::mqttPublish() const
 {
-    scheduler.addTask(_loopTask);
-    _loopTask.setCallback([this] { loop(); });
-    _loopTask.setIterations(TASK_FOREVER);
-    _loopTask.enable();
-
-    // initially force a full publish
-    this->forceUpdate();
-}
-
-void MqttHandleVedirectClass::forceUpdate()
-{
-    // initially force a full publish
-    _nextPublishUpdatesOnly = 0;
-    _nextPublishFull = 1;
-}
-
-
-void MqttHandleVedirectClass::loop()
-{
-    auto const& config = Configuration.get();
-    if (!MqttSettings.getConnected()
-        || !config.SolarCharger.Enabled
-        || config.SolarCharger.Provider != SolarChargerProviderType::VEDIRECT) {
-        return;
-    }
-
     if ((millis() >= _nextPublishFull) || (millis() >= _nextPublishUpdatesOnly)) {
+        auto const& config = Configuration.get();
+
         // determine if this cycle should publish full values or updates only
         if (_nextPublishFull <= _nextPublishUpdatesOnly) {
             _PublishFull = true;
         } else {
             _PublishFull = !config.SolarCharger.PublishUpdatesOnly;
         }
-
-        #ifdef MQTTHANDLEVEDIRECT_DEBUG
-        MessageOutput.printf("\r\n\r\nMqttHandleVedirectClass::loop millis %lu   _nextPublishUpdatesOnly %u   _nextPublishFull %u\r\n", millis(), _nextPublishUpdatesOnly, _nextPublishFull);
-        if (_PublishFull) {
-            MessageOutput.println("MqttHandleVedirectClass::loop publish full");
-        } else {
-            MessageOutput.println("MqttHandleVedirectClass::loop publish updates only");
-        }
-        #endif
 
         for (int idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
             std::optional<VeDirectMpptController::data_t> optMpptData = SolarCharger.getData(idx);
@@ -68,7 +31,7 @@ void MqttHandleVedirectClass::loop()
         }
 
         // now calculate next points of time to publish
-        _nextPublishUpdatesOnly = millis() + (config.Mqtt.PublishInterval * 1000);
+        _nextPublishUpdatesOnly = millis() + ::SolarChargers::Stats::getMqttFullPublishIntervalMs();
 
         if (_PublishFull) {
             // when Home Assistant MQTT-Auto-Discovery is active,
@@ -77,24 +40,15 @@ void MqttHandleVedirectClass::loop()
             if ((config.SolarCharger.PublishUpdatesOnly) && (config.Mqtt.Hass.Enabled) && (config.Mqtt.Hass.Expire)) {
                 _nextPublishFull = millis() + (((config.Mqtt.PublishInterval * 3) - 1) * 1000);
 
-                #ifdef MQTTHANDLEVEDIRECT_DEBUG
-                uint32_t _tmpNextFullSeconds = (config.Mqtt_PublishInterval * 3) - 1;
-                MessageOutput.printf("MqttHandleVedirectClass::loop _tmpNextFullSeconds %u - _nextPublishFull %u \r\n", _tmpNextFullSeconds, _nextPublishFull);
-                #endif
-
             } else {
                 // no future publish full needed
                 _nextPublishFull = UINT32_MAX;
             }
         }
-
-        #ifdef MQTTHANDLEVEDIRECT_DEBUG
-        MessageOutput.printf("MqttHandleVedirectClass::loop _nextPublishUpdatesOnly %u   _nextPublishFull %u\r\n", _nextPublishUpdatesOnly, _nextPublishFull);
-        #endif
     }
 }
 
-void MqttHandleVedirectClass::publish_mppt_data(const VeDirectMpptController::data_t &currentData,
+void Stats::publish_mppt_data(const VeDirectMpptController::data_t &currentData,
                                                 const VeDirectMpptController::data_t &previousData) const {
     String value;
     String topic = "victron/";
@@ -146,3 +100,5 @@ void MqttHandleVedirectClass::publish_mppt_data(const VeDirectMpptController::da
     PUBLISH_OPT(SmartBatterySenseTemperatureMilliCelsius, "SmartBatterySenseTemperature", currentData.SmartBatterySenseTemperatureMilliCelsius.second / 1000.0);
 #undef PUBLILSH_OPT
 }
+
+}; // namespace SolarChargers::Victron

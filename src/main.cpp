@@ -17,7 +17,6 @@
 #include "MqttHandleBatteryHass.h"
 #include "MqttHandleInverter.h"
 #include "MqttHandleInverterTotal.h"
-#include "MqttHandleVedirect.h"
 #include "MqttHandleHuawei.h"
 #include "MqttHandlePowerLimiter.h"
 #include "MqttHandlePowerLimiterHass.h"
@@ -135,7 +134,6 @@ void setup()
     MqttHandleDtu.init(scheduler);
     MqttHandleInverter.init(scheduler);
     MqttHandleInverterTotal.init(scheduler);
-    MqttHandleVedirect.init(scheduler);
     MqttHandleHass.init(scheduler);
     MqttHandleBatteryHass.init(scheduler);
     MqttHandleHuawei.init(scheduler);

@@ -8,6 +8,7 @@
 #include <Configuration.h>
 #include <solarcharger/Provider.h>
 #include <solarcharger/victron/HassIntegration.h>
+#include <solarcharger/victron/Stats.h>
 #include <VeDirectMpptController.h>
 
 namespace SolarChargers::Victron {
@@ -20,6 +21,7 @@ public:
     bool init(bool verboseLogging) final;
     void deinit() final;
     void loop() final;
+    std::shared_ptr<::SolarChargers::Stats> getStats() const final { return _stats; }
     ::SolarChargers::HassIntegration const& getHassIntegration() const final { return _hassIntegration; }
 
     bool isDataValid() const final;
@@ -68,6 +70,7 @@ private:
     using controller_t = std::unique_ptr<VeDirectMpptController>;
     std::vector<controller_t> _controllers;
     std::vector<String> _serialPortOwners;
+    std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
     HassIntegration _hassIntegration;
 
     bool initController(int8_t rx, int8_t tx, bool logging,

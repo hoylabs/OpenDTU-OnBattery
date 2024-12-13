@@ -51,9 +51,11 @@ void Controller::loop()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
-    if (_upProvider) {
-        _upProvider->loop();
-    }
+    if (!_upProvider) { return; }
+
+    _upProvider->loop();
+
+    _upProvider->getStats()->mqttLoop();
 
     auto const& config = Configuration.get();
     if (!config.Mqtt.Hass.Enabled) { return; }

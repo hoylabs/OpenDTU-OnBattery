@@ -10,7 +10,6 @@
 #include "MqttHandleInverter.h"
 #include "MqttHandleHuawei.h"
 #include "MqttHandlePowerLimiter.h"
-#include "MqttHandleVedirect.h"
 #include "MqttSettings.h"
 #include "WebApi.h"
 #include "WebApi_errors.h"
@@ -339,7 +338,6 @@ void WebApiMqttClass::onMqttAdminPost(AsyncWebServerRequest* request)
     MqttHandlePowerLimiter.forceUpdate();
 
     SolarCharger.updateSettings();
-    MqttHandleVedirect.forceUpdate();
 }
 
 String WebApiMqttClass::getTlsCertInfo(const char* cert)
