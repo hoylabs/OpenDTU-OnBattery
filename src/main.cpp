@@ -14,7 +14,6 @@
 #include "Huawei_can.h"
 #include "MqttHandleDtu.h"
 #include "MqttHandleHass.h"
-#include "MqttHandleVedirectHass.h"
 #include "MqttHandleBatteryHass.h"
 #include "MqttHandleInverter.h"
 #include "MqttHandleInverterTotal.h"
@@ -34,7 +33,7 @@
 #include "PowerMeter.h"
 #include "PowerLimiter.h"
 #include "defaults.h"
-#include "SolarCharger.h"
+#include <solarCharger/Controller.h>
 #include <Arduino.h>
 #include <LittleFS.h>
 #include <SpiManager.h>
@@ -138,7 +137,6 @@ void setup()
     MqttHandleInverterTotal.init(scheduler);
     MqttHandleVedirect.init(scheduler);
     MqttHandleHass.init(scheduler);
-    MqttHandleVedirectHass.init(scheduler);
     MqttHandleBatteryHass.init(scheduler);
     MqttHandleHuawei.init(scheduler);
     MqttHandlePowerLimiter.init(scheduler);

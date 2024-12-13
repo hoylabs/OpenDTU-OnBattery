@@ -1,22 +1,25 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include "SolarCharger.h"
 #include <Configuration.h>
 #include <MessageOutput.h>
-#include <VictronMppt.h>
+#include <MqttSettings.h>
+#include <solarcharger/Controller.h>
+#include <solarcharger/victron/Provider.h>
 
-SolarChargerClass SolarCharger;
+SolarChargers::Controller SolarCharger;
 
-void SolarChargerClass::init(Scheduler& scheduler)
+namespace SolarChargers {
+
+void Controller::init(Scheduler& scheduler)
 {
     scheduler.addTask(_loopTask);
-    _loopTask.setCallback(std::bind(&SolarChargerClass::loop, this));
+    _loopTask.setCallback(std::bind(&Controller::loop, this));
     _loopTask.setIterations(TASK_FOREVER);
     _loopTask.enable();
 
     this->updateSettings();
 }
 
-void SolarChargerClass::updateSettings()
+void Controller::updateSettings()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -32,7 +35,7 @@ void SolarChargerClass::updateSettings()
 
     switch (config.SolarCharger.Provider) {
         case SolarChargerProviderType::VEDIRECT:
-            _upProvider = std::make_unique<VictronMppt>();
+            _upProvider = std::make_unique<::SolarChargers::Victron::Provider>();
             break;
         default:
             MessageOutput.printf("[SolarCharger] Unknown provider: %d\r\n", config.SolarCharger.Provider);
@@ -40,18 +43,36 @@ void SolarChargerClass::updateSettings()
     }
 
     if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
+
+    _publishSensors = true;
 }
 
-void SolarChargerClass::loop()
+void Controller::loop()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
     if (_upProvider) {
         _upProvider->loop();
     }
+
+    auto const& config = Configuration.get();
+    if (!config.Mqtt.Hass.Enabled) { return; }
+
+    // TODO(schlimmchen): this cannot make sure that transient
+    // connection problems are actually always noticed.
+    if (!MqttSettings.getConnected()) {
+        _publishSensors = true;
+        return;
+    }
+
+    if (!_publishSensors) { return; }
+
+    _upProvider->getHassIntegration().publishSensors();
+
+    _publishSensors = false;
 }
 
-size_t SolarChargerClass::controllerAmount()
+size_t Controller::controllerAmount()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -62,7 +83,7 @@ size_t SolarChargerClass::controllerAmount()
     return 0;
 }
 
-bool SolarChargerClass::isDataValid()
+bool Controller::isDataValid()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -73,7 +94,7 @@ bool SolarChargerClass::isDataValid()
     return false;
 }
 
-uint32_t SolarChargerClass::getDataAgeMillis()
+uint32_t Controller::getDataAgeMillis()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -84,7 +105,7 @@ uint32_t SolarChargerClass::getDataAgeMillis()
     return 0;
 }
 
-uint32_t SolarChargerClass::getDataAgeMillis(size_t idx)
+uint32_t Controller::getDataAgeMillis(size_t idx)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -97,7 +118,7 @@ uint32_t SolarChargerClass::getDataAgeMillis(size_t idx)
 
 
 // total output of all MPPT charge controllers in Watts
-int32_t SolarChargerClass::getOutputPowerWatts()
+int32_t Controller::getOutputPowerWatts()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -109,7 +130,7 @@ int32_t SolarChargerClass::getOutputPowerWatts()
 }
 
 // total panel input power of all MPPT charge controllers in Watts
-int32_t SolarChargerClass::getPanelPowerWatts()
+int32_t Controller::getPanelPowerWatts()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -121,7 +142,7 @@ int32_t SolarChargerClass::getPanelPowerWatts()
 }
 
 // sum of total yield of all MPPT charge controllers in kWh
-float SolarChargerClass::getYieldTotal()
+float Controller::getYieldTotal()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -133,7 +154,7 @@ float SolarChargerClass::getYieldTotal()
 }
 
 // sum of today's yield of all MPPT charge controllers in kWh
-float SolarChargerClass::getYieldDay()
+float Controller::getYieldDay()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -145,7 +166,7 @@ float SolarChargerClass::getYieldDay()
 }
 
 // minimum of all MPPT charge controllers' output voltages in V
-float SolarChargerClass::getOutputVoltage()
+float Controller::getOutputVoltage()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -156,7 +177,7 @@ float SolarChargerClass::getOutputVoltage()
     return 0;
 }
 
-std::optional<VeDirectMpptController::data_t> SolarChargerClass::getData(size_t idx)
+std::optional<VeDirectMpptController::data_t> Controller::getData(size_t idx)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -166,3 +187,5 @@ std::optional<VeDirectMpptController::data_t> SolarChargerClass::getData(size_t 
 
     return std::nullopt;
 }
+
+} // namespace SolarChargers

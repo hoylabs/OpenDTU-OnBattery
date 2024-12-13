@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include "VictronMppt.h"
+#include <solarcharger/victron/Provider.h>
 #include "Configuration.h"
 #include "PinMapping.h"
 #include "MessageOutput.h"
 #include "SerialPortManager.h"
 
-bool VictronMppt::init(bool verboseLogging)
+namespace SolarChargers::Victron {
+
+bool Provider::init(bool verboseLogging)
 {
     const PinMapping_t& pin = PinMapping.get();
     auto controllerCount = 0;
@@ -25,7 +27,7 @@ bool VictronMppt::init(bool verboseLogging)
     return controllerCount > 0;
 }
 
-void VictronMppt::deinit()
+void Provider::deinit()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -36,7 +38,7 @@ void VictronMppt::deinit()
     _serialPortOwners.clear();
 }
 
-bool VictronMppt::initController(int8_t rx, int8_t tx, bool logging,
+bool Provider::initController(int8_t rx, int8_t tx, bool logging,
         uint8_t instance)
 {
     MessageOutput.printf("[VictronMppt Instance %d] rx = %d, tx = %d\r\n",
@@ -60,7 +62,7 @@ bool VictronMppt::initController(int8_t rx, int8_t tx, bool logging,
     return true;
 }
 
-void VictronMppt::loop()
+void Provider::loop()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -73,7 +75,7 @@ void VictronMppt::loop()
  * isDataValid()
  * return: true = if at least one of the MPPT controllers delivers valid data
  */
-bool VictronMppt::isDataValid() const
+bool Provider::isDataValid() const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -84,7 +86,7 @@ bool VictronMppt::isDataValid() const
     return false;
 }
 
-uint32_t VictronMppt::getDataAgeMillis() const
+uint32_t Provider::getDataAgeMillis() const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -104,7 +106,7 @@ uint32_t VictronMppt::getDataAgeMillis() const
     return age;
 }
 
-uint32_t VictronMppt::getDataAgeMillis(size_t idx) const
+uint32_t Provider::getDataAgeMillis(size_t idx) const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -113,7 +115,7 @@ uint32_t VictronMppt::getDataAgeMillis(size_t idx) const
     return millis() - _controllers[idx]->getLastUpdate();
 }
 
-std::optional<VeDirectMpptController::data_t> VictronMppt::getData(size_t idx) const
+std::optional<VeDirectMpptController::data_t> Provider::getData(size_t idx) const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -128,7 +130,7 @@ std::optional<VeDirectMpptController::data_t> VictronMppt::getData(size_t idx) c
     return _controllers[idx]->getData();
 }
 
-int32_t VictronMppt::getOutputPowerWatts() const
+int32_t Provider::getOutputPowerWatts() const
 {
     int32_t sum = 0;
 
@@ -151,7 +153,7 @@ int32_t VictronMppt::getOutputPowerWatts() const
     return sum;
 }
 
-int32_t VictronMppt::getPanelPowerWatts() const
+int32_t Provider::getPanelPowerWatts() const
 {
     int32_t sum = 0;
 
@@ -172,7 +174,7 @@ int32_t VictronMppt::getPanelPowerWatts() const
     return sum;
 }
 
-float VictronMppt::getYieldTotal() const
+float Provider::getYieldTotal() const
 {
     float sum = 0;
 
@@ -184,7 +186,7 @@ float VictronMppt::getYieldTotal() const
     return sum;
 }
 
-float VictronMppt::getYieldDay() const
+float Provider::getYieldDay() const
 {
     float sum = 0;
 
@@ -196,7 +198,7 @@ float VictronMppt::getYieldDay() const
     return sum;
 }
 
-float VictronMppt::getOutputVoltage() const
+float Provider::getOutputVoltage() const
 {
     float min = -1;
 
@@ -210,7 +212,7 @@ float VictronMppt::getOutputVoltage() const
     return min;
 }
 
-std::optional<uint8_t> VictronMppt::getStateOfOperation() const
+std::optional<uint8_t> Provider::getStateOfOperation() const
 {
     for (const auto& upController : _controllers) {
         if (upController->isDataValid()) {
@@ -221,7 +223,7 @@ std::optional<uint8_t> VictronMppt::getStateOfOperation() const
     return std::nullopt;
 }
 
-std::optional<float> VictronMppt::getVoltage(MPPTVoltage kindOf) const
+std::optional<float> Provider::getVoltage(MPPTVoltage kindOf) const
 {
     for (const auto& upController : _controllers) {
         switch (kindOf) {
@@ -245,3 +247,5 @@ std::optional<float> VictronMppt::getVoltage(MPPTVoltage kindOf) const
 
     return std::nullopt;
 }
+
+} // namespace SolarChargers::Victron
