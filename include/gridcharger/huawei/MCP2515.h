@@ -10,35 +10,6 @@
 
 namespace GridCharger::Huawei {
 
-#ifndef HUAWEI_PIN_MISO
-#define HUAWEI_PIN_MISO 12
-#endif
-
-#ifndef HUAWEI_PIN_MOSI
-#define HUAWEI_PIN_MOSI 13
-#endif
-
-#ifndef HUAWEI_PIN_SCLK
-#define HUAWEI_PIN_SCLK 26
-#endif
-
-#ifndef HUAWEI_PIN_IRQ
-#define HUAWEI_PIN_IRQ 25
-#endif
-
-#ifndef HUAWEI_PIN_CS
-#define HUAWEI_PIN_CS 15
-#endif
-
-#ifndef HUAWEI_PIN_POWER
-#define HUAWEI_PIN_POWER 33
-#endif
-
-#define HUAWEI_MINIMAL_OFFLINE_VOLTAGE 48
-#define HUAWEI_MINIMAL_ONLINE_VOLTAGE 42
-
-#define MAX_CURRENT_MULTIPLIER 20
-
 // Index values for rec_values array
 #define HUAWEI_INPUT_POWER_IDX 0
 #define HUAWEI_INPUT_FREQ_IDX 1
@@ -59,20 +30,9 @@ namespace GridCharger::Huawei {
 #define HUAWEI_OFFLINE_CURRENT 0x04
 #define HUAWEI_ONLINE_CURRENT 0x03
 
-// Modes of operation
-#define HUAWEI_MODE_OFF 0
-#define HUAWEI_MODE_ON 1
-#define HUAWEI_MODE_AUTO_EXT 2
-#define HUAWEI_MODE_AUTO_INT 3
-
 // Error codes
 #define HUAWEI_ERROR_CODE_RX 0x01
 #define HUAWEI_ERROR_CODE_TX 0x02
-
-// Wait time/current before shuting down the PSU / charger
-// This is set to allow the fan to run for some time
-#define HUAWEI_AUTO_MODE_SHUTDOWN_DELAY 60000
-#define HUAWEI_AUTO_MODE_SHUTDOWN_CURRENT 0.75
 
 // Updateinterval used to request new values from the PSU
 #define HUAWEI_DATA_REQUEST_INTERVAL_MS 2500
