@@ -17,6 +17,13 @@ GridCharger::Huawei::Controller HuaweiCan;
 
 namespace GridCharger::Huawei {
 
+#define MAX_CURRENT_MULTIPLIER 20
+
+// Wait time/current before shuting down the PSU / charger
+// This is set to allow the fan to run for some time
+#define HUAWEI_AUTO_MODE_SHUTDOWN_DELAY 60000
+#define HUAWEI_AUTO_MODE_SHUTDOWN_CURRENT 0.75
+
 void Controller::init(Scheduler& scheduler, uint8_t huawei_miso, uint8_t huawei_mosi, uint8_t huawei_clk, uint8_t huawei_irq, uint8_t huawei_cs, uint8_t huawei_power)
 {
     scheduler.addTask(_loopTask);
