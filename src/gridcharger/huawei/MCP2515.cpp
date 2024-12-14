@@ -8,7 +8,39 @@
 
 namespace GridCharger::Huawei {
 
-MCP2515 HuaweiCanComm;
+MCP2515::~MCP2515()
+{
+    std::unique_lock<std::mutex> lock(_mutex);
+    _taskDone = false;
+    _stopLoop = true;
+    lock.unlock();
+
+    if (_taskHandle != nullptr) {
+        while (!_taskDone) { delay(10); }
+        _taskHandle = nullptr;
+    }
+}
+
+void MCP2515::staticLoopHelper(void* context)
+{
+    auto pInstance = static_cast<MCP2515*>(context);
+    pInstance->loopHelper();
+    vTaskDelete(nullptr);
+}
+
+void MCP2515::loopHelper()
+{
+    std::unique_lock<std::mutex> lock(_mutex);
+
+    while (!_stopLoop) {
+        loop();
+        lock.unlock();
+        yield();
+        lock.lock();
+    }
+
+    _taskDone = true;
+}
 
 bool MCP2515::init(uint8_t huawei_miso, uint8_t huawei_mosi, uint8_t huawei_clk,
         uint8_t huawei_irq, uint8_t huawei_cs, uint32_t frequency) {
@@ -45,15 +77,15 @@ bool MCP2515::init(uint8_t huawei_miso, uint8_t huawei_mosi, uint8_t huawei_clk,
     // Change to normal mode to allow messages to be transmitted
     _CAN->setMode(MCP_NORMAL);
 
+    uint32_t constexpr stackSize = 2048;
+    xTaskCreate(MCP2515::staticLoopHelper, "Huawei:MCP2515",
+            stackSize, this, 1/*prio*/, &_taskHandle);
+
     return true;
 }
 
-// Public methods need to obtain semaphore
-
 void MCP2515::loop()
 {
-  std::lock_guard<std::mutex> lock(_mutex);
-
   INT32U rxId;
   unsigned char len = 0;
   unsigned char rxBuf[8];

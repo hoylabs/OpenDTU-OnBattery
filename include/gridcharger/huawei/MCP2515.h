@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include <FreeRTOS.h>
+#include <freertos/task.h>
 #include <cstdint>
 #include "SPI.h"
 #include <mcp_can.h>
@@ -77,15 +79,19 @@ namespace GridCharger::Huawei {
 
 class MCP2515 {
 public:
+    ~MCP2515();
+
     bool init(uint8_t huawei_miso, uint8_t huawei_mosi, uint8_t huawei_clk,
             uint8_t huawei_irq, uint8_t huawei_cs, uint32_t frequency);
-    void loop();
     bool gotNewRxDataFrame(bool clear);
     uint8_t getErrorCode(bool clear);
     int32_t getParameterValue(uint8_t parameter);
     void setParameterValue(uint16_t in, uint8_t parameterType);
 
 private:
+    static void staticLoopHelper(void* context);
+    void loopHelper();
+    void loop();
     void sendRequest();
 
     SPIClass *SPI;
@@ -95,6 +101,10 @@ private:
 
     std::mutex _mutex;
 
+    TaskHandle_t _taskHandle = nullptr;
+    bool _taskDone = false;
+    bool _stopLoop = false;
+
     int32_t _recValues[12];
     uint16_t _txValues[5];
     bool _hasNewTxValue[5];
@@ -102,7 +112,5 @@ private:
     uint8_t _errorCode;
     bool _completeUpdateReceived;
 };
-
-extern MCP2515 HuaweiCanComm;
 
 } // namespace GridCharger::Huawei

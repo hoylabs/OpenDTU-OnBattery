@@ -56,7 +56,7 @@ void WebApiSysstatusClass::onSystemStatus(AsyncWebServerRequest* request)
     JsonArray taskDetails = root["task_details"].to<JsonArray>();
     static std::array<char const*, 12> constexpr task_names = {
         "IDLE0", "IDLE1", "wifi", "tiT", "loopTask", "async_tcp", "mqttclient",
-        "HUAWEI_CAN_0", "PM:SDM", "PM:HTTP+JSON", "PM:SML", "PM:HTTP+SML"
+        "Huawei:MCP2515", "PM:SDM", "PM:HTTP+JSON", "PM:SML", "PM:HTTP+SML"
     };
     for (char const* task_name : task_names) {
         TaskHandle_t const handle = xTaskGetHandle(task_name);
