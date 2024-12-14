@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
-#include <freertos/task.h>
 #include <cstdint>
-#include <mutex>
+#include <memory>
 #include <TaskSchedulerDeclarations.h>
+#include <gridcharger/huawei/MCP2515.h>
 
 namespace GridCharger::Huawei {
 
@@ -84,8 +84,8 @@ private:
     void _setValue(float in, uint8_t parameterType);
 
     Task _loopTask;
+    std::unique_ptr<MCP2515> _upHardwareInterface;
 
-    TaskHandle_t _HuaweiCanCommunicationTaskHdl = NULL;
     bool _initialized = false;
     uint8_t _huaweiPower;           // Power pin
     uint8_t _mode = HUAWEI_MODE_AUTO_EXT;

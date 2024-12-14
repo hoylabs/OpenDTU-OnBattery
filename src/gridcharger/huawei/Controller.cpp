@@ -17,14 +17,6 @@ GridCharger::Huawei::Controller HuaweiCan;
 
 namespace GridCharger::Huawei {
 
-// Using a C function to avoid static C++ member
-void HuaweiCanCommunicationTask(void* parameter) {
-  for( ;; ) {
-    HuaweiCanComm.loop();
-    yield();
-  }
-}
-
 void Controller::init(Scheduler& scheduler, uint8_t huawei_miso, uint8_t huawei_mosi, uint8_t huawei_clk, uint8_t huawei_irq, uint8_t huawei_cs, uint8_t huawei_power)
 {
     scheduler.addTask(_loopTask);
@@ -47,7 +39,9 @@ void Controller::updateSettings(uint8_t huawei_miso, uint8_t huawei_mosi, uint8_
         return;
     }
 
-    if (!HuaweiCanComm.init(huawei_miso, huawei_mosi, huawei_clk, huawei_irq, huawei_cs, config.Huawei.CAN_Controller_Frequency)) {
+    _upHardwareInterface = std::make_unique<MCP2515>();
+
+    if (!_upHardwareInterface->init(huawei_miso, huawei_mosi, huawei_clk, huawei_irq, huawei_cs, config.Huawei.CAN_Controller_Frequency)) {
       MessageOutput.println("[HuaweiCanClass::init] Error Initializing Huawei CAN communication...");
       return;
     };
@@ -59,9 +53,6 @@ void Controller::updateSettings(uint8_t huawei_miso, uint8_t huawei_mosi, uint8_
     if (config.Huawei.Auto_Power_Enabled) {
       _mode = HUAWEI_MODE_AUTO_INT;
     }
-
-    xTaskCreate(HuaweiCanCommunicationTask, "HUAWEI_CAN_0", 2048/*stack size*/,
-        NULL/*params*/, 0/*prio*/, &_HuaweiCanCommunicationTaskHdl);
 
     MessageOutput.println("[HuaweiCanClass::init] MCP2515 Initialized Successfully!");
     _initialized = true;
@@ -75,19 +66,19 @@ RectifierParameters_t * Controller::get()
 
 void Controller::processReceivedParameters()
 {
-    _rp.input_power = HuaweiCanComm.getParameterValue(HUAWEI_INPUT_POWER_IDX) / 1024.0;
-    _rp.input_frequency = HuaweiCanComm.getParameterValue(HUAWEI_INPUT_FREQ_IDX) / 1024.0;
-    _rp.input_current = HuaweiCanComm.getParameterValue(HUAWEI_INPUT_CURRENT_IDX) / 1024.0;
-    _rp.output_power = HuaweiCanComm.getParameterValue(HUAWEI_OUTPUT_POWER_IDX) / 1024.0;
-    _rp.efficiency = HuaweiCanComm.getParameterValue(HUAWEI_EFFICIENCY_IDX) / 1024.0;
-    _rp.output_voltage = HuaweiCanComm.getParameterValue(HUAWEI_OUTPUT_VOLTAGE_IDX) / 1024.0;
-    _rp.max_output_current = static_cast<float>(HuaweiCanComm.getParameterValue(HUAWEI_OUTPUT_CURRENT_MAX_IDX)) / MAX_CURRENT_MULTIPLIER;
-    _rp.input_voltage = HuaweiCanComm.getParameterValue(HUAWEI_INPUT_VOLTAGE_IDX) / 1024.0;
-    _rp.output_temp = HuaweiCanComm.getParameterValue(HUAWEI_OUTPUT_TEMPERATURE_IDX) / 1024.0;
-    _rp.input_temp = HuaweiCanComm.getParameterValue(HUAWEI_INPUT_TEMPERATURE_IDX) / 1024.0;
-    _rp.output_current = HuaweiCanComm.getParameterValue(HUAWEI_OUTPUT_CURRENT_IDX) / 1024.0;
+    _rp.input_power = _upHardwareInterface->getParameterValue(HUAWEI_INPUT_POWER_IDX) / 1024.0;
+    _rp.input_frequency = _upHardwareInterface->getParameterValue(HUAWEI_INPUT_FREQ_IDX) / 1024.0;
+    _rp.input_current = _upHardwareInterface->getParameterValue(HUAWEI_INPUT_CURRENT_IDX) / 1024.0;
+    _rp.output_power = _upHardwareInterface->getParameterValue(HUAWEI_OUTPUT_POWER_IDX) / 1024.0;
+    _rp.efficiency = _upHardwareInterface->getParameterValue(HUAWEI_EFFICIENCY_IDX) / 1024.0;
+    _rp.output_voltage = _upHardwareInterface->getParameterValue(HUAWEI_OUTPUT_VOLTAGE_IDX) / 1024.0;
+    _rp.max_output_current = static_cast<float>(_upHardwareInterface->getParameterValue(HUAWEI_OUTPUT_CURRENT_MAX_IDX)) / MAX_CURRENT_MULTIPLIER;
+    _rp.input_voltage = _upHardwareInterface->getParameterValue(HUAWEI_INPUT_VOLTAGE_IDX) / 1024.0;
+    _rp.output_temp = _upHardwareInterface->getParameterValue(HUAWEI_OUTPUT_TEMPERATURE_IDX) / 1024.0;
+    _rp.input_temp = _upHardwareInterface->getParameterValue(HUAWEI_INPUT_TEMPERATURE_IDX) / 1024.0;
+    _rp.output_current = _upHardwareInterface->getParameterValue(HUAWEI_OUTPUT_CURRENT_IDX) / 1024.0;
 
-    if (HuaweiCanComm.gotNewRxDataFrame(true)) {
+    if (_upHardwareInterface->gotNewRxDataFrame(true)) {
       _lastUpdateReceivedMillis = millis();
     }
 }
@@ -105,7 +96,7 @@ void Controller::loop()
 
   processReceivedParameters();
 
-  uint8_t com_error = HuaweiCanComm.getErrorCode(true);
+  uint8_t com_error = _upHardwareInterface->getErrorCode(true);
   if (com_error & HUAWEI_ERROR_CODE_RX) {
     MessageOutput.println("[HuaweiCanClass::loop] Data request error");
   }
@@ -114,7 +105,7 @@ void Controller::loop()
   }
 
   // Print updated data
-  if (HuaweiCanComm.gotNewRxDataFrame(false) && verboseLogging) {
+  if (_upHardwareInterface->gotNewRxDataFrame(false) && verboseLogging) {
     MessageOutput.printf("[HuaweiCanClass::loop] In:  %.02fV, %.02fA, %.02fW\n", _rp.input_voltage, _rp.input_current, _rp.input_power);
     MessageOutput.printf("[HuaweiCanClass::loop] Out: %.02fV, %.02fA of %.02fA, %.02fW\n", _rp.output_voltage, _rp.output_current, _rp.max_output_current, _rp.output_power);
     MessageOutput.printf("[HuaweiCanClass::loop] Eff : %.01f%%, Temp in: %.01fC, Temp out: %.01fC\n", _rp.efficiency * 100, _rp.input_temp, _rp.output_temp);
@@ -305,7 +296,7 @@ void Controller::_setValue(float in, uint8_t parameterType)
         return;
     }
 
-    HuaweiCanComm.setParameterValue(value, parameterType);
+    _upHardwareInterface->setParameterValue(value, parameterType);
 }
 
 void Controller::setMode(uint8_t mode) {
