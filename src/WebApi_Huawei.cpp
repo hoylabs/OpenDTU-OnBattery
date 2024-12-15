@@ -228,34 +228,4 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
     delay(1000);
     yield();
     ESP.restart();
-
-    auto const& config = Configuration.get();
-
-    const PinMapping_t& pin = PinMapping.get();
-    // Properly turn this on
-    if (config.Huawei.Enabled) {
-        MessageOutput.println("Initialize Huawei AC charger interface... ");
-        if (PinMapping.isValidHuaweiConfig()) {
-            MessageOutput.printf("Huawei AC-charger miso = %d, mosi = %d, clk = %d, irq = %d, cs = %d, power_pin = %d\r\n", pin.huawei_miso, pin.huawei_mosi, pin.huawei_clk, pin.huawei_irq, pin.huawei_cs, pin.huawei_power);
-            HuaweiCan.updateSettings(pin.huawei_miso, pin.huawei_mosi, pin.huawei_clk, pin.huawei_irq, pin.huawei_cs, pin.huawei_power);
-            MessageOutput.println("done");
-        } else {
-            MessageOutput.println("Invalid pin config");
-        }
-    }
-
-    // Properly turn this off
-    if (!config.Huawei.Enabled) {
-      HuaweiCan.setValue(0, HUAWEI_ONLINE_CURRENT);
-      delay(500);
-      HuaweiCan.setMode(HUAWEI_MODE_OFF);
-      return;
-    }
-
-    if (config.Huawei.Auto_Power_Enabled) {
-      HuaweiCan.setMode(HUAWEI_MODE_AUTO_INT);
-      return;
-    }
-
-    HuaweiCan.setMode(HUAWEI_MODE_AUTO_EXT);
 }
