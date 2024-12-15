@@ -187,14 +187,8 @@ void setup()
     PowerLimiter.init(scheduler);
 
     // Initialize Huawei AC-charger PSU / CAN bus
-    MessageOutput.println("Initialize Huawei AC charger interface... ");
-    if (PinMapping.isValidHuaweiConfig()) {
-        MessageOutput.printf("Huawei AC-charger miso = %d, mosi = %d, clk = %d, irq = %d, cs = %d, power_pin = %d\r\n", pin.huawei_miso, pin.huawei_mosi, pin.huawei_clk, pin.huawei_irq, pin.huawei_cs, pin.huawei_power);
-        HuaweiCan.init(scheduler, pin.huawei_miso, pin.huawei_mosi, pin.huawei_clk, pin.huawei_irq, pin.huawei_cs, pin.huawei_power);
-        MessageOutput.println("done");
-    } else {
-        MessageOutput.println("Invalid pin config");
-    }
+    MessageOutput.println("Initialize Huawei AC charger interface...");
+    HuaweiCan.init(scheduler);
 
     Battery.init(scheduler);
 }

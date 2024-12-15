@@ -114,30 +114,31 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic t,
     }
 
     std::lock_guard<std::mutex> mqttLock(_mqttMutex);
+    using Setting = GridCharger::Huawei::HardwareInterface::Setting;
 
     switch (t) {
         case Topic::LimitOnlineVoltage:
             MessageOutput.printf("Limit Voltage: %f V\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setValue,
-                        &HuaweiCan, payload_val, HUAWEI_ONLINE_VOLTAGE));
+            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setParameter,
+                        &HuaweiCan, payload_val, Setting::OnlineVoltage));
             break;
 
         case Topic::LimitOfflineVoltage:
             MessageOutput.printf("Offline Limit Voltage: %f V\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setValue,
-                        &HuaweiCan, payload_val, HUAWEI_OFFLINE_VOLTAGE));
+            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setParameter,
+                        &HuaweiCan, payload_val, Setting::OfflineVoltage));
             break;
 
         case Topic::LimitOnlineCurrent:
             MessageOutput.printf("Limit Current: %f A\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setValue,
-                        &HuaweiCan, payload_val, HUAWEI_ONLINE_CURRENT));
+            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setParameter,
+                        &HuaweiCan, payload_val, Setting::OnlineCurrent));
             break;
 
         case Topic::LimitOfflineCurrent:
             MessageOutput.printf("Offline Limit Current: %f A\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setValue,
-                        &HuaweiCan, payload_val, HUAWEI_OFFLINE_CURRENT));
+            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setParameter,
+                        &HuaweiCan, payload_val, Setting::OfflineCurrent));
             break;
 
         case Topic::Mode:

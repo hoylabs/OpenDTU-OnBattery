@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <TaskSchedulerDeclarations.h>
-#include <gridcharger/huawei/MCP2515.h>
+#include <gridcharger/huawei/HardwareInterface.h>
 
 namespace GridCharger::Huawei {
 
@@ -34,9 +34,9 @@ typedef struct RectifierParameters {
 
 class Controller {
 public:
-    void init(Scheduler& scheduler, uint8_t huawei_miso, uint8_t huawei_mosi, uint8_t huawei_clk, uint8_t huawei_irq, uint8_t huawei_cs, uint8_t huawei_power);
-    void updateSettings(uint8_t huawei_miso, uint8_t huawei_mosi, uint8_t huawei_clk, uint8_t huawei_irq, uint8_t huawei_cs, uint8_t huawei_power);
-    void setValue(float in, uint8_t parameterType);
+    void init(Scheduler& scheduler);
+    void updateSettings();
+    void setParameter(float val, HardwareInterface::Setting setting);
     void setMode(uint8_t mode);
 
     RectifierParameters_t * get();
@@ -46,14 +46,19 @@ public:
 
 private:
     void loop();
-    void processReceivedParameters();
-    void _setValue(float in, uint8_t parameterType);
+    void _setParameter(float val, HardwareInterface::Setting setting);
+
+    // these control the pin named "power", which in turn is supposed to control
+    // a relay (or similar) to enable or disable the PSU using it's slot detect
+    // pins.
+    void enableOutput();
+    void disableOutput();
+    int8_t _huaweiPower;
 
     Task _loopTask;
-    std::unique_ptr<MCP2515> _upHardwareInterface;
+    std::unique_ptr<HardwareInterface> _upHardwareInterface;
 
-    bool _initialized = false;
-    uint8_t _huaweiPower;           // Power pin
+    std::mutex _mutex;
     uint8_t _mode = HUAWEI_MODE_AUTO_EXT;
 
     RectifierParameters_t _rp;

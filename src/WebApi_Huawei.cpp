@@ -98,6 +98,8 @@ void WebApiHuaweiClass::onPost(AsyncWebServerRequest* request)
         return;
     }
 
+    using Setting = GridCharger::Huawei::HardwareInterface::Setting;
+
     if (root["voltage_valid"].is<bool>()) {
         if (root["voltage_valid"].as<bool>()) {
             if (root["voltage"].as<float>() < minimal_voltage || root["voltage"].as<float>() > 58) {
@@ -111,9 +113,9 @@ void WebApiHuaweiClass::onPost(AsyncWebServerRequest* request)
             } else {
                 value = root["voltage"].as<float>();
                 if (online) {
-                    HuaweiCan.setValue(value, HUAWEI_ONLINE_VOLTAGE);
+                    HuaweiCan.setParameter(value, Setting::OnlineVoltage);
                 } else {
-                    HuaweiCan.setValue(value, HUAWEI_OFFLINE_VOLTAGE);
+                    HuaweiCan.setParameter(value, Setting::OfflineVoltage);
                 }
             }
         }
@@ -132,9 +134,9 @@ void WebApiHuaweiClass::onPost(AsyncWebServerRequest* request)
             } else {
                 value = root["current"].as<float>();
                 if (online) {
-                    HuaweiCan.setValue(value, HUAWEI_ONLINE_CURRENT);
+                    HuaweiCan.setParameter(value, Setting::OnlineCurrent);
                 } else {
-                    HuaweiCan.setValue(value, HUAWEI_OFFLINE_CURRENT);
+                    HuaweiCan.setParameter(value, Setting::OfflineCurrent);
                 }
             }
         }
