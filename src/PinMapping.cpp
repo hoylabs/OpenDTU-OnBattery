@@ -450,13 +450,3 @@ bool PinMappingClass::isValidEthConfig() const
         && _pinMapping.eth_mdio >= 0;
 }
 #endif
-
-bool PinMappingClass::isValidHuaweiConfig() const
-{
-    return _pinMapping.huawei_miso >= 0
-        && _pinMapping.huawei_mosi >= 0
-        && _pinMapping.huawei_clk >= 0
-        && _pinMapping.huawei_irq >= 0
-        && _pinMapping.huawei_cs >= 0
-        && _pinMapping.huawei_power >= 0;
-}

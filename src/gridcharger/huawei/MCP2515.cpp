@@ -5,6 +5,8 @@
 #include <gridcharger/huawei/MCP2515.h>
 #include "MessageOutput.h"
 #include "SpiManager.h"
+#include "PinMapping.h"
+#include "Configuration.h"
 
 namespace GridCharger::Huawei {
 
@@ -42,29 +44,40 @@ void MCP2515::loopHelper()
     _taskDone = true;
 }
 
-bool MCP2515::init(uint8_t huawei_miso, uint8_t huawei_mosi, uint8_t huawei_clk,
-        uint8_t huawei_irq, uint8_t huawei_cs, uint32_t frequency) {
+bool MCP2515::init() {
+
+    const PinMapping_t& pin = PinMapping.get();
+
+    MessageOutput.printf("[Huawei::MCP2515] clk = %d, miso = %d, mosi = %d, cs = %d, irq = %d\r\n",
+            pin.huawei_clk, pin.huawei_miso, pin.huawei_mosi, pin.huawei_cs, pin.huawei_irq);
+
+    if (pin.huawei_clk < 0 || pin.huawei_miso < 0 || pin.huawei_mosi < 0 || pin.huawei_cs < 0) {
+        MessageOutput.printf("[Huawei::MCP2515] invalid pin config\r\n");
+        return false;
+    }
 
     auto spi_bus = SpiManagerInst.claim_bus_arduino();
     if (!spi_bus) { return false; }
 
     SPI = new SPIClass(*spi_bus);
 
-    SPI->begin(huawei_clk, huawei_miso, huawei_mosi, huawei_cs);
-    pinMode(huawei_cs, OUTPUT);
-    digitalWrite(huawei_cs, HIGH);
+    SPI->begin(pin.huawei_clk, pin.huawei_miso, pin.huawei_mosi, pin.huawei_cs);
+    pinMode(pin.huawei_cs, OUTPUT);
+    digitalWrite(pin.huawei_cs, HIGH);
 
-    pinMode(huawei_irq, INPUT_PULLUP);
-    _huaweiIrq = huawei_irq;
+    pinMode(pin.huawei_irq, INPUT_PULLUP);
+    _huaweiIrq = pin.huawei_irq;
 
     auto mcp_frequency = MCP_8MHZ;
+    auto frequency = Configuration.get().Huawei.CAN_Controller_Frequency;
     if (16000000UL == frequency) { mcp_frequency = MCP_16MHZ; }
     else if (8000000UL != frequency) {
-        MessageOutput.printf("Huawei CAN: unknown frequency %d Hz, using 8 MHz\r\n", mcp_frequency);
+        MessageOutput.printf("[Huawei::MCP2515] unknown frequency %d Hz, using 8 MHz\r\n", mcp_frequency);
     }
 
-    _CAN = new MCP_CAN(SPI, huawei_cs);
-    if (!_CAN->begin(MCP_STDEXT, CAN_125KBPS, mcp_frequency) == CAN_OK) {
+    _CAN = new MCP_CAN(SPI, pin.huawei_cs);
+    if (_CAN->begin(MCP_STDEXT, CAN_125KBPS, mcp_frequency) != CAN_OK) {
+        MessageOutput.printf("[Huawei::MCP2515] mcp_can begin() failed\r\n");
         return false;
     }
 
@@ -89,60 +102,56 @@ void MCP2515::loop()
     INT32U rxId;
     unsigned char len = 0;
     unsigned char rxBuf[8];
-    uint8_t i;
 
-    if (!digitalRead(_huaweiIrq)) {
-        // If CAN_INT pin is low, read receive buffer
-        _CAN->readMsgBuf(&rxId, &len, rxBuf);      // Read data: len = data length, buf = data byte(s)
-        if ((rxId & 0x80000000) == 0x80000000) {   // Determine if ID is standard (11 bits) or extended (29 bits)
-            if ((rxId & 0x1FFFFFFF) == 0x1081407F && len == 8) {
+    while (!digitalRead(_huaweiIrq)) {
+        _CAN->readMsgBuf(&rxId, &len, rxBuf); // Read data: len = data length, buf = data byte(s)
 
-                int32_t value = __bswap32(*reinterpret_cast<int32_t*>(rxBuf + 4));
+        // Determine if ID is standard (11 bits) or extended (29 bits)
+        if ((rxId & 0x80000000) != 0x80000000) { continue; }
 
-                // Input power 0x70, Input frequency 0x71, Input current 0x72
-                // Output power 0x73, Efficiency 0x74, Output Voltage 0x75 and Output Current 0x76
-                if (rxBuf[1] >= 0x70 && rxBuf[1] <= 0x76 ) {
-                    _recValues[rxBuf[1] - 0x70] = value;
-                }
+        if (len != 8) { continue; }
 
-                // Input voltage
-                if (rxBuf[1] == 0x78 ) {
-                    _recValues[HUAWEI_INPUT_VOLTAGE_IDX] = value;
-                }
-
-                // Output Temperature
-                if (rxBuf[1] == 0x7F ) {
-                    _recValues[HUAWEI_OUTPUT_TEMPERATURE_IDX] = value;
-                }
-
-                // Input Temperature 0x80, Output Current 1 0x81 and Output Current 2 0x82
-                if (rxBuf[1] >= 0x80 && rxBuf[1] <= 0x82 ) {
-                    _recValues[rxBuf[1] - 0x80 + HUAWEI_INPUT_TEMPERATURE_IDX] = value;
-                }
-
-                // This is the last value that is send
-                if (rxBuf[1] == 0x81) {
-                    _completeUpdateReceived = true;
-                }
-            }
-        }
-        // Other emitted codes not handled here are: 0x1081407E (Ack), 0x1081807E (Ack Frame), 0x1081D27F (Description), 0x1001117E (Whr meter), 0x100011FE (unclear), 0x108111FE (output enabled), 0x108081FE (unclear). See:
+        // Other emitted codes not handled here are:
+        //     0x1081407E (Ack), 0x1081807E (Ack Frame),
+        //     0x1081D27F (Description), 0x1001117E (Whr meter),
+        //     0x100011FE (unclear), 0x108111FE (output enabled),
+        //     0x108081FE (unclear).
         // https://github.com/craigpeacock/Huawei_R4850G2_CAN/blob/main/r4850.c
         // https://www.beyondlogic.org/review-huawei-r4850g2-power-supply-53-5vdc-3kw/
+        if ((rxId & 0x1FFFFFFF) != 0x1081407F) { continue; }
+
+        uint32_t valId = rxBuf[0] << 24 | rxBuf[1] << 16 | rxBuf[2] << 8 | rxBuf[3];
+        if ((valId & 0xFF00FFFF) != 0x01000000) { continue; }
+
+        auto property = static_cast<Property>(rxBuf[1]);
+        float value = rxBuf[4] << 24 | rxBuf[5] << 16 | rxBuf[6] << 8 | rxBuf[7];
+
+        if (property == HardwareInterface::Property::OutputCurrentMax) {
+            value /= _maxCurrentMultiplier;
+        }
+        else {
+            value /= 1024;
+        }
+        _stats[property] = {value, millis()};
     }
 
     // Transmit values
-    for (i = 0; i < HUAWEI_OFFLINE_CURRENT; i++) {
-        if ( _hasNewTxValue[i] == true) {
-            uint8_t data[8] = {0x01, i, 0x00, 0x00, 0x00, 0x00, (uint8_t)((_txValues[i] & 0xFF00) >> 8), (uint8_t)(_txValues[i] & 0xFF)};
+    size_t queueSize = _sendQueue.size();
+    for (size_t i = 0; i < queueSize; ++i) {
+        auto [setting, val] = _sendQueue.front();
+        _sendQueue.pop();
 
-            // Send extended message
-            byte sndStat = _CAN->sendMsgBuf(0x108180FE, 1, 8, data);
-            if (sndStat == CAN_OK) {
-                _hasNewTxValue[i] = false;
-            } else {
-                _errorCode |= HUAWEI_ERROR_CODE_TX;
-            }
+        uint8_t data[8] = {
+            0x01, static_cast<uint8_t>(setting), 0x00, 0x00,
+            0x00, 0x00, static_cast<uint8_t>((val & 0xFF00) >> 8),
+            static_cast<uint8_t>(val & 0xFF)
+        };
+
+        // Send extended message
+        byte sndStat = _CAN->sendMsgBuf(0x108180FE, 1, 8, data);
+        if (sndStat != CAN_OK) {
+            _errorCode |= HUAWEI_ERROR_CODE_TX;
+            _sendQueue.push({setting, val});
         }
     }
 
@@ -153,24 +162,12 @@ void MCP2515::loop()
 
 }
 
-int32_t MCP2515::getParameterValue(uint8_t parameter)
+HardwareInterface::property_t MCP2515::getParameter(HardwareInterface::Property property)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    if (parameter < HUAWEI_OUTPUT_CURRENT1_IDX) {
-        return _recValues[parameter];
-    }
-    return 0;
-}
-
-bool MCP2515::gotNewRxDataFrame(bool clear)
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-    bool b = false;
-    b = _completeUpdateReceived;
-    if (clear) {
-        _completeUpdateReceived = false;
-    }
-    return b;
+    auto pos = _stats.find(property);
+    if (pos == _stats.end()) { return {0, 0}; }
+    return pos->second;
 }
 
 uint8_t MCP2515::getErrorCode(bool clear)
@@ -184,13 +181,22 @@ uint8_t MCP2515::getErrorCode(bool clear)
     return e;
 }
 
-void MCP2515::setParameterValue(uint16_t in, uint8_t parameterType)
+void MCP2515::setParameter(HardwareInterface::Setting setting, float val)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    if (parameterType < HUAWEI_OFFLINE_CURRENT) {
-        _txValues[parameterType] = in;
-        _hasNewTxValue[parameterType] = true;
+
+    switch (setting) {
+        case Setting::OfflineVoltage:
+        case Setting::OnlineVoltage:
+            val *= 1024;
+            break;
+        case Setting::OfflineCurrent:
+        case Setting::OnlineCurrent:
+            val *= _maxCurrentMultiplier;
+            break;
     }
+
+    _sendQueue.push({setting, static_cast<uint16_t>(val)});
 }
 
 // Private methods

@@ -90,7 +90,6 @@ public:
 #if CONFIG_ETH_USE_ESP32_EMAC
     bool isValidEthConfig() const;
 #endif
-    bool isValidHuaweiConfig() const;
 
 private:
     PinMapping_t _pinMapping;
