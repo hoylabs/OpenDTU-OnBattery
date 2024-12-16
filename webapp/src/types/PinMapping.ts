@@ -55,6 +55,8 @@ export interface Huawei {
     clk: number;
     cs: number;
     irq: number;
+    rx: number;
+    tx: number;
     power: number;
 }
 

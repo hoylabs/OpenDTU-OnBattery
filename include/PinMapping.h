@@ -66,8 +66,10 @@ struct PinMapping_t {
     int8_t huawei_miso;
     int8_t huawei_mosi;
     int8_t huawei_clk;
-    int8_t huawei_irq;
     int8_t huawei_cs;
+    int8_t huawei_irq;
+    int8_t huawei_rx;
+    int8_t huawei_tx;
     int8_t huawei_power;
     int8_t powermeter_rx;
     int8_t powermeter_tx;
