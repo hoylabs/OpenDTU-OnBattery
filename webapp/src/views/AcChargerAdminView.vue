@@ -14,7 +14,27 @@
                 />
 
                 <template v-if="acChargerConfigList.enabled">
+                    <InputElement
+                        :label="$t('acchargeradmin.VerboseLogging')"
+                        v-model="acChargerConfigList.verbose_logging"
+                        type="checkbox"
+                        wide
+                    />
+
                     <div class="row mb-3">
+                        <label class="col-sm-4 col-form-label">
+                            {{ $t('acchargeradmin.HardwareInterface') }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select class="form-select" v-model="acChargerConfigList.hardware_interface">
+                                <option v-for="type in hardwareInterfaceList" :key="type.key" :value="type.key">
+                                    {{ $t('acchargeradmin.HardwareInterface' + type.value) }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3" v-if="acChargerConfigList.hardware_interface === 0">
                         <label class="col-sm-4 col-form-label">
                             {{ $t('acchargeradmin.CanControllerFrequency') }}
                         </label>
@@ -30,13 +50,6 @@
                             </select>
                         </div>
                     </div>
-
-                    <InputElement
-                        :label="$t('acchargeradmin.VerboseLogging')"
-                        v-model="acChargerConfigList.verbose_logging"
-                        type="checkbox"
-                        wide
-                    />
 
                     <InputElement
                         :label="$t('acchargeradmin.EnableAutoPower')"
@@ -182,6 +195,10 @@ export default defineComponent({
             frequencyTypeList: [
                 { key: 8, value: 8000000 },
                 { key: 16, value: 16000000 },
+            ],
+            hardwareInterfaceList: [
+                { key: 0, value: 'MCP2515' },
+                { key: 1, value: 'VP230' },
             ],
         };
     },

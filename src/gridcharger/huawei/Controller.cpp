@@ -5,6 +5,7 @@
 #include "Battery.h"
 #include <gridcharger/huawei/Controller.h>
 #include <gridcharger/huawei/MCP2515.h>
+#include <gridcharger/huawei/TWAI.h>
 #include "MessageOutput.h"
 #include "PowerMeter.h"
 #include "PowerLimiter.h"
@@ -54,7 +55,19 @@ void Controller::updateSettings()
 
     if (!config.Huawei.Enabled) { return; }
 
-    _upHardwareInterface = std::make_unique<MCP2515>();
+    switch (config.Huawei.HardwareInterface) {
+        case GridChargerHardwareInterface::MCP2515:
+            _upHardwareInterface = std::make_unique<MCP2515>();
+            break;
+        case GridChargerHardwareInterface::VP230:
+            _upHardwareInterface = std::make_unique<TWAI>();
+            break;
+        default:
+            MessageOutput.printf("[HuaweiCanClass::init] Unknown hardware "
+                    "interface setting %d\r\n", config.Huawei.HardwareInterface);
+            return;
+            break;
+    }
 
     if (!_upHardwareInterface->init()) {
         MessageOutput.println("[HuaweiCanClass::init] Error initializing hardware interface");

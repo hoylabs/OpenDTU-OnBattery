@@ -159,6 +159,7 @@ void WebApiHuaweiClass::onAdminGet(AsyncWebServerRequest* request)
 
     root["enabled"] = config.Huawei.Enabled;
     root["verbose_logging"] = config.Huawei.VerboseLogging;
+    root["hardware_interface"] = config.Huawei.HardwareInterface;
     root["can_controller_frequency"] = config.Huawei.CAN_Controller_Frequency;
     root["auto_power_enabled"] = config.Huawei.Auto_Power_Enabled;
     root["auto_power_batterysoc_limits_enabled"] = config.Huawei.Auto_Power_BatterySoC_Limits_Enabled;
@@ -207,6 +208,7 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
         auto& config = guard.getConfig();
         config.Huawei.Enabled = root["enabled"].as<bool>();
         config.Huawei.VerboseLogging = root["verbose_logging"];
+        config.Huawei.HardwareInterface = root["hardware_interface"];
         config.Huawei.CAN_Controller_Frequency = root["can_controller_frequency"].as<uint32_t>();
         config.Huawei.Auto_Power_Enabled = root["auto_power_enabled"].as<bool>();
         config.Huawei.Auto_Power_BatterySoC_Limits_Enabled = root["auto_power_batterysoc_limits_enabled"].as<bool>();
