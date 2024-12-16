@@ -114,8 +114,10 @@ void WebApiDeviceClass::onDeviceAdminGet(AsyncWebServerRequest* request)
     huaweiPinObj["miso"] = pin.huawei_miso;
     huaweiPinObj["mosi"] = pin.huawei_mosi;
     huaweiPinObj["clk"] = pin.huawei_clk;
-    huaweiPinObj["irq"] = pin.huawei_irq;
     huaweiPinObj["cs"] = pin.huawei_cs;
+    huaweiPinObj["irq"] = pin.huawei_irq;
+    huaweiPinObj["rx"] = pin.huawei_rx;
+    huaweiPinObj["tx"] = pin.huawei_tx;
     huaweiPinObj["power"] = pin.huawei_power;
 
     auto powermeterPinObj = curPin["powermeter"].to<JsonObject>();

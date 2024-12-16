@@ -207,6 +207,14 @@
 #define HUAWEI_PIN_IRQ -1
 #endif
 
+#ifndef HUAWEI_PIN_RX
+#define HUAWEI_PIN_RX -1
+#endif
+
+#ifndef HUAWEI_PIN_TX
+#define HUAWEI_PIN_TX -1
+#endif
+
 #ifndef HUAWEI_PIN_POWER
 #define HUAWEI_PIN_POWER -1
 #endif
@@ -300,6 +308,8 @@ PinMappingClass::PinMappingClass()
     _pinMapping.huawei_clk = HUAWEI_PIN_SCLK;
     _pinMapping.huawei_cs = HUAWEI_PIN_CS;
     _pinMapping.huawei_irq = HUAWEI_PIN_IRQ;
+    _pinMapping.huawei_rx = HUAWEI_PIN_RX;
+    _pinMapping.huawei_tx = HUAWEI_PIN_TX;
     _pinMapping.huawei_power = HUAWEI_PIN_POWER;
 
     _pinMapping.powermeter_rx = POWERMETER_PIN_RX;
@@ -397,8 +407,10 @@ bool PinMappingClass::init(const String& deviceMapping)
             _pinMapping.huawei_miso = doc[i]["huawei"]["miso"] | HUAWEI_PIN_MISO;
             _pinMapping.huawei_mosi = doc[i]["huawei"]["mosi"] | HUAWEI_PIN_MOSI;
             _pinMapping.huawei_clk = doc[i]["huawei"]["clk"] | HUAWEI_PIN_SCLK;
-            _pinMapping.huawei_irq = doc[i]["huawei"]["irq"] | HUAWEI_PIN_IRQ;
             _pinMapping.huawei_cs = doc[i]["huawei"]["cs"] | HUAWEI_PIN_CS;
+            _pinMapping.huawei_irq = doc[i]["huawei"]["irq"] | HUAWEI_PIN_IRQ;
+            _pinMapping.huawei_rx = doc[i]["huawei"]["rx"] | HUAWEI_PIN_RX;
+            _pinMapping.huawei_tx = doc[i]["huawei"]["tx"] | HUAWEI_PIN_TX;
             _pinMapping.huawei_power = doc[i]["huawei"]["power"] | HUAWEI_PIN_POWER;
 
             _pinMapping.powermeter_rx = doc[i]["powermeter"]["rx"] | POWERMETER_PIN_RX;
