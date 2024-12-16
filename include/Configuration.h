@@ -197,6 +197,8 @@ struct BATTERY_CONFIG_T {
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
+enum GridChargerHardwareInterface { MCP2515 = 0, VP230 = 1 };
+
 struct CONFIG_T {
     struct {
         uint32_t Version;
@@ -331,6 +333,7 @@ struct CONFIG_T {
     struct {
         bool Enabled;
         bool VerboseLogging;
+        GridChargerHardwareInterface HardwareInterface;
         uint32_t CAN_Controller_Frequency;
         bool Auto_Power_Enabled;
         bool Auto_Power_BatterySoC_Limits_Enabled;

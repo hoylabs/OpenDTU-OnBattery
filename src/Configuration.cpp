@@ -329,6 +329,7 @@ bool ConfigurationClass::write()
     JsonObject huawei = doc["huawei"].to<JsonObject>();
     huawei["enabled"] = config.Huawei.Enabled;
     huawei["verbose_logging"] = config.Huawei.VerboseLogging;
+    huawei["hardware_interface"] = config.Huawei.HardwareInterface;
     huawei["can_controller_frequency"] = config.Huawei.CAN_Controller_Frequency;
     huawei["auto_power_enabled"] = config.Huawei.Auto_Power_Enabled;
     huawei["auto_power_batterysoc_limits_enabled"] = config.Huawei.Auto_Power_BatterySoC_Limits_Enabled;
@@ -681,6 +682,7 @@ bool ConfigurationClass::read()
     JsonObject huawei = doc["huawei"];
     config.Huawei.Enabled = huawei["enabled"] | HUAWEI_ENABLED;
     config.Huawei.VerboseLogging = huawei["verbose_logging"] | VERBOSE_LOGGING;
+    config.Huawei.HardwareInterface = huawei["hardware_interface"] | GridChargerHardwareInterface::MCP2515;
     config.Huawei.CAN_Controller_Frequency = huawei["can_controller_frequency"] | HUAWEI_CAN_CONTROLLER_FREQUENCY;
     config.Huawei.Auto_Power_Enabled = huawei["auto_power_enabled"] | false;
     config.Huawei.Auto_Power_BatterySoC_Limits_Enabled = huawei["auto_power_batterysoc_limits_enabled"] | false;
