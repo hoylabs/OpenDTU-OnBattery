@@ -40,6 +40,7 @@
 #include <SpiManager.h>
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
+#include "ShellyACPlug.h"
 
 void setup()
 {
@@ -195,6 +196,10 @@ void setup()
     } else {
         MessageOutput.println("Invalid pin config");
     }
+
+    // Initialize Shelly AC-charger
+    MessageOutput.println("Initialize Shelly AC charger interface... ");
+    ShellyACPlug.init(scheduler);
 
     Battery.init(scheduler);
 }

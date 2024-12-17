@@ -71,6 +71,11 @@ export interface Huawei {
     Power: ValueObject;
 }
 
+export interface Shelly {
+    enabled: boolean;
+    Power: ValueObject;
+}
+
 export interface Battery {
     enabled: boolean;
     soc?: ValueObject;
@@ -92,4 +97,5 @@ export interface LiveData {
     huawei: Huawei;
     battery: Battery;
     power_meter: PowerMeter;
+    shelly: Shelly;
 }
