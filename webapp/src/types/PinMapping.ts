@@ -49,6 +49,23 @@ export interface Battery {
     tx: number;
 }
 
+export interface Huawei {
+    miso: number;
+    mosi: number;
+    clk: number;
+    cs: number;
+    irq: number;
+    power: number;
+}
+
+export interface PowerMeter {
+    rx: number;
+    tx: number;
+    dere: number;
+    rxen: number;
+    txen: number;
+}
+
 export interface Device {
     name: string;
     links: Array<Links>;
@@ -58,6 +75,8 @@ export interface Device {
     display: Display;
     victron: Victron;
     battery: Battery;
+    huawei: Huawei;
+    powermeter: PowerMeter;
 }
 
 export type PinMapping = Array<Device>;
