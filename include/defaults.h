@@ -115,9 +115,9 @@
 #define LANG_PACK_SUFFIX ".lang.json"
 
 // values specific to downstream project OpenDTU-OnBattery start here:
-#define VEDIRECT_ENABLED false
-#define VEDIRECT_VERBOSE_LOGGING false
-#define VEDIRECT_UPDATESONLY true
+#define SOLAR_CHARGER_ENABLED false
+#define SOLAR_CHARGER_VERBOSE_LOGGING false
+#define SOLAR_CHARGER_PUBLISH_UPDATES_ONLY true
 
 #define POWERMETER_ENABLED false
 #define POWERMETER_POLLING_INTERVAL 10

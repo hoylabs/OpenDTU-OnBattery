@@ -2,13 +2,10 @@
 /*
  * Copyright (C) 2022 Helge Erbe and others
  */
-#include "VictronMppt.h"
 #include "MqttHandleVedirect.h"
 #include "MqttSettings.h"
 #include "MessageOutput.h"
-
-
-
+#include "SolarCharger.h"
 
 MqttHandleVedirectClass MqttHandleVedirect;
 
@@ -36,8 +33,9 @@ void MqttHandleVedirectClass::forceUpdate()
 void MqttHandleVedirectClass::loop()
 {
     auto const& config = Configuration.get();
-
-    if (!MqttSettings.getConnected() || !config.Vedirect.Enabled) {
+    if (!MqttSettings.getConnected()
+        || !config.SolarCharger.Enabled
+        || config.SolarCharger.Provider != SolarChargerProviderType::VEDIRECT) {
         return;
     }
 
@@ -46,7 +44,7 @@ void MqttHandleVedirectClass::loop()
         if (_nextPublishFull <= _nextPublishUpdatesOnly) {
             _PublishFull = true;
         } else {
-            _PublishFull = !config.Vedirect.UpdatesOnly;
+            _PublishFull = !config.SolarCharger.PublishUpdatesOnly;
         }
 
         #ifdef MQTTHANDLEVEDIRECT_DEBUG
@@ -58,8 +56,8 @@ void MqttHandleVedirectClass::loop()
         }
         #endif
 
-        for (int idx = 0; idx < VictronMppt.controllerAmount(); ++idx) {
-            std::optional<VeDirectMpptController::data_t> optMpptData = VictronMppt.getData(idx);
+        for (int idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
+            std::optional<VeDirectMpptController::data_t> optMpptData = SolarCharger.getData(idx);
             if (!optMpptData.has_value()) { continue; }
 
             auto const& kvFrame = _kvFrames[optMpptData->serialNr_SER];
@@ -76,7 +74,7 @@ void MqttHandleVedirectClass::loop()
             // when Home Assistant MQTT-Auto-Discovery is active,
             // and "enable expiration" is active, all values must be published at
             // least once before the announced expiry interval is reached
-            if ((config.Vedirect.UpdatesOnly) && (config.Mqtt.Hass.Enabled) && (config.Mqtt.Hass.Expire)) {
+            if ((config.SolarCharger.PublishUpdatesOnly) && (config.Mqtt.Hass.Enabled) && (config.Mqtt.Hass.Expire)) {
                 _nextPublishFull = millis() + (((config.Mqtt.PublishInterval * 3) - 1) * 1000);
 
                 #ifdef MQTTHANDLEVEDIRECT_DEBUG

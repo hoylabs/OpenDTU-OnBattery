@@ -27,8 +27,8 @@
 #include "WebApi_ws_console.h"
 #include "WebApi_ws_live.h"
 #include <AsyncJson.h>
-#include "WebApi_ws_vedirect_live.h"
-#include "WebApi_vedirect.h"
+#include "WebApi_ws_solarcharger_live.h"
+#include "WebApi_solarcharger.h"
 #include "WebApi_ws_Huawei.h"
 #include "WebApi_Huawei.h"
 #include "WebApi_ws_battery.h"
@@ -79,8 +79,8 @@ private:
     WebApiWebappClass _webApiWebapp;
     WebApiWsConsoleClass _webApiWsConsole;
     WebApiWsLiveClass _webApiWsLive;
-    WebApiWsVedirectLiveClass _webApiWsVedirectLive;
-    WebApiVedirectClass _webApiVedirect;
+    WebApiWsSolarChargerLiveClass _webApiWsSolarChargerLive;
+    WebApiSolarChargerlass _webApiSolarCharger;
     WebApiHuaweiClass _webApiHuaweiClass;
     WebApiWsHuaweiLiveClass _webApiWsHuaweiLive;
     WebApiWsBatteryLiveClass _webApiWsBatteryLive;

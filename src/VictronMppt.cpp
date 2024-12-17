@@ -5,19 +5,27 @@
 #include "MessageOutput.h"
 #include "SerialPortManager.h"
 
-VictronMpptClass VictronMppt;
-
-void VictronMpptClass::init(Scheduler& scheduler)
+bool VictronMppt::init(bool verboseLogging)
 {
-    scheduler.addTask(_loopTask);
-    _loopTask.setCallback([this] { loop(); });
-    _loopTask.setIterations(TASK_FOREVER);
-    _loopTask.enable();
+    const PinMapping_t& pin = PinMapping.get();
+    auto controllerCount = 0;
 
-    this->updateSettings();
+    if (initController(pin.victron_rx, pin.victron_tx, verboseLogging, 1)) {
+        controllerCount++;
+    }
+
+    if (initController(pin.victron_rx2, pin.victron_tx2, verboseLogging, 2)) {
+        controllerCount++;
+    }
+
+    if (initController(pin.victron_rx3, pin.victron_tx3, verboseLogging, 3)) {
+        controllerCount++;
+    }
+
+    return controllerCount > 0;
 }
 
-void VictronMpptClass::updateSettings()
+void VictronMppt::deinit()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -26,23 +34,9 @@ void VictronMpptClass::updateSettings()
         SerialPortManager.freePort(o.c_str());
     }
     _serialPortOwners.clear();
-
-    auto const& config = Configuration.get();
-    if (!config.Vedirect.Enabled) { return; }
-
-    const PinMapping_t& pin = PinMapping.get();
-
-    initController(pin.victron_rx, pin.victron_tx,
-            config.Vedirect.VerboseLogging, 1);
-
-    initController(pin.victron_rx2, pin.victron_tx2,
-            config.Vedirect.VerboseLogging, 2);
-
-    initController(pin.victron_rx3, pin.victron_tx3,
-            config.Vedirect.VerboseLogging, 3);
 }
 
-bool VictronMpptClass::initController(int8_t rx, int8_t tx, bool logging,
+bool VictronMppt::initController(int8_t rx, int8_t tx, bool logging,
         uint8_t instance)
 {
     MessageOutput.printf("[VictronMppt Instance %d] rx = %d, tx = %d\r\n",
@@ -66,7 +60,7 @@ bool VictronMpptClass::initController(int8_t rx, int8_t tx, bool logging,
     return true;
 }
 
-void VictronMpptClass::loop()
+void VictronMppt::loop()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -79,7 +73,7 @@ void VictronMpptClass::loop()
  * isDataValid()
  * return: true = if at least one of the MPPT controllers delivers valid data
  */
-bool VictronMpptClass::isDataValid() const
+bool VictronMppt::isDataValid() const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -90,18 +84,7 @@ bool VictronMpptClass::isDataValid() const
     return false;
 }
 
-bool VictronMpptClass::isDataValid(size_t idx) const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_controllers.empty() || idx >= _controllers.size()) {
-        return false;
-    }
-
-    return _controllers[idx]->isDataValid();
-}
-
-uint32_t VictronMpptClass::getDataAgeMillis() const
+uint32_t VictronMppt::getDataAgeMillis() const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -121,7 +104,7 @@ uint32_t VictronMpptClass::getDataAgeMillis() const
     return age;
 }
 
-uint32_t VictronMpptClass::getDataAgeMillis(size_t idx) const
+uint32_t VictronMppt::getDataAgeMillis(size_t idx) const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -130,7 +113,7 @@ uint32_t VictronMpptClass::getDataAgeMillis(size_t idx) const
     return millis() - _controllers[idx]->getLastUpdate();
 }
 
-std::optional<VeDirectMpptController::data_t> VictronMpptClass::getData(size_t idx) const
+std::optional<VeDirectMpptController::data_t> VictronMppt::getData(size_t idx) const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -145,7 +128,7 @@ std::optional<VeDirectMpptController::data_t> VictronMpptClass::getData(size_t i
     return _controllers[idx]->getData();
 }
 
-int32_t VictronMpptClass::getPowerOutputWatts() const
+int32_t VictronMppt::getOutputPowerWatts() const
 {
     int32_t sum = 0;
 
@@ -168,7 +151,7 @@ int32_t VictronMpptClass::getPowerOutputWatts() const
     return sum;
 }
 
-int32_t VictronMpptClass::getPanelPowerWatts() const
+int32_t VictronMppt::getPanelPowerWatts() const
 {
     int32_t sum = 0;
 
@@ -189,7 +172,7 @@ int32_t VictronMpptClass::getPanelPowerWatts() const
     return sum;
 }
 
-float VictronMpptClass::getYieldTotal() const
+float VictronMppt::getYieldTotal() const
 {
     float sum = 0;
 
@@ -201,7 +184,7 @@ float VictronMpptClass::getYieldTotal() const
     return sum;
 }
 
-float VictronMpptClass::getYieldDay() const
+float VictronMppt::getYieldDay() const
 {
     float sum = 0;
 
@@ -213,7 +196,7 @@ float VictronMpptClass::getYieldDay() const
     return sum;
 }
 
-float VictronMpptClass::getOutputVoltage() const
+float VictronMppt::getOutputVoltage() const
 {
     float min = -1;
 
@@ -227,7 +210,7 @@ float VictronMpptClass::getOutputVoltage() const
     return min;
 }
 
-std::optional<uint8_t> VictronMpptClass::getStateOfOperation() const
+std::optional<uint8_t> VictronMppt::getStateOfOperation() const
 {
     for (const auto& upController : _controllers) {
         if (upController->isDataValid()) {
@@ -238,7 +221,7 @@ std::optional<uint8_t> VictronMpptClass::getStateOfOperation() const
     return std::nullopt;
 }
 
-std::optional<float> VictronMpptClass::getVoltage(MPPTVoltage kindOf) const
+std::optional<float> VictronMppt::getVoltage(MPPTVoltage kindOf) const
 {
     for (const auto& upController : _controllers) {
         switch (kindOf) {
