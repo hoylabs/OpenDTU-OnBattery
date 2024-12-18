@@ -71,6 +71,7 @@ void Controller::updateSettings()
 
     if (!_upHardwareInterface->init()) {
         MessageOutput.println("[HuaweiCanClass::init] Error initializing hardware interface");
+        _upHardwareInterface.reset(nullptr);
         return;
     };
 

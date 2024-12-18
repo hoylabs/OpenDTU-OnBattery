@@ -6,45 +6,48 @@
 
 namespace GridCharger::Huawei {
 
-HardwareInterface::~HardwareInterface()
-{
-    std::unique_lock<std::mutex> lock(_mutex);
-    _taskDone = false;
-    _stopLoop = true;
-    lock.unlock();
-
-    if (_taskHandle != nullptr) {
-        while (!_taskDone) { delay(10); }
-        _taskHandle = nullptr;
-    }
-}
-
 void HardwareInterface::staticLoopHelper(void* context)
 {
     auto pInstance = static_cast<HardwareInterface*>(context);
-    pInstance->loopHelper();
-    vTaskDelete(nullptr);
-}
+    static auto constexpr resetNotificationValue = pdTRUE;
+    static auto constexpr notificationTimeout = pdMS_TO_TICKS(500);
 
-void HardwareInterface::loopHelper()
-{
-    std::unique_lock<std::mutex> lock(_mutex);
-
-    while (!_stopLoop) {
-        loop();
-        lock.unlock();
-        yield();
-        lock.lock();
+    while (true) {
+        ulTaskNotifyTake(resetNotificationValue, notificationTimeout);
+        {
+            std::unique_lock<std::mutex> lock(pInstance->_mutex);
+            if (pInstance->_stopLoop) { break; }
+            pInstance->loop();
+        }
     }
 
-    _taskDone = true;
+    pInstance->_taskDone = true;
+
+    vTaskDelete(nullptr);
 }
 
 bool HardwareInterface::startLoop()
 {
-    uint32_t constexpr stackSize = 2048;
+    uint32_t constexpr stackSize = 4096;
     return pdPASS == xTaskCreate(HardwareInterface::staticLoopHelper,
             "HuaweiHwIfc", stackSize, this, 1/*prio*/, &_taskHandle);
+}
+
+void HardwareInterface::stopLoop()
+{
+    if (_taskHandle == nullptr) { return; }
+
+    _taskDone = false;
+
+    {
+        std::unique_lock<std::mutex> lock(_mutex);
+        _stopLoop = true;
+    }
+
+    xTaskNotifyGive(_taskHandle);
+
+    while (!_taskDone) { delay(10); }
+    _taskHandle = nullptr;
 }
 
 void HardwareInterface::loop()
@@ -80,7 +83,6 @@ void HardwareInterface::loop()
             static_cast<uint8_t>(val & 0xFF)
         };
 
-        // Send extended message
         if (!sendMessage(0x108180FE, data)) {
             MessageOutput.print("[Huawei::HwIfc] Failed to set parameter\r\n");
             _sendQueue.push({setting, val});
@@ -101,6 +103,8 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
+    if (_taskHandle == nullptr) { return; }
+
     switch (setting) {
         case Setting::OfflineVoltage:
         case Setting::OnlineVoltage:
@@ -113,6 +117,8 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
     }
 
     _sendQueue.push({setting, static_cast<uint16_t>(val)});
+
+    xTaskNotifyGive(_taskHandle);
 }
 
 HardwareInterface::property_t HardwareInterface::getParameter(HardwareInterface::Property property) const

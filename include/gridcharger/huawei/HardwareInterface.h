@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include <atomic>
 #include <array>
 #include <mutex>
 #include <map>
@@ -13,7 +14,9 @@ namespace GridCharger::Huawei {
 
 class HardwareInterface {
 public:
-    virtual ~HardwareInterface();
+    HardwareInterface() = default;
+
+    virtual ~HardwareInterface() = default;
 
     virtual bool init() = 0;
 
@@ -52,20 +55,22 @@ protected:
     using can_message_t = struct CAN_MESSAGE_T;
 
     bool startLoop();
+    void stopLoop();
+
+    TaskHandle_t getTaskHandle() const { return _taskHandle; }
 
 private:
     static void staticLoopHelper(void* context);
-    void loopHelper();
     void loop();
 
     virtual bool getMessage(can_message_t& msg) = 0;
 
-    virtual bool sendMessage(uint32_t valueId, std::array<uint8_t, 8> const& data) = 0;
+    virtual bool sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data) = 0;
 
     mutable std::mutex _mutex;
 
     TaskHandle_t _taskHandle = nullptr;
-    bool _taskDone = false;
+    std::atomic<bool> _taskDone = false;
     bool _stopLoop = false;
 
     std::map<HardwareInterface::Property, HardwareInterface::property_t> _stats;

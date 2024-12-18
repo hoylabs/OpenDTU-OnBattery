@@ -201,11 +201,5 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 
-    // TODO(schlimmchen): HuaweiCan has no real concept of the fact that the
-    // config might change. at least not regarding CAN parameters. until that
-    // changes, the ESP must restart for configuration changes to take effect.
-    yield();
-    delay(1000);
-    yield();
-    ESP.restart();
+    HuaweiCan.updateSettings();
 }

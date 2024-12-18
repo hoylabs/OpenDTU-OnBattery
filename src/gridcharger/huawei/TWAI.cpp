@@ -10,6 +10,22 @@
 
 namespace GridCharger::Huawei {
 
+TWAI::~TWAI()
+{
+    stopLoop();
+
+    if (twai_stop() != ESP_OK) {
+        MessageOutput.print("[Huawei::TWAI] failed to stop driver\r\n");
+        return;
+    }
+
+    if (twai_driver_uninstall() != ESP_OK) {
+        MessageOutput.print("[Huawei::TWAI] failed to uninstall driver\r\n");
+    }
+
+    MessageOutput.print("[Huawei::TWAI] driver stopped and uninstalled\r\n");
+}
+
 bool TWAI::init()
 {
     const PinMapping_t& pin = PinMapping.get();
@@ -25,6 +41,7 @@ bool TWAI::init()
     auto tx = static_cast<gpio_num_t>(pin.huawei_tx);
     auto rx = static_cast<gpio_num_t>(pin.huawei_rx);
     twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(tx, rx, TWAI_MODE_NORMAL);
+    g_config.rx_queue_len = 16;
 
     // interrupts at level 1 are in high demand, at least on ESP32-S3 boards,
     // but only a limited amount can be allocated. failing to allocate an
@@ -87,14 +104,14 @@ bool TWAI::getMessage(HardwareInterface::can_message_t& msg)
     return false;
 }
 
-bool TWAI::sendMessage(uint32_t valueId, std::array<uint8_t, 8> const& data)
+bool TWAI::sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data)
 {
     twai_message_t txMsg;
     memset(&txMsg, 0, sizeof(txMsg));
     memcpy(txMsg.data, data.data(), data.size());
     txMsg.extd = 1;
     txMsg.data_length_code = data.size();
-    txMsg.identifier = valueId;
+    txMsg.identifier = canId;
 
     return twai_transmit(&txMsg, pdMS_TO_TICKS(1000)) == ESP_OK;
 }
