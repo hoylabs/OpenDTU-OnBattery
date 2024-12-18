@@ -26,6 +26,19 @@ void ConfigurationClass::init(Scheduler& scheduler)
     memset(&config, 0x0, sizeof(config));
 }
 
+// we want a representation of our floating-point value in the JSON that
+// uses the least amount of decimal digits possible to convey the value that
+// is actually represented by the float. this is no easy task. ArduinoJson
+// does this for us, however, it does it as expected only for variables of
+// type double. this is probably because it assumes all floating-point
+// values to have the precision of a double (64 bits), so it prints the
+// respective number of siginificant decimals, which are too many if the
+// actual value is a float (32 bits).
+double ConfigurationClass::roundedFloat(float val)
+{
+    return static_cast<int>(val * 100 + (val > 0 ? 0.5 : -0.5)) / 100.0;
+}
+
 void ConfigurationClass::serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target)
 {
     JsonObject target_http_config = target["http_request"].to<JsonObject>();
@@ -115,18 +128,6 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
         return String(serialBuffer);
     };
 
-    // we want a representation of our floating-point value in the JSON that
-    // uses the least amount of decimal digits possible to convey the value that
-    // is actually represented by the float. this is no easy task. ArduinoJson
-    // does this for us, however, it does it as expected only for variables of
-    // type double. this is probably because it assumes all floating-point
-    // values to have the precision of a double (64 bits), so it prints the
-    // respective number of siginificant decimals, which are too many if the
-    // actual value is a float (32 bits).
-    auto roundedFloat = [](float val) -> double {
-        return static_cast<int>(val * 100 + (val > 0 ? 0.5 : -0.5)) / 100.0;
-    };
-
     target["enabled"] = source.Enabled;
     target["verbose_logging"] = source.VerboseLogging;
     target["solar_passthrough_enabled"] = source.SolarPassThroughEnabled;
@@ -164,6 +165,23 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
         t["upper_power_limit"] = s.UpperPowerLimit;
         t["scaling_threshold"] = s.ScalingThreshold;
     }
+}
+
+void ConfigurationClass::serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target)
+{
+    target["enabled"] = source.Enabled;
+    target["verbose_logging"] = source.VerboseLogging;
+    target["hardware_interface"] = source.HardwareInterface;
+    target["can_controller_frequency"] = source.CAN_Controller_Frequency;
+    target["auto_power_enabled"] = source.Auto_Power_Enabled;
+    target["auto_power_batterysoc_limits_enabled"] = source.Auto_Power_BatterySoC_Limits_Enabled;
+    target["emergency_charge_enabled"] = source.Emergency_Charge_Enabled;
+    target["voltage_limit"] = roundedFloat(source.Auto_Power_Voltage_Limit);
+    target["enable_voltage_limit"] = roundedFloat(source.Auto_Power_Enable_Voltage_Limit);
+    target["lower_power_limit"] = source.Auto_Power_Lower_Power_Limit;
+    target["upper_power_limit"] = source.Auto_Power_Upper_Power_Limit;
+    target["stop_batterysoc_threshold"] = source.Auto_Power_Stop_BatterySoC_Threshold;
+    target["target_power_consumption"] = source.Auto_Power_Target_Power_Consumption;
 }
 
 bool ConfigurationClass::write()
@@ -327,19 +345,7 @@ bool ConfigurationClass::write()
     serializeBatteryConfig(config.Battery, battery);
 
     JsonObject huawei = doc["huawei"].to<JsonObject>();
-    huawei["enabled"] = config.Huawei.Enabled;
-    huawei["verbose_logging"] = config.Huawei.VerboseLogging;
-    huawei["hardware_interface"] = config.Huawei.HardwareInterface;
-    huawei["can_controller_frequency"] = config.Huawei.CAN_Controller_Frequency;
-    huawei["auto_power_enabled"] = config.Huawei.Auto_Power_Enabled;
-    huawei["auto_power_batterysoc_limits_enabled"] = config.Huawei.Auto_Power_BatterySoC_Limits_Enabled;
-    huawei["emergency_charge_enabled"] = config.Huawei.Emergency_Charge_Enabled;
-    huawei["voltage_limit"] = config.Huawei.Auto_Power_Voltage_Limit;
-    huawei["enable_voltage_limit"] = config.Huawei.Auto_Power_Enable_Voltage_Limit;
-    huawei["lower_power_limit"] = config.Huawei.Auto_Power_Lower_Power_Limit;
-    huawei["upper_power_limit"] = config.Huawei.Auto_Power_Upper_Power_Limit;
-    huawei["stop_batterysoc_threshold"] = config.Huawei.Auto_Power_Stop_BatterySoC_Threshold;
-    huawei["target_power_consumption"] = config.Huawei.Auto_Power_Target_Power_Consumption;
+    serializeGridChargerConfig(config.Huawei, huawei);
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
@@ -476,6 +482,23 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
         inv.UpperPowerLimit = s["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
         inv.ScalingThreshold = s["scaling_threshold"] | POWERLIMITER_SCALING_THRESHOLD;
     }
+}
+
+void ConfigurationClass::deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target)
+{
+    target.Enabled = source["enabled"] | HUAWEI_ENABLED;
+    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
+    target.HardwareInterface = source["hardware_interface"] | GridChargerHardwareInterface::MCP2515;
+    target.CAN_Controller_Frequency = source["can_controller_frequency"] | HUAWEI_CAN_CONTROLLER_FREQUENCY;
+    target.Auto_Power_Enabled = source["auto_power_enabled"] | false;
+    target.Auto_Power_BatterySoC_Limits_Enabled = source["auto_power_batterysoc_limits_enabled"] | false;
+    target.Emergency_Charge_Enabled = source["emergency_charge_enabled"] | false;
+    target.Auto_Power_Voltage_Limit = source["voltage_limit"] | HUAWEI_AUTO_POWER_VOLTAGE_LIMIT;
+    target.Auto_Power_Enable_Voltage_Limit =  source["enable_voltage_limit"] | HUAWEI_AUTO_POWER_ENABLE_VOLTAGE_LIMIT;
+    target.Auto_Power_Lower_Power_Limit = source["lower_power_limit"] | HUAWEI_AUTO_POWER_LOWER_POWER_LIMIT;
+    target.Auto_Power_Upper_Power_Limit = source["upper_power_limit"] | HUAWEI_AUTO_POWER_UPPER_POWER_LIMIT;
+    target.Auto_Power_Stop_BatterySoC_Threshold = source["stop_batterysoc_threshold"] | HUAWEI_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
+    target.Auto_Power_Target_Power_Consumption = source["target_power_consumption"] | HUAWEI_AUTO_POWER_TARGET_POWER_CONSUMPTION;
 }
 
 bool ConfigurationClass::read()
@@ -679,20 +702,7 @@ bool ConfigurationClass::read()
 
     deserializeBatteryConfig(doc["battery"], config.Battery);
 
-    JsonObject huawei = doc["huawei"];
-    config.Huawei.Enabled = huawei["enabled"] | HUAWEI_ENABLED;
-    config.Huawei.VerboseLogging = huawei["verbose_logging"] | VERBOSE_LOGGING;
-    config.Huawei.HardwareInterface = huawei["hardware_interface"] | GridChargerHardwareInterface::MCP2515;
-    config.Huawei.CAN_Controller_Frequency = huawei["can_controller_frequency"] | HUAWEI_CAN_CONTROLLER_FREQUENCY;
-    config.Huawei.Auto_Power_Enabled = huawei["auto_power_enabled"] | false;
-    config.Huawei.Auto_Power_BatterySoC_Limits_Enabled = huawei["auto_power_batterysoc_limits_enabled"] | false;
-    config.Huawei.Emergency_Charge_Enabled = huawei["emergency_charge_enabled"] | false;
-    config.Huawei.Auto_Power_Voltage_Limit = huawei["voltage_limit"] | HUAWEI_AUTO_POWER_VOLTAGE_LIMIT;
-    config.Huawei.Auto_Power_Enable_Voltage_Limit =  huawei["enable_voltage_limit"] | HUAWEI_AUTO_POWER_ENABLE_VOLTAGE_LIMIT;
-    config.Huawei.Auto_Power_Lower_Power_Limit = huawei["lower_power_limit"] | HUAWEI_AUTO_POWER_LOWER_POWER_LIMIT;
-    config.Huawei.Auto_Power_Upper_Power_Limit = huawei["upper_power_limit"] | HUAWEI_AUTO_POWER_UPPER_POWER_LIMIT;
-    config.Huawei.Auto_Power_Stop_BatterySoC_Threshold = huawei["stop_batterysoc_threshold"] | HUAWEI_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
-    config.Huawei.Auto_Power_Target_Power_Consumption = huawei["target_power_consumption"] | HUAWEI_AUTO_POWER_TARGET_POWER_CONSUMPTION;
+    deserializeGridChargerConfig(doc["huawei"], config.Huawei);
 
     f.close();
 
