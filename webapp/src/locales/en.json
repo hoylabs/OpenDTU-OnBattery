@@ -313,7 +313,7 @@
         "Task_looptask": "Arduino Main Loop",
         "Task_asynctcp": "Async TCP",
         "Task_mqttclient": "MQTT Client",
-        "Task_huaweimcp2515": "AC Charger MCP2515",
+        "Task_huaweihwifc": "Grid Charger Hardware Interface",
         "Task_pmsdm": "PowerMeter (SDM)",
         "Task_pmhttpjson": "PowerMeter (HTTP+JSON)",
         "Task_pmsml": "PowerMeter (Serial SML)",

@@ -1,13 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include <array>
+#include <mutex>
+#include <map>
+#include <queue>
+#include <cstdint>
+#include <FreeRTOS.h>
+#include <freertos/task.h>
+
 namespace GridCharger::Huawei {
 
 class HardwareInterface {
 public:
-    virtual bool init() = 0;
+    virtual ~HardwareInterface();
 
-    virtual uint8_t getErrorCode(bool clear) = 0;
+    virtual bool init() = 0;
 
     enum class Setting : uint8_t {
         OnlineVoltage = 0,
@@ -15,7 +23,7 @@ public:
         OnlineCurrent = 3,
         OfflineCurrent = 4
     };
-    virtual void setParameter(Setting setting, float val) = 0;
+    void setParameter(Setting setting, float val);
 
     enum class Property : uint8_t {
         InputPower = 0x70,
@@ -31,7 +39,42 @@ public:
         OutputCurrent = 0x81
     };
     using property_t = std::pair<float, uint32_t>; // value and timestamp
-    virtual property_t getParameter(Property prop) = 0;
+    property_t getParameter(Property prop) const;
+
+    static uint32_t constexpr DataRequestIntervalMillis = 2500;
+
+protected:
+    struct CAN_MESSAGE_T {
+        uint32_t canId;
+        uint32_t valueId;
+        int32_t value;
+    };
+    using can_message_t = struct CAN_MESSAGE_T;
+
+    bool startLoop();
+
+private:
+    static void staticLoopHelper(void* context);
+    void loopHelper();
+    void loop();
+
+    virtual bool getMessage(can_message_t& msg) = 0;
+
+    virtual bool sendMessage(uint32_t valueId, std::array<uint8_t, 8> const& data) = 0;
+
+    mutable std::mutex _mutex;
+
+    TaskHandle_t _taskHandle = nullptr;
+    bool _taskDone = false;
+    bool _stopLoop = false;
+
+    std::map<HardwareInterface::Property, HardwareInterface::property_t> _stats;
+
+    std::queue<std::pair<HardwareInterface::Setting, uint16_t>> _sendQueue;
+
+    static unsigned constexpr _maxCurrentMultiplier = 20;
+
+    uint32_t _nextRequestMillis = 0; // When to send next data request to PSU
 };
 
 } // namespace GridCharger::Huawei

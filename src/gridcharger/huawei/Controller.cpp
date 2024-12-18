@@ -123,15 +123,6 @@ void Controller::loop()
     assign(&_rp.input_temp, Prop::InputTemperature);
     assign(&_rp.output_current, Prop::OutputCurrent);
 
-    uint8_t com_error = _upHardwareInterface->getErrorCode(true);
-    if (com_error & HUAWEI_ERROR_CODE_RX) {
-        MessageOutput.println("[HuaweiCanClass::loop] Data request error");
-    }
-
-    if (com_error & HUAWEI_ERROR_CODE_TX) {
-        MessageOutput.println("[HuaweiCanClass::loop] Data set error");
-    }
-
     // Print updated data
     if (lastUpdate != _lastUpdateReceivedMillis && verboseLogging) {
         MessageOutput.printf("[HuaweiCanClass::loop] In:  %.02fV, %.02fA, %.02fW\n", _rp.input_voltage, _rp.input_current, _rp.input_power);
@@ -278,7 +269,7 @@ void Controller::loop()
                 _setParameter(outputCurrent, Setting::OnlineCurrent);
 
                 // Don't run auto mode some time to allow for output stabilization after issuing a new value
-                _autoModeBlockedTillMillis = millis() + 2 * HUAWEI_DATA_REQUEST_INTERVAL_MS;
+                _autoModeBlockedTillMillis = millis() + 2 * HardwareInterface::DataRequestIntervalMillis;
             } else {
                 // requested PL is below minium. Set current to 0
                 _autoPowerEnabled = false;
