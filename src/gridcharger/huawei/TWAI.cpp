@@ -10,42 +10,8 @@
 
 namespace GridCharger::Huawei {
 
-TWAI::~TWAI()
+bool TWAI::init()
 {
-    std::unique_lock<std::mutex> lock(_mutex);
-    _taskDone = false;
-    _stopLoop = true;
-    lock.unlock();
-
-    if (_taskHandle != nullptr) {
-        while (!_taskDone) { delay(10); }
-        _taskHandle = nullptr;
-    }
-}
-
-void TWAI::staticLoopHelper(void* context)
-{
-    auto pInstance = static_cast<TWAI*>(context);
-    pInstance->loopHelper();
-    vTaskDelete(nullptr);
-}
-
-void TWAI::loopHelper()
-{
-    std::unique_lock<std::mutex> lock(_mutex);
-
-    while (!_stopLoop) {
-        loop();
-        lock.unlock();
-        yield();
-        lock.lock();
-    }
-
-    _taskDone = true;
-}
-
-bool TWAI::init() {
-
     const PinMapping_t& pin = PinMapping.get();
 
     MessageOutput.printf("[Huawei::TWAI] rx = %d, tx = %d\r\n",
@@ -84,138 +50,53 @@ bool TWAI::init() {
 
     MessageOutput.print("[Huawei::TWAI] driver ready\r\n");
 
-    uint32_t constexpr stackSize = 3072;
-    xTaskCreate(TWAI::staticLoopHelper, "Huawei:TWAI",
-            stackSize, this, 1/*prio*/, &_taskHandle);
-
-    return true;
+    return startLoop();
 }
 
-bool TWAI::receiveMessage(twai_message_t* rxMessage)
+bool TWAI::getMessage(HardwareInterface::can_message_t& msg)
 {
     twai_status_info_t status;
-    if (twai_get_status_info(&status) != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] Failed to get status info\r\n");
-        return false;
+
+    while (true) {
+        if (twai_get_status_info(&status) != ESP_OK) {
+            MessageOutput.print("[Huawei::TWAI] Failed to get status info\r\n");
+            return false;
+        }
+
+        if (status.msgs_to_rx == 0) { return false; }
+
+        twai_message_t rxMessage;
+
+        // wait for message to be received, function is blocking (for 100ms)
+        if (twai_receive(&rxMessage, pdMS_TO_TICKS(100)) != ESP_OK) {
+            MessageOutput.print("[Huawei::TWAI] Failed to receive message\r\n");
+            return false;
+        }
+
+        if (rxMessage.extd != 1) { continue; } // we only process extended format messages
+
+        if (rxMessage.data_length_code != 8) { continue; }
+
+        msg.canId = rxMessage.identifier;
+        msg.valueId = rxMessage.data[0] << 24 | rxMessage.data[1] << 16 | rxMessage.data[2] << 8 | rxMessage.data[3];
+        msg.value = rxMessage.data[4] << 24 | rxMessage.data[5] << 16 | rxMessage.data[6] << 8 | rxMessage.data[7];
+
+        return true;
     }
 
-    if (status.msgs_to_rx == 0) { return false; }
-
-    // Wait for message to be received, function is blocking (for 100ms)
-    if (twai_receive(rxMessage, pdMS_TO_TICKS(100)) != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] Failed to receive message\r\n");
-        return false;
-    }
-
-    return true;
+    return false;
 }
 
-bool TWAI::sendMessage(uint32_t id, std::array<uint8_t, 8> const& data)
+bool TWAI::sendMessage(uint32_t valueId, std::array<uint8_t, 8> const& data)
 {
     twai_message_t txMsg;
     memset(&txMsg, 0, sizeof(txMsg));
     memcpy(txMsg.data, data.data(), data.size());
     txMsg.extd = 1;
     txMsg.data_length_code = data.size();
-    txMsg.identifier = id;
+    txMsg.identifier = valueId;
 
     return twai_transmit(&txMsg, pdMS_TO_TICKS(1000)) == ESP_OK;
-}
-
-void TWAI::loop()
-{
-    twai_message_t rxMessage;
-
-    while (receiveMessage(&rxMessage)) {
-        if (rxMessage.extd != 1) { continue; } // we only process extended format messages
-
-        if (rxMessage.data_length_code != 8) { continue; }
-
-        if ((rxMessage.identifier & 0x1FFFFFFF) != 0x1081407F) { continue; }
-
-        uint32_t valId = rxMessage.data[0] << 24 | rxMessage.data[1] << 16 | rxMessage.data[2] << 8 | rxMessage.data[3];
-        if ((valId & 0xFF00FFFF) != 0x01000000) { continue; }
-
-        auto property = static_cast<Property>(rxMessage.data[1]);
-        float value = rxMessage.data[4] << 24 | rxMessage.data[5] << 16 | rxMessage.data[6] << 8 | rxMessage.data[7];
-
-        if (property == HardwareInterface::Property::OutputCurrentMax) {
-            value /= _maxCurrentMultiplier;
-        }
-        else {
-            value /= 1024;
-        }
-        _stats[property] = {value, millis()};
-    }
-
-    // Transmit values
-    size_t queueSize = _sendQueue.size();
-    for (size_t i = 0; i < queueSize; ++i) {
-        auto [setting, val] = _sendQueue.front();
-        _sendQueue.pop();
-
-        std::array<uint8_t, 8> data = {
-            0x01, static_cast<uint8_t>(setting), 0x00, 0x00,
-            0x00, 0x00, static_cast<uint8_t>((val & 0xFF00) >> 8),
-            static_cast<uint8_t>(val & 0xFF)
-        };
-
-        // Send extended message
-        if (!sendMessage(0x108180FE, data)) {
-            _errorCode |= HUAWEI_ERROR_CODE_TX;
-            _sendQueue.push({setting, val});
-        }
-    }
-
-    if (_nextRequestMillis < millis()) {
-        sendRequest();
-        _nextRequestMillis = millis() + HUAWEI_DATA_REQUEST_INTERVAL_MS;
-    }
-}
-
-HardwareInterface::property_t TWAI::getParameter(HardwareInterface::Property property)
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-    auto pos = _stats.find(property);
-    if (pos == _stats.end()) { return {0, 0}; }
-    return pos->second;
-}
-
-uint8_t TWAI::getErrorCode(bool clear)
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-    uint8_t e = 0;
-    e = _errorCode;
-    if (clear) {
-        _errorCode = 0;
-    }
-    return e;
-}
-
-void TWAI::setParameter(HardwareInterface::Setting setting, float val)
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    switch (setting) {
-        case Setting::OfflineVoltage:
-        case Setting::OnlineVoltage:
-            val *= 1024;
-            break;
-        case Setting::OfflineCurrent:
-        case Setting::OnlineCurrent:
-            val *= _maxCurrentMultiplier;
-            break;
-    }
-
-    _sendQueue.push({setting, static_cast<uint16_t>(val)});
-}
-
-void TWAI::sendRequest()
-{
-    std::array<uint8_t, 8> data = { 0 };
-    if (!sendMessage(0x108040FE, data)) {
-        _errorCode |= HUAWEI_ERROR_CODE_RX;
-    }
 }
 
 } // namespace GridCharger::Huawei
