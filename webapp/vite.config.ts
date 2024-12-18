@@ -81,6 +81,11 @@ export default defineConfig(({ command }) => { return {
         ws: true,
         changeOrigin: true
       },
+      '^/huaweilivedata': {
+        target: 'ws://' + proxy_target,
+        ws: true,
+        changeOrigin: true
+      },
       '^/console': {
         target: 'ws://' + proxy_target,
         ws: true,
