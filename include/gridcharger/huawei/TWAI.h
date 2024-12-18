@@ -7,11 +7,13 @@ namespace GridCharger::Huawei {
 
 class TWAI : public HardwareInterface {
 public:
+    ~TWAI();
+
     bool init() final;
 
     bool getMessage(HardwareInterface::can_message_t& msg) final;
 
-    bool sendMessage(uint32_t valueId, std::array<uint8_t, 8> const& data) final;
+    bool sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data) final;
 };
 
 } // namespace GridCharger::Huawei
