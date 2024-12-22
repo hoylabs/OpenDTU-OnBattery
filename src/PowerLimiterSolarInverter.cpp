@@ -152,8 +152,8 @@ uint16_t PowerLimiterSolarInverter::scaleLimit(uint16_t expectedOutputWatts)
     // is currently not producing (efficiency is zero in that case)
     inverterEfficiencyFactor = (inverterEfficiencyFactor > 0) ? inverterEfficiencyFactor/100 : 0.967;
 
-    // 98% of the expected power is good enough
-    auto expectedAcPowerPerMppt = (getCurrentLimitWatts() / dcTotalMppts) * 0.98;
+    auto scalingThreshold = static_cast<float>(_config.ScalingThreshold) / 100.0;
+    auto expectedAcPowerPerMppt = (getCurrentLimitWatts() / dcTotalMppts) * scalingThreshold;
 
     if (_verboseLogging) {
         MessageOutput.printf("%s expected AC power per MPPT %.0f W\r\n",

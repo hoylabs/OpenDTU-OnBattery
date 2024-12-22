@@ -710,6 +710,8 @@
         "VoltageLoadCorrectionFactor": "Lastkorrekturfaktor",
         "BatterySocInfo": "<b>Hinweis:</b> Die Batterie State of Charge (SoC) Schwellwerte werden bevorzugt herangezogen. Sie werden allerdings nur benutzt, wenn die Batterie-Kommunikationsschnittstelle innerhalb der letzten Minute gültige Werte verarbeitet hat. Andernfalls werden ersatzweise die Spannungs-Schwellwerte verwendet.",
         "InverterIsBehindPowerMeter": "Stromzählermessung beinhaltet Wechselrichter",
+        "ScalingPowerThreshold": "Schwellenwert für Überskalierung",
+        "ScalingPowerThresholdHint": "Minimale Eingangsleistungsschwelle (%). Eingänge unterhalb dieses Prozentsatzes werden als verschattet/ungenutzt bewertet.",
         "InverterIsBehindPowerMeterHint": "Aktivieren falls sich der Stromzähler-Messwert um die Ausgangsleistung des Wechselrichters verringert, wenn dieser Strom produziert. Normalerweise ist das zutreffend.",
         "InverterIsSolarPowered": "Wechselrichter wird von Solarmodulen gespeist",
         "UseOverscaling": "Verschattetet/Ungenutzte Eingänge ausgleichen",

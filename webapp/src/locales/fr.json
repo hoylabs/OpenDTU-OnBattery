@@ -778,6 +778,8 @@
         "VoltageLoadCorrectionFactor": "Load correction factor",
         "BatterySocInfo": "<b>Hint:</b> The use of battery State of Charge (SoC) thresholds is prioritized. However, SoC thresholds are only used if the battery communication interface has processed valid SoC values in the last minute. Otherwise, the voltage thresholds will be used as fallback.",
         "InverterIsBehindPowerMeter": "PowerMeter reading includes inverter output",
+        "ScalingPowerThreshold": "Overscaling input power threshold",
+        "ScalingPowerThresholdHint": "Set the minimum power input threshold (%). Inputs below this percentage are considered shaded/unused.",
         "InverterIsBehindPowerMeterHint": "Enable this option if the power meter reading is reduced by the inverter's output when it produces power. This is typically true.",
         "InverterIsSolarPowered": "Inverter is powered by solar modules",
         "UseOverscaling": "Compensate shaded or unused inputs",

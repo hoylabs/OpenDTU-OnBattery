@@ -141,6 +141,18 @@
                         />
 
                         <InputElement
+                            v-if="powerLimiterConfigList.inverters[idx].use_overscaling_to_compensate_shading"
+                            :label="$t('powerlimiteradmin.ScalingPowerThreshold')"
+                            v-model="powerLimiterConfigList.inverters[idx].scaling_threshold"
+                            :tooltip="$t('powerlimiteradmin.ScalingPowerThresholdHint')"
+                            :min="(0).toString()"
+                            :max="(100).toString()"
+                            postfix="%"
+                            type="number"
+                            wide
+                        />
+
+                        <InputElement
                             :label="$t('powerlimiteradmin.LowerPowerLimit')"
                             :tooltip="$t('powerlimiteradmin.LowerPowerLimitHint')"
                             v-model="powerLimiterConfigList.inverters[idx].lower_power_limit"
