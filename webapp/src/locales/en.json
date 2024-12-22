@@ -233,7 +233,10 @@
         "FirmwareVersion": "Firmware Version",
         "FirmwareBuildDate": "Firmware Build Date",
         "HardwarePartNumber": "Hardware Part Number",
-        "HardwareVersion": "Hardware Version"
+        "HardwareVersion": "Hardware Version",
+        "SupportsPowerDistributionLogic": "'Power Distribution Logic' supported",
+        "yes": "@:base.Yes",
+        "no": "@:base.No"
     },
     "gridprofile": {
         "NoInfo": "@:devinfo.NoInfo",
@@ -713,7 +716,6 @@
         "InverterIsSolarPowered": "Inverter is powered by solar modules",
         "UseOverscaling": "Compensate shaded or unused inputs",
         "UseOverscalingHint": "Allow to overscale the inverter limit to compensate for unused inputs or shading of one or multiple inputs.",
-        "UseOverscalingInfo": "<b>Hint:</b> Only enable compensation of shaded or unused inputs if your inverter does NOT support hoymiles 'Power Distribution Logic' which will limit the AC output instead of limiting the DC inputs (added in inverter firmware version 01.01.12 on supported models).",
         "VoltageThresholds": "Battery Voltage Thresholds",
         "VoltageLoadCorrectionInfo": "<b>Hint:</b> When the battery is discharged, its voltage drops. The voltage drop scales with the discharge current. In order to not stop inverters too early (stop threshold), this load correction factor can be specified to calculate the battery voltage if it was idle. Corrected voltage = DC Voltage + (Current power * correction factor).",
         "InverterRestartHour": "Automatic Inverter Restart Time",

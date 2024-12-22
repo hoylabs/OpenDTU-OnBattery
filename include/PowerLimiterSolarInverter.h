@@ -17,4 +17,5 @@ public:
 private:
     uint16_t scaleLimit(uint16_t expectedOutputWatts);
     void setAcOutput(uint16_t expectedOutputWatts) final;
+    static char mpptName(MpptNum_t mppt);
 };

@@ -233,7 +233,10 @@
         "FirmwareVersion": "Firmware-Version",
         "FirmwareBuildDate": "Firmware-Erstellungsdatum",
         "HardwarePartNumber": "Hardware-Teilenummer",
-        "HardwareVersion": "Hardware-Version"
+        "HardwareVersion": "Hardware-Version",
+        "SupportsPowerDistributionLogic": "'Power Distribution Logic' unterstützt",
+        "yes": "@:base.Yes",
+        "no": "@:base.No"
     },
     "gridprofile": {
         "NoInfo": "@:devinfo.NoInfo",
@@ -711,7 +714,6 @@
         "InverterIsSolarPowered": "Wechselrichter wird von Solarmodulen gespeist",
         "UseOverscaling": "Verschattetet/Ungenutzte Eingänge ausgleichen",
         "UseOverscalingHint": "Erlaubt das Überskalieren des Wechselrichter-Limits, um ungenutzte Eingänge oder Verschattung eines oder mehrerer Eingänge auszugleichen.",
-        "UseOverscalingInfo": "<b>Hint:</b> Aktiviere das Ausgleichen von Verschatteten oder ungenutzten Eingängen NICHT, wenn dein Wechselrichter Hoymiles 'Power Distribution Logic' unterstützt, da hiermit der AC-Ausgang limitiert wird und nicht die DC-Eingänge (Verfügbar seit Wechselrichter Firmware Version 01.01.12 auf unterstützten Modellen).",
         "VoltageThresholds": "Batterie Spannungs-Schwellwerte ",
         "VoltageLoadCorrectionInfo": "<b>Hinweis:</b> Wenn Leistung von der Batterie abgegeben wird, bricht ihre Spannung etwas ein. Der Spannungseinbruch skaliert mit dem Entladestrom. Damit Wechselrichter nicht vorzeitig ausgeschaltet werden sobald der Stop-Schwellenwert unterschritten wurde, wird der hier angegebene Korrekturfaktor mit einberechnet, um die Spannung zu errechnen, die der Akku in Ruhe hätte. Korrigierte Spannung = DC Spannung + (Aktuelle Leistung (W) * Korrekturfaktor).",
         "InverterRestartHour": "Uhrzeit für automatischen Wechselrichterneustart",

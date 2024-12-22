@@ -123,7 +123,7 @@ uint16_t PowerLimiterSolarInverter::scaleLimit(uint16_t expectedOutputWatts)
     // as the inverter will take care of the power distribution across the MPPTs itself.
     // (added in inverter firmware 01.01.12 on supported models (HMS-1600/1800/2000))
     // When disabled we return the expected output.
-    if (!_config.UseOverscaling) { return expectedOutputWatts; }
+    if (!_config.UseOverscaling || _spInverter->supportsPowerDistributionLogic()) { return expectedOutputWatts; }
 
     // prevent scaling if inverter is not producing, as input channels are not
     // producing energy and hence are detected as not-producing, causing
@@ -178,7 +178,7 @@ uint16_t PowerLimiterSolarInverter::scaleLimit(uint16_t expectedOutputWatts)
 
         if (_verboseLogging) {
             MessageOutput.printf("%s MPPT-%c AC power %.0f W\r\n",
-                    _logPrefix, m + 'a', mpptPowerAC);
+                    _logPrefix, mpptName(m), mpptPowerAC);
         }
     }
 
@@ -226,4 +226,24 @@ void PowerLimiterSolarInverter::setAcOutput(uint16_t expectedOutputWatts)
     setExpectedOutputAcWatts(expectedOutputWatts);
     setTargetPowerLimitWatts(scaleLimit(expectedOutputWatts));
     setTargetPowerState(true);
+}
+
+char PowerLimiterSolarInverter::mpptName(MpptNum_t mppt)
+{
+    switch (mppt) {
+        case MpptNum_t::MPPT_A:
+            return 'a';
+
+        case MpptNum_t::MPPT_B:
+            return 'b';
+
+        case MpptNum_t::MPPT_C:
+            return 'c';
+
+        case MpptNum_t::MPPT_D:
+            return 'd';
+
+        default:
+            return '?';
+    }
 }

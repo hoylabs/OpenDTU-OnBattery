@@ -129,20 +129,16 @@
                         />
 
                         <InputElement
-                            v-if="powerLimiterConfigList.inverters[idx].is_solar_powered"
+                            v-if="
+                                powerLimiterConfigList.inverters[idx].is_solar_powered &&
+                                inverterSupportsOverscaling(inv.serial)
+                            "
                             :label="$t('powerlimiteradmin.UseOverscaling')"
                             :tooltip="$t('powerlimiteradmin.UseOverscalingHint')"
                             v-model="powerLimiterConfigList.inverters[idx].use_overscaling_to_compensate_shading"
                             type="checkbox"
                             wide
                         />
-
-                        <div
-                            v-if="powerLimiterConfigList.inverters[idx].use_overscaling_to_compensate_shading"
-                            class="alert alert-secondary"
-                            role="alert"
-                            v-html="$t('powerlimiteradmin.UseOverscalingInfo')"
-                        ></div>
 
                         <InputElement
                             :label="$t('powerlimiteradmin.LowerPowerLimit')"
@@ -596,6 +592,20 @@ export default defineComponent({
                 return 'not found';
             }
             return inv.name + ' (' + inv.type + ')';
+        },
+        inverterSupportsOverscaling(serial: string) {
+            if (serial === undefined) {
+                return false;
+            }
+            const meta = this.powerLimiterMetaData;
+            if (meta === undefined) {
+                return false;
+            }
+            const inv = this.getInverterInfo(serial);
+            if (inv === undefined) {
+                return false;
+            }
+            return inv.pdl_supported === false;
         },
         needsChannelSelection() {
             const cfg = this.powerLimiterConfigList;
