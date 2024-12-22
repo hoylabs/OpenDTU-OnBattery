@@ -117,6 +117,14 @@ uint16_t PowerLimiterSolarInverter::standby()
 
 uint16_t PowerLimiterSolarInverter::scaleLimit(uint16_t expectedOutputWatts)
 {
+    // overscalling allows us to compensate for shaded panels by increasing the
+    // total power limit, if the inverter is solar powered.
+    // this feature should not be used when homyiles 'Power Distribution Logic' is available
+    // as the inverter will take care of the power distribution across the MPPTs itself.
+    // (added in inverter firmware 01.01.12 on supported models (HMS-1600/1800/2000))
+    // When disabled we return the expected output.
+    if (!_config.UseOverscaling) { return expectedOutputWatts; }
+
     // prevent scaling if inverter is not producing, as input channels are not
     // producing energy and hence are detected as not-producing, causing
     // unreasonable scaling.
@@ -136,108 +144,81 @@ uint16_t PowerLimiterSolarInverter::scaleLimit(uint16_t expectedOutputWatts)
     // producing very little due to the very low limit.
     if (getCurrentLimitWatts() < dcTotalChnls * 10) { return expectedOutputWatts; }
 
-    // overscalling allows us to compensate for shaded panels by increasing the
-    // total power limit, if the inverter is solar powered.
-    if (_config.UseOverscalingToCompensateShading) {
-        auto inverterOutputAC = pStats->getChannelFieldValue(TYPE_AC, CH0, FLD_PAC);
+    auto inverterOutputAC = pStats->getChannelFieldValue(TYPE_AC, CH0, FLD_PAC);
 
-        float inverterEfficiencyFactor = pStats->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF);
+    float inverterEfficiencyFactor = pStats->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF);
 
-        // fall back to hoymiles peak efficiency as per datasheet if inverter
-        // is currently not producing (efficiency is zero in that case)
-        inverterEfficiencyFactor = (inverterEfficiencyFactor > 0) ? inverterEfficiencyFactor/100 : 0.967;
+    // fall back to hoymiles peak efficiency as per datasheet if inverter
+    // is currently not producing (efficiency is zero in that case)
+    inverterEfficiencyFactor = (inverterEfficiencyFactor > 0) ? inverterEfficiencyFactor/100 : 0.967;
 
-        // 98% of the expected power is good enough
-        auto expectedAcPowerPerMppt = (getCurrentLimitWatts() / dcTotalMppts) * 0.98;
+    // 98% of the expected power is good enough
+    auto expectedAcPowerPerMppt = (getCurrentLimitWatts() / dcTotalMppts) * 0.98;
 
-        if (_verboseLogging) {
-            MessageOutput.printf("%s expected AC power per MPPT %.0f W\r\n",
-                    _logPrefix, expectedAcPowerPerMppt);
-        }
-
-        size_t dcShadedMppts = 0;
-        auto shadedChannelACPowerSum = 0.0;
-
-        for (auto& m : dcMppts) {
-            float mpptPowerAC = 0.0;
-            std::vector<ChannelNum_t> mpptChnls = _spInverter->getChannelsDCByMppt(m);
-
-            for (auto& c : mpptChnls) {
-                mpptPowerAC += pStats->getChannelFieldValue(TYPE_DC, c, FLD_PDC) * inverterEfficiencyFactor;
-            }
-
-            if (mpptPowerAC < expectedAcPowerPerMppt) {
-                dcShadedMppts++;
-                shadedChannelACPowerSum += mpptPowerAC;
-            }
-
-            if (_verboseLogging) {
-                MessageOutput.printf("%s MPPT-%c AC power %.0f W\r\n",
-                        _logPrefix, m + 'a', mpptPowerAC);
-            }
-        }
-
-        // no shading or the shaded channels provide more power than what
-        // we currently need.
-        if (dcShadedMppts == 0 || shadedChannelACPowerSum >= expectedOutputWatts) {
-            return expectedOutputWatts;
-        }
-
-        if (dcShadedMppts == dcTotalMppts) {
-            // keep the currentLimit when:
-            // - all channels are shaded
-            // - currentLimit >= expectedOutputWatts
-            // - we get the expected AC power or less and
-            if (getCurrentLimitWatts() >= expectedOutputWatts &&
-                    inverterOutputAC <= expectedOutputWatts) {
-                if (_verboseLogging) {
-                    MessageOutput.printf("%s all mppts are shaded, "
-                            "keeping the current limit of %d W\r\n",
-                            _logPrefix, getCurrentLimitWatts());
-                }
-
-                return getCurrentLimitWatts();
-
-            } else {
-                return expectedOutputWatts;
-            }
-        }
-
-        size_t dcNonShadedMppts = dcTotalMppts - dcShadedMppts;
-        uint16_t overScaledLimit = (expectedOutputWatts - shadedChannelACPowerSum) / dcNonShadedMppts * dcTotalMppts;
-
-        if (overScaledLimit <= expectedOutputWatts) { return expectedOutputWatts; }
-
-        if (_verboseLogging) {
-            MessageOutput.printf("%s %d/%d mppts are shaded, scaling %d W\r\n",
-                    _logPrefix, dcShadedMppts, dcTotalMppts, overScaledLimit);
-        }
-
-        return overScaledLimit;
+    if (_verboseLogging) {
+        MessageOutput.printf("%s expected AC power per MPPT %.0f W\r\n",
+                _logPrefix, expectedAcPowerPerMppt);
     }
 
-    size_t dcProdMppts = 0;
+    size_t dcShadedMppts = 0;
+    auto shadedChannelACPowerSum = 0.0;
+
     for (auto& m : dcMppts) {
-        float dcPowerMppt = 0.0;
+        float mpptPowerAC = 0.0;
         std::vector<ChannelNum_t> mpptChnls = _spInverter->getChannelsDCByMppt(m);
 
         for (auto& c : mpptChnls) {
-            dcPowerMppt += pStats->getChannelFieldValue(TYPE_DC, c, FLD_PDC);
+            mpptPowerAC += pStats->getChannelFieldValue(TYPE_DC, c, FLD_PDC) * inverterEfficiencyFactor;
         }
 
-        if (dcPowerMppt > 2.0 * mpptChnls.size()) {
-            dcProdMppts++;
+        if (mpptPowerAC < expectedAcPowerPerMppt) {
+            dcShadedMppts++;
+            shadedChannelACPowerSum += mpptPowerAC;
+        }
+
+        if (_verboseLogging) {
+            MessageOutput.printf("%s MPPT-%c AC power %.0f W\r\n",
+                    _logPrefix, m + 'a', mpptPowerAC);
         }
     }
 
-    if (dcProdMppts == 0 || dcProdMppts == dcTotalMppts) { return expectedOutputWatts; }
+    // no shading or the shaded channels provide more power than what
+    // we currently need.
+    if (dcShadedMppts == 0 || shadedChannelACPowerSum >= expectedOutputWatts) {
+        return expectedOutputWatts;
+    }
 
-    uint16_t scaled = expectedOutputWatts / dcProdMppts * dcTotalMppts;
-    MessageOutput.printf("%s %d/%d mppts are producing, scaling from %d to "
-            "%d W\r\n", _logPrefix, dcProdMppts, dcTotalMppts,
-            expectedOutputWatts, scaled);
+    if (dcShadedMppts == dcTotalMppts) {
+        // keep the currentLimit when:
+        // - all channels are shaded
+        // - currentLimit >= expectedOutputWatts
+        // - we get the expected AC power or less and
+        if (getCurrentLimitWatts() >= expectedOutputWatts &&
+                inverterOutputAC <= expectedOutputWatts) {
+            if (_verboseLogging) {
+                MessageOutput.printf("%s all mppts are shaded, "
+                        "keeping the current limit of %d W\r\n",
+                        _logPrefix, getCurrentLimitWatts());
+            }
 
-    return scaled;
+            return getCurrentLimitWatts();
+
+        } else {
+            return expectedOutputWatts;
+        }
+    }
+
+    size_t dcNonShadedMppts = dcTotalMppts - dcShadedMppts;
+    uint16_t overScaledLimit = (expectedOutputWatts - shadedChannelACPowerSum) / dcNonShadedMppts * dcTotalMppts;
+
+    if (overScaledLimit <= expectedOutputWatts) { return expectedOutputWatts; }
+
+    if (_verboseLogging) {
+        MessageOutput.printf("%s %d/%d mppts are not-producing/shaded, scaling %d W\r\n",
+                _logPrefix, dcShadedMppts, dcTotalMppts, overScaledLimit);
+    }
+
+    return overScaledLimit;
 }
 
 void PowerLimiterSolarInverter::setAcOutput(uint16_t expectedOutputWatts)

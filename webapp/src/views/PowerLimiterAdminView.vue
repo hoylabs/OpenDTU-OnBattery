@@ -130,12 +130,19 @@
 
                         <InputElement
                             v-if="powerLimiterConfigList.inverters[idx].is_solar_powered"
-                            :label="$t('powerlimiteradmin.UseOverscalingToCompensateShading')"
-                            :tooltip="$t('powerlimiteradmin.UseOverscalingToCompensateShadingHint')"
+                            :label="$t('powerlimiteradmin.UseOverscaling')"
+                            :tooltip="$t('powerlimiteradmin.UseOverscalingHint')"
                             v-model="powerLimiterConfigList.inverters[idx].use_overscaling_to_compensate_shading"
                             type="checkbox"
                             wide
                         />
+
+                        <div
+                            v-if="powerLimiterConfigList.inverters[idx].use_overscaling_to_compensate_shading"
+                            class="alert alert-secondary"
+                            role="alert"
+                            v-html="$t('powerlimiteradmin.UseOverscalingInfo')"
+                        ></div>
 
                         <InputElement
                             :label="$t('powerlimiteradmin.LowerPowerLimit')"
