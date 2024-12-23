@@ -661,7 +661,7 @@
         "ConfigHintPowerMeterDisabled": "Der DPL stellt ohne Stromzählerschnittstelle lediglich die konfigurierte Grundlast als Limit am Wechselrichter ein (Ausnahme: (Full) Solar-Passthrough).",
         "ConfigHintNoInverter": "Vor dem Festlegen von Einstellungen des DPL muss mindestens ein Inverter konfiguriert sein.",
         "ConfigHintInverterCommunication": "Das Abrufen von Daten und Senden von Kommandos muss für jeden zu steuernden Wechselrichter aktiviert sein.",
-        "ConfigHintNoChargeController": "Die Solar-Passthrough Funktion kann nur mit aktivierter VE.Direct Schnittstelle genutzt werden.",
+        "ConfigHintNoChargeController": "Die Solar-Passthrough Funktion kann nur mit konfigurierter Solarladereglerkommunikationsschnittstelle genutzt werden.",
         "ConfigHintNoBatteryInterface": "SoC-basierte Schwellwerte können nur mit konfigurierter Batteriekommunikationsschnittstelle genutzt werden.",
         "General": "Allgemein",
         "Enable": "Aktiviert",
