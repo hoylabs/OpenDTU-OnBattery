@@ -63,14 +63,14 @@ void Controller::updateSettings()
             _upHardwareInterface = std::make_unique<TWAI>();
             break;
         default:
-            MessageOutput.printf("[HuaweiCanClass::init] Unknown hardware "
+            MessageOutput.printf("[Huawei::Controller] Unknown hardware "
                     "interface setting %d\r\n", config.Huawei.HardwareInterface);
             return;
             break;
     }
 
     if (!_upHardwareInterface->init()) {
-        MessageOutput.println("[HuaweiCanClass::init] Error initializing hardware interface");
+        MessageOutput.print("[Huawei::Controller] Error initializing hardware interface\r\n");
         _upHardwareInterface.reset(nullptr);
         return;
     };
@@ -86,7 +86,7 @@ void Controller::updateSettings()
         _mode = HUAWEI_MODE_AUTO_INT;
     }
 
-    MessageOutput.println("[HuaweiCanClass::init] Hardware Interface initialized successfully");
+    MessageOutput.print("[Huawei::Controller] Hardware Interface initialized successfully\r\n");
 }
 
 RectifierParameters_t * Controller::get()
@@ -126,9 +126,12 @@ void Controller::loop()
 
     // Print updated data
     if (lastUpdate != _lastUpdateReceivedMillis && verboseLogging) {
-        MessageOutput.printf("[HuaweiCanClass::loop] In:  %.02fV, %.02fA, %.02fW\n", _rp.input_voltage, _rp.input_current, _rp.input_power);
-        MessageOutput.printf("[HuaweiCanClass::loop] Out: %.02fV, %.02fA of %.02fA, %.02fW\n", _rp.output_voltage, _rp.output_current, _rp.max_output_current, _rp.output_power);
-        MessageOutput.printf("[HuaweiCanClass::loop] Eff : %.01f%%, Temp in: %.01fC, Temp out: %.01fC\n", _rp.efficiency * 100, _rp.input_temp, _rp.output_temp);
+        MessageOutput.printf("[Huawei::Controller] In: %.02fV, %.02fA, %.02fW\r\n",
+            _rp.input_voltage, _rp.input_current, _rp.input_power);
+        MessageOutput.printf("[Huawei::Controller] Out: %.02fV, %.02fA of %.02fA, %.02fW\r\n",
+            _rp.output_voltage, _rp.output_current, _rp.max_output_current, _rp.output_power);
+        MessageOutput.printf("[Huawei::Controller] Eff: %.01f%%, Temp in: %.01f°C, Temp out: %.01f°C\r\n",
+            _rp.efficiency * 100, _rp.input_temp, _rp.output_temp);
     }
 
     // Internal PSU power pin (slot detect) control
@@ -147,7 +150,8 @@ void Controller::loop()
 
         // Set voltage limit in periodic intervals if we're in auto mode or if emergency battery charge is requested.
         if ( _nextAutoModePeriodicIntMillis < millis()) {
-            MessageOutput.printf("[HuaweiCanClass::loop] Periodically setting voltage limit: %f \r\n", config.Huawei.Auto_Power_Voltage_Limit);
+            MessageOutput.printf("[Huawei::Controller] Periodically setting "
+                "voltage limit: %f \r\n", config.Huawei.Auto_Power_Voltage_Limit);
             _setParameter(config.Huawei.Auto_Power_Voltage_Limit, Setting::OnlineVoltage);
             _nextAutoModePeriodicIntMillis = millis() + 60000;
         }
@@ -163,7 +167,8 @@ void Controller::loop()
         // Set output current
         float efficiency =  (_rp.efficiency > 0.5 ? _rp.efficiency : 1.0);
         float outputCurrent = efficiency * (config.Huawei.Auto_Power_Upper_Power_Limit / _rp.output_voltage);
-        MessageOutput.printf("[HuaweiCanClass::loop] Emergency Charge Output current %f \r\n", outputCurrent);
+        MessageOutput.printf("[Huawei::Controller] Emergency Charge Output "
+            "current %.02f \r\n", outputCurrent);
         _setParameter(outputCurrent, Setting::OnlineCurrent);
         return;
     }
@@ -197,7 +202,7 @@ void Controller::loop()
             _setParameter(0.0, Setting::OnlineCurrent);
             // Don't run auto mode for a second now. Otherwise we may send too much over the CAN bus
             _autoModeBlockedTillMillis = millis() + 1000;
-            MessageOutput.printf("[HuaweiCanClass::loop] Inverter is active, disable\r\n");
+            MessageOutput.printf("[Huawei::Controller] Inverter is active, disable PSU\r\n");
             return;
         }
 
@@ -216,7 +221,8 @@ void Controller::loop()
             newPowerLimit += _rp.output_power + config.Huawei.Auto_Power_Target_Power_Consumption / efficiency;
 
             if (verboseLogging){
-                MessageOutput.printf("[HuaweiCanClass::loop] newPowerLimit: %f, output_power: %f \r\n", newPowerLimit, _rp.output_power);
+                MessageOutput.printf("[Huawei::Controller] newPowerLimit: %.0f, "
+                    "output_power: %.01f\r\n", newPowerLimit, _rp.output_power);
             }
 
             // Check whether the battery SoC limit setting is enabled
@@ -226,7 +232,7 @@ void Controller::loop()
                 if (_batterySoC >= config.Huawei.Auto_Power_Stop_BatterySoC_Threshold) {
                     newPowerLimit = 0;
                     if (verboseLogging) {
-                        MessageOutput.printf("[HuaweiCanClass::loop] Current battery SoC %i reached "
+                        MessageOutput.printf("[Huawei::Controller] Current battery SoC %i reached "
                                 "stop threshold %i, set newPowerLimit to %f \r\n", _batterySoC,
                                 config.Huawei.Auto_Power_Stop_BatterySoC_Threshold, newPowerLimit);
                     }
@@ -239,7 +245,9 @@ void Controller::loop()
                 // and if the PSU should be turned off. Also we use a simple counter mechanism here to be able
                 // to ramp up from zero output power when starting up
                 if (_rp.output_power < config.Huawei.Auto_Power_Lower_Power_Limit) {
-                    MessageOutput.printf("[HuaweiCanClass::loop] Power and voltage limit reached. Disabling automatic power control .... \r\n");
+                    MessageOutput.print("[Huawei::Controller] Power and "
+                        "voltage limit reached. Disabling automatic power "
+                        "control.\r\n");
                     _autoPowerEnabledCounter--;
                     if (_autoPowerEnabledCounter == 0) {
                         _autoPowerEnabled = false;
@@ -264,7 +272,11 @@ void Controller::loop()
                 outputCurrent= outputCurrent > 0 ? outputCurrent : 0;
 
                 if (verboseLogging) {
-                    MessageOutput.printf("[HuaweiCanClass::loop] Setting output current to %.2fA. This is the lower value of calculated %.2fA and BMS permissable %.2fA currents\r\n", outputCurrent, calculatedCurrent, permissableCurrent);
+                    MessageOutput.printf("[Huawei::Controller] Setting output "
+                        "current to %.2fA. This is the lower value of "
+                        "calculated %.2fA and BMS permissable %.2fA "
+                        "currents\r\n", outputCurrent, calculatedCurrent,
+                        permissableCurrent);
                 }
                 _autoPowerEnabled = true;
                 _setParameter(outputCurrent, Setting::OnlineCurrent);
@@ -294,7 +306,7 @@ void Controller::_setParameter(float val, HardwareInterface::Setting setting)
     if (!_upHardwareInterface) { return; }
 
     if (val < 0) {
-        MessageOutput.printf("[HuaweiCanClass::_setParameter] Error: Tried to set "
+        MessageOutput.printf("[Huawei::Controller] Error: Tried to set "
                 "voltage/current to negative value %.2f\r\n", val);
         return;
     }
@@ -329,7 +341,9 @@ void Controller::setMode(uint8_t mode) {
     auto const& config = Configuration.get();
 
     if (mode == HUAWEI_MODE_AUTO_INT && !config.Huawei.Auto_Power_Enabled ) {
-        MessageOutput.println("[HuaweiCanClass::setMode] WARNING: Trying to setmode to internal automatic power control without being enabled in the UI. Ignoring command");
+        MessageOutput.println("[Huawei::Controller] WARNING: Trying to set "
+            "mode to internal automatic power control without being enabled "
+            "in the UI. Ignoring command.");
         return;
     }
 
