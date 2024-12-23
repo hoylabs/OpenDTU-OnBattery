@@ -12,6 +12,15 @@ namespace GridCharger::Huawei {
 
 TWAI::~TWAI()
 {
+    if (_pollingTaskHandle != nullptr) {
+        _pollingTaskDone = false;
+        _stopPolling = true;
+
+        while (!_pollingTaskDone) { delay(10); }
+
+        _pollingTaskHandle = nullptr;
+    }
+
     stopLoop();
 
     if (twai_stop() != ESP_OK) {
@@ -41,7 +50,6 @@ bool TWAI::init()
     auto tx = static_cast<gpio_num_t>(pin.huawei_tx);
     auto rx = static_cast<gpio_num_t>(pin.huawei_rx);
     twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(tx, rx, TWAI_MODE_NORMAL);
-    g_config.rx_queue_len = 16;
 
     // interrupts at level 1 are in high demand, at least on ESP32-S3 boards,
     // but only a limited amount can be allocated. failing to allocate an
@@ -65,30 +73,55 @@ bool TWAI::init()
         return false;
     }
 
+    if (!startLoop()) {
+        MessageOutput.printf("[Huawei::TWAI] failed to start loop task\r\n");
+        return false;
+    }
+
+    // enable alert on message received
+    uint32_t alertsToEnable = TWAI_ALERT_RX_DATA;
+    if (twai_reconfigure_alerts(alertsToEnable, NULL) != ESP_OK) {
+        MessageOutput.print("[Huawei::TWAI] Failed to configure alerts\r\n");
+        return false;
+    }
+
+    uint32_t constexpr stackSize = 1536;
+    return pdPASS == xTaskCreate(TWAI::pollAlerts,
+            "HuaweiTwai", stackSize, this, 20/*prio*/, &_pollingTaskHandle);
+
     MessageOutput.print("[Huawei::TWAI] driver ready\r\n");
 
-    return startLoop();
+    return true;
+}
+
+void TWAI::pollAlerts(void* context)
+{
+    auto& instance = *static_cast<TWAI*>(context);
+    uint32_t alerts;
+
+    while (!instance._stopPolling) {
+        if (twai_read_alerts(&alerts, pdMS_TO_TICKS(500)) != ESP_OK) { continue; }
+
+        if (alerts & TWAI_ALERT_RX_DATA) {
+            // wake up hardware interface task to actually receive the message
+            xTaskNotifyGive(instance.getTaskHandle());
+        }
+    }
+
+    instance._pollingTaskDone = true;
+
+    vTaskDelete(nullptr);
 }
 
 bool TWAI::getMessage(HardwareInterface::can_message_t& msg)
 {
-    twai_status_info_t status;
-
     while (true) {
-        if (twai_get_status_info(&status) != ESP_OK) {
-            MessageOutput.print("[Huawei::TWAI] Failed to get status info\r\n");
-            return false;
-        }
-
-        if (status.msgs_to_rx == 0) { return false; }
-
         twai_message_t rxMessage;
 
-        // wait for message to be received, function is blocking (for 100ms)
-        if (twai_receive(&rxMessage, pdMS_TO_TICKS(100)) != ESP_OK) {
-            MessageOutput.print("[Huawei::TWAI] Failed to receive message\r\n");
-            return false;
-        }
+        // it's okay if we cannot receive a message now, as the hardware
+        // interface task wakes up for reasons other than a message being
+        // received, but always checks if a message is available.
+        if (twai_receive(&rxMessage, pdMS_TO_TICKS(1)) != ESP_OK) { return false; }
 
         if (rxMessage.extd != 1) { continue; } // we only process extended format messages
 
