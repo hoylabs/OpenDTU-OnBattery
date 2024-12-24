@@ -29,7 +29,6 @@ typedef struct RectifierParameters {
     float max_output_current;
     float output_power;
     float output_temp;
-    float amp_hour;
 } RectifierParameters_t;
 
 class Controller {
