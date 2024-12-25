@@ -10,6 +10,7 @@ export interface PowerLimiterInverterInfo {
     max_power: number;
     type: string;
     channels: number;
+    pdl_supported: boolean;
 }
 
 // meta-data not directly part of the DPL settings,
@@ -29,6 +30,7 @@ export interface PowerLimiterInverterConfig {
     use_overscaling_to_compensate_shading: boolean;
     lower_power_limit: number;
     upper_power_limit: number;
+    scaling_threshold: number;
 }
 
 export interface PowerLimiterConfig {

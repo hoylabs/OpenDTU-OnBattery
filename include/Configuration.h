@@ -138,9 +138,10 @@ struct POWERLIMITER_INVERTER_CONFIG_T {
     bool IsGoverned;
     bool IsBehindPowerMeter;
     bool IsSolarPowered;
-    bool UseOverscalingToCompensateShading;
+    bool UseOverscaling;
     uint16_t LowerPowerLimit;
     uint16_t UpperPowerLimit;
+    uint8_t ScalingThreshold;
 };
 using PowerLimiterInverterConfig = struct POWERLIMITER_INVERTER_CONFIG_T;
 

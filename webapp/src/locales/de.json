@@ -233,7 +233,10 @@
         "FirmwareVersion": "Firmware-Version",
         "FirmwareBuildDate": "Firmware-Erstellungsdatum",
         "HardwarePartNumber": "Hardware-Teilenummer",
-        "HardwareVersion": "Hardware-Version"
+        "HardwareVersion": "Hardware-Version",
+        "SupportsPowerDistributionLogic": "'Power Distribution Logic' unterstützt",
+        "yes": "@:base.Yes",
+        "no": "@:base.No"
     },
     "gridprofile": {
         "NoInfo": "@:devinfo.NoInfo",
@@ -708,10 +711,12 @@
         "VoltageLoadCorrectionFactor": "Lastkorrekturfaktor",
         "BatterySocInfo": "<b>Hinweis:</b> Die Batterie State of Charge (SoC) Schwellwerte werden bevorzugt herangezogen. Sie werden allerdings nur benutzt, wenn die Batterie-Kommunikationsschnittstelle innerhalb der letzten Minute gültige Werte verarbeitet hat. Andernfalls werden ersatzweise die Spannungs-Schwellwerte verwendet.",
         "InverterIsBehindPowerMeter": "Stromzählermessung beinhaltet Wechselrichter",
+        "ScalingPowerThreshold": "Schwellenwert für Überskalierung",
+        "ScalingPowerThresholdHint": "Minimale Eingangsleistungsschwelle (%). Eingänge unterhalb dieses Prozentsatzes werden als verschattet/ungenutzt bewertet.",
         "InverterIsBehindPowerMeterHint": "Aktivieren falls sich der Stromzähler-Messwert um die Ausgangsleistung des Wechselrichters verringert, wenn dieser Strom produziert. Normalerweise ist das zutreffend.",
         "InverterIsSolarPowered": "Wechselrichter wird von Solarmodulen gespeist",
-        "UseOverscalingToCompensateShading": "Verschattung durch Überskalierung ausgleichen",
-        "UseOverscalingToCompensateShadingHint": "Erlaubt das Überskalieren des Wechselrichter-Limits, um Verschattung eines oder mehrerer Eingänge auszugleichen.",
+        "UseOverscaling": "Verschattetet/Ungenutzte Eingänge ausgleichen",
+        "UseOverscalingHint": "Erlaubt das Überskalieren des Wechselrichter-Limits, um ungenutzte Eingänge oder Verschattung eines oder mehrerer Eingänge auszugleichen.",
         "VoltageThresholds": "Batterie Spannungs-Schwellwerte ",
         "VoltageLoadCorrectionInfo": "<b>Hinweis:</b> Wenn Leistung von der Batterie abgegeben wird, bricht ihre Spannung etwas ein. Der Spannungseinbruch skaliert mit dem Entladestrom. Damit Wechselrichter nicht vorzeitig ausgeschaltet werden sobald der Stop-Schwellenwert unterschritten wurde, wird der hier angegebene Korrekturfaktor mit einberechnet, um die Spannung zu errechnen, die der Akku in Ruhe hätte. Korrigierte Spannung = DC Spannung + (Aktuelle Leistung (W) * Korrekturfaktor).",
         "InverterRestartHour": "Uhrzeit für automatischen Wechselrichterneustart",
