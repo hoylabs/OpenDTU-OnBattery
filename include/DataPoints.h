@@ -6,6 +6,8 @@
 #include <string>
 #include <unordered_map>
 #include <variant>
+#include <limits>
+#include <algorithm>
 
 using tCellVoltages = std::map<uint8_t, uint16_t>;
 
@@ -57,8 +59,6 @@ template<typename DataPoint, typename Label, template<Label> class Traits>
 class DataPointContainer {
     public:
         DataPointContainer() = default;
-
-        //template<Label L> using Traits = LabelTraits<L>;
 
         template<Label L>
         void add(typename Traits<L>::type val) {
@@ -112,6 +112,16 @@ class DataPointContainer {
                 }
                 _dataPoints.insert(*iter);
             }
+        }
+
+        uint32_t getLastUpdate() const
+        {
+            uint32_t now = millis();
+            uint32_t diff = std::numeric_limits<uint32_t>::max()/2;
+            for (auto iter = _dataPoints.cbegin(); iter != _dataPoints.cend(); ++iter) {
+                diff = std::min(diff, now - iter->second.getTimestamp());
+            }
+            return now - diff;
         }
 
     private:

@@ -89,11 +89,6 @@ void Controller::updateSettings()
     MessageOutput.print("[Huawei::Controller] Hardware Interface initialized successfully\r\n");
 }
 
-RectifierParameters_t * Controller::get()
-{
-    return &_rp;
-}
-
 void Controller::loop()
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -104,38 +99,19 @@ void Controller::loop()
 
     bool verboseLogging = config.Huawei.VerboseLogging;
 
-    uint32_t lastUpdate = _lastUpdateReceivedMillis;
-    _lastUpdateReceivedMillis = std::numeric_limits<uint32_t>::max();
-    using Prop = HardwareInterface::Property;
-    auto assign = [this](float* pTarget, Prop p) {
-        auto [val, timestamp] = _upHardwareInterface->getParameter(p);
-        _lastUpdateReceivedMillis = std::min(_lastUpdateReceivedMillis, timestamp);
-        *pTarget = val;
-    };
-    assign(&_rp.input_power, Prop::InputPower);
-    assign(&_rp.input_frequency, Prop::InputFrequency);
-    assign(&_rp.input_current, Prop::InputCurrent);
-    assign(&_rp.output_power, Prop::OutputPower);
-    assign(&_rp.efficiency, Prop::Efficiency);
-    assign(&_rp.output_voltage, Prop::OutputVoltage);
-    assign(&_rp.max_output_current, Prop::OutputCurrentMax);
-    assign(&_rp.input_voltage, Prop::InputVoltage);
-    assign(&_rp.output_temp, Prop::OutputTemperature);
-    assign(&_rp.input_temp, Prop::InputTemperature);
-    assign(&_rp.output_current, Prop::OutputCurrent);
-
-    // Print updated data
-    if (lastUpdate != _lastUpdateReceivedMillis && verboseLogging) {
-        MessageOutput.printf("[Huawei::Controller] In: %.02fV, %.02fA, %.02fW\r\n",
-            _rp.input_voltage, _rp.input_current, _rp.input_power);
-        MessageOutput.printf("[Huawei::Controller] Out: %.02fV, %.02fA of %.02fA, %.02fW\r\n",
-            _rp.output_voltage, _rp.output_current, _rp.max_output_current, _rp.output_power);
-        MessageOutput.printf("[Huawei::Controller] Eff: %.01f%%, Temp in: %.01f°C, Temp out: %.01f°C\r\n",
-            _rp.efficiency * 100, _rp.input_temp, _rp.output_temp);
+    auto upNewData = _upHardwareInterface->getCurrentData();
+    if (upNewData) {
+        _dataPoints.updateFrom(*upNewData);
     }
 
+    auto oOutputCurrent = _dataPoints.get<DataPointLabel::OutputCurrent>();
+    auto oOutputVoltage = _dataPoints.get<DataPointLabel::OutputVoltage>();
+    auto oOutputPower = _dataPoints.get<DataPointLabel::OutputPower>();
+    auto oEfficiency = _dataPoints.get<DataPointLabel::Efficiency>();
+    auto efficiency = oEfficiency ? (*oEfficiency > 0.5 ? *oEfficiency : 1.0) : 1.0;
+
     // Internal PSU power pin (slot detect) control
-    if (_rp.output_current > HUAWEI_AUTO_MODE_SHUTDOWN_CURRENT) {
+    if (oOutputCurrent && *oOutputCurrent > HUAWEI_AUTO_MODE_SHUTDOWN_CURRENT) {
         _outputCurrentOnSinceMillis = millis();
     }
 
@@ -161,12 +137,20 @@ void Controller::loop()
     // Emergency charge
     // ***********************
     auto stats = Battery.getStats();
-    if (config.Huawei.Emergency_Charge_Enabled && stats->getImmediateChargingRequest()) {
+    if (!_batteryEmergencyCharging && config.Huawei.Emergency_Charge_Enabled && stats->getImmediateChargingRequest()) {
+        if (!oOutputVoltage) {
+            // TODO(schlimmchen): if this situation actually occurs, this message
+            // will be printed with high frequency for a prolonged time. how can
+            // we deal with that?
+            MessageOutput.print("[Huawei::Controller] Cannot perform emergency "
+                    "charging with unknown PSU output voltage value\r\n");
+            return;
+        }
+
         _batteryEmergencyCharging = true;
 
         // Set output current
-        float efficiency =  (_rp.efficiency > 0.5 ? _rp.efficiency : 1.0);
-        float outputCurrent = efficiency * (config.Huawei.Auto_Power_Upper_Power_Limit / _rp.output_voltage);
+        float outputCurrent = efficiency * (config.Huawei.Auto_Power_Upper_Power_Limit / *oOutputVoltage);
         MessageOutput.printf("[Huawei::Controller] Emergency Charge Output "
             "current %.02f \r\n", outputCurrent);
         _setParameter(outputCurrent, Setting::OnlineCurrent);
@@ -175,8 +159,10 @@ void Controller::loop()
 
     if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
         // Battery request has changed. Set current to 0, wait for PSU to respond and then clear state
+        // TODO(schlimmchen): this is repeated very often for up to (polling interval) seconds. maybe
+        // trigger sending request for data immediately? otherwise implement a backoff instead.
         _setParameter(0, Setting::OnlineCurrent);
-        if (_rp.output_current < 1) {
+        if (oOutputCurrent && *oOutputCurrent < 1) {
             _batteryEmergencyCharging = false;
         }
         return;
@@ -186,15 +172,21 @@ void Controller::loop()
     // Automatic power control
     // ***********************
     if (_mode == HUAWEI_MODE_AUTO_INT ) {
-
         // Check if we should run automatic power calculation at all.
         // We may have set a value recently and still wait for output stabilization
         if (_autoModeBlockedTillMillis > millis()) {
             return;
         }
 
+        if (!oOutputVoltage || !oOutputPower || !oOutputCurrent) {
+            MessageOutput.print("[Huawei::Controller] Cannot perform auto power "
+                    "control while critical PSU values are still unknown\r\n");
+            _autoModeBlockedTillMillis = millis() + 1000;
+            return;
+        }
+
         // Re-enable automatic power control if the output voltage has dropped below threshold
-        if (_rp.output_voltage < config.Huawei.Auto_Power_Enable_Voltage_Limit ) {
+        if (oOutputVoltage && *oOutputVoltage < config.Huawei.Auto_Power_Enable_Voltage_Limit ) {
             _autoPowerEnabledCounter = 10;
         }
 
@@ -215,14 +207,13 @@ void Controller::loop()
 
             // Calculate new power limit
             float newPowerLimit = -1 * round(PowerMeter.getPowerTotal());
-            float efficiency =  (_rp.efficiency > 0.5 ? _rp.efficiency : 1.0);
 
             // Powerlimit is the requested output power + permissable Grid consumption factoring in the efficiency factor
-            newPowerLimit += _rp.output_power + config.Huawei.Auto_Power_Target_Power_Consumption / efficiency;
+            newPowerLimit += *oOutputPower + config.Huawei.Auto_Power_Target_Power_Consumption / efficiency;
 
-            if (verboseLogging){
+            if (verboseLogging) {
                 MessageOutput.printf("[Huawei::Controller] newPowerLimit: %.0f, "
-                    "output_power: %.01f\r\n", newPowerLimit, _rp.output_power);
+                    "output_power: %.01f\r\n", newPowerLimit, *oOutputPower);
             }
 
             // Check whether the battery SoC limit setting is enabled
@@ -244,7 +235,7 @@ void Controller::loop()
                 // Check if the output power has dropped below the lower limit (i.e. the battery is full)
                 // and if the PSU should be turned off. Also we use a simple counter mechanism here to be able
                 // to ramp up from zero output power when starting up
-                if (_rp.output_power < config.Huawei.Auto_Power_Lower_Power_Limit) {
+                if (*oOutputPower < config.Huawei.Auto_Power_Lower_Power_Limit) {
                     MessageOutput.print("[Huawei::Controller] Power and "
                         "voltage limit reached. Disabling automatic power "
                         "control.\r\n");
@@ -264,10 +255,10 @@ void Controller::loop()
                 }
 
                 // Calculate output current
-                float calculatedCurrent = efficiency * (newPowerLimit / _rp.output_voltage);
+                float calculatedCurrent = efficiency * (newPowerLimit / *oOutputVoltage);
 
                 // Limit output current to value requested by BMS
-                float permissableCurrent = stats->getChargeCurrentLimitation() - (stats->getChargeCurrent() - _rp.output_current); // BMS current limit - current from other sources, e.g. Victron MPPT charger
+                float permissableCurrent = stats->getChargeCurrentLimitation() - (stats->getChargeCurrent() - *oOutputCurrent); // BMS current limit - current from other sources, e.g. Victron MPPT charger
                 float outputCurrent = std::min(calculatedCurrent, permissableCurrent);
                 outputCurrent= outputCurrent > 0 ? outputCurrent : 0;
 
@@ -355,6 +346,33 @@ void Controller::setMode(uint8_t mode) {
     if (mode == HUAWEI_MODE_AUTO_EXT || mode == HUAWEI_MODE_AUTO_INT) {
         _mode = mode;
     }
+}
+
+void Controller::getJsonData(JsonVariant& root) const
+{
+    root["data_age"] = (millis() - _dataPoints.getLastUpdate()) / 1000;
+
+    using Label = GridCharger::Huawei::DataPointLabel;
+#define VAL(l, n) \
+    { \
+        auto oDataPoint = _dataPoints.getDataPointFor<Label::l>(); \
+        if (oDataPoint) { \
+            root[n]["v"] = *_dataPoints.get<Label::l>(); \
+            root[n]["u"] = oDataPoint->getUnitText(); \
+        } \
+    }
+
+    VAL(InputVoltage, "input_voltage");
+    VAL(InputCurrent, "input_current");
+    VAL(InputPower, "input_power");
+    VAL(OutputVoltage, "output_voltage");
+    VAL(OutputCurrent, "output_current");
+    VAL(OutputCurrentMax, "max_output_current");
+    VAL(OutputPower, "output_power");
+    VAL(InputTemperature, "input_temp");
+    VAL(OutputTemperature, "output_temp");
+    VAL(Efficiency, "efficiency");
+#undef VAL
 }
 
 } // namespace GridCharger::Huawei

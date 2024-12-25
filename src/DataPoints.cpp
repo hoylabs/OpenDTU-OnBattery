@@ -17,6 +17,11 @@ template std::string dataPointValueToStr(uint8_t const& v);
 template std::string dataPointValueToStr(uint16_t const& v);
 template std::string dataPointValueToStr(uint32_t const& v);
 
+template<> std::string dataPointValueToStr(float const& v) {
+    snprintf(conversionBuffer, sizeof(conversionBuffer), "%.2f", v);
+    return conversionBuffer;
+}
+
 template<>
 std::string dataPointValueToStr(std::string const& v) {
     return v;

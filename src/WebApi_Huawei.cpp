@@ -24,33 +24,6 @@ void WebApiHuaweiClass::init(AsyncWebServer& server, Scheduler& scheduler)
     _server->on("/api/huawei/limit/config", HTTP_POST, std::bind(&WebApiHuaweiClass::onPost, this, _1));
 }
 
-void WebApiHuaweiClass::getJsonData(JsonVariant& root) {
-    auto const* rp = HuaweiCan.get();
-
-    root["data_age"] = (millis() - HuaweiCan.getLastUpdate()) / 1000;
-    root["input_voltage"]["v"] = rp->input_voltage;
-    root["input_voltage"]["u"] = "V";
-    root["input_current"]["v"] = rp->input_current;
-    root["input_current"]["u"] = "A";
-    root["input_power"]["v"] = rp->input_power;
-    root["input_power"]["u"] = "W";
-    root["output_voltage"]["v"] = rp->output_voltage;
-    root["output_voltage"]["u"] = "V";
-    root["output_current"]["v"] = rp->output_current;
-    root["output_current"]["u"] = "A";
-    root["max_output_current"]["v"] = rp->max_output_current;
-    root["max_output_current"]["u"] = "A";
-    root["output_power"]["v"] = rp->output_power;
-    root["output_power"]["u"] = "W";
-    root["input_temp"]["v"] = rp->input_temp;
-    root["input_temp"]["u"] = "°C";
-    root["output_temp"]["v"] = rp->output_temp;
-    root["output_temp"]["u"] = "°C";
-    root["efficiency"]["v"] = rp->efficiency * 100;
-    root["efficiency"]["u"] = "%";
-
-}
-
 void WebApiHuaweiClass::onStatus(AsyncWebServerRequest* request)
 {
     if (!WebApi.checkCredentialsReadonly(request)) {
@@ -59,7 +32,7 @@ void WebApiHuaweiClass::onStatus(AsyncWebServerRequest* request)
 
     AsyncJsonResponse* response = new AsyncJsonResponse();
     auto& root = response->getRoot();
-    getJsonData(root);
+    HuaweiCan.getJsonData(root);
 
     response->setLength();
     request->send(response);
