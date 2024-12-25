@@ -87,13 +87,16 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
         if (!all) { _lastPublishVictron = millis(); }
     }
 
-    if (all || (HuaweiCan.getLastUpdate() - _lastPublishHuawei) < halfOfAllMillis ) {
+    if (all || (HuaweiCan.getDataPoints().getLastUpdate() - _lastPublishHuawei) < halfOfAllMillis ) {
         auto huaweiObj = root["huawei"].to<JsonObject>();
         huaweiObj["enabled"] = config.Huawei.Enabled;
 
         if (config.Huawei.Enabled) {
-            auto const* rp = HuaweiCan.get();
-            addTotalField(huaweiObj, "Power", rp->input_power, "W", 2);
+            auto const& dataPoints = HuaweiCan.getDataPoints();
+            auto oInputPower = dataPoints.get<GridCharger::Huawei::DataPointLabel::InputPower>();
+            if (oInputPower) {
+                addTotalField(huaweiObj, "Power", *oInputPower, "W", 2);
+            }
         }
 
         if (!all) { _lastPublishHuawei = millis(); }

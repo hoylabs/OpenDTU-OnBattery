@@ -74,26 +74,36 @@ void MqttHandleHuaweiClass::loop()
         return;
     }
 
-    auto const* rp = HuaweiCan.get();
-
-    if ((millis() - _lastPublish) > (config.Mqtt.PublishInterval * 1000) ) {
-      MqttSettings.publish("huawei/data_age", String((millis() - HuaweiCan.getLastUpdate()) / 1000));
-      MqttSettings.publish("huawei/input_voltage", String(rp->input_voltage));
-      MqttSettings.publish("huawei/input_current", String(rp->input_current));
-      MqttSettings.publish("huawei/input_power", String(rp->input_power));
-      MqttSettings.publish("huawei/output_voltage", String(rp->output_voltage));
-      MqttSettings.publish("huawei/output_current", String(rp->output_current));
-      MqttSettings.publish("huawei/max_output_current", String(rp->max_output_current));
-      MqttSettings.publish("huawei/output_power", String(rp->output_power));
-      MqttSettings.publish("huawei/input_temp", String(rp->input_temp));
-      MqttSettings.publish("huawei/output_temp", String(rp->output_temp));
-      MqttSettings.publish("huawei/efficiency", String(rp->efficiency));
-      MqttSettings.publish("huawei/mode", String(HuaweiCan.getMode()));
-
-
-      yield();
-      _lastPublish = millis();
+    if ((millis() - _lastPublish) <= (config.Mqtt.PublishInterval * 1000)) {
+        return;
     }
+
+    auto const& dataPoints = HuaweiCan.getDataPoints();
+
+#define PUB(l, t) \
+    { \
+        auto oDataPoint = dataPoints.get<GridCharger::Huawei::DataPointLabel::l>(); \
+        if (oDataPoint) { \
+            MqttSettings.publish("huawei/" t, String(*oDataPoint)); \
+        } \
+    }
+
+    PUB(InputVoltage, "input_voltage");
+    PUB(InputCurrent, "input_current");
+    PUB(InputPower, "input_power");
+    PUB(OutputVoltage, "output_voltage");
+    PUB(OutputCurrent, "output_current");
+    PUB(OutputCurrentMax, "max_output_current");
+    PUB(OutputPower, "output_power");
+    PUB(InputTemperature, "input_temp");
+    PUB(OutputTemperature, "output_temp");
+    PUB(Efficiency, "efficiency");
+#undef PUB
+
+    MqttSettings.publish("huawei/data_age", String((millis() - dataPoints.getLastUpdate()) / 1000));
+    MqttSettings.publish("huawei/mode", String(HuaweiCan.getMode()));
+
+    _lastPublish = millis();
 }
 
 

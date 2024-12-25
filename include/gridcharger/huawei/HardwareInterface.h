@@ -4,11 +4,12 @@
 #include <atomic>
 #include <array>
 #include <mutex>
-#include <map>
+#include <memory>
 #include <queue>
 #include <cstdint>
 #include <FreeRTOS.h>
 #include <freertos/task.h>
+#include <gridcharger/huawei/DataPoints.h>
 
 namespace GridCharger::Huawei {
 
@@ -28,21 +29,7 @@ public:
     };
     void setParameter(Setting setting, float val);
 
-    enum class Property : uint8_t {
-        InputPower = 0x70,
-        InputFrequency = 0x71,
-        InputCurrent = 0x72,
-        OutputPower = 0x73,
-        Efficiency = 0x74,
-        OutputVoltage = 0x75,
-        OutputCurrentMax = 0x76,
-        InputVoltage = 0x78,
-        OutputTemperature = 0x7F,
-        InputTemperature = 0x80,
-        OutputCurrent = 0x81
-    };
-    using property_t = std::pair<float, uint32_t>; // value and timestamp
-    property_t getParameter(Property prop) const;
+    std::unique_ptr<DataPointContainer> getCurrentData() { return std::move(_upDataCurrent); }
 
     static uint32_t constexpr DataRequestIntervalMillis = 2500;
 
@@ -73,7 +60,8 @@ private:
     std::atomic<bool> _taskDone = false;
     bool _stopLoop = false;
 
-    std::map<HardwareInterface::Property, HardwareInterface::property_t> _stats;
+    std::unique_ptr<DataPointContainer> _upDataCurrent = nullptr;
+    std::unique_ptr<DataPointContainer> _upDataInFlight = nullptr;
 
     std::queue<std::pair<HardwareInterface::Setting, uint16_t>> _sendQueue;
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <Arduino.h>
+#include <Configuration.h>
 #include <MessageOutput.h>
 #include <gridcharger/huawei/HardwareInterface.h>
 
@@ -28,7 +29,7 @@ void HardwareInterface::staticLoopHelper(void* context)
 
 bool HardwareInterface::startLoop()
 {
-    uint32_t constexpr stackSize = 2048;
+    uint32_t constexpr stackSize = 3072;
     return pdPASS == xTaskCreate(HardwareInterface::staticLoopHelper,
             "HuaweiHwIfc", stackSize, this, 10/*prio*/, &_taskHandle);
 }
@@ -66,10 +67,47 @@ void HardwareInterface::loop()
 
         if ((msg.valueId & 0xFF00FFFF) != 0x01000000) { continue; }
 
-        auto property = static_cast<Property>((msg.valueId & 0x00FF0000) >> 16);
+        if (!_upDataInFlight) { _upDataInFlight = std::make_unique<DataPointContainer>(); }
 
-        unsigned divisor = (property == Property::OutputCurrentMax) ? _maxCurrentMultiplier : 1024;
-        _stats[property] = {static_cast<float>(msg.value)/divisor, millis()};
+        auto label = static_cast<DataPointLabel>((msg.valueId & 0x00FF0000) >> 16);
+
+        unsigned divisor = (label == DataPointLabel::OutputCurrentMax) ? _maxCurrentMultiplier : 1024;
+        float value = static_cast<float>(msg.value)/divisor;
+        switch (label) {
+            case DataPointLabel::InputPower:
+                _upDataInFlight->add<DataPointLabel::InputPower>(value);
+                break;
+            case DataPointLabel::InputFrequency:
+                _upDataInFlight->add<DataPointLabel::InputFrequency>(value);
+                break;
+            case DataPointLabel::InputCurrent:
+                _upDataInFlight->add<DataPointLabel::InputCurrent>(value);
+                break;
+            case DataPointLabel::OutputPower:
+                _upDataInFlight->add<DataPointLabel::OutputPower>(value);
+                break;
+            case DataPointLabel::Efficiency:
+                _upDataInFlight->add<DataPointLabel::Efficiency>(value);
+                break;
+            case DataPointLabel::OutputVoltage:
+                _upDataInFlight->add<DataPointLabel::OutputVoltage>(value);
+                break;
+            case DataPointLabel::OutputCurrentMax:
+                _upDataInFlight->add<DataPointLabel::OutputCurrentMax>(value);
+                break;
+            case DataPointLabel::InputVoltage:
+                _upDataInFlight->add<DataPointLabel::InputVoltage>(value);
+                break;
+            case DataPointLabel::OutputTemperature:
+                _upDataInFlight->add<DataPointLabel::OutputTemperature>(value);
+                break;
+            case DataPointLabel::InputTemperature:
+                _upDataInFlight->add<DataPointLabel::InputTemperature>(value);
+                break;
+            case DataPointLabel::OutputCurrent:
+                _upDataInFlight->add<DataPointLabel::OutputCurrent>(value);
+                break;
+        }
     }
 
     size_t queueSize = _sendQueue.size();
@@ -96,6 +134,21 @@ void HardwareInterface::loop()
         }
 
         _nextRequestMillis = millis() + DataRequestIntervalMillis;
+
+        auto const& config = Configuration.get();
+        if (_upDataInFlight && config.Huawei.VerboseLogging) {
+            auto iter = _upDataInFlight->cbegin();
+            while (iter != _upDataInFlight->cend()) {
+                MessageOutput.printf("[Huawei::HwIfc] [%.3f] %s: %s%s\r\n",
+                    static_cast<float>(iter->second.getTimestamp())/1000,
+                    iter->second.getLabelText().c_str(),
+                    iter->second.getValueText().c_str(),
+                    iter->second.getUnitText().c_str());
+                ++iter;
+            }
+        }
+
+        _upDataCurrent = std::move(_upDataInFlight);
     }
 }
 
@@ -119,14 +172,6 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
     _sendQueue.push({setting, static_cast<uint16_t>(val)});
 
     xTaskNotifyGive(_taskHandle);
-}
-
-HardwareInterface::property_t HardwareInterface::getParameter(HardwareInterface::Property property) const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-    auto pos = _stats.find(property);
-    if (pos == _stats.end()) { return {0, 0}; }
-    return pos->second;
 }
 
 } // namespace GridCharger::Huawei
