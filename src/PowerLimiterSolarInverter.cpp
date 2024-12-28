@@ -33,8 +33,17 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
 
     float inverterEfficiencyFactor = pStats->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF) / 100;
 
-    // 98% of the expected power is good enough
-    auto expectedAcPowerPerMppt = (getCurrentLimitWatts() / dcTotalMppts) * 0.98;
+    // with 97% we are a bit less strict than when we scale the limit
+    auto expectedPowerPercentage = 0.97;
+
+    // use the scaling threshold as the expected power percentage if lower,
+    // but only when overscalingis enabled and the inverter does not support PDL
+    if (_config.UseOverscaling && !_spInverter->supportsPowerDistributionLogic()) {
+        expectedPowerPercentage = std::min(expectedPowerPercentage, static_cast<float>(_config.ScalingThreshold) / 100.0);
+    }
+
+    // x% of the expected power is good enough
+    auto expectedAcPowerPerMppt = (getCurrentLimitWatts() / dcTotalMppts) * expectedPowerPercentage;
 
     size_t dcNonShadedMppts = 0;
     auto nonShadedMpptACPowerSum = 0.0;
