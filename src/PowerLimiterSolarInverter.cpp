@@ -244,23 +244,3 @@ void PowerLimiterSolarInverter::setAcOutput(uint16_t expectedOutputWatts)
     setTargetPowerLimitWatts(scaleLimit(expectedOutputWatts));
     setTargetPowerState(true);
 }
-
-char PowerLimiterSolarInverter::mpptName(MpptNum_t mppt)
-{
-    switch (mppt) {
-        case MpptNum_t::MPPT_A:
-            return 'a';
-
-        case MpptNum_t::MPPT_B:
-            return 'b';
-
-        case MpptNum_t::MPPT_C:
-            return 'c';
-
-        case MpptNum_t::MPPT_D:
-            return 'd';
-
-        default:
-            return '?';
-    }
-}

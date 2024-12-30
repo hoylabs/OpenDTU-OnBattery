@@ -93,6 +93,8 @@ protected:
     void setTargetPowerState(bool enable) { _oTargetPowerState = enable; }
     void setExpectedOutputAcWatts(uint16_t power) { _expectedOutputAcWatts = power; }
 
+    static char mpptName(MpptNum_t mppt);
+
     // copied to avoid races with web UI
     PowerLimiterInverterConfig _config;
 
