@@ -349,4 +349,44 @@ void PowerLimiterInverter::debug() const
         (_oTargetPowerState.has_value()?(*_oTargetPowerState?"production":"standby"):"unchanged"),
         getUpdateTimeouts()
     );
+
+    MessageOutput.printf("    MPPTs AC power:");
+
+    auto pStats = _spInverter->Statistics();
+    float inverterEfficiencyFactor = pStats->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF) / 100;
+    std::vector<MpptNum_t> dcMppts = _spInverter->getMppts();
+
+    for (auto& m : dcMppts) {
+        float mpptPowerAC = 0.0;
+        std::vector<ChannelNum_t> mpptChnls = _spInverter->getChannelsDCByMppt(m);
+
+        for (auto& c : mpptChnls) {
+            mpptPowerAC += pStats->getChannelFieldValue(TYPE_DC, c, FLD_PDC) * inverterEfficiencyFactor;
+        }
+
+        MessageOutput.printf(" %c: %.0f W",
+                mpptName(m), mpptPowerAC);
+    }
+
+    MessageOutput.printf("\r\n");
+}
+
+char PowerLimiterInverter::mpptName(MpptNum_t mppt)
+{
+    switch (mppt) {
+        case MpptNum_t::MPPT_A:
+            return 'a';
+
+        case MpptNum_t::MPPT_B:
+            return 'b';
+
+        case MpptNum_t::MPPT_C:
+            return 'c';
+
+        case MpptNum_t::MPPT_D:
+            return 'd';
+
+        default:
+            return '?';
+    }
 }
