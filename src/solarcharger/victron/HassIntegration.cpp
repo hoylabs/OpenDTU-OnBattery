@@ -17,8 +17,8 @@ namespace SolarChargers::Victron {
 void HassIntegration::publishSensors() const
 {
     // device info
-    for (int idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
-        auto optMpptData = SolarCharger.getData(idx);
+    for (int idx = 0; idx < 0; ++idx) {
+        std::optional<VeDirectMpptController::data_t> optMpptData = std::nullopt;// TODO(andreasboehm): How can i get the data in a nice way? .getData(idx);
         if (!optMpptData.has_value()) { continue; }
 
         publishSensor("MPPT serial number", "mdi:counter", "SER", nullptr, nullptr, nullptr, *optMpptData);
@@ -76,8 +76,6 @@ void HassIntegration::publishSensors() const
             publishSensor("Smart Battery Sense temperature", "mdi:temperature-celsius", "SmartBatterySenseTemperature", "temperature", "measurement", "°C", *optMpptData);
         }
     }
-
-    yield();
 }
 
 void HassIntegration::publishSensor(const char *caption, const char *icon, const char *subTopic,

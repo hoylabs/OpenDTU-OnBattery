@@ -7,6 +7,245 @@
 
 namespace SolarChargers::Victron {
 
+void Stats::update(const String serial, const std::optional<VeDirectMpptController::data_t> mpptData, uint32_t lastUpdate) const
+{
+    // serial required as index
+    if (serial.isEmpty()) { return; }
+
+    _data[serial] = mpptData;
+    _lastUpdate[serial] = lastUpdate;
+}
+
+uint32_t Stats::getAgeMillis() const
+{
+    uint32_t age = 0;
+    auto now = millis();
+
+    for (auto const& entry : _data) {
+        if (!entry.second) { continue; }
+        if (!_lastUpdate[entry.first]) { continue; }
+
+        age = std::max<uint32_t>(age, now - _lastUpdate[entry.first]);
+    }
+
+    return age;
+
+}
+
+std::optional<int32_t> Stats::getOutputPowerWatts() const
+{
+    int32_t sum = -1;
+
+    for (auto const& entry : _data) {
+        if (!entry.second) { continue; }
+        sum += entry.second->batteryOutputPower_W;
+    }
+
+    if (sum == -1) { return std::nullopt; }
+
+    return sum;
+}
+
+std::optional<float> Stats::getOutputVoltage() const
+{
+    float min = -1;
+
+    for (auto const& entry : _data) {
+        if (!entry.second) { continue; }
+
+        float volts = entry.second->batteryVoltage_V_mV / 1000.0;
+        if (min == -1) { min = volts; }
+        min = std::min(min, volts);
+    }
+
+    if (min == -1) { return std::nullopt; }
+
+    return min;
+}
+
+int32_t Stats::getPanelPowerWatts() const
+{
+    int32_t sum = 0;
+
+    for (auto const& entry : _data) {
+        if (!entry.second) { continue; }
+
+        // if any charge controller is part of a VE.Smart network, and if the
+        // charge controller is connected in a way that allows to send
+        // requests, we should have the "network total DC input power" available.
+        auto networkPower = entry.second->NetworkTotalDcInputPowerMilliWatts;
+        if (networkPower.first > 0) {
+            return static_cast<int32_t>(networkPower.second / 1000.0);
+        }
+
+        sum += entry.second->panelPower_PPV_W;
+    }
+
+    return sum;
+}
+
+float Stats::getYieldTotal() const
+{
+    float sum = 0;
+
+    for (auto const& entry : _data) {
+        if (!entry.second) { continue; }
+
+        sum += entry.second->yieldTotal_H19_Wh / 1000.0;
+    }
+
+    return sum;
+}
+
+float Stats::getYieldDay() const
+{
+    float sum = 0;
+
+    for (auto const& entry : _data) {
+        if (!entry.second) { continue; }
+
+        sum += entry.second->yieldToday_H20_Wh;
+    }
+
+    return sum;
+}
+
+void Stats::getLiveViewData(JsonVariant& root, boolean fullUpdate, uint32_t lastPublish) const
+{
+    ::SolarChargers::Stats::getLiveViewData(root, fullUpdate, lastPublish);
+
+    auto instances = root["solarcharger"]["instances"].to<JsonObject>();
+
+    for (auto const& entry : _data) {
+        if (!entry.second) { continue; }
+
+        auto age = 0;
+        if (_lastUpdate[entry.first]) {
+            age = millis() - _lastUpdate[entry.first];
+        }
+
+        auto hasUpdate = age != 0 && age < millis() - lastPublish;
+        if (!fullUpdate && !hasUpdate) { continue; }
+
+        JsonObject instance = instances[entry.first].to<JsonObject>();
+        instance["data_age_ms"] = age;
+        populateJsonWithInstanceStats(instance, *entry.second);
+    }
+}
+
+void Stats::populateJsonWithInstanceStats(const JsonObject &root, const VeDirectMpptController::data_t &mpptData) const
+{
+    root["product_id"] = mpptData.getPidAsString();
+    root["firmware_version"] = mpptData.getFwVersionFormatted();
+
+    const JsonObject values = root["values"].to<JsonObject>();
+
+    const JsonObject device = values["device"].to<JsonObject>();
+
+    // LOAD     IL      UI label    result
+    // ------------------------------------
+    // false    false               Do not display LOAD and IL (device has no physical load output and virtual load is not configured)
+    // true     false   "VIRTLOAD"  We display just LOAD (device has no physical load output and virtual load is configured)
+    // true     true    "LOAD"      We display LOAD and IL (device has physical load output, regardless if virtual load is configured or not)
+    if (mpptData.loadOutputState_LOAD.first > 0) {
+        device[(mpptData.loadCurrent_IL_mA.first > 0) ? "LOAD" : "VIRTLOAD"] = mpptData.loadOutputState_LOAD.second ? "ON" : "OFF";
+    }
+    if (mpptData.loadCurrent_IL_mA.first > 0) {
+        device["IL"]["v"] = mpptData.loadCurrent_IL_mA.second / 1000.0;
+        device["IL"]["u"] = "A";
+        device["IL"]["d"] = 2;
+    }
+    device["CS"] = mpptData.getCsAsString();
+    device["MPPT"] = mpptData.getMpptAsString();
+    device["OR"] = mpptData.getOrAsString();
+    if (mpptData.relayState_RELAY.first > 0) {
+        device["RELAY"] = mpptData.relayState_RELAY.second ? "ON" : "OFF";
+    }
+    device["ERR"] = mpptData.getErrAsString();
+    device["HSDS"]["v"] = mpptData.daySequenceNr_HSDS;
+    device["HSDS"]["u"] = "d";
+    if (mpptData.MpptTemperatureMilliCelsius.first > 0) {
+        device["MpptTemperature"]["v"] = mpptData.MpptTemperatureMilliCelsius.second / 1000.0;
+        device["MpptTemperature"]["u"] = "°C";
+        device["MpptTemperature"]["d"] = "1";
+    }
+
+    const JsonObject output = values["output"].to<JsonObject>();
+    output["P"]["v"] = mpptData.batteryOutputPower_W;
+    output["P"]["u"] = "W";
+    output["P"]["d"] = 0;
+    output["V"]["v"] = mpptData.batteryVoltage_V_mV / 1000.0;
+    output["V"]["u"] = "V";
+    output["V"]["d"] = 2;
+    output["I"]["v"] = mpptData.batteryCurrent_I_mA / 1000.0;
+    output["I"]["u"] = "A";
+    output["I"]["d"] = 2;
+    output["E"]["v"] = mpptData.mpptEfficiency_Percent;
+    output["E"]["u"] = "%";
+    output["E"]["d"] = 1;
+    if (mpptData.SmartBatterySenseTemperatureMilliCelsius.first > 0) {
+        output["SBSTemperature"]["v"] = mpptData.SmartBatterySenseTemperatureMilliCelsius.second / 1000.0;
+        output["SBSTemperature"]["u"] = "°C";
+        output["SBSTemperature"]["d"] = "0";
+    }
+    if (mpptData.BatteryAbsorptionMilliVolt.first > 0) {
+        output["AbsorptionVoltage"]["v"] = mpptData.BatteryAbsorptionMilliVolt.second / 1000.0;
+        output["AbsorptionVoltage"]["u"] = "V";
+        output["AbsorptionVoltage"]["d"] = "2";
+    }
+    if (mpptData.BatteryFloatMilliVolt.first > 0) {
+        output["FloatVoltage"]["v"] = mpptData.BatteryFloatMilliVolt.second / 1000.0;
+        output["FloatVoltage"]["u"] = "V";
+        output["FloatVoltage"]["d"] = "2";
+    }
+
+    const JsonObject input = values["input"].to<JsonObject>();
+    if (mpptData.NetworkTotalDcInputPowerMilliWatts.first > 0) {
+        input["NetworkPower"]["v"] = mpptData.NetworkTotalDcInputPowerMilliWatts.second / 1000.0;
+        input["NetworkPower"]["u"] = "W";
+        input["NetworkPower"]["d"] = "0";
+    }
+    input["PPV"]["v"] = mpptData.panelPower_PPV_W;
+    input["PPV"]["u"] = "W";
+    input["PPV"]["d"] = 0;
+    input["VPV"]["v"] = mpptData.panelVoltage_VPV_mV / 1000.0;
+    input["VPV"]["u"] = "V";
+    input["VPV"]["d"] = 2;
+    input["IPV"]["v"] = mpptData.panelCurrent_mA / 1000.0;
+    input["IPV"]["u"] = "A";
+    input["IPV"]["d"] = 2;
+
+    if (mpptData.yieldToday_H20_Wh >= 1000.0) {
+        input["YieldToday"]["v"] = mpptData.yieldToday_H20_Wh / 1000.0;
+        input["YieldToday"]["u"] = "kWh";
+        input["YieldToday"]["d"] = 2;
+    } else {
+        input["YieldToday"]["v"] = mpptData.yieldToday_H20_Wh;
+        input["YieldToday"]["u"] = "Wh";
+        input["YieldToday"]["d"] = 0;
+    }
+
+    if (mpptData.yieldYesterday_H22_Wh >= 1000.0) {
+        input["YieldYesterday"]["v"] = mpptData.yieldYesterday_H22_Wh / 1000.0;
+        input["YieldYesterday"]["u"] = "kWh";
+        input["YieldYesterday"]["d"] = 2;
+    } else {
+        input["YieldYesterday"]["v"] = mpptData.yieldYesterday_H22_Wh;
+        input["YieldYesterday"]["u"] = "Wh";
+        input["YieldYesterday"]["d"] = 0;
+    }
+
+    input["YieldTotal"]["v"] = mpptData.yieldTotal_H19_Wh / 1000.0;
+    input["YieldTotal"]["u"] = "kWh";
+    input["YieldTotal"]["d"] = 2;
+    input["MaximumPowerToday"]["v"] = mpptData.maxPowerToday_H21_W;
+    input["MaximumPowerToday"]["u"] = "W";
+    input["MaximumPowerToday"]["d"] = 0;
+    input["MaximumPowerYesterday"]["v"] = mpptData.maxPowerYesterday_H23_W;
+    input["MaximumPowerYesterday"]["u"] = "W";
+    input["MaximumPowerYesterday"]["d"] = 0;
+}
+
 void Stats::mqttPublish() const
 {
     if ((millis() >= _nextPublishFull) || (millis() >= _nextPublishUpdatesOnly)) {
@@ -19,14 +258,15 @@ void Stats::mqttPublish() const
             _PublishFull = !config.SolarCharger.PublishUpdatesOnly;
         }
 
-        for (int idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
-            std::optional<VeDirectMpptController::data_t> optMpptData = SolarCharger.getData(idx);
-            if (!optMpptData.has_value()) { continue; }
+        for (auto const& entry : _data) {
+            auto currentData = entry.second;
+            if (!currentData) { continue; }
 
-            auto const& kvFrame = _kvFrames[optMpptData->serialNr_SER];
-            publish_mppt_data(*optMpptData, kvFrame);
+            auto const& previousData = _previousData[entry.first];
+            publish_mppt_data(*currentData, previousData);
+
             if (!_PublishFull) {
-                _kvFrames[optMpptData->serialNr_SER] = *optMpptData;
+                _previousData[entry.first] = *currentData;
             }
         }
 
@@ -48,8 +288,7 @@ void Stats::mqttPublish() const
     }
 }
 
-void Stats::publish_mppt_data(const VeDirectMpptController::data_t &currentData,
-                                                const VeDirectMpptController::data_t &previousData) const {
+void Stats::publish_mppt_data(const VeDirectMpptController::data_t &currentData, const VeDirectMpptController::data_t &previousData) const {
     String value;
     String topic = "victron/";
     topic.concat(currentData.serialNr_SER);

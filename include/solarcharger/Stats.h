@@ -2,16 +2,38 @@
 #pragma once
 
 #include <Arduino.h>
+#include <AsyncJson.h>
 
 namespace SolarChargers {
 
 class Stats {
 public:
+    // the last time *any* data was updated
+    virtual uint32_t getAgeMillis() const;
+
+    // total output of all MPPT charge controllers in Watts
+    virtual std::optional<int32_t> getOutputPowerWatts() const;
+
+    // minimum of all MPPT charge controllers' output voltages in V
+    virtual std::optional<float> getOutputVoltage() const;
+
+    // total panel input power of all MPPT charge controllers in Watts
+    virtual int32_t getPanelPowerWatts() const;
+
+    // sum of total yield of all MPPT charge controllers in kWh
+    virtual float getYieldTotal() const;
+
+    // sum of today's yield of all MPPT charge controllers in Wh
+    virtual float getYieldDay() const;
+
+    // convert stats to JSON for web application live view
+    virtual void getLiveViewData(JsonVariant& root, boolean fullUpdate, uint32_t lastPublish) const;
+
     void mqttLoop();
 
     // the interval at which all data will be re-published, even
     // if they did not change. used to calculate Home Assistent expiration.
-    virtual uint32_t getMqttFullPublishIntervalMs() const;
+    uint32_t getMqttFullPublishIntervalMs() const;
 
 protected:
     virtual void mqttPublish() const;

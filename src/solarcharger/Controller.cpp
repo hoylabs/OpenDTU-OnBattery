@@ -3,6 +3,7 @@
 #include <MessageOutput.h>
 #include <MqttSettings.h>
 #include <solarcharger/Controller.h>
+#include <solarcharger/DummyStats.h>
 #include <solarcharger/victron/Provider.h>
 
 SolarChargers::Controller SolarCharger;
@@ -47,6 +48,18 @@ void Controller::updateSettings()
     _publishSensors = true;
 }
 
+std::shared_ptr<Stats const> Controller::getStats() const
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (!_upProvider) {
+        static auto sspDummyStats = std::make_shared<DummyStats>();
+        return sspDummyStats;
+    }
+
+    return _upProvider->getStats();
+}
+
 void Controller::loop()
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -72,122 +85,6 @@ void Controller::loop()
     _upProvider->getHassIntegration().publishSensors();
 
     _publishSensors = false;
-}
-
-size_t Controller::controllerAmount() const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_upProvider) {
-        return _upProvider->controllerAmount();
-    }
-
-    return 0;
-}
-
-bool Controller::isDataValid() const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_upProvider) {
-        return _upProvider->isDataValid();
-    }
-
-    return false;
-}
-
-uint32_t Controller::getDataAgeMillis() const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_upProvider) {
-        return _upProvider->getDataAgeMillis();
-    }
-
-    return 0;
-}
-
-uint32_t Controller::getDataAgeMillis(size_t idx) const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_upProvider) {
-        return _upProvider->getDataAgeMillis(idx);
-    }
-
-    return 0;
-}
-
-
-// total output of all MPPT charge controllers in Watts
-int32_t Controller::getOutputPowerWatts() const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_upProvider) {
-        return _upProvider->getOutputPowerWatts();
-    }
-
-    return 0;
-}
-
-// total panel input power of all MPPT charge controllers in Watts
-int32_t Controller::getPanelPowerWatts() const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_upProvider) {
-        return _upProvider->getPanelPowerWatts();
-    }
-
-    return 0;
-}
-
-// sum of total yield of all MPPT charge controllers in kWh
-float Controller::getYieldTotal() const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_upProvider) {
-        return _upProvider->getYieldTotal();
-    }
-
-    return 0;
-}
-
-// sum of today's yield of all MPPT charge controllers in kWh
-float Controller::getYieldDay() const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_upProvider) {
-        return _upProvider->getYieldDay();
-    }
-
-    return 0;
-}
-
-// minimum of all MPPT charge controllers' output voltages in V
-float Controller::getOutputVoltage() const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_upProvider) {
-        return _upProvider->getOutputVoltage();
-    }
-
-    return 0;
-}
-
-std::optional<VeDirectMpptController::data_t> Controller::getData(size_t idx) const
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_upProvider) {
-        return _upProvider->getData(idx);
-    }
-
-    return std::nullopt;
 }
 
 } // namespace SolarChargers

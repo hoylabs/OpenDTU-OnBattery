@@ -2,8 +2,21 @@
 #include <solarcharger/Stats.h>
 #include <Configuration.h>
 #include <MqttSettings.h>
+#include <PowerLimiter.h>
 
 namespace SolarChargers {
+
+void Stats::getLiveViewData(JsonVariant& root, boolean fullUpdate, uint32_t lastPublish) const
+{
+    // power limiter state
+    root["dpl"]["PLSTATE"] = -1;
+    if (Configuration.get().PowerLimiter.Enabled) {
+        root["dpl"]["PLSTATE"] = PowerLimiter.getPowerLimiterState();
+    }
+    root["dpl"]["PLLIMIT"] = PowerLimiter.getInverterOutput();
+
+    root["solarcharger"]["full_update"] = fullUpdate;
+}
 
 void Stats::mqttLoop()
 {
@@ -28,6 +41,10 @@ uint32_t Stats::getMqttFullPublishIntervalMs() const
     // with a lower frequency and hence implement this method with a different
     // return value.
     return config.Mqtt.PublishInterval * 1000;
+}
+
+void Stats::mqttPublish() const
+{
 }
 
 } // namespace SolarChargers
