@@ -50,6 +50,8 @@ template<typename T>
 VeDirectFrameHandler<T>::VeDirectFrameHandler() :
 	_msgOut(&MessageOutputDummy),
 	_lastUpdate(0),
+    _actFrameNumber(0),
+    _endFrameNumber(0),
 	_state(State::IDLE),
 	_checksum(0),
 	_textPointer(0),
@@ -208,13 +210,28 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 	{
 		if (_verboseLogging) { dumpDebugBuffer(); }
 		if (_checksum == 0) {
+
+            // we use the field-label "V" to detect the start frame because all VE.Direct devices send this field
+            bool startFrame = false;
 			for (auto const& event : _textData) {
-				processTextData(event.first, event.second);
+				if (processTextData(event.first, event.second)) { startFrame = true; }
 			}
-			_lastUpdate = millis();
+
+            // related data can be fragmented across multiple frames (start frame -> end frame),
+            // so we check how many frames are required to get all related data
+            // once we kow the amount of frames we set the timestamp (_lastupdate) on the end frame
+            // Note: At startup, it may take up to 2 seconds for the first timestamp to become available.
+            if (startFrame) {
+                if (_actFrameNumber != 0) { _endFrameNumber = _actFrameNumber; } // buffer the end frame number
+                _actFrameNumber = 1;
+            } else {
+                if (_actFrameNumber != 0) { _actFrameNumber++; } // we do not count frames until we have a start frame
+            }
+            if ((_endFrameNumber != 0) && (_actFrameNumber == _endFrameNumber)) { _lastUpdate = millis(); }
 			frameValidEvent();
 		}
 		else {
+            _actFrameNumber = 0;
 			_msgOut->printf("%s checksum 0x%02x != 0x00, invalid frame\r\n", _logId, _checksum);
 		}
 		reset();
@@ -228,51 +245,53 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 
 /*
  * This function is called every time a new name/value is successfully parsed.  It writes the values to the temporary buffer.
+ * Returns true if we have received the start frame (contains field-label "V")
  */
 template<typename T>
-void VeDirectFrameHandler<T>::processTextData(std::string const& name, std::string const& value) {
+bool VeDirectFrameHandler<T>::processTextData(std::string const& name, std::string const& value) {
 	if (_verboseLogging) {
 		_msgOut->printf("%s Text Data '%s' = '%s'\r\n",
 				_logId, name.c_str(), value.c_str());
 	}
 
-	if (processTextDataDerived(name, value)) { return; }
+	if (processTextDataDerived(name, value)) { return false; }
 
 	if (name == "PID") {
 		_tmpFrame.productID_PID = strtol(value.c_str(), nullptr, 0);
-		return;
+		return false;
 	}
 
 	if (name == "SER") {
 		strncpy(_tmpFrame.serialNr_SER, value.c_str(), sizeof(_tmpFrame.serialNr_SER));
-		return;
+		return false;
 	}
 
 	if (name == "FW") {
 		_tmpFrame.firmwareVer_FWE[0] = '\0';
 		strncpy(_tmpFrame.firmwareVer_FW, value.c_str(), sizeof(_tmpFrame.firmwareVer_FW));
-		return;
+		return false;
 	}
 
 	// some devices use "FWE" instead of "FW" for the firmware version.
 	if (name == "FWE") {
 		_tmpFrame.firmwareVer_FW[0] = '\0';
 		strncpy(_tmpFrame.firmwareVer_FWE, value.c_str(), sizeof(_tmpFrame.firmwareVer_FWE));
-		return;
+		return false;
 	}
 
 	if (name == "V") {
 		_tmpFrame.batteryVoltage_V_mV = atol(value.c_str());
-		return;
+		return true; // start frame
 	}
 
 	if (name == "I") {
 		_tmpFrame.batteryCurrent_I_mA = atol(value.c_str());
-		return;
+		return false;
 	}
 
 	_msgOut->printf("%s Unknown text data '%s' (value '%s')\r\n",
 			_logId, name.c_str(), value.c_str());
+    return false;
 }
 
 /*
@@ -318,10 +337,10 @@ typename VeDirectFrameHandler<T>::State VeDirectFrameHandler<T>::hexRxEvent(uint
 template<typename T>
 bool VeDirectFrameHandler<T>::isDataValid() const
 {
-	// VE.Direct text frame data is valid if we receive a device serialnumber and
-	// the data is not older as 10 seconds
-	// we accept a glitch where the data is valid for ten seconds when serialNr_SER != "" and (millis() - _lastUpdate) overflows
-	return strlen(_tmpFrame.serialNr_SER) > 0 && (millis() - _lastUpdate) < (10 * 1000);
+	// VE.Direct text frame data is valid if we receive a device voltage and
+	// the data is not older as 10 seconds and the end frame was received
+	// we accept a glitch where the data is valid for ten seconds when batteryVoltage_V_mV != 0.0f and (millis() - _lastUpdate) overflows
+	return (_tmpFrame.batteryVoltage_V_mV != 0.0f) && (millis() - _lastUpdate) < (10 * 1000) && _lastUpdate != 0;
 }
 
 template<typename T>

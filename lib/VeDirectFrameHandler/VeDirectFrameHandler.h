@@ -37,7 +37,9 @@ protected:
 
     bool _verboseLogging;
     Print* _msgOut;
-    uint32_t _lastUpdate;
+    uint32_t _lastUpdate;                       // timestamp of end frame (data may be fragmented across multiple frames)
+    size_t _actFrameNumber;                     // counts the necessary frames to obtain all related data
+    size_t _endFrameNumber;                     // buffer the end frame number
 
     T _tmpFrame;
 
@@ -48,7 +50,7 @@ private:
     void reset();
     void dumpDebugBuffer();
     void rxData(uint8_t inbyte);              // byte of serial data
-    void processTextData(std::string const& name, std::string const& value);
+    bool processTextData(std::string const& name, std::string const& value);
     virtual bool processTextDataDerived(std::string const& name, std::string const& value) = 0;
     virtual void frameValidEvent() { }
     bool disassembleHexData(VeDirectHexData &data);     //return true if disassembling was possible
