@@ -287,7 +287,9 @@ void Controller::loop()
 
 void Controller::setParameter(float val, HardwareInterface::Setting setting)
 {
-    if (_mode == HUAWEI_MODE_AUTO_INT) { return; }
+    if (_mode == HUAWEI_MODE_AUTO_INT &&
+        setting != HardwareInterface::Setting::OfflineVoltage &&
+        setting != HardwareInterface::Setting::OfflineCurrent) { return; }
 
     _setParameter(val, setting);
 }
