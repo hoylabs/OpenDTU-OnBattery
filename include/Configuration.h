@@ -197,7 +197,7 @@ struct BATTERY_CONFIG_T {
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
-enum GridChargerHardwareInterface { MCP2515 = 0, VP230 = 1 };
+enum GridChargerHardwareInterface { MCP2515 = 0, TWAI = 1 };
 
 struct GRID_CHARGER_CONFIG_T {
     bool Enabled;

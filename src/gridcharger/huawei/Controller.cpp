@@ -61,7 +61,7 @@ void Controller::updateSettings()
         case GridChargerHardwareInterface::MCP2515:
             _upHardwareInterface = std::make_unique<MCP2515>();
             break;
-        case GridChargerHardwareInterface::VP230:
+        case GridChargerHardwareInterface::TWAI:
             _upHardwareInterface = std::make_unique<TWAI>();
             break;
         default:

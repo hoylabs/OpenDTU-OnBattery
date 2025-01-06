@@ -198,7 +198,7 @@ export default defineComponent({
             ],
             hardwareInterfaceList: [
                 { key: 0, value: 'MCP2515' },
-                { key: 1, value: 'VP230' },
+                { key: 1, value: 'TWAI' },
             ],
         };
     },

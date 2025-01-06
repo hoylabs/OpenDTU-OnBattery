@@ -963,7 +963,7 @@
         "VerboseLogging": "@:base.VerboseLogging",
         "HardwareInterface": "Schnittstellentyp",
         "HardwareInterfaceMCP2515": "Externer CAN-Controller MCP2515 über SPI",
-        "HardwareInterfaceVP230": "Interner CAN-Controller an CAN-Transceiver SN65HVD230 (VP230)",
+        "HardwareInterfaceTWAI": "Interner CAN-Controller an CAN-Transceiver SN65HVD230 (VP230)",
         "CanControllerFrequency": "Frequenz des Quarzes am CAN Controller",
         "EnableAutoPower": "Automatische Leistungssteuerung",
         "EnableBatterySoCLimits": "Ladezustand einer angeschlossenen Batterie berücksichtigen",
