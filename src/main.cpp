@@ -178,18 +178,11 @@ void setup()
     Datastore.init(scheduler);
     RestartHelper.init(scheduler);
 
+    // OpenDTU-OnBattery-specific initializations go below
     VictronMppt.init(scheduler);
-
-    // Power meter
     PowerMeter.init(scheduler);
-
-    // Dynamic power limiter
     PowerLimiter.init(scheduler);
-
-    // Initialize Huawei AC-charger PSU / CAN bus
-    MessageOutput.println("Initialize Huawei AC charger interface...");
     HuaweiCan.init(scheduler);
-
     Battery.init(scheduler);
 }
 

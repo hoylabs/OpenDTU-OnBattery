@@ -25,6 +25,8 @@ namespace GridCharger::Huawei {
 
 void Controller::init(Scheduler& scheduler)
 {
+    MessageOutput.print("Initialize Huawei AC charger interface...\r\n");
+
     scheduler.addTask(_loopTask);
     _loopTask.setCallback(std::bind(&Controller::loop, this));
     _loopTask.setIterations(TASK_FOREVER);
