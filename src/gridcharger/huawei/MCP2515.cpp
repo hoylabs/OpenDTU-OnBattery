@@ -39,7 +39,7 @@ bool MCP2515::init()
     MessageOutput.printf("[Huawei::MCP2515] clk = %d, miso = %d, mosi = %d, cs = %d, irq = %d\r\n",
             pin.huawei_clk, pin.huawei_miso, pin.huawei_mosi, pin.huawei_cs, pin.huawei_irq);
 
-    if (pin.huawei_clk < 0 || pin.huawei_miso < 0 || pin.huawei_mosi < 0 || pin.huawei_cs < 0) {
+    if (pin.huawei_clk < 0 || pin.huawei_miso < 0 || pin.huawei_mosi < 0 || pin.huawei_cs < 0 || pin.huawei_irq < 0) {
         MessageOutput.printf("[Huawei::MCP2515] invalid pin config\r\n");
         return false;
     }
