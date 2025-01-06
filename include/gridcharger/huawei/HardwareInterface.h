@@ -7,8 +7,6 @@
 #include <memory>
 #include <queue>
 #include <cstdint>
-#include <FreeRTOS.h>
-#include <freertos/task.h>
 #include <gridcharger/huawei/DataPoints.h>
 
 namespace GridCharger::Huawei {

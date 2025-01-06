@@ -2,8 +2,6 @@
 #pragma once
 
 #include <atomic>
-#include <FreeRTOS.h>
-#include <freertos/task.h>
 #include <gridcharger/huawei/HardwareInterface.h>
 
 namespace GridCharger::Huawei {
