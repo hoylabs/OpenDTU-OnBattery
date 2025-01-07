@@ -1,6 +1,7 @@
 export interface AcChargerConfig {
     enabled: boolean;
     verbose_logging: boolean;
+    hardware_interface: number;
     can_controller_frequency: number;
     auto_power_enabled: boolean;
     auto_power_batterysoc_limits_enabled: boolean;

@@ -9,7 +9,7 @@
 #include "Configuration.h"
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
-#include "Huawei_can.h"
+#include <gridcharger/huawei/Controller.h>
 #include <VictronMppt.h>
 #include "MessageOutput.h"
 #include <ctime>
