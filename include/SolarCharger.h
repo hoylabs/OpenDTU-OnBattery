@@ -14,28 +14,28 @@ public:
 
     // TODO(andreasboehm): below methods are taken from VictronMppt to start abstracting
     // solar chargers without breaking everything.
-    size_t controllerAmount();
-    uint32_t getDataAgeMillis();
-    uint32_t getDataAgeMillis(size_t idx);
+    size_t controllerAmount() const;
+    uint32_t getDataAgeMillis() const;
+    uint32_t getDataAgeMillis(size_t idx) const;
 
     // total output of all MPPT charge controllers in Watts
-    int32_t getOutputPowerWatts();
+    int32_t getOutputPowerWatts() const;
 
     // total panel input power of all MPPT charge controllers in Watts
-    int32_t getPanelPowerWatts();
+    int32_t getPanelPowerWatts() const;
 
     // sum of total yield of all MPPT charge controllers in kWh
-    float getYieldTotal();
+    float getYieldTotal() const;
 
     // sum of today's yield of all MPPT charge controllers in kWh
-    float getYieldDay();
+    float getYieldDay() const;
 
     // minimum of all MPPT charge controllers' output voltages in V
-    float getOutputVoltage();
+    float getOutputVoltage() const;
 
-    std::optional<VeDirectMpptController::data_t> getData(size_t idx = 0);
+    std::optional<VeDirectMpptController::data_t> getData(size_t idx = 0) const;
 
-    bool isDataValid();
+    bool isDataValid() const;
 
 private:
     void loop();
