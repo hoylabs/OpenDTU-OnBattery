@@ -283,7 +283,7 @@ void PowerLimiterClass::loop()
                 config.PowerLimiter.VoltageStopThreshold,
                 config.PowerLimiter.BatterySocStopThreshold);
 
-        if (config.PowerLimiter.SolarPassThroughEnabled) {
+        if (config.Vedirect.Enabled && config.PowerLimiter.SolarPassThroughEnabled) {
             MessageOutput.printf("[DPL] full solar-passthrough %s, start %.2f V or %u %%, stop %.2f V\r\n",
                     (isFullSolarPassthroughActive()?"active":"dormant"),
                     config.PowerLimiter.FullSolarPassThroughStartVoltage,
@@ -676,7 +676,8 @@ uint16_t PowerLimiterClass::getSolarPassthroughPower()
 {
     auto const& config = Configuration.get();
 
-    if (!config.PowerLimiter.SolarPassThroughEnabled
+    if (!config.Vedirect.Enabled
+            || !config.PowerLimiter.SolarPassThroughEnabled
             || isBelowStopThreshold()
             || !VictronMppt.isDataValid()) {
         return 0;
@@ -849,8 +850,11 @@ bool PowerLimiterClass::isFullSolarPassthroughActive()
     // solar passthrough only applies to setups with battery-powered inverters
     if (!usesBatteryPoweredInverter()) { return false; }
 
+    // solarcharger is needed for solar passthrough
+    if (!config.Vedirect.Enabled) { return false; }
+
     // We only do full solar PT if general solar PT is enabled
-    if(!config.PowerLimiter.SolarPassThroughEnabled) { return false; }
+    if (!config.PowerLimiter.SolarPassThroughEnabled) { return false; }
 
     if (testThreshold(config.PowerLimiter.FullSolarPassThroughSoc,
                       config.PowerLimiter.FullSolarPassThroughStartVoltage,
