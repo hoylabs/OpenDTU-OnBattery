@@ -46,6 +46,11 @@
                 <td>{{ $t('devinfo.HardwareVersion') }}</td>
                 <td>{{ devInfoList.hw_version }}</td>
             </tr>
+            <tr>
+                <td>{{ $t('devinfo.SupportsPowerDistributionLogic') }}</td>
+                <td v-if="devInfoList.pdl_supported">{{ $t('devinfo.yes') }}</td>
+                <td v-else>{{ $t('devinfo.no') }}</td>
+            </tr>
         </tbody>
     </table>
 </template>

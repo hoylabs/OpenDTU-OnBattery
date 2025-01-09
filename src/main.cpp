@@ -10,9 +10,8 @@
 #include "Led_Single.h"
 #include "MessageOutput.h"
 #include "SerialPortManager.h"
-#include "VictronMppt.h"
 #include "Battery.h"
-#include "Huawei_can.h"
+#include <gridcharger/huawei/Controller.h>
 #include "MqttHandleDtu.h"
 #include "MqttHandleHass.h"
 #include "MqttHandleVedirectHass.h"
@@ -35,6 +34,7 @@
 #include "PowerMeter.h"
 #include "PowerLimiter.h"
 #include "defaults.h"
+#include "SolarCharger.h"
 #include <Arduino.h>
 #include <LittleFS.h>
 #include <SpiManager.h>
@@ -89,6 +89,10 @@ void setup()
     if (Configuration.get().Cfg.Version != CONFIG_VERSION) {
         MessageOutput.print("migrated... ");
         Configuration.migrate();
+    }
+    if (Configuration.get().Cfg.VersionOnBattery != CONFIG_VERSION_ONBATTERY) {
+        Configuration.migrateOnBattery();
+        MessageOutput.print("migrated OpenDTU-OnBattery-specific config... ");
     }
     auto& config = Configuration.get();
     MessageOutput.println("done");
@@ -174,24 +178,11 @@ void setup()
     Datastore.init(scheduler);
     RestartHelper.init(scheduler);
 
-    VictronMppt.init(scheduler);
-
-    // Power meter
+    // OpenDTU-OnBattery-specific initializations go below
+    SolarCharger.init(scheduler);
     PowerMeter.init(scheduler);
-
-    // Dynamic power limiter
     PowerLimiter.init(scheduler);
-
-    // Initialize Huawei AC-charger PSU / CAN bus
-    MessageOutput.println("Initialize Huawei AC charger interface... ");
-    if (PinMapping.isValidHuaweiConfig()) {
-        MessageOutput.printf("Huawei AC-charger miso = %d, mosi = %d, clk = %d, irq = %d, cs = %d, power_pin = %d\r\n", pin.huawei_miso, pin.huawei_mosi, pin.huawei_clk, pin.huawei_irq, pin.huawei_cs, pin.huawei_power);
-        HuaweiCan.init(scheduler, pin.huawei_miso, pin.huawei_mosi, pin.huawei_clk, pin.huawei_irq, pin.huawei_cs, pin.huawei_power);
-        MessageOutput.println("done");
-    } else {
-        MessageOutput.println("Invalid pin config");
-    }
-
+    HuaweiCan.init(scheduler);
     Battery.init(scheduler);
 }
 

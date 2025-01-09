@@ -90,3 +90,10 @@ uint8_t HMS_4CH::getChannelMetaDataSize() const
 {
     return sizeof(channelMetaData) / sizeof(channelMetaData[0]);
 }
+
+bool HMS_4CH::supportsPowerDistributionLogic()
+{
+    // This feature was added in inverter firmware version 01.01.12 and
+    // will limit the AC output instead of limiting the DC inputs.
+    return DevInfo()->getFwBuildVersion() >= 10112U;
+};

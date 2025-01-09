@@ -6,7 +6,7 @@
     </div>
 
     <template v-else>
-        <div class="row gy-3 mt-0" v-for="(item, serial) in vedirect.instances" :key="serial">
+        <div class="row gy-3 mt-0" v-for="(item, serial) in solarcharger.instances" :key="serial">
             <div class="tab-content col-sm-12 col-md-12" id="v-pills-tabContent">
                 <div class="card">
                     <div
@@ -22,14 +22,14 @@
                                     {{ item.product_id }}
                                 </div>
                                 <div style="padding-right: 2em">
-                                    {{ $t('vedirecthome.SerialNumber') }}: {{ serial }}
+                                    {{ $t('solarchargerhome.SerialNumber') }}: {{ serial }}
                                 </div>
                                 <div style="padding-right: 2em">
-                                    {{ $t('vedirecthome.FirmwareVersion') }}: {{ item.firmware_version }}
+                                    {{ $t('solarchargerhome.FirmwareVersion') }}: {{ item.firmware_version }}
                                 </div>
                                 <div style="padding-right: 2em">
-                                    {{ $t('vedirecthome.DataAge') }}:
-                                    {{ $t('vedirecthome.Seconds', { val: Math.floor(item.data_age_ms / 1000) }) }}
+                                    {{ $t('solarchargerhome.DataAge') }}:
+                                    {{ $t('solarchargerhome.Seconds', { val: Math.floor(item.data_age_ms / 1000) }) }}
                                 </div>
                             </div>
                         </div>
@@ -38,7 +38,7 @@
                                 type="button"
                                 class="btn btn-sm"
                                 v-tooltip
-                                :title="$t('vedirecthome.PowerLimiterState')"
+                                :title="$t('solarchargerhome.PowerLimiterState')"
                             >
                                 <div v-if="dplData.PLSTATE == 0">
                                     <BIconXCircleFill style="font-size: 24px" />
@@ -66,24 +66,24 @@
                             <div v-for="(values, section) in item.values" v-bind:key="section" class="col order-0">
                                 <div class="card card-table" :class="{ 'border-info': section === 'device' }">
                                     <div :class="section === 'device' ? 'card-header text-bg-info' : 'card-header'">
-                                        {{ $t('vedirecthome.section_' + section) }}
+                                        {{ $t('solarchargerhome.section_' + section) }}
                                     </div>
                                     <div class="card-body">
                                         <div class="table-responsive">
                                             <table class="table table-striped table-hover">
                                                 <thead>
                                                     <tr>
-                                                        <th scope="col">{{ $t('vedirecthome.Property') }}</th>
+                                                        <th scope="col">{{ $t('solarchargerhome.Property') }}</th>
                                                         <th class="value" scope="col">
-                                                            {{ $t('vedirecthome.Value') }}
+                                                            {{ $t('solarchargerhome.Value') }}
                                                         </th>
-                                                        <th scope="col">{{ $t('vedirecthome.Unit') }}</th>
+                                                        <th scope="col">{{ $t('solarchargerhome.Unit') }}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     <tr v-for="(prop, key) in values" v-bind:key="key">
                                                         <th scope="row">
-                                                            {{ $t('vedirecthome.' + section + '.' + key) }}
+                                                            {{ $t('solarchargerhome.' + section + '.' + key) }}
                                                         </th>
                                                         <td class="value">
                                                             <template v-if="typeof prop === 'string'">
@@ -117,7 +117,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import type { DynamicPowerLimiter, Vedirect } from '@/types/VedirectLiveDataStatus';
+import type { DynamicPowerLimiter, SolarCharger } from '@/types/SolarChargerLiveDataStatus';
 import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
 import { BIconSun, BIconBatteryCharging, BIconBatteryHalf, BIconXCircleFill } from 'bootstrap-icons-vue';
 
@@ -135,7 +135,7 @@ export default defineComponent({
             dataAgeTimers: {} as Record<string, number>,
             dataLoading: true,
             dplData: {} as DynamicPowerLimiter,
-            vedirect: {} as Vedirect,
+            solarcharger: {} as SolarCharger,
             isFirstFetchAfterConnect: true,
         };
     },
@@ -148,23 +148,23 @@ export default defineComponent({
     },
     methods: {
         getInitialData() {
-            console.log('Get initalData for VeDirect');
+            console.log('Get initalData for SolarChargerView');
             this.dataLoading = true;
-            fetch('/api/vedirectlivedata/status', { headers: authHeader() })
+            fetch('/api/solarchargerlivedata/status', { headers: authHeader() })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((root) => {
                     this.dplData = root['dpl'];
-                    this.vedirect = root['vedirect'];
+                    this.solarcharger = root['solarcharger'];
                     this.dataLoading = false;
-                    this.resetDataAging(Object.keys(root['vedirect']['instances']));
+                    this.resetDataAging(Object.keys(root['solarcharger']['instances']));
                 });
         },
         initSocket() {
-            console.log('Starting connection to VeDirect WebSocket Server');
+            console.log('Starting connection to SolarCharger WebSocket Server');
 
             const { protocol, host } = location;
             const authString = authUrl();
-            const webSocketUrl = `${protocol === 'https:' ? 'wss' : 'ws'}://${authString}${host}/vedirectlivedata`;
+            const webSocketUrl = `${protocol === 'https:' ? 'wss' : 'ws'}://${authString}${host}/solarchargerlivedata`;
 
             this.socket = new WebSocket(webSocketUrl);
 
@@ -172,19 +172,19 @@ export default defineComponent({
                 console.log(event);
                 const root = JSON.parse(event.data);
                 this.dplData = root['dpl'];
-                if (root['vedirect']['full_update'] === true) {
-                    this.vedirect = root['vedirect'];
+                if (root['solarcharger']['full_update'] === true) {
+                    this.solarcharger = root['solarcharger'];
                 } else {
-                    Object.assign(this.vedirect.instances, root['vedirect']['instances']);
+                    Object.assign(this.solarcharger.instances, root['solarcharger']['instances']);
                 }
-                this.resetDataAging(Object.keys(root['vedirect']['instances']));
+                this.resetDataAging(Object.keys(root['solarcharger']['instances']));
                 this.dataLoading = false;
                 this.heartCheck(); // Reset heartbeat detection
             };
 
             this.socket.onopen = function (event) {
                 console.log(event);
-                console.log('Successfully connected to the VeDirect websocket server...');
+                console.log('Successfully connected to the SolarCharger websocket server...');
             };
 
             // Listen to window events , When the window closes , Take the initiative to disconnect websocket Connect
@@ -198,18 +198,18 @@ export default defineComponent({
                     clearTimeout(this.dataAgeTimers[serial]);
                 }
 
-                const nextMs = 1000 - (this.vedirect.instances[serial].data_age_ms % 1000);
+                const nextMs = 1000 - (this.solarcharger.instances[serial].data_age_ms % 1000);
                 this.dataAgeTimers[serial] = setTimeout(() => {
                     this.doDataAging(serial);
                 }, nextMs);
             });
         },
         doDataAging(serial: string) {
-            if (this.vedirect?.instances?.[serial] === undefined) {
+            if (this.solarcharger?.instances?.[serial] === undefined) {
                 return;
             }
 
-            this.vedirect.instances[serial].data_age_ms += 1000;
+            this.solarcharger.instances[serial].data_age_ms += 1000;
 
             this.dataAgeTimers[serial] = setTimeout(() => {
                 this.doDataAging(serial);

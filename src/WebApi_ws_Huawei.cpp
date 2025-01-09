@@ -5,7 +5,7 @@
 #include "WebApi_ws_Huawei.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
-#include "Huawei_can.h"
+#include <gridcharger/huawei/Controller.h>
 #include "MessageOutput.h"
 #include "Utils.h"
 #include "WebApi.h"
@@ -99,30 +99,7 @@ void WebApiWsHuaweiLiveClass::sendDataTaskCb()
 
 void WebApiWsHuaweiLiveClass::generateCommonJsonResponse(JsonVariant& root)
 {
-    const RectifierParameters_t * rp = HuaweiCan.get();
-
-    root["data_age"] = (millis() - HuaweiCan.getLastUpdate()) / 1000;
-    root["input_voltage"]["v"] = rp->input_voltage;
-    root["input_voltage"]["u"] = "V";
-    root["input_current"]["v"] = rp->input_current;
-    root["input_current"]["u"] = "A";
-    root["input_power"]["v"] = rp->input_power;
-    root["input_power"]["u"] = "W";
-    root["output_voltage"]["v"] = rp->output_voltage;
-    root["output_voltage"]["u"] = "V";
-    root["output_current"]["v"] = rp->output_current;
-    root["output_current"]["u"] = "A";
-    root["max_output_current"]["v"] = rp->max_output_current;
-    root["max_output_current"]["u"] = "A";
-    root["output_power"]["v"] = rp->output_power;
-    root["output_power"]["u"] = "W";
-    root["input_temp"]["v"] = rp->input_temp;
-    root["input_temp"]["u"] = "°C";
-    root["output_temp"]["v"] = rp->output_temp;
-    root["output_temp"]["u"] = "°C";
-    root["efficiency"]["v"] = rp->efficiency * 100;
-    root["efficiency"]["u"] = "%";
-
+    HuaweiCan.getJsonData(root);
 }
 
 void WebApiWsHuaweiLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)

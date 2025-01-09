@@ -10,6 +10,7 @@ export interface PowerLimiterInverterInfo {
     max_power: number;
     type: string;
     channels: number;
+    pdl_supported: boolean;
 }
 
 // meta-data not directly part of the DPL settings,
@@ -29,13 +30,14 @@ export interface PowerLimiterInverterConfig {
     use_overscaling_to_compensate_shading: boolean;
     lower_power_limit: number;
     upper_power_limit: number;
+    scaling_threshold: number;
 }
 
 export interface PowerLimiterConfig {
     enabled: boolean;
     verbose_logging: boolean;
     solar_passthrough_enabled: boolean;
-    solar_passthrough_losses: number;
+    conduction_losses: number;
     battery_always_use_at_night: boolean;
     target_power_consumption: number;
     target_power_consumption_hysteresis: number;

@@ -129,11 +129,26 @@
                         />
 
                         <InputElement
-                            v-if="powerLimiterConfigList.inverters[idx].is_solar_powered"
-                            :label="$t('powerlimiteradmin.UseOverscalingToCompensateShading')"
-                            :tooltip="$t('powerlimiteradmin.UseOverscalingToCompensateShadingHint')"
+                            v-if="
+                                powerLimiterConfigList.inverters[idx].is_solar_powered &&
+                                inverterSupportsOverscaling(inv.serial)
+                            "
+                            :label="$t('powerlimiteradmin.UseOverscaling')"
+                            :tooltip="$t('powerlimiteradmin.UseOverscalingHint')"
                             v-model="powerLimiterConfigList.inverters[idx].use_overscaling_to_compensate_shading"
                             type="checkbox"
+                            wide
+                        />
+
+                        <InputElement
+                            v-if="powerLimiterConfigList.inverters[idx].use_overscaling_to_compensate_shading"
+                            :label="$t('powerlimiteradmin.ScalingPowerThreshold')"
+                            v-model="powerLimiterConfigList.inverters[idx].scaling_threshold"
+                            :tooltip="$t('powerlimiteradmin.ScalingPowerThresholdHint')"
+                            :min="(0).toString()"
+                            :max="(100).toString()"
+                            postfix="%"
+                            type="number"
                             wide
                         />
 
@@ -145,6 +160,23 @@
                             type="number"
                             wide
                         />
+
+                        <div class="row">
+                            <div class="col-sm-4"></div>
+                            <div class="col-sm-8">
+                                <div
+                                    v-if="lowerLimitWarning(powerLimiterConfigList.inverters[idx])"
+                                    class="alert alert-warning"
+                                    role="alert"
+                                >
+                                    {{
+                                        $t('powerlimiteradmin.LowerPowerLimitWarning', {
+                                            min: getLowerLimitMinimum(powerLimiterConfigList.inverters[idx]),
+                                        })
+                                    }}
+                                </div>
+                            </div>
+                        </div>
 
                         <InputElement
                             :label="$t('powerlimiteradmin.UpperPowerLimit')"
@@ -158,11 +190,20 @@
                 </template>
 
                 <CardElement
-                    :text="$t('powerlimiteradmin.InverterSettings')"
+                    :text="$t('powerlimiteradmin.DcPowerBusSettings')"
                     textVariant="text-bg-primary"
                     add-space
                     v-if="governingBatteryPoweredInverters"
                 >
+                    <InputElement
+                        v-if="canUseSolarPassthrough"
+                        :label="$t('powerlimiteradmin.EnableSolarPassthrough')"
+                        :tooltip="$t('powerlimiteradmin.SolarPassthroughInfo')"
+                        v-model="powerLimiterConfigList.solar_passthrough_enabled"
+                        type="checkbox"
+                        wide
+                    />
+
                     <InputElement
                         :label="$t('powerlimiteradmin.BatteryDischargeAtNight')"
                         v-model="powerLimiterConfigList.battery_always_use_at_night"
@@ -238,45 +279,17 @@
                             </select>
                         </div>
                     </div>
-                </CardElement>
-
-                <CardElement
-                    :text="$t('powerlimiteradmin.SolarPassthrough')"
-                    textVariant="text-bg-primary"
-                    add-space
-                    v-if="canUseSolarPassthrough"
-                >
-                    <div
-                        class="alert alert-secondary"
-                        role="alert"
-                        v-html="$t('powerlimiteradmin.SolarpassthroughInfo')"
-                    ></div>
 
                     <InputElement
-                        :label="$t('powerlimiteradmin.EnableSolarPassthrough')"
-                        v-model="powerLimiterConfigList.solar_passthrough_enabled"
-                        type="checkbox"
+                        :label="$t('powerlimiteradmin.ConductionLosses')"
+                        :tooltip="$t('powerlimiteradmin.ConductionLossesInfo')"
+                        v-model="powerLimiterConfigList.conduction_losses"
+                        min="0"
+                        max="10"
+                        postfix="%"
+                        type="number"
                         wide
                     />
-
-                    <template v-if="powerLimiterConfigList.solar_passthrough_enabled">
-                        <InputElement
-                            :label="$t('powerlimiteradmin.SolarPassthroughLosses')"
-                            v-model="powerLimiterConfigList.solar_passthrough_losses"
-                            placeholder="3"
-                            min="0"
-                            max="10"
-                            postfix="%"
-                            type="number"
-                            wide
-                        />
-
-                        <div
-                            class="alert alert-secondary"
-                            role="alert"
-                            v-html="$t('powerlimiteradmin.SolarPassthroughLossesInfo')"
-                        ></div>
-                    </template>
                 </CardElement>
 
                 <CardElement
@@ -536,7 +549,13 @@ export default defineComponent({
                     ) {
                         continue;
                     }
-                    if (!(inv.poll_enable && inv.command_enable && inv.poll_enable_night && inv.command_enable_night)) {
+                    const commEnabled =
+                        inv.poll_enable && inv.command_enable && inv.poll_enable_night && inv.command_enable_night;
+                    const governed = this.governedInverters.some(
+                        (cfgInv: PowerLimiterInverterConfig) => cfgInv.serial === inv.serial
+                    );
+
+                    if (governed && !commEnabled) {
                         hints.push({ severity: 'requirement', subject: 'InverterCommunication' });
                         break;
                     }
@@ -586,6 +605,20 @@ export default defineComponent({
             }
             return inv.name + ' (' + inv.type + ')';
         },
+        inverterSupportsOverscaling(serial: string) {
+            if (serial === undefined) {
+                return false;
+            }
+            const meta = this.powerLimiterMetaData;
+            if (meta === undefined) {
+                return false;
+            }
+            const inv = this.getInverterInfo(serial);
+            if (inv === undefined) {
+                return false;
+            }
+            return inv.pdl_supported === false;
+        },
         needsChannelSelection() {
             const cfg = this.powerLimiterConfigList;
 
@@ -608,6 +641,14 @@ export default defineComponent({
             }
 
             return inverter.channels > 1;
+        },
+        getLowerLimitMinimum(inv: PowerLimiterInverterConfig) {
+            // we can trust that the inverter info is actually available,
+            // as we only use this function in a context with a valid serial.
+            return this.getInverterInfo(inv.serial).channels * 13;
+        },
+        lowerLimitWarning(inv: PowerLimiterInverterConfig) {
+            return inv.lower_power_limit < this.getLowerLimitMinimum(inv);
         },
         getMetaData() {
             this.dataLoading = true;
@@ -646,7 +687,7 @@ export default defineComponent({
                 newInv.serial = metaInv.serial;
                 newInv.is_governed = false;
                 newInv.is_behind_power_meter = true;
-                newInv.lower_power_limit = 10 * metaInv.channels;
+                newInv.lower_power_limit = this.getLowerLimitMinimum(newInv);
                 newInv.upper_power_limit = Math.max(metaInv.max_power, 300);
                 inverters.push(newInv);
             }

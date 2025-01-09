@@ -14,5 +14,4 @@ export interface Huawei {
     max_output_current: ValueObject;
     output_power: ValueObject;
     output_temp: ValueObject;
-    amp_hour: ValueObject;
 }

@@ -26,6 +26,19 @@ void ConfigurationClass::init(Scheduler& scheduler)
     memset(&config, 0x0, sizeof(config));
 }
 
+// we want a representation of our floating-point value in the JSON that
+// uses the least amount of decimal digits possible to convey the value that
+// is actually represented by the float. this is no easy task. ArduinoJson
+// does this for us, however, it does it as expected only for variables of
+// type double. this is probably because it assumes all floating-point
+// values to have the precision of a double (64 bits), so it prints the
+// respective number of siginificant decimals, which are too many if the
+// actual value is a float (32 bits).
+double ConfigurationClass::roundedFloat(float val)
+{
+    return static_cast<int>(val * 100 + (val > 0 ? 0.5 : -0.5)) / 100.0;
+}
+
 void ConfigurationClass::serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target)
 {
     JsonObject target_http_config = target["http_request"].to<JsonObject>();
@@ -36,6 +49,14 @@ void ConfigurationClass::serializeHttpRequestConfig(HttpRequestConfig const& sou
     target_http_config["header_key"] = source.HeaderKey;
     target_http_config["header_value"] = source.HeaderValue;
     target_http_config["timeout"] = source.Timeout;
+}
+
+void ConfigurationClass::serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target)
+{
+    target["enabled"] = source.Enabled;
+    target["verbose_logging"] = source.VerboseLogging;
+    target["provider"] = source.Provider;
+    target["publish_updates_only"] = source.PublishUpdatesOnly;
 }
 
 void ConfigurationClass::serializePowerMeterMqttConfig(PowerMeterMqttConfig const& source, JsonObject& target)
@@ -115,22 +136,10 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
         return String(serialBuffer);
     };
 
-    // we want a representation of our floating-point value in the JSON that
-    // uses the least amount of decimal digits possible to convey the value that
-    // is actually represented by the float. this is no easy task. ArduinoJson
-    // does this for us, however, it does it as expected only for variables of
-    // type double. this is probably because it assumes all floating-point
-    // values to have the precision of a double (64 bits), so it prints the
-    // respective number of siginificant decimals, which are too many if the
-    // actual value is a float (32 bits).
-    auto roundedFloat = [](float val) -> double {
-        return static_cast<int>(val * 100 + (val > 0 ? 0.5 : -0.5)) / 100.0;
-    };
-
     target["enabled"] = source.Enabled;
     target["verbose_logging"] = source.VerboseLogging;
     target["solar_passthrough_enabled"] = source.SolarPassThroughEnabled;
-    target["solar_passthrough_losses"] = source.SolarPassThroughLosses;
+    target["conduction_losses"] = source.ConductionLosses;
     target["battery_always_use_at_night"] = source.BatteryAlwaysUseAtNight;
     target["target_power_consumption"] = source.TargetPowerConsumption;
     target["target_power_consumption_hysteresis"] = source.TargetPowerConsumptionHysteresis;
@@ -159,10 +168,28 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
         t["is_governed"] = s.IsGoverned;
         t["is_behind_power_meter"] = s.IsBehindPowerMeter;
         t["is_solar_powered"] = s.IsSolarPowered;
-        t["use_overscaling_to_compensate_shading"] = s.UseOverscalingToCompensateShading;
+        t["use_overscaling_to_compensate_shading"] = s.UseOverscaling;
         t["lower_power_limit"] = s.LowerPowerLimit;
         t["upper_power_limit"] = s.UpperPowerLimit;
+        t["scaling_threshold"] = s.ScalingThreshold;
     }
+}
+
+void ConfigurationClass::serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target)
+{
+    target["enabled"] = source.Enabled;
+    target["verbose_logging"] = source.VerboseLogging;
+    target["hardware_interface"] = source.HardwareInterface;
+    target["can_controller_frequency"] = source.CAN_Controller_Frequency;
+    target["auto_power_enabled"] = source.Auto_Power_Enabled;
+    target["auto_power_batterysoc_limits_enabled"] = source.Auto_Power_BatterySoC_Limits_Enabled;
+    target["emergency_charge_enabled"] = source.Emergency_Charge_Enabled;
+    target["voltage_limit"] = roundedFloat(source.Auto_Power_Voltage_Limit);
+    target["enable_voltage_limit"] = roundedFloat(source.Auto_Power_Enable_Voltage_Limit);
+    target["lower_power_limit"] = source.Auto_Power_Lower_Power_Limit;
+    target["upper_power_limit"] = source.Auto_Power_Upper_Power_Limit;
+    target["stop_batterysoc_threshold"] = source.Auto_Power_Stop_BatterySoC_Threshold;
+    target["target_power_consumption"] = source.Auto_Power_Target_Power_Consumption;
 }
 
 bool ConfigurationClass::write()
@@ -177,6 +204,7 @@ bool ConfigurationClass::write()
 
     JsonObject cfg = doc["cfg"].to<JsonObject>();
     cfg["version"] = config.Cfg.Version;
+    cfg["version_onbattery"] = config.Cfg.VersionOnBattery;
     cfg["save_count"] = config.Cfg.SaveCount;
 
     JsonObject wifi = doc["wifi"].to<JsonObject>();
@@ -296,10 +324,8 @@ bool ConfigurationClass::write()
         }
     }
 
-    JsonObject vedirect = doc["vedirect"].to<JsonObject>();
-    vedirect["enabled"] = config.Vedirect.Enabled;
-    vedirect["verbose_logging"] = config.Vedirect.VerboseLogging;
-    vedirect["updates_only"] = config.Vedirect.UpdatesOnly;
+    JsonObject solarcharger = doc["solarcharger"].to<JsonObject>();
+    serializeSolarChargerConfig(config.SolarCharger, solarcharger);
 
     JsonObject powermeter = doc["powermeter"].to<JsonObject>();
     powermeter["enabled"] = config.PowerMeter.Enabled;
@@ -325,18 +351,7 @@ bool ConfigurationClass::write()
     serializeBatteryConfig(config.Battery, battery);
 
     JsonObject huawei = doc["huawei"].to<JsonObject>();
-    huawei["enabled"] = config.Huawei.Enabled;
-    huawei["verbose_logging"] = config.Huawei.VerboseLogging;
-    huawei["can_controller_frequency"] = config.Huawei.CAN_Controller_Frequency;
-    huawei["auto_power_enabled"] = config.Huawei.Auto_Power_Enabled;
-    huawei["auto_power_batterysoc_limits_enabled"] = config.Huawei.Auto_Power_BatterySoC_Limits_Enabled;
-    huawei["emergency_charge_enabled"] = config.Huawei.Emergency_Charge_Enabled;
-    huawei["voltage_limit"] = config.Huawei.Auto_Power_Voltage_Limit;
-    huawei["enable_voltage_limit"] = config.Huawei.Auto_Power_Enable_Voltage_Limit;
-    huawei["lower_power_limit"] = config.Huawei.Auto_Power_Lower_Power_Limit;
-    huawei["upper_power_limit"] = config.Huawei.Auto_Power_Upper_Power_Limit;
-    huawei["stop_batterysoc_threshold"] = config.Huawei.Auto_Power_Stop_BatterySoC_Threshold;
-    huawei["target_power_consumption"] = config.Huawei.Auto_Power_Target_Power_Consumption;
+    serializeGridChargerConfig(config.Huawei, huawei);
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
@@ -352,14 +367,8 @@ bool ConfigurationClass::write()
     return true;
 }
 
-void ConfigurationClass::deserializeHttpRequestConfig(JsonObject const& source, HttpRequestConfig& target)
+void ConfigurationClass::deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target)
 {
-    JsonObject source_http_config = source["http_request"];
-
-    // http request parameters of HTTP/JSON power meter were previously stored
-    // alongside other settings. TODO(schlimmchen): remove in mid 2025.
-    if (source_http_config.isNull()) { source_http_config = source; }
-
     strlcpy(target.Url, source_http_config["url"] | "", sizeof(target.Url));
     target.AuthType = source_http_config["auth_type"] | HttpRequestConfig::Auth::None;
     strlcpy(target.Username, source_http_config["username"] | "", sizeof(target.Username));
@@ -367,6 +376,14 @@ void ConfigurationClass::deserializeHttpRequestConfig(JsonObject const& source, 
     strlcpy(target.HeaderKey, source_http_config["header_key"] | "", sizeof(target.HeaderKey));
     strlcpy(target.HeaderValue, source_http_config["header_value"] | "", sizeof(target.HeaderValue));
     target.Timeout = source_http_config["timeout"] | HTTP_REQUEST_TIMEOUT_MS;
+}
+
+void ConfigurationClass::deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target)
+{
+    target.Enabled = source["enabled"] | SOLAR_CHARGER_ENABLED;
+    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
+    target.Provider = source["provider"] | SolarChargerProviderType::VEDIRECT;
+    target.PublishUpdatesOnly = source["publish_updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
 }
 
 void ConfigurationClass::deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target)
@@ -398,7 +415,7 @@ void ConfigurationClass::deserializePowerMeterHttpJsonConfig(JsonObject const& s
         PowerMeterHttpJsonValue& t = target.Values[i];
         JsonObject s = values[i];
 
-        deserializeHttpRequestConfig(s, t.HttpRequest);
+        deserializeHttpRequestConfig(s["http_request"], t.HttpRequest);
 
         t.Enabled = s["enabled"] | false;
         strlcpy(t.JsonPath, s["json_path"] | "", sizeof(t.JsonPath));
@@ -412,7 +429,7 @@ void ConfigurationClass::deserializePowerMeterHttpJsonConfig(JsonObject const& s
 void ConfigurationClass::deserializePowerMeterHttpSmlConfig(JsonObject const& source, PowerMeterHttpSmlConfig& target)
 {
     target.PollingInterval = source["polling_interval"] | POWERMETER_POLLING_INTERVAL;
-    deserializeHttpRequestConfig(source, target.HttpRequest);
+    deserializeHttpRequestConfig(source["http_request"], target.HttpRequest);
 }
 
 void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target)
@@ -446,7 +463,7 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
     target.Enabled = source["enabled"] | POWERLIMITER_ENABLED;
     target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
     target.SolarPassThroughEnabled = source["solar_passthrough_enabled"] | POWERLIMITER_SOLAR_PASSTHROUGH_ENABLED;
-    target.SolarPassThroughLosses = source["solar_passthrough_losses"] | POWERLIMITER_SOLAR_PASSTHROUGH_LOSSES;
+    target.ConductionLosses = source["conduction_losses"] | POWERLIMITER_CONDUCTION_LOSSES;
     target.BatteryAlwaysUseAtNight = source["battery_always_use_at_night"] | POWERLIMITER_BATTERY_ALWAYS_USE_AT_NIGHT;
     target.TargetPowerConsumption = source["target_power_consumption"] | POWERLIMITER_TARGET_POWER_CONSUMPTION;
     target.TargetPowerConsumptionHysteresis = source["target_power_consumption_hysteresis"] | POWERLIMITER_TARGET_POWER_CONSUMPTION_HYSTERESIS;
@@ -474,10 +491,28 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
         inv.IsGoverned = s["is_governed"] | false;
         inv.IsBehindPowerMeter = s["is_behind_power_meter"] | POWERLIMITER_IS_INVERTER_BEHIND_POWER_METER;
         inv.IsSolarPowered = s["is_solar_powered"] | POWERLIMITER_IS_INVERTER_SOLAR_POWERED;
-        inv.UseOverscalingToCompensateShading = s["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING_TO_COMPENSATE_SHADING;
+        inv.UseOverscaling = s["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING;
         inv.LowerPowerLimit = s["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
         inv.UpperPowerLimit = s["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+        inv.ScalingThreshold = s["scaling_threshold"] | POWERLIMITER_SCALING_THRESHOLD;
     }
+}
+
+void ConfigurationClass::deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target)
+{
+    target.Enabled = source["enabled"] | HUAWEI_ENABLED;
+    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
+    target.HardwareInterface = source["hardware_interface"] | GridChargerHardwareInterface::MCP2515;
+    target.CAN_Controller_Frequency = source["can_controller_frequency"] | HUAWEI_CAN_CONTROLLER_FREQUENCY;
+    target.Auto_Power_Enabled = source["auto_power_enabled"] | false;
+    target.Auto_Power_BatterySoC_Limits_Enabled = source["auto_power_batterysoc_limits_enabled"] | false;
+    target.Emergency_Charge_Enabled = source["emergency_charge_enabled"] | false;
+    target.Auto_Power_Voltage_Limit = source["voltage_limit"] | HUAWEI_AUTO_POWER_VOLTAGE_LIMIT;
+    target.Auto_Power_Enable_Voltage_Limit =  source["enable_voltage_limit"] | HUAWEI_AUTO_POWER_ENABLE_VOLTAGE_LIMIT;
+    target.Auto_Power_Lower_Power_Limit = source["lower_power_limit"] | HUAWEI_AUTO_POWER_LOWER_POWER_LIMIT;
+    target.Auto_Power_Upper_Power_Limit = source["upper_power_limit"] | HUAWEI_AUTO_POWER_UPPER_POWER_LIMIT;
+    target.Auto_Power_Stop_BatterySoC_Threshold = source["stop_batterysoc_threshold"] | HUAWEI_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
+    target.Auto_Power_Target_Power_Consumption = source["target_power_consumption"] | HUAWEI_AUTO_POWER_TARGET_POWER_CONSUMPTION;
 }
 
 bool ConfigurationClass::read()
@@ -485,18 +520,20 @@ bool ConfigurationClass::read()
     File f = LittleFS.open(CONFIG_FILENAME, "r", false);
     Utils::skipBom(f);
 
-    // skip Byte Order Mask (BOM). valid JSON docs always start with '{' or '['.
-    while (f.available() > 0) {
-        int c = f.peek();
-        if (c == '{' || c == '[') { break; }
-        f.read();
-    }
-
     JsonDocument doc;
+
+    // as OpenDTU-OnBattery was in use a long time without the version marker
+    // specific to OpenDTU-OnBattery, we must distinguish the cases (1) where a
+    // valid legacy config.json file was read and (2) where there was no config
+    // (or an error when reading occured). in the former case we want to
+    // perform a migration, whereas in the latter there is no need for a
+    // migration as the config is default-initialized to the current version.
+    uint32_t version_onbattery = 0;
 
     // Deserialize the JSON document
     const DeserializationError error = deserializeJson(doc, f);
     if (error) {
+        version_onbattery = CONFIG_VERSION_ONBATTERY;
         MessageOutput.println("Failed to read file, using default configuration");
     }
 
@@ -506,6 +543,7 @@ bool ConfigurationClass::read()
 
     JsonObject cfg = doc["cfg"];
     config.Cfg.Version = cfg["version"] | CONFIG_VERSION;
+    config.Cfg.VersionOnBattery = cfg["version_onbattery"] | version_onbattery;
     config.Cfg.SaveCount = cfg["save_count"] | 0;
 
     JsonObject wifi = doc["wifi"];
@@ -656,10 +694,7 @@ bool ConfigurationClass::read()
         }
     }
 
-    JsonObject vedirect = doc["vedirect"];
-    config.Vedirect.Enabled = vedirect["enabled"] | VEDIRECT_ENABLED;
-    config.Vedirect.VerboseLogging = vedirect["verbose_logging"] | VEDIRECT_VERBOSE_LOGGING;
-    config.Vedirect.UpdatesOnly = vedirect["updates_only"] | VEDIRECT_UPDATESONLY;
+    deserializeSolarChargerConfig(doc["solarcharger"], config.SolarCharger);
 
     JsonObject powermeter = doc["powermeter"];
     config.PowerMeter.Enabled = powermeter["enabled"] | POWERMETER_ENABLED;
@@ -668,108 +703,17 @@ bool ConfigurationClass::read()
 
     deserializePowerMeterMqttConfig(powermeter["mqtt"], config.PowerMeter.Mqtt);
 
-    // process settings from legacy config if they are present
-    // TODO(schlimmchen): remove in mid 2025.
-    if (!powermeter["mqtt_topic_powermeter_1"].isNull()) {
-        auto& values = config.PowerMeter.Mqtt.Values;
-        strlcpy(values[0].Topic, powermeter["mqtt_topic_powermeter_1"], sizeof(values[0].Topic));
-        strlcpy(values[1].Topic, powermeter["mqtt_topic_powermeter_2"], sizeof(values[1].Topic));
-        strlcpy(values[2].Topic, powermeter["mqtt_topic_powermeter_3"], sizeof(values[2].Topic));
-    }
-
     deserializePowerMeterSerialSdmConfig(powermeter["serial_sdm"], config.PowerMeter.SerialSdm);
 
-    // process settings from legacy config if they are present
-    // TODO(schlimmchen): remove in mid 2025.
-    if (!powermeter["sdmaddress"].isNull()) {
-        config.PowerMeter.SerialSdm.Address = powermeter["sdmaddress"];
-    }
+    deserializePowerMeterHttpJsonConfig(powermeter["http_json"], config.PowerMeter.HttpJson);
 
-    JsonObject powermeter_http_json = powermeter["http_json"];
-    deserializePowerMeterHttpJsonConfig(powermeter_http_json, config.PowerMeter.HttpJson);
+    deserializePowerMeterHttpSmlConfig(powermeter["http_sml"], config.PowerMeter.HttpSml);
 
-    JsonObject powermeter_sml = powermeter["http_sml"];
-    deserializePowerMeterHttpSmlConfig(powermeter_sml, config.PowerMeter.HttpSml);
-
-    // process settings from legacy config if they are present
-    // TODO(schlimmchen): remove in mid 2025.
-    if (!powermeter["http_phases"].isNull()) {
-        auto& target = config.PowerMeter.HttpJson;
-
-        for (size_t i = 0; i < POWERMETER_HTTP_JSON_MAX_VALUES; ++i) {
-            PowerMeterHttpJsonValue& t = target.Values[i];
-            JsonObject s = powermeter["http_phases"][i];
-
-            deserializeHttpRequestConfig(s, t.HttpRequest);
-
-            t.Enabled = s["enabled"] | false;
-            strlcpy(t.JsonPath, s["json_path"] | "", sizeof(t.JsonPath));
-            t.PowerUnit = s["unit"] | PowerMeterHttpJsonValue::Unit::Watts;
-            t.SignInverted = s["sign_inverted"] | false;
-        }
-
-        target.IndividualRequests = powermeter["http_individual_requests"] | false;
-    }
-
-    JsonObject powerlimiter = doc["powerlimiter"];
-    deserializePowerLimiterConfig(powerlimiter, config.PowerLimiter);
-
-    if (powerlimiter["battery_drain_strategy"].as<uint8_t>() == 1) {
-        config.PowerLimiter.BatteryAlwaysUseAtNight = true; // convert legacy setting
-    }
-
-    if (!powerlimiter["solar_passtrough_enabled"].isNull()) {
-        // solar_passthrough_enabled was previously saved as
-        // solar_passtrough_enabled. be nice and also try misspelled key.
-        config.PowerLimiter.SolarPassThroughEnabled = powerlimiter["solar_passtrough_enabled"].as<bool>();
-    }
-
-    if (!powerlimiter["solar_passtrough_losses"].isNull()) {
-        // solar_passthrough_losses was previously saved as
-        // solar_passtrough_losses. be nice and also try misspelled key.
-        config.PowerLimiter.SolarPassThroughLosses = powerlimiter["solar_passtrough_losses"].as<uint8_t>();
-    }
-
-    // process settings from legacy config if they are present
-    // TODO(schlimmchen): remove in mid 2025.
-    if (!powerlimiter["inverter_id"].isNull()) {
-        config.PowerLimiter.InverterChannelIdForDcVoltage = powerlimiter["inverter_channel_id"] | POWERLIMITER_INVERTER_CHANNEL_ID;
-
-        auto& inv = config.PowerLimiter.Inverters[0];
-        uint64_t previousInverterSerial = powerlimiter["inverter_id"].as<uint64_t>();
-        if (previousInverterSerial < INV_MAX_COUNT) {
-            // we previously had an index (not a serial) saved as inverter_id.
-            previousInverterSerial = config.Inverter[inv.Serial].Serial; // still 0 if no inverters configured
-        }
-        inv.Serial = previousInverterSerial;
-        config.PowerLimiter.InverterSerialForDcVoltage = previousInverterSerial;
-        inv.IsGoverned = true;
-        inv.IsBehindPowerMeter = powerlimiter["is_inverter_behind_powermeter"] | POWERLIMITER_IS_INVERTER_BEHIND_POWER_METER;
-        inv.IsSolarPowered = powerlimiter["is_inverter_solar_powered"] | POWERLIMITER_IS_INVERTER_SOLAR_POWERED;
-        inv.UseOverscalingToCompensateShading = powerlimiter["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING_TO_COMPENSATE_SHADING;
-        inv.LowerPowerLimit = powerlimiter["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
-        inv.UpperPowerLimit = powerlimiter["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
-
-        config.PowerLimiter.TotalUpperPowerLimit = inv.UpperPowerLimit;
-
-        config.PowerLimiter.Inverters[1].Serial = 0;
-    }
+    deserializePowerLimiterConfig(doc["powerlimiter"], config.PowerLimiter);
 
     deserializeBatteryConfig(doc["battery"], config.Battery);
 
-    JsonObject huawei = doc["huawei"];
-    config.Huawei.Enabled = huawei["enabled"] | HUAWEI_ENABLED;
-    config.Huawei.VerboseLogging = huawei["verbose_logging"] | VERBOSE_LOGGING;
-    config.Huawei.CAN_Controller_Frequency = huawei["can_controller_frequency"] | HUAWEI_CAN_CONTROLLER_FREQUENCY;
-    config.Huawei.Auto_Power_Enabled = huawei["auto_power_enabled"] | false;
-    config.Huawei.Auto_Power_BatterySoC_Limits_Enabled = huawei["auto_power_batterysoc_limits_enabled"] | false;
-    config.Huawei.Emergency_Charge_Enabled = huawei["emergency_charge_enabled"] | false;
-    config.Huawei.Auto_Power_Voltage_Limit = huawei["voltage_limit"] | HUAWEI_AUTO_POWER_VOLTAGE_LIMIT;
-    config.Huawei.Auto_Power_Enable_Voltage_Limit =  huawei["enable_voltage_limit"] | HUAWEI_AUTO_POWER_ENABLE_VOLTAGE_LIMIT;
-    config.Huawei.Auto_Power_Lower_Power_Limit = huawei["lower_power_limit"] | HUAWEI_AUTO_POWER_LOWER_POWER_LIMIT;
-    config.Huawei.Auto_Power_Upper_Power_Limit = huawei["upper_power_limit"] | HUAWEI_AUTO_POWER_UPPER_POWER_LIMIT;
-    config.Huawei.Auto_Power_Stop_BatterySoC_Threshold = huawei["stop_batterysoc_threshold"] | HUAWEI_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
-    config.Huawei.Auto_Power_Target_Power_Consumption = huawei["target_power_consumption"] | HUAWEI_AUTO_POWER_TARGET_POWER_CONSUMPTION;
+    deserializeGridChargerConfig(doc["huawei"], config.Huawei);
 
     f.close();
 
@@ -796,6 +740,8 @@ void ConfigurationClass::migrate()
         MessageOutput.println("Failed to open file, cancel migration");
         return;
     }
+
+    Utils::skipBom(f);
 
     JsonDocument doc;
 
@@ -870,6 +816,128 @@ void ConfigurationClass::migrate()
     f.close();
 
     config.Cfg.Version = CONFIG_VERSION;
+    write();
+    read();
+}
+
+void ConfigurationClass::migrateOnBattery()
+{
+    File f = LittleFS.open(CONFIG_FILENAME, "r", false);
+    if (!f) {
+        MessageOutput.println("Failed to open file, cancel OpenDTU-OnBattery migration");
+        return;
+    }
+
+    Utils::skipBom(f);
+
+    JsonDocument doc;
+
+    // Deserialize the JSON document
+    const DeserializationError error = deserializeJson(doc, f);
+    if (error) {
+        MessageOutput.printf("Failed to read file, cancel OpenDTU-OnBattery "
+                "migration: %s\r\n", error.c_str());
+        return;
+    }
+
+    if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
+        return;
+    }
+
+    if (config.Cfg.VersionOnBattery < 1) {
+        // all migrations in this block need to check whether or not the
+        // respective legacy setting is even present, as OpenDTU-OnBattery
+        // config version 0 identifies multiple different legacy versions of
+        // OpenDTU-OnBattery-specific settings, i.e., all before the
+        // OpenDTU-OnBattery config version value was introduced.
+
+        JsonObject powermeter = doc["powermeter"];
+
+        if (!powermeter["mqtt_topic_powermeter_1"].isNull()) {
+            auto& values = config.PowerMeter.Mqtt.Values;
+            strlcpy(values[0].Topic, powermeter["mqtt_topic_powermeter_1"], sizeof(values[0].Topic));
+            strlcpy(values[1].Topic, powermeter["mqtt_topic_powermeter_2"], sizeof(values[1].Topic));
+            strlcpy(values[2].Topic, powermeter["mqtt_topic_powermeter_3"], sizeof(values[2].Topic));
+        }
+
+        if (!powermeter["sdmaddress"].isNull()) {
+            config.PowerMeter.SerialSdm.Address = powermeter["sdmaddress"];
+        }
+
+        if (!powermeter["http_phases"].isNull()) {
+            auto& target = config.PowerMeter.HttpJson;
+
+            for (size_t i = 0; i < POWERMETER_HTTP_JSON_MAX_VALUES; ++i) {
+                PowerMeterHttpJsonValue& t = target.Values[i];
+                JsonObject s = powermeter["http_phases"][i];
+
+                deserializeHttpRequestConfig(s, t.HttpRequest);
+
+                t.Enabled = s["enabled"] | false;
+                strlcpy(t.JsonPath, s["json_path"] | "", sizeof(t.JsonPath));
+                t.PowerUnit = s["unit"] | PowerMeterHttpJsonValue::Unit::Watts;
+                t.SignInverted = s["sign_inverted"] | false;
+            }
+
+            target.IndividualRequests = powermeter["http_individual_requests"] | false;
+        }
+
+        JsonObject powerlimiter = doc["powerlimiter"];
+
+        if (powerlimiter["battery_drain_strategy"].as<uint8_t>() == 1) {
+            config.PowerLimiter.BatteryAlwaysUseAtNight = true;
+        }
+
+        if (!powerlimiter["solar_passtrough_enabled"].isNull()) {
+            config.PowerLimiter.SolarPassThroughEnabled = powerlimiter["solar_passtrough_enabled"].as<bool>();
+        }
+
+        if (!powerlimiter["solar_passtrough_losses"].isNull()) {
+            config.PowerLimiter.ConductionLosses = powerlimiter["solar_passtrough_losses"].as<uint8_t>();
+        }
+
+        if (!powerlimiter["inverter_id"].isNull()) {
+            config.PowerLimiter.InverterChannelIdForDcVoltage = powerlimiter["inverter_channel_id"] | POWERLIMITER_INVERTER_CHANNEL_ID;
+
+            auto& inv = config.PowerLimiter.Inverters[0];
+            uint64_t previousInverterSerial = powerlimiter["inverter_id"].as<uint64_t>();
+            if (previousInverterSerial < INV_MAX_COUNT) {
+                // we previously had an index (not a serial) saved as inverter_id.
+                previousInverterSerial = config.Inverter[inv.Serial].Serial; // still 0 if no inverters configured
+            }
+            inv.Serial = previousInverterSerial;
+            config.PowerLimiter.InverterSerialForDcVoltage = previousInverterSerial;
+            inv.IsGoverned = true;
+            inv.IsBehindPowerMeter = powerlimiter["is_inverter_behind_powermeter"] | POWERLIMITER_IS_INVERTER_BEHIND_POWER_METER;
+            inv.IsSolarPowered = powerlimiter["is_inverter_solar_powered"] | POWERLIMITER_IS_INVERTER_SOLAR_POWERED;
+            inv.UseOverscaling = powerlimiter["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING;
+            inv.LowerPowerLimit = powerlimiter["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
+            inv.UpperPowerLimit = powerlimiter["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+
+            config.PowerLimiter.TotalUpperPowerLimit = inv.UpperPowerLimit;
+
+            config.PowerLimiter.Inverters[1].Serial = 0;
+        }
+    }
+
+    if (config.Cfg.VersionOnBattery < 2) {
+        config.PowerLimiter.ConductionLosses = doc["powerlimiter"]["solar_passthrough_losses"].as<uint8_t>();
+    }
+
+    if (config.Cfg.VersionOnBattery < 3) {
+        config.Dtu.PollInterval *= 1000; // new unit is milliseconds
+    }
+
+    if (config.Cfg.VersionOnBattery < 4) {
+        JsonObject vedirect = doc["vedirect"];
+        config.SolarCharger.Enabled = vedirect["enabled"] | SOLAR_CHARGER_ENABLED;
+        config.SolarCharger.VerboseLogging = vedirect["verbose_logging"] | SOLAR_CHARGER_VERBOSE_LOGGING;
+        config.SolarCharger.PublishUpdatesOnly = vedirect["updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
+    }
+
+    f.close();
+
+    config.Cfg.VersionOnBattery = CONFIG_VERSION_ONBATTERY;
     write();
     read();
 }

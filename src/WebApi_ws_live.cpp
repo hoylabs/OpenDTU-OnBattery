@@ -8,10 +8,10 @@
 #include "Utils.h"
 #include "WebApi.h"
 #include "Battery.h"
-#include "Huawei_can.h"
+#include <gridcharger/huawei/Controller.h>
 #include "PowerMeter.h"
-#include "VictronMppt.h"
 #include "defaults.h"
+#include "SolarCharger.h"
 #include <AsyncJson.h>
 
 WebApiWsLiveClass::WebApiWsLiveClass()
@@ -72,28 +72,31 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
     auto const& config = Configuration.get();
     auto constexpr halfOfAllMillis = std::numeric_limits<uint32_t>::max() / 2;
 
-    auto victronAge = VictronMppt.getDataAgeMillis();
-    if (all || (victronAge > 0 && (millis() - _lastPublishVictron) > victronAge)) {
-        auto vedirectObj = root["vedirect"].to<JsonObject>();
-        vedirectObj["enabled"] = config.Vedirect.Enabled;
+    auto solarChargerAge = SolarCharger.getDataAgeMillis();
+    if (all || (solarChargerAge > 0 && (millis() - _lastPublishSolarCharger) > solarChargerAge)) {
+        auto solarchargerObj = root["solarcharger"].to<JsonObject>();
+        solarchargerObj["enabled"] = config.SolarCharger.Enabled;
 
-        if (config.Vedirect.Enabled) {
-            auto totalVeObj = vedirectObj["total"].to<JsonObject>();
-            addTotalField(totalVeObj, "Power", VictronMppt.getPanelPowerWatts(), "W", 1);
-            addTotalField(totalVeObj, "YieldDay", VictronMppt.getYieldDay() * 1000, "Wh", 0);
-            addTotalField(totalVeObj, "YieldTotal", VictronMppt.getYieldTotal(), "kWh", 2);
+        if (config.SolarCharger.Enabled) {
+            auto totalVeObj = solarchargerObj["total"].to<JsonObject>();
+            addTotalField(totalVeObj, "Power", SolarCharger.getPanelPowerWatts(), "W", 1);
+            addTotalField(totalVeObj, "YieldDay", SolarCharger.getYieldDay() * 1000, "Wh", 0);
+            addTotalField(totalVeObj, "YieldTotal", SolarCharger.getYieldTotal(), "kWh", 2);
         }
 
-        if (!all) { _lastPublishVictron = millis(); }
+        if (!all) { _lastPublishSolarCharger = millis(); }
     }
 
-    if (all || (HuaweiCan.getLastUpdate() - _lastPublishHuawei) < halfOfAllMillis ) {
+    if (all || (HuaweiCan.getDataPoints().getLastUpdate() - _lastPublishHuawei) < halfOfAllMillis ) {
         auto huaweiObj = root["huawei"].to<JsonObject>();
         huaweiObj["enabled"] = config.Huawei.Enabled;
 
         if (config.Huawei.Enabled) {
-            const RectifierParameters_t * rp = HuaweiCan.get();
-            addTotalField(huaweiObj, "Power", rp->input_power, "W", 2);
+            auto const& dataPoints = HuaweiCan.getDataPoints();
+            auto oInputPower = dataPoints.get<GridCharger::Huawei::DataPointLabel::InputPower>();
+            if (oInputPower) {
+                addTotalField(huaweiObj, "Power", *oInputPower, "W", 2);
+            }
         }
 
         if (!all) { _lastPublishHuawei = millis(); }
@@ -220,6 +223,9 @@ void WebApiWsLiveClass::generateCommonJsonResponse(JsonVariant& root)
     hintObj["time_sync"] = !getLocalTime(&timeinfo, 5);
     hintObj["radio_problem"] = (Hoymiles.getRadioNrf()->isInitialized() && (!Hoymiles.getRadioNrf()->isConnected() || !Hoymiles.getRadioNrf()->isPVariant())) || (Hoymiles.getRadioCmt()->isInitialized() && (!Hoymiles.getRadioCmt()->isConnected()));
     hintObj["default_password"] = strcmp(Configuration.get().Security.Password, ACCESS_POINT_PASSWORD) == 0;
+
+    bool isGeneric = std::string(PIOENV).find("generic") != std::string::npos;
+    hintObj["pin_mapping_issue"] = isGeneric && !PinMapping.isMappingSelected();
 }
 
 void WebApiWsLiveClass::generateInverterCommonJsonResponse(JsonObject& root, std::shared_ptr<InverterAbstract> inv)
@@ -232,7 +238,7 @@ void WebApiWsLiveClass::generateInverterCommonJsonResponse(JsonObject& root, std
     root["serial"] = inv->serialString();
     root["name"] = inv->name();
     root["order"] = inv_cfg->Order;
-    root["data_age"] = (millis() - inv->Statistics()->getLastUpdate()) / 1000;
+    root["data_age_ms"] = millis() - inv->Statistics()->getLastUpdate();
     root["poll_enabled"] = inv->getEnablePolling();
     root["reachable"] = inv->isReachable();
     root["producing"] = inv->isProducing();
@@ -367,7 +373,7 @@ void WebApiWsLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
         generateOnBatteryJsonResponse(root, true);
 
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
-    
+
     } catch (const std::bad_alloc& bad_alloc) {
         MessageOutput.printf("Calling /api/livedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
         WebApi.sendTooManyRequests(request);

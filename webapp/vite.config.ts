@@ -71,12 +71,17 @@ export default defineConfig(({ command }) => { return {
         ws: true,
         changeOrigin: true
       },
-      '^/vedirectlivedata': {
+      '^/solarchargerlivedata': {
         target: 'ws://' + proxy_target,
         ws: true,
         changeOrigin: true
       },
       '^/batterylivedata': {
+        target: 'ws://' + proxy_target,
+        ws: true,
+        changeOrigin: true
+      },
+      '^/huaweilivedata': {
         target: 'ws://' + proxy_target,
         ws: true,
         changeOrigin: true

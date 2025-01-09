@@ -1,8 +1,8 @@
-OpenDTU - ESP32 firmware to control HoyMiles Inverter
+OpenDTU-OnBattery - ESP32 firmware to control Hoymiles inverters and peripherals
 
 Copyright (C) 2022 Thomas Basler and others
 
-OpenDTU is provided under:
+OpenDTU-OnBattery is provided under:
 
     SPDX-License-Identifier: GPL-2.0-or-later
 

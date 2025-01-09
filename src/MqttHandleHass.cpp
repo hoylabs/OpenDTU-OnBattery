@@ -162,7 +162,7 @@ void MqttHandleHassClass::publishInverterField(std::shared_ptr<InverterAbstract>
         root["uniq_id"] = serial + "_ch" + chanNum + "_" + fieldName;
 
         if (Configuration.get().Mqtt.Hass.Expire) {
-            root["exp_aft"] = Hoymiles.getNumInverters() * max<uint32_t>(Hoymiles.PollInterval(), Configuration.get().Mqtt.PublishInterval) * inv->getReachableThreshold();
+            root["exp_aft"] = Hoymiles.getNumInverters() * max<uint32_t>(Hoymiles.PollInterval()/1000U, Configuration.get().Mqtt.PublishInterval) * inv->getReachableThreshold();
         }
 
         publish(configTopic, root);

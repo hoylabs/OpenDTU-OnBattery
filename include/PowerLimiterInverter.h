@@ -75,15 +75,25 @@ public:
 protected:
     PowerLimiterInverter(bool verboseLogging, PowerLimiterInverterConfig const& config);
 
+    enum class Eligibility : unsigned {
+        Unreachable,
+        SendingCommandsDisabled,
+        MaxOutputUnknown,
+        CurrentLimitUnknown,
+        Eligible
+    };
+
     // returns false if the inverter cannot participate
     // in achieving the requested change in power output
-    bool isEligible() const;
+    Eligibility isEligible() const;
 
     uint16_t getCurrentLimitWatts() const;
 
     void setTargetPowerLimitWatts(uint16_t power) { _oTargetPowerLimitWatts = power; }
     void setTargetPowerState(bool enable) { _oTargetPowerState = enable; }
     void setExpectedOutputAcWatts(uint16_t power) { _expectedOutputAcWatts = power; }
+
+    static char mpptName(MpptNum_t mppt);
 
     // copied to avoid races with web UI
     PowerLimiterInverterConfig _config;

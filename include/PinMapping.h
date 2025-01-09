@@ -66,8 +66,10 @@ struct PinMapping_t {
     int8_t huawei_miso;
     int8_t huawei_mosi;
     int8_t huawei_clk;
-    int8_t huawei_irq;
     int8_t huawei_cs;
+    int8_t huawei_irq;
+    int8_t huawei_rx;
+    int8_t huawei_tx;
     int8_t huawei_power;
     int8_t powermeter_rx;
     int8_t powermeter_tx;
@@ -82,16 +84,19 @@ public:
     bool init(const String& deviceMapping);
     PinMapping_t& get();
 
+    bool isMappingSelected() const { return _mappingSelected; }
+
     bool isValidNrf24Config() const;
     bool isValidCmt2300Config() const;
     bool isValidW5500Config() const;
 #if CONFIG_ETH_USE_ESP32_EMAC
     bool isValidEthConfig() const;
 #endif
-    bool isValidHuaweiConfig() const;
 
 private:
     PinMapping_t _pinMapping;
+
+    bool _mappingSelected = false;
 };
 
 extern PinMappingClass PinMapping;

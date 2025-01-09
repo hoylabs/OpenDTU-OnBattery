@@ -6,6 +6,7 @@
 #include "Configuration.h"
 #include "NetworkSettings.h"
 #include "PinMapping.h"
+#include "SerialPortManager.h"
 #include "WebApi.h"
 #include "__compiled_constants.h"
 #include <AsyncJson.h>
@@ -53,9 +54,9 @@ void WebApiSysstatusClass::onSystemStatus(AsyncWebServerRequest* request)
     root["flashsize"] = ESP.getFlashChipSize();
 
     JsonArray taskDetails = root["task_details"].to<JsonArray>();
-    static std::array<char const*, 12> constexpr task_names = {
+    static std::array<char const*, 13> constexpr task_names = {
         "IDLE0", "IDLE1", "wifi", "tiT", "loopTask", "async_tcp", "mqttclient",
-        "HUAWEI_CAN_0", "PM:SDM", "PM:HTTP+JSON", "PM:SML", "PM:HTTP+SML"
+        "HuaweiHwIfc", "HuaweiTwai", "PM:SDM", "PM:HTTP+JSON", "PM:SML", "PM:HTTP+SML"
     };
     for (char const* task_name : task_names) {
         TaskHandle_t const handle = xTaskGetHandle(task_name);
@@ -78,6 +79,7 @@ void WebApiSysstatusClass::onSystemStatus(AsyncWebServerRequest* request)
     char version[16];
     snprintf(version, sizeof(version), "%d.%d.%d", CONFIG_VERSION >> 24 & 0xff, CONFIG_VERSION >> 16 & 0xff, CONFIG_VERSION >> 8 & 0xff);
     root["config_version"] = version;
+    root["config_version_onbattery"] = CONFIG_VERSION_ONBATTERY;
     root["git_hash"] = __COMPILED_GIT_HASH__;
     root["git_branch"] = __COMPILED_GIT_BRANCH__;
     root["pioenv"] = PIOENV;
@@ -90,6 +92,13 @@ void WebApiSysstatusClass::onSystemStatus(AsyncWebServerRequest* request)
 
     root["cmt_configured"] = PinMapping.isValidCmt2300Config();
     root["cmt_connected"] = Hoymiles.getRadioCmt()->isConnected();
+
+    JsonArray uarts = root["uarts"].to<JsonArray>();
+    for (auto const& allocation : SerialPortManager.getAllocations()) {
+        JsonObject uart = uarts.add<JsonObject>();
+        uart["port"] = allocation.first;
+        uart["owner"] = allocation.second;
+    }
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }

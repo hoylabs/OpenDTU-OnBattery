@@ -8,9 +8,9 @@
 #include "MqttHandleHass.h"
 #include "NetworkSettings.h"
 #include "MessageOutput.h"
-#include "VictronMppt.h"
 #include "Utils.h"
 #include "__compiled_constants.h"
+#include "SolarCharger.h"
 
 MqttHandleVedirectHassClass MqttHandleVedirectHass;
 
@@ -24,9 +24,12 @@ void MqttHandleVedirectHassClass::init(Scheduler& scheduler)
 
 void MqttHandleVedirectHassClass::loop()
 {
-    if (!Configuration.get().Vedirect.Enabled) {
+    if (!Configuration.get().Mqtt.Hass.Enabled
+        || !Configuration.get().SolarCharger.Enabled
+        || Configuration.get().SolarCharger.Provider != SolarChargerProviderType::VEDIRECT) {
         return;
     }
+
     if (_updateForced) {
         publishConfig();
         _updateForced = false;
@@ -49,18 +52,13 @@ void MqttHandleVedirectHassClass::forceUpdate()
 
 void MqttHandleVedirectHassClass::publishConfig()
 {
-    if ((!Configuration.get().Mqtt.Hass.Enabled) ||
-       (!Configuration.get().Vedirect.Enabled)) {
-        return;
-    }
-
     if (!MqttSettings.getConnected()) {
         return;
     }
 
     // device info
-    for (int idx = 0; idx < VictronMppt.controllerAmount(); ++idx) {
-        auto optMpptData = VictronMppt.getData(idx);
+    for (int idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
+        auto optMpptData = SolarCharger.getData(idx);
         if (!optMpptData.has_value()) { continue; }
 
         publishSensor("MPPT serial number", "mdi:counter", "SER", nullptr, nullptr, nullptr, *optMpptData);

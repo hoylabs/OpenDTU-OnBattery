@@ -17,10 +17,11 @@
 
                 <InputElement
                     :label="$t('dtuadmin.PollInterval')"
-                    v-model="dtuConfigList.pollinterval"
+                    v-model="pollIntervalSeconds"
                     type="number"
-                    min="1"
+                    min="1.0"
                     max="86400"
+                    step="0.1"
                     :postfix="$t('dtuadmin.Seconds')"
                 />
 
@@ -158,6 +159,14 @@ export default defineComponent({
         this.getDtuConfig();
     },
     computed: {
+        pollIntervalSeconds: {
+            get(): number {
+                return this.dtuConfigList.pollinterval / 1000;
+            },
+            set(value: number) {
+                this.dtuConfigList.pollinterval = value * 1000;
+            },
+        },
         cmtFrequencyText() {
             return this.$t('dtuadmin.MHz', {
                 mhz: this.$n(this.dtuConfigList.cmt_frequency / 1000000, 'decimalTwoDigits'),

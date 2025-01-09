@@ -10,6 +10,7 @@
 
 #define CONFIG_FILENAME "/config.json"
 #define CONFIG_VERSION 0x00011d00 // 0.1.29 // make sure to clean all after change
+#define CONFIG_VERSION_ONBATTERY 4
 
 #define WIFI_MAX_SSID_STRLEN 32
 #define WIFI_MAX_PASSWORD_STRLEN 64
@@ -137,9 +138,10 @@ struct POWERLIMITER_INVERTER_CONFIG_T {
     bool IsGoverned;
     bool IsBehindPowerMeter;
     bool IsSolarPowered;
-    bool UseOverscalingToCompensateShading;
+    bool UseOverscaling;
     uint16_t LowerPowerLimit;
     uint16_t UpperPowerLimit;
+    uint8_t ScalingThreshold;
 };
 using PowerLimiterInverterConfig = struct POWERLIMITER_INVERTER_CONFIG_T;
 
@@ -147,7 +149,7 @@ struct POWERLIMITER_CONFIG_T {
     bool Enabled;
     bool VerboseLogging;
     bool SolarPassThroughEnabled;
-    uint8_t SolarPassThroughLosses;
+    uint8_t ConductionLosses;
     bool BatteryAlwaysUseAtNight;
     int16_t TargetPowerConsumption;
     uint16_t TargetPowerConsumptionHysteresis;
@@ -195,9 +197,39 @@ struct BATTERY_CONFIG_T {
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
+enum GridChargerHardwareInterface { MCP2515 = 0, TWAI = 1 };
+
+struct GRID_CHARGER_CONFIG_T {
+    bool Enabled;
+    bool VerboseLogging;
+    GridChargerHardwareInterface HardwareInterface;
+    uint32_t CAN_Controller_Frequency;
+    bool Auto_Power_Enabled;
+    bool Auto_Power_BatterySoC_Limits_Enabled;
+    bool Emergency_Charge_Enabled;
+    float Auto_Power_Voltage_Limit;
+    float Auto_Power_Enable_Voltage_Limit;
+    float Auto_Power_Lower_Power_Limit;
+    float Auto_Power_Upper_Power_Limit;
+    uint8_t Auto_Power_Stop_BatterySoC_Threshold;
+    float Auto_Power_Target_Power_Consumption;
+};
+using GridChargerConfig = struct GRID_CHARGER_CONFIG_T;
+
+enum SolarChargerProviderType { VEDIRECT = 0 };
+
+struct SOLAR_CHARGER_CONFIG_T {
+    bool Enabled;
+    bool VerboseLogging;
+    SolarChargerProviderType Provider;
+    bool PublishUpdatesOnly;
+};
+using SolarChargerConfig = struct SOLAR_CHARGER_CONFIG_T;
+
 struct CONFIG_T {
     struct {
         uint32_t Version;
+        uint32_t VersionOnBattery;
         uint32_t SaveCount;
     } Cfg;
 
@@ -305,11 +337,7 @@ struct CONFIG_T {
         uint8_t Brightness;
     } Led_Single[PINMAPPING_LED_COUNT];
 
-    struct {
-        bool Enabled;
-        bool VerboseLogging;
-        bool UpdatesOnly;
-    } Vedirect;
+    SolarChargerConfig SolarCharger;
 
     struct PowerMeterConfig {
         bool Enabled;
@@ -325,21 +353,7 @@ struct CONFIG_T {
 
     BatteryConfig Battery;
 
-    struct {
-        bool Enabled;
-        bool VerboseLogging;
-        uint32_t CAN_Controller_Frequency;
-        bool Auto_Power_Enabled;
-        bool Auto_Power_BatterySoC_Limits_Enabled;
-        bool Emergency_Charge_Enabled;
-        float Auto_Power_Voltage_Limit;
-        float Auto_Power_Enable_Voltage_Limit;
-        float Auto_Power_Lower_Power_Limit;
-        float Auto_Power_Upper_Power_Limit;
-        uint8_t Auto_Power_Stop_BatterySoC_Threshold;
-        float Auto_Power_Target_Power_Consumption;
-    } Huawei;
-
+    GridChargerConfig Huawei;
 
     INVERTER_CONFIG_T Inverter[INV_MAX_COUNT];
     char Dev_PinMapping[DEV_MAX_MAPPING_NAME_STRLEN + 1];
@@ -351,6 +365,7 @@ public:
     bool read();
     bool write();
     void migrate();
+    void migrateOnBattery();
     CONFIG_T const& get();
 
     class WriteGuard {
@@ -370,23 +385,28 @@ public:
     void deleteInverterById(const uint8_t id);
 
     static void serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target);
+    static void serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target);
     static void serializePowerMeterMqttConfig(PowerMeterMqttConfig const& source, JsonObject& target);
     static void serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target);
     static void serializeBatteryConfig(BatteryConfig const& source, JsonObject& target);
     static void serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target);
+    static void serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target);
 
-    static void deserializeHttpRequestConfig(JsonObject const& source, HttpRequestConfig& target);
+    static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
+    static void deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target);
     static void deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target);
     static void deserializePowerMeterSerialSdmConfig(JsonObject const& source, PowerMeterSerialSdmConfig& target);
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);
     static void deserializePowerMeterHttpSmlConfig(JsonObject const& source, PowerMeterHttpSmlConfig& target);
     static void deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target);
     static void deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target);
+    static void deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target);
 
 private:
     void loop();
+    static double roundedFloat(float val);
 
     Task _loopTask;
 };

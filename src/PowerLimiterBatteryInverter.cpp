@@ -5,7 +5,7 @@ PowerLimiterBatteryInverter::PowerLimiterBatteryInverter(bool verboseLogging, Po
 
 uint16_t PowerLimiterBatteryInverter::getMaxReductionWatts(bool allowStandby) const
 {
-    if (!isEligible()) { return 0; }
+    if (isEligible() != Eligibility::Eligible) { return 0; }
 
     if (!isProducing()) { return 0; }
 
@@ -18,7 +18,7 @@ uint16_t PowerLimiterBatteryInverter::getMaxReductionWatts(bool allowStandby) co
 
 uint16_t PowerLimiterBatteryInverter::getMaxIncreaseWatts() const
 {
-    if (!isEligible()) { return 0; }
+    if (isEligible() != Eligibility::Eligible) { return 0; }
 
     if (!isProducing()) {
         return getConfiguredMaxPowerWatts();
@@ -38,7 +38,7 @@ uint16_t PowerLimiterBatteryInverter::getMaxIncreaseWatts() const
 
 uint16_t PowerLimiterBatteryInverter::applyReduction(uint16_t reduction, bool allowStandby)
 {
-    if (!isEligible()) { return 0; }
+    if (isEligible() != Eligibility::Eligible) { return 0; }
 
     if (reduction == 0) { return 0; }
 
@@ -67,7 +67,7 @@ uint16_t PowerLimiterBatteryInverter::applyReduction(uint16_t reduction, bool al
 
 uint16_t PowerLimiterBatteryInverter::applyIncrease(uint16_t increase)
 {
-    if (!isEligible()) { return 0; }
+    if (isEligible() != Eligibility::Eligible) { return 0; }
 
     if (increase == 0) { return 0; }
 

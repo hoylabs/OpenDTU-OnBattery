@@ -3,7 +3,6 @@
  * Copyright (C) 2022-2024 Thomas Basler and others
  */
 #include "WebApi_powerlimiter.h"
-#include "VeDirectFrameHandler.h"
 #include "ArduinoJson.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
@@ -50,7 +49,7 @@ void WebApiPowerLimiterClass::onMetaData(AsyncWebServerRequest* request)
 
     root["power_meter_enabled"] = config.PowerMeter.Enabled;
     root["battery_enabled"] = config.Battery.Enabled;
-    root["charge_controller_enabled"] = config.Vedirect.Enabled;
+    root["charge_controller_enabled"] = config.SolarCharger.Enabled;
 
     JsonArray inverters = root["inverters"].to<JsonArray>();
     for (uint8_t i = 0; i < INV_MAX_COUNT; i++) {
@@ -70,6 +69,7 @@ void WebApiPowerLimiterClass::onMetaData(AsyncWebServerRequest* request)
         obj["type"] = inv->typeName();
         auto channels = inv->Statistics()->getChannelsByType(TYPE_DC);
         obj["channels"] = channels.size();
+        obj["pdl_supported"] = inv->supportsPowerDistributionLogic();
     }
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);

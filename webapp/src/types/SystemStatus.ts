@@ -4,6 +4,11 @@ export interface TaskDetail {
     priority: number;
 }
 
+export interface UartAllocation {
+    port: number;
+    owner: string;
+}
+
 export interface SystemStatus {
     // HardwareInfo
     chipmodel: string;
@@ -18,6 +23,7 @@ export interface SystemStatus {
     hostname: string;
     sdkversion: string;
     config_version: string;
+    config_version_onbattery: string;
     git_hash: string;
     git_is_hash: boolean;
     git_branch: string;
@@ -46,4 +52,6 @@ export interface SystemStatus {
     nrf_pvariant: boolean;
     cmt_configured: boolean;
     cmt_connected: boolean;
+    // UARTs
+    uarts: UartAllocation[];
 }
