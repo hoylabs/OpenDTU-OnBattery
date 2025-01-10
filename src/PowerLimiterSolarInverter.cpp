@@ -82,9 +82,13 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
         return maxTotalIncrease;
     }
 
-    // for inverter with PDL we use the max power of the inverter because each MPPT can deliver its max power,
     // for inverters without PDL we use the configured max power, because the limit will be divided equally across the MPPTs by the inverter.
-    int16_t inverterMaxPower = _spInverter->supportsPowerDistributionLogic() ? getInverterMaxPowerWatts() : getConfiguredMaxPowerWatts();
+    int16_t inverterMaxPower = getConfiguredMaxPowerWatts();
+
+    // for inverter with PDL or when overscaling is enabled we use the max power of the inverter because each MPPT can deliver its max power.
+    if (_spInverter->supportsPowerDistributionLogic() || _config.UseOverscaling) {
+        inverterMaxPower = getInverterMaxPowerWatts();
+    }
 
     int16_t maxPowerPerMppt = inverterMaxPower / dcTotalMppts;
 
