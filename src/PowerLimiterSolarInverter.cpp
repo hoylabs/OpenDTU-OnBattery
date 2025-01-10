@@ -18,14 +18,14 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
 {
     if (isEligible() != Eligibility::Eligible) { return 0; }
 
-    // the maximum increase possible for this inverter
-    int16_t maxTotalIncrease = getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
-
     if (!isProducing()) {
         // the inverter is not producing, we don't know how much we can increase
         // the power, so we return the maximum possible increase
-        return maxTotalIncrease;
+        return getConfiguredMaxPowerWatts();
     }
+
+    // the maximum increase possible for this inverter
+    int16_t maxTotalIncrease = getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
 
     // when the current limit is less than 15% of the max power of the inverter
     // the output will not match the limit as the inverters are not able to work
@@ -82,14 +82,23 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
         return maxTotalIncrease;
     }
 
-    int16_t maxPowerPerMppt = getConfiguredMaxPowerWatts() / dcTotalMppts;
+    // for inverter with PDL we use the max power of the inverter because each MPPT can deliver its max power,
+    // for inverters without PDL we use the configured max power, because the limit will be divided equally across the MPPTs by the inverter.
+    int16_t inverterMaxPower = _spInverter->supportsPowerDistributionLogic() ? getInverterMaxPowerWatts() : getConfiguredMaxPowerWatts();
+
+    int16_t maxPowerPerMppt = inverterMaxPower / dcTotalMppts;
 
     int16_t currentPowerPerNonShadedMppt = nonShadedMpptACPowerSum / dcNonShadedMppts;
 
     int16_t maxIncreasePerNonShadedMppt = maxPowerPerMppt - currentPowerPerNonShadedMppt;
 
-    // maximum increase based on the non-shaded mppts
-    return maxIncreasePerNonShadedMppt * dcNonShadedMppts;
+    // maximum increase based on the non-shaded mppts, can be higher than maxTotalIncrease for inverters
+    // with PDL when getConfiguredMaxPowerWatts() is less than getInverterMaxPowerWatts() divided by
+    // the number of used/unshaded MPPTs.
+    int16_t maxIncreaseNonShadedMppts = maxIncreasePerNonShadedMppt * dcNonShadedMppts;
+
+    // maximum increase should not exceed the max total increase
+    return std::min(maxTotalIncrease, maxIncreaseNonShadedMppts);
 }
 
 uint16_t PowerLimiterSolarInverter::applyReduction(uint16_t reduction, bool)
