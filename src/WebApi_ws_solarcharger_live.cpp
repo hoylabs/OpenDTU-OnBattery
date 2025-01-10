@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2022-2024 Thomas Basler and others
  */
-#include "WebApi_ws_vedirect_live.h"
+#include "WebApi_ws_solarcharger_live.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
 #include "MessageOutput.h"
@@ -10,14 +10,14 @@
 #include "WebApi.h"
 #include "defaults.h"
 #include "PowerLimiter.h"
-#include "VictronMppt.h"
+#include "SolarCharger.h"
 
-WebApiWsVedirectLiveClass::WebApiWsVedirectLiveClass()
-    : _ws("/vedirectlivedata")
+WebApiWsSolarChargerLiveClass::WebApiWsSolarChargerLiveClass()
+    : _ws("/solarchargerlivedata")
 {
 }
 
-void WebApiWsVedirectLiveClass::init(AsyncWebServer& server, Scheduler& scheduler)
+void WebApiWsSolarChargerLiveClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
     using std::placeholders::_1;
     using std::placeholders::_2;
@@ -27,31 +27,31 @@ void WebApiWsVedirectLiveClass::init(AsyncWebServer& server, Scheduler& schedule
     using std::placeholders::_6;
 
     _server = &server;
-    _server->on("/api/vedirectlivedata/status", HTTP_GET, std::bind(&WebApiWsVedirectLiveClass::onLivedataStatus, this, _1));
+    _server->on("/api/solarchargerlivedata/status", HTTP_GET, std::bind(&WebApiWsSolarChargerLiveClass::onLivedataStatus, this, _1));
 
     _server->addHandler(&_ws);
-    _ws.onEvent(std::bind(&WebApiWsVedirectLiveClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
+    _ws.onEvent(std::bind(&WebApiWsSolarChargerLiveClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
 
 
     scheduler.addTask(_wsCleanupTask);
-    _wsCleanupTask.setCallback(std::bind(&WebApiWsVedirectLiveClass::wsCleanupTaskCb, this));
+    _wsCleanupTask.setCallback(std::bind(&WebApiWsSolarChargerLiveClass::wsCleanupTaskCb, this));
     _wsCleanupTask.setIterations(TASK_FOREVER);
     _wsCleanupTask.setInterval(1 * TASK_SECOND);
     _wsCleanupTask.enable();
 
     scheduler.addTask(_sendDataTask);
-    _sendDataTask.setCallback(std::bind(&WebApiWsVedirectLiveClass::sendDataTaskCb, this));
+    _sendDataTask.setCallback(std::bind(&WebApiWsSolarChargerLiveClass::sendDataTaskCb, this));
     _sendDataTask.setIterations(TASK_FOREVER);
     _sendDataTask.setInterval(500 * TASK_MILLISECOND);
     _sendDataTask.enable();
 
     _simpleDigestAuth.setUsername(AUTH_USERNAME);
-    _simpleDigestAuth.setRealm("vedirect websocket");
+    _simpleDigestAuth.setRealm("solarcharger websocket");
 
     reload();
 }
 
-void WebApiWsVedirectLiveClass::reload()
+void WebApiWsSolarChargerLiveClass::reload()
 {
     _ws.removeMiddleware(&_simpleDigestAuth);
 
@@ -66,27 +66,27 @@ void WebApiWsVedirectLiveClass::reload()
     _ws.enable(true);
 }
 
-void WebApiWsVedirectLiveClass::wsCleanupTaskCb()
+void WebApiWsSolarChargerLiveClass::wsCleanupTaskCb()
 {
     // see: https://github.com/me-no-dev/ESPAsyncWebServer#limiting-the-number-of-web-socket-clients
     _ws.cleanupClients();
 }
 
-bool WebApiWsVedirectLiveClass::hasUpdate(size_t idx)
+bool WebApiWsSolarChargerLiveClass::hasUpdate(size_t idx)
 {
-    auto dataAgeMillis = VictronMppt.getDataAgeMillis(idx);
+    auto dataAgeMillis = SolarCharger.getDataAgeMillis(idx);
     if (dataAgeMillis == 0) { return false; }
     auto publishAgeMillis = millis() - _lastPublish;
     return dataAgeMillis < publishAgeMillis;
 }
 
-uint16_t WebApiWsVedirectLiveClass::responseSize() const
+uint16_t WebApiWsSolarChargerLiveClass::responseSize() const
 {
     // estimated with ArduinoJson assistant
-    return VictronMppt.controllerAmount() * (1024 + 512) + 128/*DPL status and structure*/;
+    return SolarCharger.controllerAmount() * (1024 + 512) + 128/*DPL status and structure*/;
 }
 
-void WebApiWsVedirectLiveClass::sendDataTaskCb()
+void WebApiWsSolarChargerLiveClass::sendDataTaskCb()
 {
     // do nothing if no WS client is connected
     if (_ws.count() == 0) { return; }
@@ -95,7 +95,7 @@ void WebApiWsVedirectLiveClass::sendDataTaskCb()
     bool fullUpdate = (millis() - _lastFullPublish > (10 * 1000));
     bool updateAvailable = false;
     if (!fullUpdate) {
-        for (size_t idx = 0; idx < VictronMppt.controllerAmount(); ++idx) {
+        for (size_t idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
             if (hasUpdate(idx)) {
                 updateAvailable = true;
                 break;
@@ -118,9 +118,9 @@ void WebApiWsVedirectLiveClass::sendDataTaskCb()
                 _ws.textAll(buffer);;
             }
         } catch (std::bad_alloc& bad_alloc) {
-            MessageOutput.printf("Calling /api/vedirectlivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
+            MessageOutput.printf("Calling /api/solarchargerlivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
         } catch (const std::exception& exc) {
-            MessageOutput.printf("Unknown exception in /api/vedirectlivedata/status. Reason: \"%s\".\r\n", exc.what());
+            MessageOutput.printf("Unknown exception in /api/solarchargerlivedata/status. Reason: \"%s\".\r\n", exc.what());
         }
     }
 
@@ -129,13 +129,13 @@ void WebApiWsVedirectLiveClass::sendDataTaskCb()
     }
 }
 
-void WebApiWsVedirectLiveClass::generateCommonJsonResponse(JsonVariant& root, bool fullUpdate)
+void WebApiWsSolarChargerLiveClass::generateCommonJsonResponse(JsonVariant& root, bool fullUpdate)
 {
-    auto array = root["vedirect"]["instances"].to<JsonObject>();
-    root["vedirect"]["full_update"] = fullUpdate;
+    auto array = root["solarcharger"]["instances"].to<JsonObject>();
+    root["solarcharger"]["full_update"] = fullUpdate;
 
-    for (size_t idx = 0; idx < VictronMppt.controllerAmount(); ++idx) {
-        auto optMpptData = VictronMppt.getData(idx);
+    for (size_t idx = 0; idx < SolarCharger.controllerAmount(); ++idx) {
+        auto optMpptData = SolarCharger.getData(idx);
         if (!optMpptData.has_value()) { continue; }
 
         if (!fullUpdate && !hasUpdate(idx)) { continue; }
@@ -144,7 +144,7 @@ void WebApiWsVedirectLiveClass::generateCommonJsonResponse(JsonVariant& root, bo
         if (serial.isEmpty()) { continue; } // serial required as index
 
         JsonObject nested = array[serial].to<JsonObject>();
-        nested["data_age_ms"] = VictronMppt.getDataAgeMillis(idx);
+        nested["data_age_ms"] = SolarCharger.getDataAgeMillis(idx);
         populateJson(nested, *optMpptData);
     }
 
@@ -157,7 +157,7 @@ void WebApiWsVedirectLiveClass::generateCommonJsonResponse(JsonVariant& root, bo
     root["dpl"]["PLLIMIT"] = PowerLimiter.getInverterOutput();
 }
 
-void WebApiWsVedirectLiveClass::populateJson(const JsonObject &root, const VeDirectMpptController::data_t &mpptData) {
+void WebApiWsSolarChargerLiveClass::populateJson(const JsonObject &root, const VeDirectMpptController::data_t &mpptData) {
     root["product_id"] = mpptData.getPidAsString();
     root["firmware_version"] = mpptData.getFwVersionFormatted();
 
@@ -254,7 +254,7 @@ void WebApiWsVedirectLiveClass::populateJson(const JsonObject &root, const VeDir
     input["MaximumPowerYesterday"]["d"] = 0;
 }
 
-void WebApiWsVedirectLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
+void WebApiWsSolarChargerLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
 {
     if (type == WS_EVT_CONNECT) {
         char str[64];
@@ -269,7 +269,7 @@ void WebApiWsVedirectLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWe
     }
 }
 
-void WebApiWsVedirectLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
+void WebApiWsSolarChargerLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
 {
     if (!WebApi.checkCredentialsReadonly(request)) {
         return;
@@ -283,10 +283,10 @@ void WebApiWsVedirectLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
 
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
     } catch (std::bad_alloc& bad_alloc) {
-        MessageOutput.printf("Calling /api/vedirectlivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
+        MessageOutput.printf("Calling /api/solarchargerlivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
         WebApi.sendTooManyRequests(request);
     } catch (const std::exception& exc) {
-        MessageOutput.printf("Unknown exception in /api/vedirectlivedata/status. Reason: \"%s\".\r\n", exc.what());
+        MessageOutput.printf("Unknown exception in /api/solarchargerlivedata/status. Reason: \"%s\".\r\n", exc.what());
         WebApi.sendTooManyRequests(request);
     }
 }

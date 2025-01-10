@@ -10,7 +10,7 @@
 
 #define CONFIG_FILENAME "/config.json"
 #define CONFIG_VERSION 0x00011d00 // 0.1.29 // make sure to clean all after change
-#define CONFIG_VERSION_ONBATTERY 2
+#define CONFIG_VERSION_ONBATTERY 4
 
 #define WIFI_MAX_SSID_STRLEN 32
 #define WIFI_MAX_PASSWORD_STRLEN 64
@@ -216,6 +216,16 @@ struct GRID_CHARGER_CONFIG_T {
 };
 using GridChargerConfig = struct GRID_CHARGER_CONFIG_T;
 
+enum SolarChargerProviderType { VEDIRECT = 0 };
+
+struct SOLAR_CHARGER_CONFIG_T {
+    bool Enabled;
+    bool VerboseLogging;
+    SolarChargerProviderType Provider;
+    bool PublishUpdatesOnly;
+};
+using SolarChargerConfig = struct SOLAR_CHARGER_CONFIG_T;
+
 struct CONFIG_T {
     struct {
         uint32_t Version;
@@ -327,11 +337,7 @@ struct CONFIG_T {
         uint8_t Brightness;
     } Led_Single[PINMAPPING_LED_COUNT];
 
-    struct {
-        bool Enabled;
-        bool VerboseLogging;
-        bool UpdatesOnly;
-    } Vedirect;
+    SolarChargerConfig SolarCharger;
 
     struct PowerMeterConfig {
         bool Enabled;
@@ -395,6 +401,7 @@ public:
     void deleteInverterById(const uint8_t id);
 
     static void serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target);
+    static void serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target);
     static void serializePowerMeterMqttConfig(PowerMeterMqttConfig const& source, JsonObject& target);
     static void serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target);
@@ -404,6 +411,7 @@ public:
     static void serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target);
 
     static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
+    static void deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target);
     static void deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target);
     static void deserializePowerMeterSerialSdmConfig(JsonObject const& source, PowerMeterSerialSdmConfig& target);
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);

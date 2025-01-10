@@ -10,7 +10,7 @@
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
 #include <gridcharger/huawei/Controller.h>
-#include <VictronMppt.h>
+#include <SolarCharger.h>
 #include "MessageOutput.h"
 #include <ctime>
 #include <cmath>
@@ -283,7 +283,7 @@ void PowerLimiterClass::loop()
                 config.PowerLimiter.VoltageStopThreshold,
                 config.PowerLimiter.BatterySocStopThreshold);
 
-        if (config.PowerLimiter.SolarPassThroughEnabled) {
+        if (config.SolarCharger.Enabled && config.PowerLimiter.SolarPassThroughEnabled) {
             MessageOutput.printf("[DPL] full solar-passthrough %s, start %.2f V or %u %%, stop %.2f V\r\n",
                     (isFullSolarPassthroughActive()?"active":"dormant"),
                     config.PowerLimiter.FullSolarPassThroughStartVoltage,
@@ -370,8 +370,8 @@ float PowerLimiterClass::getBatteryVoltage(bool log) {
     if (inverter.first > 0) { res = inverter.first; }
 
     float chargeControllerVoltage = -1;
-    if (VictronMppt.isDataValid()) {
-        res = chargeControllerVoltage = static_cast<float>(VictronMppt.getOutputVoltage());
+    if (SolarCharger.isDataValid()) {
+        res = chargeControllerVoltage = static_cast<float>(SolarCharger.getOutputVoltage());
     }
 
     float bmsVoltage = -1;
@@ -425,8 +425,8 @@ void PowerLimiterClass::fullSolarPassthrough(PowerLimiterClass::Status reason)
 
     uint16_t targetOutput = 0;
 
-    if (VictronMppt.isDataValid()) {
-        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, VictronMppt.getPowerOutputWatts()));
+    if (SolarCharger.isDataValid()) {
+        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, SolarCharger.getOutputPowerWatts()));
         targetOutput = dcPowerBusToInverterAc(targetOutput);
     }
 
@@ -676,13 +676,14 @@ uint16_t PowerLimiterClass::getSolarPassthroughPower()
 {
     auto const& config = Configuration.get();
 
-    if (!config.PowerLimiter.SolarPassThroughEnabled
+    if (!config.SolarCharger.Enabled
+            || !config.PowerLimiter.SolarPassThroughEnabled
             || isBelowStopThreshold()
-            || !VictronMppt.isDataValid()) {
+            || !SolarCharger.isDataValid()) {
         return 0;
     }
 
-    return VictronMppt.getPowerOutputWatts();
+    return SolarCharger.getOutputPowerWatts();
 }
 
 float PowerLimiterClass::getBatteryInvertersOutputAcWatts()
@@ -849,8 +850,11 @@ bool PowerLimiterClass::isFullSolarPassthroughActive()
     // solar passthrough only applies to setups with battery-powered inverters
     if (!usesBatteryPoweredInverter()) { return false; }
 
+    // solarcharger is needed for solar passthrough
+    if (!config.SolarCharger.Enabled) { return false; }
+
     // We only do full solar PT if general solar PT is enabled
-    if(!config.PowerLimiter.SolarPassThroughEnabled) { return false; }
+    if (!config.PowerLimiter.SolarPassThroughEnabled) { return false; }
 
     if (testThreshold(config.PowerLimiter.FullSolarPassThroughSoc,
                       config.PowerLimiter.FullSolarPassThroughStartVoltage,

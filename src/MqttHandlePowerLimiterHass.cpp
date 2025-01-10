@@ -75,7 +75,7 @@ void MqttHandlePowerLimiterHassClass::publishConfig()
     publishNumber("DPL battery voltage stop threshold", "mdi:battery-charging",
             "config", "threshold/voltage/stop", "threshold/voltage/stop", "V", 16, 60, 0.1);
 
-    if (config.Vedirect.Enabled) {
+    if (config.SolarCharger.Enabled) {
         publishBinarySensor("full solar passthrough active",
             "mdi:transmission-tower-import",
             "full_solar_passthrough_active", "1", "0");
@@ -96,7 +96,7 @@ void MqttHandlePowerLimiterHassClass::publishConfig()
         publishNumber("DPL battery SoC stop threshold", "mdi:battery-charging",
                 "config", "threshold/soc/stop", "threshold/soc/stop", "%", 0, 100, 1.0);
 
-        if (config.Vedirect.Enabled) {
+        if (config.SolarCharger.Enabled) {
             publishNumber("DPL full solar passthrough SoC",
                     "mdi:transmission-tower-import", "config",
                     "threshold/soc/full_solar_passthrough",

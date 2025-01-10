@@ -10,7 +10,6 @@
 #include "Led_Single.h"
 #include "MessageOutput.h"
 #include "SerialPortManager.h"
-#include "VictronMppt.h"
 #include "Battery.h"
 #include <gridcharger/huawei/Controller.h>
 #include "MqttHandleDtu.h"
@@ -35,6 +34,7 @@
 #include "PowerMeter.h"
 #include "PowerLimiter.h"
 #include "defaults.h"
+#include "SolarCharger.h"
 #include <Arduino.h>
 #include <LittleFS.h>
 #include <SpiManager.h>
@@ -180,7 +180,7 @@ void setup()
     RestartHelper.init(scheduler);
 
     // OpenDTU-OnBattery-specific initializations go below
-    VictronMppt.init(scheduler);
+    SolarCharger.init(scheduler);
     PowerMeter.init(scheduler);
     PowerLimiter.init(scheduler);
 

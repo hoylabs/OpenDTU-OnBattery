@@ -3,44 +3,45 @@
 
 #include <mutex>
 #include <memory>
-
-#include "VeDirectMpptController.h"
-#include "Configuration.h"
 #include <TaskSchedulerDeclarations.h>
 
-class VictronMpptClass {
+#include "SolarChargerProvider.h"
+#include "VeDirectMpptController.h"
+#include "Configuration.h"
+
+class VictronMppt : public SolarChargerProvider {
 public:
-    VictronMpptClass() = default;
-    ~VictronMpptClass() = default;
+    VictronMppt() = default;
+    ~VictronMppt() = default;
 
-    void init(Scheduler& scheduler);
-    void updateSettings();
+    bool init(bool verboseLogging) final;
+    void deinit() final;
+    void loop() final;
 
-    bool isDataValid() const;
-    bool isDataValid(size_t idx) const;
+    bool isDataValid() const final;
 
     // returns the data age of all controllers,
     // i.e, the youngest data's age is returned.
-    uint32_t getDataAgeMillis() const;
-    uint32_t getDataAgeMillis(size_t idx) const;
+    uint32_t getDataAgeMillis() const final;
+    uint32_t getDataAgeMillis(size_t idx) const final;
 
-    size_t controllerAmount() const { return _controllers.size(); }
-    std::optional<VeDirectMpptController::data_t> getData(size_t idx = 0) const;
+    size_t controllerAmount() const final { return _controllers.size(); }
+    std::optional<VeDirectMpptController::data_t> getData(size_t idx = 0) const final;
 
     // total output of all MPPT charge controllers in Watts
-    int32_t getPowerOutputWatts() const;
+    int32_t getOutputPowerWatts() const final;
 
     // total panel input power of all MPPT charge controllers in Watts
-    int32_t getPanelPowerWatts() const;
+    int32_t getPanelPowerWatts() const final;
 
     // sum of total yield of all MPPT charge controllers in kWh
-    float getYieldTotal() const;
+    float getYieldTotal() const final;
 
     // sum of today's yield of all MPPT charge controllers in kWh
-    float getYieldDay() const;
+    float getYieldDay() const final;
 
     // minimum of all MPPT charge controllers' output voltages in V
-    float getOutputVoltage() const;
+    float getOutputVoltage() const final;
 
     // returns the state of operation from the first available controller
     std::optional<uint8_t> getStateOfOperation() const;
@@ -54,13 +55,10 @@ public:
     std::optional<float> getVoltage(MPPTVoltage kindOf) const;
 
 private:
-    void loop();
-    VictronMpptClass(VictronMpptClass const& other) = delete;
-    VictronMpptClass(VictronMpptClass&& other) = delete;
-    VictronMpptClass& operator=(VictronMpptClass const& other) = delete;
-    VictronMpptClass& operator=(VictronMpptClass&& other) = delete;
-
-    Task _loopTask;
+    VictronMppt(VictronMppt const& other) = delete;
+    VictronMppt(VictronMppt&& other) = delete;
+    VictronMppt& operator=(VictronMppt const& other) = delete;
+    VictronMppt& operator=(VictronMppt&& other) = delete;
 
     mutable std::mutex _mutex;
     using controller_t = std::unique_ptr<VeDirectMpptController>;
@@ -70,5 +68,3 @@ private:
     bool initController(int8_t rx, int8_t tx, bool logging,
         uint8_t instance);
 };
-
-extern VictronMpptClass VictronMppt;

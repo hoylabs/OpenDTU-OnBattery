@@ -35,7 +35,7 @@ export interface Inverter {
     serial: string;
     name: string;
     order: number;
-    data_age: number;
+    data_age_ms: number;
     poll_enabled: boolean;
     reachable: boolean;
     producing: boolean;
@@ -61,7 +61,7 @@ export interface Hints {
     pin_mapping_issue: boolean;
 }
 
-export interface Vedirect {
+export interface SolarCharger {
     enabled: boolean;
     total: Total;
 }
@@ -93,7 +93,7 @@ export interface LiveData {
     inverters: Inverter[];
     total: Total;
     hints: Hints;
-    vedirect: Vedirect;
+    solarcharger: SolarCharger;
     huawei: Huawei;
     battery: Battery;
     power_meter: PowerMeter;

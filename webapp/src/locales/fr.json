@@ -9,7 +9,7 @@
         "SecuritySettings": "Sécurité",
         "DTUSettings": "DTU",
         "DeviceManager": "Périphériques",
-        "VedirectSettings": "VE.Direct",
+        "SolarChargerSettings": "Solar Charger",
         "PowerMeterSettings": "Power Meter",
         "BatterySettings": "Battery",
         "AcChargerSettings": "AC Charger",
@@ -22,7 +22,6 @@
         "NTP": "NTP",
         "MQTT": "MQTT",
         "Console": "Console",
-        "Vedirect": "VE.Direct",
         "About": "A propos",
         "Logout": "Déconnexion",
         "Login": "Connexion"
@@ -169,7 +168,7 @@
         "RssiHint": "HM inverters only support RSSI values < -64 dBm and > -64 dBm. In this case, -80 dbm and -30 dbm is shown.",
         "dBm": "{dbm} dBm"
     },
-    "vedirecthome": {
+    "solarchargerhome": {
         "SerialNumber": "Numéro de série",
         "FirmwareVersion": "Version du Firmware",
         "DataAge": "Âge des données",
@@ -203,41 +202,6 @@
         "section_input": "Input (Solar Panels)",
         "input": {
             "NetworkPower": "VE.Smart network total power",
-            "PPV": "Power",
-            "VPV": "Voltage",
-            "IPV": "Current (calculated)",
-            "YieldToday": "Yield today",
-            "YieldYesterday": "Yield yesterday",
-            "YieldTotal": "Yield total (user resettable counter)",
-            "MaximumPowerToday": "Maximum power today",
-            "MaximumPowerYesterday": "Maximum power yesterday"
-        },
-        "PowerLimiterState": "Power limiter state [off (charging), solar passthrough, on battery]"
-    },
-    "vedirecthome": {
-        "SerialNumber": "Serial Number: ",
-        "FirmwareNumber": "Firmware Number: ",
-        "DataAge": "Data Age: ",
-        "Seconds": "{val} seconds",
-        "DeviceInfo": "Device Info",
-        "Property": "Property",
-        "Value": "Value",
-        "Unit": "Unit",
-        "LoadOutputState": "Load output state",
-        "StateOfOperation": "State of operation",
-        "TrackerOperationMode": "Tracker operation mode",
-        "OffReason": "Off reason",
-        "ErrorCode": "Error code",
-        "DaySequenceNumber": "Day sequence number (0..364)",
-        "Battery": "Output (Battery)",
-        "output": {
-            "P": "Power (calculated)",
-            "V": "Voltage",
-            "I": "Current",
-            "E": "Efficiency (calculated)"
-        },
-        "Panel": "Input (Solar Panels)",
-        "input": {
             "PPV": "Power",
             "VPV": "Voltage",
             "IPV": "Current (calculated)",
@@ -433,17 +397,6 @@
         "Connected": "connecté",
         "Disconnected": "déconnecté"
     },
-    "vedirectinfo": {
-        "VedirectInformation": "VE.Direct Info",
-        "ConfigurationSummary": "@:ntpinfo.ConfigurationSummary",
-        "Status": "@:ntpinfo.Status",
-        "Enabled": "@:mqttinfo.Enabled",
-        "Disabled": "@:mqttinfo.Disabled",
-        "VerboseLogging": "@:base.VerboseLogging",
-        "UpdatesOnly": "@:vedirectadmin.UpdatesOnly",
-        "UpdatesEnabled": "@:mqttinfo.Enabled",
-        "UpdatesDisabled": "@:mqttinfo.Disabled"
-    },
     "console": {
         "Console": "Console",
         "VirtualDebugConsole": "Console de débogage",
@@ -614,13 +567,14 @@
         "HassExpire": "Activer l'expiration",
         "HassIndividual": "Panneaux individuels"
     },
-    "vedirectadmin": {
-        "VedirectSettings": "VE.Direct Settings",
-        "VedirectConfiguration": "VE.Direct Configuration",
-        "EnableVedirect": "Enable VE.Direct",
-        "VedirectParameter": "VE.Direct Parameter",
+    "solarchargeradmin": {
+        "SolarChargerSettings": "Solar Charger Settings",
+        "SolarChargerConfiguration": "Solar Charger Configuration",
+        "EnableSolarCharger": "Enable Interface",
+        "Provider": "Data Provider",
+        "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
         "VerboseLogging": "@:base.VerboseLogging",
-        "UpdatesOnly": "Publish values to MQTT only when they change"
+        "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change"
     },
     "batteryadmin": {
         "BatterySettings": "Battery Settings",
@@ -740,7 +694,7 @@
         "ConfigHintPowerMeterDisabled": "Without a power meter interface, the inverter limit the DPL will configure equals the configured base load (exception: (full) solar-passthrough).",
         "ConfigHintNoInverter": "At least one inverter must be configured prior to setting up the DPL.",
         "ConfigHintInverterCommunication": "Polling data from and sending commands to all governed inverters must be enabled.",
-        "ConfigHintNoChargeController": "The solar-passthrough feature can only be used if the VE.Direct interface is configured.",
+        "ConfigHintNoChargeController": "The solar-passthrough feature can only be used if a solarcharger communication interface is configured.",
         "ConfigHintNoBatteryInterface": "SoC-based thresholds can only be used if a battery communication interface is configured.",
         "General": "General",
         "Enable": "Enable",

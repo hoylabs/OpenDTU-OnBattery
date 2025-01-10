@@ -11,7 +11,7 @@
         <InverterTotalInfo
             :totalData="liveData.total"
             :hasInverters="hasInverters"
-            :totalVeData="liveData.vedirect"
+            :solarChargerData="liveData.solarcharger"
             :totalBattData="liveData.battery"
             :powerMeterData="liveData.power_meter"
             :huaweiData="liveData.huawei"
@@ -97,9 +97,9 @@
                                     </div>
                                     <div style="padding-right: 2em">
                                         {{ $t('home.DataAge') }}
-                                        {{ $t('home.Seconds', { val: $n(inverter.data_age) }) }}
-                                        <template v-if="inverter.data_age > 300">
-                                            / {{ calculateAbsoluteTime(inverter.data_age) }}
+                                        {{ $t('home.Seconds', { val: $n(Math.floor(inverter.data_age_ms / 1000)) }) }}
+                                        <template v-if="inverter.data_age_ms > 300000">
+                                            / {{ calculateAbsoluteTime(inverter.data_age_ms) }}
                                         </template>
                                     </div>
                                 </div>
@@ -344,7 +344,7 @@
                 </div>
             </div>
         </div>
-        <VedirectView v-if="liveData.vedirect.enabled" />
+        <SolarChargerView v-if="liveData.solarcharger.enabled" />
         <BatteryView v-if="liveData.battery.enabled" />
         <HuaweiView v-if="liveData.huawei.enabled" />
     </BasePage>
@@ -512,7 +512,7 @@ import HintView from '@/components/HintView.vue';
 import InverterChannelInfo from '@/components/InverterChannelInfo.vue';
 import InverterTotalInfo from '@/components/InverterTotalInfo.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
-import VedirectView from '@/components/VedirectView.vue';
+import SolarChargerView from '@/components/SolarChargerView.vue';
 import HuaweiView from '@/components/HuaweiView.vue';
 import BatteryView from '@/components/BatteryView.vue';
 import type { DevInfoStatus } from '@/types/DevInfoStatus';
@@ -565,7 +565,7 @@ export default defineComponent({
         BIconToggleOff,
         BIconToggleOn,
         BIconXCircleFill,
-        VedirectView,
+        SolarChargerView,
         HuaweiView,
         BatteryView,
     },
@@ -575,7 +575,7 @@ export default defineComponent({
 
             socket: {} as WebSocket,
             heartInterval: 0,
-            dataAgeInterval: 0,
+            dataAgeTimers: {} as Record<string, number>,
             dataLoading: true,
             liveData: {} as LiveData,
             isFirstFetchAfterConnect: true,
@@ -620,7 +620,6 @@ export default defineComponent({
     created() {
         this.getInitialData();
         this.initSocket();
-        this.initDataAgeing();
         this.$emitter.on('logged-in', () => {
             this.isLogged = this.isLoggedIn();
         });
@@ -714,8 +713,8 @@ export default defineComponent({
                 console.log(event);
                 if (event.data != '{}') {
                     const newData = JSON.parse(event.data);
-                    if (typeof newData.vedirect !== 'undefined') {
-                        Object.assign(this.liveData.vedirect, newData.vedirect);
+                    if (typeof newData.solarcharger !== 'undefined') {
+                        Object.assign(this.liveData.solarcharger, newData.solarcharger);
                     }
                     if (typeof newData.huawei !== 'undefined') {
                         Object.assign(this.liveData.huawei, newData.huawei);
@@ -741,8 +740,10 @@ export default defineComponent({
                     );
                     if (foundIdx == -1) {
                         Object.assign(this.liveData.inverters, newData.inverters);
+                        this.liveData.inverters.forEach((inv) => this.resetDataAging(inv));
                     } else {
                         Object.assign(this.liveData.inverters[foundIdx], newData.inverters[0]);
+                        this.resetDataAging(this.liveData.inverters[foundIdx]);
                     }
                     this.dataLoading = false;
                     this.heartCheck(); // Reset heartbeat detection
@@ -769,13 +770,26 @@ export default defineComponent({
                 this.closeSocket();
             };
         },
-        initDataAgeing() {
-            this.dataAgeInterval = setInterval(() => {
-                if (this.inverterData) {
-                    this.inverterData.forEach((element) => {
-                        element.data_age++;
-                    });
-                }
+        resetDataAging(inv: Inverter) {
+            if (this.dataAgeTimers[inv.serial] !== undefined) {
+                clearTimeout(this.dataAgeTimers[inv.serial]);
+            }
+
+            const nextMs = 1000 - (inv.data_age_ms % 1000);
+            this.dataAgeTimers[inv.serial] = setTimeout(() => {
+                this.doDataAging(inv.serial);
+            }, nextMs);
+        },
+        doDataAging(serial: string) {
+            const inv = this.liveData?.inverters?.find((inv) => inv.serial === serial);
+            if (inv === undefined) {
+                return;
+            }
+
+            inv.data_age_ms += 1000;
+
+            this.dataAgeTimers[serial] = setTimeout(() => {
+                this.doDataAging(serial);
             }, 1000);
         },
         // Send heartbeat packets regularly * 59s Send a heartbeat
@@ -954,7 +968,7 @@ export default defineComponent({
                 });
         },
         calculateAbsoluteTime(lastTime: number): string {
-            const date = new Date(Date.now() - lastTime * 1000);
+            const date = new Date(Date.now() - lastTime);
             return this.$d(date, 'datetime');
         },
         getSumIrridiation(inv: Inverter): number {

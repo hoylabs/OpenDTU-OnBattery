@@ -9,7 +9,7 @@
         "SecuritySettings": "Sicherheit",
         "DTUSettings": "DTU",
         "DeviceManager": "Hardware",
-        "VedirectSettings": "VE.Direct",
+        "SolarChargerSettings": "Solarladeregler",
         "PowerMeterSettings": "Stromzähler",
         "BatterySettings": "Batterie",
         "AcChargerSettings": "AC Ladegerät",
@@ -22,7 +22,6 @@
         "NTP": "NTP",
         "MQTT": "MQTT",
         "Console": "Konsole",
-        "Vedirect": "VE.Direct",
         "About": "Über",
         "Logout": "Abmelden",
         "Login": "Anmelden"
@@ -169,7 +168,7 @@
         "RssiHint": "HM-Wechselrichter unterstützen nur RSSI-Werte  < -64 dBm und > -64 dBm. In diesem Fall wird -80 dBm und -30 dBm angezeigt.",
         "dBm": "{dbm} dBm"
     },
-    "vedirecthome": {
+    "solarchargerhome": {
         "SerialNumber": "Seriennummer",
         "FirmwareVersion": "Firmware-Version",
         "DataAge": "letzte Aktualisierung",
@@ -417,17 +416,6 @@
         "Connected": "verbunden",
         "Disconnected": "getrennt"
     },
-    "vedirectinfo": {
-        "VedirectInformation": "VE.Direct Info",
-        "ConfigurationSummary": "@:ntpinfo.ConfigurationSummary",
-        "Status": "@:ntpinfo.Status",
-        "Enabled": "@:mqttinfo.Enabled",
-        "Disabled": "@:mqttinfo.Disabled",
-        "VerboseLogging": "@:base.VerboseLogging",
-        "UpdatesOnly": "@:vedirectadmin.UpdatesOnly",
-        "UpdatesEnabled": "@:mqttinfo.Enabled",
-        "UpdatesDisabled": "@:mqttinfo.Disabled"
-    },
     "console": {
         "Console": "Konsole",
         "VirtualDebugConsole": "Virtuelle Debug-Konsole",
@@ -602,13 +590,14 @@
         "HassExpire": "Ablauffunktion aktivieren",
         "HassIndividual": "Einzelne Panels"
     },
-    "vedirectadmin": {
-        "VedirectSettings": "VE.Direct Einstellungen",
-        "VedirectConfiguration": "VE.Direct Konfiguration",
-        "EnableVedirect": "Aktiviere VE.Direct",
-        "VedirectParameter": "VE.Direct Parameter",
+    "solarchargeradmin": {
+        "SolarChargerSettings": "Solarladeregler Einstellungen",
+        "SolarChargerConfiguration": "Solarladeregler Konfiguration",
+        "EnableSolarCharger": "Aktiviere Schnittstelle",
+        "Provider": "Datenanbieter",
+        "ProviderVeDirect": "Victron MPPT(s) per VE.Direct Schnittstelle",
         "VerboseLogging": "@:base.VerboseLogging",
-        "UpdatesOnly": "Werte nur bei Änderung an MQTT broker senden"
+        "MqttPublishUpdatesOnly": "Werte nur bei Änderung an MQTT broker senden"
     },
     "powermeteradmin": {
         "PowerMeterSettings": "Stromzähler Einstellungen",
@@ -673,7 +662,7 @@
         "ConfigHintPowerMeterDisabled": "Der DPL stellt ohne Stromzählerschnittstelle lediglich die konfigurierte Grundlast als Limit am Wechselrichter ein (Ausnahme: (Full) Solar-Passthrough).",
         "ConfigHintNoInverter": "Vor dem Festlegen von Einstellungen des DPL muss mindestens ein Inverter konfiguriert sein.",
         "ConfigHintInverterCommunication": "Das Abrufen von Daten und Senden von Kommandos muss für jeden zu steuernden Wechselrichter aktiviert sein.",
-        "ConfigHintNoChargeController": "Die Solar-Passthrough Funktion kann nur mit aktivierter VE.Direct Schnittstelle genutzt werden.",
+        "ConfigHintNoChargeController": "Die Solar-Passthrough Funktion kann nur mit konfigurierter Solarladereglerkommunikationsschnittstelle genutzt werden.",
         "ConfigHintNoBatteryInterface": "SoC-basierte Schwellwerte können nur mit konfigurierter Batteriekommunikationsschnittstelle genutzt werden.",
         "General": "Allgemein",
         "Enable": "Aktiviert",

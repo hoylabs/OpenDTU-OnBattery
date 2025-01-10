@@ -10,8 +10,8 @@
 #include "Battery.h"
 #include <gridcharger/huawei/Controller.h>
 #include "PowerMeter.h"
-#include "VictronMppt.h"
 #include "defaults.h"
+#include "SolarCharger.h"
 #include <AsyncJson.h>
 #include "ShellyACPlug.h"
 
@@ -73,19 +73,19 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
     auto const& config = Configuration.get();
     auto constexpr halfOfAllMillis = std::numeric_limits<uint32_t>::max() / 2;
 
-    auto victronAge = VictronMppt.getDataAgeMillis();
-    if (all || (victronAge > 0 && (millis() - _lastPublishVictron) > victronAge)) {
-        auto vedirectObj = root["vedirect"].to<JsonObject>();
-        vedirectObj["enabled"] = config.Vedirect.Enabled;
+    auto solarChargerAge = SolarCharger.getDataAgeMillis();
+    if (all || (solarChargerAge > 0 && (millis() - _lastPublishSolarCharger) > solarChargerAge)) {
+        auto solarchargerObj = root["solarcharger"].to<JsonObject>();
+        solarchargerObj["enabled"] = config.SolarCharger.Enabled;
 
-        if (config.Vedirect.Enabled) {
-            auto totalVeObj = vedirectObj["total"].to<JsonObject>();
-            addTotalField(totalVeObj, "Power", VictronMppt.getPanelPowerWatts(), "W", 1);
-            addTotalField(totalVeObj, "YieldDay", VictronMppt.getYieldDay() * 1000, "Wh", 0);
-            addTotalField(totalVeObj, "YieldTotal", VictronMppt.getYieldTotal(), "kWh", 2);
+        if (config.SolarCharger.Enabled) {
+            auto totalVeObj = solarchargerObj["total"].to<JsonObject>();
+            addTotalField(totalVeObj, "Power", SolarCharger.getPanelPowerWatts(), "W", 1);
+            addTotalField(totalVeObj, "YieldDay", SolarCharger.getYieldDay() * 1000, "Wh", 0);
+            addTotalField(totalVeObj, "YieldTotal", SolarCharger.getYieldTotal(), "kWh", 2);
         }
 
-        if (!all) { _lastPublishVictron = millis(); }
+        if (!all) { _lastPublishSolarCharger = millis(); }
     }
 
     if (all || (HuaweiCan.getDataPoints().getLastUpdate() - _lastPublishHuawei) < halfOfAllMillis ) {
@@ -249,7 +249,7 @@ void WebApiWsLiveClass::generateInverterCommonJsonResponse(JsonObject& root, std
     root["serial"] = inv->serialString();
     root["name"] = inv->name();
     root["order"] = inv_cfg->Order;
-    root["data_age"] = (millis() - inv->Statistics()->getLastUpdate()) / 1000;
+    root["data_age_ms"] = millis() - inv->Statistics()->getLastUpdate();
     root["poll_enabled"] = inv->getEnablePolling();
     root["reachable"] = inv->isReachable();
     root["producing"] = inv->isProducing();
