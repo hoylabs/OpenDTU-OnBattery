@@ -287,6 +287,8 @@ void Controller::loop()
 
 void Controller::setParameter(float val, HardwareInterface::Setting setting)
 {
+    std::lock_guard<std::mutex> lock(_mutex);
+
     if (_mode == HUAWEI_MODE_AUTO_INT &&
         setting != HardwareInterface::Setting::OfflineVoltage &&
         setting != HardwareInterface::Setting::OfflineCurrent) { return; }
@@ -296,7 +298,7 @@ void Controller::setParameter(float val, HardwareInterface::Setting setting)
 
 void Controller::_setParameter(float val, HardwareInterface::Setting setting)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    // NOTE: the mutex is locked by any method calling this private method
 
     if (!_upHardwareInterface) { return; }
 
