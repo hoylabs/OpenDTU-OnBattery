@@ -32,9 +32,9 @@ uint32_t Stats::getAgeMillis() const
 
 }
 
-std::optional<int32_t> Stats::getOutputPowerWatts() const
+std::optional<uint16_t> Stats::getOutputPowerWatts() const
 {
-    int32_t sum = 0;
+    uint16_t sum = 0;
     auto data = false;
 
     for (auto const& entry : _data) {
@@ -65,12 +65,14 @@ std::optional<float> Stats::getOutputVoltage() const
     return min;
 }
 
-int32_t Stats::getPanelPowerWatts() const
+std::optional<uint16_t> Stats::getPanelPowerWatts() const
 {
-    int32_t sum = 0;
+    uint16_t sum = 0;
+    auto data = false;
 
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
+        data = true;
 
         // if any charge controller is part of a VE.Smart network, and if the
         // charge controller is connected in a way that allows to send
@@ -83,10 +85,12 @@ int32_t Stats::getPanelPowerWatts() const
         sum += entry.second->panelPower_PPV_W;
     }
 
+    if (!data) { return std::nullopt; }
+
     return sum;
 }
 
-float Stats::getYieldTotal() const
+std::optional<float> Stats::getYieldTotal() const
 {
     float sum = 0;
 
@@ -99,7 +103,7 @@ float Stats::getYieldTotal() const
     return sum;
 }
 
-float Stats::getYieldDay() const
+std::optional<float> Stats::getYieldDay() const
 {
     float sum = 0;
 
