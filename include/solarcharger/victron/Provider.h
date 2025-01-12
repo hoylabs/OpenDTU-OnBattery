@@ -22,7 +22,6 @@ public:
     void deinit() final;
     void loop() final;
     std::shared_ptr<::SolarChargers::Stats> getStats() const final { return _stats; }
-    ::SolarChargers::HassIntegration const& getHassIntegration() const final { return _hassIntegration; }
 
 private:
     Provider(Provider const& other) = delete;
@@ -35,7 +34,6 @@ private:
     std::vector<controller_t> _controllers;
     std::vector<String> _serialPortOwners;
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
-    HassIntegration _hassIntegration;
 
     bool initController(int8_t rx, int8_t tx, bool logging, uint8_t instance);
 };

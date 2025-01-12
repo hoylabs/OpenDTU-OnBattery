@@ -27,9 +27,11 @@ public:
     virtual float getYieldDay() const;
 
     // convert stats to JSON for web application live view
-    virtual void getLiveViewData(JsonVariant& root, boolean fullUpdate, uint32_t lastPublish) const;
+    virtual void getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const;
 
     void mqttLoop();
+
+    virtual void mqttPublishSensors(const boolean forcePublish) const;
 
     // the interval at which all data will be re-published, even
     // if they did not change. used to calculate Home Assistent expiration.

@@ -7,9 +7,6 @@
 namespace SolarChargers {
 
 class HassIntegration {
-public:
-    virtual void publishSensors() const;
-
 protected:
     void publish(const String& subtopic, const String& payload) const;
 };

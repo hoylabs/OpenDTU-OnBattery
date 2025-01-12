@@ -110,7 +110,7 @@ float Stats::getYieldDay() const
     return sum;
 }
 
-void Stats::getLiveViewData(JsonVariant& root, boolean fullUpdate, uint32_t lastPublish) const
+void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const
 {
     ::SolarChargers::Stats::getLiveViewData(root, fullUpdate, lastPublish);
 
@@ -338,6 +338,20 @@ void Stats::publish_mppt_data(const VeDirectMpptController::data_t &currentData,
     PUBLISH_OPT(BatteryFloatMilliVolt,                    "BatteryFloat",                 currentData.BatteryFloatMilliVolt.second / 1000.0);
     PUBLISH_OPT(SmartBatterySenseTemperatureMilliCelsius, "SmartBatterySenseTemperature", currentData.SmartBatterySenseTemperatureMilliCelsius.second / 1000.0);
 #undef PUBLILSH_OPT
+}
+
+void Stats::mqttPublishSensors(const boolean forcePublish) const
+{
+    // TODO(andreasboehm): sensors are only published once, and then never again.
+    // This matches the old implementation, but is not ideal. We should publish
+    // sensors whenever a new controller is discovered, or when the amount of available
+    // datapoints for a controller changed.
+    if (!forcePublish) { return; }
+
+    for (auto entry : _data) {
+        if (!entry.second) { continue; }
+        _hassIntegration.publishSensors(*entry.second);
+    }
 }
 
 }; // namespace SolarChargers::Victron

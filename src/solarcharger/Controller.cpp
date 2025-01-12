@@ -45,7 +45,7 @@ void Controller::updateSettings()
 
     if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
 
-    _publishSensors = true;
+    _forcePublishSensors = true;
 }
 
 std::shared_ptr<Stats const> Controller::getStats() const
@@ -68,23 +68,21 @@ void Controller::loop()
 
     _upProvider->loop();
 
+    // TODO(schlimmchen): this cannot make sure that transient
+    // connection problems are actually always noticed.
+    if (!MqttSettings.getConnected()) {
+        _forcePublishSensors = true;
+        return;
+    }
+
     _upProvider->getStats()->mqttLoop();
 
     auto const& config = Configuration.get();
     if (!config.Mqtt.Hass.Enabled) { return; }
 
-    // TODO(schlimmchen): this cannot make sure that transient
-    // connection problems are actually always noticed.
-    if (!MqttSettings.getConnected()) {
-        _publishSensors = true;
-        return;
-    }
+    _upProvider->getStats()->mqttPublishSensors(_forcePublishSensors);
 
-    if (!_publishSensors) { return; }
-
-    _upProvider->getHassIntegration().publishSensors();
-
-    _publishSensors = false;
+    _forcePublishSensors = false;
 }
 
 } // namespace SolarChargers

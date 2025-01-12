@@ -13,8 +13,9 @@ public:
     int32_t getPanelPowerWatts() const override { return 0; }
     float getYieldTotal() const override { return 0; }
     float getYieldDay() const override { return 0; }
-    void getLiveViewData(JsonVariant& root, boolean fullUpdate, uint32_t lastPublish) const override {}
+    void getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const override {}
     void mqttPublish() const override {}
+    void mqttPublishSensors(const boolean forcePublish) const override {}
 };
 
 } // namespace SolarChargers

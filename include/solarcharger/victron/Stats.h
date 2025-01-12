@@ -2,6 +2,7 @@
 #pragma once
 
 #include <solarcharger/Stats.h>
+#include <solarcharger/victron/HassIntegration.h>
 #include <VeDirectMpptController.h>
 #include <map>
 
@@ -16,8 +17,9 @@ public:
     float getYieldTotal() const final;
     float getYieldDay() const final;
 
-    void getLiveViewData(JsonVariant& root, boolean fullUpdate, uint32_t lastPublish) const final;
+    void getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const final;
     void mqttPublish() const final;
+    void mqttPublishSensors(const boolean forcePublish) const final;
 
     void update(const String serial, const std::optional<VeDirectMpptController::data_t> mpptData, uint32_t lastUpdate) const;
 
@@ -35,6 +37,8 @@ private:
     mutable uint32_t _nextPublishFull = 1;
 
     mutable bool _PublishFull;
+
+    HassIntegration _hassIntegration;
 
     void populateJsonWithInstanceStats(const JsonObject &root, const VeDirectMpptController::data_t &mpptData) const;
 
