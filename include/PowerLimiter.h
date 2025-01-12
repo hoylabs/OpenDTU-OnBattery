@@ -74,10 +74,11 @@ private:
     std::pair<bool, uint32_t> _nextInverterRestart = { false, 0 };
     bool _fullSolarPassThroughEnabled = false;
     bool _verboseLogging = true;
+    bool _shutdownComplete = false;
 
     frozen::string const& getStatusText(Status status);
     void announceStatus(Status status);
-    bool shutdown(Status status);
+    bool isDisabled();
     void reloadConfig();
     std::pair<float, char const*> getInverterDcVoltage();
     float getBatteryVoltage(bool log = false);
