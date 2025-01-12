@@ -34,14 +34,16 @@ uint32_t Stats::getAgeMillis() const
 
 std::optional<int32_t> Stats::getOutputPowerWatts() const
 {
-    int32_t sum = -1;
+    int32_t sum = 0;
+    auto data = false;
 
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
+        data = true;
         sum += entry.second->batteryOutputPower_W;
     }
 
-    if (sum == -1) { return std::nullopt; }
+    if (!data) { return std::nullopt; }
 
     return sum;
 }
@@ -263,7 +265,7 @@ void Stats::mqttPublish() const
             if (!currentData) { continue; }
 
             auto const& previousData = _previousData[entry.first];
-            publish_mppt_data(*currentData, previousData);
+            publishMpptData(*currentData, previousData);
 
             if (!_PublishFull) {
                 _previousData[entry.first] = *currentData;
@@ -288,7 +290,7 @@ void Stats::mqttPublish() const
     }
 }
 
-void Stats::publish_mppt_data(const VeDirectMpptController::data_t &currentData, const VeDirectMpptController::data_t &previousData) const {
+void Stats::publishMpptData(const VeDirectMpptController::data_t &currentData, const VeDirectMpptController::data_t &previousData) const {
     String value;
     String topic = "victron/";
     topic.concat(currentData.serialNr_SER);

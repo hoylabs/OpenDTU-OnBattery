@@ -4,10 +4,7 @@
 #include <mutex>
 #include <memory>
 #include <TaskSchedulerDeclarations.h>
-
-#include <Configuration.h>
 #include <solarcharger/Provider.h>
-#include <solarcharger/victron/HassIntegration.h>
 #include <solarcharger/victron/Stats.h>
 #include <VeDirectMpptController.h>
 

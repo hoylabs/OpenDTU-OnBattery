@@ -384,7 +384,6 @@ float PowerLimiterClass::getBatteryVoltage(bool log) {
     float chargeControllerVoltage = -1;
 
     auto chargerOutputVoltage = SolarCharger.getStats()->getOutputVoltage();
-
     if (chargerOutputVoltage) {
         res = chargeControllerVoltage = *chargerOutputVoltage;
     }

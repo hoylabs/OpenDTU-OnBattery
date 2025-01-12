@@ -42,7 +42,7 @@ private:
 
     void populateJsonWithInstanceStats(const JsonObject &root, const VeDirectMpptController::data_t &mpptData) const;
 
-    void publish_mppt_data(const VeDirectMpptController::data_t &mpptData, const VeDirectMpptController::data_t &frame) const;
+    void publishMpptData(const VeDirectMpptController::data_t &mpptData, const VeDirectMpptController::data_t &frame) const;
 };
 
 } // namespace SolarChargers::Victron

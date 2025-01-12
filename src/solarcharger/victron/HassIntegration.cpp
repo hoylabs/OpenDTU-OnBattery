@@ -5,11 +5,8 @@
 #include "Configuration.h"
 #include "MqttSettings.h"
 #include "MqttHandleHass.h"
-#include "NetworkSettings.h"
-#include "MessageOutput.h"
 #include "Utils.h"
 #include "__compiled_constants.h"
-#include <solarcharger/Controller.h>
 #include <solarcharger/victron/HassIntegration.h>
 
 namespace SolarChargers::Victron {
@@ -131,6 +128,7 @@ void HassIntegration::publishSensor(const char *caption, const char *icon, const
     publish(configTopic, buffer);
 
 }
+
 void HassIntegration::publishBinarySensor(const char *caption, const char *icon, const char *subTopic,
                                                       const char *payload_on, const char *payload_off,
                                                       const VeDirectMpptController::data_t &mpptData) const

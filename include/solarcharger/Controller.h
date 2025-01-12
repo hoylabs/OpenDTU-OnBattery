@@ -6,7 +6,6 @@
 #include <TaskSchedulerDeclarations.h>
 #include <solarcharger/Provider.h>
 #include <solarcharger/Stats.h>
-#include <VeDirectMpptController.h>
 
 namespace SolarChargers {
 
