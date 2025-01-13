@@ -27,14 +27,6 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
     // the maximum increase possible for this inverter
     int16_t maxTotalIncrease = getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
 
-    // when the current limit is less than 15% of the max power of the inverter
-    // the output will not match the limit as the inverters are not able to work
-    // with those low limits. In this case we assume that the inverter is able to
-    // provide more power and we return the maximum possible increase.
-    // thanks spcqike for creating a table that can be found here:
-    // https://github.com/hoylabs/OpenDTU-OnBattery/issues/1087#issuecomment-2216787552
-    if (getCurrentLimitWatts() < getInverterMaxPowerWatts() * 0.15) { return maxTotalIncrease; }
-
     auto pStats = _spInverter->Statistics();
     std::vector<MpptNum_t> dcMppts = _spInverter->getMppts();
     size_t dcTotalMppts = dcMppts.size();
