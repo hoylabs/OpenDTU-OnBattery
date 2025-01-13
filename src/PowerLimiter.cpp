@@ -82,18 +82,31 @@ void PowerLimiterClass::announceStatus(PowerLimiterClass::Status status)
     _lastStatusPrinted = millis();
 }
 
-/**
- * returns true if the inverters' state was changed or is about to change, i.e.,
- * if any are actually in need of a shutdown. returns false otherwise, i.e., the
- * inverters are already shut down.
- */
-bool PowerLimiterClass::shutdown(PowerLimiterClass::Status status)
+bool PowerLimiterClass::isDisabled()
 {
-    announceStatus(status);
+    auto const& config = Configuration.get();
+
+    if (!config.PowerLimiter.Enabled) {
+        announceStatus(Status::DisabledByConfig);
+    }
+    else if (Mode::Disabled == _mode) {
+        announceStatus(Status::DisabledByMqtt);
+    }
+    else {
+        _shutdownComplete = false;
+        return false;
+    }
+
+    // we only shut down governed inverters once when the DPL is disabled by
+    // configuration or by the MQTT mode setting. afterwards, we leave the
+    // inverter(s) alone so they can be managed through other means.
+    if (_shutdownComplete) { return true; }
 
     for (auto& upInv : _inverters) { upInv->standby(); }
 
-    return updateInverters();
+    _shutdownComplete = !updateInverters();
+
+    return true;
 }
 
 void PowerLimiterClass::reloadConfig()
@@ -157,15 +170,7 @@ void PowerLimiterClass::loop()
         return announceStatus(Status::InverterCmdPending);
     }
 
-    if (!config.PowerLimiter.Enabled) {
-        shutdown(Status::DisabledByConfig);
-        return;
-    }
-
-    if (Mode::Disabled == _mode) {
-        shutdown(Status::DisabledByMqtt);
-        return;
-    }
+    if (isDisabled()) { return; }
 
     if (_reloadConfigFlag) {
         reloadConfig();
