@@ -52,7 +52,7 @@
         <div class="col" v-if="hasInverters">
             <CardElement
                 centerContent
-                textVariant="text-bg-success"
+                textVariant="text-bg-primary"
                 :text="$t('invertertotalinfo.InverterTotalYieldTotal')"
             >
                 <h2>
@@ -69,7 +69,7 @@
         <div class="col" v-if="hasInverters">
             <CardElement
                 centerContent
-                textVariant="text-bg-success"
+                textVariant="text-bg-primary"
                 :text="$t('invertertotalinfo.InverterTotalYieldDay')"
             >
                 <h2>
@@ -84,7 +84,7 @@
             </CardElement>
         </div>
         <div class="col" v-if="hasInverters">
-            <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.InverterTotalPower')">
+            <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.InverterTotalPower')">
                 <h2>
                     {{
                         $n(totalData.Power.v, 'decimal', {

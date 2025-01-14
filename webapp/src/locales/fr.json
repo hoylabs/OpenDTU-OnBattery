@@ -38,7 +38,9 @@
         "Refreshing": "Refreshing",
         "Pull": "Pull down to refresh",
         "Release": "Release to refresh",
-        "Close": "Fermer"
+        "Close": "Fermer",
+        "Yes": "Yes",
+        "No": "No"
     },
     "wait": {
         "NotReady": "OpenDTU-OnBattery is not yet ready",
@@ -234,8 +236,8 @@
         "HardwarePartNumber": "Numéro d'article matériel",
         "HardwareVersion": "Version du matériel",
         "SupportsPowerDistributionLogic": "'Power Distribution Logic' supported",
-        "yes": "@:base.Yes",
-        "no": "@:base.No"
+        "Yes": "@:base.Yes",
+        "No": "@:base.No"
     },
     "gridprofile": {
         "NoInfo": "@:devinfo.NoInfo",

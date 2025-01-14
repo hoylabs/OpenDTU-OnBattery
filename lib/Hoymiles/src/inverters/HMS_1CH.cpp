@@ -33,7 +33,9 @@ static const channelMetaData_t channelMetaData[] = {
 };
 
 HMS_1CH::HMS_1CH(HoymilesRadio* radio, const uint64_t serial)
-    : HMS_Abstract(radio, serial) {};
+    : HMS_Abstract(radio, serial)
+{
+}
 
 bool HMS_1CH::isValidSerial(const uint64_t serial)
 {
