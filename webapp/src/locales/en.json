@@ -27,8 +27,6 @@
         "Login": "Login"
     },
     "base": {
-        "Yes": "Yes",
-        "No": "No",
         "VerboseLogging": "Verbose Logging",
         "Seconds": "Seconds",
         "Loading": "Loading...",
@@ -38,7 +36,9 @@
         "Refreshing": "Refreshing",
         "Pull": "Pull down to refresh",
         "Release": "Release to refresh",
-        "Close": "Close"
+        "Close": "Close",
+        "Yes": "Yes",
+        "No": "No"
     },
     "wait": {
         "NotReady": "OpenDTU-OnBattery is not yet ready",
@@ -234,8 +234,8 @@
         "HardwarePartNumber": "Hardware Part Number",
         "HardwareVersion": "Hardware Version",
         "SupportsPowerDistributionLogic": "'Power Distribution Logic' supported",
-        "yes": "@:base.Yes",
-        "no": "@:base.No"
+        "Yes": "@:base.Yes",
+        "No": "@:base.No"
     },
     "gridprofile": {
         "NoInfo": "@:devinfo.NoInfo",

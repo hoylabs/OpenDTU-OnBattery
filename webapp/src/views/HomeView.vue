@@ -39,12 +39,22 @@
                     >
                         <div class="d-flex align-items-center">
                             <div class="me-2">
-                                <BIconXCircleFill class="fs-4" v-if="!inverter.reachable" />
-                                <BIconExclamationCircleFill
-                                    class="fs-4"
-                                    v-if="inverter.reachable && !inverter.producing"
-                                />
-                                <BIconCheckCircleFill class="fs-4" v-if="inverter.reachable && inverter.producing" />
+                                <span
+                                    v-if="inverter.AC"
+                                    class="badge"
+                                    :class="{
+                                        'text-bg-secondary': !inverter.poll_enabled,
+                                        'text-bg-danger': inverter.poll_enabled && !inverter.reachable,
+                                        'text-bg-warning':
+                                            inverter.poll_enabled && inverter.reachable && !inverter.producing,
+                                        'text-bg-success':
+                                            inverter.poll_enabled && inverter.reachable && inverter.producing,
+                                    }"
+                                >
+                                    {{ $n(inverter.AC[0]?.Power?.v || 0, 'decimalNoDigits') }}
+                                    {{ inverter.AC[0].Power?.u }}
+                                </span>
+                                <span v-else class="badge text-bg-light">-</span>
                             </div>
                             <div class="ms-auto me-auto">
                                 {{ inverter.name }}
@@ -78,7 +88,7 @@
                                 'text-bg-tertiary': !inverter.poll_enabled,
                                 'text-bg-danger': inverter.poll_enabled && !inverter.reachable,
                                 'text-bg-warning': inverter.poll_enabled && inverter.reachable && !inverter.producing,
-                                'text-bg-primary': inverter.poll_enabled && inverter.reachable && inverter.producing,
+                                'text-bg-success': inverter.poll_enabled && inverter.reachable && inverter.producing,
                             }"
                         >
                             <div class="p-1 flex-grow-1">
@@ -527,9 +537,7 @@ import * as bootstrap from 'bootstrap';
 import {
     BIconArrowCounterclockwise,
     BIconBroadcast,
-    BIconCheckCircleFill,
     BIconCpu,
-    BIconExclamationCircleFill,
     BIconInfoCircle,
     BIconJournalText,
     BIconOutlet,
@@ -537,7 +545,6 @@ import {
     BIconSpeedometer,
     BIconToggleOff,
     BIconToggleOn,
-    BIconXCircleFill,
 } from 'bootstrap-icons-vue';
 import { defineComponent } from 'vue';
 
@@ -554,9 +561,7 @@ export default defineComponent({
         ModalDialog,
         BIconArrowCounterclockwise,
         BIconBroadcast,
-        BIconCheckCircleFill,
         BIconCpu,
-        BIconExclamationCircleFill,
         BIconInfoCircle,
         BIconJournalText,
         BIconOutlet,
@@ -564,7 +569,6 @@ export default defineComponent({
         BIconSpeedometer,
         BIconToggleOff,
         BIconToggleOn,
-        BIconXCircleFill,
         SolarChargerView,
         HuaweiView,
         BatteryView,

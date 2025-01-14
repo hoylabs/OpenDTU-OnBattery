@@ -34,7 +34,9 @@ static const channelMetaData_t channelMetaData[] = {
 };
 
 HERF_1CH::HERF_1CH(HoymilesRadio* radio, const uint64_t serial)
-    : HM_Abstract(radio, serial) {};
+    : HM_Abstract(radio, serial)
+{
+}
 
 bool HERF_1CH::isValidSerial(const uint64_t serial)
 {

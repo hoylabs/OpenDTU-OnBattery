@@ -9,7 +9,7 @@
         <div class="col" v-if="solarChargerData.enabled">
             <CardElement
                 centerContent
-                textVariant="text-bg-success"
+                textVariant="text-bg-primary"
                 :text="$t('invertertotalinfo.MpptTotalYieldTotal')"
             >
                 <h2>
@@ -24,7 +24,7 @@
             </CardElement>
         </div>
         <div class="col" v-if="solarChargerData.enabled">
-            <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.MpptTotalYieldDay')">
+            <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.MpptTotalYieldDay')">
                 <h2>
                     {{
                         $n(solarChargerData.total.YieldDay.v, 'decimal', {
@@ -37,7 +37,7 @@
             </CardElement>
         </div>
         <div class="col" v-if="solarChargerData.enabled">
-            <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.MpptTotalPower')">
+            <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.MpptTotalPower')">
                 <h2>
                     {{
                         $n(solarChargerData.total.Power.v, 'decimal', {
@@ -52,7 +52,7 @@
         <div class="col" v-if="hasInverters">
             <CardElement
                 centerContent
-                textVariant="text-bg-success"
+                textVariant="text-bg-primary"
                 :text="$t('invertertotalinfo.InverterTotalYieldTotal')"
             >
                 <h2>
@@ -69,7 +69,7 @@
         <div class="col" v-if="hasInverters">
             <CardElement
                 centerContent
-                textVariant="text-bg-success"
+                textVariant="text-bg-primary"
                 :text="$t('invertertotalinfo.InverterTotalYieldDay')"
             >
                 <h2>
@@ -84,7 +84,7 @@
             </CardElement>
         </div>
         <div class="col" v-if="hasInverters">
-            <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.InverterTotalPower')">
+            <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.InverterTotalPower')">
                 <h2>
                     {{
                         $n(totalData.Power.v, 'decimal', {
@@ -101,7 +101,7 @@
                 <CardElement
                     centerContent
                     flexChildren
-                    textVariant="text-bg-success"
+                    textVariant="text-bg-primary"
                     :text="$t('invertertotalinfo.BatteryCharge')"
                 >
                     <div class="flex-fill" v-if="totalBattData.soc">
@@ -133,7 +133,7 @@
                 <CardElement
                     centerContent
                     flexChildren
-                    textVariant="text-bg-success"
+                    textVariant="text-bg-primary"
                     :text="$t('invertertotalinfo.BatteryPower')"
                 >
                     <div class="flex-fill" v-if="totalBattData.power">
@@ -163,7 +163,7 @@
             </div>
         </template>
         <div class="col" v-if="powerMeterData.enabled">
-            <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.HomePower')">
+            <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.HomePower')">
                 <h2>
                     {{
                         $n(powerMeterData.Power.v, 'decimal', {
@@ -176,7 +176,7 @@
             </CardElement>
         </div>
         <div class="col" v-if="huaweiData.enabled">
-            <CardElement centerContent textVariant="text-bg-success" :text="$t('invertertotalinfo.HuaweiPower')">
+            <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.HuaweiPower')">
                 <h2>
                     {{
                         $n(huaweiData.Power.v, 'decimal', {

@@ -13,7 +13,7 @@
                         class="card-header d-flex justify-content-between align-items-center"
                         :class="{
                             'text-bg-danger': item.data_age_ms >= 10000,
-                            'text-bg-primary': item.data_age_ms < 10000,
+                            'text-bg-success': item.data_age_ms < 10000,
                         }"
                     >
                         <div class="p-1 flex-grow-1">
