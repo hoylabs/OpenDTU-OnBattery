@@ -63,10 +63,8 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
     }
 
     if (dcNonShadedMppts == 0) {
-        // all mppts are shaded according to our calculation.
-        // but because we can not be sure we assume that we can
-        // increase the power by 3% of the max power.
-        return getConfiguredMaxPowerWatts() / 33;
+        // all mppts are shaded, we can't increase the power
+        return 0;
     }
 
     if (dcNonShadedMppts == dcTotalMppts) {
