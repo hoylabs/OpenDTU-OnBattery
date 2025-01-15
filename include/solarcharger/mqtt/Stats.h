@@ -18,8 +18,7 @@ public:
     std::optional<float> getYieldTotal() const final { return std::nullopt; }
     std::optional<float> getYieldDay() const final { return std::nullopt; }
 
-    // live view is not needed as the data is already shown in a dedicated card on top of the homepage
-    void getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const final {}
+    void getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const final;
 
     // no need to republish values received via mqtt
     void mqttPublish() const final {}

@@ -21,10 +21,10 @@
                                 <div style="padding-right: 2em">
                                     {{ item.product_id }}
                                 </div>
-                                <div style="padding-right: 2em">
+                                <div v-if="item.hide_serial !== true" style="padding-right: 2em">
                                     {{ $t('solarchargerhome.SerialNumber') }}: {{ serial }}
                                 </div>
-                                <div style="padding-right: 2em">
+                                <div v-if="item.firmware_version" style="padding-right: 2em">
                                     {{ $t('solarchargerhome.FirmwareVersion') }}: {{ item.firmware_version }}
                                 </div>
                                 <div style="padding-right: 2em">

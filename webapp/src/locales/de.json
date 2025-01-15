@@ -200,7 +200,8 @@
             "E": "Effizienz (berechnet)",
             "AbsorptionVoltage": "Absorptionsspannung",
             "FloatVoltage": "Erhaltungsspannung",
-            "SBSTemperature": "SBS Temperatur"
+            "SBSTemperature": "SBS Temperatur",
+            "Power": "Leistung"
         },
         "section_input": "Eingang (Solarpanele)",
         "input": {

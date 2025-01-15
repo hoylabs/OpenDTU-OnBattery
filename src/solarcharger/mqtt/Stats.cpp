@@ -50,4 +50,48 @@ std::optional<float> Stats::getValueIfNotOutdated(const uint32_t lastUpdate, con
     return value;
 }
 
+void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const
+{
+    ::SolarChargers::Stats::getLiveViewData(root, fullUpdate, lastPublish);
+
+    auto age = 0;
+    if (_lastUpdate) {
+        age = millis() - _lastUpdate;
+    }
+
+    auto hasUpdate = age != 0 && age < millis() - lastPublish;
+    if (!fullUpdate && !hasUpdate) { return; }
+
+    const JsonObject instance = root["solarcharger"]["instances"]["MQTT"].to<JsonObject>();
+    instance["data_age_ms"] = age;
+    instance["hide_serial"] = true;
+    instance["product_id"] = "MPPT: MQTT";
+
+    const JsonObject output = instance["values"]["output"].to<JsonObject>();
+
+    if (Configuration.get().SolarCharger.Mqtt.CalculateOutputPower) {
+        output["P"]["v"] = _outputPowerWatts;
+        output["P"]["u"] = "W";
+        output["P"]["d"] = 1;
+        output["V"]["v"] = _outputVoltage;
+        output["V"]["u"] = "V";
+        output["V"]["d"] = 2;
+        output["I"]["v"] = _outputCurrent;
+        output["I"]["u"] = "A";
+        output["I"]["d"] = 2;
+    }
+    else {
+        output["Power"]["v"] = _outputPowerWatts;
+        output["Power"]["u"] = "W";
+        output["Power"]["d"] = 1;
+
+        auto outputVoltage = getOutputVoltage();
+        if (outputVoltage) {
+            output["V"]["v"] = *outputVoltage;
+            output["V"]["u"] = "V";
+            output["V"]["d"] = 2;
+        }
+    }
+}
+
 }; // namespace SolarChargers::Mqtt

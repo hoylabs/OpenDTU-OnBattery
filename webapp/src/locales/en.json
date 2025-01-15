@@ -200,7 +200,8 @@
             "E": "Efficiency (calculated)",
             "AbsorptionVoltage": "Absorption voltage",
             "FloatVoltage": "Float voltage",
-            "SBSTemperature": "SBS temperature"
+            "SBSTemperature": "SBS temperature",
+            "Power": "Power"
         },
         "section_input": "Input (Solar Panels)",
         "input": {
