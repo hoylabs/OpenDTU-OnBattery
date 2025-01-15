@@ -31,7 +31,7 @@ private:
     String _outputPowerTopic;
     String _outputVoltageTopic;
     String _outputCurrentTopic;
-    auto _subscribedTopics = std::vector<String>();
+    std::vector<String> _subscribedTopics;
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
 
     void onMqttMessageOutputPower(espMqttClientTypes::MessageProperties const& properties,
