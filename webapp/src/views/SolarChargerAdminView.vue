@@ -41,8 +41,165 @@
                         type="checkbox"
                         wide
                     />
+
+                    <template v-if="solarChargerConfigList.provider === 1">
+                        <InputElement
+                            :label="$t('solarchargeradmin.CalculateOutputPower')"
+                            v-model="solarChargerConfigList.mqtt.calculate_output_power"
+                            :tooltip="$t('solarchargeradmin.CalculateOutputPowerDescription')"
+                            type="checkbox"
+                            wide
+                        />
+
+                        <div class="row">
+                            <div class="col-sm-4"></div>
+                            <div class="col-sm-8">
+                                <div
+                                    class="alert alert-secondary"
+                                    role="alert"
+                                    v-html="$t('solarchargeradmin.OutputPowerUsageHint')"
+                                ></div>
+                            </div>
+                        </div>
+                    </template>
                 </template>
             </CardElement>
+
+            <template v-if="solarChargerConfigList.enabled && solarChargerConfigList.provider === 1">
+                <CardElement
+                    v-if="!solarChargerConfigList.mqtt.calculate_output_power"
+                    :text="$t('solarchargeradmin.MqttOutputPowerConfiguration')"
+                    textVariant="text-bg-primary"
+                    addSpace
+                >
+                    <InputElement
+                        :label="$t('solarchargeradmin.MqttOutputPowerTopic')"
+                        v-model="solarChargerConfigList.mqtt.mqtt_output_power_topic"
+                        type="text"
+                        maxlength="256"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('solarchargeradmin.MqttJsonPath')"
+                        v-model="solarChargerConfigList.mqtt.mqtt_output_power_path"
+                        type="text"
+                        maxlength="256"
+                        :tooltip="$t('solarchargeradmin.MqttJsonPathDescription')"
+                        wide
+                    />
+
+                    <div class="row mb-3">
+                        <label for="mqtt_output_power_unit" class="col-sm-4 col-form-label">
+                            {{ $t('solarchargeradmin.MqttOutputPowerUnit') }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select
+                                id="mqtt_output_power_unit"
+                                class="form-select"
+                                v-model="solarChargerConfigList.mqtt.mqtt_output_power_unit"
+                            >
+                                <option v-for="u in wattageUnitTypeList" :key="u.key" :value="u.key">
+                                    {{ u.value }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </CardElement>
+
+                <CardElement
+                    v-if="solarChargerConfigList.mqtt.calculate_output_power"
+                    :text="$t('solarchargeradmin.MqttOutputCurrentConfiguration')"
+                    textVariant="text-bg-primary"
+                    addSpace
+                >
+                    <div
+                        class="alert alert-secondary"
+                        role="alert"
+                        v-html="$t('solarchargeradmin.MqttOutputCurrentUsageHint')"
+                    ></div>
+
+                    <InputElement
+                        :label="$t('solarchargeradmin.MqttOutputCurrentTopic')"
+                        v-model="solarChargerConfigList.mqtt.mqtt_output_current_topic"
+                        type="text"
+                        maxlength="256"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('solarchargeradmin.MqttJsonPath')"
+                        v-model="solarChargerConfigList.mqtt.mqtt_output_current_path"
+                        type="text"
+                        maxlength="256"
+                        :tooltip="$t('solarchargeradmin.MqttJsonPathDescription')"
+                        wide
+                    />
+
+                    <div class="row mb-3">
+                        <label for="mqtt_output_current_unit" class="col-sm-4 col-form-label">
+                            {{ $t('solarchargeradmin.MqttOutputCurrentUnit') }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select
+                                id="mqtt_output_current_unit"
+                                class="form-select"
+                                v-model="solarChargerConfigList.mqtt.mqtt_output_current_unit"
+                            >
+                                <option v-for="u in amperageUnitTypeList" :key="u.key" :value="u.key">
+                                    {{ u.value }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </CardElement>
+
+                <CardElement
+                    :text="$t('solarchargeradmin.MqttOutputVoltageConfiguration')"
+                    textVariant="text-bg-primary"
+                    addSpace
+                >
+                    <div
+                        class="alert alert-secondary"
+                        role="alert"
+                        v-html="$t('solarchargeradmin.MqttOutputVoltagetUsageHint')"
+                    ></div>
+
+                    <InputElement
+                        :label="$t('solarchargeradmin.MqttOutputVoltageTopic')"
+                        v-model="solarChargerConfigList.mqtt.mqtt_output_voltage_topic"
+                        type="text"
+                        maxlength="256"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('solarchargeradmin.MqttJsonPath')"
+                        v-model="solarChargerConfigList.mqtt.mqtt_output_voltage_path"
+                        type="text"
+                        maxlength="256"
+                        :tooltip="$t('solarchargeradmin.MqttJsonPathDescription')"
+                        wide
+                    />
+
+                    <div class="row mb-3">
+                        <label for="mqtt_output_voltage_unit" class="col-sm-4 col-form-label">
+                            {{ $t('solarchargeradmin.MqttOutputVoltageUnit') }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select
+                                id="mqtt_output_voltage_unit"
+                                class="form-select"
+                                v-model="solarChargerConfigList.mqtt.mqtt_output_voltage_unit"
+                            >
+                                <option v-for="u in voltageUnitTypeList" :key="u.key" :value="u.key">
+                                    {{ u.value }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </CardElement>
+            </template>
 
             <FormFooter @reload="getSolarChargerConfig" />
         </form>
@@ -74,7 +231,25 @@ export default defineComponent({
             alertMessage: '',
             alertType: 'info',
             showAlert: false,
-            providerTypeList: [{ key: 0, value: 'VeDirect' }],
+            providerTypeList: [
+                { key: 0, value: 'VeDirect' },
+                { key: 1, value: 'Mqtt' },
+            ],
+            wattageUnitTypeList: [
+                { key: 0, value: 'W' },
+                { key: 1, value: 'mW' },
+                { key: 2, value: 'kW' },
+            ],
+            voltageUnitTypeList: [
+                { key: 0, value: 'V' },
+                { key: 1, value: 'dV' },
+                { key: 2, value: 'cV' },
+                { key: 3, value: 'mV' },
+            ],
+            amperageUnitTypeList: [
+                { key: 0, value: 'A' },
+                { key: 1, value: 'mA' },
+            ],
         };
     },
     created() {

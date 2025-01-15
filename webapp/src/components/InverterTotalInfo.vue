@@ -42,11 +42,7 @@
                 </CardElement>
             </div>
             <div class="col" v-if="solarChargerData.power">
-                <CardElement
-                    centerContent
-                    textVariant="text-bg-primary"
-                    :text="$t('invertertotalinfo.MpptTotalPower')"
-                >
+                <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.MpptTotalPower')">
                     <h2>
                         {{
                             $n(solarChargerData.power.v, 'decimal', {
