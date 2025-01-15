@@ -29,6 +29,7 @@
 #define MQTT_MAX_TOPIC_STRLEN 256
 #define MQTT_MAX_LWTVALUE_STRLEN 20
 #define MQTT_MAX_CERT_STRLEN 2560
+#define MQTT_MAX_JSON_PATH_STRLEN 256
 
 #define INV_MAX_NAME_STRLEN 31
 #define INV_MAX_COUNT 10
@@ -47,8 +48,6 @@
 
 #define POWERMETER_MQTT_MAX_VALUES 3
 #define POWERMETER_HTTP_JSON_MAX_VALUES 3
-#define POWERMETER_HTTP_JSON_MAX_PATH_STRLEN 256
-#define BATTERY_JSON_MAX_PATH_STRLEN 128
 
 struct CHANNEL_CONFIG_T {
     uint16_t MaxChannelPower;
@@ -88,7 +87,7 @@ using HttpRequestConfig = struct HTTP_REQUEST_CONFIG_T;
 
 struct POWERMETER_MQTT_VALUE_T {
     char Topic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char JsonPath[POWERMETER_HTTP_JSON_MAX_PATH_STRLEN + 1];
+    char JsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
 
     enum Unit { Watts = 0, MilliWatts = 1, KiloWatts = 2 };
     Unit PowerUnit;
@@ -111,7 +110,7 @@ using PowerMeterSerialSdmConfig = struct POWERMETER_SERIAL_SDM_CONFIG_T;
 struct POWERMETER_HTTP_JSON_VALUE_T {
     HttpRequestConfig HttpRequest;
     bool Enabled;
-    char JsonPath[POWERMETER_HTTP_JSON_MAX_PATH_STRLEN + 1];
+    char JsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
 
     enum Unit { Watts = 0, MilliWatts = 1, KiloWatts = 2 };
     Unit PowerUnit;
@@ -182,9 +181,9 @@ struct BATTERY_CONFIG_T {
     uint8_t JkBmsInterface;
     uint8_t JkBmsPollingInterval;
     char MqttSocTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttSocJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
+    char MqttSocJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     char MqttVoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttVoltageJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
+    char MqttVoltageJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryVoltageUnit MqttVoltageUnit;
     bool EnableDischargeCurrentLimit;
     float DischargeCurrentLimit;
@@ -192,7 +191,7 @@ struct BATTERY_CONFIG_T {
     float DischargeCurrentLimitBelowVoltage;
     bool UseBatteryReportedDischargeCurrentLimit;
     char MqttDischargeCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttDischargeCurrentJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
+    char MqttDischargeCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryAmperageUnit MqttAmperageUnit;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;

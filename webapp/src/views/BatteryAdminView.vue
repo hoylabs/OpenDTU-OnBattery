@@ -85,7 +85,7 @@
                         :label="$t('batteryadmin.MqttJsonPath')"
                         v-model="batteryConfigList.mqtt_soc_json_path"
                         type="text"
-                        maxlength="128"
+                        maxlength="256"
                         :tooltip="$t('batteryadmin.MqttJsonPathDescription')"
                         wide
                     />
@@ -104,7 +104,7 @@
                         :label="$t('batteryadmin.MqttJsonPath')"
                         v-model="batteryConfigList.mqtt_voltage_json_path"
                         type="text"
-                        maxlength="128"
+                        maxlength="256"
                         :tooltip="$t('batteryadmin.MqttJsonPathDescription')"
                         wide
                     />
@@ -215,7 +215,7 @@
                                     v-model="batteryConfigList.mqtt_discharge_current_json_path"
                                     wide
                                     type="text"
-                                    maxlength="128"
+                                    maxlength="256"
                                     :tooltip="$t('batteryadmin.MqttJsonPathDescription')"
                                 />
 
