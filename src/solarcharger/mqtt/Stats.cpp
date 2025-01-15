@@ -43,7 +43,7 @@ void Stats::setOutputCurrent(const float current) {
 std::optional<float> Stats::getValueIfNotOutdated(const uint32_t lastUpdate, const float value) const {
     // never updated or older than 60 seconds
     if (lastUpdate == 0
-        || millis() - _lastUpdateOutputCurrent > 60 * 1000) {
+        || millis() - lastUpdate > 60 * 1000) {
         return std::nullopt;
     }
 
