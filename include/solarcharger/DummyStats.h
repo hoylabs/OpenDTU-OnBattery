@@ -8,7 +8,7 @@ namespace SolarChargers {
 class DummyStats : public Stats {
 public:
     uint32_t getAgeMillis() const final { return 0; }
-    std::optional<uint16_t> getOutputPowerWatts() const final { return std::nullopt; }
+    std::optional<float> getOutputPowerWatts() const final { return std::nullopt; }
     std::optional<float> getOutputVoltage() const final { return std::nullopt; }
     std::optional<uint16_t> getPanelPowerWatts() const final { return std::nullopt; }
     std::optional<float> getYieldTotal() const final { return std::nullopt; }

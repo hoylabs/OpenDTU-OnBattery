@@ -2,7 +2,6 @@
 #include <Configuration.h>
 #include <MqttSettings.h>
 #include <MessageOutput.h>
-#include <solarcharger/Controller.h>
 #include <solarcharger/victron/Stats.h>
 
 namespace SolarChargers::Victron {
@@ -32,9 +31,9 @@ uint32_t Stats::getAgeMillis() const
 
 }
 
-std::optional<uint16_t> Stats::getOutputPowerWatts() const
+std::optional<float> Stats::getOutputPowerWatts() const
 {
-    uint16_t sum = 0;
+    float sum = 0;
     auto data = false;
 
     for (auto const& entry : _data) {

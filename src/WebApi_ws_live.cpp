@@ -82,7 +82,7 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
         solarchargerObj["enabled"] = config.SolarCharger.Enabled;
 
         if (config.SolarCharger.Enabled) {
-            uint16_t power = 0;
+            float power = 0;
             auto outputPower = SolarCharger.getStats()->getOutputPowerWatts();
             auto panelPower = SolarCharger.getStats()->getPanelPowerWatts();
 

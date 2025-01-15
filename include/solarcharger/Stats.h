@@ -12,7 +12,7 @@ public:
     virtual uint32_t getAgeMillis() const;
 
     // total output of all MPPT charge controllers in Watts
-    virtual std::optional<uint16_t> getOutputPowerWatts() const;
+    virtual std::optional<float> getOutputPowerWatts() const;
 
     // minimum of all MPPT charge controllers' output voltages in V
     virtual std::optional<float> getOutputVoltage() const;

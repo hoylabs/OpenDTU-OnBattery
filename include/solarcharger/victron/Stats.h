@@ -11,7 +11,7 @@ namespace SolarChargers::Victron {
 class Stats : public ::SolarChargers::Stats {
 public:
     uint32_t getAgeMillis() const final;
-    std::optional<uint16_t> getOutputPowerWatts() const final;
+    std::optional<float> getOutputPowerWatts() const final;
     std::optional<float> getOutputVoltage() const final;
     std::optional<uint16_t> getPanelPowerWatts() const final;
     std::optional<float> getYieldTotal() const final;
