@@ -31,6 +31,9 @@ void WebApiSolarChargerlass::onAdminGet(AsyncWebServerRequest* request)
 
     ConfigurationClass::serializeSolarChargerConfig(config.SolarCharger, root);
 
+    auto mqtt = root["mqtt"].to<JsonObject>();
+    ConfigurationClass::serializeSolarChargerMqttConfig(config.SolarCharger.Mqtt, mqtt);
+
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
@@ -62,6 +65,8 @@ void WebApiSolarChargerlass::onAdminPost(AsyncWebServerRequest* request)
         auto guard = Configuration.getWriteGuard();
         auto& config = guard.getConfig();
         ConfigurationClass::deserializeSolarChargerConfig(root.as<JsonObject>(), config.SolarCharger);
+
+        ConfigurationClass::deserializeSolarChargerMqttConfig(root["mqtt"].as<JsonObject>(), config.SolarCharger.Mqtt);
     }
 
     WebApi.writeConfig(retMsg);

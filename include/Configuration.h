@@ -215,13 +215,34 @@ struct GRID_CHARGER_CONFIG_T {
 };
 using GridChargerConfig = struct GRID_CHARGER_CONFIG_T;
 
-enum SolarChargerProviderType { VEDIRECT = 0 };
+enum SolarChargerProviderType { VEDIRECT = 0, MQTT = 1 };
+
+struct SOLARCHARGER_MQTT_CONFIG_T {
+    bool CalculateOutputPower;
+
+    enum WattageUnit { Watts = 0, MilliWatts = 1, KiloWatts = 2 };
+    char MqttOutputPowerTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char MqttOutputPowerJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    WattageUnit MqttOutputPowerUnit;
+
+    enum VoltageUnit { Volts = 0, DeciVolts = 1, CentiVolts = 2, MilliVolts = 3 };
+    char MqttOutputVoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char MqttOutputVoltageJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    VoltageUnit MqttOutputVoltageUnit;
+
+    enum AmperageUnit { Amps = 0, MilliAmps = 1 };
+    char MqttOutputCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char MqttOutputCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    AmperageUnit MqttOutputCurrentUnit;
+};
+using SolarChargerMqttConfig = struct SOLARCHARGER_MQTT_CONFIG_T;
 
 struct SOLAR_CHARGER_CONFIG_T {
     bool Enabled;
     bool VerboseLogging;
-    SolarChargerProviderType Provider;
     bool PublishUpdatesOnly;
+    SolarChargerProviderType Provider;
+    SolarChargerMqttConfig Mqtt;
 };
 using SolarChargerConfig = struct SOLAR_CHARGER_CONFIG_T;
 
@@ -385,6 +406,7 @@ public:
 
     static void serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target);
     static void serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target);
+    static void serializeSolarChargerMqttConfig(SolarChargerMqttConfig const& source, JsonObject& target);
     static void serializePowerMeterMqttConfig(PowerMeterMqttConfig const& source, JsonObject& target);
     static void serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target);
@@ -395,6 +417,7 @@ public:
 
     static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
     static void deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target);
+    static void deserializeSolarChargerMqttConfig(JsonObject const& source, SolarChargerMqttConfig& target);
     static void deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target);
     static void deserializePowerMeterSerialSdmConfig(JsonObject const& source, PowerMeterSerialSdmConfig& target);
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);

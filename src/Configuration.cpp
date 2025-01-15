@@ -59,6 +59,20 @@ void ConfigurationClass::serializeSolarChargerConfig(SolarChargerConfig const& s
     target["publish_updates_only"] = source.PublishUpdatesOnly;
 }
 
+void ConfigurationClass::serializeSolarChargerMqttConfig(SolarChargerMqttConfig const& source, JsonObject& target)
+{
+    target["calculate_output_power"] = source.CalculateOutputPower;
+    target["mqtt_output_power_topic"] = source.MqttOutputPowerTopic;
+    target["mqtt_output_power_path"] = source.MqttOutputPowerJsonPath;
+    target["mqtt_output_power_unit"] = source.MqttOutputPowerUnit;
+    target["mqtt_output_voltage_topic"] = source.MqttOutputVoltageTopic;
+    target["mqtt_output_voltage_path"] = source.MqttOutputVoltageJsonPath;
+    target["mqtt_output_voltage_unit"] = source.MqttOutputVoltageUnit;
+    target["mqtt_output_current_topic"] = source.MqttOutputCurrentTopic;
+    target["mqtt_output_current_path"] = source.MqttOutputCurrentJsonPath;
+    target["mqtt_output_current_unit"] = source.MqttOutputCurrentUnit;
+}
+
 void ConfigurationClass::serializePowerMeterMqttConfig(PowerMeterMqttConfig const& source, JsonObject& target)
 {
     JsonArray values = target["values"].to<JsonArray>();
@@ -327,6 +341,9 @@ bool ConfigurationClass::write()
     JsonObject solarcharger = doc["solarcharger"].to<JsonObject>();
     serializeSolarChargerConfig(config.SolarCharger, solarcharger);
 
+    JsonObject solarcharger_mqtt = solarcharger["mqtt"].to<JsonObject>();
+    serializeSolarChargerMqttConfig(config.SolarCharger.Mqtt, solarcharger_mqtt);
+
     JsonObject powermeter = doc["powermeter"].to<JsonObject>();
     powermeter["enabled"] = config.PowerMeter.Enabled;
     powermeter["verbose_logging"] = config.PowerMeter.VerboseLogging;
@@ -384,6 +401,20 @@ void ConfigurationClass::deserializeSolarChargerConfig(JsonObject const& source,
     target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
     target.Provider = source["provider"] | SolarChargerProviderType::VEDIRECT;
     target.PublishUpdatesOnly = source["publish_updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
+}
+
+void ConfigurationClass::deserializeSolarChargerMqttConfig(JsonObject const& source, SolarChargerMqttConfig& target)
+{
+    target.CalculateOutputPower = source["calculate_output_power"];
+    strlcpy(target.MqttOutputPowerTopic, source["mqtt_output_power_topic"] | "", sizeof(target.MqttOutputPowerTopic));
+    strlcpy(target.MqttOutputPowerJsonPath, source["mqtt_output_power_path"] | "", sizeof(target.MqttOutputPowerJsonPath));
+    target.MqttOutputPowerUnit = source["mqtt_output_power_unit"] | SolarChargerMqttConfig::WattageUnit::Watts;
+    strlcpy(target.MqttOutputVoltageTopic, source["mqtt_output_voltage_topic"] | "", sizeof(target.MqttOutputVoltageTopic));
+    strlcpy(target.MqttOutputVoltageJsonPath, source["mqtt_output_voltage_path"] | "", sizeof(target.MqttOutputVoltageJsonPath));
+    target.MqttOutputVoltageUnit = source["mqtt_output_voltage_unit"] | SolarChargerMqttConfig::VoltageUnit::Volts;
+    strlcpy(target.MqttOutputCurrentTopic, source["mqtt_output_current_topic"] | "", sizeof(target.MqttOutputCurrentTopic));
+    strlcpy(target.MqttOutputCurrentJsonPath, source["mqtt_output_current_path"] | "", sizeof(target.MqttOutputCurrentJsonPath));
+    target.MqttOutputCurrentUnit = source["mqtt_output_current_unit"] | SolarChargerMqttConfig::AmperageUnit::Amps;
 }
 
 void ConfigurationClass::deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target)
@@ -694,7 +725,9 @@ bool ConfigurationClass::read()
         }
     }
 
-    deserializeSolarChargerConfig(doc["solarcharger"], config.SolarCharger);
+    JsonObject solarcharger = doc["solarcharger"];
+    deserializeSolarChargerConfig(solarcharger, config.SolarCharger);
+    deserializeSolarChargerMqttConfig(solarcharger["mqtt"], config.SolarCharger.Mqtt);
 
     JsonObject powermeter = doc["powermeter"];
     config.PowerMeter.Enabled = powermeter["enabled"] | POWERMETER_ENABLED;
