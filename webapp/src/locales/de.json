@@ -604,7 +604,7 @@
         "MqttPublishUpdatesOnly": "Werte nur bei Änderung an MQTT broker senden",
         "CalculateOutputPower": "Solarladeregler-Ausgangsleistung berechnen",
         "CalculateOutputPowerDescription": "Wenn aktiviert, wird die Ausgangsleistung des Solarladeregler basierend auf den Strom- und Spannungswerten berechnet. Wenn deaktiviert, wird die Ausgangsleistung direkt vom Solarladeregler übernommen.",
-        "OutputPowerUsageHint": "<b>Hinweis:</b> Die Ausgangsleistung wird von der DPL-Solar-Passthrough-Funktion verwendet. Weitere Details findest du <a href=\"https://opendtu-onbattery.net/firmware/solar_passthrough/\" target=\"_blank\">hier</a>.",
+        "OutputPowerUsageHint": "<b>Hinweis:</b> Die Ausgangsleistung wird von der DPL-Solar-Passthrough-Funktion verwendet. <a href=\"https://opendtu-onbattery.net/firmware/solar_passthrough/\" target=\"_blank\">Weitere Details findest du in der Solar-Passthrough Dokumentation</a>.",
         "MqttJsonPath": "@:base.MqttJsonPath",
         "MqttJsonPathDescription": "@:base.MqttJsonPathDescription",
         "MqttOutputPowerConfiguration": "Einstellungen Ausgangsleistung",
@@ -615,7 +615,7 @@
         "MqttOutputCurrentTopic": "Ausgangsstrom Topic",
         "MqttOutputCurrentUnit": "@:base.Unit",
         "MqttOutputVoltageConfiguration": "Einstellungen Ausgangsspannung",
-        "MqttOutputVoltagetUsageHint": "<b>Hinweis:</b> Die Ausgangsspannung wird als Ersatzspannung für die DPL verwendet, wenn die Batteriespannung nicht bekannt ist, und ist erforderlich, wenn 'Solarladeregler-Ausgangsleistung berechnen' aktiviert ist. Weitere Details findest du <a href=\"https://opendtu-onbattery.net/firmware/solar_passthrough/\" target=\"_blank\">hier</a>.",
+        "MqttOutputVoltagetUsageHint": "<b>Hinweis:</b> Die Ausgangsspannung wird als Ersatzspannung für die DPL verwendet, wenn die Batteriespannung nicht bekannt ist, und ist erforderlich, wenn 'Solarladeregler-Ausgangsleistung berechnen' aktiviert ist. <a href=\"https://opendtu-onbattery.net/firmware/solar_passthrough/\" target=\"_blank\">Weitere Details findest du in der Solar-Passthrough Dokumentation</a>.",
         "MqttOutputVoltageTopic": "Ausgangsspannung Topic",
         "MqttOutputVoltageUnit": "@:base.Unit"
     },

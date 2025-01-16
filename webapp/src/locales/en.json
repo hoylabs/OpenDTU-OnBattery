@@ -606,7 +606,7 @@
         "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change",
         "CalculateOutputPower": "Calculate Solar Charger output power",
         "CalculateOutputPowerDescription": "If enabled, the output power of the Solar Charger will be calculated based on the current and voltage values. If disabled, the output power will be taken from the Solar Charger directly.",
-        "OutputPowerUsageHint": "<b>Hint:</b> The output power is used by the DPL solar-passthrough feature. Details can be found <a href=\"https://opendtu-onbattery.net/firmware/solar_passthrough/ \" target=\"_blank\">here</a>.",
+        "OutputPowerUsageHint": "<b>Hint:</b> The output power is used by the DPL solar-passthrough feature. <a href=\"https://opendtu-onbattery.net/firmware/solar_passthrough/ \" target=\"_blank\">Details can be found in the documentation concerning Solar-Passthrough</a>.",
         "MqttJsonPath": "@:base.MqttJsonPath",
         "MqttJsonPathDescription": "@:base.MqttJsonPathDescription",
         "MqttOutputPowerConfiguration": "Output Power Settings",
@@ -617,7 +617,7 @@
         "MqttOutputCurrentTopic": "Output Current Topic",
         "MqttOutputCurrentUnit": "@:base.Unit",
         "MqttOutputVoltageConfiguration": "Output Voltage Settings",
-        "MqttOutputVoltagetUsageHint": "<b>Hint:</b> The output voltage is used as a fallback voltage for the DPL when the battery voltage is not known, and is needed when 'Calculate Solar Charger output power' is enabled. Details can be found <a href=\"https://opendtu-onbattery.net/firmware/solar_passthrough/ \" target=\"_blank\">here</a>.",
+        "MqttOutputVoltagetUsageHint": "<b>Hint:</b> The output voltage is used as a fallback voltage for the DPL when the battery voltage is not known, and is needed when 'Calculate Solar Charger output power' is enabled. <a href=\"https://opendtu-onbattery.net/firmware/solar_passthrough/ \" target=\"_blank\">Details can be found in the documentation concerning Solar-Passthrough</a>.",
         "MqttOutputVoltageTopic": "Output Voltage Topic",
         "MqttOutputVoltageUnit": "@:base.Unit"
     },
