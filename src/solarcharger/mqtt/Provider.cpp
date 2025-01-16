@@ -26,7 +26,8 @@ bool Provider::init(bool verboseLogging)
         return false;
     }
 
-    if (!_outputPowerTopic.isEmpty()) {
+    if (!_outputPowerTopic.isEmpty()
+        && !config.CalculateOutputPower) {
         _subscribedTopics.push_back(_outputPowerTopic);
 
         MqttSettings.subscribe(_outputPowerTopic, 0/*QoS*/,
@@ -45,6 +46,7 @@ bool Provider::init(bool verboseLogging)
 
     if (!_outputCurrentTopic.isEmpty()) {
         _subscribedTopics.push_back(_outputCurrentTopic);
+
         MqttSettings.subscribe(_outputCurrentTopic, 0/*QoS*/,
                 std::bind(&Provider::onMqttMessageOutputCurrent,
                     this, std::placeholders::_1, std::placeholders::_2,
@@ -54,7 +56,7 @@ bool Provider::init(bool verboseLogging)
                 );
 
         if (_verboseLogging) {
-            MessageOutput.printf("[SolarChargers::Mqtt]: Subscribed to '%s' for ouput_power readings\r\n",
+            MessageOutput.printf("[SolarChargers::Mqtt]: Subscribed to '%s' for output_current readings\r\n",
                 _outputCurrentTopic.c_str());
         }
     }
@@ -62,6 +64,7 @@ bool Provider::init(bool verboseLogging)
     _outputVoltageTopic = config.MqttOutputVoltageTopic;
     if (!_outputVoltageTopic.isEmpty()) {
         _subscribedTopics.push_back(_outputVoltageTopic);
+
         MqttSettings.subscribe(_outputVoltageTopic, 0/*QoS*/,
                 std::bind(&Provider::onMqttMessageOutputVoltage,
                     this, std::placeholders::_1, std::placeholders::_2,
