@@ -62,15 +62,15 @@ void ConfigurationClass::serializeSolarChargerConfig(SolarChargerConfig const& s
 void ConfigurationClass::serializeSolarChargerMqttConfig(SolarChargerMqttConfig const& source, JsonObject& target)
 {
     target["calculate_output_power"] = source.CalculateOutputPower;
-    target["mqtt_output_power_topic"] = source.MqttOutputPowerTopic;
-    target["mqtt_output_power_path"] = source.MqttOutputPowerJsonPath;
-    target["mqtt_output_power_unit"] = source.MqttOutputPowerUnit;
-    target["mqtt_output_voltage_topic"] = source.MqttOutputVoltageTopic;
-    target["mqtt_output_voltage_path"] = source.MqttOutputVoltageJsonPath;
-    target["mqtt_output_voltage_unit"] = source.MqttOutputVoltageUnit;
-    target["mqtt_output_current_topic"] = source.MqttOutputCurrentTopic;
-    target["mqtt_output_current_path"] = source.MqttOutputCurrentJsonPath;
-    target["mqtt_output_current_unit"] = source.MqttOutputCurrentUnit;
+    target["power_topic"] = source.MqttOutputPowerTopic;
+    target["power_path"] = source.MqttOutputPowerJsonPath;
+    target["power_unit"] = source.MqttOutputPowerUnit;
+    target["voltage_topic"] = source.MqttOutputVoltageTopic;
+    target["voltage_path"] = source.MqttOutputVoltageJsonPath;
+    target["voltage_unit"] = source.MqttOutputVoltageUnit;
+    target["current_topic"] = source.MqttOutputCurrentTopic;
+    target["current_path"] = source.MqttOutputCurrentJsonPath;
+    target["current_unit"] = source.MqttOutputCurrentUnit;
 }
 
 void ConfigurationClass::serializePowerMeterMqttConfig(PowerMeterMqttConfig const& source, JsonObject& target)
@@ -406,15 +406,15 @@ void ConfigurationClass::deserializeSolarChargerConfig(JsonObject const& source,
 void ConfigurationClass::deserializeSolarChargerMqttConfig(JsonObject const& source, SolarChargerMqttConfig& target)
 {
     target.CalculateOutputPower = source["calculate_output_power"];
-    strlcpy(target.MqttOutputPowerTopic, source["mqtt_output_power_topic"] | "", sizeof(target.MqttOutputPowerTopic));
-    strlcpy(target.MqttOutputPowerJsonPath, source["mqtt_output_power_path"] | "", sizeof(target.MqttOutputPowerJsonPath));
-    target.MqttOutputPowerUnit = source["mqtt_output_power_unit"] | SolarChargerMqttConfig::WattageUnit::Watts;
-    strlcpy(target.MqttOutputVoltageTopic, source["mqtt_output_voltage_topic"] | "", sizeof(target.MqttOutputVoltageTopic));
-    strlcpy(target.MqttOutputVoltageJsonPath, source["mqtt_output_voltage_path"] | "", sizeof(target.MqttOutputVoltageJsonPath));
-    target.MqttOutputVoltageUnit = source["mqtt_output_voltage_unit"] | SolarChargerMqttConfig::VoltageUnit::Volts;
-    strlcpy(target.MqttOutputCurrentTopic, source["mqtt_output_current_topic"] | "", sizeof(target.MqttOutputCurrentTopic));
-    strlcpy(target.MqttOutputCurrentJsonPath, source["mqtt_output_current_path"] | "", sizeof(target.MqttOutputCurrentJsonPath));
-    target.MqttOutputCurrentUnit = source["mqtt_output_current_unit"] | SolarChargerMqttConfig::AmperageUnit::Amps;
+    strlcpy(target.MqttOutputPowerTopic, source["power_topic"] | "", sizeof(target.MqttOutputPowerTopic));
+    strlcpy(target.MqttOutputPowerJsonPath, source["power_path"] | "", sizeof(target.MqttOutputPowerJsonPath));
+    target.MqttOutputPowerUnit = source["power_unit"] | SolarChargerMqttConfig::WattageUnit::Watts;
+    strlcpy(target.MqttOutputVoltageTopic, source["voltage_topic"] | "", sizeof(target.MqttOutputVoltageTopic));
+    strlcpy(target.MqttOutputVoltageJsonPath, source["voltage_path"] | "", sizeof(target.MqttOutputVoltageJsonPath));
+    target.MqttOutputVoltageUnit = source["voltage_unit"] | SolarChargerMqttConfig::VoltageUnit::Volts;
+    strlcpy(target.MqttOutputCurrentTopic, source["current_topic"] | "", sizeof(target.MqttOutputCurrentTopic));
+    strlcpy(target.MqttOutputCurrentJsonPath, source["current_path"] | "", sizeof(target.MqttOutputCurrentJsonPath));
+    target.MqttOutputCurrentUnit = source["current_unit"] | SolarChargerMqttConfig::AmperageUnit::Amps;
 }
 
 void ConfigurationClass::deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target)

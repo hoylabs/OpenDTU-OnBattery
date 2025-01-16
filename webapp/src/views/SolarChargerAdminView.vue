@@ -90,12 +90,12 @@
                     />
 
                     <div class="row mb-3">
-                        <label for="mqtt_output_power_unit" class="col-sm-4 col-form-label">
+                        <label for="power_unit" class="col-sm-4 col-form-label">
                             {{ $t('solarchargeradmin.MqttOutputPowerUnit') }}
                         </label>
                         <div class="col-sm-8">
                             <select
-                                id="mqtt_output_power_unit"
+                                id="power_unit"
                                 class="form-select"
                                 v-model="solarChargerConfigList.mqtt.mqtt_output_power_unit"
                             >
@@ -137,12 +137,12 @@
                     />
 
                     <div class="row mb-3">
-                        <label for="mqtt_output_current_unit" class="col-sm-4 col-form-label">
+                        <label for="current_unit" class="col-sm-4 col-form-label">
                             {{ $t('solarchargeradmin.MqttOutputCurrentUnit') }}
                         </label>
                         <div class="col-sm-8">
                             <select
-                                id="mqtt_output_current_unit"
+                                id="current_unit"
                                 class="form-select"
                                 v-model="solarChargerConfigList.mqtt.mqtt_output_current_unit"
                             >
@@ -183,12 +183,12 @@
                     />
 
                     <div class="row mb-3">
-                        <label for="mqtt_output_voltage_unit" class="col-sm-4 col-form-label">
+                        <label for="voltage_unit" class="col-sm-4 col-form-label">
                             {{ $t('solarchargeradmin.MqttOutputVoltageUnit') }}
                         </label>
                         <div class="col-sm-8">
                             <select
-                                id="mqtt_output_voltage_unit"
+                                id="voltage_unit"
                                 class="form-select"
                                 v-model="solarChargerConfigList.mqtt.mqtt_output_voltage_unit"
                             >
