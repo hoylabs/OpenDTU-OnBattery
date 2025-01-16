@@ -82,6 +82,10 @@ void PowerLimiterClass::announceStatus(PowerLimiterClass::Status status)
     _lastStatusPrinted = millis();
 }
 
+/**
+ * NOTE: this method relies on being called regularly, i.e., as part of the
+ * loop(), and that it is called *after* updateInverters().
+ */
 bool PowerLimiterClass::isDisabled()
 {
     auto const& config = Configuration.get();
@@ -104,7 +108,10 @@ bool PowerLimiterClass::isDisabled()
 
     for (auto& upInv : _inverters) { upInv->standby(); }
 
-    _shutdownComplete = !updateInverters();
+    // we triggered the shutdown, and we won't trigger it again until the DPL
+    // enabled and disabled again. we rely that updateInverters() is called
+    // in the DPL loop(), applying the standby limit and power state.
+    _shutdownComplete = true;
 
     return true;
 }

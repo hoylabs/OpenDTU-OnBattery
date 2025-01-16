@@ -23,7 +23,7 @@ private:
 
     AsyncWebServer* _server;
     AsyncWebSocket _ws;
-    AuthenticationMiddleware _simpleDigestAuth;
+    AsyncAuthenticationMiddleware _simpleDigestAuth;
 
     uint32_t _lastFullPublish = 0;
     uint32_t _lastPublish = 0;
