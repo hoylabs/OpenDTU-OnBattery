@@ -10,13 +10,13 @@ body:
   - type: markdown
     attributes:
       value: |
-        #### Have a question? 👉 [Start a new discussion](https://github.com/helgeerbe/OpenDTU-OnBattery/discussions/new/choose) or [ask in chat](https://discord.gg/WzhxEY62mB).
+        #### Have a question? 👉 [Start a new discussion](https://github.com/hoylabs/OpenDTU-OnBattery/discussions/new/choose) or [ask in chat](https://discord.gg/WzhxEY62mB).
 
         #### Before opening an issue, please double check:
 
         - [Documentation](https://opendtu-onbattery.net)
         - [The FAQs](https://opendtu-onbattery.net/firmware/faq/)
-        - [Existing issues and discussions](https://github.com/helgeerbe/OpenDTU-OnBattery/search?q=&type=issues)
+        - [Existing issues and discussions](https://github.com/hoylabs/OpenDTU-OnBattery/search?q=&type=issues)
   - type: textarea
     id: what-happened
     attributes:
