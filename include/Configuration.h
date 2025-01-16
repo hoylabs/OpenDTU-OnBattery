@@ -220,7 +220,7 @@ enum SolarChargerProviderType { VEDIRECT = 0, MQTT = 1 };
 struct SOLARCHARGER_MQTT_CONFIG_T {
     bool CalculateOutputPower;
 
-    enum WattageUnit { Watts = 0, MilliWatts = 1, KiloWatts = 2 };
+    enum WattageUnit { KiloWatts = 0, Watts = 1, MilliWatts = 2 };
     char MqttOutputPowerTopic[MQTT_MAX_TOPIC_STRLEN + 1];
     char MqttOutputPowerJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     WattageUnit MqttOutputPowerUnit;

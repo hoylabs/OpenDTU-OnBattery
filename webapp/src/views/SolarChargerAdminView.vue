@@ -236,9 +236,9 @@ export default defineComponent({
                 { key: 1, value: 'Mqtt' },
             ],
             wattageUnitTypeList: [
-                { key: 0, value: 'W' },
-                { key: 1, value: 'mW' },
-                { key: 2, value: 'kW' },
+                { key: 0, value: 'kW' },
+                { key: 1, value: 'W' },
+                { key: 2, value: 'mW' },
             ],
             voltageUnitTypeList: [
                 { key: 0, value: 'V' },
