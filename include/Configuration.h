@@ -221,19 +221,19 @@ struct SOLARCHARGER_MQTT_CONFIG_T {
     bool CalculateOutputPower;
 
     enum WattageUnit { KiloWatts = 0, Watts = 1, MilliWatts = 2 };
-    char MqttOutputPowerTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttOutputPowerJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
-    WattageUnit MqttOutputPowerUnit;
+    char PowerTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char PowerJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    WattageUnit PowerUnit;
 
     enum VoltageUnit { Volts = 0, DeciVolts = 1, CentiVolts = 2, MilliVolts = 3 };
-    char MqttOutputVoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttOutputVoltageJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
-    VoltageUnit MqttOutputVoltageUnit;
+    char VoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char VoltageJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    VoltageUnit VoltageTopicUnit;
 
     enum AmperageUnit { Amps = 0, MilliAmps = 1 };
-    char MqttOutputCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttOutputCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
-    AmperageUnit MqttOutputCurrentUnit;
+    char CurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char CurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    AmperageUnit CurrentUnit;
 };
 using SolarChargerMqttConfig = struct SOLARCHARGER_MQTT_CONFIG_T;
 

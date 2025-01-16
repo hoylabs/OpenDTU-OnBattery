@@ -12,8 +12,8 @@ bool Provider::init(bool verboseLogging)
     _verboseLogging = verboseLogging;
     auto const& config = Configuration.get().SolarCharger.Mqtt;
 
-    _outputPowerTopic = config.MqttOutputPowerTopic;
-    _outputCurrentTopic = config.MqttOutputCurrentTopic;
+    _outputPowerTopic = config.PowerTopic;
+    _outputCurrentTopic = config.CurrentTopic;
 
     auto configValid = config.CalculateOutputPower ? !_outputCurrentTopic.isEmpty() : !_outputPowerTopic.isEmpty();
 
@@ -35,7 +35,7 @@ bool Provider::init(bool verboseLogging)
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
                     std::placeholders::_5, std::placeholders::_6,
-                    config.MqttOutputPowerJsonPath)
+                    config.PowerJsonPath)
                 );
 
         if (_verboseLogging) {
@@ -52,7 +52,7 @@ bool Provider::init(bool verboseLogging)
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
                     std::placeholders::_5, std::placeholders::_6,
-                    config.MqttOutputCurrentJsonPath)
+                    config.CurrentJsonPath)
                 );
 
         if (_verboseLogging) {
@@ -61,7 +61,7 @@ bool Provider::init(bool verboseLogging)
         }
     }
 
-    _outputVoltageTopic = config.MqttOutputVoltageTopic;
+    _outputVoltageTopic = config.VoltageTopic;
     if (!_outputVoltageTopic.isEmpty()) {
         _subscribedTopics.push_back(_outputVoltageTopic);
 
@@ -70,7 +70,7 @@ bool Provider::init(bool verboseLogging)
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
                     std::placeholders::_5, std::placeholders::_6,
-                    config.MqttOutputVoltageJsonPath)
+                    config.VoltageJsonPath)
                 );
 
         if (_verboseLogging) {
@@ -102,7 +102,7 @@ void Provider::onMqttMessageOutputPower(espMqttClientTypes::MessageProperties co
 
     auto const& config = Configuration.get().SolarCharger.Mqtt;
     using Unit_t = SolarChargerMqttConfig::WattageUnit;
-    switch (config.MqttOutputPowerUnit) {
+    switch (config.PowerUnit) {
         case Unit_t::MilliWatts:
             *outputPower /= 1000;
             break;
@@ -139,7 +139,7 @@ void Provider::onMqttMessageOutputVoltage(espMqttClientTypes::MessageProperties 
 
     auto const& config = Configuration.get().SolarCharger.Mqtt;
     using Unit_t = SolarChargerMqttConfig::VoltageUnit;
-    switch (config.MqttOutputVoltageUnit) {
+    switch (config.VoltageTopicUnit) {
         case Unit_t::DeciVolts:
             *outputVoltage /= 10;
             break;
@@ -182,7 +182,7 @@ void Provider::onMqttMessageOutputCurrent(espMqttClientTypes::MessageProperties 
 
     auto const& config = Configuration.get().SolarCharger.Mqtt;
     using Unit_t = SolarChargerMqttConfig::AmperageUnit;
-    switch (config.MqttOutputVoltageUnit) {
+    switch (config.CurrentUnit) {
         case Unit_t::MilliAmps:
             *outputCurrent /= 1000;
             break;
