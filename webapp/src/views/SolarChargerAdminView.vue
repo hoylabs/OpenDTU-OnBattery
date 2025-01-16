@@ -55,7 +55,7 @@
                             <div class="col-sm-4"></div>
                             <div class="col-sm-8">
                                 <div
-                                    class="alert alert-secondary"
+                                    class="alert alert-secondary mb-0"
                                     role="alert"
                                     v-html="$t('solarchargeradmin.OutputPowerUsageHint')"
                                 ></div>
