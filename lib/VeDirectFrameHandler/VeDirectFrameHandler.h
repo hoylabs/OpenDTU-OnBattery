@@ -24,7 +24,7 @@ class VeDirectFrameHandler {
 public:
     virtual void loop();                         // main loop to read ve.direct data
     uint32_t getLastUpdate() const;              // timestamp of last successful frame read
-    bool isDataValid() const;                    // return true if data valid and not outdated
+    bool isDataValid();                          // return true if data valid and not outdated
     T const& getData() const { return _tmpFrame; }
     bool sendHexCommand(VeDirectHexCommand cmd, VeDirectHexRegister addr, uint32_t value = 0, uint8_t valsize = 0);
     bool isStateIdle() const { return (_state == State::IDLE); }
@@ -37,9 +37,7 @@ protected:
 
     bool _verboseLogging;
     Print* _msgOut;
-    uint32_t _lastUpdate;                       // timestamp of end frame (data may be fragmented across multiple frames)
-    size_t _actFrameNumber;                     // counts the necessary frames to obtain all related data
-    size_t _endFrameNumber;                     // buffer the end frame number
+    uint32_t _lastUpdate;                       // timestamp of frame containing field "V"
 
     T _tmpFrame;
 
@@ -50,7 +48,7 @@ private:
     void reset();
     void dumpDebugBuffer();
     void rxData(uint8_t inbyte);              // byte of serial data
-    bool processTextData(std::string const& name, std::string const& value);
+    void processTextData(std::string const& name, std::string const& value);
     virtual bool processTextDataDerived(std::string const& name, std::string const& value) = 0;
     virtual void frameValidEvent() { }
     bool disassembleHexData(VeDirectHexData &data);     //return true if disassembling was possible
@@ -79,6 +77,9 @@ private:
     std::array<uint8_t, 512> _debugBuffer;
     unsigned _debugIn;
     uint32_t _lastByteMillis;                  // time of last parsed byte
+    bool _dataValid;                           // true if data is valid and not outdated
+    bool _startUpPassed;                       // helps to handle correct start up on multible frames
+    bool _frameContainsFieldV;                 // true if frame contains field "V"
 
     /**
      * not every frame contains every value the device is communicating, i.e.,

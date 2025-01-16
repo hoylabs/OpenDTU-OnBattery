@@ -50,8 +50,6 @@ template<typename T>
 VeDirectFrameHandler<T>::VeDirectFrameHandler() :
 	_msgOut(&MessageOutputDummy),
 	_lastUpdate(0),
-    _actFrameNumber(0),
-    _endFrameNumber(0),
 	_state(State::IDLE),
 	_checksum(0),
 	_textPointer(0),
@@ -59,7 +57,9 @@ VeDirectFrameHandler<T>::VeDirectFrameHandler() :
 	_name(""),
 	_value(""),
 	_debugIn(0),
-	_lastByteMillis(0)
+	_lastByteMillis(0),
+    _dataValid(false),
+    _startUpPassed(false)
 {
 }
 
@@ -76,6 +76,8 @@ void VeDirectFrameHandler<T>::init(char const* who, int8_t rx, int8_t tx,
 	_msgOut = msgOut;
 	_verboseLogging = verboseLogging;
 	_debugIn = 0;
+    _startUpPassed = false; // to obtain a complete dataset after a new start or restart
+    _dataValid = false;     // data is not valid on start or restart
 	snprintf(_logId, sizeof(_logId), "[VE.Direct %s %d/%d]", who, rx, tx);
 	if (_verboseLogging) { _msgOut->printf("%s init complete\r\n", _logId); }
 }
@@ -211,27 +213,26 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 		if (_verboseLogging) { dumpDebugBuffer(); }
 		if (_checksum == 0) {
 
-            // we use the field-label "V" to detect the start frame because all VE.Direct devices send this field
-            bool startFrame = false;
+            _frameContainsFieldV = false;
 			for (auto const& event : _textData) {
-				if (processTextData(event.first, event.second)) { startFrame = true; }
+				processTextData(event.first, event.second);
 			}
 
-            // related data can be fragmented across multiple frames (start frame -> end frame),
-            // so we check how many frames are required to get all related data
-            // once we kow the amount of frames we set the timestamp (_lastupdate) on the end frame
-            // Note: At startup, it may take up to 2 seconds for the first timestamp to become available.
-            if (startFrame) {
-                if (_actFrameNumber != 0) { _endFrameNumber = _actFrameNumber; } // buffer the end frame number
-                _actFrameNumber = 1;
-            } else {
-                if (_actFrameNumber != 0) { _actFrameNumber++; } // we do not count frames until we have a start frame
+            // A dataset can be fragmented across multiple frames,
+            // so we give just frames containing the field-label "V" a timestamp to avoid
+            // multible timestamps on related data. We also take care to have a complete dataset from
+            // multible frames after a start or restart or fault before we set the data as valid.
+            // Note: At startup, it may take up to 2 seconds for the first timestamp to be available
+            if (_frameContainsFieldV) {
+                if (_startUpPassed) {
+                    _lastUpdate = millis();
+                    _dataValid = true;
+                }
+                _startUpPassed = true;
             }
-            if ((_endFrameNumber != 0) && (_actFrameNumber == _endFrameNumber)) { _lastUpdate = millis(); }
 			frameValidEvent();
 		}
 		else {
-            _actFrameNumber = 0;
 			_msgOut->printf("%s checksum 0x%02x != 0x00, invalid frame\r\n", _logId, _checksum);
 		}
 		reset();
@@ -245,53 +246,52 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 
 /*
  * This function is called every time a new name/value is successfully parsed.  It writes the values to the temporary buffer.
- * Returns true if we have received the start frame (contains field-label "V")
  */
 template<typename T>
-bool VeDirectFrameHandler<T>::processTextData(std::string const& name, std::string const& value) {
+void VeDirectFrameHandler<T>::processTextData(std::string const& name, std::string const& value) {
 	if (_verboseLogging) {
 		_msgOut->printf("%s Text Data '%s' = '%s'\r\n",
 				_logId, name.c_str(), value.c_str());
 	}
 
-	if (processTextDataDerived(name, value)) { return false; }
+	if (processTextDataDerived(name, value)) { return; }
 
 	if (name == "PID") {
 		_tmpFrame.productID_PID = strtol(value.c_str(), nullptr, 0);
-		return false;
+		return;
 	}
 
 	if (name == "SER") {
 		strncpy(_tmpFrame.serialNr_SER, value.c_str(), sizeof(_tmpFrame.serialNr_SER));
-		return false;
+		return;
 	}
 
 	if (name == "FW") {
 		_tmpFrame.firmwareVer_FWE[0] = '\0';
 		strncpy(_tmpFrame.firmwareVer_FW, value.c_str(), sizeof(_tmpFrame.firmwareVer_FW));
-		return false;
+		return;
 	}
 
 	// some devices use "FWE" instead of "FW" for the firmware version.
 	if (name == "FWE") {
 		_tmpFrame.firmwareVer_FW[0] = '\0';
 		strncpy(_tmpFrame.firmwareVer_FWE, value.c_str(), sizeof(_tmpFrame.firmwareVer_FWE));
-		return false;
+		return;
 	}
 
 	if (name == "V") {
 		_tmpFrame.batteryVoltage_V_mV = atol(value.c_str());
-		return true; // start frame
+        _frameContainsFieldV = true; // frame contains the field-label "V"
+		return;
 	}
 
 	if (name == "I") {
 		_tmpFrame.batteryCurrent_I_mA = atol(value.c_str());
-		return false;
+		return;
 	}
 
 	_msgOut->printf("%s Unknown text data '%s' (value '%s')\r\n",
 			_logId, name.c_str(), value.c_str());
-    return false;
 }
 
 /*
@@ -334,15 +334,22 @@ typename VeDirectFrameHandler<T>::State VeDirectFrameHandler<T>::hexRxEvent(uint
 	return ret;
 }
 
+
+// Returns true if the dataset is valid and not older than 10 seconds
 template<typename T>
-bool VeDirectFrameHandler<T>::isDataValid() const
+bool VeDirectFrameHandler<T>::isDataValid()
 {
-	// VE.Direct text frame data is valid if we receive a device voltage and
-	// the data is not older as 10 seconds and the end frame was received
-	// we accept a glitch where the data is valid for ten seconds when batteryVoltage_V_mV != 0.0f and (millis() - _lastUpdate) overflows
-	return (_tmpFrame.batteryVoltage_V_mV != 0.0f) && (millis() - _lastUpdate) < (10 * 1000) && _lastUpdate != 0;
+    // if the data is older than 10 seconds, it is no longer valid (millis() rollover safe)
+    if (_dataValid && (millis() - _lastUpdate > (10 * 1000))) {
+        _dataValid = false;     // data is outdated
+        _startUpPassed = false; // reset the start-up condition
+    }
+
+	return _dataValid;
 }
 
+// Returns the millis() timestamp of the last successfully received dataset
+// Note: Be aware of millis() rollover every 49 days
 template<typename T>
 uint32_t VeDirectFrameHandler<T>::getLastUpdate() const
 {
