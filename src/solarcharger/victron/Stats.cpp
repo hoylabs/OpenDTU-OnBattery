@@ -134,6 +134,7 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
 
         JsonObject instance = instances[entry.first].to<JsonObject>();
         instance["data_age_ms"] = age;
+        instance["hide_serial"] = false;
         populateJsonWithInstanceStats(instance, *entry.second);
     }
 }
