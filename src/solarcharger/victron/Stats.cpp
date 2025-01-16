@@ -115,6 +115,39 @@ std::optional<float> Stats::getYieldDay() const
     return sum;
 }
 
+std::optional<uint8_t> Stats::getStateOfOperation() const
+{
+    for (auto const& entry : _data) {
+        if (!entry.second) { continue; }
+        return entry.second->currentState_CS;
+    }
+    return std::nullopt;
+}
+
+std::optional<float> Stats::getFloatVoltage() const
+{
+    for (auto const& entry : _data) {
+        if (!entry.second) { continue; }
+        auto voltage = entry.second->BatteryFloatMilliVolt;
+        if (voltage.first > 0) { // only return valid and not outdated value
+            return voltage.second / 1000.0;
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<float> Stats::getAbsorptionVoltage() const
+{
+    for (auto const& entry : _data) {
+        if (!entry.second) { continue; }
+        auto voltage = entry.second->BatteryAbsorptionMilliVolt;
+        if (voltage.first > 0) { // only return valid and not outdated value
+            return voltage.second / 1000.0;
+        }
+    }
+    return std::nullopt;
+}
+
 void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const
 {
     ::SolarChargers::Stats::getLiveViewData(root, fullUpdate, lastPublish);
