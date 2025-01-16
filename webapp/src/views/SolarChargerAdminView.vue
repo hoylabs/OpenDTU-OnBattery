@@ -113,14 +113,9 @@
                     textVariant="text-bg-primary"
                     addSpace
                 >
-                    <div
-                        class="alert alert-secondary"
-                        role="alert"
-                        v-html="$t('solarchargeradmin.MqttOutputCurrentUsageHint')"
-                    ></div>
-
                     <InputElement
                         :label="$t('solarchargeradmin.MqttOutputCurrentTopic')"
+                        :tooltip="$t('solarchargeradmin.MqttOutputCurrentUsageHint')"
                         v-model="solarChargerConfigList.mqtt.mqtt_output_current_topic"
                         type="text"
                         maxlength="256"
@@ -159,14 +154,9 @@
                     textVariant="text-bg-primary"
                     addSpace
                 >
-                    <div
-                        class="alert alert-secondary"
-                        role="alert"
-                        v-html="$t('solarchargeradmin.MqttOutputVoltagetUsageHint')"
-                    ></div>
-
                     <InputElement
                         :label="$t('solarchargeradmin.MqttOutputVoltageTopic')"
+                        :tooltip="$t('solarchargeradmin.MqttOutputVoltagetUsageHint')"
                         v-model="solarChargerConfigList.mqtt.mqtt_output_voltage_topic"
                         type="text"
                         maxlength="256"
