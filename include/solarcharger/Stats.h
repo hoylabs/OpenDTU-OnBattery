@@ -12,19 +12,19 @@ public:
     virtual uint32_t getAgeMillis() const;
 
     // total output of all MPPT charge controllers in Watts
-    virtual std::optional<int32_t> getOutputPowerWatts() const;
+    virtual std::optional<float> getOutputPowerWatts() const;
 
     // minimum of all MPPT charge controllers' output voltages in V
     virtual std::optional<float> getOutputVoltage() const;
 
     // total panel input power of all MPPT charge controllers in Watts
-    virtual int32_t getPanelPowerWatts() const;
+    virtual std::optional<uint16_t> getPanelPowerWatts() const;
 
     // sum of total yield of all MPPT charge controllers in kWh
-    virtual float getYieldTotal() const;
+    virtual std::optional<float> getYieldTotal() const;
 
     // sum of today's yield of all MPPT charge controllers in Wh
-    virtual float getYieldDay() const;
+    virtual std::optional<float> getYieldDay() const;
 
     // convert stats to JSON for web application live view
     virtual void getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const;

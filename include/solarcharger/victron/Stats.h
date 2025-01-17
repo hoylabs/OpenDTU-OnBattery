@@ -11,11 +11,11 @@ namespace SolarChargers::Victron {
 class Stats : public ::SolarChargers::Stats {
 public:
     uint32_t getAgeMillis() const final;
-    std::optional<int32_t> getOutputPowerWatts() const final;
+    std::optional<float> getOutputPowerWatts() const final;
     std::optional<float> getOutputVoltage() const final;
-    int32_t getPanelPowerWatts() const final;
-    float getYieldTotal() const final;
-    float getYieldDay() const final;
+    std::optional<uint16_t> getPanelPowerWatts() const final;
+    std::optional<float> getYieldTotal() const final;
+    std::optional<float> getYieldDay() const final;
 
     void getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const final;
     void mqttPublish() const final;

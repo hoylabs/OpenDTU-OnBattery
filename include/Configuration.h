@@ -29,6 +29,7 @@
 #define MQTT_MAX_TOPIC_STRLEN 256
 #define MQTT_MAX_LWTVALUE_STRLEN 20
 #define MQTT_MAX_CERT_STRLEN 2560
+#define MQTT_MAX_JSON_PATH_STRLEN 256
 
 #define INV_MAX_NAME_STRLEN 31
 #define INV_MAX_COUNT 10
@@ -47,8 +48,6 @@
 
 #define POWERMETER_MQTT_MAX_VALUES 3
 #define POWERMETER_HTTP_JSON_MAX_VALUES 3
-#define POWERMETER_HTTP_JSON_MAX_PATH_STRLEN 256
-#define BATTERY_JSON_MAX_PATH_STRLEN 128
 
 struct CHANNEL_CONFIG_T {
     uint16_t MaxChannelPower;
@@ -88,7 +87,7 @@ using HttpRequestConfig = struct HTTP_REQUEST_CONFIG_T;
 
 struct POWERMETER_MQTT_VALUE_T {
     char Topic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char JsonPath[POWERMETER_HTTP_JSON_MAX_PATH_STRLEN + 1];
+    char JsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
 
     enum Unit { Watts = 0, MilliWatts = 1, KiloWatts = 2 };
     Unit PowerUnit;
@@ -111,7 +110,7 @@ using PowerMeterSerialSdmConfig = struct POWERMETER_SERIAL_SDM_CONFIG_T;
 struct POWERMETER_HTTP_JSON_VALUE_T {
     HttpRequestConfig HttpRequest;
     bool Enabled;
-    char JsonPath[POWERMETER_HTTP_JSON_MAX_PATH_STRLEN + 1];
+    char JsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
 
     enum Unit { Watts = 0, MilliWatts = 1, KiloWatts = 2 };
     Unit PowerUnit;
@@ -182,9 +181,9 @@ struct BATTERY_CONFIG_T {
     uint8_t JkBmsInterface;
     uint8_t JkBmsPollingInterval;
     char MqttSocTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttSocJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
+    char MqttSocJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     char MqttVoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttVoltageJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
+    char MqttVoltageJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryVoltageUnit MqttVoltageUnit;
     bool EnableDischargeCurrentLimit;
     float DischargeCurrentLimit;
@@ -192,7 +191,7 @@ struct BATTERY_CONFIG_T {
     float DischargeCurrentLimitBelowVoltage;
     bool UseBatteryReportedDischargeCurrentLimit;
     char MqttDischargeCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttDischargeCurrentJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
+    char MqttDischargeCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryAmperageUnit MqttAmperageUnit;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
@@ -216,13 +215,34 @@ struct GRID_CHARGER_CONFIG_T {
 };
 using GridChargerConfig = struct GRID_CHARGER_CONFIG_T;
 
-enum SolarChargerProviderType { VEDIRECT = 0 };
+enum SolarChargerProviderType { VEDIRECT = 0, MQTT = 1 };
+
+struct SOLARCHARGER_MQTT_CONFIG_T {
+    bool CalculateOutputPower;
+
+    enum WattageUnit { KiloWatts = 0, Watts = 1, MilliWatts = 2 };
+    char PowerTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char PowerJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    WattageUnit PowerUnit;
+
+    enum VoltageUnit { Volts = 0, DeciVolts = 1, CentiVolts = 2, MilliVolts = 3 };
+    char VoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char VoltageJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    VoltageUnit VoltageTopicUnit;
+
+    enum AmperageUnit { Amps = 0, MilliAmps = 1 };
+    char CurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char CurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    AmperageUnit CurrentUnit;
+};
+using SolarChargerMqttConfig = struct SOLARCHARGER_MQTT_CONFIG_T;
 
 struct SOLAR_CHARGER_CONFIG_T {
     bool Enabled;
     bool VerboseLogging;
-    SolarChargerProviderType Provider;
     bool PublishUpdatesOnly;
+    SolarChargerProviderType Provider;
+    SolarChargerMqttConfig Mqtt;
 };
 using SolarChargerConfig = struct SOLAR_CHARGER_CONFIG_T;
 
@@ -386,6 +406,7 @@ public:
 
     static void serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target);
     static void serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target);
+    static void serializeSolarChargerMqttConfig(SolarChargerMqttConfig const& source, JsonObject& target);
     static void serializePowerMeterMqttConfig(PowerMeterMqttConfig const& source, JsonObject& target);
     static void serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target);
@@ -396,6 +417,7 @@ public:
 
     static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
     static void deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target);
+    static void deserializeSolarChargerMqttConfig(JsonObject const& source, SolarChargerMqttConfig& target);
     static void deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target);
     static void deserializePowerMeterSerialSdmConfig(JsonObject const& source, PowerMeterSerialSdmConfig& target);
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);

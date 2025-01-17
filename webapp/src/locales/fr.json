@@ -169,6 +169,7 @@
         "dBm": "{dbm} dBm"
     },
     "solarchargerhome": {
+        "MqttProduct": "Valeurs du contrôleur de charge à partir de MQTT",
         "SerialNumber": "Numéro de série",
         "FirmwareVersion": "Version du Firmware",
         "DataAge": "Âge des données",
@@ -413,9 +414,9 @@
         "InverterTotalYieldTotal": "Onduleurs rendement total",
         "InverterTotalYieldDay": "Onduleurs rendement du jour",
         "InverterTotalPower": "Onduleurs puissance de l'installation",
-        "MpptTotalYieldTotal": "MPPT rendement total",
-        "MpptTotalYieldDay": "MPPT rendement du jour",
-        "MpptTotalPower": "MPPT puissance de l'installation",
+        "MpptTotalYieldTotal": "Rendement solair total",
+        "MpptTotalYieldDay": "Rendement solaire du jour",
+        "MpptTotalPower": "Puissance totale solaire",
         "BatteryCharge": "Battery Charge",
         "BatteryPower": "Battery Power",
         "HomePower": "Grid Power",

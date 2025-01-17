@@ -82,19 +82,29 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
         solarchargerObj["enabled"] = config.SolarCharger.Enabled;
 
         if (config.SolarCharger.Enabled) {
-            auto totalVeObj = solarchargerObj["total"].to<JsonObject>();
-
-            auto power = SolarCharger.getStats()->getPanelPowerWatts();
+            float power = 0;
             auto outputPower = SolarCharger.getStats()->getOutputPowerWatts();
+            auto panelPower = SolarCharger.getStats()->getPanelPowerWatts();
 
-            // use output power if available, because it is more accurate
             if (outputPower) {
                 power = *outputPower;
             }
 
-            addTotalField(totalVeObj, "Power", power, "W", 1);
-            addTotalField(totalVeObj, "YieldDay", SolarCharger.getStats()->getYieldDay(), "Wh", 0);
-            addTotalField(totalVeObj, "YieldTotal", SolarCharger.getStats()->getYieldTotal(), "kWh", 2);
+            if (power == 0 && panelPower) {
+                power = *panelPower;
+            }
+
+            addTotalField(solarchargerObj, "power", power, "W", 1);
+
+            auto yieldDay = SolarCharger.getStats()->getYieldDay();
+            if (yieldDay) {
+                addTotalField(solarchargerObj, "yieldDay", *yieldDay, "Wh", 0);
+            }
+
+            auto yieldTotal = SolarCharger.getStats()->getYieldTotal();
+            if (yieldTotal) {
+                addTotalField(solarchargerObj, "yieldTotal", *yieldTotal, "kWh", 2);
+            }
         }
 
         if (!all) { _lastPublishSolarCharger = millis(); }

@@ -38,7 +38,10 @@
         "Release": "Release to refresh",
         "Close": "Close",
         "Yes": "Yes",
-        "No": "No"
+        "No": "No",
+        "Unit": "Unit",
+        "MqttJsonPath": "Optional: JSON Path",
+        "MqttJsonPathDescription": "Application specific JSON path to find the value in the JSON payload, e.g., 'electricLevel'. Leave empty if the topic's payload contains a plain numeric value."
     },
     "wait": {
         "NotReady": "OpenDTU-OnBattery is not yet ready",
@@ -169,13 +172,14 @@
         "dBm": "{dbm} dBm"
     },
     "solarchargerhome": {
+        "MqttProduct": "Charge controller values from MQTT",
         "SerialNumber": "Serial Number",
         "FirmwareVersion": "Firmware Version",
         "DataAge": "Data Age",
         "Seconds": "{val} seconds",
         "Property": "Property",
         "Value": "Value",
-        "Unit": "Unit",
+        "Unit": "@:base.Unit",
         "section_device": "Device Info",
         "device": {
             "LOAD": "Load output state",
@@ -197,7 +201,8 @@
             "E": "Efficiency (calculated)",
             "AbsorptionVoltage": "Absorption voltage",
             "FloatVoltage": "Float voltage",
-            "SBSTemperature": "SBS temperature"
+            "SBSTemperature": "SBS temperature",
+            "Power": "Power"
         },
         "section_input": "Input (Solar Panels)",
         "input": {
@@ -434,9 +439,9 @@
         "InverterTotalYieldTotal": "Inverter Total Yield Total",
         "InverterTotalYieldDay": "Inverter Total Yield Day",
         "InverterTotalPower": "Inverter Total Power",
-        "MpptTotalYieldTotal": "MPPT Total Yield Total",
-        "MpptTotalYieldDay": "MPPT Total Yield Day",
-        "MpptTotalPower": "MPPT Total Power",
+        "MpptTotalYieldTotal": "Solar Charger Total Yield Total",
+        "MpptTotalYieldDay": "Solar Charger Total Yield Day",
+        "MpptTotalPower": "Solar Charger Total Power",
         "BatteryCharge": "Battery Charge",
         "BatteryPower": "Battery Power",
         "HomePower": "Grid Power",
@@ -597,8 +602,25 @@
         "EnableSolarCharger": "Enable Interface",
         "Provider": "Data Provider",
         "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
+        "ProviderMqtt": "Solar Charger data from MQTT broker",
         "VerboseLogging": "@:base.VerboseLogging",
-        "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change"
+        "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change",
+        "CalculateOutputPower": "Calculate Solar Charger output power",
+        "CalculateOutputPowerDescription": "If enabled, the output power of the Solar Charger will be calculated based on the current and voltage values. If disabled, the output power will be taken from the Solar Charger directly.",
+        "OutputPowerUsageHint": "<b>Hint:</b> The output power is used by the DPL solar-passthrough feature. Details can be found in the documentation concerning Solar-Passthrough.",
+        "MqttJsonPath": "@:base.MqttJsonPath",
+        "MqttJsonPathDescription": "@:base.MqttJsonPathDescription",
+        "MqttOutputPowerConfiguration": "Output Power Settings",
+        "MqttOutputPowerTopic": "Output Power Topic",
+        "MqttOutputPowerUnit": "@:base.Unit",
+        "MqttOutputCurrentConfiguration": "Output Current Settings",
+        "MqttOutputCurrentUsageHint": "The output current is used to calculate the output power based on the current and voltage values when 'Calculate Solar Charger output power' is enabled.",
+        "MqttOutputCurrentTopic": "Output Current Topic",
+        "MqttOutputCurrentUnit": "@:base.Unit",
+        "MqttOutputVoltageConfiguration": "Output Voltage Settings",
+        "MqttOutputVoltagetUsageHint": "The output voltage is used as a fallback voltage for the DPL when the battery voltage is not known, and is needed when 'Calculate Solar Charger output power' is enabled. Details can be found in the documentation concerning Solar-Passthrough.",
+        "MqttOutputVoltageTopic": "Output Voltage Topic",
+        "MqttOutputVoltageUnit": "@:base.Unit"
     },
     "powermeteradmin": {
         "PowerMeterSettings": "Power Meter Settings",
@@ -629,7 +651,7 @@
         "httpEnabled": "Value Enabled",
         "valueJsonPath": "JSON Path",
         "valueJsonPathDescription": "Application specific JSON path to find the power value in the JSON payload, e.g., 'power/total/watts' or simply 'total'.",
-        "valueUnit": "Unit",
+        "valueUnit": "@:base.Unit",
         "valueSignInverted": "Change Sign",
         "valueSignInvertedHint": "Is is expected that positive values denote power usage from the grid. Check this option if the sign of this value has the opposite meaning.",
         "testHttpJsonHeader": "Test Configuration",
@@ -730,9 +752,9 @@
         "MqttConfiguration": "MQTT Settings",
         "MqttSocConfiguration": "SoC Settings",
         "MqttVoltageConfiguration": "Voltage Settings",
-        "MqttJsonPath": "Optional: JSON Path",
-        "MqttJsonPathDescription": "Application specific JSON path to find the value in the JSON payload, e.g., 'electricLevel'. Leave empty if the topic's payload contains a plain numeric value.",
-        "MqttVoltageUnit": "Unit",
+        "MqttJsonPath": "@:base.MqttJsonPath",
+        "MqttJsonPathDescription": "@:base.MqttJsonPathDescription",
+        "MqttVoltageUnit": "@:base.Unit",
         "MqttSocTopic": "SoC Value Topic",
         "MqttVoltageTopic": "Voltage Value Topic",
         "SerialSettings": "Serial Settings",
@@ -752,7 +774,7 @@
         "UseBatteryReportedDischargeCurrentLimit": "Use Battery-Reported limit",
         "BatteryReportedDischargeCurrentLimitInfo": "<b>Hint:</b> The lowest limit will be applied, with the battery-reported discharge current limit used only if an update was received in the last minute; otherwise, the previously specified limit will act as a fallback.",
         "MqttDischargeCurrentTopic": "Discharge Current Limit Value Topic",
-        "MqttAmperageUnit": "Unit"
+        "MqttAmperageUnit": "@:base.Unit"
     },
     "inverteradmin": {
         "InverterSettings": "Inverter Settings",
@@ -928,7 +950,7 @@
         "Output": "Output",
         "Property": "Property",
         "Value": "Value",
-        "Unit": "Unit",
+        "Unit": "@:base.Unit",
         "input_voltage": "Input voltage",
         "input_current": "Input current",
         "input_power": "Input power",
@@ -988,7 +1010,7 @@
         "yes": "@:base.Yes",
         "no": "@:base.No",
         "Value": "Value",
-        "Unit": "Unit",
+        "Unit": "@:base.Unit",
         "SoC": "State of Charge",
         "stateOfHealth": "State of Health",
         "voltage": "Voltage",

@@ -38,7 +38,10 @@
         "Release": "Loslassen zum Aktualisieren",
         "Close": "Schließen",
         "Yes": "Ja",
-        "No": "Nein"
+        "No": "Nein",
+        "Unit": "Einheit",
+        "MqttJsonPath": "Optional: JSON-Pfad",
+        "MqttJsonPathDescription": "Anwendungsspezifischer JSON-Pfad um den Wert in den JSON Nutzdatzen zu finden, z.B. 'electricLevel'. Leer lassen, falls die Nutzdaten des Topics einen numerischen Wert enthält."
     },
     "wait": {
         "NotReady": "OpenDTU-OnBattery ist noch nicht bereit",
@@ -169,13 +172,14 @@
         "dBm": "{dbm} dBm"
     },
     "solarchargerhome": {
+        "MqttProduct": "Ladereglerwerte aus MQTT",
         "SerialNumber": "Seriennummer",
         "FirmwareVersion": "Firmware-Version",
         "DataAge": "letzte Aktualisierung",
         "Seconds": "vor {val} Sekunden",
         "Property": "Eigenschaft",
         "Value": "Wert",
-        "Unit": "Einheit",
+        "Unit": "@:base.Unit",
         "section_device": "Geräteinformation",
         "device": {
             "LOAD": "Status Lastausgang",
@@ -197,7 +201,8 @@
             "E": "Effizienz (berechnet)",
             "AbsorptionVoltage": "Absorptionsspannung",
             "FloatVoltage": "Erhaltungsspannung",
-            "SBSTemperature": "SBS Temperatur"
+            "SBSTemperature": "SBS Temperatur",
+            "Power": "Leistung"
         },
         "section_input": "Eingang (Solarpanele)",
         "input": {
@@ -432,9 +437,9 @@
         "InverterTotalYieldTotal": "Inverter Gesamtertrag Insgesamt",
         "InverterTotalYieldDay": "Inverter Gesamtertrag Heute",
         "InverterTotalPower": "Inverter Gesamtleistung",
-        "MpptTotalYieldTotal": "MPPT Gesamtertrag Insgesamt",
-        "MpptTotalYieldDay": "MPPT Gesamtertrag Heute",
-        "MpptTotalPower": "MPPT Gesamtleistung",
+        "MpptTotalYieldTotal": "Solarladeregler Gesamtertrag Insgesamt",
+        "MpptTotalYieldDay": "Solarladeregler Gesamtertrag Heute",
+        "MpptTotalPower": "Solarladeregler Gesamtleistung",
         "BatteryCharge": "Batterie Ladezustand",
         "BatteryPower": "Batterie Leistung",
         "HomePower": "Leistung / Netz",
@@ -595,8 +600,25 @@
         "EnableSolarCharger": "Aktiviere Schnittstelle",
         "Provider": "Datenanbieter",
         "ProviderVeDirect": "Victron MPPT(s) per VE.Direct Schnittstelle",
+        "ProviderMqtt": "Solarladereglerwerte aus MQTT Broker",
         "VerboseLogging": "@:base.VerboseLogging",
-        "MqttPublishUpdatesOnly": "Werte nur bei Änderung an MQTT broker senden"
+        "MqttPublishUpdatesOnly": "Werte nur bei Änderung an MQTT broker senden",
+        "CalculateOutputPower": "Solarladeregler-Ausgangsleistung berechnen",
+        "CalculateOutputPowerDescription": "Wenn aktiviert, wird die Ausgangsleistung des Solarladeregler basierend auf den Strom- und Spannungswerten berechnet. Wenn deaktiviert, wird die Ausgangsleistung direkt vom Solarladeregler übernommen.",
+        "OutputPowerUsageHint": "<b>Hinweis:</b> Die Ausgangsleistung wird von der DPL-Solar-Passthrough-Funktion verwendet. Weitere Details findest du in der Solar-Passthrough Dokumentation.",
+        "MqttJsonPath": "@:base.MqttJsonPath",
+        "MqttJsonPathDescription": "@:base.MqttJsonPathDescription",
+        "MqttOutputPowerConfiguration": "Einstellungen Ausgangsleistung",
+        "MqttOutputPowerTopic": "Ausgangsleistung Topic",
+        "MqttOutputPowerUnit": "@:base.Unit",
+        "MqttOutputCurrentConfiguration": "Einstellungen Ausgangsstrom",
+        "MqttOutputCurrentUsageHint": "Der Ausgangsstrom wird verwendet, um die Ausgangsleistung basierend auf den Strom- und Spannungswerten zu berechnen, wenn 'Solarladeregler-Ausgangsleistung berechnen' aktiviert ist.",
+        "MqttOutputCurrentTopic": "Ausgangsstrom Topic",
+        "MqttOutputCurrentUnit": "@:base.Unit",
+        "MqttOutputVoltageConfiguration": "Einstellungen Ausgangsspannung",
+        "MqttOutputVoltagetUsageHint": "Die Ausgangsspannung wird als Ersatzspannung für die DPL verwendet, wenn die Batteriespannung nicht bekannt ist, und ist erforderlich, wenn 'Solarladeregler-Ausgangsleistung berechnen' aktiviert ist. Weitere Details findest du in der Solar-Passthrough Dokumentation.",
+        "MqttOutputVoltageTopic": "Ausgangsspannung Topic",
+        "MqttOutputVoltageUnit": "@:base.Unit"
     },
     "powermeteradmin": {
         "PowerMeterSettings": "Stromzähler Einstellungen",
@@ -627,7 +649,7 @@
         "httpEnabled": "Wert aktiviert",
         "valueJsonPath": "JSON-Pfad",
         "valueJsonPathDescription": "Anwendungsspezifischer JSON-Pfad um den Leistungswert in den JSON Nutzdatzen zu finden, z.B. 'power/total/watts' oder nur 'total'.",
-        "valueUnit": "Einheit",
+        "valueUnit": "@:base.Unit",
         "valueSignInverted": "Vorzeichen umkehren",
         "valueSignInvertedHint": "Positive Werte werden als Leistungsabnahme aus dem Netz interpretiert. Diese Option muss aktiviert werden, wenn das Vorzeichen des Wertes die gegenteilige Bedeutung hat.",
         "testHttpJsonHeader": "Konfiguration testen",
@@ -727,9 +749,9 @@
         "ProviderPytesCan": "Pytes per CAN-Bus",
         "MqttSocConfiguration": "Einstellungen SoC",
         "MqttVoltageConfiguration": "Einstellungen Spannung",
-        "MqttJsonPath": "Optional: JSON-Pfad",
-        "MqttJsonPathDescription": "Anwendungsspezifischer JSON-Pfad um den Wert in den JSON Nutzdatzen zu finden, z.B. 'electricLevel'. Leer lassen, falls die Nutzdaten des Topics einen numerischen Wert enthält.",
-        "MqttVoltageUnit": "Einheit",
+        "MqttJsonPath": "@:base.MqttJsonPath",
+        "MqttJsonPathDescription": "@:base.MqttJsonPathDescription",
+        "MqttVoltageUnit": "@:base.Unit",
         "MqttSocTopic": "Topic für SoC",
         "MqttVoltageTopic": "Topic für Spannung",
         "SerialSettings": "Einstellungen Serielle Schnittstelle",
@@ -749,7 +771,7 @@
         "UseBatteryReportedDischargeCurrentLimit": "Von der Batterie übermitteltes Limit verwenden",
         "BatteryReportedDischargeCurrentLimitInfo": "<b>Hinweis:</b> Das niedrigste Limit wird angewendet, wobei das von der Batterie übermittelte Entladestromlimit nur verwendet wird, wenn in der letzten Minute ein Update eingegangen ist; andernfalls dient das zuvor festgelegte Limit als Fallback.",
         "MqttDischargeCurrentTopic": "Topic für Entladestromlimit",
-        "MqttAmperageUnit": "Einheit"
+        "MqttAmperageUnit": "@:base.Unit"
     },
     "inverteradmin": {
         "InverterSettings": "Wechselrichter Einstellungen",
@@ -924,7 +946,7 @@
         "Output": "Ausgang",
         "Property": "Eigenschaft",
         "Value": "Wert",
-        "Unit": "Einheit",
+        "Unit": "@:base.Unit",
         "input_voltage": "Eingangsspannung",
         "input_current": "Eingangsstrom",
         "input_power": "Eingangsleistung",
@@ -984,7 +1006,7 @@
         "yes": "@:base.Yes",
         "no": "@:base.No",
         "Value": "Wert",
-        "Unit": "Einheit",
+        "Unit": "@:base.Unit",
         "SoC": "Ladezustand (SoC)",
         "stateOfHealth": "Batteriezustand (SoH)",
         "voltage": "Spannung",

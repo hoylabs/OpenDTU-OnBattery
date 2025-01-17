@@ -2,7 +2,6 @@
 #include <Configuration.h>
 #include <MqttSettings.h>
 #include <MessageOutput.h>
-#include <solarcharger/Controller.h>
 #include <solarcharger/victron/Stats.h>
 
 namespace SolarChargers::Victron {
@@ -32,9 +31,9 @@ uint32_t Stats::getAgeMillis() const
 
 }
 
-std::optional<int32_t> Stats::getOutputPowerWatts() const
+std::optional<float> Stats::getOutputPowerWatts() const
 {
-    int32_t sum = 0;
+    float sum = 0;
     auto data = false;
 
     for (auto const& entry : _data) {
@@ -65,12 +64,14 @@ std::optional<float> Stats::getOutputVoltage() const
     return min;
 }
 
-int32_t Stats::getPanelPowerWatts() const
+std::optional<uint16_t> Stats::getPanelPowerWatts() const
 {
-    int32_t sum = 0;
+    uint16_t sum = 0;
+    auto data = false;
 
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
+        data = true;
 
         // if any charge controller is part of a VE.Smart network, and if the
         // charge controller is connected in a way that allows to send
@@ -83,10 +84,12 @@ int32_t Stats::getPanelPowerWatts() const
         sum += entry.second->panelPower_PPV_W;
     }
 
+    if (!data) { return std::nullopt; }
+
     return sum;
 }
 
-float Stats::getYieldTotal() const
+std::optional<float> Stats::getYieldTotal() const
 {
     float sum = 0;
 
@@ -99,7 +102,7 @@ float Stats::getYieldTotal() const
     return sum;
 }
 
-float Stats::getYieldDay() const
+std::optional<float> Stats::getYieldDay() const
 {
     float sum = 0;
 
@@ -131,6 +134,7 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
 
         JsonObject instance = instances[entry.first].to<JsonObject>();
         instance["data_age_ms"] = age;
+        instance["hide_serial"] = false;
         populateJsonWithInstanceStats(instance, *entry.second);
     }
 }

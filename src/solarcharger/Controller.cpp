@@ -5,6 +5,7 @@
 #include <solarcharger/Controller.h>
 #include <solarcharger/DummyStats.h>
 #include <solarcharger/victron/Provider.h>
+#include <solarcharger/mqtt/Provider.h>
 
 SolarChargers::Controller SolarCharger;
 
@@ -37,6 +38,9 @@ void Controller::updateSettings()
     switch (config.SolarCharger.Provider) {
         case SolarChargerProviderType::VEDIRECT:
             _upProvider = std::make_unique<::SolarChargers::Victron::Provider>();
+            break;
+        case SolarChargerProviderType::MQTT:
+            _upProvider = std::make_unique<::SolarChargers::Mqtt::Provider>();
             break;
         default:
             MessageOutput.printf("[SolarCharger] Unknown provider: %d\r\n", config.SolarCharger.Provider);

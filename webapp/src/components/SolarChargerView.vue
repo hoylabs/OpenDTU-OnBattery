@@ -19,12 +19,17 @@
                         <div class="p-1 flex-grow-1">
                             <div class="d-flex flex-wrap">
                                 <div style="padding-right: 2em">
-                                    {{ item.product_id }}
+                                    <template v-if="item.product_id === 'MQTT'">
+                                        {{ $t('solarchargerhome.MqttProduct') }}
+                                    </template>
+                                    <template v-else>
+                                        {{ item.product_id }}
+                                    </template>
                                 </div>
-                                <div style="padding-right: 2em">
+                                <div v-if="item.hide_serial !== true" style="padding-right: 2em">
                                     {{ $t('solarchargerhome.SerialNumber') }}: {{ serial }}
                                 </div>
-                                <div style="padding-right: 2em">
+                                <div v-if="item.firmware_version" style="padding-right: 2em">
                                     {{ $t('solarchargerhome.FirmwareVersion') }}: {{ item.firmware_version }}
                                 </div>
                                 <div style="padding-right: 2em">
