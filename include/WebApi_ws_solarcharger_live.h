@@ -16,10 +16,8 @@ public:
 
 private:
     void generateCommonJsonResponse(JsonVariant& root, bool fullUpdate);
-    static void populateJson(const JsonObject &root, const VeDirectMpptController::data_t &mpptData);
     void onLivedataStatus(AsyncWebServerRequest* request);
     void onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len);
-    bool hasUpdate(size_t idx);
 
     AsyncWebServer* _server;
     AsyncWebSocket _ws;
@@ -27,7 +25,6 @@ private:
 
     uint32_t _lastFullPublish = 0;
     uint32_t _lastPublish = 0;
-    uint16_t responseSize() const;
 
     std::mutex _mutex;
 

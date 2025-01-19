@@ -6,49 +6,55 @@
         </div>
     </BootstrapAlert>
     <div class="row row-cols-1 row-cols-md-3 g-3" ref="totals-container">
-        <div class="col" v-if="solarChargerData.enabled">
-            <CardElement
-                centerContent
-                textVariant="text-bg-primary"
-                :text="$t('invertertotalinfo.MpptTotalYieldTotal')"
-            >
-                <h2>
-                    {{
-                        $n(solarChargerData.total.YieldTotal.v, 'decimal', {
-                            minimumFractionDigits: solarChargerData.total.YieldTotal.d,
-                            maximumFractionDigits: solarChargerData.total.YieldTotal.d,
-                        })
-                    }}
-                    <small class="text-muted">{{ solarChargerData.total.YieldTotal.u }}</small>
-                </h2>
-            </CardElement>
-        </div>
-        <div class="col" v-if="solarChargerData.enabled">
-            <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.MpptTotalYieldDay')">
-                <h2>
-                    {{
-                        $n(solarChargerData.total.YieldDay.v, 'decimal', {
-                            minimumFractionDigits: solarChargerData.total.YieldDay.d,
-                            maximumFractionDigits: solarChargerData.total.YieldDay.d,
-                        })
-                    }}
-                    <small class="text-muted">{{ solarChargerData.total.YieldDay.u }}</small>
-                </h2>
-            </CardElement>
-        </div>
-        <div class="col" v-if="solarChargerData.enabled">
-            <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.MpptTotalPower')">
-                <h2>
-                    {{
-                        $n(solarChargerData.total.Power.v, 'decimal', {
-                            minimumFractionDigits: solarChargerData.total.Power.d,
-                            maximumFractionDigits: solarChargerData.total.Power.d,
-                        })
-                    }}
-                    <small class="text-muted">{{ solarChargerData.total.Power.u }}</small>
-                </h2>
-            </CardElement>
-        </div>
+        <template v-if="solarChargerData.enabled">
+            <div class="col" v-if="solarChargerData.yieldTotal">
+                <CardElement
+                    centerContent
+                    textVariant="text-bg-primary"
+                    :text="$t('invertertotalinfo.MpptTotalYieldTotal')"
+                >
+                    <h2>
+                        {{
+                            $n(solarChargerData.yieldTotal.v, 'decimal', {
+                                minimumFractionDigits: solarChargerData.yieldTotal.d,
+                                maximumFractionDigits: solarChargerData.yieldTotal.d,
+                            })
+                        }}
+                        <small class="text-muted">{{ solarChargerData.yieldTotal.u }}</small>
+                    </h2>
+                </CardElement>
+            </div>
+            <div class="col" v-if="solarChargerData.yieldDay">
+                <CardElement
+                    centerContent
+                    textVariant="text-bg-primary"
+                    :text="$t('invertertotalinfo.MpptTotalYieldDay')"
+                >
+                    <h2>
+                        {{
+                            $n(solarChargerData.yieldDay.v, 'decimal', {
+                                minimumFractionDigits: solarChargerData.yieldDay.d,
+                                maximumFractionDigits: solarChargerData.yieldDay.d,
+                            })
+                        }}
+                        <small class="text-muted">{{ solarChargerData.yieldDay.u }}</small>
+                    </h2>
+                </CardElement>
+            </div>
+            <div class="col" v-if="solarChargerData.power">
+                <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.MpptTotalPower')">
+                    <h2>
+                        {{
+                            $n(solarChargerData.power.v, 'decimal', {
+                                minimumFractionDigits: solarChargerData.power.d,
+                                maximumFractionDigits: solarChargerData.power.d,
+                            })
+                        }}
+                        <small class="text-muted">{{ solarChargerData.power.u }}</small>
+                    </h2>
+                </CardElement>
+            </div>
+        </template>
         <div class="col" v-if="hasInverters">
             <CardElement
                 centerContent

@@ -377,8 +377,15 @@ void Controller::getJsonData(JsonVariant& root) const
     VAL(OutputPower, "output_power");
     VAL(InputTemperature, "input_temp");
     VAL(OutputTemperature, "output_temp");
-    VAL(Efficiency, "efficiency");
 #undef VAL
+
+    // special handling for efficiency, as we need to multiply it
+    // to get the percentage (rather than the decimal notation).
+    auto oEfficiency = _dataPoints.getDataPointFor<Label::Efficiency>();
+    if (oEfficiency) {
+        root["efficiency"]["v"] = *_dataPoints.get<Label::Efficiency>() * 100;
+        root["efficiency"]["u"] = oEfficiency->getUnitText();
+    }
 }
 
 } // namespace GridCharger::Huawei
