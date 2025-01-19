@@ -283,6 +283,12 @@ void PowerLimiterClass::loop()
     _oLoadCorrectedVoltage = std::nullopt;
 
     if (_verboseLogging && usesBatteryPoweredInverter()) {
+        MessageOutput.printf("[DPL] up %lu s, %snext inverter restart at %d s (set to %d)\r\n",
+                millis()/1000,
+                (_nextInverterRestart.first?"":"NO "),
+                _nextInverterRestart.second/1000,
+                config.PowerLimiter.RestartHour);
+
         MessageOutput.printf("[DPL] battery interface %sabled, SoC %.1f %% (%s), age %u s (%s)\r\n",
                 (config.Battery.Enabled?"en":"dis"),
                 Battery.getStats()->getSoC(),
