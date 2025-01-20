@@ -52,10 +52,10 @@ void ShellyACPlugClass::loop()
         PowerOFF();
     }
     if (verboselogging) {
-        MessageOutput.printf("[ShellyACPlug::loop] Power reported by the Smart Plug%f W\r\n", _acPower );
+        MessageOutput.printf("[ShellyACPlug::loop] Power reported by the Smart Plug%f W\r\n",  _readpower);
         MessageOutput.printf("[ShellyACPlug::loop] State of the Smart Plug ON/OFF %d \r\n", powerstate );
         MessageOutput.printf("[ShellyACPlug::loop] Current Battery SoC %f \r\n", _SoC);
-        MessageOutput.printf("[ShellyACPlug::loop] Current Power consumed by the household %f W\r\n", _readpower );
+        MessageOutput.printf("[ShellyACPlug::loop] Current Power consumed by the household %f W\r\n", _acPower );
     }
 }
 
