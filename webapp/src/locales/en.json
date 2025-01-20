@@ -715,7 +715,7 @@
         "UpperPowerLimit": "Maximum Power Limit",
         "UpperPowerLimitHint": "The inverter is always set such that no more than this output power is achieved. This value must be selected to comply with the current carrying capacity of the AC connection cables.",
         "SocThresholds": "Battery State of Charge (SoC) Thresholds",
-        "IgnoreSoc": "Use Voltage Threshols Only",
+        "IgnoreSoc": "Use Voltage Thresholds Only",
         "IgnoreSocHint": "When enabled, only voltage thresholds are considered. Disable this switch to configure and use battery State of Charge (SoC) thresholds (not recommended as the SoC value is often inaccurate).",
         "StartThreshold": "Start Threshold for Battery Discharging",
         "StopThreshold": "Stop Threshold for Battery Discharging",
