@@ -254,11 +254,11 @@ void WebApiMqttClass::onMqttAdminPost(AsyncWebServerRequest* request)
             return;
         }
 
-        if (root["mqtt_publish_interval"].as<uint32_t>() < 5 || root["mqtt_publish_interval"].as<uint32_t>() > 65535) {
-            retMsg["message"] = "Publish interval must be a number between 5 and 65535!";
+        if (root["mqtt_publish_interval"].as<uint32_t>() < 1 || root["mqtt_publish_interval"].as<uint32_t>() > 86400) {
+            retMsg["message"] = "Publish interval must be a number between 1 and 86400!";
             retMsg["code"] = WebApiError::MqttPublishInterval;
-            retMsg["param"]["min"] = 5;
-            retMsg["param"]["max"] = 65535;
+            retMsg["param"]["min"] = 1;
+            retMsg["param"]["max"] = 86400;
             WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
             return;
         }
