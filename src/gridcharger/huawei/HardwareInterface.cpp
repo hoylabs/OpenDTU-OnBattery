@@ -108,6 +108,13 @@ void HardwareInterface::loop()
                 _upDataInFlight->add<DataPointLabel::OutputCurrent>(value);
                 break;
         }
+
+        // the OutputCurent value is the last value in a data request's answer
+        // among all values we process into the data point container, so we
+        // make the in-flight container the current container.
+        if (label == DataPointLabel::OutputCurrent) {
+            _upDataCurrent = std::move(_upDataInFlight);
+        }
     }
 
     size_t queueSize = _sendQueue.size();
@@ -135,20 +142,12 @@ void HardwareInterface::loop()
 
         _nextRequestMillis = millis() + DataRequestIntervalMillis;
 
-        auto const& config = Configuration.get();
-        if (_upDataInFlight && config.Huawei.VerboseLogging) {
-            auto iter = _upDataInFlight->cbegin();
-            while (iter != _upDataInFlight->cend()) {
-                MessageOutput.printf("[Huawei::HwIfc] [%.3f] %s: %s%s\r\n",
-                    static_cast<float>(iter->second.getTimestamp())/1000,
-                    iter->second.getLabelText().c_str(),
-                    iter->second.getValueText().c_str(),
-                    iter->second.getUnitText().c_str());
-                ++iter;
-            }
+        // this should be redundant, as every answer to a data request should
+        // have the OutputCurrent value, which is supposed to be the last value
+        // in the answer, and it already triggers moving the data in flight.
+        if (_upDataInFlight) {
+            _upDataCurrent = std::move(_upDataInFlight);
         }
-
-        _upDataCurrent = std::move(_upDataInFlight);
     }
 }
 
@@ -172,6 +171,31 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
     _sendQueue.push({setting, static_cast<uint16_t>(val)});
 
     xTaskNotifyGive(_taskHandle);
+}
+
+std::unique_ptr<DataPointContainer> HardwareInterface::getCurrentData()
+{
+    std::unique_ptr<DataPointContainer> upData = nullptr;
+
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        upData = std::move(_upDataCurrent);
+    }
+
+    auto const& config = Configuration.get();
+    if (upData && config.Huawei.VerboseLogging) {
+        auto iter = upData->cbegin();
+        while (iter != upData->cend()) {
+            MessageOutput.printf("[Huawei::HwIfc] [%.3f] %s: %s%s\r\n",
+                static_cast<float>(iter->second.getTimestamp())/1000,
+                iter->second.getLabelText().c_str(),
+                iter->second.getValueText().c_str(),
+                iter->second.getUnitText().c_str());
+            ++iter;
+        }
+    }
+
+    return std::move(upData);
 }
 
 } // namespace GridCharger::Huawei
