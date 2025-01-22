@@ -31,7 +31,7 @@ bool HardwareInterface::startLoop()
 {
     uint32_t constexpr stackSize = 3072;
     return pdPASS == xTaskCreate(HardwareInterface::staticLoopHelper,
-            "HuaweiHwIfc", stackSize, this, 10/*prio*/, &_taskHandle);
+            "HuaweiHwIfc", stackSize, this, 16/*prio*/, &_taskHandle);
 }
 
 void HardwareInterface::stopLoop()
