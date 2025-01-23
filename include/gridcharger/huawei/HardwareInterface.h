@@ -81,6 +81,8 @@ private:
     };
     StringState _boardPropertiesState = StringState::Unknown;
     uint32_t _boardPropertiesRequestMillis = 0;
+
+    bool readRectifierState(can_message_t const& msg);
 };
 
 } // namespace GridCharger::Huawei

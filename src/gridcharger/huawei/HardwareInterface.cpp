@@ -105,6 +105,64 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
     return true;
 }
 
+bool HardwareInterface::readRectifierState(can_message_t const& msg)
+{
+    if (msg.canId != 0x1081407F) { return false; }
+
+    if ((msg.valueId & 0xFF00FFFF) != 0x01000000) { return false; }
+
+    if (!_upDataInFlight) { _upDataInFlight = std::make_unique<DataPointContainer>(); }
+
+    auto label = static_cast<DataPointLabel>((msg.valueId & 0x00FF0000) >> 16);
+
+    unsigned divisor = (label == DataPointLabel::OutputCurrentMax) ? _maxCurrentMultiplier : 1024;
+    float value = static_cast<float>(msg.value)/divisor;
+    switch (label) {
+        case DataPointLabel::InputPower:
+            _upDataInFlight->add<DataPointLabel::InputPower>(value);
+            break;
+        case DataPointLabel::InputFrequency:
+            _upDataInFlight->add<DataPointLabel::InputFrequency>(value);
+            break;
+        case DataPointLabel::InputCurrent:
+            _upDataInFlight->add<DataPointLabel::InputCurrent>(value);
+            break;
+        case DataPointLabel::OutputPower:
+            _upDataInFlight->add<DataPointLabel::OutputPower>(value);
+            break;
+        case DataPointLabel::Efficiency:
+            _upDataInFlight->add<DataPointLabel::Efficiency>(value);
+            break;
+        case DataPointLabel::OutputVoltage:
+            _upDataInFlight->add<DataPointLabel::OutputVoltage>(value);
+            break;
+        case DataPointLabel::OutputCurrentMax:
+            _upDataInFlight->add<DataPointLabel::OutputCurrentMax>(value);
+            break;
+        case DataPointLabel::InputVoltage:
+            _upDataInFlight->add<DataPointLabel::InputVoltage>(value);
+            break;
+        case DataPointLabel::OutputTemperature:
+            _upDataInFlight->add<DataPointLabel::OutputTemperature>(value);
+            break;
+        case DataPointLabel::InputTemperature:
+            _upDataInFlight->add<DataPointLabel::InputTemperature>(value);
+            break;
+        case DataPointLabel::OutputCurrent:
+            _upDataInFlight->add<DataPointLabel::OutputCurrent>(value);
+            break;
+    }
+
+    // the OutputCurent value is the last value in a data request's answer
+    // among all values we process into the data point container, so we
+    // make the in-flight container the current container.
+    if (label == DataPointLabel::OutputCurrent) {
+        _upDataCurrent = std::move(_upDataInFlight);
+    }
+
+    return true;
+}
+
 void HardwareInterface::loop()
 {
     can_message_t msg;
@@ -113,71 +171,19 @@ void HardwareInterface::loop()
     while (getMessage(msg)) {
         if (readBoardProperties(msg)) { continue; }
 
-        // Other emitted codes not handled here are:
+        if (readRectifierState(msg)) { continue; }
+
+        // examples for codes not handled are:
         //     0x1081407E (Ack), 0x1081807E (Ack Frame),
         //     0x1001117E (Whr meter),
         //     0x100011FE (unclear), 0x108111FE (output enabled),
         //     0x108081FE (unclear).
         // https://github.com/craigpeacock/Huawei_R4850G2_CAN/blob/main/r4850.c
         // https://www.beyondlogic.org/review-huawei-r4850g2-power-supply-53-5vdc-3kw/
-        if (msg.canId != 0x1081407F) {
-            if (config.Huawei.VerboseLogging) {
-                MessageOutput.printf("[Huawei::HwIfc] ignoring message with CAN ID "
-                        "0x%08x, value ID 0x%08x, and value 0x%08x\r\n",
-                        msg.canId, msg.valueId, msg.value);
-            }
-            continue;
-        }
-
-        if ((msg.valueId & 0xFF00FFFF) != 0x01000000) { continue; }
-
-        if (!_upDataInFlight) { _upDataInFlight = std::make_unique<DataPointContainer>(); }
-
-        auto label = static_cast<DataPointLabel>((msg.valueId & 0x00FF0000) >> 16);
-
-        unsigned divisor = (label == DataPointLabel::OutputCurrentMax) ? _maxCurrentMultiplier : 1024;
-        float value = static_cast<float>(msg.value)/divisor;
-        switch (label) {
-            case DataPointLabel::InputPower:
-                _upDataInFlight->add<DataPointLabel::InputPower>(value);
-                break;
-            case DataPointLabel::InputFrequency:
-                _upDataInFlight->add<DataPointLabel::InputFrequency>(value);
-                break;
-            case DataPointLabel::InputCurrent:
-                _upDataInFlight->add<DataPointLabel::InputCurrent>(value);
-                break;
-            case DataPointLabel::OutputPower:
-                _upDataInFlight->add<DataPointLabel::OutputPower>(value);
-                break;
-            case DataPointLabel::Efficiency:
-                _upDataInFlight->add<DataPointLabel::Efficiency>(value);
-                break;
-            case DataPointLabel::OutputVoltage:
-                _upDataInFlight->add<DataPointLabel::OutputVoltage>(value);
-                break;
-            case DataPointLabel::OutputCurrentMax:
-                _upDataInFlight->add<DataPointLabel::OutputCurrentMax>(value);
-                break;
-            case DataPointLabel::InputVoltage:
-                _upDataInFlight->add<DataPointLabel::InputVoltage>(value);
-                break;
-            case DataPointLabel::OutputTemperature:
-                _upDataInFlight->add<DataPointLabel::OutputTemperature>(value);
-                break;
-            case DataPointLabel::InputTemperature:
-                _upDataInFlight->add<DataPointLabel::InputTemperature>(value);
-                break;
-            case DataPointLabel::OutputCurrent:
-                _upDataInFlight->add<DataPointLabel::OutputCurrent>(value);
-                break;
-        }
-
-        // the OutputCurent value is the last value in a data request's answer
-        // among all values we process into the data point container, so we
-        // make the in-flight container the current container.
-        if (label == DataPointLabel::OutputCurrent) {
-            _upDataCurrent = std::move(_upDataInFlight);
+        if (config.Huawei.VerboseLogging) {
+            MessageOutput.printf("[Huawei::HwIfc] ignoring message with CAN ID "
+                    "0x%08x, value ID 0x%08x, and value 0x%08x\r\n",
+                    msg.canId, msg.valueId, msg.value);
         }
     }
 
