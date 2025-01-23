@@ -110,7 +110,7 @@ void Controller::loop()
     auto oOutputVoltage = _dataPoints.get<DataPointLabel::OutputVoltage>();
     auto oOutputPower = _dataPoints.get<DataPointLabel::OutputPower>();
     auto oEfficiency = _dataPoints.get<DataPointLabel::Efficiency>();
-    auto efficiency = oEfficiency ? (*oEfficiency > 0.5 ? *oEfficiency : 1.0) : 1.0;
+    auto efficiency = oEfficiency ? (*oEfficiency > 50 ? *oEfficiency / 100 : 1.0) : 1.0;
 
     // Internal PSU power pin (slot detect) control
     if (oOutputCurrent && *oOutputCurrent > HUAWEI_AUTO_MODE_SHUTDOWN_CURRENT) {
@@ -377,15 +377,8 @@ void Controller::getJsonData(JsonVariant& root) const
     VAL(OutputPower, "output_power");
     VAL(InputTemperature, "input_temp");
     VAL(OutputTemperature, "output_temp");
+    VAL(Efficiency, "efficiency");
 #undef VAL
-
-    // special handling for efficiency, as we need to multiply it
-    // to get the percentage (rather than the decimal notation).
-    auto oEfficiency = _dataPoints.getDataPointFor<Label::Efficiency>();
-    if (oEfficiency) {
-        root["efficiency"]["v"] = *_dataPoints.get<Label::Efficiency>() * 100;
-        root["efficiency"]["u"] = oEfficiency->getUnitText();
-    }
 
 #define VAL(l, n) \
     { \

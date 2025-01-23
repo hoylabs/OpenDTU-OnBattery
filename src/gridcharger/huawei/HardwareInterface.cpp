@@ -163,6 +163,7 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
             _upData->add<DataPointLabel::OutputPower>(value);
             break;
         case DataPointLabel::Efficiency:
+            value *= 100;
             _upData->add<DataPointLabel::Efficiency>(value);
             break;
         case DataPointLabel::OutputVoltage:
