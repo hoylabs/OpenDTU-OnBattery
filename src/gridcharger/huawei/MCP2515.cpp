@@ -123,7 +123,7 @@ bool MCP2515::getMessage(HardwareInterface::can_message_t& msg)
 
         if (len != 8) { continue; }
 
-        msg.canId = rxId;
+        msg.canId = rxId & 0x1FFFFFFF; // mask piggy-backed MCP2515 bits
         msg.valueId = rxBuf[0] << 24 | rxBuf[1] << 16 | rxBuf[2] << 8 | rxBuf[3];
         msg.value = rxBuf[4] << 24 | rxBuf[5] << 16 | rxBuf[6] << 8 | rxBuf[7];
 
