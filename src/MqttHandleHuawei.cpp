@@ -99,6 +99,22 @@ void MqttHandleHuaweiClass::loop()
     PUB(Efficiency, "efficiency");
 #undef PUB
 
+#define PUBSTR(l, t) \
+    { \
+        auto oDataPoint = dataPoints.get<GridCharger::Huawei::DataPointLabel::l>(); \
+        if (oDataPoint) { \
+            MqttSettings.publish("huawei/" t, String(oDataPoint->c_str())); \
+        } \
+    }
+
+    PUBSTR(BoardType, "board_type");
+    PUBSTR(Serial, "serial");
+    PUBSTR(Manufactured, "manufactured");
+    PUBSTR(VendorName, "vendor_name");
+    PUBSTR(ProductName, "product_name");
+    PUBSTR(ProductDescription, "product_description");
+#undef PUBSTR
+
     MqttSettings.publish("huawei/data_age", String((millis() - dataPoints.getLastUpdate()) / 1000));
     MqttSettings.publish("huawei/mode", String(HuaweiCan.getMode()));
 

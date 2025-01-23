@@ -12,13 +12,23 @@
                     <div
                         class="card-header d-flex justify-content-between align-items-center"
                         :class="{
-                            'text-bg-danger': huaweiData.data_age > 20,
-                            'text-bg-success': huaweiData.data_age < 19,
+                            'text-bg-danger': huaweiData.data_age > 10,
+                            'text-bg-success': huaweiData.data_age <= 10
                         }"
                     >
                         <div class="p-1 flex-grow-1">
                             <div class="d-flex flex-wrap">
-                                <div style="padding-right: 2em">Huawei R4850G2</div>
+                                <div style="padding-right: 2em">
+                                    <template v-if="huaweiData.vendor_name !== undefined && huaweiData.product_name !== undefined">
+                                        {{ huaweiData.vendor_name }} {{ huaweiData.product_name }}
+                                    </template>
+                                    <template v-else>
+                                        Huawei PSU
+                                    </template>
+                                </div>
+                                <div v-if="huaweiData.serial" style="padding-right: 2em">
+                                    {{ $t('huawei.SerialNumber') }}: {{ huaweiData.serial }}
+                                </div>
                                 <DataAgeDisplay :data-age-ms="huaweiData.data_age * 1000" />
                             </div>
                         </div>
@@ -41,8 +51,45 @@
                     <div class="card-body">
                         <div class="row flex-row flex-wrap align-items-start g-3">
                             <div class="col order-0">
-                                <div class="card card-table" :class="{ 'border-info': true }">
-                                    <div class="card-header bg-info">{{ $t('huawei.Input') }}</div>
+                                <div class="card card-table border-info">
+                                    <div class="card-header text-bg-info">{{ $t('huawei.Device') }}</div>
+                                    <div class="card-body">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">{{ $t('huawei.Property') }}</th>
+                                                    <th scope="col">
+                                                        {{ $t('huawei.Value') }}
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-if="huaweiData.board_type">
+                                                    <th scope="row">{{ $t('huawei.BoardType') }}</th>
+                                                    <td>
+                                                        {{ huaweiData.board_type }}
+                                                    </td>
+                                                </tr>
+                                                <tr v-if="huaweiData.manufactured">
+                                                    <th scope="row">{{ $t('huawei.Manufactured') }}</th>
+                                                    <td>
+                                                        {{ huaweiData.manufactured }}
+                                                    </td>
+                                                </tr>
+                                                <tr v-if="huaweiData.product_description">
+                                                    <th scope="row">{{ $t('huawei.ProductDescription') }}</th>
+                                                    <td>
+                                                        {{ huaweiData.product_description }}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col order-0">
+                                <div class="card card-table">
+                                    <div class="card-header">{{ $t('huawei.Input') }}</div>
                                     <div class="card-body">
                                         <table class="table table-striped table-hover">
                                             <thead>
@@ -96,8 +143,8 @@
                                 </div>
                             </div>
                             <div class="col order-1">
-                                <div class="card card-table" :class="{ 'border-info': false }">
-                                    <div class="card-header bg-info">{{ $t('huawei.Output') }}</div>
+                                <div class="card card-table">
+                                    <div class="card-header">{{ $t('huawei.Output') }}</div>
                                     <div class="card-body">
                                         <table class="table table-striped table-hover">
                                             <thead>

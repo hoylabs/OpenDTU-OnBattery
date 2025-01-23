@@ -14,4 +14,10 @@ export interface Huawei {
     max_output_current: ValueObject;
     output_power: ValueObject;
     output_temp: ValueObject;
+    board_type?: string;
+    serial?: string;
+    manufactured?: string;
+    vendor_name?: string;
+    product_name?: string;
+    product_description?: string;
 }
