@@ -102,6 +102,40 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
                 _boardProperties.c_str());
     }
 
+    auto getProperty = [this](std::string key) -> std::string {
+        key += '=';
+        auto start = _boardProperties.find(key);
+        if (std::string::npos == start) { return "unknown"; }
+        start += key.length();
+        auto end = _boardProperties.find('\n', start);
+        return _boardProperties.substr(start, end - start);
+    };
+
+    auto getDescription = [this,&getProperty](size_t idx) -> std::string {
+        auto description = getProperty("Description");
+        size_t start = 0;
+        for (size_t i = 0; i < idx; ++i) {
+            start = description.find(',', start);
+            if (std::string::npos == start) { return ""; }
+            ++start;
+        }
+        auto end = description.find(',', start);
+        return description.substr(start, end - start);
+    };
+
+    _upData->add<DataPointLabel::BoardType>(getProperty("BoardType"));
+    _upData->add<DataPointLabel::Serial>(getProperty("BarCode"));
+    _upData->add<DataPointLabel::Manufactured>(getProperty("Manufactured"));
+    _upData->add<DataPointLabel::VendorName>(getProperty("VendorName"));
+    _upData->add<DataPointLabel::ProductName>(getDescription(1));
+
+    std::string descr;
+    size_t i = 2;
+    do {
+        descr = getDescription(i++);
+    } while (!descr.empty() && descr.find("ectifier") == std::string::npos);
+    _upData->add<DataPointLabel::ProductDescription>(descr);
+
     return true;
 }
 
@@ -111,53 +145,46 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
 
     if ((msg.valueId & 0xFF00FFFF) != 0x01000000) { return false; }
 
-    if (!_upDataInFlight) { _upDataInFlight = std::make_unique<DataPointContainer>(); }
-
     auto label = static_cast<DataPointLabel>((msg.valueId & 0x00FF0000) >> 16);
 
     unsigned divisor = (label == DataPointLabel::OutputCurrentMax) ? _maxCurrentMultiplier : 1024;
     float value = static_cast<float>(msg.value)/divisor;
     switch (label) {
         case DataPointLabel::InputPower:
-            _upDataInFlight->add<DataPointLabel::InputPower>(value);
+            _upData->add<DataPointLabel::InputPower>(value);
             break;
         case DataPointLabel::InputFrequency:
-            _upDataInFlight->add<DataPointLabel::InputFrequency>(value);
+            _upData->add<DataPointLabel::InputFrequency>(value);
             break;
         case DataPointLabel::InputCurrent:
-            _upDataInFlight->add<DataPointLabel::InputCurrent>(value);
+            _upData->add<DataPointLabel::InputCurrent>(value);
             break;
         case DataPointLabel::OutputPower:
-            _upDataInFlight->add<DataPointLabel::OutputPower>(value);
+            _upData->add<DataPointLabel::OutputPower>(value);
             break;
         case DataPointLabel::Efficiency:
-            _upDataInFlight->add<DataPointLabel::Efficiency>(value);
+            _upData->add<DataPointLabel::Efficiency>(value);
             break;
         case DataPointLabel::OutputVoltage:
-            _upDataInFlight->add<DataPointLabel::OutputVoltage>(value);
+            _upData->add<DataPointLabel::OutputVoltage>(value);
             break;
         case DataPointLabel::OutputCurrentMax:
-            _upDataInFlight->add<DataPointLabel::OutputCurrentMax>(value);
+            _upData->add<DataPointLabel::OutputCurrentMax>(value);
             break;
         case DataPointLabel::InputVoltage:
-            _upDataInFlight->add<DataPointLabel::InputVoltage>(value);
+            _upData->add<DataPointLabel::InputVoltage>(value);
             break;
         case DataPointLabel::OutputTemperature:
-            _upDataInFlight->add<DataPointLabel::OutputTemperature>(value);
+            _upData->add<DataPointLabel::OutputTemperature>(value);
             break;
         case DataPointLabel::InputTemperature:
-            _upDataInFlight->add<DataPointLabel::InputTemperature>(value);
+            _upData->add<DataPointLabel::InputTemperature>(value);
             break;
         case DataPointLabel::OutputCurrent:
-            _upDataInFlight->add<DataPointLabel::OutputCurrent>(value);
+            _upData->add<DataPointLabel::OutputCurrent>(value);
             break;
-    }
-
-    // the OutputCurent value is the last value in a data request's answer
-    // among all values we process into the data point container, so we
-    // make the in-flight container the current container.
-    if (label == DataPointLabel::OutputCurrent) {
-        _upDataCurrent = std::move(_upDataInFlight);
+        default:
+            break;
     }
 
     return true;
@@ -167,6 +194,8 @@ void HardwareInterface::loop()
 {
     can_message_t msg;
     auto const& config = Configuration.get();
+
+    if (!_upData) { _upData = std::make_unique<DataPointContainer>(); }
 
     while (getMessage(msg)) {
         if (readBoardProperties(msg)) { continue; }
@@ -226,13 +255,6 @@ void HardwareInterface::loop()
         }
 
         _nextRequestMillis = millis() + DataRequestIntervalMillis;
-
-        // this should be redundant, as every answer to a data request should
-        // have the OutputCurrent value, which is supposed to be the last value
-        // in the answer, and it already triggers moving the data in flight.
-        if (_upDataInFlight) {
-            _upDataCurrent = std::move(_upDataInFlight);
-        }
     }
 }
 
@@ -265,7 +287,7 @@ std::unique_ptr<DataPointContainer> HardwareInterface::getCurrentData()
 
     {
         std::lock_guard<std::mutex> lock(_mutex);
-        upData = std::move(_upDataCurrent);
+        upData = std::move(_upData);
     }
 
     auto const& config = Configuration.get();
