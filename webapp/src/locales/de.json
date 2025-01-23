@@ -980,6 +980,11 @@
         "format_unknown": "Unbekanntes Format"
     },
     "huawei": {
+        "SerialNumber": "Seriennummer",
+        "Device": "Geräteinformation",
+        "BoardType": "Platinentyp",
+        "Manufactured": "Herstellungsdatum",
+        "ProductDescription": "Produktbeschreibung",
         "Input": "Eingang",
         "Output": "Ausgang",
         "Property": "Eigenschaft",
