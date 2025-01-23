@@ -169,6 +169,7 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
     }
 
     _sendQueue.push({setting, static_cast<uint16_t>(val)});
+    _nextRequestMillis = millis() - 1; // request param feedback immediately
 
     xTaskNotifyGive(_taskHandle);
 }
