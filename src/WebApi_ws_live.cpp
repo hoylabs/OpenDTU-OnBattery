@@ -11,8 +11,12 @@
 #include <gridcharger/huawei/Controller.h>
 #include "PowerMeter.h"
 #include "defaults.h"
-#include "SolarCharger.h"
+#include <solarcharger/Controller.h>
 #include <AsyncJson.h>
+
+#ifndef PIN_MAPPING_REQUIRED
+    #define PIN_MAPPING_REQUIRED 0
+#endif
 
 WebApiWsLiveClass::WebApiWsLiveClass()
     : _ws("/livedata")
@@ -72,16 +76,35 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
     auto const& config = Configuration.get();
     auto constexpr halfOfAllMillis = std::numeric_limits<uint32_t>::max() / 2;
 
-    auto solarChargerAge = SolarCharger.getDataAgeMillis();
+    auto solarChargerAge = SolarCharger.getStats()->getAgeMillis();
     if (all || (solarChargerAge > 0 && (millis() - _lastPublishSolarCharger) > solarChargerAge)) {
         auto solarchargerObj = root["solarcharger"].to<JsonObject>();
         solarchargerObj["enabled"] = config.SolarCharger.Enabled;
 
         if (config.SolarCharger.Enabled) {
-            auto totalVeObj = solarchargerObj["total"].to<JsonObject>();
-            addTotalField(totalVeObj, "Power", SolarCharger.getPanelPowerWatts(), "W", 1);
-            addTotalField(totalVeObj, "YieldDay", SolarCharger.getYieldDay() * 1000, "Wh", 0);
-            addTotalField(totalVeObj, "YieldTotal", SolarCharger.getYieldTotal(), "kWh", 2);
+            float power = 0;
+            auto outputPower = SolarCharger.getStats()->getOutputPowerWatts();
+            auto panelPower = SolarCharger.getStats()->getPanelPowerWatts();
+
+            if (outputPower) {
+                power = *outputPower;
+            }
+
+            if (power == 0 && panelPower) {
+                power = *panelPower;
+            }
+
+            addTotalField(solarchargerObj, "power", power, "W", 1);
+
+            auto yieldDay = SolarCharger.getStats()->getYieldDay();
+            if (yieldDay) {
+                addTotalField(solarchargerObj, "yieldDay", *yieldDay, "Wh", 0);
+            }
+
+            auto yieldTotal = SolarCharger.getStats()->getYieldTotal();
+            if (yieldTotal) {
+                addTotalField(solarchargerObj, "yieldTotal", *yieldTotal, "kWh", 2);
+            }
         }
 
         if (!all) { _lastPublishSolarCharger = millis(); }
@@ -224,8 +247,7 @@ void WebApiWsLiveClass::generateCommonJsonResponse(JsonVariant& root)
     hintObj["radio_problem"] = (Hoymiles.getRadioNrf()->isInitialized() && (!Hoymiles.getRadioNrf()->isConnected() || !Hoymiles.getRadioNrf()->isPVariant())) || (Hoymiles.getRadioCmt()->isInitialized() && (!Hoymiles.getRadioCmt()->isConnected()));
     hintObj["default_password"] = strcmp(Configuration.get().Security.Password, ACCESS_POINT_PASSWORD) == 0;
 
-    bool isGeneric = std::string(PIOENV).find("generic") != std::string::npos;
-    hintObj["pin_mapping_issue"] = isGeneric && !PinMapping.isMappingSelected();
+    hintObj["pin_mapping_issue"] = PIN_MAPPING_REQUIRED && !PinMapping.isMappingSelected();
 }
 
 void WebApiWsLiveClass::generateInverterCommonJsonResponse(JsonObject& root, std::shared_ptr<InverterAbstract> inv)

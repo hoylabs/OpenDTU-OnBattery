@@ -36,7 +36,7 @@
         }
     ],
     "template": "${{CHANGELOG}}",
-    "pr_template": "- [${{TITLE}}](https://github.com/helgeerbe/OpenDTU-OnBattery/commit/${{MERGE_SHA}})",
+    "pr_template": "- [${{TITLE}}](https://github.com/hoylabs/OpenDTU-OnBattery/commit/${{MERGE_SHA}})",
     "empty_template": "- no changes",
     "label_extractor": [
         {

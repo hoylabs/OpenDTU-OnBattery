@@ -57,7 +57,9 @@ static const channelMetaData_t channelMetaData[] = {
 };
 
 HMS_4CH::HMS_4CH(HoymilesRadio* radio, const uint64_t serial)
-    : HMS_Abstract(radio, serial) {};
+    : HMS_Abstract(radio, serial)
+{
+}
 
 bool HMS_4CH::isValidSerial(const uint64_t serial)
 {
@@ -81,6 +83,13 @@ uint8_t HMS_4CH::getByteAssignmentSize() const
     return sizeof(byteAssignment) / sizeof(byteAssignment[0]);
 }
 
+bool HMS_4CH::supportsPowerDistributionLogic()
+{
+    // This feature was added in inverter firmware version 01.01.12 and
+    // will limit the AC output instead of limiting the DC inputs.
+    return DevInfo()->getFwBuildVersion() >= 10112U;
+}
+
 const channelMetaData_t* HMS_4CH::getChannelMetaData() const
 {
     return channelMetaData;
@@ -90,10 +99,3 @@ uint8_t HMS_4CH::getChannelMetaDataSize() const
 {
     return sizeof(channelMetaData) / sizeof(channelMetaData[0]);
 }
-
-bool HMS_4CH::supportsPowerDistributionLogic()
-{
-    // This feature was added in inverter firmware version 01.01.12 and
-    // will limit the AC output instead of limiting the DC inputs.
-    return DevInfo()->getFwBuildVersion() >= 10112U;
-};

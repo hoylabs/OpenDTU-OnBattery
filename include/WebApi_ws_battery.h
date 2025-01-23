@@ -19,7 +19,7 @@ private:
 
     AsyncWebServer* _server;
     AsyncWebSocket _ws;
-    AuthenticationMiddleware _simpleDigestAuth;
+    AsyncAuthenticationMiddleware _simpleDigestAuth;
 
     uint32_t _lastUpdateCheck = 0;
     static constexpr uint16_t _responseSize = 1024 + 512;

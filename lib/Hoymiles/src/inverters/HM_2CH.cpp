@@ -42,7 +42,9 @@ static const channelMetaData_t channelMetaData[] = {
 };
 
 HM_2CH::HM_2CH(HoymilesRadio* radio, const uint64_t serial)
-    : HM_Abstract(radio, serial) {};
+    : HM_Abstract(radio, serial)
+{
+}
 
 bool HM_2CH::isValidSerial(const uint64_t serial)
 {

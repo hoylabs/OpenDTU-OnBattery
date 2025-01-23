@@ -31,7 +31,7 @@ LABEL_TRAIT(InputPower,         "W");
 LABEL_TRAIT(InputFrequency,     "Hz");
 LABEL_TRAIT(InputCurrent,       "A");
 LABEL_TRAIT(OutputPower,        "W");
-LABEL_TRAIT(Efficiency,         "%");
+LABEL_TRAIT(Efficiency,         ""); // no unit as value is in decimals, e.g., 0.88 for 88%
 LABEL_TRAIT(OutputVoltage,      "V");
 LABEL_TRAIT(OutputCurrentMax,   "A");
 LABEL_TRAIT(InputVoltage,       "V");

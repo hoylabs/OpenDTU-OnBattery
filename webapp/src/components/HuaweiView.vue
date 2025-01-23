@@ -13,7 +13,7 @@
                         class="card-header d-flex justify-content-between align-items-center"
                         :class="{
                             'text-bg-danger': huaweiData.data_age > 20,
-                            'text-bg-primary': huaweiData.data_age < 19,
+                            'text-bg-success': huaweiData.data_age < 19,
                         }"
                     >
                         <div class="p-1 flex-grow-1">

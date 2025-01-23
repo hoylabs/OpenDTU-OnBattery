@@ -10,7 +10,7 @@
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
 #include <gridcharger/huawei/Controller.h>
-#include <SolarCharger.h>
+#include <solarcharger/Controller.h>
 #include "MessageOutput.h"
 #include <ctime>
 #include <cmath>
@@ -83,17 +83,37 @@ void PowerLimiterClass::announceStatus(PowerLimiterClass::Status status)
 }
 
 /**
- * returns true if the inverters' state was changed or is about to change, i.e.,
- * if any are actually in need of a shutdown. returns false otherwise, i.e., the
- * inverters are already shut down.
+ * NOTE: this method relies on being called regularly, i.e., as part of the
+ * loop(), and that it is called *after* updateInverters().
  */
-bool PowerLimiterClass::shutdown(PowerLimiterClass::Status status)
+bool PowerLimiterClass::isDisabled()
 {
-    announceStatus(status);
+    auto const& config = Configuration.get();
+
+    if (!config.PowerLimiter.Enabled) {
+        announceStatus(Status::DisabledByConfig);
+    }
+    else if (Mode::Disabled == _mode) {
+        announceStatus(Status::DisabledByMqtt);
+    }
+    else {
+        _shutdownComplete = false;
+        return false;
+    }
+
+    // we only shut down governed inverters once when the DPL is disabled by
+    // configuration or by the MQTT mode setting. afterwards, we leave the
+    // inverter(s) alone so they can be managed through other means.
+    if (_shutdownComplete) { return true; }
 
     for (auto& upInv : _inverters) { upInv->standby(); }
 
-    return updateInverters();
+    // we triggered the shutdown, and we won't trigger it again until the DPL
+    // enabled and disabled again. we rely that updateInverters() is called
+    // in the DPL loop(), applying the standby limit and power state.
+    _shutdownComplete = true;
+
+    return true;
 }
 
 void PowerLimiterClass::reloadConfig()
@@ -157,15 +177,7 @@ void PowerLimiterClass::loop()
         return announceStatus(Status::InverterCmdPending);
     }
 
-    if (!config.PowerLimiter.Enabled) {
-        shutdown(Status::DisabledByConfig);
-        return;
-    }
-
-    if (Mode::Disabled == _mode) {
-        shutdown(Status::DisabledByMqtt);
-        return;
-    }
+    if (isDisabled()) { return; }
 
     if (_reloadConfigFlag) {
         reloadConfig();
@@ -245,9 +257,17 @@ void PowerLimiterClass::loop()
 
         if (isStartThresholdReached()) { return true; }
 
+        // start a nighttime discharge cycle on a partially charged battery if
+        //   1. the respective switch/setting is enabled
+        //   2. it is now after sunset, i.e., it is nighttime
+        //   3. we are not already in a discharge cycle
+        //   4. we did not start a nighttime discharge cycle on a partially
+        //      charged battery already (the _nighttimeDischarging flag will
+        //      only be reset at sunrise, see above)
         if (config.PowerLimiter.BatteryAlwaysUseAtNight &&
                 !isDayPeriod &&
-                !_batteryDischargeEnabled) {
+                !_batteryDischargeEnabled &&
+                !_nighttimeDischarging) {
             _nighttimeDischarging = true;
             return true;
         }
@@ -263,6 +283,12 @@ void PowerLimiterClass::loop()
     _oLoadCorrectedVoltage = std::nullopt;
 
     if (_verboseLogging && usesBatteryPoweredInverter()) {
+        MessageOutput.printf("[DPL] up %lu s, %snext inverter restart at %d s (set to %d)\r\n",
+                millis()/1000,
+                (_nextInverterRestart.first?"":"NO "),
+                _nextInverterRestart.second/1000,
+                config.PowerLimiter.RestartHour);
+
         MessageOutput.printf("[DPL] battery interface %sabled, SoC %.1f %% (%s), age %u s (%s)\r\n",
                 (config.Battery.Enabled?"en":"dis"),
                 Battery.getStats()->getSoC(),
@@ -291,11 +317,12 @@ void PowerLimiterClass::loop()
                     config.PowerLimiter.FullSolarPassThroughStopVoltage);
         }
 
-        MessageOutput.printf("[DPL] start %sreached, stop %sreached, solar-passthrough %sabled, use at night: %s\r\n",
+        MessageOutput.printf("[DPL] start %sreached, stop %sreached, solar-passthrough %sabled, use at night %sabled and %s\r\n",
                 (isStartThresholdReached()?"":"NOT "),
                 (isStopThresholdReached()?"":"NOT "),
                 (config.PowerLimiter.SolarPassThroughEnabled?"en":"dis"),
-                (config.PowerLimiter.BatteryAlwaysUseAtNight?"yes":"no"));
+                (config.PowerLimiter.BatteryAlwaysUseAtNight?"en":"dis"),
+                (_nighttimeDischarging?"active":"dormant"));
 
         MessageOutput.printf("[DPL] total max AC power is %u W, conduction losses are %u %%\r\n",
             config.PowerLimiter.TotalUpperPowerLimit,
@@ -370,8 +397,10 @@ float PowerLimiterClass::getBatteryVoltage(bool log) {
     if (inverter.first > 0) { res = inverter.first; }
 
     float chargeControllerVoltage = -1;
-    if (SolarCharger.isDataValid()) {
-        res = chargeControllerVoltage = static_cast<float>(SolarCharger.getOutputVoltage());
+
+    auto chargerOutputVoltage = SolarCharger.getStats()->getOutputVoltage();
+    if (chargerOutputVoltage) {
+        res = chargeControllerVoltage = *chargerOutputVoltage;
     }
 
     float bmsVoltage = -1;
@@ -425,8 +454,9 @@ void PowerLimiterClass::fullSolarPassthrough(PowerLimiterClass::Status reason)
 
     uint16_t targetOutput = 0;
 
-    if (SolarCharger.isDataValid()) {
-        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, SolarCharger.getOutputPowerWatts()));
+    auto solarChargerOuput = SolarCharger.getStats()->getOutputPowerWatts();
+    if (solarChargerOuput) {
+        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, *solarChargerOuput));
         targetOutput = dcPowerBusToInverterAc(targetOutput);
     }
 
@@ -675,15 +705,17 @@ bool PowerLimiterClass::updateInverters()
 uint16_t PowerLimiterClass::getSolarPassthroughPower()
 {
     auto const& config = Configuration.get();
+    auto solarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
 
     if (!config.SolarCharger.Enabled
             || !config.PowerLimiter.SolarPassThroughEnabled
             || isBelowStopThreshold()
-            || !SolarCharger.isDataValid()) {
+            || !solarChargerOutput
+            ) {
         return 0;
     }
 
-    return SolarCharger.getOutputPowerWatts();
+    return *solarChargerOutput;
 }
 
 float PowerLimiterClass::getBatteryInvertersOutputAcWatts()

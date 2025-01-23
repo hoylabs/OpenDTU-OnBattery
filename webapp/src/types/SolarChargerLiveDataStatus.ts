@@ -15,6 +15,7 @@ type MpptData = (ValueObject | string)[];
 export interface SolarChargerInstance {
     data_age_ms: number;
     product_id: string;
-    firmware_version: string;
+    firmware_version?: string;
+    hide_serial: boolean;
     values: { [key: string]: MpptData };
 }

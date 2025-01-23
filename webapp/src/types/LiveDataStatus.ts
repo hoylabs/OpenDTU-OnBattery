@@ -63,7 +63,9 @@ export interface Hints {
 
 export interface SolarCharger {
     enabled: boolean;
-    total: Total;
+    power?: ValueObject;
+    yieldDay?: ValueObject;
+    yieldTotal?: ValueObject;
 }
 
 export interface Huawei {

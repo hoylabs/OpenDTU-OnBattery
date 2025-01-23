@@ -276,7 +276,7 @@ frozen::string const& veMpptStruct::getErrAsString() const
 		{ 39,  "Input shutdown (due to current flow during off mode)" },
 		{ 40,  "Input" },
 		{ 65,  "Lost communication with one of devices" },
-		{ 67,  "Synchronisedcharging device configuration issue" },
+		{ 67,  "Synchronised charging device configuration issue" },
 		{ 68,  "BMS connection lost" },
 		{ 116, "Factory calibration data lost" },
 		{ 117, "Invalid/incompatible firmware" },

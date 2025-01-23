@@ -16,8 +16,11 @@ void mcp2515Isr()
     if (sIsrTaskHandle == nullptr) { return; }
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     vTaskNotifyGiveFromISR(sIsrTaskHandle, &xHigherPriorityTaskWoken);
-    // we assume we can wait until the lower-priority task is scheduled
-    // anyways, so we ignore xHigherPriorityTaskWoken == pdTRUE.
+    // make sure that the high-priority hardware interface task is scheduled,
+    // as the timing is very critical. CAN messages will be missed if the
+    // MCP2515 interrupt is not serviced immediately, as a new message
+    // overwrites a pending message.
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 std::optional<uint8_t> MCP2515::_oSpiBus = std::nullopt;

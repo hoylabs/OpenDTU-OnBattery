@@ -19,7 +19,7 @@ private:
 
     AsyncWebServer* _server;
     AsyncWebSocket _ws;
-    AuthenticationMiddleware _simpleDigestAuth;
+    AsyncAuthenticationMiddleware _simpleDigestAuth;
 
     std::mutex _mutex;
     

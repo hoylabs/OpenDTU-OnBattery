@@ -14,11 +14,9 @@
 #include <gridcharger/huawei/Controller.h>
 #include "MqttHandleDtu.h"
 #include "MqttHandleHass.h"
-#include "MqttHandleVedirectHass.h"
 #include "MqttHandleBatteryHass.h"
 #include "MqttHandleInverter.h"
 #include "MqttHandleInverterTotal.h"
-#include "MqttHandleVedirect.h"
 #include "MqttHandleHuawei.h"
 #include "MqttHandlePowerLimiter.h"
 #include "MqttHandlePowerLimiterHass.h"
@@ -34,7 +32,7 @@
 #include "PowerMeter.h"
 #include "PowerLimiter.h"
 #include "defaults.h"
-#include "SolarCharger.h"
+#include <solarcharger/Controller.h>
 #include <Arduino.h>
 #include <LittleFS.h>
 #include <SpiManager.h>
@@ -104,7 +102,7 @@ void setup()
 
     // Load PinMapping
     MessageOutput.print("Reading PinMapping... ");
-    if (PinMapping.init(String(Configuration.get().Dev_PinMapping))) {
+    if (PinMapping.init(Configuration.get().Dev_PinMapping)) {
         MessageOutput.print("found valid mapping ");
     } else {
         MessageOutput.print("using default config ");
@@ -114,7 +112,7 @@ void setup()
 
     SerialPortManager.init();
 
-    // Initialize WiFi
+    // Initialize Network
     MessageOutput.print("Initialize Network... ");
     NetworkSettings.init(scheduler);
     MessageOutput.println("done");
@@ -136,9 +134,7 @@ void setup()
     MqttHandleDtu.init(scheduler);
     MqttHandleInverter.init(scheduler);
     MqttHandleInverterTotal.init(scheduler);
-    MqttHandleVedirect.init(scheduler);
     MqttHandleHass.init(scheduler);
-    MqttHandleVedirectHass.init(scheduler);
     MqttHandleBatteryHass.init(scheduler);
     MqttHandleHuawei.init(scheduler);
     MqttHandlePowerLimiter.init(scheduler);

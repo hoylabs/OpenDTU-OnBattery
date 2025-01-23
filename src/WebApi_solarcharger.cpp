@@ -7,7 +7,7 @@
 #include "WebApi_errors.h"
 #include "helper.h"
 #include "MqttHandlePowerLimiterHass.h"
-#include "SolarCharger.h"
+#include <solarcharger/Controller.h>
 
 void WebApiSolarChargerlass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -30,6 +30,9 @@ void WebApiSolarChargerlass::onAdminGet(AsyncWebServerRequest* request)
     auto const& config = Configuration.get();
 
     ConfigurationClass::serializeSolarChargerConfig(config.SolarCharger, root);
+
+    auto mqtt = root["mqtt"].to<JsonObject>();
+    ConfigurationClass::serializeSolarChargerMqttConfig(config.SolarCharger.Mqtt, mqtt);
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
@@ -62,6 +65,8 @@ void WebApiSolarChargerlass::onAdminPost(AsyncWebServerRequest* request)
         auto guard = Configuration.getWriteGuard();
         auto& config = guard.getConfig();
         ConfigurationClass::deserializeSolarChargerConfig(root.as<JsonObject>(), config.SolarCharger);
+
+        ConfigurationClass::deserializeSolarChargerMqttConfig(root["mqtt"].as<JsonObject>(), config.SolarCharger.Mqtt);
     }
 
     WebApi.writeConfig(retMsg);
