@@ -131,6 +131,13 @@
                                                     <td>{{ huaweiData.input_temp.u }}</td>
                                                 </tr>
                                                 <tr>
+                                                    <th scope="row">{{ $t('huawei.input_frequency') }}</th>
+                                                    <td class="value">
+                                                        {{ formatNumber(huaweiData.input_frequency.v) }}
+                                                    </td>
+                                                    <td>{{ huaweiData.input_frequency.u }}</td>
+                                                </tr>
+                                                <tr>
                                                     <th scope="row">{{ $t('huawei.efficiency') }}</th>
                                                     <td class="value">
                                                         {{ huaweiData.efficiency.v.toFixed(1) }}
