@@ -6,6 +6,12 @@
 namespace GridCharger::Huawei {
 
 enum class DataPointLabel : uint8_t {
+    BoardType,
+    Serial,
+    Manufactured,
+    VendorName,
+    ProductName,
+    ProductDescription,
     InputPower = 0x70,
     InputFrequency = 0x71,
     InputCurrent = 0x72,
@@ -21,31 +27,37 @@ enum class DataPointLabel : uint8_t {
 
 template<DataPointLabel> struct DataPointLabelTraits;
 
-#define LABEL_TRAIT(n, u) template<> struct DataPointLabelTraits<DataPointLabel::n> { \
-    using type = float; \
+#define LABEL_TRAIT(n, t, u) template<> struct DataPointLabelTraits<DataPointLabel::n> { \
+    using type = t; \
     static constexpr char const name[] = #n; \
     static constexpr char const unit[] = u; \
 };
 
-LABEL_TRAIT(InputPower,         "W");
-LABEL_TRAIT(InputFrequency,     "Hz");
-LABEL_TRAIT(InputCurrent,       "A");
-LABEL_TRAIT(OutputPower,        "W");
-LABEL_TRAIT(Efficiency,         ""); // no unit as value is in decimals, e.g., 0.88 for 88%
-LABEL_TRAIT(OutputVoltage,      "V");
-LABEL_TRAIT(OutputCurrentMax,   "A");
-LABEL_TRAIT(InputVoltage,       "V");
-LABEL_TRAIT(OutputTemperature,  "°C");
-LABEL_TRAIT(InputTemperature,   "°C");
-LABEL_TRAIT(OutputCurrent,      "A");
+LABEL_TRAIT(BoardType,          std::string, "");
+LABEL_TRAIT(Serial,             std::string, "");
+LABEL_TRAIT(Manufactured,       std::string, "");
+LABEL_TRAIT(VendorName,         std::string, "");
+LABEL_TRAIT(ProductName,        std::string, "");
+LABEL_TRAIT(ProductDescription, std::string, "");
+LABEL_TRAIT(InputPower,         float,       "W");
+LABEL_TRAIT(InputFrequency,     float,       "Hz");
+LABEL_TRAIT(InputCurrent,       float,       "A");
+LABEL_TRAIT(OutputPower,        float,       "W");
+LABEL_TRAIT(Efficiency,         float,       ""); // no unit as value is in decimals, e.g., 0.88 for 88%
+LABEL_TRAIT(OutputVoltage,      float,       "V");
+LABEL_TRAIT(OutputCurrentMax,   float,       "A");
+LABEL_TRAIT(InputVoltage,       float,       "V");
+LABEL_TRAIT(OutputTemperature,  float,       "°C");
+LABEL_TRAIT(InputTemperature,   float,       "°C");
+LABEL_TRAIT(OutputCurrent,      float,       "A");
 #undef LABEL_TRAIT
 
 } // namespace GridCharger::Huawei
 
-template class DataPointContainer<DataPoint<float>,
+template class DataPointContainer<DataPoint<float, std::string>,
                                   GridCharger::Huawei::DataPointLabel,
                                   GridCharger::Huawei::DataPointLabelTraits>;
 
 namespace GridCharger::Huawei {
-    using DataPointContainer = DataPointContainer<DataPoint<float>, DataPointLabel, DataPointLabelTraits>;
+    using DataPointContainer = DataPointContainer<DataPoint<float, std::string>, DataPointLabel, DataPointLabelTraits>;
 } // namespace GridCharger::Huawei
