@@ -59,8 +59,7 @@ private:
     std::atomic<bool> _taskDone = false;
     bool _stopLoop = false;
 
-    std::unique_ptr<DataPointContainer> _upDataCurrent = nullptr;
-    std::unique_ptr<DataPointContainer> _upDataInFlight = nullptr;
+    std::unique_ptr<DataPointContainer> _upData = nullptr;
 
     std::queue<std::pair<HardwareInterface::Setting, uint16_t>> _sendQueue;
 
