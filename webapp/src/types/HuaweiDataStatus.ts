@@ -4,10 +4,10 @@ import type { ValueObject } from '@/types/LiveDataStatus';
 export interface Huawei {
     data_age: 0;
     input_voltage: ValueObject;
-    input_frequency: ValueObject;
     input_current: ValueObject;
     input_power: ValueObject;
     input_temp: ValueObject;
+    input_frequency: ValueObject;
     efficiency: ValueObject;
     output_voltage: ValueObject;
     output_current: ValueObject;
