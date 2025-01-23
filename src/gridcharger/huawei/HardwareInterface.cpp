@@ -54,6 +54,7 @@ void HardwareInterface::stopLoop()
 void HardwareInterface::loop()
 {
     can_message_t msg;
+    auto const& config = Configuration.get();
 
     while (getMessage(msg)) {
         // Other emitted codes not handled here are:
@@ -63,7 +64,14 @@ void HardwareInterface::loop()
         //     0x108081FE (unclear).
         // https://github.com/craigpeacock/Huawei_R4850G2_CAN/blob/main/r4850.c
         // https://www.beyondlogic.org/review-huawei-r4850g2-power-supply-53-5vdc-3kw/
-        if ((msg.canId & 0x1FFFFFFF) != 0x1081407F) { continue; }
+        if ((msg.canId & 0x1FFFFFFF) != 0x1081407F) {
+            if (config.Huawei.VerboseLogging) {
+                MessageOutput.printf("[Huawei::HwIfc] ignoring message with CAN ID "
+                        "0x%08x, value ID 0x%08x, and value 0x%08x\r\n",
+                        msg.canId, msg.valueId, msg.value);
+            }
+            continue;
+        }
 
         if ((msg.valueId & 0xFF00FFFF) != 0x01000000) { continue; }
 
