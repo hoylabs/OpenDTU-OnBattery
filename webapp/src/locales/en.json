@@ -1036,6 +1036,7 @@
         "input_current": "Input current",
         "input_power": "Input power",
         "input_temp": "Input temperature",
+        "input_frequency": "Input frequency",
         "efficiency": "Efficiency",
         "output_voltage": "Output voltage",
         "output_current": "Output current",

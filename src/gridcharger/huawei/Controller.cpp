@@ -377,6 +377,7 @@ void Controller::getJsonData(JsonVariant& root) const
     VAL(OutputPower, "output_power");
     VAL(InputTemperature, "input_temp");
     VAL(OutputTemperature, "output_temp");
+    VAL(InputFrequency, "input_frequency");
     VAL(Efficiency, "efficiency");
 #undef VAL
 

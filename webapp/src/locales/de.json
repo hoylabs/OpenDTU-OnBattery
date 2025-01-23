@@ -1033,6 +1033,7 @@
         "input_current": "Eingangsstrom",
         "input_power": "Eingangsleistung",
         "input_temp": "Eingangstemperatur",
+        "input_frequency": "Eingangsfrequenz",
         "efficiency": "Wirkungsgrad",
         "output_voltage": "Ausgangsspannung",
         "output_current": "Ausgangsstrom",
