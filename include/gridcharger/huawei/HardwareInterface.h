@@ -6,6 +6,7 @@
 #include <mutex>
 #include <memory>
 #include <queue>
+#include <string>
 #include <cstdint>
 #include <gridcharger/huawei/DataPoints.h>
 
@@ -66,6 +67,20 @@ private:
     static unsigned constexpr _maxCurrentMultiplier = 20;
 
     uint32_t _nextRequestMillis = 0; // When to send next data request to PSU
+
+    bool readBoardProperties(can_message_t const& msg);
+
+    std::string _boardProperties = "";
+    uint16_t _boardPropertiesCounter = 0;
+    enum class StringState : uint8_t {
+        Unknown,
+        RequestFailed,
+        Reading,
+        MissedMessage,
+        Complete
+    };
+    StringState _boardPropertiesState = StringState::Unknown;
+    uint32_t _boardPropertiesRequestMillis = 0;
 };
 
 } // namespace GridCharger::Huawei

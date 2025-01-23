@@ -77,8 +77,8 @@ bool MCP2515::init()
         return false;
     }
 
-    const uint32_t myMask = 0xFFFFFFFF;         // Look at all incoming bits and...
-    const uint32_t myFilter = 0x1081407F;       // filter for this message only
+    const uint32_t myMask = 0xFFFF0000;      // filter for the first two bytes...
+    const uint32_t myFilter = 0x10810000;    // ...with this value
     _upCAN->init_Mask(0, 1, myMask);
     _upCAN->init_Filt(0, 1, myFilter);
     _upCAN->init_Mask(1, 1, myMask);
