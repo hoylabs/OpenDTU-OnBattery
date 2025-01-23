@@ -51,15 +51,71 @@ void HardwareInterface::stopLoop()
     _taskHandle = nullptr;
 }
 
+bool HardwareInterface::readBoardProperties(can_message_t const& msg)
+{
+    auto const& config = Configuration.get();
+
+    // we process multiple messages with ID 0x1081D27F and a
+    // single one with ID 0x181D27E, which concludes the answer.
+    uint32_t constexpr lastId = 0x1081D27E;
+
+    if ((msg.canId | 0x1) != (lastId | 0x1)) { return false; }
+
+    uint16_t counter = static_cast<uint16_t>(msg.valueId >> 16);
+
+    if (msg.canId == (lastId | 0x1) && counter == 1) {
+        _boardProperties = "";
+        _boardPropertiesCounter = 0;
+        _boardPropertiesState = StringState::Reading;
+    }
+
+    if (StringState::Reading != _boardPropertiesState) { return true; }
+
+    if (++_boardPropertiesCounter != counter) {
+        MessageOutput.printf("[Huawei::HwIfc] missed message %d while reading "
+                "board properties\r\n", _boardPropertiesCounter);
+        _boardPropertiesState = StringState::MissedMessage;
+        return true;
+    }
+
+    auto appendAscii = [this](uint32_t val) -> void {
+        val &= 0xFF;
+        if ((val < 0x20 || val > 0x7E) && val != 0x0A) { return; }
+        // enforce CRLF line endings (as we do on all log lines)
+        if (val == 0x0A) { _boardProperties.push_back('\r'); }
+        _boardProperties.push_back(static_cast<char>(val));
+    };
+
+    appendAscii(msg.valueId >>  8);
+    appendAscii(msg.valueId >>  0);
+    appendAscii(msg.value   >> 24);
+    appendAscii(msg.value   >> 16);
+    appendAscii(msg.value   >>  8);
+    appendAscii(msg.value   >>  0);
+
+    if (msg.canId != lastId) { return true; }
+
+    _boardPropertiesState = StringState::Complete;
+
+    if (config.Huawei.VerboseLogging) {
+        MessageOutput.printf("[Huawei::HwIfc] board properties:\r\n%s\r\n",
+                _boardProperties.c_str());
+    }
+
+    return true;
+}
+
 void HardwareInterface::loop()
 {
     can_message_t msg;
     auto const& config = Configuration.get();
 
     while (getMessage(msg)) {
+        if (readBoardProperties(msg)) { continue; }
+
         // Other emitted codes not handled here are:
         //     0x1081407E (Ack), 0x1081807E (Ack Frame),
-        //     0x1081D27F (Description), 0x1001117E (Whr meter),
+        //     0x1001117E (Whr meter),
         //     0x100011FE (unclear), 0x108111FE (output enabled),
         //     0x108081FE (unclear).
         // https://github.com/craigpeacock/Huawei_R4850G2_CAN/blob/main/r4850.c
@@ -123,6 +179,21 @@ void HardwareInterface::loop()
         if (label == DataPointLabel::OutputCurrent) {
             _upDataCurrent = std::move(_upDataInFlight);
         }
+    }
+
+    if (StringState::Complete != _boardPropertiesState) {
+        // stand by while processing the board properties replies and not timed out
+        if (StringState::Reading == _boardPropertiesState &&
+                _boardPropertiesRequestMillis + 5000 < millis()) { return; }
+
+        static constexpr std::array<uint8_t, 8> data = { 0 };
+        if (!sendMessage(0x1081D2FE, data)) {
+            MessageOutput.print("[Huawei::HwIfc] Failed to send board properties request\r\n");
+            _boardPropertiesState = StringState::RequestFailed;
+        }
+        _boardPropertiesRequestMillis = millis();
+
+        return; // not sending other requests until we know the board properties
     }
 
     size_t queueSize = _sendQueue.size();
