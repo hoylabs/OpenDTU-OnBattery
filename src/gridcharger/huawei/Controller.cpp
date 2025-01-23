@@ -386,6 +386,20 @@ void Controller::getJsonData(JsonVariant& root) const
         root["efficiency"]["v"] = *_dataPoints.get<Label::Efficiency>() * 100;
         root["efficiency"]["u"] = oEfficiency->getUnitText();
     }
+
+#define VAL(l, n) \
+    { \
+        auto oText = _dataPoints.get<Label::l>(); \
+        if (oText) { root[n] = *oText; } \
+    }
+
+    VAL(BoardType,          "board_type");
+    VAL(Serial,             "serial");
+    VAL(Manufactured,       "manufactured");
+    VAL(VendorName,         "vendor_name");
+    VAL(ProductName,        "product_name");
+    VAL(ProductDescription, "product_description");
+#undef VAL
 }
 
 } // namespace GridCharger::Huawei

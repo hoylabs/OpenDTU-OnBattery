@@ -1001,6 +1001,11 @@
         "format_unknown": "Unknown format"
     },
     "huawei": {
+        "SerialNumber": "Serial Number",
+        "Device": "Device Info",
+        "BoardType": "Board Type",
+        "Manufactured": "Manufacturing Date",
+        "ProductDescription": "Product Description",
         "Input": "Input",
         "Output": "Output",
         "Property": "Property",
