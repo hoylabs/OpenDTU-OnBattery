@@ -6,12 +6,33 @@ namespace PowerMeters {
 
 bool Provider::isDataValid() const
 {
-    return _lastUpdate > 0 && ((millis() - _lastUpdate) < (30 * 1000));
+    return getLastUpdate() > 0 && ((millis() - getLastUpdate()) < (30 * 1000));
 }
 
-void Provider::mqttPublish(String const& topic, float const& value) const
+float Provider::getPowerTotal() const
 {
-    MqttSettings.publish("powermeter/" + topic, String(value));
+    auto oPowerTotal = _dataCurrent.get<DataPointLabel::PowerTotal>();
+
+    if (oPowerTotal) {
+        return *oPowerTotal;
+    }
+
+    auto powerTotal = 0.0;
+
+#define ADD(l) \
+    { \
+        auto oDataPoint = _dataCurrent.get<DataPointLabel::l>(); \
+        if (oDataPoint) { \
+            powerTotal += *oDataPoint; \
+        } \
+    }
+
+    ADD(PowerL1);
+    ADD(PowerL2);
+    ADD(PowerL3);
+#undef ADD
+
+    return powerTotal;
 }
 
 void Provider::mqttLoop() const
@@ -21,11 +42,31 @@ void Provider::mqttLoop() const
     if (!isDataValid()) { return; }
 
     auto constexpr halfOfAllMillis = std::numeric_limits<uint32_t>::max() / 2;
-    if ((_lastUpdate - _lastMqttPublish) > halfOfAllMillis) { return; }
+    if ((getLastUpdate() - _lastMqttPublish) > halfOfAllMillis) { return; }
 
-    mqttPublish("powertotal", getPowerTotal());
+    // based on getPowerTotal() as we can not be sure that the PowerTotal value is set for all providers
+    MqttSettings.publish("powermeter/powerTotal", String(getPowerTotal()));
 
-    doMqttPublish();
+#define PUB(l, t) \
+    { \
+        auto oDataPoint = _dataCurrent.get<DataPointLabel::l>(); \
+        if (oDataPoint) { \
+            MqttSettings.publish("powermeter/" t, String(*oDataPoint)); \
+        } \
+    }
+
+    PUB(PowerL1, "power1");
+    PUB(PowerL2, "power2");
+    PUB(PowerL3, "power3");
+    PUB(VoltageL1, "voltage1");
+    PUB(VoltageL2, "voltage2");
+    PUB(VoltageL3, "voltage3");
+    PUB(CurrentL1, "current1");
+    PUB(CurrentL2, "current2");
+    PUB(CurrentL3, "current3");
+    PUB(Import, "import");
+    PUB(Export, "export");
+#undef PUB
 
     _lastMqttPublish = millis();
 }

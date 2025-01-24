@@ -82,8 +82,6 @@ void Provider::pollingLoop()
             MessageOutput.printf("[PowerMeters::Sml::Http] %s\r\n", res.c_str());
             continue;
         }
-
-        gotUpdate();
     }
 }
 

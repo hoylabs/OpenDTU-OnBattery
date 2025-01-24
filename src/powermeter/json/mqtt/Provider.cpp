@@ -9,8 +9,7 @@ namespace PowerMeters::Json::Mqtt {
 
 bool Provider::init()
 {
-    auto subscribe = [this](PowerMeterMqttValue const& val, float* targetVariable) {
-        *targetVariable = 0;
+    auto subscribe = [this](PowerMeterMqttValue const& val, uint8_t phaseIndex) {
         char const* topic = val.Topic;
         if (strlen(topic) == 0) { return; }
         MqttSettings.subscribe(topic, 0,
@@ -18,13 +17,13 @@ bool Provider::init()
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
                     std::placeholders::_5, std::placeholders::_6,
-                    targetVariable, &val)
+                    phaseIndex, &val)
                 );
         _mqttSubscriptions.push_back(topic);
     };
 
-    for (size_t i = 0; i < _powerValues.size(); ++i) {
-        subscribe(_cfg.Values[i], &_powerValues[i]);
+    for (uint8_t i = 0; i < POWERMETER_MQTT_MAX_VALUES; ++i) {
+        subscribe(_cfg.Values[i], i);
     }
 
     return _mqttSubscriptions.size() > 0;
@@ -38,7 +37,7 @@ Provider::~Provider()
 
 void Provider::onMessage(Provider::MsgProperties const& properties,
         char const* topic, uint8_t const* payload, size_t len, size_t index,
-        size_t total, float* targetVariable, PowerMeterMqttValue const* cfg)
+        size_t total, uint8_t const phaseIndex, PowerMeterMqttValue const* cfg)
 {
     auto extracted = Utils::getNumericValueFromMqttPayload<float>("PowerMeters::Json::Mqtt",
             std::string(reinterpret_cast<const char*>(payload), len), topic,
@@ -63,24 +62,29 @@ void Provider::onMessage(Provider::MsgProperties const& properties,
     if (cfg->SignInverted) { newValue *= -1; }
 
     {
-        std::lock_guard<std::mutex> l(_mutex);
-        *targetVariable = newValue;
+        auto scopedLock = _dataCurrent.lock();
+        switch (phaseIndex) {
+            case 0:
+                _dataCurrent.add<DataPointLabel::PowerL1>(newValue);
+                break;
+
+            case 1:
+                _dataCurrent.add<DataPointLabel::PowerL2>(newValue);
+                break;
+
+            case 2:
+                _dataCurrent.add<DataPointLabel::PowerL3>(newValue);
+                break;
+
+            default:
+                break;
+        }
     }
 
     if (_verboseLogging) {
         MessageOutput.printf("[PowerMeters::Json::Mqtt] Topic '%s': new value: %5.2f, "
                 "total: %5.2f\r\n", topic, newValue, getPowerTotal());
     }
-
-    gotUpdate();
-}
-
-float Provider::getPowerTotal() const
-{
-    float sum = 0.0;
-    std::unique_lock<std::mutex> lock(_mutex);
-    for (auto v: _powerValues) { sum += v; }
-    return sum;
 }
 
 } // namespace PowerMeters::Json::Mqtt
