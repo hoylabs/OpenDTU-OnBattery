@@ -1015,6 +1015,8 @@
         "capacity": "Gesamtkapazität",
         "availableCapacity": "Verfügbare Kapazität",
         "temperature": "Temperatur",
+        "resistor": "Innenwiderstand",
+        "openCircuitVoltage": "Leerlaufspannung",
         "bmsTemp": "BMS-Temperatur",
         "chargeVoltage": "Gewünschte Ladespannung (BMS)",
         "chargeCurrentLimitation": "Ladestromlimit",
