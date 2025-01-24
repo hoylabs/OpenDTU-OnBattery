@@ -119,7 +119,15 @@ std::optional<Stats::StateOfOperation> Stats::getStateOfOperation() const
 {
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
-        return static_cast<Stats::StateOfOperation>(entry.second->currentState_CS);
+        // see victron protocol documentation for CS values
+        switch (entry.second->currentState_CS) {
+            case 0: return Stats::StateOfOperation::Off;
+            case 3: return Stats::StateOfOperation::Bulk;
+            case 246:
+            case 4: return Stats::StateOfOperation::Absorption;
+            case 5: return Stats::StateOfOperation::Float;
+            default: return Stats::StateOfOperation::Various;
+        }
     }
     return std::nullopt;
 }

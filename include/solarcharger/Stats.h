@@ -27,11 +27,7 @@ public:
     virtual std::optional<float> getYieldDay() const;
 
     // state of operation from the first available controller
-    enum class StateOfOperation : uint8_t {
-        Off = 0, LimitedPower = 1, Fault = 2, Bulk = 3, Absorption = 4, Float = 5, Storage = 6,
-        Equalize = 7, Inverting = 9, PowerSupply = 11, Starting = 245, AutoEqualize = 246,
-        Slave = 247, Disconnect = 248, None = 255,
-    };
+    enum class StateOfOperation : uint8_t { Off = 0, Bulk = 1, Absorption = 2, Float = 3, Various = 255 };
     virtual std::optional<Stats::StateOfOperation> getStateOfOperation() const { return std::nullopt; };
 
     // float voltage from the first available charge controller
