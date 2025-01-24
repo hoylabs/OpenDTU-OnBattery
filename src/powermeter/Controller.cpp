@@ -91,6 +91,7 @@ void Controller::loop()
     _upProvider->loop();
 
     auto const& pmcfg = Configuration.get().PowerMeter;
+    // we don't need to republish data received from MQTT
     if (pmcfg.Source == static_cast<uint8_t>(Provider::Type::MQTT)) { return; }
     _upProvider->mqttLoop();
 }
