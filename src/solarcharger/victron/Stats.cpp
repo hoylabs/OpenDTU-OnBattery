@@ -115,11 +115,11 @@ std::optional<float> Stats::getYieldDay() const
     return sum;
 }
 
-std::optional<uint8_t> Stats::getStateOfOperation() const
+std::optional<Stats::StateOfOperation> Stats::getStateOfOperation() const
 {
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
-        return entry.second->currentState_CS;
+        return static_cast<Stats::StateOfOperation>(entry.second->currentState_CS);
     }
     return std::nullopt;
 }

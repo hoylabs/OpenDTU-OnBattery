@@ -16,7 +16,7 @@ public:
     std::optional<uint16_t> getPanelPowerWatts() const final;
     std::optional<float> getYieldTotal() const final;
     std::optional<float> getYieldDay() const final;
-    std::optional<uint8_t> getStateOfOperation() const final;
+    std::optional<StateOfOperation> getStateOfOperation() const final;
     std::optional<float> getFloatVoltage() const final;
     std::optional<float> getAbsorptionVoltage() const final;
 
