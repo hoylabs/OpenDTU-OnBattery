@@ -23,6 +23,7 @@ class Controller {
 public:
     void init(Scheduler& scheduler);
     void updateSettings();
+    void setProduction(bool enable);
     void setParameter(float val, HardwareInterface::Setting setting);
     void setMode(uint8_t mode);
 
