@@ -7,6 +7,7 @@
 #include <memory>
 #include <queue>
 #include <string>
+#include <tuple>
 #include <cstdint>
 #include <gridcharger/huawei/DataPoints.h>
 
@@ -21,12 +22,14 @@ public:
     virtual bool init() = 0;
 
     enum class Setting : uint8_t {
-        OnlineVoltage = 0,
-        OfflineVoltage = 1,
-        OnlineCurrent = 3,
-        OfflineCurrent = 4
+        OnlineVoltage = 0x00,
+        OfflineVoltage = 0x01,
+        OnlineCurrent = 0x03,
+        OfflineCurrent = 0x04
     };
     void setParameter(Setting setting, float val);
+
+    void setProduction(bool enable);
 
     std::unique_ptr<DataPointContainer> getCurrentData();
 
@@ -61,7 +64,7 @@ private:
 
     std::unique_ptr<DataPointContainer> _upData = nullptr;
 
-    std::queue<std::pair<HardwareInterface::Setting, uint32_t>> _sendQueue;
+    std::queue<std::tuple<uint8_t, uint16_t, uint32_t>> _sendQueue;
 
     static unsigned constexpr _maxCurrentMultiplier = 20;
 
