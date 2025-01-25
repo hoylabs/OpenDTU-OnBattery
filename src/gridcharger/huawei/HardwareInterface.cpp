@@ -275,8 +275,10 @@ void HardwareInterface::loop()
 
         std::array<uint8_t, 8> data = {
             0x01, static_cast<uint8_t>(setting), 0x00, 0x00,
-            0x00, 0x00, static_cast<uint8_t>((val & 0xFF00) >> 8),
-            static_cast<uint8_t>(val & 0xFF)
+            static_cast<uint8_t>((val >> 24) & 0xFF),
+            static_cast<uint8_t>((val >> 16) & 0xFF),
+            static_cast<uint8_t>((val >>  8) & 0xFF),
+            static_cast<uint8_t>((val >>  0) & 0xFF)
         };
 
         // note that this should actually set a parameter only on the first
@@ -318,7 +320,7 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
             break;
     }
 
-    _sendQueue.push({setting, static_cast<uint16_t>(val)});
+    _sendQueue.push({setting, static_cast<uint32_t>(val)});
     _nextRequestMillis = millis() - 1; // request param feedback immediately
 
     xTaskNotifyGive(_taskHandle);
