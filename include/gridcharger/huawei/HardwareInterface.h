@@ -61,7 +61,7 @@ private:
 
     std::unique_ptr<DataPointContainer> _upData = nullptr;
 
-    std::queue<std::pair<HardwareInterface::Setting, uint16_t>> _sendQueue;
+    std::queue<std::pair<HardwareInterface::Setting, uint32_t>> _sendQueue;
 
     static unsigned constexpr _maxCurrentMultiplier = 20;
 
