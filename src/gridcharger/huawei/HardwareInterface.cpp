@@ -270,17 +270,17 @@ void HardwareInterface::loop()
 
     size_t queueSize = _sendQueue.size();
     for (size_t i = 0; i < queueSize; ++i) {
-        auto [setting, flags, val] = _sendQueue.front();
+        auto cmd = _sendQueue.front();
         _sendQueue.pop();
 
         std::array<uint8_t, 8> data = {
-            0x01, static_cast<uint8_t>(setting),
-            static_cast<uint8_t>((flags >> 8) & 0xFF),
-            static_cast<uint8_t>((flags >> 0) & 0xFF),
-            static_cast<uint8_t>((val >> 24) & 0xFF),
-            static_cast<uint8_t>((val >> 16) & 0xFF),
-            static_cast<uint8_t>((val >>  8) & 0xFF),
-            static_cast<uint8_t>((val >>  0) & 0xFF)
+            0x01, static_cast<uint8_t>(cmd.command),
+            static_cast<uint8_t>((cmd.flags >>  8) & 0xFF),
+            static_cast<uint8_t>((cmd.flags >>  0) & 0xFF),
+            static_cast<uint8_t>((cmd.value >> 24) & 0xFF),
+            static_cast<uint8_t>((cmd.value >> 16) & 0xFF),
+            static_cast<uint8_t>((cmd.value >>  8) & 0xFF),
+            static_cast<uint8_t>((cmd.value >>  0) & 0xFF)
         };
 
         // note that this should actually set a parameter only on the first
@@ -288,7 +288,7 @@ void HardwareInterface::loop()
         // on the CAN bus. not sure how the units know their address, yet.
         if (!sendMessage(0x108180FE, data)) {
             MessageOutput.print("[Huawei::HwIfc] Failed to set parameter\r\n");
-            _sendQueue.push({setting, flags, val});
+            _sendQueue.push(cmd);
         }
     }
 
@@ -311,7 +311,11 @@ void HardwareInterface::setProduction(bool enable)
 
     if (_taskHandle == nullptr) { return; }
 
-    _sendQueue.push({0x32, (enable?0x00:0x01), 0});
+    _sendQueue.push(command_t {
+        .command = 0x32,
+        .flags = static_cast<uint16_t>(enable?0:1),
+        .value = 0
+    });
     _nextRequestMillis = millis() - 1; // request param feedback immediately
 
     xTaskNotifyGive(_taskHandle);
@@ -334,7 +338,11 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
             break;
     }
 
-    _sendQueue.push({static_cast<uint8_t>(setting), 0x00, static_cast<uint32_t>(val)});
+    _sendQueue.push(command_t {
+        .command = static_cast<uint8_t>(setting),
+        .flags = 0,
+        .value = static_cast<uint32_t>(val)
+    });
     _nextRequestMillis = millis() - 1; // request param feedback immediately
 
     xTaskNotifyGive(_taskHandle);

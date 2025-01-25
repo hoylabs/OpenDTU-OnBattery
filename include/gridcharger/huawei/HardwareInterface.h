@@ -64,7 +64,13 @@ private:
 
     std::unique_ptr<DataPointContainer> _upData = nullptr;
 
-    std::queue<std::tuple<uint8_t, uint16_t, uint32_t>> _sendQueue;
+    struct COMMAND {
+        uint8_t command;
+        uint16_t flags;
+        uint32_t value;
+    };
+    using command_t = struct COMMAND;
+    std::queue<command_t> _sendQueue;
 
     static unsigned constexpr _maxCurrentMultiplier = 20;
 
