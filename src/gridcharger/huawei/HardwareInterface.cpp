@@ -141,13 +141,27 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
 
 bool HardwareInterface::readRectifierState(can_message_t const& msg)
 {
+    auto const& config = Configuration.get();
+
     // we will receive a bunch of messages with CAN ID 0x1081407F,
     // and one (the last one) with ID 0x1081407E.
     if ((msg.canId | 0x1) != 0x1081407F) { return false; }
 
-    if ((msg.valueId & 0xFF00FFFF) != 0x01000000) { return false; }
+    uint32_t valueId = msg.valueId;
 
-    auto label = static_cast<DataPointLabel>((msg.valueId & 0x00FF0000) >> 16);
+    // sometimes the last bit of the value ID of a message with CAN ID
+    // 0x1081407E is set. TODO(schlimmchen): why?
+    if (msg.canId == 0x1081407E && (valueId & 0x1) > 0) {
+        if (config.Huawei.VerboseLogging) {
+            MessageOutput.print("[Huawei::HwIfc] last bit in value ID is set, "
+                    "resetting\r\n");
+        }
+        valueId &= ~(1<<0);
+    }
+
+    if ((valueId & 0xFF00FFFF) != 0x01000000) { return false; }
+
+    auto label = static_cast<DataPointLabel>((valueId & 0x00FF0000) >> 16);
 
     unsigned divisor = (label == DataPointLabel::OutputCurrentMax) ? _maxCurrentMultiplier : 1024;
     float value = static_cast<float>(msg.value)/divisor;
