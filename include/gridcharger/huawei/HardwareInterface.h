@@ -21,11 +21,11 @@ public:
 
     virtual bool init() = 0;
 
-    enum class Setting : uint8_t {
-        OnlineVoltage = 0x00,
-        OfflineVoltage = 0x01,
-        OnlineCurrent = 0x03,
-        OfflineCurrent = 0x04
+    enum class Setting : uint16_t {
+        OnlineVoltage = 0x0100,
+        OfflineVoltage = 0x0101,
+        OnlineCurrent = 0x0103,
+        OfflineCurrent = 0x0104
     };
     void setParameter(Setting setting, float val);
 
@@ -65,7 +65,10 @@ private:
     std::unique_ptr<DataPointContainer> _upData = nullptr;
 
     struct COMMAND {
-        uint8_t command;
+        uint8_t tries;
+        uint8_t deviceAddress;
+        uint16_t registerAddress;
+        uint16_t command;
         uint16_t flags;
         uint32_t value;
     };
