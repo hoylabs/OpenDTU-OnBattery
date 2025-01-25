@@ -211,6 +211,16 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
             _upData->add<DataPointLabel::OutputCurrent>(value);
             break;
         default:
+            uint8_t rawLabel = static_cast<uint8_t>(label);
+            // 0x0E/0x0A seems to be a static label/value pair, so we don't print it
+            if (config.Huawei.VerboseLogging && (rawLabel != 0x0E || msg.value != 0x0A)) {
+                MessageOutput.printf("[Huawei::HwIfc] raw value for 0x%02x is "
+                        "0x%08x (%d), scaled by 1024: %.2f, scaled by %d: %.2f\r\n",
+                        rawLabel, msg.value, msg.value,
+                        static_cast<float>(msg.value)/1024,
+                        _maxCurrentMultiplier,
+                        static_cast<float>(msg.value)/_maxCurrentMultiplier);
+            }
             break;
     }
 
@@ -269,6 +279,9 @@ void HardwareInterface::loop()
             static_cast<uint8_t>(val & 0xFF)
         };
 
+        // note that this should actually set a parameter only on the first
+        // unit on the CAN bus. 0x108080FE would set a parameter on all units
+        // on the CAN bus. not sure how the units know their address, yet.
         if (!sendMessage(0x108180FE, data)) {
             MessageOutput.print("[Huawei::HwIfc] Failed to set parameter\r\n");
             _sendQueue.push({setting, val});
@@ -277,6 +290,9 @@ void HardwareInterface::loop()
 
     if (_nextRequestMillis < millis()) {
         static constexpr std::array<uint8_t, 8> data = { 0 };
+        // note that this should actually request data from all (not just one)
+        // units on the CAN bus. 0x108140FE would request data from only the
+        // first unit. not sure how the units know their address, yet.
         if (!sendMessage(0x108040FE, data)) {
             MessageOutput.print("[Huawei::HwIfc] Failed to send data request\r\n");
         }
