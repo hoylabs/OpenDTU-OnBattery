@@ -159,6 +159,16 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
         valueId &= ~(1<<0);
     }
 
+    // during start-up and when shortening or opening the slot detect pins,
+    // the value ID starts with 0x31 rather than 0x01. TODO(schlimmchen): why?
+    if ((valueId >> 24) == 0x31) {
+        if (config.Huawei.VerboseLogging) {
+            MessageOutput.print("[Huawei::HwIfc] processing value for value ID "
+                    "starting with 0x31\r\n");
+        }
+        valueId &= 0x0FFFFFFF;
+    }
+
     if ((valueId & 0xFF00FFFF) != 0x01000000) { return false; }
 
     auto label = static_cast<DataPointLabel>((valueId & 0x00FF0000) >> 16);
