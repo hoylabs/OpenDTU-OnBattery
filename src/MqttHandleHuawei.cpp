@@ -196,5 +196,14 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic t,
                     break;
             }
             break;
+
+        case Topic::Production:
+        {
+            bool enable = payload_val > 0;
+            MessageOutput.printf("[Huawei MQTT] Production to be %sabled\r\n", (enable?"en":"dis"));
+            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setProduction,
+                        &HuaweiCan, enable));
+            break;
+        }
     }
 }

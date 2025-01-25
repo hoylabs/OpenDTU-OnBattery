@@ -27,16 +27,18 @@ private:
         LimitOnlineCurrent,
         LimitOfflineVoltage,
         LimitOfflineCurrent,
-        Mode
+        Mode,
+        Production
     };
 
     static constexpr frozen::string _cmdtopic = "huawei/cmd/";
-    static constexpr frozen::map<frozen::string, Topic, 5> _subscriptions = {
+    static constexpr frozen::map<frozen::string, Topic, 6> _subscriptions = {
         { "limit_online_voltage",  Topic::LimitOnlineVoltage },
         { "limit_online_current",  Topic::LimitOnlineCurrent },
         { "limit_offline_voltage", Topic::LimitOfflineVoltage },
         { "limit_offline_current", Topic::LimitOfflineCurrent },
         { "mode",                  Topic::Mode },
+        { "production",            Topic::Production },
     };
 
     void onMqttMessage(Topic t,
