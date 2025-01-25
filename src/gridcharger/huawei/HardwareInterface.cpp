@@ -11,7 +11,7 @@ void HardwareInterface::staticLoopHelper(void* context)
 {
     auto pInstance = static_cast<HardwareInterface*>(context);
     static auto constexpr resetNotificationValue = pdTRUE;
-    static auto constexpr notificationTimeout = pdMS_TO_TICKS(500);
+    static auto constexpr notificationTimeout = pdMS_TO_TICKS(100);
 
     while (true) {
         ulTaskNotifyTake(resetNotificationValue, notificationTimeout);
@@ -268,13 +268,27 @@ void HardwareInterface::loop()
         return; // not sending other requests until we know the board properties
     }
 
+    if (_nextRequestMillis < millis()) {
+        _sendQueue.push(command_t {
+            .tries = 1,
+            .deviceAddress = 1,
+            .registerAddress = 0x40FE,
+            .command = 0,
+            .flags = 0,
+            .value = 0
+        });
+
+        _nextRequestMillis = millis() + DataRequestIntervalMillis;
+    }
+
     size_t queueSize = _sendQueue.size();
     for (size_t i = 0; i < queueSize; ++i) {
         auto cmd = _sendQueue.front();
         _sendQueue.pop();
 
         std::array<uint8_t, 8> data = {
-            0x01, static_cast<uint8_t>(cmd.command),
+            static_cast<uint8_t>((cmd.command >> 8) & 0xFF),
+            static_cast<uint8_t>((cmd.command >> 0) & 0xFF),
             static_cast<uint8_t>((cmd.flags >>  8) & 0xFF),
             static_cast<uint8_t>((cmd.flags >>  0) & 0xFF),
             static_cast<uint8_t>((cmd.value >> 24) & 0xFF),
@@ -283,25 +297,16 @@ void HardwareInterface::loop()
             static_cast<uint8_t>((cmd.value >>  0) & 0xFF)
         };
 
-        // note that this should actually set a parameter only on the first
-        // unit on the CAN bus. 0x108080FE would set a parameter on all units
-        // on the CAN bus. not sure how the units know their address, yet.
-        if (!sendMessage(0x108180FE, data)) {
-            MessageOutput.print("[Huawei::HwIfc] Failed to set parameter\r\n");
-            _sendQueue.push(cmd);
-        }
-    }
+        uint32_t addr = 0x10800000 | (cmd.deviceAddress << 16) | cmd.registerAddress;
+        if (!sendMessage(addr, data)) {
+            if (cmd.tries > 0) { --cmd.tries; }
 
-    if (_nextRequestMillis < millis()) {
-        static constexpr std::array<uint8_t, 8> data = { 0 };
-        // note that this should actually request data from all (not just one)
-        // units on the CAN bus. 0x108140FE would request data from only the
-        // first unit. not sure how the units know their address, yet.
-        if (!sendMessage(0x108040FE, data)) {
-            MessageOutput.print("[Huawei::HwIfc] Failed to send data request\r\n");
-        }
+            MessageOutput.printf("[Huawei::HwIfc] Sending to 0x%08x failed, "
+                    "command 0x%04x, flags 0x%04x, value 0x%08x, %d tries remaining\r\n",
+                    addr, cmd.command, cmd.flags, cmd.value, cmd.tries);
 
-        _nextRequestMillis = millis() + DataRequestIntervalMillis;
+            if (cmd.tries > 0) { _sendQueue.push(cmd); }
+        }
     }
 }
 
@@ -312,11 +317,15 @@ void HardwareInterface::setProduction(bool enable)
     if (_taskHandle == nullptr) { return; }
 
     _sendQueue.push(command_t {
-        .command = 0x32,
+        .tries = 3,
+        .deviceAddress = 1,
+        .registerAddress = 0x80FE,
+        .command = 0x0132,
         .flags = static_cast<uint16_t>(enable?0:1),
         .value = 0
     });
-    _nextRequestMillis = millis() - 1; // request param feedback immediately
+
+    _nextRequestMillis = millis() + 88; // request early param feedback
 
     xTaskNotifyGive(_taskHandle);
 }
@@ -339,11 +348,15 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
     }
 
     _sendQueue.push(command_t {
-        .command = static_cast<uint8_t>(setting),
+        .tries = 3,
+        .deviceAddress = 1,
+        .registerAddress = 0x80FE,
+        .command = static_cast<uint16_t>(setting),
         .flags = 0,
         .value = static_cast<uint32_t>(val)
     });
-    _nextRequestMillis = millis() - 1; // request param feedback immediately
+
+    _nextRequestMillis = millis() + 88; // request early param feedback
 
     xTaskNotifyGive(_taskHandle);
 }
