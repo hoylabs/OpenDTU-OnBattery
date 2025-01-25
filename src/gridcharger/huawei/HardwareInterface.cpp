@@ -141,7 +141,9 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
 
 bool HardwareInterface::readRectifierState(can_message_t const& msg)
 {
-    if (msg.canId != 0x1081407F) { return false; }
+    // we will receive a bunch of messages with CAN ID 0x1081407F,
+    // and one (the last one) with ID 0x1081407E.
+    if ((msg.canId | 0x1) != 0x1081407F) { return false; }
 
     if ((msg.valueId & 0xFF00FFFF) != 0x01000000) { return false; }
 
