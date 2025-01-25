@@ -285,6 +285,15 @@ void Controller::loop()
     }
 }
 
+void Controller::setProduction(bool enable)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (!_upHardwareInterface) { return; }
+
+    _upHardwareInterface->setProduction(enable);
+}
+
 void Controller::setParameter(float val, HardwareInterface::Setting setting)
 {
     std::lock_guard<std::mutex> lock(_mutex);
