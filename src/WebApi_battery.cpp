@@ -7,7 +7,6 @@
 #include "AsyncJson.h"
 #include <battery/Controller.h>
 #include "Configuration.h"
-#include "MqttHandleBatteryHass.h"
 #include "MqttHandlePowerLimiterHass.h"
 #include "WebApi.h"
 #include "WebApi_battery.h"

@@ -24,7 +24,6 @@ private:
     Task _loopTask;
     mutable std::mutex _mutex;
     std::unique_ptr<Provider> _upProvider = nullptr;
-    bool _publishSensors = false;
 };
 
 } // namespace Batteries

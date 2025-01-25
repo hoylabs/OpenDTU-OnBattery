@@ -3,14 +3,11 @@
 
 #include <battery/HassIntegration.h>
 
-namespace Batteries::Mqtt {
+namespace Batteries::Zendure {
 
 class HassIntegration : public ::Batteries::HassIntegration {
 public:
-    void publishSensors() const final
-    {
-        ::Batteries::HassIntegration::publishSensors();
-    }
+    void publishSensors() const final;
 };
 
-} // namespace Batteries::Mqtt
+} // namespace Batteries::Zendure
