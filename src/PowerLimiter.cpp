@@ -257,9 +257,17 @@ void PowerLimiterClass::loop()
 
         if (isStartThresholdReached()) { return true; }
 
+        // start a nighttime discharge cycle on a partially charged battery if
+        //   1. the respective switch/setting is enabled
+        //   2. it is now after sunset, i.e., it is nighttime
+        //   3. we are not already in a discharge cycle
+        //   4. we did not start a nighttime discharge cycle on a partially
+        //      charged battery already (the _nighttimeDischarging flag will
+        //      only be reset at sunrise, see above)
         if (config.PowerLimiter.BatteryAlwaysUseAtNight &&
                 !isDayPeriod &&
-                !_batteryDischargeEnabled) {
+                !_batteryDischargeEnabled &&
+                !_nighttimeDischarging) {
             _nighttimeDischarging = true;
             return true;
         }
@@ -275,6 +283,12 @@ void PowerLimiterClass::loop()
     _oLoadCorrectedVoltage = std::nullopt;
 
     if (_verboseLogging && usesBatteryPoweredInverter()) {
+        MessageOutput.printf("[DPL] up %lu s, %snext inverter restart at %d s (set to %d)\r\n",
+                millis()/1000,
+                (_nextInverterRestart.first?"":"NO "),
+                _nextInverterRestart.second/1000,
+                config.PowerLimiter.RestartHour);
+
         MessageOutput.printf("[DPL] battery interface %sabled, SoC %.1f %% (%s), age %u s (%s)\r\n",
                 (config.Battery.Enabled?"en":"dis"),
                 Battery.getStats()->getSoC(),
@@ -303,11 +317,12 @@ void PowerLimiterClass::loop()
                     config.PowerLimiter.FullSolarPassThroughStopVoltage);
         }
 
-        MessageOutput.printf("[DPL] start %sreached, stop %sreached, solar-passthrough %sabled, use at night: %s\r\n",
+        MessageOutput.printf("[DPL] start %sreached, stop %sreached, solar-passthrough %sabled, use at night %sabled and %s\r\n",
                 (isStartThresholdReached()?"":"NOT "),
                 (isStopThresholdReached()?"":"NOT "),
                 (config.PowerLimiter.SolarPassThroughEnabled?"en":"dis"),
-                (config.PowerLimiter.BatteryAlwaysUseAtNight?"yes":"no"));
+                (config.PowerLimiter.BatteryAlwaysUseAtNight?"en":"dis"),
+                (_nighttimeDischarging?"active":"dormant"));
 
         MessageOutput.printf("[DPL] total max AC power is %u W, conduction losses are %u %%\r\n",
             config.PowerLimiter.TotalUpperPowerLimit,

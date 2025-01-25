@@ -27,7 +27,7 @@ public:
     };
     void setParameter(Setting setting, float val);
 
-    std::unique_ptr<DataPointContainer> getCurrentData() { return std::move(_upDataCurrent); }
+    std::unique_ptr<DataPointContainer> getCurrentData();
 
     static uint32_t constexpr DataRequestIntervalMillis = 2500;
 
