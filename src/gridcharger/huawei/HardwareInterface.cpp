@@ -310,6 +310,24 @@ void HardwareInterface::loop()
     }
 }
 
+void HardwareInterface::setFan(bool online, bool fullSpeed)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (_taskHandle == nullptr) { return; }
+
+    _sendQueue.push(command_t {
+        .tries = 3,
+        .deviceAddress = 1,
+        .registerAddress = 0x80FE,
+        .command = static_cast<uint16_t>(online?0x0134:0x0135),
+        .flags = static_cast<uint16_t>(fullSpeed?1:0),
+        .value = 0
+    });
+
+    xTaskNotifyGive(_taskHandle);
+}
+
 void HardwareInterface::setProduction(bool enable)
 {
     std::lock_guard<std::mutex> lock(_mutex);
