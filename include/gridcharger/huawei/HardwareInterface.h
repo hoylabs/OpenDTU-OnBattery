@@ -29,6 +29,8 @@ public:
     };
     void setParameter(Setting setting, float val);
 
+    void setFan(bool online, bool fullSpeed);
+
     void setProduction(bool enable);
 
     std::unique_ptr<DataPointContainer> getCurrentData();
