@@ -25,7 +25,8 @@ public:
         OnlineVoltage = 0x0100,
         OfflineVoltage = 0x0101,
         OnlineCurrent = 0x0103,
-        OfflineCurrent = 0x0104
+        OfflineCurrent = 0x0104,
+        InputCurrent = 0x0109
     };
     void setParameter(Setting setting, float val);
 

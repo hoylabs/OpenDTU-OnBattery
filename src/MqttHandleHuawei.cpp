@@ -206,6 +206,12 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic enumTopic,
             break;
         }
 
+        case Topic::LimitInputCurrent:
+            MessageOutput.printf("[Huawei MQTT] Limit input current: %.2f\r\n", payload_val);
+            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setParameter,
+                        &HuaweiCan, payload_val, Setting::InputCurrent));
+            break;
+
         case Topic::FanOnlineFullSpeed:
         case Topic::FanOfflineFullSpeed:
         {
