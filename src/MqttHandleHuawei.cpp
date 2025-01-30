@@ -122,7 +122,7 @@ void MqttHandleHuaweiClass::loop()
 }
 
 
-void MqttHandleHuaweiClass::onMqttMessage(Topic t,
+void MqttHandleHuaweiClass::onMqttMessage(Topic enumTopic,
         const espMqttClientTypes::MessageProperties& properties,
         const char* topic, const uint8_t* payload, size_t len)
 {
@@ -140,7 +140,7 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic t,
     std::lock_guard<std::mutex> mqttLock(_mqttMutex);
     using Setting = GridCharger::Huawei::HardwareInterface::Setting;
 
-    switch (t) {
+    switch (enumTopic) {
         case Topic::LimitOnlineVoltage:
             MessageOutput.printf("Limit Voltage: %f V\r\n", payload_val);
             _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setParameter,
@@ -203,6 +203,18 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic t,
             MessageOutput.printf("[Huawei MQTT] Production to be %sabled\r\n", (enable?"en":"dis"));
             _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setProduction,
                         &HuaweiCan, enable));
+            break;
+        }
+
+        case Topic::FanOnlineFullSpeed:
+        case Topic::FanOfflineFullSpeed:
+        {
+            bool online = (Topic::FanOnlineFullSpeed == enumTopic);
+            bool fullSpeed = payload_val > 0;
+            MessageOutput.printf("[Huawei MQTT] %sline fan %s speed\r\n",
+                    (online?"On":"Off"), (fullSpeed?"full":"auto"));
+            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setFan,
+                        &HuaweiCan, online, fullSpeed));
             break;
         }
     }
