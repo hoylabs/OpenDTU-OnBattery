@@ -285,6 +285,15 @@ void Controller::loop()
     }
 }
 
+void Controller::setFan(bool online, bool fullSpeed)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (!_upHardwareInterface) { return; }
+
+    _upHardwareInterface->setFan(online, fullSpeed);
+}
+
 void Controller::setProduction(bool enable)
 {
     std::lock_guard<std::mutex> lock(_mutex);
