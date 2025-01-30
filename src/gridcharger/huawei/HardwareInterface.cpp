@@ -151,12 +151,23 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
 
     // sometimes the last bit of the value ID of a message with CAN ID
     // 0x1081407E is set. TODO(schlimmchen): why?
-    if (msg.canId == 0x1081407E && (valueId & 0x1) > 0) {
+    if (msg.canId == 0x1081407E && (valueId & 0x01) > 0) {
         if (config.Huawei.VerboseLogging) {
-            MessageOutput.print("[Huawei::HwIfc] last bit in value ID is set, "
-                    "resetting\r\n");
+            MessageOutput.printf("[Huawei::HwIfc] last bit in value ID %08x is "
+                    "set, resetting\r\n", valueId);
         }
-        valueId &= ~(1<<0);
+        valueId &= ~(0x01);
+    }
+
+    // for unknown reasons, the input voltage value ID has the last two bits
+    // set on a R4830G1. this unit supports DC input as well, but these bits
+    // do not change when powered the unit using DC. TODO(schlimmchen): why?
+    if (msg.canId == 0x1081407F && (valueId & 0x03) > 0) {
+        if (config.Huawei.VerboseLogging) {
+            MessageOutput.printf("[Huawei::HwIfc] last two bits in value ID "
+                    "%08x are set, resetting\r\n", valueId);
+        }
+        valueId &= ~(0x03);
     }
 
     // during start-up and when shortening or opening the slot detect pins,
