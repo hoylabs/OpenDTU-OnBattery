@@ -354,6 +354,8 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
 
     if (_taskHandle == nullptr) { return; }
 
+    uint16_t flags = 0;
+
     switch (setting) {
         case Setting::OfflineVoltage:
         case Setting::OnlineVoltage:
@@ -363,6 +365,12 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
         case Setting::OnlineCurrent:
             val *= _maxCurrentMultiplier;
             break;
+        case Setting::InputCurrent:
+            val *= 1024;
+            if (val > 0) {
+                flags = 0x0001;
+            }
+            break;
     }
 
     _sendQueue.push(command_t {
@@ -370,7 +378,7 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
         .deviceAddress = 1,
         .registerAddress = 0x80FE,
         .command = static_cast<uint16_t>(setting),
-        .flags = 0,
+        .flags = flags,
         .value = static_cast<uint32_t>(val)
     });
 
