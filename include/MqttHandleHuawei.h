@@ -27,6 +27,7 @@ private:
         LimitOnlineCurrent,
         LimitOfflineVoltage,
         LimitOfflineCurrent,
+        LimitInputCurrent,
         Mode,
         Production,
         FanOnlineFullSpeed,
@@ -34,11 +35,12 @@ private:
     };
 
     static constexpr frozen::string _cmdtopic = "huawei/cmd/";
-    static constexpr frozen::map<frozen::string, Topic, 8> _subscriptions = {
+    static constexpr frozen::map<frozen::string, Topic, 9> _subscriptions = {
         { "limit_online_voltage",   Topic::LimitOnlineVoltage },
         { "limit_online_current",   Topic::LimitOnlineCurrent },
         { "limit_offline_voltage",  Topic::LimitOfflineVoltage },
         { "limit_offline_current",  Topic::LimitOfflineCurrent },
+        { "limit_input_current",    Topic::LimitInputCurrent },
         { "mode",                   Topic::Mode },
         { "production",             Topic::Production },
         { "fan_online_full_speed",  Topic::FanOnlineFullSpeed },
