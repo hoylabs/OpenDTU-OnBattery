@@ -102,6 +102,31 @@
                         wide
                     />
                 </template>
+
+                <template
+                    v-if="isEnabled && (governingBatteryPoweredInverters || governingSmartBufferPoweredInverters)"
+                >
+                    <div class="row mb-3">
+                        <label for="inverter_restart" class="col-sm-4 col-form-label">
+                            {{ $t('powerlimiteradmin.InverterRestartHour') }}
+                            <BIconInfoCircle v-tooltip :title="$t('powerlimiteradmin.InverterRestartHint')" />
+                        </label>
+                        <div class="col-sm-8">
+                            <select
+                                id="inverter_restart"
+                                class="form-select"
+                                v-model="powerLimiterConfigList.inverter_restart_hour"
+                            >
+                                <option value="-1">
+                                    {{ $t('powerlimiteradmin.InverterRestartDisabled') }}
+                                </option>
+                                <option v-for="hour in range(24)" :key="hour" :value="hour">
+                                    {{ hour > 9 ? hour : '0' + hour }}:00
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </template>
             </CardElement>
 
             <template v-if="isEnabled">
@@ -121,16 +146,29 @@
                             wide
                         />
 
-                        <InputElement
-                            :label="$t('powerlimiteradmin.InverterIsSolarPowered')"
-                            v-model="powerLimiterConfigList.inverters[idx].is_solar_powered"
-                            type="checkbox"
-                            wide
-                        />
+                        <div class="row mb-3">
+                            <label class="col-sm-4 col-form-label">
+                                {{ $t('powerlimiteradmin.PowerSource') }}
+                            </label>
+                            <div class="col-sm-8">
+                                <select
+                                    class="form-select"
+                                    v-model="powerLimiterConfigList.inverters[idx].power_source"
+                                >
+                                    <option
+                                        v-for="provider in powerSourceList"
+                                        :key="provider.key"
+                                        :value="provider.key"
+                                    >
+                                        {{ $t(`powerlimiteradmin.PowerSource` + provider.value) }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
 
                         <InputElement
                             v-if="
-                                powerLimiterConfigList.inverters[idx].is_solar_powered &&
+                                powerLimiterConfigList.inverters[idx].power_source != 0 &&
                                 inverterSupportsOverscaling(inv.serial)
                             "
                             :label="$t('powerlimiteradmin.UseOverscaling')"
@@ -257,27 +295,6 @@
                                     :value="channel"
                                 >
                                     {{ channel + 1 }}
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <label for="inverter_restart" class="col-sm-4 col-form-label">
-                            {{ $t('powerlimiteradmin.InverterRestartHour') }}
-                            <BIconInfoCircle v-tooltip :title="$t('powerlimiteradmin.InverterRestartHint')" />
-                        </label>
-                        <div class="col-sm-8">
-                            <select
-                                id="inverter_restart"
-                                class="form-select"
-                                v-model="powerLimiterConfigList.inverter_restart_hour"
-                            >
-                                <option value="-1">
-                                    {{ $t('powerlimiteradmin.InverterRestartDisabled') }}
-                                </option>
-                                <option v-for="hour in range(24)" :key="hour" :value="hour">
-                                    {{ hour > 9 ? hour : '0' + hour }}:00
                                 </option>
                             </select>
                         </div>
@@ -466,6 +483,11 @@ export default defineComponent({
             alertType: 'info',
             showAlert: false,
             configAlert: false,
+            powerSourceList: [
+                { key: 0, value: 'Battery' },
+                { key: 1, value: 'Solar' },
+                { key: 2, value: 'SmartBuffer' },
+            ],
         };
     },
     created() {
@@ -490,10 +512,13 @@ export default defineComponent({
             return inverters.filter((inv: PowerLimiterInverterConfig) => inv.is_governed) || [];
         },
         governedBatteryPoweredInverters(): PowerLimiterInverterConfig[] {
-            return this.governedInverters.filter((inv: PowerLimiterInverterConfig) => !inv.is_solar_powered);
+            return this.governedInverters.filter((inv: PowerLimiterInverterConfig) => inv.power_source == 0);
         },
         governingBatteryPoweredInverters(): boolean {
             return this.governedBatteryPoweredInverters.length > 0;
+        },
+        governingSmartBufferPoweredInverters(): boolean {
+            return this.governedInverters.filter((inv: PowerLimiterInverterConfig) => inv.power_source == 2).length > 0;
         },
         isEnabled(): boolean {
             const cfg = this.powerLimiterConfigList;
@@ -692,6 +717,7 @@ export default defineComponent({
                 newInv.is_behind_power_meter = true;
                 newInv.lower_power_limit = this.getLowerLimitMinimum(newInv);
                 newInv.upper_power_limit = Math.max(metaInv.max_power, 300);
+                newInv.power_source = 0; // battery
                 newInv.use_overscaling_to_compensate_shading = false;
                 newInv.scaling_threshold = 98;
                 inverters.push(newInv);
