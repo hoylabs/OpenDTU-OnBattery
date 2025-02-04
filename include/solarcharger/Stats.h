@@ -28,13 +28,13 @@ public:
 
     // state of operation from the first available controller
     enum class StateOfOperation : uint8_t { Off = 0, Bulk = 1, Absorption = 2, Float = 3, Various = 255 };
-    virtual std::optional<Stats::StateOfOperation> getStateOfOperation() const { return std::nullopt; };
+    virtual std::optional<Stats::StateOfOperation> getStateOfOperation() const;
 
     // float voltage from the first available charge controller
-    virtual std::optional<float> getFloatVoltage() const { return std::nullopt; };
+    virtual std::optional<float> getFloatVoltage() const;
 
     // absorption voltage from the first available charge controller
-    virtual std::optional<float> getAbsorptionVoltage() const { return std::nullopt; };
+    virtual std::optional<float> getAbsorptionVoltage() const;
 
     // convert stats to JSON for web application live view
     virtual void getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const;
