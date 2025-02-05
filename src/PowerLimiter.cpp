@@ -931,10 +931,10 @@ bool PowerLimiterClass::usesSmartBufferPoweredInverter()
     return false;
 }
 
-bool PowerLimiterClass::isGovernedInverterProducing()
+bool PowerLimiterClass::isGovernedBatteryPoweredInverterProducing()
 {
     for (auto const& upInv : _inverters) {
-        if (upInv->isProducing()) { return true; }
+        if (upInv->isBatteryPowered() && upInv->isProducing()) { return true; }
     }
     return false;
 }
