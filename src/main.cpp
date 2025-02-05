@@ -37,6 +37,7 @@
 #include <SpiManager.h>
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
+#include "SurplusPower.h"
 
 void setup()
 {
@@ -178,6 +179,7 @@ void setup()
     PowerLimiter.init(scheduler);
     HuaweiCan.init(scheduler);
     Battery.init(scheduler);
+    SurplusPower.init(scheduler);
 }
 
 void loop()

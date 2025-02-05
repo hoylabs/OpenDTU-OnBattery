@@ -18,6 +18,7 @@
 #include <limits>
 #include <frozen/map.h>
 #include "SunPosition.h"
+#include "SurplusPower.h"
 
 static auto sBatteryPoweredFilter = [](PowerLimiterInverter const& inv) {
     return inv.isBatteryPowered();
@@ -331,6 +332,11 @@ void PowerLimiterClass::loop()
     auto coveredBySmartBuffer = updateInverterLimits(remainingAfterSolar, sSmartBufferPoweredFilter, sSmartBufferPoweredExpression);
     auto remainingAfterSmartBuffer = (remainingAfterSolar >= coveredBySmartBuffer) ? remainingAfterSolar - coveredBySmartBuffer : 0;
     auto powerBusUsage = calcPowerBusUsage(remainingAfterSmartBuffer);
+
+    if (_batteryDischargeEnabled) {
+        powerBusUsage = SurplusPower.calculateSurplus(powerBusUsage, getBatteryInvertersOutputAcWatts(), latestInverterStats);
+    }
+
     auto coveredByBattery = updateInverterLimits(powerBusUsage, sBatteryPoweredFilter, sBatteryPoweredExpression);
 
     if (_verboseLogging) {
