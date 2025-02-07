@@ -209,6 +209,7 @@
 
                     <InputElement
                         :label="$t('powerlimiteradmin.BatteryDischargeAtNight')"
+                        :tooltip="$t('powerlimiteradmin.BatteryDischargeAtNightHint')"
                         v-model="powerLimiterConfigList.battery_always_use_at_night"
                         type="checkbox"
                         wide
