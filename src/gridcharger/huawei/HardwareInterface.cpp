@@ -245,10 +245,21 @@ void HardwareInterface::loop()
 
     if (!_upData) { _upData = std::make_unique<DataPointContainer>(); }
 
-    while (getMessage(msg)) {
-        if (readBoardProperties(msg)) { continue; }
+    auto logIncoming = [&config,&msg](bool processed) -> void {
+        if (!config.Huawei.VerboseLogging) { return; }
 
-        if (readRectifierState(msg)) { continue; }
+        MessageOutput.printf("[Huawei::HwIfc] %s message with CAN ID "
+                "0x%08x, value ID 0x%08x, and value 0x%08x\r\n",
+                (processed?"processed":"  ignored"),
+                msg.canId, msg.valueId, msg.value);
+    };
+
+    while (getMessage(msg)) {
+        if (readBoardProperties(msg) ||
+                readRectifierState(msg)) {
+            logIncoming(true);
+            continue;
+        }
 
         // examples for codes not handled are:
         //     0x1081407E (Ack), 0x1081807E (Ack Frame),
@@ -257,11 +268,7 @@ void HardwareInterface::loop()
         //     0x108081FE (unclear).
         // https://github.com/craigpeacock/Huawei_R4850G2_CAN/blob/main/r4850.c
         // https://www.beyondlogic.org/review-huawei-r4850g2-power-supply-53-5vdc-3kw/
-        if (config.Huawei.VerboseLogging) {
-            MessageOutput.printf("[Huawei::HwIfc] ignoring message with CAN ID "
-                    "0x%08x, value ID 0x%08x, and value 0x%08x\r\n",
-                    msg.canId, msg.valueId, msg.value);
-        }
+        logIncoming(false);
     }
 
     if (StringState::Complete != _boardPropertiesState) {
@@ -309,6 +316,12 @@ void HardwareInterface::loop()
         };
 
         uint32_t addr = 0x10800000 | (cmd.deviceAddress << 16) | cmd.registerAddress;
+
+        if (config.Huawei.VerboseLogging) {
+            MessageOutput.printf("[Huawei::HwIfc] sending to 0x%08x: %04x%04x%08x\r\n",
+                    addr, cmd.command, cmd.flags, cmd.value);
+        }
+
         if (!sendMessage(addr, data)) {
             if (cmd.tries > 0) { --cmd.tries; }
 
