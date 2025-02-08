@@ -288,13 +288,15 @@ void PowerLimiterClass::loop()
     // re-calculate load-corrected voltage once (and only once) per DPL loop
     _oLoadCorrectedVoltage = std::nullopt;
 
-    if (_verboseLogging && usesBatteryPoweredInverter()) {
+    if (_verboseLogging && (usesBatteryPoweredInverter() || usesSmartBufferPoweredInverter())) {
         MessageOutput.printf("[DPL] up %lu s, %snext inverter restart at %d s (set to %d)\r\n",
                 millis()/1000,
                 (_nextInverterRestart.first?"":"NO "),
                 _nextInverterRestart.second/1000,
                 config.PowerLimiter.RestartHour);
+    }
 
+    if (_verboseLogging && usesBatteryPoweredInverter()) {
         MessageOutput.printf("[DPL] battery interface %sabled, SoC %.1f %% (%s), age %u s (%s)\r\n",
                 (config.Battery.Enabled?"en":"dis"),
                 Battery.getStats()->getSoC(),
@@ -915,6 +917,15 @@ bool PowerLimiterClass::usesBatteryPoweredInverter()
 {
     for (auto const& upInv : _inverters) {
         if (upInv->isBatteryPowered()) { return true; }
+    }
+
+    return false;
+}
+
+bool PowerLimiterClass::usesSmartBufferPoweredInverter()
+{
+    for (auto const& upInv : _inverters) {
+        if (upInv->isSmartBufferPowered()) { return true; }
     }
 
     return false;

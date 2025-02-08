@@ -52,6 +52,7 @@ public:
     void setMode(Mode m) { _mode = m; }
     Mode getMode() const { return _mode; }
     bool usesBatteryPoweredInverter();
+    bool usesSmartBufferPoweredInverter();
     bool isGovernedInverterProducing();
 
 private:
