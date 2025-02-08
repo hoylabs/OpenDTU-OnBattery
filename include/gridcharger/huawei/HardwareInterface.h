@@ -78,7 +78,7 @@ private:
     using command_t = struct COMMAND;
     std::queue<command_t> _sendQueue;
 
-    static unsigned constexpr _maxCurrentMultiplier = 20;
+    float _maxCurrentMultiplier = 0; // device-specific, must be fetched first
 
     uint32_t _nextRequestMillis = 0; // When to send next data request to PSU
 
@@ -95,6 +95,8 @@ private:
     };
     StringState _boardPropertiesState = StringState::Unknown;
     uint32_t _boardPropertiesRequestMillis = 0;
+
+    bool readMaxAmps(can_message_t const& msg);
 
     bool readRectifierState(can_message_t const& msg);
 };
