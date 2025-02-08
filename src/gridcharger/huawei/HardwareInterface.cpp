@@ -139,6 +139,30 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
     return true;
 }
 
+bool HardwareInterface::readMaxAmps(can_message_t const& msg)
+{
+    auto const& config = Configuration.get();
+
+    // we will receive five messages with CAN ID 0x1081507F,
+    // and one (the last one) with ID 0x1081507E.
+    if ((msg.canId | 0x1) != 0x1081507F) { return false; }
+
+    uint16_t counter = static_cast<uint16_t>(msg.valueId >> 16);
+
+    if (counter == 1) {
+        // device-specific value containing double the maximum output current
+        // (not quite for a R4830 it seems, but the derived multiplier is spot on)
+        uint8_t maxAmps = (msg.value >> 16) & 0xFF;
+        _maxCurrentMultiplier = 2048 / static_cast<float>(maxAmps);
+        if (config.Huawei.VerboseLogging) {
+            MessageOutput.printf("[Huawei::HwIfc] max current multiplier is %.2f\r\n",
+                    _maxCurrentMultiplier);
+        }
+    }
+
+    return true;
+}
+
 bool HardwareInterface::readRectifierState(can_message_t const& msg)
 {
     auto const& config = Configuration.get();
@@ -184,7 +208,14 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
 
     auto label = static_cast<DataPointLabel>((valueId & 0x00FF0000) >> 16);
 
-    unsigned divisor = (label == DataPointLabel::OutputCurrentMax) ? _maxCurrentMultiplier : 1024;
+    float divisor = (label == DataPointLabel::OutputCurrentMax) ? _maxCurrentMultiplier : 1024;
+
+    if (divisor == 0) {
+        MessageOutput.print("[Huawei::HwIfc] cannot process output current max "
+                "value while respective multiplier unknown\r\n");
+        return false;
+    }
+
     float value = static_cast<float>(msg.value)/divisor;
     switch (label) {
         case DataPointLabel::InputPower:
@@ -226,7 +257,7 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
             // 0x0E/0x0A seems to be a static label/value pair, so we don't print it
             if (config.Huawei.VerboseLogging && (rawLabel != 0x0E || msg.value != 0x0A)) {
                 MessageOutput.printf("[Huawei::HwIfc] raw value for 0x%02x is "
-                        "0x%08x (%d), scaled by 1024: %.2f, scaled by %d: %.2f\r\n",
+                        "0x%08x (%d), scaled by 1024: %.2f, scaled by %.2f: %.2f\r\n",
                         rawLabel, msg.value, msg.value,
                         static_cast<float>(msg.value)/1024,
                         _maxCurrentMultiplier,
@@ -256,6 +287,7 @@ void HardwareInterface::loop()
 
     while (getMessage(msg)) {
         if (readBoardProperties(msg) ||
+                readMaxAmps(msg) ||
                 readRectifierState(msg)) {
             logIncoming(true);
             continue;
@@ -284,6 +316,14 @@ void HardwareInterface::loop()
         _boardPropertiesRequestMillis = millis();
 
         return; // not sending other requests until we know the board properties
+    }
+
+    if (_maxCurrentMultiplier == 0) {
+        static constexpr std::array<uint8_t, 8> data = { 0 };
+        if (!sendMessage(0x108150FE, data)) {
+            MessageOutput.print("[Huawei::HwIfc] Failed to send request for max amps\r\n");
+        }
+        return; // not sending other requests until we know the max current value
     }
 
     if (_nextRequestMillis < millis()) {
