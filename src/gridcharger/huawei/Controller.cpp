@@ -401,6 +401,18 @@ void Controller::getJsonData(JsonVariant& root) const
 
 #define VAL(l, n) \
     { \
+        auto oVal = _dataPoints.get<Label::l>(); \
+        if (oVal) { \
+            root[n] = *oVal; \
+        } \
+    }
+
+    VAL(Row, "row");
+    VAL(Slot, "slot");
+#undef VAL
+
+#define VAL(l, n) \
+    { \
         auto oText = _dataPoints.get<Label::l>(); \
         if (oText) { root[n] = *oText; } \
     }

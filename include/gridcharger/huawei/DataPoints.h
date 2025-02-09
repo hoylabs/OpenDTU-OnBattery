@@ -12,6 +12,8 @@ enum class DataPointLabel : uint8_t {
     VendorName,
     ProductName,
     ProductDescription,
+    Row,
+    Slot,
     InputPower = 0x70,
     InputFrequency = 0x71,
     InputCurrent = 0x72,
@@ -39,6 +41,8 @@ LABEL_TRAIT(Manufactured,       std::string, "");
 LABEL_TRAIT(VendorName,         std::string, "");
 LABEL_TRAIT(ProductName,        std::string, "");
 LABEL_TRAIT(ProductDescription, std::string, "");
+LABEL_TRAIT(Row,                uint8_t,     "");
+LABEL_TRAIT(Slot,               uint8_t,     "");
 LABEL_TRAIT(InputPower,         float,       "W");
 LABEL_TRAIT(InputFrequency,     float,       "Hz");
 LABEL_TRAIT(InputCurrent,       float,       "A");
@@ -54,10 +58,10 @@ LABEL_TRAIT(OutputCurrent,      float,       "A");
 
 } // namespace GridCharger::Huawei
 
-template class DataPointContainer<DataPoint<float, std::string>,
+template class DataPointContainer<DataPoint<float, std::string, uint8_t>,
                                   GridCharger::Huawei::DataPointLabel,
                                   GridCharger::Huawei::DataPointLabelTraits>;
 
 namespace GridCharger::Huawei {
-    using DataPointContainer = DataPointContainer<DataPoint<float, std::string>, DataPointLabel, DataPointLabelTraits>;
+    using DataPointContainer = DataPointContainer<DataPoint<float, std::string, uint8_t>, DataPointLabel, DataPointLabelTraits>;
 } // namespace GridCharger::Huawei
