@@ -54,6 +54,7 @@ protected:
 private:
     static void staticLoopHelper(void* context);
     void loop();
+    void processQueue();
 
     virtual bool getMessage(can_message_t& msg) = 0;
 
@@ -80,7 +81,7 @@ private:
 
     float _maxCurrentMultiplier = 0; // device-specific, must be fetched first
 
-    uint32_t _nextRequestMillis = 0; // When to send next data request to PSU
+    uint32_t _lastRequestMillis = 0;
 
     bool readBoardProperties(can_message_t const& msg);
 
