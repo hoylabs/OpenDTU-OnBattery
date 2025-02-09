@@ -1024,6 +1024,8 @@
         "BoardType": "Platinentyp",
         "Manufactured": "Herstellungsdatum",
         "ProductDescription": "Produktbeschreibung",
+        "SlotLabel": "Steckplatz",
+        "SlotText": "Reihe {row} Index {slot}",
         "Input": "Eingang",
         "Output": "Ausgang",
         "Property": "Eigenschaft",

@@ -82,6 +82,12 @@
                                                         {{ huaweiData.product_description }}
                                                     </td>
                                                 </tr>
+                                                <tr v-if="huaweiData.row !== undefined && huaweiData.slot !== undefined">
+                                                    <th scope="row">{{ $t('huawei.SlotLabel') }}</th>
+                                                    <td>
+                                                        {{ $t('huawei.SlotText', { row: huaweiData.row, slot: huaweiData.slot }) }}
+                                                    </td>
+                                                </tr>
                                             </tbody>
                                         </table>
                                     </div>

@@ -139,7 +139,7 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
     return true;
 }
 
-bool HardwareInterface::readMaxAmps(can_message_t const& msg)
+bool HardwareInterface::readDeviceConfig(can_message_t const& msg)
 {
     auto const& config = Configuration.get();
 
@@ -158,6 +158,10 @@ bool HardwareInterface::readMaxAmps(can_message_t const& msg)
             MessageOutput.printf("[Huawei::HwIfc] max current multiplier is %.2f\r\n",
                     _maxCurrentMultiplier);
         }
+    }
+    else if (counter == 6) {
+        _upData->add<DataPointLabel::Row>(static_cast<uint8_t>((msg.valueId >> 8) & 0xFF));
+        _upData->add<DataPointLabel::Slot>(static_cast<uint8_t>(msg.valueId & 0xFF));
     }
 
     return true;
@@ -287,7 +291,7 @@ void HardwareInterface::loop()
 
     while (getMessage(msg)) {
         if (readBoardProperties(msg) ||
-                readMaxAmps(msg) ||
+                readDeviceConfig(msg) ||
                 readRectifierState(msg)) {
             logIncoming(true);
             continue;
@@ -318,15 +322,18 @@ void HardwareInterface::loop()
         return; // not sending other requests until we know the board properties
     }
 
-    if (_maxCurrentMultiplier == 0) {
-        static constexpr std::array<uint8_t, 8> data = { 0 };
-        if (!sendMessage(0x108150FE, data)) {
-            MessageOutput.print("[Huawei::HwIfc] Failed to send request for max amps\r\n");
-        }
-        return; // not sending other requests until we know the max current value
-    }
-
     if (_nextRequestMillis < millis()) {
+        // request device config (max amps, row, slot)
+        _sendQueue.push(command_t {
+            .tries = 1,
+            .deviceAddress = 1,
+            .registerAddress = 0x50FE,
+            .command = 0,
+            .flags = 0,
+            .value = 0
+        });
+
+        // request rectifier state
         _sendQueue.push(command_t {
             .tries = 1,
             .deviceAddress = 1,
