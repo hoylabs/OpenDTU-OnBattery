@@ -20,4 +20,6 @@ export interface Huawei {
     vendor_name?: string;
     product_name?: string;
     product_description?: string;
+    row?: number;
+    slot?: number;
 }

@@ -97,6 +97,8 @@ void MqttHandleHuaweiClass::loop()
     PUB(InputTemperature, "input_temp");
     PUB(OutputTemperature, "output_temp");
     PUB(Efficiency, "efficiency");
+    PUB(Row, "slot_detection/row");
+    PUB(Slot, "slot_detection/slot");
 #undef PUB
 
 #define PUBSTR(l, t) \

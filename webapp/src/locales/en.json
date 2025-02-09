@@ -1027,6 +1027,8 @@
         "BoardType": "Board Type",
         "Manufactured": "Manufacturing Date",
         "ProductDescription": "Product Description",
+        "SlotLabel": "Slot",
+        "SlotText": "Row {row} Index {slot}",
         "Input": "Input",
         "Output": "Output",
         "Property": "Property",
