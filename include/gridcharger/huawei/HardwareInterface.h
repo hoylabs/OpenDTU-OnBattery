@@ -96,7 +96,7 @@ private:
     StringState _boardPropertiesState = StringState::Unknown;
     uint32_t _boardPropertiesRequestMillis = 0;
 
-    bool readMaxAmps(can_message_t const& msg);
+    bool readDeviceConfig(can_message_t const& msg);
 
     bool readRectifierState(can_message_t const& msg);
 };
