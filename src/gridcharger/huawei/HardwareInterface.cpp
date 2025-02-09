@@ -310,19 +310,23 @@ void HardwareInterface::loop()
     if (StringState::Complete != _boardPropertiesState) {
         // stand by while processing the board properties replies and not timed out
         if (StringState::Reading == _boardPropertiesState &&
-                _boardPropertiesRequestMillis + 5000 < millis()) { return; }
+                (millis() - _lastRequestMillis) < 5000) { return; }
 
-        static constexpr std::array<uint8_t, 8> data = { 0 };
-        if (!sendMessage(0x1081D2FE, data)) {
-            MessageOutput.print("[Huawei::HwIfc] Failed to send board properties request\r\n");
-            _boardPropertiesState = StringState::RequestFailed;
-        }
-        _boardPropertiesRequestMillis = millis();
+        _lastRequestMillis = millis();
 
-        return; // not sending other requests until we know the board properties
+        _sendQueue.push(command_t {
+            .tries = 1,
+            .deviceAddress = 1,
+            .registerAddress = 0xD2FE,
+            .command = 0,
+            .flags = 0,
+            .value = 0
+        });
+
+        return processQueue(); // not sending timed requests until we know the board properties
     }
 
-    if (_nextRequestMillis < millis()) {
+    if ((millis() - _lastRequestMillis) >= DataRequestIntervalMillis) {
         // request device config (max amps, row, slot)
         _sendQueue.push(command_t {
             .tries = 1,
@@ -343,13 +347,19 @@ void HardwareInterface::loop()
             .value = 0
         });
 
-        _nextRequestMillis = millis() + DataRequestIntervalMillis;
+        _lastRequestMillis = millis();
     }
+
+    processQueue();
+}
+
+void HardwareInterface::processQueue()
+{
+    auto const& config = Configuration.get();
 
     size_t queueSize = _sendQueue.size();
     for (size_t i = 0; i < queueSize; ++i) {
-        auto cmd = _sendQueue.front();
-        _sendQueue.pop();
+        auto& cmd = _sendQueue.front();
 
         std::array<uint8_t, 8> data = {
             static_cast<uint8_t>((cmd.command >> 8) & 0xFF),
@@ -369,15 +379,18 @@ void HardwareInterface::loop()
                     addr, cmd.command, cmd.flags, cmd.value);
         }
 
-        if (!sendMessage(addr, data)) {
-            if (cmd.tries > 0) { --cmd.tries; }
-
-            MessageOutput.printf("[Huawei::HwIfc] Sending to 0x%08x failed, "
-                    "command 0x%04x, flags 0x%04x, value 0x%08x, %d tries remaining\r\n",
-                    addr, cmd.command, cmd.flags, cmd.value, cmd.tries);
-
-            if (cmd.tries > 0) { _sendQueue.push(cmd); }
+        if (sendMessage(addr, data)) {
+            _sendQueue.pop();
+            continue;
         }
+
+        if (cmd.tries > 0) { --cmd.tries; }
+
+        MessageOutput.printf("[Huawei::HwIfc] Sending to 0x%08x failed, "
+                "command 0x%04x, flags 0x%04x, value 0x%08x, %d tries remaining\r\n",
+                addr, cmd.command, cmd.flags, cmd.value, cmd.tries);
+
+        if (cmd.tries == 0) { _sendQueue.pop(); }
     }
 }
 
@@ -414,7 +427,7 @@ void HardwareInterface::setProduction(bool enable)
         .value = 0
     });
 
-    _nextRequestMillis = millis() + 88; // request early param feedback
+    _lastRequestMillis = millis() - DataRequestIntervalMillis; // request early param feedback
 
     xTaskNotifyGive(_taskHandle);
 }
@@ -453,7 +466,7 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
         .value = static_cast<uint32_t>(val)
     });
 
-    _nextRequestMillis = millis() + 88; // request early param feedback
+    _lastRequestMillis = millis() - DataRequestIntervalMillis; // request early param feedback
 
     xTaskNotifyGive(_taskHandle);
 }
