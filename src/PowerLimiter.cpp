@@ -209,7 +209,7 @@ void PowerLimiterClass::loop()
     // calculation at all after surviving the loop above, which ensures that we
     // have inverter stats more recent than their respective last update command
     if (Mode::UnconditionalFullSolarPassthrough == _mode) {
-        return fullSolarPassthrough(Status::UnconditionalSolarPassthrough);
+        return unconditionalFullSolarPassthrough();
     }
 
     // if the power meter is being used, i.e., if its data is valid, we want to
@@ -448,12 +448,12 @@ uint16_t PowerLimiterClass::dcPowerBusToInverterAc(uint16_t dcPower)
 }
 
 /**
- * implements the "full solar passthrough" mode of operation. in this mode of
+ * implements the "uncoditional full solar passthrough" mode of operation. in this mode of
  * operation, the inverters shall behave as if they were connected to the solar
  * panels directly, i.e., all solar power (and only solar power) is converted
  * to AC power, independent from the power meter reading.
  */
-void PowerLimiterClass::fullSolarPassthrough(PowerLimiterClass::Status reason)
+void PowerLimiterClass::unconditionalFullSolarPassthrough()
 {
     if ((millis() - _lastCalculation) < _calculationBackoffMs) { return; }
     _lastCalculation = millis();
@@ -472,7 +472,7 @@ void PowerLimiterClass::fullSolarPassthrough(PowerLimiterClass::Status reason)
 
     _calculationBackoffMs = 1 * 1000;
     updateInverterLimits(targetOutput, sBatteryPoweredFilter, sBatteryPoweredExpression);
-    return announceStatus(reason);
+    return announceStatus(Status::UnconditionalSolarPassthrough);
 }
 
 uint8_t PowerLimiterClass::getInverterUpdateTimeouts() const
