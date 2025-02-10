@@ -105,6 +105,7 @@ private:
     bool isStopThresholdReached();
     bool isBelowStopThreshold();
     void calcNextInverterRestart();
+    bool isSolarPassThroughEnabled();
     bool isFullSolarPassthroughActive();
 };
 
