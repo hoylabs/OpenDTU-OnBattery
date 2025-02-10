@@ -459,7 +459,7 @@ void PowerLimiterClass::fullSolarPassthrough(PowerLimiterClass::Status reason)
     _lastCalculation = millis();
 
     for (auto& upInv : _inverters) {
-        if (upInv->isSolarPowered()) { upInv->setMaxOutput(); }
+        if (!upInv->isBatteryPowered()) { upInv->setMaxOutput(); }
     }
 
     uint16_t targetOutput = 0;
