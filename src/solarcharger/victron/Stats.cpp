@@ -91,29 +91,35 @@ std::optional<uint16_t> Stats::getPanelPowerWatts() const
 
 std::optional<float> Stats::getYieldTotal() const
 {
-    float sum = 0;
+    std::optional<float> sum = std::nullopt;
 
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
 
-        sum += entry.second->yieldTotal_H19_Wh / 1000.0;
+        if (!sum.has_value()) {
+            sum = entry.second->yieldTotal_H19_Wh / 1000.0;
+        } else {
+            *sum += entry.second->yieldTotal_H19_Wh / 1000.0;
+        }
     }
 
-    if (0 == sum) { return std::nullopt; }
     return sum;
 }
 
 std::optional<float> Stats::getYieldDay() const
 {
-    float sum = 0;
+    std::optional<float> sum = std::nullopt;
 
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
 
-        sum += entry.second->yieldToday_H20_Wh;
+        if (!sum.has_value()) {
+            sum = entry.second->yieldToday_H20_Wh;
+        } else {
+            *sum += entry.second->yieldToday_H20_Wh;
+        }
     }
 
-    if (0 == sum) { return std::nullopt; }
     return sum;
 }
 
