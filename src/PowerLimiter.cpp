@@ -19,7 +19,7 @@
 #include "SunPosition.h"
 
 static auto sBatteryPoweredFilter = [](PowerLimiterInverter const& inv) {
-    return !inv.isSolarPowered();
+    return inv.isBatteryPowered();
 };
 
 static const char sBatteryPoweredExpression[] = "battery-powered";
@@ -29,6 +29,12 @@ static auto sSolarPoweredFilter = [](PowerLimiterInverter const& inv) {
 };
 
 static const char sSolarPoweredExpression[] = "solar-powered";
+
+static auto sSmartBufferPoweredFilter = [](PowerLimiterInverter const& inv) {
+    return inv.isSmartBufferPowered();
+};
+
+static const char sSmartBufferPoweredExpression[] = "smart-buffer-powered";
 
 PowerLimiterClass PowerLimiter;
 
@@ -282,13 +288,15 @@ void PowerLimiterClass::loop()
     // re-calculate load-corrected voltage once (and only once) per DPL loop
     _oLoadCorrectedVoltage = std::nullopt;
 
-    if (_verboseLogging && usesBatteryPoweredInverter()) {
+    if (_verboseLogging && (usesBatteryPoweredInverter() || usesSmartBufferPoweredInverter())) {
         MessageOutput.printf("[DPL] up %lu s, %snext inverter restart at %d s (set to %d)\r\n",
                 millis()/1000,
                 (_nextInverterRestart.first?"":"NO "),
                 _nextInverterRestart.second/1000,
                 config.PowerLimiter.RestartHour);
+    }
 
+    if (_verboseLogging && usesBatteryPoweredInverter()) {
         MessageOutput.printf("[DPL] battery interface %sabled, SoC %.1f %% (%s), age %u s (%s)\r\n",
                 (config.Battery.Enabled?"en":"dis"),
                 Battery.getStats()->getSoC(),
@@ -339,8 +347,10 @@ void PowerLimiterClass::loop()
     inverterTotalPower = std::min(inverterTotalPower, totalAllowance);
 
     auto coveredBySolar = updateInverterLimits(inverterTotalPower, sSolarPoweredFilter, sSolarPoweredExpression);
-    auto remaining = (inverterTotalPower >= coveredBySolar) ? inverterTotalPower - coveredBySolar : 0;
-    auto powerBusUsage = calcPowerBusUsage(remaining);
+    auto remainingAfterSolar = (inverterTotalPower >= coveredBySolar) ? inverterTotalPower - coveredBySolar : 0;
+    auto coveredBySmartBuffer = updateInverterLimits(remainingAfterSolar, sSmartBufferPoweredFilter, sSmartBufferPoweredExpression);
+    auto remainingAfterSmartBuffer = (remainingAfterSolar >= coveredBySmartBuffer) ? remainingAfterSolar - coveredBySmartBuffer : 0;
+    auto powerBusUsage = calcPowerBusUsage(remainingAfterSmartBuffer);
     auto coveredByBattery = updateInverterLimits(powerBusUsage, sBatteryPoweredFilter, sBatteryPoweredExpression);
 
     if (_verboseLogging) {
@@ -566,6 +576,8 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
         matchingInverters.push_back(upInv.get());
     }
 
+    if (matchingInverters.empty()) { return 0; }
+
     int32_t diff = powerRequested - producing;
 
     auto const& config = Configuration.get();
@@ -578,8 +590,6 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
                 powerRequested, matchingInverters.size(), filterExpression.c_str(),
                 (plural?"s":""), producing, diff, hysteresis);
     }
-
-    if (matchingInverters.empty()) { return 0; }
 
     if (std::abs(diff) < static_cast<int32_t>(hysteresis)) { return producing; }
 
@@ -723,7 +733,7 @@ float PowerLimiterClass::getBatteryInvertersOutputAcWatts()
     float res = 0;
 
     for (auto const& upInv : _inverters) {
-        if (upInv->isSolarPowered()) { continue; }
+        if (!upInv->isBatteryPowered()) { continue; }
         // TODO(schlimmchen): we must use the DC power instead, as the battery
         // voltage drops proportional to the DC current draw, but the AC power
         // output does not correlate with the battery current or voltage.
@@ -906,16 +916,25 @@ bool PowerLimiterClass::isFullSolarPassthroughActive()
 bool PowerLimiterClass::usesBatteryPoweredInverter()
 {
     for (auto const& upInv : _inverters) {
-        if (!upInv->isSolarPowered()) { return true; }
+        if (upInv->isBatteryPowered()) { return true; }
     }
 
     return false;
 }
 
-bool PowerLimiterClass::isGovernedInverterProducing()
+bool PowerLimiterClass::usesSmartBufferPoweredInverter()
 {
     for (auto const& upInv : _inverters) {
-        if (upInv->isProducing()) { return true; }
+        if (upInv->isSmartBufferPowered()) { return true; }
+    }
+
+    return false;
+}
+
+bool PowerLimiterClass::isGovernedBatteryPoweredInverterProducing()
+{
+    for (auto const& upInv : _inverters) {
+        if (upInv->isBatteryPowered() && upInv->isProducing()) { return true; }
     }
     return false;
 }
