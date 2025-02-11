@@ -7,7 +7,7 @@
 #include <cfloat>
 #include <string>
 
-namespace BatteryNs {
+namespace Batteries {
 
 // mandatory interface for all kinds of batteries
 class Stats {
@@ -151,4 +151,4 @@ private:
     uint32_t _lastUpdateDischargeCurrentLimit = 0;
 };
 
-} // namespace BatteryNs
+} // namespace Batteries

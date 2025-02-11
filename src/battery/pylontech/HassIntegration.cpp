@@ -2,11 +2,11 @@
 
 #include <battery/pylontech/HassIntegration.h>
 
-namespace BatteryNs::Pylontech {
+namespace Batteries::Pylontech {
 
 void HassIntegration::publishSensors() const
 {
-    ::BatteryNs::HassIntegration::publishSensors();
+    ::Batteries::HassIntegration::publishSensors();
 
     publishSensor("Battery voltage", NULL, "voltage", "voltage", "measurement", "V");
     publishSensor("Battery current", NULL, "current", "current", "measurement", "A");
@@ -44,4 +44,4 @@ void HassIntegration::publishSensors() const
     publishBinarySensor("Charge immediately", "mdi:alert", "charging/chargeImmediately", "1", "0");
 }
 
-} // namespace BatteryNs::Pylontech
+} // namespace Batteries::Pylontech

@@ -2,11 +2,11 @@
 #include <MqttSettings.h>
 #include <battery/sbs/Stats.h>
 
-namespace BatteryNs::SBS {
+namespace Batteries::SBS {
 
 void Stats::getLiveViewData(JsonVariant& root) const
 {
-    ::BatteryNs::Stats::getLiveViewData(root);
+    ::Batteries::Stats::getLiveViewData(root);
 
     // values go into the "Status" card of the web application
     addLiveViewValue(root, "chargeVoltage", _chargeVoltage, "V", 1);
@@ -29,7 +29,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
 void Stats::mqttPublish() const
 {
-    ::BatteryNs::Stats::mqttPublish();
+    ::Batteries::Stats::mqttPublish();
 
     MqttSettings.publish("battery/settings/chargeVoltage", String(_chargeVoltage));
     MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimitation));
@@ -45,4 +45,4 @@ void Stats::mqttPublish() const
     MqttSettings.publish("battery/charging/dischargeEnabled", String(_dischargeEnabled));
 }
 
-} // namespace BatteryNs::SBS
+} // namespace Batteries::SBS

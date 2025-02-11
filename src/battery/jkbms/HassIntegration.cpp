@@ -2,11 +2,11 @@
 
 #include <battery/jkbms/HassIntegration.h>
 
-namespace BatteryNs::JkBms {
+namespace Batteries::JkBms {
 
 void HassIntegration::publishSensors() const
 {
-    ::BatteryNs::HassIntegration::publishSensors();
+    ::Batteries::HassIntegration::publishSensors();
 
     //            caption              icon                    topic                       dev. class     state class    unit
     publishSensor("Voltage",           "mdi:battery-charging", "BatteryVoltageMilliVolt",  "voltage",     "measurement", "mV");
@@ -38,4 +38,4 @@ void HassIntegration::publishSensors() const
 #undef PBS
 }
 
-} // namespace BatteryNs::JkBms
+} // namespace Batteries::JkBms

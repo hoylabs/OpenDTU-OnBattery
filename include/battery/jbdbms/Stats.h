@@ -4,9 +4,9 @@
 #include <battery/Stats.h>
 #include <battery/jbdbms/DataPoints.h>
 
-namespace BatteryNs::JbdBms {
+namespace Batteries::JbdBms {
 
-class Stats : public ::BatteryNs::Stats {
+class Stats : public ::Batteries::Stats {
 public:
     void getLiveViewData(JsonVariant& root) const final {
         getJsonData(root, false);
@@ -35,4 +35,4 @@ private:
     uint32_t _cellVoltageTimestamp = 0;
 };
 
-} // namespace BatteryNs::JbdBms
+} // namespace Batteries::JbdBms

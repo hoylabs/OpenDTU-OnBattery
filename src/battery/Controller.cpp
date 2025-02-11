@@ -11,9 +11,9 @@
 #include <MessageOutput.h>
 #include <MqttSettings.h>
 
-BatteryNs::Controller Battery;
+Batteries::Controller Battery;
 
-namespace BatteryNs {
+namespace Batteries {
 
 std::shared_ptr<Stats const> Controller::getStats() const
 {
@@ -152,4 +152,4 @@ float Controller::getDischargeCurrentLimit()
     return FLT_MAX;
 }
 
-} // namespace BatteryNs
+} // namespace Batteries

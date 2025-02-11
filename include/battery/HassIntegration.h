@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-namespace BatteryNs {
+namespace Batteries {
 
 class HassIntegration {
 public:
@@ -24,4 +24,4 @@ protected:
     String _serial = "0001"; // pseudo-serial, can be replaced in future with real serialnumber
 };
 
-} // namespace BatteryNs
+} // namespace Batteries

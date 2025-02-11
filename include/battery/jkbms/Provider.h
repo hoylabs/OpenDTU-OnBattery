@@ -13,17 +13,17 @@
 
 //#define JKBMS_DUMMY_SERIAL
 
-namespace BatteryNs::JkBms {
+namespace Batteries::JkBms {
 
-class Provider : public ::BatteryNs::Provider {
+class Provider : public ::Batteries::Provider {
 public:
     Provider() = default;
 
     bool init(bool verboseLogging) final;
     void deinit() final;
     void loop() final;
-    std::shared_ptr<::BatteryNs::Stats> getStats() const final { return _stats; }
-    ::BatteryNs::HassIntegration const& getHassIntegration() const final { return _hassIntegration; }
+    std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
+    ::Batteries::HassIntegration const& getHassIntegration() const final { return _hassIntegration; }
 
 private:
     static char constexpr _serialPortOwner[] = "JK BMS";
@@ -87,4 +87,4 @@ private:
     HassIntegration _hassIntegration;
 };
 
-} // namespace BatteryNs::JkBms
+} // namespace Batteries::JkBms

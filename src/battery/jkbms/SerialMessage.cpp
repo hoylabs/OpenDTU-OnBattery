@@ -2,7 +2,7 @@
 #include <battery/jkbms/SerialMessage.h>
 #include <MessageOutput.h>
 
-namespace BatteryNs::JkBms {
+namespace Batteries::JkBms {
 
 SerialCommand::SerialCommand(SerialCommand::Command cmd)
     : SerialMessage(20, 0x00)
@@ -359,4 +359,4 @@ bool SerialMessage::isValid() const {
     return true;
 }
 
-} // namespace BatteryNs::JkBms
+} // namespace Batteries::JkBms

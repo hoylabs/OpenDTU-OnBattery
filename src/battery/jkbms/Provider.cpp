@@ -8,7 +8,7 @@
 #include <SerialPortManager.h>
 #include <frozen/map.h>
 
-namespace BatteryNs::JkBms {
+namespace Batteries::JkBms {
 
 bool Provider::init(bool verboseLogging)
 {
@@ -246,4 +246,4 @@ void Provider::processDataPoints(DataPointContainer const& dataPoints)
     }
 }
 
-} // namespace BatteryNs::JkBms
+} // namespace Batteries::JkBms

@@ -4,7 +4,7 @@
 #include <MessageOutput.h>
 #include <SerialPortManager.h>
 
-namespace BatteryNs::VictronSmartShunt {
+namespace Batteries::VictronSmartShunt {
 
 void Provider::deinit()
 {
@@ -44,4 +44,4 @@ void Provider::loop()
     _lastUpdate = VeDirectShunt.getLastUpdate();
 }
 
-} // namespace BatteryNs::VictronSmartShunt
+} // namespace Batteries::VictronSmartShunt

@@ -5,12 +5,12 @@
 #include <driver/twai.h>
 #include <ctime>
 
-namespace BatteryNs::SBS {
+namespace Batteries::SBS {
 
 bool Provider::init(bool verboseLogging)
 {
     _stats->_chargeVoltage =58.4;
-    return ::BatteryNs::CanReceiver::init(verboseLogging, "SBS");
+    return ::Batteries::CanReceiver::init(verboseLogging, "SBS");
 }
 
 void Provider::onMessage(twai_message_t rx_message)
@@ -185,4 +185,4 @@ void Provider::dummyData()
 }
 #endif
 
-} // namespace BatteryNs::SBS
+} // namespace Batteries::SBS

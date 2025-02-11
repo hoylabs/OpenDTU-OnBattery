@@ -4,9 +4,9 @@
 #include <VeDirectShuntController.h>
 #include <battery/Stats.h>
 
-namespace BatteryNs::VictronSmartShunt {
+namespace Batteries::VictronSmartShunt {
 
-class Stats : public ::BatteryNs::Stats {
+class Stats : public ::Batteries::Stats {
 public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
@@ -33,4 +33,4 @@ private:
     bool _alarmHighTemperature;
 };
 
-} // namespace BatteryNs::VictronSmartShunt
+} // namespace Batteries::VictronSmartShunt

@@ -5,7 +5,7 @@
 #include <driver/twai.h>
 #include <ctime>
 
-namespace BatteryNs::Pytes {
+namespace Batteries::Pytes {
 
 static void pytesSetCellLabel(String& label, uint16_t value) {
     char name[8];
@@ -22,7 +22,7 @@ static uint32_t popCount(uint32_t val) {
 
 bool Provider::init(bool verboseLogging)
 {
-    return ::BatteryNs::CanReceiver::init(verboseLogging, "Pytes");
+    return ::Batteries::CanReceiver::init(verboseLogging, "Pytes");
 }
 
 void Provider::onMessage(twai_message_t rx_message)
@@ -492,4 +492,4 @@ void Provider::onMessage(twai_message_t rx_message)
     _stats->setLastUpdate(millis());
 }
 
-} // namespace BatteryNs::Pytes
+} // namespace Batteries::Pytes

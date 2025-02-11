@@ -9,7 +9,7 @@
 #include <Utils.h>
 #include <__compiled_constants.h>
 
-namespace BatteryNs {
+namespace Batteries {
 
 void HassIntegration::publishSensors() const
 {
@@ -145,4 +145,4 @@ void HassIntegration::publish(const String& subtopic, const String& payload) con
     MqttSettings.publishGeneric(topic.c_str(), payload.c_str(), Configuration.get().Mqtt.Hass.Retain);
 }
 
-} // namespace BatteryNs
+} // namespace Batteries

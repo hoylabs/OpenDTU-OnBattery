@@ -5,7 +5,7 @@
 #include <driver/twai.h>
 #include <battery/Provider.h>
 
-namespace BatteryNs {
+namespace Batteries {
 
 class CanReceiver : public Provider {
 public:
@@ -30,4 +30,4 @@ private:
     char const* _providerName = "Battery CAN";
 };
 
-} // namespace BatteryNs
+} // namespace Batteries

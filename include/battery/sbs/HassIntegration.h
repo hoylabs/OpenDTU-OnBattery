@@ -3,11 +3,11 @@
 
 #include <battery/HassIntegration.h>
 
-namespace BatteryNs::SBS {
+namespace Batteries::SBS {
 
-class HassIntegration : public ::BatteryNs::HassIntegration {
+class HassIntegration : public ::Batteries::HassIntegration {
 public:
     void publishSensors() const final;
 };
 
-} // namespace BatteryNs::SBS
+} // namespace Batteries::SBS

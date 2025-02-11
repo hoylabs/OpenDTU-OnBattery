@@ -3,9 +3,9 @@
 
 #include <battery/Stats.h>
 
-namespace BatteryNs::Mqtt {
+namespace Batteries::Mqtt {
 
-class Stats : public ::BatteryNs::Stats {
+class Stats : public ::Batteries::Stats {
 friend class Provider;
 
 public:
@@ -18,4 +18,4 @@ public:
     bool supportsAlarmsAndWarnings() const final { return false; }
 };
 
-} // namespace BatteryNs::Mqtt
+} // namespace Batteries::Mqtt

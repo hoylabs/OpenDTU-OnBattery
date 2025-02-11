@@ -6,11 +6,11 @@
 #include <battery/jkbms/Stats.h>
 #include <battery/jkbms/DataPoints.h>
 
-namespace BatteryNs::JkBms {
+namespace Batteries::JkBms {
 
 void Stats::getJsonData(JsonVariant& root, bool verbose) const
 {
-    ::BatteryNs::Stats::getLiveViewData(root);
+    ::Batteries::Stats::getLiveViewData(root);
 
     using Label = JkBms::DataPointLabel;
 
@@ -89,7 +89,7 @@ void Stats::getJsonData(JsonVariant& root, bool verbose) const
 
 void Stats::mqttPublish() const
 {
-    ::BatteryNs::Stats::mqttPublish();
+    ::Batteries::Stats::mqttPublish();
 
     using Label = JkBms::DataPointLabel;
 
@@ -182,21 +182,21 @@ void Stats::updateFrom(JkBms::DataPointContainer const& dp)
     auto oSoCValue = dp.get<Label::BatterySoCPercent>();
     if (oSoCValue.has_value()) {
         auto oSoCDataPoint = dp.getDataPointFor<Label::BatterySoCPercent>();
-        ::BatteryNs::Stats::setSoC(*oSoCValue, 0/*precision*/,
+        ::Batteries::Stats::setSoC(*oSoCValue, 0/*precision*/,
                 oSoCDataPoint->getTimestamp());
     }
 
     auto oVoltage = dp.get<Label::BatteryVoltageMilliVolt>();
     if (oVoltage.has_value()) {
         auto oVoltageDataPoint = dp.getDataPointFor<Label::BatteryVoltageMilliVolt>();
-        ::BatteryNs::Stats::setVoltage(static_cast<float>(*oVoltage) / 1000,
+        ::Batteries::Stats::setVoltage(static_cast<float>(*oVoltage) / 1000,
                 oVoltageDataPoint->getTimestamp());
     }
 
     auto oCurrent = dp.get<Label::BatteryCurrentMilliAmps>();
     if (oCurrent.has_value()) {
         auto oCurrentDataPoint = dp.getDataPointFor<Label::BatteryCurrentMilliAmps>();
-        ::BatteryNs::Stats::setCurrent(static_cast<float>(*oCurrent) / 1000, 2/*precision*/,
+        ::Batteries::Stats::setCurrent(static_cast<float>(*oCurrent) / 1000, 2/*precision*/,
                 oCurrentDataPoint->getTimestamp());
     }
 
@@ -237,4 +237,4 @@ void Stats::updateFrom(JkBms::DataPointContainer const& dp)
     _lastUpdate = millis();
 }
 
-} // namespace BatteryNs::JkBms
+} // namespace Batteries::JkBms

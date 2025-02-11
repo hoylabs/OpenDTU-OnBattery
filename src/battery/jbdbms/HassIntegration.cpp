@@ -2,11 +2,11 @@
 
 #include <battery/jbdbms/HassIntegration.h>
 
-namespace BatteryNs::JbdBms {
+namespace Batteries::JbdBms {
 
 void HassIntegration::publishSensors() const
 {
-    ::BatteryNs::HassIntegration::publishSensors();
+    ::Batteries::HassIntegration::publishSensors();
 
     //            caption                  icon                    topic                    dev. class     state class    unit
     publishSensor("Voltage",               "mdi:battery-charging", "voltage",               "voltage",     "measurement", "V");
@@ -45,4 +45,4 @@ void HassIntegration::publishSensors() const
 #undef PBS
 }
 
-} // namespace BatteryNs::JbdBms
+} // namespace Batteries::JbdBms

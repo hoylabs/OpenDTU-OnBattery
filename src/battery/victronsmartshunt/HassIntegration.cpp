@@ -2,11 +2,11 @@
 
 #include <battery/victronsmartshunt/HassIntegration.h>
 
-namespace BatteryNs::VictronSmartShunt {
+namespace Batteries::VictronSmartShunt {
 
 void HassIntegration::publishSensors() const
 {
-    ::BatteryNs::HassIntegration::publishSensors();
+    ::Batteries::HassIntegration::publishSensors();
 
     publishSensor("Voltage", "mdi:battery-charging", "voltage", "voltage", "measurement", "V");
     publishSensor("Current", "mdi:current-dc", "current", "current", "measurement", "A");
@@ -20,4 +20,4 @@ void HassIntegration::publishSensors() const
     publishSensor("Midpoint Deviation", NULL, "midpointDeviation", "battery", "measurement", "%");
 }
 
-} // namespace BatteryNs::VictronSmartShunt
+} // namespace Batteries::VictronSmartShunt

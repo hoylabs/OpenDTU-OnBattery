@@ -3,9 +3,9 @@
 
 #include <battery/Stats.h>
 
-namespace BatteryNs::Pylontech {
+namespace Batteries::Pylontech {
 
-class Stats : public ::BatteryNs::Stats {
+class Stats : public ::Batteries::Stats {
 friend class Provider;
 
 public:
@@ -46,4 +46,4 @@ private:
     uint8_t _moduleCount;
 };
 
-} // namespace BatteryNs::Pylontech
+} // namespace Batteries::Pylontech

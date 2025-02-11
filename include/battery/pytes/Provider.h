@@ -7,15 +7,15 @@
 #include <battery/pytes/Stats.h>
 #include <battery/pytes/HassIntegration.h>
 
-namespace BatteryNs::Pytes {
+namespace Batteries::Pytes {
 
-class Provider : public ::BatteryNs::CanReceiver {
+class Provider : public ::Batteries::CanReceiver {
 public:
     bool init(bool verboseLogging) final;
     void onMessage(twai_message_t rx_message) final;
 
-    std::shared_ptr<::BatteryNs::Stats> getStats() const final { return _stats; }
-    ::BatteryNs::HassIntegration const& getHassIntegration() const final { return _hassIntegration; }
+    std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
+    ::Batteries::HassIntegration const& getHassIntegration() const final { return _hassIntegration; }
 
 private:
     std::shared_ptr<Stats> _stats =
@@ -23,4 +23,4 @@ private:
     HassIntegration _hassIntegration;
 };
 
-} // namespace BatteryNs::Pytes
+} // namespace Batteries::Pytes

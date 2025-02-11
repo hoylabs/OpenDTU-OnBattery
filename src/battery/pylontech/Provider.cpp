@@ -5,11 +5,11 @@
 #include <driver/twai.h>
 #include <ctime>
 
-namespace BatteryNs::Pylontech {
+namespace Batteries::Pylontech {
 
 bool Provider::init(bool verboseLogging)
 {
-    return ::BatteryNs::CanReceiver::init(verboseLogging, "Pylontech");
+    return ::Batteries::CanReceiver::init(verboseLogging, "Pylontech");
 }
 
 void Provider::onMessage(twai_message_t rx_message)
@@ -225,4 +225,4 @@ void Provider::dummyData()
 }
 #endif
 
-} // namespace BatteryNs::Pylontech
+} // namespace Batteries::Pylontech

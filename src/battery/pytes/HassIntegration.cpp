@@ -2,11 +2,11 @@
 
 #include <battery/pytes/HassIntegration.h>
 
-namespace BatteryNs::Pytes {
+namespace Batteries::Pytes {
 
 void HassIntegration::publishSensors() const
 {
-    ::BatteryNs::HassIntegration::publishSensors();
+    ::Batteries::HassIntegration::publishSensors();
 
     publishSensor("Charge voltage (BMS)", NULL, "settings/chargeVoltage", "voltage", "measurement", "V");
     publishSensor("Charge current limit", NULL, "settings/chargeCurrentLimitation", "current", "measurement", "A");
@@ -67,4 +67,4 @@ void HassIntegration::publishSensors() const
     publishBinarySensor("Charge immediately", "mdi:alert", "charging/chargeImmediately", "1", "0");
 }
 
-} // namespace BatteryNs::Pytes
+} // namespace Batteries::Pytes

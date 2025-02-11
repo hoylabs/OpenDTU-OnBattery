@@ -6,7 +6,7 @@
 
 #include <battery/jbdbms/DataPoints.h>
 
-namespace BatteryNs::JbdBms {
+namespace Batteries::JbdBms {
 
 // Only valid for receiving messages
 class SerialMessage {
@@ -92,4 +92,4 @@ class SerialCommand : public SerialMessage {
         static Command _lastCmd;
 };
 
-} // namespace BatteryNs::JbdBms
+} // namespace Batteries::JbdBms

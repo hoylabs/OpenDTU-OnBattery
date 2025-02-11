@@ -5,7 +5,7 @@
 #include <MessageOutput.h>
 #include <Utils.h>
 
-namespace BatteryNs::Mqtt {
+namespace Batteries::Mqtt {
 
 bool Provider::init(bool verboseLogging)
 {
@@ -195,4 +195,4 @@ void Provider::onMqttMessageDischargeCurrentLimit(espMqttClientTypes::MessagePro
     }
 }
 
-} // namespace BatteryNs::Mqtt
+} // namespace Batteries::Mqtt

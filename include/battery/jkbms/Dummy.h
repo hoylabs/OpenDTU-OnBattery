@@ -4,7 +4,7 @@
 #include <vector>
 #include <MessageOutput.h>
 
-namespace BatteryNs::JkBms {
+namespace Batteries::JkBms {
 
 class DummySerial {
     public:
@@ -193,4 +193,4 @@ class DummySerial {
         size_t _byte_idx = 0;
 };
 
-} // namespace BatteryNs::JkBms
+} // namespace Batteries::JkBms

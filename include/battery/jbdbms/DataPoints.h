@@ -6,7 +6,7 @@
 #include <frozen/string.h>
 #include <DataPoints.h>
 
-namespace BatteryNs::JbdBms {
+namespace Batteries::JbdBms {
 
 #define JBD_PROTECTION_STATUS(fnc) \
     fnc(CellOverVoltage, (1<<0)) \
@@ -105,13 +105,13 @@ LABEL_TRAIT(BmsHardwareVersion,                     std::string, "");
 LABEL_TRAIT(ActualBatteryCapacityAmpHours,          uint32_t,    "Ah");
 #undef LABEL_TRAIT
 
-} // namespace BatteryNs::JbdBms
+} // namespace Batteries::JbdBms
 
 using JbdBmsDataPoint = DataPoint<bool, uint8_t, uint16_t, uint32_t,
-              int16_t, int32_t, std::string, BatteryNs::JbdBms::tCells>;
+              int16_t, int32_t, std::string, Batteries::JbdBms::tCells>;
 
-template class DataPointContainer<JbdBmsDataPoint, BatteryNs::JbdBms::DataPointLabel, BatteryNs::JbdBms::DataPointLabelTraits>;
+template class DataPointContainer<JbdBmsDataPoint, Batteries::JbdBms::DataPointLabel, Batteries::JbdBms::DataPointLabelTraits>;
 
-namespace BatteryNs::JbdBms {
+namespace Batteries::JbdBms {
     using DataPointContainer = DataPointContainer<JbdBmsDataPoint, DataPointLabel, DataPointLabelTraits>;
-} // namespace BatteryNs::JbdBms
+} // namespace Batteries::JbdBms

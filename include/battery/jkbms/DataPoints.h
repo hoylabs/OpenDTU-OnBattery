@@ -6,7 +6,7 @@
 #include <frozen/string.h>
 #include <DataPoints.h>
 
-namespace BatteryNs::JkBms {
+namespace Batteries::JkBms {
 
 #define ALARM_BITS(fnc) \
     fnc(LowCapacity, (1<<0)) \
@@ -203,13 +203,13 @@ LABEL_TRAIT(ProductId,                              std::string, "");
 LABEL_TRAIT(ProtocolVersion,                        uint8_t,     "");
 #undef LABEL_TRAIT
 
-} // namespace BatteryNs::JkBms
+} // namespace Batteries::JkBms
 
 using JkBmsDataPoint = DataPoint<bool, uint8_t, uint16_t, uint32_t,
-              int16_t, int32_t, std::string, BatteryNs::JkBms::tCells>;
+              int16_t, int32_t, std::string, Batteries::JkBms::tCells>;
 
-template class DataPointContainer<JkBmsDataPoint, BatteryNs::JkBms::DataPointLabel, BatteryNs::JkBms::DataPointLabelTraits>;
+template class DataPointContainer<JkBmsDataPoint, Batteries::JkBms::DataPointLabel, Batteries::JkBms::DataPointLabelTraits>;
 
-namespace BatteryNs::JkBms {
+namespace Batteries::JkBms {
     using DataPointContainer = DataPointContainer<JkBmsDataPoint, DataPointLabel, DataPointLabelTraits>;
-} // namespace BatteryNs::JkBms
+} // namespace Batteries::JkBms

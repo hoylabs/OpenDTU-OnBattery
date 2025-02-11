@@ -7,7 +7,7 @@
 #include <battery/Provider.h>
 #include <battery/Stats.h>
 
-namespace BatteryNs {
+namespace Batteries {
 
 class Controller {
 public:
@@ -27,6 +27,6 @@ private:
     bool _publishSensors = false;
 };
 
-} // namespace BatteryNs
+} // namespace Batteries
 
-extern BatteryNs::Controller Battery;
+extern Batteries::Controller Battery;

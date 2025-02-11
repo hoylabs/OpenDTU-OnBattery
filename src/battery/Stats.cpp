@@ -4,7 +4,7 @@
 #include <Configuration.h>
 #include <MqttSettings.h>
 
-namespace BatteryNs {
+namespace Batteries {
 
 void Stats::setManufacturer(const String& m)
 {
@@ -107,4 +107,4 @@ void Stats::mqttPublish() const
     }
 }
 
-} // namespace BatteryNs
+} // namespace Batteries

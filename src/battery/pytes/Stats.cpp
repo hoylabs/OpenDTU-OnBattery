@@ -2,11 +2,11 @@
 #include <MqttSettings.h>
 #include <battery/pytes/Stats.h>
 
-namespace BatteryNs::Pytes {
+namespace Batteries::Pytes {
 
 void Stats::getLiveViewData(JsonVariant& root) const
 {
-    ::BatteryNs::Stats::getLiveViewData(root);
+    ::Batteries::Stats::getLiveViewData(root);
 
     // values go into the "Status" card of the web application
     addLiveViewValue(root, "chargeVoltage", _chargeVoltageLimit, "V", 1);
@@ -84,7 +84,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
 void Stats::mqttPublish() const
 {
-    ::BatteryNs::Stats::mqttPublish();
+    ::Batteries::Stats::mqttPublish();
 
     MqttSettings.publish("battery/settings/chargeVoltage", String(_chargeVoltageLimit));
     MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimit));
@@ -150,4 +150,4 @@ void Stats::mqttPublish() const
     MqttSettings.publish("battery/charging/chargeImmediately", String(_chargeImmediately));
 }
 
-} // namespace BatteryNs::Pytes
+} // namespace Batteries::Pytes

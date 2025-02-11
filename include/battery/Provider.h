@@ -3,7 +3,7 @@
 
 #include <memory>
 
-namespace BatteryNs {
+namespace Batteries {
 
 class Stats;
 class HassIntegration;
@@ -18,4 +18,4 @@ public:
     virtual HassIntegration const& getHassIntegration() const = 0;
 };
 
-} // namespace BatteryNs
+} // namespace Batteries

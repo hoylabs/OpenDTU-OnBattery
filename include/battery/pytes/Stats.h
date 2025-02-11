@@ -3,9 +3,9 @@
 
 #include <battery/Stats.h>
 
-namespace BatteryNs::Pytes {
+namespace Batteries::Pytes {
 
-class Stats : public ::BatteryNs::Stats {
+class Stats : public ::Batteries::Stats {
 friend class Provider;
 
 public:
@@ -83,4 +83,4 @@ private:
     bool _chargeImmediately;
 };
 
-} // namespace BatteryNs::Pytes
+} // namespace Batteries::Pytes

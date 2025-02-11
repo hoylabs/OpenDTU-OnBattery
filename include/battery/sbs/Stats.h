@@ -3,9 +3,9 @@
 
 #include <battery/Stats.h>
 
-namespace BatteryNs::SBS {
+namespace Batteries::SBS {
 
-class Stats : public ::BatteryNs::Stats {
+class Stats : public ::Batteries::Stats {
 friend class Provider;
 
 public:
@@ -36,4 +36,4 @@ private:
     bool _dischargeEnabled;
 };
 
-} // namespace BatteryNs::SBS
+} // namespace Batteries::SBS

@@ -4,7 +4,7 @@
 #include <PinMapping.h>
 #include <driver/twai.h>
 
-namespace BatteryNs {
+namespace Batteries {
 
 bool CanReceiver::init(bool verboseLogging, char const* providerName)
 {
@@ -190,4 +190,4 @@ bool CanReceiver::getBit(uint8_t value, uint8_t bit)
     return (value & (1 << bit)) >> bit;
 }
 
-} // namespace BatteryNs
+} // namespace Batteries

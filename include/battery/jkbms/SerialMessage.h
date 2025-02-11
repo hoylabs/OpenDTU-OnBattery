@@ -6,7 +6,7 @@
 
 #include <battery/jkbms/DataPoints.h>
 
-namespace BatteryNs::JkBms {
+namespace Batteries::JkBms {
 
 class SerialMessage {
     public:
@@ -90,4 +90,4 @@ class SerialCommand : public SerialMessage {
         explicit SerialCommand(Command cmd);
 };
 
-} // namespace BatteryNs::JkBms
+} // namespace Batteries::JkBms

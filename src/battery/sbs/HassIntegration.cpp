@@ -2,11 +2,11 @@
 
 #include <battery/sbs/HassIntegration.h>
 
-namespace BatteryNs::SBS {
+namespace Batteries::SBS {
 
 void HassIntegration::publishSensors() const
 {
-    ::BatteryNs::HassIntegration::publishSensors();
+    ::Batteries::HassIntegration::publishSensors();
 
     publishSensor("Battery voltage", NULL, "voltage", "voltage", "measurement", "V");
     publishSensor("Battery current", NULL, "current", "current", "measurement", "A");
@@ -34,4 +34,4 @@ void HassIntegration::publishSensors() const
     publishBinarySensor("Discharge enabled", "mdi:battery-arrow-down", "charging/dischargeEnabled", "1", "0");
 }
 
-} // namespace BatteryNs::SBS
+} // namespace Batteries::SBS

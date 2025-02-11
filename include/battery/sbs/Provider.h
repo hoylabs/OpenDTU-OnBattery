@@ -7,15 +7,15 @@
 #include <battery/sbs/Stats.h>
 #include <battery/sbs/HassIntegration.h>
 
-namespace BatteryNs::SBS {
+namespace Batteries::SBS {
 
-class Provider : public ::BatteryNs::CanReceiver {
+class Provider : public ::Batteries::CanReceiver {
 public:
     bool init(bool verboseLogging) final;
     void onMessage(twai_message_t rx_message) final;
 
-    std::shared_ptr<::BatteryNs::Stats> getStats() const final { return _stats; }
-    ::BatteryNs::HassIntegration const& getHassIntegration() const final { return _hassIntegration; }
+    std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
+    ::Batteries::HassIntegration const& getHassIntegration() const final { return _hassIntegration; }
 
 private:
     void dummyData();
@@ -24,4 +24,4 @@ private:
     HassIntegration _hassIntegration;
 };
 
-} // namespace BatteryNs::SBS
+} // namespace Batteries::SBS

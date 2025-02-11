@@ -4,7 +4,7 @@
 #include <battery/jbdbms/SerialMessage.h>
 #include <MessageOutput.h>
 
-namespace BatteryNs::JbdBms {
+namespace Batteries::JbdBms {
 
 SerialCommand::SerialCommand(SerialCommand::Status status, SerialCommand::Command cmd)
     : SerialMessage(7, 0x00) // frame length 7 bytes initialized with zeros
@@ -269,4 +269,4 @@ bool SerialCommand::isValid() const {
     return true;
 }
 
-} // namespace BatteryNs::JbdBms
+} // namespace Batteries::JbdBms

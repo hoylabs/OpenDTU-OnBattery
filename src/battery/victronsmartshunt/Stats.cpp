@@ -2,12 +2,12 @@
 #include <MqttSettings.h>
 #include <battery/victronsmartshunt/Stats.h>
 
-namespace BatteryNs::VictronSmartShunt {
+namespace Batteries::VictronSmartShunt {
 
 void Stats::updateFrom(VeDirectShuntController::data_t const& shuntData) {
-    ::BatteryNs::Stats::setVoltage(shuntData.batteryVoltage_V_mV / 1000.0, millis());
-    ::BatteryNs::Stats::setSoC(static_cast<float>(shuntData.SOC) / 10, 1/*precision*/, millis());
-    ::BatteryNs::Stats::setCurrent(static_cast<float>(shuntData.batteryCurrent_I_mA) / 1000, 2/*precision*/, millis());
+    ::Batteries::Stats::setVoltage(shuntData.batteryVoltage_V_mV / 1000.0, millis());
+    ::Batteries::Stats::setSoC(static_cast<float>(shuntData.SOC) / 10, 1/*precision*/, millis());
+    ::Batteries::Stats::setCurrent(static_cast<float>(shuntData.batteryCurrent_I_mA) / 1000, 2/*precision*/, millis());
     _fwversion = shuntData.getFwVersionFormatted();
 
     _chargeCycles = shuntData.H4;
@@ -33,7 +33,7 @@ void Stats::updateFrom(VeDirectShuntController::data_t const& shuntData) {
 }
 
 void Stats::getLiveViewData(JsonVariant& root) const {
-    ::BatteryNs::Stats::getLiveViewData(root);
+    ::Batteries::Stats::getLiveViewData(root);
 
     // values go into the "Status" card of the web application
     addLiveViewValue(root, "chargeCycles", _chargeCycles, "", 0);
@@ -56,7 +56,7 @@ void Stats::getLiveViewData(JsonVariant& root) const {
 }
 
 void Stats::mqttPublish() const {
-    ::BatteryNs::Stats::mqttPublish();
+    ::Batteries::Stats::mqttPublish();
 
     MqttSettings.publish("battery/chargeCycles", String(_chargeCycles));
     MqttSettings.publish("battery/chargedEnergy", String(_chargedEnergy));
@@ -68,4 +68,4 @@ void Stats::mqttPublish() const {
     MqttSettings.publish("battery/midpointDeviation", String(_midpointDeviation));
 }
 
-} // namespace BatteryNs::VictronSmartShunt
+} // namespace Batteries::VictronSmartShunt
