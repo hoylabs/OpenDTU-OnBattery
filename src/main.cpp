@@ -10,11 +10,10 @@
 #include "Led_Single.h"
 #include "MessageOutput.h"
 #include "SerialPortManager.h"
-#include "Battery.h"
+#include <battery/Controller.h>
 #include <gridcharger/huawei/Controller.h>
 #include "MqttHandleDtu.h"
 #include "MqttHandleHass.h"
-#include "MqttHandleBatteryHass.h"
 #include "MqttHandleInverter.h"
 #include "MqttHandleInverterTotal.h"
 #include "MqttHandleHuawei.h"
@@ -135,7 +134,6 @@ void setup()
     MqttHandleInverter.init(scheduler);
     MqttHandleInverterTotal.init(scheduler);
     MqttHandleHass.init(scheduler);
-    MqttHandleBatteryHass.init(scheduler);
     MqttHandleHuawei.init(scheduler);
     MqttHandlePowerLimiter.init(scheduler);
     MqttHandlePowerLimiterHass.init(scheduler);

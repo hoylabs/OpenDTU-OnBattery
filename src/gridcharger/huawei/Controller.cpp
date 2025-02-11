@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2023 Malte Schmidt and others
  */
-#include "Battery.h"
+#include <battery/Controller.h>
 #include <gridcharger/huawei/Controller.h>
 #include <gridcharger/huawei/MCP2515.h>
 #include <gridcharger/huawei/TWAI.h>
