@@ -91,7 +91,7 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
     createDeviceInfo(deviceObj);
 
     if (Configuration.get().Mqtt.Hass.Expire) {
-        root["exp_aft"] = _spStats->getMqttFullPublishIntervalMs() / 1000 * 3;
+        root["exp_aft"] = Battery.getStats()->getMqttFullPublishIntervalMs() / 1000 * 3;
     }
     if (deviceClass != NULL) {
         root["dev_cla"] = deviceClass;
