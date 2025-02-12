@@ -209,7 +209,7 @@ void PowerLimiterClass::loop()
     // calculation at all after surviving the loop above, which ensures that we
     // have inverter stats more recent than their respective last update command
     if (Mode::UnconditionalFullSolarPassthrough == _mode) {
-        return fullSolarPassthrough(Status::UnconditionalSolarPassthrough);
+        return unconditionalFullSolarPassthrough();
     }
 
     // if the power meter is being used, i.e., if its data is valid, we want to
@@ -317,7 +317,7 @@ void PowerLimiterClass::loop()
                 config.PowerLimiter.VoltageStopThreshold,
                 config.PowerLimiter.BatterySocStopThreshold);
 
-        if (config.SolarCharger.Enabled && config.PowerLimiter.SolarPassThroughEnabled) {
+        if (isSolarPassThroughEnabled()) {
             MessageOutput.printf("[DPL] full solar-passthrough %s, start %.2f V or %u %%, stop %.2f V\r\n",
                     (isFullSolarPassthroughActive()?"active":"dormant"),
                     config.PowerLimiter.FullSolarPassThroughStartVoltage,
@@ -328,7 +328,7 @@ void PowerLimiterClass::loop()
         MessageOutput.printf("[DPL] start %sreached, stop %sreached, solar-passthrough %sabled, use at night %sabled and %s\r\n",
                 (isStartThresholdReached()?"":"NOT "),
                 (isStopThresholdReached()?"":"NOT "),
-                (config.PowerLimiter.SolarPassThroughEnabled?"en":"dis"),
+                (isSolarPassThroughEnabled()?"en":"dis"),
                 (config.PowerLimiter.BatteryAlwaysUseAtNight?"en":"dis"),
                 (_nighttimeDischarging?"active":"dormant"));
 
@@ -448,18 +448,18 @@ uint16_t PowerLimiterClass::dcPowerBusToInverterAc(uint16_t dcPower)
 }
 
 /**
- * implements the "full solar passthrough" mode of operation. in this mode of
+ * implements the "uncoditional full solar passthrough" mode of operation. in this mode of
  * operation, the inverters shall behave as if they were connected to the solar
  * panels directly, i.e., all solar power (and only solar power) is converted
  * to AC power, independent from the power meter reading.
  */
-void PowerLimiterClass::fullSolarPassthrough(PowerLimiterClass::Status reason)
+void PowerLimiterClass::unconditionalFullSolarPassthrough()
 {
     if ((millis() - _lastCalculation) < _calculationBackoffMs) { return; }
     _lastCalculation = millis();
 
     for (auto& upInv : _inverters) {
-        if (upInv->isSolarPowered()) { upInv->setMaxOutput(); }
+        if (!upInv->isBatteryPowered()) { upInv->setMaxOutput(); }
     }
 
     uint16_t targetOutput = 0;
@@ -472,7 +472,7 @@ void PowerLimiterClass::fullSolarPassthrough(PowerLimiterClass::Status reason)
 
     _calculationBackoffMs = 1 * 1000;
     updateInverterLimits(targetOutput, sBatteryPoweredFilter, sBatteryPoweredExpression);
-    return announceStatus(reason);
+    return announceStatus(Status::UnconditionalSolarPassthrough);
 }
 
 uint8_t PowerLimiterClass::getInverterUpdateTimeouts() const
@@ -714,11 +714,9 @@ bool PowerLimiterClass::updateInverters()
 
 uint16_t PowerLimiterClass::getSolarPassthroughPower()
 {
-    auto const& config = Configuration.get();
     auto solarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
 
-    if (!config.SolarCharger.Enabled
-            || !config.PowerLimiter.SolarPassThroughEnabled
+    if (!isSolarPassThroughEnabled()
             || isBelowStopThreshold()
             || !solarChargerOutput
             ) {
@@ -885,7 +883,7 @@ void PowerLimiterClass::calcNextInverterRestart()
     _nextInverterRestart = { true, restartMillis };
 }
 
-bool PowerLimiterClass::isFullSolarPassthroughActive()
+bool PowerLimiterClass::isSolarPassThroughEnabled()
 {
     auto const& config = Configuration.get();
 
@@ -895,8 +893,15 @@ bool PowerLimiterClass::isFullSolarPassthroughActive()
     // solarcharger is needed for solar passthrough
     if (!config.SolarCharger.Enabled) { return false; }
 
+    return config.PowerLimiter.SolarPassThroughEnabled;
+}
+
+bool PowerLimiterClass::isFullSolarPassthroughActive()
+{
+    auto const& config = Configuration.get();
+
     // We only do full solar PT if general solar PT is enabled
-    if (!config.PowerLimiter.SolarPassThroughEnabled) { return false; }
+    if (!isSolarPassThroughEnabled()) { return false; }
 
     if (testThreshold(config.PowerLimiter.FullSolarPassThroughSoc,
                       config.PowerLimiter.FullSolarPassThroughStartVoltage,
