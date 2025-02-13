@@ -830,9 +830,10 @@ void JbdBmsBatteryStats::updateFrom(JbdBms::DataPointContainer const& dp)
 }
 
 void VictronSmartShuntStats::updateFrom(VeDirectShuntController::data_t const& shuntData) {
-    BatteryStats::setVoltage(shuntData.batteryVoltage_V_mV / 1000.0, millis());
-    BatteryStats::setSoC(static_cast<float>(shuntData.SOC) / 10, 1/*precision*/, millis());
-    BatteryStats::setCurrent(static_cast<float>(shuntData.batteryCurrent_I_mA) / 1000, 2/*precision*/, millis());
+    _lastUpdate = VeDirectShunt.getLastUpdate();
+    BatteryStats::setVoltage(shuntData.batteryVoltage_V_mV / 1000.0, _lastUpdate);
+    BatteryStats::setSoC(static_cast<float>(shuntData.SOC) / 10, 1/*precision*/, _lastUpdate);
+    BatteryStats::setCurrent(static_cast<float>(shuntData.batteryCurrent_I_mA) / 1000, 2/*precision*/, _lastUpdate);
     _fwversion = shuntData.getFwVersionFormatted();
 
     _chargeCycles = shuntData.H4;
@@ -853,8 +854,6 @@ void VictronSmartShuntStats::updateFrom(VeDirectShuntController::data_t const& s
     _alarmLowSOC = shuntData.alarmReason_AR & 4;
     _alarmLowTemperature = shuntData.alarmReason_AR & 32;
     _alarmHighTemperature = shuntData.alarmReason_AR & 64;
-
-    _lastUpdate = VeDirectShunt.getLastUpdate();
 }
 
 void VictronSmartShuntStats::getLiveViewData(JsonVariant& root) const {
