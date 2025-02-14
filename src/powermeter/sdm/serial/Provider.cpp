@@ -149,6 +149,7 @@ void Provider::pollingLoop()
         // reading takes a "very long" time as each readVal() is a synchronous
         // exchange of serial messages. cache the values and write later to
         // enforce consistent values.
+        std::optional<float> oTotalPower = std::nullopt;
         float phase1Power = 0.0;
         float phase2Power = 0.0;
         float phase3Power = 0.0;
@@ -157,6 +158,13 @@ void Provider::pollingLoop()
         float phase3Voltage = 0.0;
         float energyImport = 0.0;
         float energyExport = 0.0;
+
+        if (_phases == Phases::Three) {
+            float totalPower = 0.0;
+            if (readValue(lock, SDM_TOTAL_SYSTEM_POWER, totalPower)) {
+                oTotalPower = totalPower;
+            }
+        }
 
         bool success = readValue(lock, SDM_PHASE_1_POWER, phase1Power) &&
             readValue(lock, SDM_PHASE_1_VOLTAGE, phase1Voltage) &&
@@ -181,6 +189,9 @@ void Provider::pollingLoop()
             _dataCurrent.add<DataPointLabel::Export>(energyExport);
 
             if (_phases == Phases::Three) {
+                if (oTotalPower.has_value()) {
+                    _dataCurrent.add<DataPointLabel::PowerTotal>(*oTotalPower);
+                }
                 _dataCurrent.add<DataPointLabel::PowerL2>(phase2Power);
                 _dataCurrent.add<DataPointLabel::PowerL3>(phase3Power);
                 _dataCurrent.add<DataPointLabel::VoltageL2>(phase2Voltage);
