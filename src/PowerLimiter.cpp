@@ -18,6 +18,7 @@
 #include <frozen/map.h>
 #include "SunPosition.h"
 #include <LogHelper.h>
+#include <BatteryGuard.h>
 
 #undef TAG
 static const char* TAG = "dynamicPowerLimiter";
@@ -291,6 +292,12 @@ void PowerLimiterClass::loop()
     };
 
     auto getLoadCorrectedVoltage = [this,&config]() -> float {
+        // use "open circuit voltage" from the Battery Guard if available
+        auto oOpenCV = BatteryGuard.getOpenCircuitVoltage();
+        if (oOpenCV.has_value()) {
+            return *oOpenCV;
+        }
+
         // TODO(schlimmchen): use the battery's data if available,
         // i.e., the current drawn from the battery as reported by the battery.
         float acPower = getBatteryInvertersOutputAcWatts();
