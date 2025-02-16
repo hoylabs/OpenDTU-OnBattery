@@ -94,21 +94,21 @@ void Stats::mqttPublish() const
     MqttSettings.publish("battery/serial", _serial);
 
     for (const auto& [index, value] : _packData) {
-        auto sn = String(index);
-        MqttSettings.publish("battery/" + sn + "/cellMinMilliVolt", String(value->_cell_voltage_min));
-        MqttSettings.publish("battery/" + sn + "/cellMaxMilliVolt", String(value->_cell_voltage_max));
-        MqttSettings.publish("battery/" + sn + "/cellDiffMilliVolt", String(value->_cell_voltage_spread));
-        MqttSettings.publish("battery/" + sn + "/cellAvgMilliVolt", String(value->_cell_voltage_avg));
-        MqttSettings.publish("battery/" + sn + "/cellMaxTemperature", String(value->_cell_temperature_max));
-        MqttSettings.publish("battery/" + sn + "/voltage", String(value->_voltage_total));
-        MqttSettings.publish("battery/" + sn + "/power", String(value->_power));
-        MqttSettings.publish("battery/" + sn + "/current", String(value->_current));
-        MqttSettings.publish("battery/" + sn + "/stateOfCharge", String(value->_soc_level, 1));
-        MqttSettings.publish("battery/" + sn + "/stateOfHealth", String(value->_state_of_health, 1));
-        MqttSettings.publish("battery/" + sn + "/state", String(static_cast<uint8_t>(value->_state)));
-        MqttSettings.publish("battery/" + sn + "/serial", value->getSerial());
-        MqttSettings.publish("battery/" + sn + "/name", value->getName());
-        MqttSettings.publish("battery/" + sn + "/capacity", String(value->_capacity));
+        auto id = String(index);
+        MqttSettings.publish("battery/" + id + "/cellMinMilliVolt", String(value->_cell_voltage_min));
+        MqttSettings.publish("battery/" + id + "/cellMaxMilliVolt", String(value->_cell_voltage_max));
+        MqttSettings.publish("battery/" + id + "/cellDiffMilliVolt", String(value->_cell_voltage_spread));
+        MqttSettings.publish("battery/" + id + "/cellAvgMilliVolt", String(value->_cell_voltage_avg));
+        MqttSettings.publish("battery/" + id + "/cellMaxTemperature", String(value->_cell_temperature_max));
+        MqttSettings.publish("battery/" + id + "/voltage", String(value->_voltage_total));
+        MqttSettings.publish("battery/" + id + "/power", String(value->_power));
+        MqttSettings.publish("battery/" + id + "/current", String(value->_current));
+        MqttSettings.publish("battery/" + id + "/stateOfCharge", String(value->_soc_level, 1));
+        MqttSettings.publish("battery/" + id + "/stateOfHealth", String(value->_state_of_health, 1));
+        MqttSettings.publish("battery/" + id + "/state", String(static_cast<uint8_t>(value->_state)));
+        MqttSettings.publish("battery/" + id + "/serial", value->getSerial());
+        MqttSettings.publish("battery/" + id + "/name", value->getName());
+        MqttSettings.publish("battery/" + id + "/capacity", String(value->_capacity));
     }
 
     MqttSettings.publish("battery/solarPowerMppt1", String(_solar_power_1));
@@ -122,8 +122,8 @@ void Stats::mqttPublish() const
 
     MqttSettings.publish("battery/settings/outputLimitPower", String(_output_limit));
     MqttSettings.publish("battery/settings/inputLimitPower", String(_input_limit));
-    MqttSettings.publish("battery/settings/stateOfChargeMin", String(_soc_min));
-    MqttSettings.publish("battery/settings/stateOfChargeMax", String(_soc_max));
+    MqttSettings.publish("battery/settings/stateOfChargeMin", String(_soc_min, 1));
+    MqttSettings.publish("battery/settings/stateOfChargeMax", String(_soc_max, 1));
     MqttSettings.publish("battery/settings/bypassModeString", bypassModeToString<String>(_bypass_mode));
     MqttSettings.publish("battery/settings/bypassMode", String(static_cast<uint8_t>(_bypass_mode)));
 }

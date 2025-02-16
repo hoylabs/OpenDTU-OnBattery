@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-
+#include <battery/zendure/Constants.h>
 #include <battery/zendure/HassIntegration.h>
 
 namespace Batteries::Zendure {
@@ -24,27 +24,21 @@ void HassIntegration::publishSensors() const
     publishSensor("Efficiency", NULL, "efficiency", NULL, "measurement", "%");
     publishSensor("Last Full Charge", "mdi:timelapse", "lastFullCharge", NULL, NULL, "h");
 
-    // auto stats = std::reinterpret_pointer_cast<const ZendureBatteryStats>(Battery.getStats());
-    // if (stats)
-    // {
-    //     for (const auto& [i, value] : stats->getPackDataList()) {
-    //         if (!value) {
-    //             continue;
-    //         }
-    //         auto id = String(i) + "/";
-    //         publishSensor("Cell Min Voltage", NULL, String(id + "CellMinMilliVolt").c_str(), "voltage", "measurement", "mV");
-    //         publishSensor("Cell Average Voltage", NULL, String(id + "CellAvgMilliVolt").c_str(), "voltage", "measurement", "mV");
-    //         publishSensor("Cell Max Voltage", NULL, String(id + "CellMaxMilliVolt").c_str(), "voltage", "measurement", "mV");
-    //         publishSensor("Cell Voltage Diff", "mdi:battery-alert", String(id + "CellDiffMilliVolt").c_str(), "voltage", "measurement", "mV");
-    //         publishSensor("Cell Max Temperature", NULL, String(id + "CellMaxTemperature").c_str(), "temperature", "measurement", "°C");
-    //         publishSensor("Power", NULL, String(id + "power").c_str(), "power", "measurement", "W");
-    //         publishSensor("Voltage", NULL, String(id + "voltage").c_str(), "voltage", "measurement", "V");
-    //         publishSensor("Current", NULL, String(id + "current").c_str(), "current", "measurement", "A");
-    //         publishSensor("State Of Charge", NULL, String(id + "stateOfCharge").c_str(), NULL, "measurement", "%");
-    //         publishSensor("State Of Health", NULL, String(id + "stateOfHealth").c_str(), NULL, "measurement", "%");
-    //         publishSensor("State", NULL, "state");
-    //     }
-    // }
+    for (size_t i = 1 ; i <= ZENDURE_MAX_PACKS ; i++) {
+        const auto id = String(i);
+        const auto bat = "Pack#" + id + ": ";
+        publishSensor(bat + "Cell Min Voltage", NULL, id + "/CellMinMilliVolt", "voltage", "measurement", "mV");
+        publishSensor(bat + "Cell Average Voltage", NULL, id + "/CellAvgMilliVolt", "voltage", "measurement", "mV");
+        publishSensor(bat + "Cell Max Voltage", NULL, id + "/CellMaxMilliVolt", "voltage", "measurement", "mV");
+        publishSensor(bat + "Cell Voltage Diff", "mdi:battery-alert", id + "/CellDiffMilliVolt", "voltage", "measurement", "mV");
+        publishSensor(bat + "Cell Max Temperature", NULL, id + "/CellMaxTemperature", "temperature", "measurement", "°C");
+        publishSensor(bat + "Power", NULL, id + "/power", "power", "measurement", "W");
+        publishSensor(bat + "Voltage", NULL, id + "/voltage", "voltage", "measurement", "V");
+        publishSensor(bat + "Current", NULL, id + "/current", "current", "measurement", "A");
+        publishSensor(bat + "State Of Charge", NULL, id + "/stateOfCharge", NULL, "measurement", "%");
+        publishSensor(bat + "State Of Health", NULL, id + "/stateOfHealth", NULL, "measurement", "%");
+        publishSensor(bat + "State", NULL, id + "/state");
+    }
 
     publishSensor("Solar Power MPPT 1", "mdi:solar-power", "solarPowerMppt1", "power", "measurement", "W");
     publishSensor("Solar Power MPPT 2", "mdi:solar-power", "solarPowerMppt2", "power", "measurement", "W");
