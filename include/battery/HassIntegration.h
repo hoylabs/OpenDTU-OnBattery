@@ -23,6 +23,18 @@ protected:
             const char* subTopic, const char* deviceClass = nullptr,
             const char* stateClass = nullptr,
             const char* unitOfMeasurement = nullptr) const;
+    void publishSensor(const String& caption, const char* icon,
+            const String& subTopic, const char* deviceClass = nullptr,
+            const char* stateClass = nullptr,
+            const char* unitOfMeasurement = nullptr) const;
+    void publishSensor(const String& caption, const char* icon,
+            const char* subTopic, const char* deviceClass = nullptr,
+            const char* stateClass = nullptr,
+            const char* unitOfMeasurement = nullptr) const;
+    void publishSensor(const char* caption, const char* icon,
+            const String& subTopic, const char* deviceClass = nullptr,
+            const char* stateClass = nullptr,
+            const char* unitOfMeasurement = nullptr) const;
     void createDeviceInfo(JsonObject& object) const;
 
     virtual void publishSensors() const;

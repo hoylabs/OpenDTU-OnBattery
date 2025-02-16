@@ -44,6 +44,27 @@ void HassIntegration::publishSensors() const
     publishSensor("Current", "mdi:current-dc", "current", "current", "measurement", "A");
 }
 
+void HassIntegration::publishSensor(const String& caption, const char* icon,
+        const String& subTopic, const char* deviceClass,
+        const char* stateClass, const char* unitOfMeasurement) const
+{
+    publishSensor(caption.c_str(), icon, subTopic.c_str(), deviceClass, stateClass, unitOfMeasurement);
+}
+
+void HassIntegration::publishSensor(const char* caption, const char* icon,
+        const String& subTopic, const char* deviceClass,
+        const char* stateClass, const char* unitOfMeasurement) const
+{
+    publishSensor(caption, icon, subTopic.c_str(), deviceClass, stateClass, unitOfMeasurement);
+}
+
+void HassIntegration::publishSensor(const String& caption, const char* icon,
+        const char* subTopic, const char* deviceClass,
+        const char* stateClass, const char* unitOfMeasurement) const
+{
+    publishSensor(caption.c_str(), icon, subTopic, deviceClass, stateClass, unitOfMeasurement);
+}
+
 void HassIntegration::publishSensor(const char* caption, const char* icon,
         const char* subTopic, const char* deviceClass,
         const char* stateClass, const char* unitOfMeasurement) const
