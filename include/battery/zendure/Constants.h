@@ -171,7 +171,7 @@ namespace Batteries::Zendure {
 #define ZENDURE_REPORT_EXIT_PASS_TIME               "exitPassTime"      // seems to be statically set to 360
 #define ZENDURE_REPORT_LOCAL_STATE                  "localState"        // always 0
 
-#define ZENDURE_REPORT_PACK_DATE                    "packData"
+#define ZENDURE_REPORT_PACK_DATA                    "packData"
 #define ZENDURE_REPORT_PACK_SERIAL                  "sn"
 #define ZENDURE_REPORT_PACK_STATE                   "state"
 #define ZENDURE_REPORT_PACK_POWER                   "power"

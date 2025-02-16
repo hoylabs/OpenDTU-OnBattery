@@ -167,6 +167,8 @@ bool Provider::init(bool verboseLogging)
     }
     setTargetSoCs(config.Battery.ZendureMinSoC, config.Battery.ZendureMaxSoC);
 
+
+    MessageOutput.printf("ZendureBattery: INIT DONE!\r\n");
     return true;
 }
 
@@ -586,16 +588,14 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
         _stats->_lastUpdate = ms;
     }
 
-
-
     // stop processing here, if no pack data found in message
-    auto packData = Utils::getJsonElement<JsonArrayConst>(obj, ZENDURE_REPORT_PACK_DATE, 2);
-    if (!packData.has_value()) {
+    auto packData = Utils::getJsonElement<JsonArrayConst>(obj, ZENDURE_REPORT_PACK_DATA, 2);
+    if (!packData.has_value() || _stats->_num_batteries == 0) {
         return;
     }
 
     // get serial number related to index only if all packs given in message
-    if (_stats->_num_batteries != 0 && (*packData).size() == _stats->_num_batteries) {
+    if ((*packData).size() == _stats->_num_batteries) {
         for (size_t i = 0 ; i < _stats->_num_batteries ; i++) {
             auto serial = Utils::getJsonElement<String>((*packData)[i], ZENDURE_REPORT_PACK_SERIAL);
             if (!serial.has_value()) {
@@ -606,6 +606,13 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
                 log("Invalid or unkown serial '%s' in '%s'", (*serial).c_str(), logValue.c_str());
             }
         }
+    }
+
+    // check if our array has got inconsistant
+    if (_stats->_packData.size() > _stats->_num_batteries) {
+        log("Detected inconsitency of pack data - resetting internal data buffer!");
+        _stats->_packData.clear();
+        return;
     }
 
     // get additional data only if all packs were identified
@@ -620,7 +627,7 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
         auto soh = Utils::getJsonElement<uint16_t>(packDataJson, ZENDURE_REPORT_PACK_HEALTH);
 
         // do not waste processing time if nothing to do
-        if (!serial.has_value() || !(state.has_value() || version.has_value())) {
+        if (!serial.has_value() || !(state.has_value() || version.has_value() || soh.has_value())) {
             continue;
         }
 
@@ -655,6 +662,8 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
         char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)
 {
     auto ms = millis();
+
+    log("Logging Frame received!");
 
     std::string const src = std::string(reinterpret_cast<const char*>(payload), len);
     std::string logValue = src.substr(0, 64);
