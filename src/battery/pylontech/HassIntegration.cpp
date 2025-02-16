@@ -11,8 +11,6 @@ void HassIntegration::publishSensors() const
 {
     ::Batteries::HassIntegration::publishSensors();
 
-    publishSensor("Battery voltage", NULL, "voltage", "voltage", "measurement", "V");
-    publishSensor("Battery current", NULL, "current", "current", "measurement", "A");
     publishSensor("Temperature", NULL, "temperature", "temperature", "measurement", "°C");
     publishSensor("State of Health (SOH)", "mdi:heart-plus", "stateOfHealth", NULL, "measurement", "%");
     publishSensor("Charge voltage (BMS)", NULL, "settings/chargeVoltage", "voltage", "measurement", "V");

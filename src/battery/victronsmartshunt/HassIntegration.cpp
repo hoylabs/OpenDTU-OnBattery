@@ -11,8 +11,6 @@ void HassIntegration::publishSensors() const
 {
     ::Batteries::HassIntegration::publishSensors();
 
-    publishSensor("Voltage", "mdi:battery-charging", "voltage", "voltage", "measurement", "V");
-    publishSensor("Current", "mdi:current-dc", "current", "current", "measurement", "A");
     publishSensor("Instantaneous Power", NULL, "instantaneousPower", "power", "measurement", "W");
     publishSensor("Charged Energy", NULL, "chargedEnergy", "energy", "total_increasing", "kWh");
     publishSensor("Discharged Energy", NULL, "dischargedEnergy", "energy", "total_increasing", "kWh");
