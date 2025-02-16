@@ -19,6 +19,7 @@ public:
     void mqttPublish() const final;
 
     uint32_t getMqttFullPublishIntervalMs() const final { return 60 * 1000; }
+    std::optional<String> getHassDeviceName() const final;
 
     void updateFrom(DataPointContainer const& dp);
 

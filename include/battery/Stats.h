@@ -13,6 +13,7 @@ namespace Batteries {
 class Stats {
 public:
     std::optional<String> const& getManufacturer() const { return _oManufacturer; }
+    virtual std::optional<String> getHassDeviceName() const { return _oManufacturer; }
 
     // the last time *any* data was updated
     uint32_t getAgeSeconds() const { return (millis() - _lastUpdate) / 1000; }

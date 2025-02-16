@@ -26,7 +26,9 @@ void HassIntegration::hassLoop()
         return;
     }
 
-    if (!_publishSensors || !_spStats->getManufacturer().has_value()) { return; }
+    if (!_publishSensors ||
+        !_spStats->getManufacturer().has_value() ||
+        !_spStats->getHassDeviceName().has_value()) { return; }
 
     publishSensors();
 
@@ -145,13 +147,7 @@ void HassIntegration::publishBinarySensor(const char* caption,
 
 void HassIntegration::createDeviceInfo(JsonObject& object) const
 {
-    object["name"] = "Battery(" + _serial + ")";
-
-    auto const& config = Configuration.get();
-    if (config.Battery.Provider == 1) {
-        object["name"] = "JK BMS (" + *_spStats->getManufacturer() + ")";
-    }
-
+    object["name"] = *_spStats->getHassDeviceName();
     object["ids"] = _serial;
     object["cu"] = MqttHandleHass.getDtuUrl();
     object["mf"] = "OpenDTU";

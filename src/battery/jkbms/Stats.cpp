@@ -160,6 +160,13 @@ void Stats::mqttPublish() const
     if (fullPublish) { _lastFullMqttPublish = _lastMqttPublish; }
 }
 
+std::optional<String> Stats::getHassDeviceName() const
+{
+    auto oManufacturer = ::Batteries::Stats::getManufacturer();
+    if (!oManufacturer.has_value()) { return std::nullopt; }
+    return String("JK BMS (") + *oManufacturer + ")";
+}
+
 void Stats::updateFrom(JkBms::DataPointContainer const& dp)
 {
     using Label = JkBms::DataPointLabel;
