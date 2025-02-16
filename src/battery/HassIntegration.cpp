@@ -40,6 +40,8 @@ void HassIntegration::publishSensors() const
     publishSensor("Manufacturer",          "mdi:factory",        "manufacturer");
     publishSensor("Data Age",              "mdi:timer-sand",     "dataAge",       "duration", "measurement", "s");
     publishSensor("State of Charge (SoC)", "mdi:battery-medium", "stateOfCharge", "battery",  "measurement", "%");
+    publishSensor("Voltage", "mdi:battery-charging", "voltage", "voltage", "measurement", "V");
+    publishSensor("Current", "mdi:current-dc", "current", "current", "measurement", "A");
 }
 
 void HassIntegration::publishSensor(const char* caption, const char* icon,

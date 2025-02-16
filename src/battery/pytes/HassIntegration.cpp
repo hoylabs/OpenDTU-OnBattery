@@ -16,8 +16,6 @@ void HassIntegration::publishSensors() const
     publishSensor("Discharge current limit", NULL, "settings/dischargeCurrentLimitation", "current", "measurement", "A");
     publishSensor("Discharge voltage limit", NULL, "settings/dischargeVoltageLimitation", "voltage", "measurement", "V");
 
-    publishSensor("Voltage", "mdi:battery-charging", "voltage", "voltage", "measurement", "V");
-    publishSensor("Current", "mdi:current-dc", "current", "current", "measurement", "A");
     publishSensor("State of Health (SOH)", "mdi:heart-plus", "stateOfHealth", NULL, "measurement", "%");
     publishSensor("Temperature", "mdi:thermometer", "temperature", "temperature", "measurement", "°C");
     publishSensor("Charge Cycles", "mdi:counter", "chargeCycles");
