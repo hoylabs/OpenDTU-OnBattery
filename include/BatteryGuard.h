@@ -67,6 +67,7 @@ class BatteryGuardClass {
         std::pair<float,float> _pMaxVolt = {0.0f,0.0f};     // maximum voltage and related current [V,A]
         std::pair<float,float> _pMinVolt = {0.0f,0.0f};     // minimum voltage and related current [V,A]
         uint32_t _lastTriggerMillis = 0;                    // last millis from the first min/max values [millis()]
+        uint32_t _lastDataInMillis = 0;                     // last millis for data in [millis()]
 
 };
 
