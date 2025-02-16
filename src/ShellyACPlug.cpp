@@ -7,7 +7,7 @@
 #include <ESPmDNS.h>
 #include "Configuration.h"
 #include "Datastore.h"
-#include "PowerMeter.h"
+#include <powermeter/Controller.h>
 #include "Battery.h"
 
 ShellyACPlugClass ShellyACPlug;
