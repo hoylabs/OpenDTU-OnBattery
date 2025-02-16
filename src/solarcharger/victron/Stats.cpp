@@ -33,70 +33,61 @@ uint32_t Stats::getAgeMillis() const
 
 std::optional<float> Stats::getOutputPowerWatts() const
 {
-    float sum = 0;
-    auto data = false;
+    std::optional<float> sum = std::nullopt;
 
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
-        data = true;
-        sum += entry.second->batteryOutputPower_W;
+        
+        sum = sum.has_value() ? *sum + entry.second->batteryOutputPower_W : entry.second->batteryOutputPower_W;
     }
-
-    if (!data) { return std::nullopt; }
 
     return sum;
 }
 
 std::optional<float> Stats::getOutputVoltage() const
 {
-    float min = -1;
+    std::optional<float> min = std::nullopt;
 
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
 
         float volts = entry.second->batteryVoltage_V_mV / 1000.0;
-        if (min == -1) { min = volts; }
-        min = std::min(min, volts);
+        min = min.has_value() ? std::min(*min, volts) : volts;
     }
-
-    if (min == -1) { return std::nullopt; }
 
     return min;
 }
 
 std::optional<uint16_t> Stats::getPanelPowerWatts() const
 {
-    uint16_t sum = 0;
-    auto data = false;
+    std::optional<float> sum = std::nullopt;
 
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
-        data = true;
 
         // if any charge controller is part of a VE.Smart network, and if the
         // charge controller is connected in a way that allows to send
         // requests, we should have the "network total DC input power" available.
         auto networkPower = entry.second->NetworkTotalDcInputPowerMilliWatts;
         if (networkPower.first > 0) {
-            return static_cast<int32_t>(networkPower.second / 1000.0);
+            return static_cast<uint16_t>(networkPower.second / 1000.0);
         }
 
-        sum += entry.second->panelPower_PPV_W;
+        sum = sum.has_value() ? *sum + entry.second->panelPower_PPV_W : entry.second->panelPower_PPV_W;
     }
-
-    if (!data) { return std::nullopt; }
 
     return sum;
 }
 
 std::optional<float> Stats::getYieldTotal() const
 {
-    float sum = 0;
+    std::optional<float> sum = std::nullopt;
 
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
 
-        sum += entry.second->yieldTotal_H19_Wh / 1000.0;
+        float yield = entry.second->yieldTotal_H19_Wh / 1000.0;
+        sum = sum.has_value() ? *sum + yield : yield;
     }
 
     return sum;
@@ -104,12 +95,12 @@ std::optional<float> Stats::getYieldTotal() const
 
 std::optional<float> Stats::getYieldDay() const
 {
-    float sum = 0;
+    std::optional<float> sum = std::nullopt;
 
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
 
-        sum += entry.second->yieldToday_H20_Wh;
+        sum = sum.has_value() ? *sum + entry.second->yieldToday_H20_Wh : entry.second->yieldToday_H20_Wh;
     }
 
     return sum;
@@ -123,7 +114,6 @@ std::optional<Stats::StateOfOperation> Stats::getStateOfOperation() const
         switch (entry.second->currentState_CS) {
             case 0: return Stats::StateOfOperation::Off;
             case 3: return Stats::StateOfOperation::Bulk;
-            case 246:
             case 4: return Stats::StateOfOperation::Absorption;
             case 5: return Stats::StateOfOperation::Float;
             default: return Stats::StateOfOperation::Various;
