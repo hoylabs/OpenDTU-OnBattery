@@ -111,10 +111,10 @@ void BatteryGuardClass::updateSettings(void) {
  */
 void BatteryGuardClass::loop(void) {
     if (!_useBatteryGuard) { return; }
-    if (Battery.getStats()->getLastUpdate() == _lastUpdate) { return; } // millis rollover safe
+    if (Battery.getStats()->getLastVoltageUpdate() == _lastUpdate) { return; } // millis rollover safe
 
     // new values are available
-    _lastUpdate = Battery.getStats()->getLastUpdate();
+    _lastUpdate = Battery.getStats()->getLastVoltageUpdate();
     if (Battery.getStats()->isVoltageValid() && Battery.getStats()->isCurrentValid()) {
         updateBatteryValues(Battery.getStats()->getVoltage(), Battery.getStats()->getChargeCurrent(), _lastUpdate);
     }
@@ -249,6 +249,10 @@ bool BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
 
     // check the resolution of the voltage and current measurement
     if (!isResolutionOK()) { return result; }
+
+    // the timebase for the calculation should not be below 1 second
+    if ((millis() - _lastDataInMillis) < 950 ) { return result; }
+    _lastDataInMillis = millis();
 
     // check for trigger (sufficient current change)
     if (!_triggerEvent && _minMaxAvailable && (std::abs(nowCurrent - _pMinVolt.second) > (minDiffCurrent/3.0f))) {
