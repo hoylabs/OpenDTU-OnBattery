@@ -22,11 +22,11 @@ void Provider::onMessage(twai_message_t rx_message)
     switch (rx_message.identifier) {
         case 0x610: {
             _stats->setVoltage(this->readUnsignedInt16(rx_message.data)* 0.001, millis());
-            _stats->_current =(this->readSignedInt16(rx_message.data + 3)) * 0.001;
+            _stats->setCurrent(this->readSignedInt16(rx_message.data + 3) * 0.001, 2/*precision*/, millis());
             _stats->setSoC(static_cast<float>(this->readUnsignedInt16(rx_message.data + 6)), 1, millis());
 
             if (_verboseLogging) {
-                MessageOutput.printf("[SBS Unipower] 1552 SoC: %f Voltage: %f Current: %f\r\n", _stats->getSoC(), _stats->getVoltage(), _stats->_current);
+                MessageOutput.printf("[SBS Unipower] 1552 SoC: %f Voltage: %f Current: %f\r\n", _stats->getSoC(), _stats->getVoltage(), _stats->getChargeCurrent());
             }
             break;
         }
@@ -152,7 +152,7 @@ void Provider::dummyData()
     _stats->setDischargeCurrentLimit(dummyFloat(12), millis());
     _stats->_stateOfHealth = 99;
     _stats->setVoltage(48.67, millis());
-    _stats->_current = dummyFloat(-1);
+    _stats->setCurrent(dummyFloat(-1), 2/*precision*/, millis());
     _stats->_temperature = dummyFloat(20);
 
     _stats->_chargeEnabled = true;
