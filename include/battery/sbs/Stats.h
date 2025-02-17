@@ -11,7 +11,6 @@ friend class Provider;
 public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
-    float getChargeCurrent() const { return _current; } ;
     float getChargeCurrentLimitation() const { return _chargeCurrentLimitation; } ;
 
 private:
@@ -20,7 +19,6 @@ private:
     float _chargeVoltage;
     float _chargeCurrentLimitation;
     uint16_t _stateOfHealth;
-    float _current;
     float _temperature;
 
     bool _alarmUnderTemperature;
