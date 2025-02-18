@@ -1,5 +1,6 @@
 #include "MessageOutput.h"
 #include "PowerLimiterSolarInverter.h"
+#include "PowerLimiter.h"
 
 PowerLimiterSolarInverter::PowerLimiterSolarInverter(bool verboseLogging, PowerLimiterInverterConfig const& config)
     : PowerLimiterOverscalingInverter(verboseLogging, config) { }
@@ -22,6 +23,16 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
         // the inverter is not producing, we don't know how much we can increase
         // the power, so we return the maximum possible increase
         return getConfiguredMaxPowerWatts();
+    }
+
+    // If there is only one inverter, we ignore the shading and assume that
+    // we can increase the power by the maximum possible amount by using the
+    // same calculation as for battery-powered inverters.
+    // This is a hack to prevent the inverters from getting stuck at low limits.
+    // This is a temporary solution until we have a better way to handle this situation.
+    // TODO(andreasboehm): Remove this hack once we have a better solution.
+    if (PowerLimiter.getGovernedInverterCount() == 1) {
+        return getConfiguredMaxPowerWatts() - getCurrentLimitWatts();
     }
 
     // the maximum increase possible for this inverter

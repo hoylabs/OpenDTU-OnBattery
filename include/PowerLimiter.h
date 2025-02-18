@@ -42,6 +42,7 @@ public:
     uint8_t getPowerLimiterState();
     int32_t getInverterOutput() { return _lastExpectedInverterOutput; }
     bool getFullSolarPassThroughEnabled() const { return _fullSolarPassThroughEnabled; }
+    size_t getGovernedInverterCount() const { return _inverters.size(); }
 
     enum class Mode : unsigned {
         Normal = 0,
