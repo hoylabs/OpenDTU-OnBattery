@@ -3,7 +3,8 @@
  * Copyright (C) 2022 Thomas Basler and others
  */
 
-#include "Battery.h"
+#include <battery/Controller.h>
+#include <battery/Stats.h>
 #include <powermeter/Controller.h>
 #include "PowerLimiter.h"
 #include "Configuration.h"
