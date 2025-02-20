@@ -260,7 +260,7 @@ void Controller::loop()
                 float calculatedCurrent = efficiency * (newPowerLimit / *oOutputVoltage);
 
                 // Limit output current to value requested by BMS
-                float permissableCurrent = stats->getChargeCurrentLimitation() - (stats->getChargeCurrent() - *oOutputCurrent); // BMS current limit - current from other sources, e.g. Victron MPPT charger
+                float permissableCurrent = stats->getChargeCurrentLimit() - (stats->getChargeCurrent() - *oOutputCurrent); // BMS current limit - current from other sources, e.g. Victron MPPT charger
                 float outputCurrent = std::min(calculatedCurrent, permissableCurrent);
                 outputCurrent= outputCurrent > 0 ? outputCurrent : 0;
 

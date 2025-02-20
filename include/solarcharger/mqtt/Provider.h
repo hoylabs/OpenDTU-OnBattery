@@ -19,6 +19,7 @@ public:
     bool init(bool verboseLogging) final;
     void deinit() final;
     void loop() final { return; } // this class is event-driven
+    void setChargeLimit(float limit, float act_charge_current) final { return; } 
     std::shared_ptr<::SolarChargers::Stats> getStats() const final { return _stats; }
 
 private:

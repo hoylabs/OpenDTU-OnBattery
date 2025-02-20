@@ -114,6 +114,15 @@ void VeDirectMpptController::frameValidEvent() {
 	}
 }
 
+void VeDirectMpptController::setChargeLimit( float limit )
+{
+    // Victron MPPT needs limit with a resolution of 0.1A
+	if (limit == __FLT_MAX__) {
+		_chargeLimit = 0xFFFF;
+	} else {
+		_chargeLimit = static_cast<uint16_t>( limit * 10.0f );
+	}   
+}
 
 void VeDirectMpptController::loop()
 {
@@ -144,6 +153,7 @@ void VeDirectMpptController::loop()
 	resetTimestamp(_tmpFrame.NetworkTotalDcInputPowerMilliWatts);
 	resetTimestamp(_tmpFrame.BatteryFloatMilliVolt);
 	resetTimestamp(_tmpFrame.BatteryAbsorptionMilliVolt);
+    resetTimestamp(_tmpFrame.ChargeCurrentLimit);
 
 #ifdef PROCESS_NETWORK_STATE
 	resetTimestamp(_tmpFrame.NetworkInfo);
@@ -245,6 +255,18 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			return true;
 			break;
 
+		case VeDirectHexRegister::ChargeCurrentLimit:
+			_tmpFrame.ChargeCurrentLimit =
+				{ millis(), static_cast<uint16_t>(data.value) };
+
+			if (_verboseLogging) {
+				_msgOut->printf("%s Hex Data: Charge Current Limit (0x%04X): %.1fA\r\n",
+						_logId, regLog,
+						static_cast<float>(_tmpFrame.ChargeCurrentLimit.second) / 10.0);
+			}
+			return true;
+			break;
+
 #ifdef PROCESS_NETWORK_STATE
 		case VeDirectHexRegister::NetworkInfo:
 			_tmpFrame.NetworkInfo =
@@ -333,7 +355,14 @@ void VeDirectMpptController::sendNextHexCommandFromQueue(void) {
 					(!prio && (_hexQueue[idx]._readPeriod != HIGH_PRIO_COMMAND))) &&
 					(millisTime - _hexQueue[idx]._lastSendTime) > (_hexQueue[idx]._readPeriod * 1000)) {
 
-					sendHexCommand(VeDirectHexCommand::GET, _hexQueue[idx]._hexRegister);
+					if (_hexQueue[idx]._setCommand)
+					{
+        				sendHexCommand(VeDirectHexCommand::SET, _hexQueue[idx]._hexRegister, _hexQueue[idx]._data, _hexQueue[idx]._dataLength);
+					}
+					else
+					{
+						sendHexCommand(VeDirectHexCommand::GET, _hexQueue[idx]._hexRegister);
+					}
 					_hexQueue[idx]._lastSendTime = millisTime;
 
 					// we need this information to check if we get an answer, see hexDataHandler()

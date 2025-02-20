@@ -135,6 +135,12 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["discharge_current_limit_below_soc"] = config.Battery.DischargeCurrentLimitBelowSoc;
     target["discharge_current_limit_below_voltage"] = config.Battery.DischargeCurrentLimitBelowVoltage;
     target["use_battery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
+    target["enable_charge_current_limit"] = config.Battery.EnableChargeCurrentLimit;
+    target["max_charge_current_limit"] = config.Battery.MaxChargeCurrentLimit;
+    target["min_charge_current_limit"] = config.Battery.MinChargeCurrentLimit;
+    target["charge_current_limit_below_soc"] = config.Battery.ChargeCurrentLimitBelowSoc;
+    target["charge_current_limit_below_voltage"] = config.Battery.ChargeCurrentLimitBelowVoltage;
+    target["use_battery_reported_charge_current_limit"] = config.Battery.UseBatteryReportedChargeCurrentLimit;
     target["mqtt_discharge_current_topic"] = config.Battery.MqttDischargeCurrentTopic;
     target["mqtt_discharge_current_json_path"] = config.Battery.MqttDischargeCurrentJsonPath;
     target["mqtt_amperage_unit"] = config.Battery.MqttAmperageUnit;
@@ -480,6 +486,12 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     target.DischargeCurrentLimitBelowSoc = source["discharge_current_limit_below_soc"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_SOC;
     target.DischargeCurrentLimitBelowVoltage = source["discharge_current_limit_below_voltage"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_VOLTAGE;
     target.UseBatteryReportedDischargeCurrentLimit = source["use_battery_reported_discharge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_DISCHARGE_CURRENT_LIMIT;
+    target.EnableChargeCurrentLimit = source["enable_charge_current_limit"] | BATTERY_ENABLE_CHARGE_CURRENT_LIMIT;
+    target.MaxChargeCurrentLimit = source["max_charge_current_limit"] | BATTERY_CHARGE_CURRENT_LIMIT_MAX;
+    target.MinChargeCurrentLimit = source["min_charge_current_limit"] | BATTERY_CHARGE_CURRENT_LIMIT_MIN;
+    target.ChargeCurrentLimitBelowSoc = source["charge_current_limit_below_soc"] | BATTERY_CHARGE_CURRENT_LIMIT_BELOW_SOC;
+    target.ChargeCurrentLimitBelowVoltage = source["charge_current_limit_below_voltage"] | BATTERY_CHARGE_CURRENT_LIMIT_BELOW_VOLTAGE;
+    target.UseBatteryReportedChargeCurrentLimit = source["use_battery_reported_charge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_CHARGE_CURRENT_LIMIT;
     strlcpy(target.MqttDischargeCurrentTopic, source["mqtt_discharge_current_topic"] | "", sizeof(config.Battery.MqttDischargeCurrentTopic));
     strlcpy(target.MqttDischargeCurrentJsonPath, source["mqtt_discharge_current_json_path"] | "", sizeof(config.Battery.MqttDischargeCurrentJsonPath));
     target.MqttAmperageUnit = source["mqtt_amperage_unit"] | BatteryAmperageUnit::Amps;

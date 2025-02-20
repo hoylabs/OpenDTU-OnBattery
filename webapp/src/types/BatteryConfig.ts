@@ -14,6 +14,12 @@ export interface BatteryConfig {
     discharge_current_limit_below_soc: number;
     discharge_current_limit_below_voltage: number;
     use_battery_reported_discharge_current_limit: boolean;
+    enable_charge_current_limit: boolean;
+    min_charge_current_limit: number;
+    max_charge_current_limit: number;
+    charge_current_limit_below_soc: number;
+    charge_current_limit_below_voltage: number;
+    use_battery_reported_charge_current_limit: boolean;
     mqtt_discharge_current_topic: string;
     mqtt_discharge_current_json_path: string;
     mqtt_amperage_unit: number;

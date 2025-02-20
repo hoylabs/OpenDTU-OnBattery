@@ -62,11 +62,46 @@ bool Provider::initController(int8_t rx, int8_t tx, bool logging,
     return true;
 }
 
+void Provider::setChargeLimit( float limit, float act_charge_current )
+{
+    _chargeLimit = limit;
+    _chargeCurrent = act_charge_current;
+}
+
+
 void Provider::loop()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
+    float overallChargeCurrent  { 0.0f };
+    float overallLimit          { _chargeLimit };
+    float reservedChargeCurrent { 0.5f };   // minimum current for a controller whenever the given limit is higher
+
+    uint8_t numControllers { 0 };
+    // calculate the actual charge current of all MPPTs
     for (auto const& upController : _controllers) {
+        overallChargeCurrent += static_cast<float>( upController->getData().batteryCurrent_I_mA ) / 1000.0f;
+        numControllers++;
+    }
+    // increase the charge limit with the current drawn by the inverter(s)
+    float inverterCurrent { overallChargeCurrent - _chargeCurrent };
+    overallLimit += inverterCurrent;
+
+    // reserve a minimum charge-current for every controller, to ensure that we get a good distribution over all MPPTs
+    const float overallReservedChargeCurrent { reservedChargeCurrent * static_cast<float>(numControllers) };
+    if (overallLimit > overallReservedChargeCurrent) {
+        overallLimit -= overallReservedChargeCurrent;
+    } else {
+        // the limit is lower than the needed reserve --> distribute the allowed limit in a simple way over all MPPTs
+        reservedChargeCurrent = overallLimit / static_cast<float>(numControllers);
+        overallLimit = 0.0f;
+    }
+    for (auto const& upController : _controllers) {
+        const float batCurrent = static_cast<float>( upController->getData().batteryCurrent_I_mA ) / 1000.0f;
+        const float factor = batCurrent / overallChargeCurrent;
+        const float controllerLimit { factor * overallLimit + reservedChargeCurrent};
+
+        upController->setChargeLimit(controllerLimit);
         upController->loop();
 
         if(upController->isDataValid()) {

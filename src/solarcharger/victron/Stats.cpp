@@ -206,7 +206,11 @@ void Stats::populateJsonWithInstanceStats(const JsonObject &root, const VeDirect
         device["MpptTemperature"]["u"] = "°C";
         device["MpptTemperature"]["d"] = "1";
     }
-
+    if (mpptData.ChargeCurrentLimit.first > 0) {
+        device["ChargeCurrentLimit"]["v"] = mpptData.ChargeCurrentLimit.second / 10.0;
+        device["ChargeCurrentLimit"]["u"] = "A";
+        device["ChargeCurrentLimit"]["d"] = 1;
+    }
     const JsonObject output = values["output"].to<JsonObject>();
     output["P"]["v"] = mpptData.batteryOutputPower_W;
     output["P"]["u"] = "W";

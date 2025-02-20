@@ -18,6 +18,7 @@ public:
     bool init(bool verboseLogging) final;
     void deinit() final;
     void loop() final;
+    void setChargeLimit( float limit, float act_charge_current) final;
     std::shared_ptr<::SolarChargers::Stats> getStats() const final { return _stats; }
 
 private:
@@ -31,6 +32,8 @@ private:
     std::vector<controller_t> _controllers;
     std::vector<String> _serialPortOwners;
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
+    float _chargeLimit { 0.0f };
+    float _chargeCurrent { 0.0f };
 
     bool initController(int8_t rx, int8_t tx, bool logging, uint8_t instance);
 };
