@@ -199,7 +199,8 @@
             "RELAY": "Error relay state",
             "ERR": "Error code",
             "HSDS": "Day sequence number (0..364)",
-            "MpptTemperature": "Charge controller temperature"
+            "MpptTemperature": "Charge controller temperature",
+            "ChargeCurrentLimit": "Charge current limit"
         },
         "section_output": "Output (Battery)",
         "output": {
@@ -789,6 +790,17 @@
         "BatteryReportedDischargeCurrentLimitInfo": "<b>Hint:</b> The lowest limit will be applied, with the battery-reported discharge current limit used only if an update was received in the last minute; otherwise, the previously specified limit will act as a fallback.",
         "MqttDischargeCurrentLimitTopic": "Discharge Current Limit Value Topic",
         "MqttAmperageUnit": "@:base.Unit",
+        "ChargeCurrentLimitConfiguration": "Charge Current Limit Settings",
+        "LimitChargeCurrent": "Limit Charge Current",
+        "MinChargeCurrentLimit": "min. Charge Current",
+        "MinChargeCurrentLimitInfo": "The highest limit will be applied, with the battery-reported discharge current limit used only if an update was received in the last minute; otherwise, the previously specified limit will act as a fallback.",
+        "MaxChargeCurrentLimit": "max. Charge Current",
+        "ChargeCurrentLimitBelowSoc": "Apply max limit below SoC",
+        "ChargeCurrentLimitBelowSocInfo": "The charge max current limit is only applied below this SoC (not used if 'Ignore Battery SoC' is enabled in the DPL settings).",
+        "ChargeCurrentLimitBelowVoltage": "Apply max limit below voltage",
+        "ChargeCurrentLimitBelowVoltageInfo": "The max charge current limit is only applied below this voltage (used if 'Ignore Battery SoC' is enabled in the DPL settings or when SoC is unavailable).",
+        "UseBatteryReportedChargeCurrentLimit": "Use Battery-Reported limit",
+        "BatteryReportedChargeCurrentLimitInfo": "<b>Hint:</b> The lowest limit will be applied, with the battery-reported discharge current limit used only if an update was received in the last minute; otherwise, the previously specified limit will act as a fallback.",
         "ZendureConfiguration": "Configuration",
         "ZendureDeviceType": "Product Type",
         "ZendureDeviceId": "Product ID",
