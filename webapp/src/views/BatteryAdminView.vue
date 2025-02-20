@@ -276,6 +276,93 @@
                 </template>
             </CardElement>
 
+            <CardElement
+                :text="$t('batteryadmin.ChargeCurrentLimitConfiguration')"
+                textVariant="text-bg-primary"
+                addSpace
+            >
+                <InputElement
+                    :label="$t('batteryadmin.LimitChargeCurrent')"
+                    v-model="batteryConfigList.enable_charge_current_limit"
+                    type="checkbox"
+                    wide
+                />
+
+                <template v-if="batteryConfigList.enable_charge_current_limit">
+                    <InputElement
+                        :label="$t('batteryadmin.MinChargeCurrentLimit')"
+                        v-model="batteryConfigList.min_charge_current_limit"
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        postfix="A"
+                        :tooltip="$t('batteryadmin.MinChargeCurrentLimitInfo')"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('batteryadmin.MaxChargeCurrentLimit')"
+                        v-model="batteryConfigList.max_charge_current_limit"
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        postfix="A"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('batteryadmin.ChargeCurrentLimitBelowSoc')"
+                        v-if="batteryConfigList.enabled"
+                        v-model="batteryConfigList.charge_current_limit_below_soc"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        postfix="%"
+                        :tooltip="$t('batteryadmin.ChargeCurrentLimitBelowSocInfo')"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('batteryadmin.ChargeCurrentLimitBelowVoltage')"
+                        v-if="batteryConfigList.enabled"
+                        v-model="batteryConfigList.charge_current_limit_below_voltage"
+                        type="number"
+                        min="0"
+                        max="60"
+                        step="0.01"
+                        postfix="V"
+                        :tooltip="$t('batteryadmin.ChargeCurrentLimitBelowVoltageInfo')"
+                        wide
+                    />
+
+                    <template
+                        v-if="
+                            batteryConfigList.enabled &&
+                            (batteryConfigList.provider == 0 ||
+                                batteryConfigList.provider == 4 ||
+                                batteryConfigList.provider == 5)
+                        "
+                    >
+                        <InputElement
+                            :label="$t('batteryadmin.UseBatteryReportedChargeCurrentLimit')"
+                            v-model="batteryConfigList.use_battery_reported_charge_current_limit"
+                            type="checkbox"
+                            wide
+                        />
+
+                        <template v-if="batteryConfigList.use_battery_reported_charge_current_limit">
+                            <div
+                                class="alert alert-secondary"
+                                role="alert"
+                                v-if="batteryConfigList.enabled"
+                                v-html="$t('batteryadmin.BatteryReportedChargeCurrentLimitInfo')"
+                            ></div>
+                        </template>
+                    </template>
+                </template>
+            </CardElement>
+
             <template v-if="batteryConfigList.enabled && batteryConfigList.provider == 7">
                 <CardElement :text="$t('batteryadmin.ZendureConfiguration')" textVariant="text-bg-primary" addSpace>
                     <div class="row mb-3">
