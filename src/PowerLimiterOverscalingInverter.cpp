@@ -52,8 +52,6 @@ uint16_t PowerLimiterOverscalingInverter::scaleLimit(uint16_t expectedOutputWatt
     // producing very little due to the very low limit.
     if (getCurrentLimitWatts() < dcTotalChnls * 10) { return expectedOutputWatts; }
 
-    auto inverterOutputAC = pStats->getChannelFieldValue(TYPE_AC, CH0, FLD_PAC);
-
     float inverterEfficiencyFactor = pStats->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF);
 
     // fall back to hoymiles peak efficiency as per datasheet if inverter
@@ -102,9 +100,9 @@ uint16_t PowerLimiterOverscalingInverter::scaleLimit(uint16_t expectedOutputWatt
         // keep the currentLimit when:
         // - all channels are shaded
         // - currentLimit >= expectedOutputWatts
-        // - we get the expected AC power or less and
+        // - we get the expected AC power or less
         if (getCurrentLimitWatts() >= expectedOutputWatts &&
-                inverterOutputAC <= expectedOutputWatts) {
+                getCurrentOutputAcWatts() <= expectedOutputWatts) {
             if (_verboseLogging) {
                 MessageOutput.printf("    all mppts are shaded, "
                         "keeping the current limit of %d W\r\n",

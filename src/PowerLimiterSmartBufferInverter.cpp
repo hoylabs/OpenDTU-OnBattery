@@ -53,8 +53,8 @@ uint16_t PowerLimiterSmartBufferInverter::applyReduction(uint16_t reduction, boo
         return 0;
     }
 
-    if ((getCurrentLimitWatts() - _config.LowerPowerLimit) >= reduction) {
-        setAcOutput(getCurrentLimitWatts() - reduction);
+    if ((getCurrentOutputAcWatts() - _config.LowerPowerLimit) >= reduction) {
+        setAcOutput(getCurrentOutputAcWatts() - reduction);
         return reduction;
     }
 
