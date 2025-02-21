@@ -652,7 +652,7 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
 
             pack->_lastUpdate = ms;
 
-            // we found the pack we searched for, so terminate loop here
+            // found the pack we searched for, so terminate loop here
             break;
         }
     }
@@ -706,19 +706,20 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
 
     auto v = *params;
 
+    uint16_t soc = 0;
+    uint16_t voltage = 0;
+    int16_t power = 0;
+    int16_t current = 0;
+    uint16_t capacity = 0;
+    float capacity_avail = 0;
+
     uint8_t num = v[ZENDURE_LOG_OFFSET_PACKNUM].as<uint8_t>();
     if (num > 0 && num <= ZENDURE_MAX_PACKS) {
-        uint16_t soc = 0;
-        uint16_t voltage = 0;
-        int16_t power = 0;
-        int16_t current = 0;
         uint32_t cellMin = UINT32_MAX;
         uint32_t cellMax = 0;
         uint32_t cellAvg = 0;
         uint32_t cellDelta = 0;
         int32_t cellTemp = 0;
-        uint16_t capacity = 0;
-        float capacity_avail = 0;
 
         for (size_t i = 1 ; i <= num ; i++) {
             auto pvol = v[ZENDURE_LOG_OFFSET_PACK_VOLTAGE(i)].as<uint16_t>() * 10;
@@ -761,42 +762,42 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
             current += pcur;
         }
 
-        _stats->_num_batteries = num;
-        setSoC(static_cast<float>(soc) / 10.0 / num, ms);
-        _stats->setVoltage(v[ZENDURE_LOG_OFFSET_VOLTAGE].as<float>() / 10.0, ms);
-        _stats->setCurrent(static_cast<float>(current) / 10.0, 1, ms);
-        _stats->setDischargeCurrentLimit(static_cast<float>(_stats->_inverse_max) / _stats->getVoltage(), ms);
-        if (capacity) {
-            _stats->_capacity = capacity;
-        }
-        if (capacity_avail) {
-            _stats->_capacity_avail = static_cast<uint16_t>(capacity_avail);
-        }
-
-        _stats->_auto_recover = static_cast<bool>(v[ZENDURE_LOG_OFFSET_AUTO_RECOVER].as<uint8_t>());
-        _stats->_bypass_mode = static_cast<BypassMode>(v[ZENDURE_LOG_OFFSET_BYPASS_MODE].as<uint8_t>());
-        _stats->_soc_min = v[ZENDURE_LOG_OFFSET_MIN_SOC].as<float>();
-
-        _stats->_solar_power_1 = v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1].as<uint16_t>();
-        _stats->_solar_power_2 = v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_2].as<uint16_t>();
-        _stats->_input_power = _stats->_solar_power_1 + _stats->_solar_power_2;
-
-        _stats->_output_limit = static_cast<uint16_t>(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT].as<uint32_t>() / 100);
-        //_stats->_input_power = v[ZENDURE_LOG_OFFSET_INPUT_POWER].as<uint16_t>();
-        _stats->_output_power = v[ZENDURE_LOG_OFFSET_OUTPUT_POWER].as<uint16_t>();
-        _stats->_charge_power = v[ZENDURE_LOG_OFFSET_CHARGE_POWER].as<uint16_t>();
-        _stats->_discharge_power = v[ZENDURE_LOG_OFFSET_DISCHARGE_POWER].as<uint16_t>();
-
         _stats->_cellMinMilliVolt = static_cast<uint16_t>(cellMin);
         _stats->_cellMaxMilliVolt = static_cast<uint16_t>(cellMax);
         _stats->_cellAvgMilliVolt = static_cast<uint16_t>(cellAvg) / num;
         _stats->_cellDeltaMilliVolt = static_cast<uint16_t>(cellDelta);
         _stats->_cellTemperature = static_cast<int16_t>(cellTemp);
-
-        _stats->_lastUpdate = ms;
-
-        calculateEfficiency();
     }
+
+    setSoC(static_cast<float>(soc) / 10.0 / num, ms);
+
+    _stats->_num_batteries = num;
+    _stats->_capacity = capacity;
+    _stats->_capacity_avail = static_cast<uint16_t>(capacity_avail);
+
+    _stats->setVoltage(v[ZENDURE_LOG_OFFSET_VOLTAGE].as<float>() / 10.0, ms);
+    _stats->setCurrent(static_cast<float>(current) / 10.0, 1, ms);
+    _stats->setDischargeCurrentLimit(static_cast<float>(_stats->_inverse_max) / _stats->getVoltage(), ms);
+
+    _stats->_auto_recover = static_cast<bool>(v[ZENDURE_LOG_OFFSET_AUTO_RECOVER].as<uint8_t>());
+    _stats->_bypass_mode = static_cast<BypassMode>(v[ZENDURE_LOG_OFFSET_BYPASS_MODE].as<uint8_t>());
+    _stats->_soc_min = v[ZENDURE_LOG_OFFSET_MIN_SOC].as<float>();
+
+    _stats->_solar_power_1 = v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1].as<uint16_t>();
+    _stats->_solar_power_2 = v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_2].as<uint16_t>();
+    _stats->_input_power = _stats->_solar_power_1 + _stats->_solar_power_2;
+
+    _stats->_output_limit = static_cast<uint16_t>(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT].as<uint32_t>() / 100);
+    //_stats->_input_power = v[ZENDURE_LOG_OFFSET_INPUT_POWER].as<uint16_t>();
+    _stats->_output_power = v[ZENDURE_LOG_OFFSET_OUTPUT_POWER].as<uint16_t>();
+    _stats->_charge_power = v[ZENDURE_LOG_OFFSET_CHARGE_POWER].as<uint16_t>();
+    _stats->_discharge_power = v[ZENDURE_LOG_OFFSET_DISCHARGE_POWER].as<uint16_t>();
+
+    _stats->_lastUpdate = ms;
+
+    calculateEfficiency();
+
+    MessageOutput.printf("DEBUG[Zendure]: Provider::onMqttMessageLog - Exit\r\n");
 }
 
 String Provider::parseVersion(uint32_t version)
