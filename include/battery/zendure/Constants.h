@@ -157,10 +157,11 @@ namespace Batteries::Zendure {
 #define ZENDURE_REPORT_AC_OUTPUT_POWER              "acOutputPower"     // Hyper2000 only - need to check
 
 // values smoothend over some given time frame - may be more accurate?
-#define ZENDURE_REPORT_SOLAR_POWER_MPPT_1_CYCLE    "solarPower1Cycle"
-#define ZENDURE_REPORT_SOLAR_POWER_MPPT_2_CYCLE    "solarPower2Cycle"
+#define ZENDURE_REPORT_SOLAR_POWER_MPPT_1_CYCLE     "solarPower1Cycle"
+#define ZENDURE_REPORT_SOLAR_POWER_MPPT_2_CYCLE     "solarPower2Cycle"
 #define ZENDURE_REPORT_DISCHARGE_POWER_CYCLE        "packInputPowerCycle"
 #define ZENDURE_REPORT_OUTPUT_POWER_CYCLE           "outputHomePowerCycle"
+#define ZENDURE_REPORT_CHARGE_POWER_CYCLE           "outputPackPowerCycle"  // seems like this does currently not exist
 
 #define ZENDURE_REPORT_SMART_MODE                   "smartMode"
 #define ZENDURE_REPORT_SMART_POWER                  "smartPower"

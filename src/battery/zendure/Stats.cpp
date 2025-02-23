@@ -9,15 +9,6 @@ void Stats::getLiveViewData(JsonVariant& root) const
 {
     ::Batteries::Stats::getLiveViewData(root);
 
-    auto addRemainingTime = [this](auto root, auto section, const char* name, int16_t value, bool charge = false) {
-        bool notInScope = charge ? !isCharging(this->_state) : !isDischarging(this->_state);
-        if (value < 0 || notInScope) {
-            addLiveViewTextInSection(root, section, name, "unavail");
-        }else{
-            addLiveViewInSection(root, section, name, value, "min", 0);
-        }
-    };
-
     // values go into the "Status" card of the web application
     std::string section("status");
     addLiveViewInSection(root, section, "totalInputPower", _input_power, "W", 0);
@@ -34,8 +25,8 @@ void Stats::getLiveViewData(JsonVariant& root) const
     addLiveViewBooleanInSection(root, section, "bypassState", _bypass_state);
     addLiveViewBooleanInSection(root, section, "chargethrough", _charge_through_state);
     addLiveViewInSection(root, section, "lastFullCharge", _last_full_charge_hours, "h", 0);
-    addRemainingTime(root, section, "remainOutTime", _remain_out_time, false);
-    addRemainingTime(root, section, "remainInTime", _remain_in_time, true);
+    addLiveViewInSection(root, section, "remainOutTime", _remain_out_time, "min", 0);
+    addLiveViewInSection(root, section, "remainInTime", _remain_in_time, "min", 0);
 
     // values go into the "Settings" card of the web application
     section = "settings";

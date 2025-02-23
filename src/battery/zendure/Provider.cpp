@@ -576,16 +576,6 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
             _stats->_buzzer = static_cast<bool>(*buzzer);
         }
 
-        auto outtime = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_REMAIN_OUT_TIME);
-        if (outtime.has_value()) {
-            _stats->_remain_out_time = *outtime >= ZENDURE_REMAINING_TIME_OVERFLOW ? -1 : *outtime;
-        }
-
-        auto intime = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_REMAIN_IN_TIME);
-        if (intime.has_value()) {
-            _stats->_remain_in_time = *intime >= ZENDURE_REMAINING_TIME_OVERFLOW ? -1 : *intime;
-        }
-
         auto output_power = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_OUTPUT_POWER);
         if (output_power.has_value()) {
             _stats->_output_power = *output_power;
@@ -593,24 +583,22 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
 
         auto discharge_power = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_DISCHARGE_POWER);
         if (discharge_power.has_value()) {
-            _stats->_discharge_power = *discharge_power;
+            _stats->setDischargePower(*discharge_power);
         }
 
         auto charge_power = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_CHARGE_POWER);
         if (charge_power.has_value()) {
-            _stats->_charge_power = *charge_power;
+            _stats->setChargePower(*charge_power);
         }
 
         auto solar_power_1 = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_SOLAR_POWER_MPPT_1);
         if (solar_power_1.has_value()) {
-            _stats->_solar_power_1 = *solar_power_1;
-            _stats->updateSolarInputPower();
+            _stats->setSolarPower1(*solar_power_1);
         }
 
         auto solar_power_2 = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_SOLAR_POWER_MPPT_2);
         if (solar_power_2.has_value()) {
-            _stats->_solar_power_2 = *solar_power_2;
-            _stats->updateSolarInputPower();
+            _stats->setSolarPower2(*solar_power_2);
         }
 
         _stats->_lastUpdate = ms;
@@ -811,15 +799,13 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
     _stats->_bypass_mode = static_cast<BypassMode>(v[ZENDURE_LOG_OFFSET_BYPASS_MODE].as<uint8_t>());
     _stats->_soc_min = v[ZENDURE_LOG_OFFSET_MIN_SOC].as<float>();
 
-    _stats->_solar_power_1 = v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1].as<uint16_t>();
-    _stats->_solar_power_2 = v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_2].as<uint16_t>();
-    _stats->updateSolarInputPower();
-
     _stats->_output_limit = static_cast<uint16_t>(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT].as<uint32_t>() / 100);
     //_stats->_input_power = v[ZENDURE_LOG_OFFSET_INPUT_POWER].as<uint16_t>();
     _stats->_output_power = v[ZENDURE_LOG_OFFSET_OUTPUT_POWER].as<uint16_t>();
-    _stats->_charge_power = v[ZENDURE_LOG_OFFSET_CHARGE_POWER].as<uint16_t>();
-    _stats->_discharge_power = v[ZENDURE_LOG_OFFSET_DISCHARGE_POWER].as<uint16_t>();
+    _stats->setChargePower(v[ZENDURE_LOG_OFFSET_CHARGE_POWER].as<uint16_t>());
+    _stats->setDischargePower(v[ZENDURE_LOG_OFFSET_DISCHARGE_POWER].as<uint16_t>());
+    _stats->setSolarPower1(v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1].as<uint16_t>());
+    _stats->setSolarPower2(v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_2].as<uint16_t>());
 
     _stats->_lastUpdate = ms;
 

@@ -102,6 +102,36 @@ private:
         _input_power = _solar_power_1 + _solar_power_2;
     }
 
+    void setSolarPower1(uint16_t power) {
+        _solar_power_1 = power;
+        updateSolarInputPower();
+    }
+
+    void setSolarPower2(uint16_t power) {
+        _solar_power_2 = power;
+        updateSolarInputPower();
+    }
+
+    void setChargePower(uint16_t power) {
+        _charge_power = power;
+
+        if (_charge_power > 0 && _capacity_avail > 0) {
+            _remain_out_time = static_cast<uint16_t>(_capacity_avail * (_soc_max - getSoC()) / 100 / static_cast<float>(_charge_power) * 60);
+        } else {
+            _remain_out_time = std::nullopt;
+        }
+    }
+
+    void setDischargePower(uint16_t power){
+        _discharge_power = power;
+
+        if (_discharge_power > 0 && _capacity_avail > 0) {
+            _remain_out_time = static_cast<uint16_t>(_capacity_avail * (getSoC() - _soc_min) / 100 / static_cast<float>(_discharge_power) * 60);
+        } else {
+            _remain_out_time = std::nullopt;
+        }
+    }
+
     String _device = String("Unkown");
 
     std::map<size_t, std::shared_ptr<PackStats>> _packData = std::map<size_t, std::shared_ptr<PackStats> >();
@@ -130,8 +160,15 @@ private:
     uint16_t _solar_power_1 = 0;
     uint16_t _solar_power_2 = 0;
 
-    int16_t _remain_out_time = 0;
-    int16_t _remain_in_time = 0;
+    uint16_t _charge_power_cycle = 0;
+    uint16_t _discharge_power_cycle = 0;
+    uint16_t _output_power_cycle = 0;
+    uint16_t _input_power_cycle = 0;
+    uint16_t _solar_power_1_cycle = 0;
+    uint16_t _solar_power_2_cycle = 0;
+
+    std::optional<uint16_t> _remain_out_time = std::nullopt;
+    std::optional<uint16_t> _remain_in_time = std::nullopt;
 
     State _state = State::Invalid;
     uint8_t _num_batteries = 0;
