@@ -52,6 +52,7 @@ bool Provider::init(bool verboseLogging)
         // setup static device info
         MessageOutput.printf("ZendureBattery: Device name '%s'\r\n", deviceName.c_str());
         _stats->setDevice(std::move(deviceName));
+        _stats->setManufacturer("Zendure Solarflow");
     }
 
     // store device ID as we will need them for checking when receiving messages
