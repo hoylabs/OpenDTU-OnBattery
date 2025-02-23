@@ -98,6 +98,10 @@ private:
         _device = std::move(device);
     }
 
+    void updateSolarInputPower() {
+        _input_power = _solar_power_1 + _solar_power_2;
+    }
+
     String _device = String("Unkown");
 
     std::map<size_t, std::shared_ptr<PackStats>> _packData = std::map<size_t, std::shared_ptr<PackStats> >();

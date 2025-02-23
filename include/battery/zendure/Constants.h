@@ -146,17 +146,19 @@ namespace Batteries::Zendure {
 #define ZENDURE_REPORT_INPUT_MODE                   "inputMode"
 
 // momentary values - may not sum up correctly!
-#define ZENDURE_REPORT_SOLAR_POWER_MPPT(x)          "solarPower"##x
+#define ZENDURE_REPORT_SOLAR_POWER_MPPT_1           "solarPower1"
+#define ZENDURE_REPORT_SOLAR_POWER_MPPT_2           "solarPower2"
 #define ZENDURE_REPORT_SOLAR_INPUT_POWER            "solarInputPower"
 #define ZENDURE_REPORT_GRID_INPUT_POWER             "gridInputPower"    // Hyper2000/Ace1500 only - need to check
-#define ZENDURE_REPORT_CHARGE_POWER                 "packInputPower"
-#define ZENDURE_REPORT_DISCHARGE_POWER              "outputPackPower"
+#define ZENDURE_REPORT_DISCHARGE_POWER              "packInputPower"
+#define ZENDURE_REPORT_CHARGE_POWER                 "outputPackPower"
 #define ZENDURE_REPORT_OUTPUT_POWER                 "outputHomePower"
 #define ZENDURE_REPORT_DC_OUTPUT_POWER              "dcOutputPower"     // Ace1500 only - need to check
 #define ZENDURE_REPORT_AC_OUTPUT_POWER              "acOutputPower"     // Hyper2000 only - need to check
 
 // values smoothend over some given time frame - may be more accurate?
-#define ZENDURE_REPORT_SOLAR_POWER_MPPT_CYCLE(x)    "solarPower"##x##"Cycle"
+#define ZENDURE_REPORT_SOLAR_POWER_MPPT_1_CYCLE    "solarPower1Cycle"
+#define ZENDURE_REPORT_SOLAR_POWER_MPPT_2_CYCLE    "solarPower2Cycle"
 #define ZENDURE_REPORT_DISCHARGE_POWER_CYCLE        "packInputPowerCycle"
 #define ZENDURE_REPORT_OUTPUT_POWER_CYCLE           "outputHomePowerCycle"
 
