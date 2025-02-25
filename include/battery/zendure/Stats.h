@@ -70,7 +70,6 @@ protected:
     std::shared_ptr<PackStats> getPackData(size_t index) const;
     std::shared_ptr<PackStats> addPackData(size_t index, String serial);
 
-    uint16_t getCapacity() const { return _capacity; };
     uint16_t getUseableCapacity() const { return _capacity_avail * (static_cast<float>(_soc_max - _soc_min) / 100.0); };
 
 private:
@@ -98,38 +97,42 @@ private:
         _device = std::move(device);
     }
 
-    void updateSolarInputPower() {
+    inline void updateSolarInputPower() {
         _input_power = _solar_power_1 + _solar_power_2;
     }
 
-    void setSolarPower1(uint16_t power) {
+    inline void setSolarPower1(const uint16_t power) {
         _solar_power_1 = power;
         updateSolarInputPower();
     }
 
-    void setSolarPower2(uint16_t power) {
+    inline void setSolarPower2(const uint16_t power) {
         _solar_power_2 = power;
         updateSolarInputPower();
     }
 
-    void setChargePower(uint16_t power) {
+    void setChargePower(const uint16_t power) {
         _charge_power = power;
 
-        if (_charge_power > 0 && _capacity_avail > 0) {
-            _remain_out_time = static_cast<uint16_t>(_capacity_avail * (_soc_max - getSoC()) / 100 / static_cast<float>(_charge_power) * 60);
+        if (power > 0 && _capacity_avail > 0) {
+            _remain_in_time = static_cast<uint16_t>(_capacity_avail * (_soc_max - getSoC()) / 100 / static_cast<float>(power) * 60);
+        } else {
+            _remain_in_time = std::nullopt;
+        }
+    }
+
+    void setDischargePower(const uint16_t power){
+        _discharge_power = power;
+
+        if (power > 0 && _capacity_avail > 0) {
+            _remain_out_time = static_cast<uint16_t>(_capacity_avail * (getSoC() - _soc_min) / 100 / static_cast<float>(power) * 60);
         } else {
             _remain_out_time = std::nullopt;
         }
     }
 
-    void setDischargePower(uint16_t power){
-        _discharge_power = power;
-
-        if (_discharge_power > 0 && _capacity_avail > 0) {
-            _remain_out_time = static_cast<uint16_t>(_capacity_avail * (getSoC() - _soc_min) / 100 / static_cast<float>(_discharge_power) * 60);
-        } else {
-            _remain_out_time = std::nullopt;
-        }
+    inline void setOutputPower(const uint16_t power) {
+        _output_power = power;
     }
 
     String _device = String("Unkown");
@@ -197,8 +200,6 @@ class PackStats {
         String getSerial() const { return _serial; }
 
         inline uint8_t getCellCount() const { return _cellCount; }
-        inline uint16_t getCapacity() const { return _capacity; }
-        inline uint16_t getAvailableCapacity() const { return _capacity_avail; };
         inline String getName() const { return _name; }
 
         static std::shared_ptr<PackStats> fromSerial(String serial) {
@@ -223,6 +224,11 @@ class PackStats {
         void setSerial(String serial) { _serial = serial; }
         void setHwVersion(String&& version) { _hwversion = std::move(version); }
         void setFwVersion(String&& version) { _fwversion = std::move(version); }
+
+        void setSoH(float soh){
+            _state_of_health = soh;
+            _capacity_avail = _capacity * soh / 100.0;
+        }
 
     private:
         String _serial = String();

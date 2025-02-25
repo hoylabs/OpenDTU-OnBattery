@@ -578,7 +578,7 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
 
         auto output_power = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_OUTPUT_POWER);
         if (output_power.has_value()) {
-            _stats->_output_power = *output_power;
+            _stats->setOutputPower(*output_power);
         }
 
         auto discharge_power = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_DISCHARGE_POWER);
@@ -662,8 +662,7 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
             }
 
             if (soh.has_value()) {
-                pack->_state_of_health = static_cast<float>(*soh) / 10.0;
-                pack->_capacity_avail = pack->_capacity * pack->_state_of_health / 100.0;
+                pack->setSoH(static_cast<float>(*soh) / 10.0);
             }
 
             pack->_lastUpdate = ms;
@@ -727,7 +726,7 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
     int16_t power = 0;
     int16_t current = 0;
     uint16_t capacity = 0;
-    float capacity_avail = 0;
+    uint16_t capacity_avail = 0;
 
     uint8_t num = v[ZENDURE_LOG_OFFSET_PACKNUM].as<uint8_t>();
     if (num > 0 && num <= ZENDURE_MAX_PACKS) {
@@ -789,7 +788,7 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
 
     _stats->_num_batteries = num;
     _stats->_capacity = capacity;
-    _stats->_capacity_avail = static_cast<uint16_t>(capacity_avail);
+    _stats->_capacity_avail = capacity_avail;
 
     _stats->setVoltage(v[ZENDURE_LOG_OFFSET_VOLTAGE].as<float>() / 10.0, ms);
     _stats->setCurrent(static_cast<float>(current) / 10.0, 1, ms);
@@ -801,7 +800,7 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
 
     _stats->_output_limit = static_cast<uint16_t>(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT].as<uint32_t>() / 100);
     //_stats->_input_power = v[ZENDURE_LOG_OFFSET_INPUT_POWER].as<uint16_t>();
-    _stats->_output_power = v[ZENDURE_LOG_OFFSET_OUTPUT_POWER].as<uint16_t>();
+    _stats->setOutputPower(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER].as<uint16_t>());
     _stats->setChargePower(v[ZENDURE_LOG_OFFSET_CHARGE_POWER].as<uint16_t>());
     _stats->setDischargePower(v[ZENDURE_LOG_OFFSET_DISCHARGE_POWER].as<uint16_t>());
     _stats->setSolarPower1(v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1].as<uint16_t>());
