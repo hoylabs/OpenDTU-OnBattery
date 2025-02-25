@@ -290,8 +290,9 @@ void PowerLimiterClass::loop()
     _oLoadCorrectedVoltage = std::nullopt;
 
     if (_verboseLogging && (usesBatteryPoweredInverter() || usesSmartBufferPoweredInverter())) {
-        MessageOutput.printf("[DPL] up %lu s, %snext inverter restart at %d s (set to %d)\r\n",
+        MessageOutput.printf("[DPL] up %lu s, it is %s, %snext inverter restart at %d s (set to %d)\r\n",
                 millis()/1000,
+                (SunPosition.isDayPeriod()?"day":"night"),
                 (_nextInverterRestart.first?"":"NO "),
                 _nextInverterRestart.second/1000,
                 config.PowerLimiter.RestartHour);
