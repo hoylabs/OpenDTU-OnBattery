@@ -663,7 +663,7 @@ void SurplusPowerClass::printReport(void)
     MessageOutput.printf("%s Last active time of Stage-I: %s",
             getText(Text::T_HEAD).data(), time);
     if (_stageIActive) {
-        strcpy(time, " - ongoing");
+        snprintf(time, sizeof(time), " - ongoing");
     } else {
         strftime(time, 20, " - %H:%M", &_stage_I_Time_Stop);
     }
@@ -702,7 +702,7 @@ void SurplusPowerClass::printReport(void)
     MessageOutput.printf("%s Last active time of Stage-II: %s",
         getText(Text::T_HEAD).data(), time);
     if (_stageIIActive) {
-        strcpy(time, " - ongoing");
+        snprintf(time, sizeof(time), " - ongoing");
     } else {
         strftime(time, 20, " - %H:%M", &_stage_II_Time_Stop);
     }
