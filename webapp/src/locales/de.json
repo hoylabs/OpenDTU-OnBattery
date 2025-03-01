@@ -175,7 +175,7 @@
         "MqttProduct": "Ladereglerwerte aus MQTT",
         "SerialNumber": "Seriennummer",
         "FirmwareVersion": "Firmware-Version",
-        "DataAge": "letzte Aktualisierung",
+        "DataAge": "@:home.DataAge",
         "Seconds": "vor {val} Sekunden",
         "Property": "Eigenschaft",
         "Value": "Wert",
@@ -944,7 +944,7 @@
         "format_unknown": "Unbekanntes Format"
     },
     "huawei": {
-        "DataAge": "letzte Aktualisierung: ",
+        "DataAge": "@:home.DataAge",
         "Seconds": "vor {val} Sekunden",
         "Input": "Eingang",
         "Output": "Ausgang",
@@ -1003,7 +1003,7 @@
         "battery": "Batterie",
         "FwVersion": "Firmware-Version",
         "HwVersion": "Hardware-Version",
-        "DataAge": "letzte Aktualisierung: ",
+        "DataAge": "@:home.DataAge",
         "Seconds": "vor {val} Sekunden",
         "status": "Status",
         "Property": "Eigenschaft",

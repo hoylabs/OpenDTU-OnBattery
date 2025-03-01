@@ -20,7 +20,11 @@
                             <div class="d-flex flex-wrap">
                                 <div style="padding-right: 2em">Huawei R4850G2</div>
                                 <div style="padding-right: 2em">
-                                    {{ $t('huawei.DataAge') }} {{ $t('huawei.Seconds', { val: huaweiData.data_age }) }}
+                                    {{ $t('huawei.DataAge') }}
+                                    {{ $t('huawei.Seconds', { val: huaweiData.data_age }) }}
+                                    <template v-if="huaweiData.data_age > 300">
+                                        / {{ calculateAbsoluteTime(huaweiData.data_age) }}
+                                    </template>
                                 </div>
                             </div>
                         </div>
@@ -414,6 +418,10 @@ export default defineComponent({
                         this.showAlertLimit = true;
                     }
                 });
+        },
+        calculateAbsoluteTime(lastTime: number): string {
+            const date = new Date(Date.now() - lastTime * 1000);
+            return this.$d(date, 'datetime');
         },
     },
 });

@@ -172,7 +172,7 @@
         "MqttProduct": "Valeurs du contrôleur de charge à partir de MQTT",
         "SerialNumber": "Numéro de série",
         "FirmwareVersion": "Version du Firmware",
-        "DataAge": "Âge des données",
+        "DataAge": "@:home.DataAge",
         "Seconds": "{val} secondes",
         "Property": "Property",
         "Value": "Value",
@@ -837,7 +837,7 @@
         "format_unknown": "Unknown format"
     },
     "huawei": {
-        "DataAge": "Data Age: ",
+        "DataAge": "@:home.DataAge",
         "Seconds": " {val} seconds",
         "Input": "Input",
         "Output": "Output",
@@ -896,7 +896,7 @@
         "battery": "Battery",
         "FwVersion": "Firmware Version",
         "HwVersion": "Hardware Version",
-        "DataAge": "Data Age: ",
+        "DataAge": "@:home.DataAge",
         "Seconds": " {val} seconds",
         "status": "Status",
         "Property": "Property",

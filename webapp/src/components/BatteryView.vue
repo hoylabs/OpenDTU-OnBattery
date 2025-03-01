@@ -33,6 +33,9 @@
                                 <div style="padding-right: 2em">
                                     {{ $t('battery.DataAge') }}
                                     {{ $t('battery.Seconds', { val: batteryData.data_age }) }}
+                                    <template v-if="batteryData.data_age > 300">
+                                        / {{ calculateAbsoluteTime(batteryData.data_age) }}
+                                    </template>
                                 </div>
                             </div>
                         </div>
@@ -248,6 +251,10 @@ export default defineComponent({
                 clearTimeout(this.heartInterval);
             }
             this.isFirstFetchAfterConnect = true;
+        },
+        calculateAbsoluteTime(lastTime: number): string {
+            const date = new Date(Date.now() - lastTime * 1000);
+            return this.$d(date, 'datetime');
         },
     },
     computed: {

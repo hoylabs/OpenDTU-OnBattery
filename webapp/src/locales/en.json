@@ -175,7 +175,7 @@
         "MqttProduct": "Charge controller values from MQTT",
         "SerialNumber": "Serial Number",
         "FirmwareVersion": "Firmware Version",
-        "DataAge": "Data Age",
+        "DataAge": "@:home.DataAge",
         "Seconds": "{val} seconds",
         "Property": "Property",
         "Value": "Value",
@@ -948,7 +948,7 @@
         "format_unknown": "Unknown format"
     },
     "huawei": {
-        "DataAge": "Data Age: ",
+        "DataAge": "@:home.DataAge",
         "Seconds": " {val} seconds",
         "Input": "Input",
         "Output": "Output",
@@ -1007,7 +1007,7 @@
         "battery": "Battery",
         "FwVersion": "Firmware Version",
         "HwVersion": "Hardware Version",
-        "DataAge": "Data Age: ",
+        "DataAge": "@:home.DataAge",
         "Seconds": " {val} seconds",
         "status": "Status",
         "Property": "Property",
