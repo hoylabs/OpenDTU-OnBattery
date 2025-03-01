@@ -4,6 +4,9 @@
 
 namespace Batteries::Zendure {
 
+ HassIntegration::HassIntegration(std::shared_ptr<Stats> spStats)
+    : ::Batteries::HassIntegration(spStats) { }
+
 void HassIntegration::publishSensors() const
 {
     ::Batteries::HassIntegration::publishSensors();
@@ -24,9 +27,21 @@ void HassIntegration::publishSensors() const
     publishSensor("Efficiency", NULL, "efficiency", NULL, "measurement", "%");
     publishSensor("Last Full Charge", "mdi:timelapse", "lastFullCharge", NULL, NULL, "h");
 
+    publishSensor("Solar Power MPPT 1", "mdi:solar-power", "solarPowerMppt1", "power", "measurement", "W");
+    publishSensor("Solar Power MPPT 2", "mdi:solar-power", "solarPowerMppt2", "power", "measurement", "W");
+    publishSensor("Total Output Power", NULL, "outputPower", "power", "measurement", "W");
+    publishSensor("Total Input Power", NULL, "inputPower", "power", "measurement", "W");
+    publishBinarySensor("Bypass State", NULL, "bypass", "1", "0");
+
+    publishSensor("Output Power Limit", NULL, "settings/outputLimitPower", "power", "settings", "W");
+    publishSensor("Input Power Limit", NULL, "settings/inputLimitPower", "power", "settings", "W");
+    publishSensor("Minimum State of Charge", NULL, "settings/stateOfChargeMin", NULL, "settings", "%");
+    publishSensor("Maximum State of Charge", NULL, "settings/stateOfChargeMax", NULL, "settings", "%");
+    publishSensor("Bypass Mode", NULL, "settings/bypassMode", "settings");
+
     for (size_t i = 1 ; i <= ZENDURE_MAX_PACKS ; i++) {
         const auto id = String(i);
-        const auto bat = "Pack#" + id + ": ";
+        const auto bat = String("Pack#" + id + ": ");
         publishSensor(bat + "Cell Min Voltage", NULL, id + "/CellMinMilliVolt", "voltage", "measurement", "mV");
         publishSensor(bat + "Cell Average Voltage", NULL, id + "/CellAvgMilliVolt", "voltage", "measurement", "mV");
         publishSensor(bat + "Cell Max Voltage", NULL, id + "/CellMaxMilliVolt", "voltage", "measurement", "mV");
@@ -39,18 +54,6 @@ void HassIntegration::publishSensors() const
         publishSensor(bat + "State Of Health", NULL, id + "/stateOfHealth", NULL, "measurement", "%");
         publishSensor(bat + "State", NULL, id + "/state");
     }
-
-    publishSensor("Solar Power MPPT 1", "mdi:solar-power", "solarPowerMppt1", "power", "measurement", "W");
-    publishSensor("Solar Power MPPT 2", "mdi:solar-power", "solarPowerMppt2", "power", "measurement", "W");
-    publishSensor("Total Output Power", NULL, "outputPower", "power", "measurement", "W");
-    publishSensor("Total Input Power", NULL, "inputPower", "power", "measurement", "W");
-    publishBinarySensor("Bypass State", NULL, "bypass", "1", "0");
-
-    publishSensor("Output Power Limit", NULL, "settings/outputLimitPower", "power", "settings", "W");
-    publishSensor("Input Power Limit", NULL, "settings/inputLimitPower", "power", "settings", "W");
-    publishSensor("Minimum State of Charge", NULL, "settings/stateOfChargeMin", NULL, "settings", "%");
-    publishSensor("Maximum State of Charge", NULL, "settings/stateOfChargeMax", NULL, "settings", "%");
-    publishSensor("Bypass Mode", NULL, "settings/bypassMode", "settings");
 }
 
 } // namespace Batteries::Zendure

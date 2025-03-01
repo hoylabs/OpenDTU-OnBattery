@@ -2,11 +2,14 @@
 #pragma once
 
 #include <battery/HassIntegration.h>
+#include <battery/zendure/Stats.h>
 
 namespace Batteries::Zendure {
 
 class HassIntegration : public ::Batteries::HassIntegration {
 public:
+    explicit HassIntegration(std::shared_ptr<Stats> spStats);
+
     void publishSensors() const final;
 };
 

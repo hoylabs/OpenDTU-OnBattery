@@ -13,6 +13,7 @@ namespace Batteries::Zendure {
 
 class Provider : public ::Batteries::Provider {
 public:
+    Provider();
     bool init(bool verboseLogging) final;
     void deinit() final;
     void loop() final;
