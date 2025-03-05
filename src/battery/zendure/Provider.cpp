@@ -25,23 +25,23 @@ bool Provider::init(bool verboseLogging)
         switch (config.Battery.ZendureDeviceType) {
             case 0:
                 deviceType = ZENDURE_HUB1200;
-                deviceName = String("HUB 1200");
+                deviceName = String("SolarFlow HUB 1200");
                 break;
             case 1:
                 deviceType = ZENDURE_HUB2000;
-                deviceName = String("HUB 2000");
+                deviceName = String("SolarFlow HUB 2000");
                 break;
             case 2:
                 deviceType = ZENDURE_AIO2400;
-                deviceName = String("AIO 2400");
+                deviceName = String("SolarFlow AIO 2400");
                 break;
             case 3:
                 deviceType = ZENDURE_ACE1500;
-                deviceName = String("Ace 1500");
+                deviceName = String("SolarFlow Ace 1500");
                 break;
             case 4:
                 deviceType = ZENDURE_HYPER2000;
-                deviceName = String("Hyper 2000");
+                deviceName = String("SolarFlow Hyper 2000");
                 break;
             default:
                 log("Invalid device type!");
@@ -56,7 +56,7 @@ bool Provider::init(bool verboseLogging)
         // setup static device info
         MessageOutput.printf("ZendureBattery: Device name '%s'\r\n", deviceName.c_str());
         _stats->setDevice(std::move(deviceName));
-        _stats->setManufacturer("Zendure Solarflow");
+        _stats->setManufacturer("Zendure");
     }
 
     // store device ID as we will need them for checking when receiving messages
@@ -813,8 +813,6 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
     _stats->_lastUpdate = ms;
 
     calculateEfficiency();
-
-    MessageOutput.printf("DEBUG[Zendure]: Provider::onMqttMessageLog - Exit\r\n");
 }
 
 String Provider::parseVersion(uint32_t version)

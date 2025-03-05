@@ -62,6 +62,10 @@ public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
 
+    std::optional<String> getHassDeviceName() const final {
+        return String(*getManufacturer() + " " + _device);
+    }
+
     bool supportsAlarmsAndWarnings() const final { return false; }
 
     std::map<size_t, std::shared_ptr<PackStats>> getPackDataList() const { return _packData; }
