@@ -14,11 +14,11 @@ void HassIntegration::publishSensors() const
     publishSensor("Voltage", "mdi:battery-charging", "voltage", "voltage", "measurement", "V");
     publishSensor("Current", "mdi:current-dc", "current", "current", "measurement", "A");
 
-    publishSensor("Cell Min Voltage", NULL, "CellMinMilliVolt", "voltage", "measurement", "mV");
-    publishSensor("Cell Average Voltage", NULL, "CellAvgMilliVolt", "voltage", "measurement", "mV");
-    publishSensor("Cell Max Voltage", NULL, "CellMaxMilliVolt", "voltage", "measurement", "mV");
-    publishSensor("Cell Voltage Diff", "mdi:battery-alert", "CellDiffMilliVolt", "voltage", "measurement", "mV");
-    publishSensor("Cell Max Temperature", NULL, "CellMaxTemperature", "temperature", "measurement", "°C");
+    publishSensor("Cell Min Voltage", NULL, "cellMinMilliVolt", "voltage", "measurement", "mV");
+    publishSensor("Cell Average Voltage", NULL, "cellAvgMilliVolt", "voltage", "measurement", "mV");
+    publishSensor("Cell Max Voltage", NULL, "cellMaxMilliVolt", "voltage", "measurement", "mV");
+    publishSensor("Cell Voltage Diff", "mdi:battery-alert", "cellDiffMilliVolt", "voltage", "measurement", "mV");
+    publishSensor("Cell Max Temperature", NULL, "cellMaxTemperature", "temperature", "measurement", "°C");
     publishSensor("Charge Power", "mdi:battery-charging", "chargePower", "power", "measurement", "W");
     publishSensor("Discharge Power", "mdi:battery-discharging", "dischargePower", "power", "measurement", "W");
     publishBinarySensor("Battery Heating", NULL, "heating", "1", "0");
@@ -42,17 +42,17 @@ void HassIntegration::publishSensors() const
     for (size_t i = 1 ; i <= ZENDURE_MAX_PACKS ; i++) {
         const auto id = String(i);
         const auto bat = String("Pack#" + id + ": ");
-        publishSensor(bat + "Cell Min Voltage", NULL, id + "/CellMinMilliVolt", "voltage", "measurement", "mV");
-        publishSensor(bat + "Cell Average Voltage", NULL, id + "/CellAvgMilliVolt", "voltage", "measurement", "mV");
-        publishSensor(bat + "Cell Max Voltage", NULL, id + "/CellMaxMilliVolt", "voltage", "measurement", "mV");
-        publishSensor(bat + "Cell Voltage Diff", "mdi:battery-alert", id + "/CellDiffMilliVolt", "voltage", "measurement", "mV");
-        publishSensor(bat + "Cell Max Temperature", NULL, id + "/CellMaxTemperature", "temperature", "measurement", "°C");
-        publishSensor(bat + "Power", NULL, id + "/power", "power", "measurement", "W");
-        publishSensor(bat + "Voltage", NULL, id + "/voltage", "voltage", "measurement", "V");
-        publishSensor(bat + "Current", NULL, id + "/current", "current", "measurement", "A");
-        publishSensor(bat + "State Of Charge", NULL, id + "/stateOfCharge", NULL, "measurement", "%");
-        publishSensor(bat + "State Of Health", NULL, id + "/stateOfHealth", NULL, "measurement", "%");
-        publishSensor(bat + "State", NULL, id + "/state");
+        publishSensor(bat + "Cell Min Voltage", NULL, id + "/cellMinMilliVolt", "voltage", "measurement", "mV", false);
+        publishSensor(bat + "Cell Average Voltage", NULL, id + "/cellAvgMilliVolt", "voltage", "measurement", "mV", false);
+        publishSensor(bat + "Cell Max Voltage", NULL, id + "/cellMaxMilliVolt", "voltage", "measurement", "mV", false);
+        publishSensor(bat + "Cell Voltage Diff", "mdi:battery-alert", id + "/cellDiffMilliVolt", "voltage", "measurement", "mV", false);
+        publishSensor(bat + "Cell Max Temperature", NULL, id + "/cellMaxTemperature", "temperature", "measurement", "°C", false);
+        publishSensor(bat + "Power", NULL, id + "/power", "power", "measurement", "W", false);
+        publishSensor(bat + "Voltage", NULL, id + "/voltage", "voltage", "measurement", "V", false);
+        publishSensor(bat + "Current", NULL, id + "/current", "current", "measurement", "A", false);
+        publishSensor(bat + "State Of Charge", NULL, id + "/stateOfCharge", NULL, "measurement", "%", false);
+        publishSensor(bat + "State Of Health", NULL, id + "/stateOfHealth", NULL, "measurement", "%", false);
+        publishSensor(bat + "State", NULL, id + "/state", NULL, NULL, NULL, false);
     }
 }
 

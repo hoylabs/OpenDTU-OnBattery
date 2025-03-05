@@ -46,28 +46,32 @@ void HassIntegration::publishSensors() const
 
 void HassIntegration::publishSensor(const String& caption, const char* icon,
         const String& subTopic, const char* deviceClass,
-        const char* stateClass, const char* unitOfMeasurement) const
+        const char* stateClass, const char* unitOfMeasurement,
+        const bool enabled) const
 {
-    publishSensor(caption.c_str(), icon, subTopic.c_str(), deviceClass, stateClass, unitOfMeasurement);
+    publishSensor(caption.c_str(), icon, subTopic.c_str(), deviceClass, stateClass, unitOfMeasurement, enabled);
 }
 
 void HassIntegration::publishSensor(const char* caption, const char* icon,
         const String& subTopic, const char* deviceClass,
-        const char* stateClass, const char* unitOfMeasurement) const
+        const char* stateClass, const char* unitOfMeasurement,
+        const bool enabled) const
 {
-    publishSensor(caption, icon, subTopic.c_str(), deviceClass, stateClass, unitOfMeasurement);
+    publishSensor(caption, icon, subTopic.c_str(), deviceClass, stateClass, unitOfMeasurement, enabled);
 }
 
 void HassIntegration::publishSensor(const String& caption, const char* icon,
         const char* subTopic, const char* deviceClass,
-        const char* stateClass, const char* unitOfMeasurement) const
+        const char* stateClass, const char* unitOfMeasurement,
+        const bool enabled) const
 {
-    publishSensor(caption.c_str(), icon, subTopic, deviceClass, stateClass, unitOfMeasurement);
+    publishSensor(caption.c_str(), icon, subTopic, deviceClass, stateClass, unitOfMeasurement, enabled);
 }
 
 void HassIntegration::publishSensor(const char* caption, const char* icon,
         const char* subTopic, const char* deviceClass,
-        const char* stateClass, const char* unitOfMeasurement) const
+        const char* stateClass, const char* unitOfMeasurement,
+        const bool enabled) const
 {
     String sensorId = santinzeUniqueId(caption);
 
@@ -88,6 +92,10 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
 
     if (icon != NULL) {
         root["icon"] = icon;
+    }
+
+    if (!enabled) {
+        root["enabled_by_default"] = "false";
     }
 
     if (unitOfMeasurement != NULL) {
@@ -119,7 +127,8 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
 
 void HassIntegration::publishBinarySensor(const char* caption,
         const char* icon, const char* subTopic,
-        const char* payload_on, const char* payload_off) const
+        const char* payload_on, const char* payload_off,
+        const bool enabled) const
 {
     String sensorId = santinzeUniqueId(caption);
 
@@ -143,6 +152,10 @@ void HassIntegration::publishBinarySensor(const char* caption,
 
     if (icon != NULL) {
         root["icon"] = icon;
+    }
+
+    if (!enabled) {
+        root["enabled_by_default"] = "false";
     }
 
     auto deviceObj = root["dev"].to<JsonObject>();

@@ -741,14 +741,14 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
         int32_t cellTemp = 0;
 
         for (size_t i = 1 ; i <= num ; i++) {
-            auto pvol = v[ZENDURE_LOG_OFFSET_PACK_VOLTAGE(i)].as<uint16_t>() * 10;
-            auto pcur = v[ZENDURE_LOG_OFFSET_PACK_CURRENT(i)].as<int16_t>();
-            auto psoc = v[ZENDURE_LOG_OFFSET_PACK_SOC(i)].as<uint16_t>();
+            uint16_t pvol = v[ZENDURE_LOG_OFFSET_PACK_VOLTAGE(i)].as<uint16_t>() * 10;
+            int16_t  pcur = v[ZENDURE_LOG_OFFSET_PACK_CURRENT(i)].as<int16_t>();
+            uint16_t psoc = v[ZENDURE_LOG_OFFSET_PACK_SOC(i)].as<uint16_t>();
 
-            auto ctmp = v[ZENDURE_LOG_OFFSET_PACK_TEMPERATURE(i)].as<int32_t>();
-            auto cmin = v[ZENDURE_LOG_OFFSET_PACK_CELL_MIN(i)].as<uint32_t>() * 10;
-            auto cmax = v[ZENDURE_LOG_OFFSET_PACK_CELL_MAX(i)].as<uint32_t>() * 10;
-            auto cdel = cmax - cmin;
+            int32_t  ctmp = v[ZENDURE_LOG_OFFSET_PACK_TEMPERATURE(i)].as<int32_t>();
+            uint32_t cmin = v[ZENDURE_LOG_OFFSET_PACK_CELL_MIN(i)].as<uint32_t>() * 10;
+            uint32_t cmax = v[ZENDURE_LOG_OFFSET_PACK_CELL_MAX(i)].as<uint32_t>() * 10;
+            uint32_t cdel = cmax - cmin;
 
             auto pack = _stats->getPackData(i);
             if (pack != nullptr) {

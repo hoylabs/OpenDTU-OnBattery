@@ -18,23 +18,28 @@ protected:
     void publish(const String& subtopic, const String& payload) const;
     void publishBinarySensor(const char* caption,
             const char* icon, const char* subTopic,
-            const char* payload_on, const char* payload_off) const;
+            const char* payload_on, const char* payload_off,
+            const bool enabled = true) const;
     void publishSensor(const char* caption, const char* icon,
             const char* subTopic, const char* deviceClass = nullptr,
             const char* stateClass = nullptr,
-            const char* unitOfMeasurement = nullptr) const;
+            const char* unitOfMeasurement = nullptr,
+            const bool enabled = true) const;
     void publishSensor(const String& caption, const char* icon,
             const String& subTopic, const char* deviceClass = nullptr,
             const char* stateClass = nullptr,
-            const char* unitOfMeasurement = nullptr) const;
+            const char* unitOfMeasurement = nullptr,
+            const bool enabled = true) const;
     void publishSensor(const String& caption, const char* icon,
             const char* subTopic, const char* deviceClass = nullptr,
             const char* stateClass = nullptr,
-            const char* unitOfMeasurement = nullptr) const;
+            const char* unitOfMeasurement = nullptr,
+            const bool enabled = true) const;
     void publishSensor(const char* caption, const char* icon,
             const String& subTopic, const char* deviceClass = nullptr,
             const char* stateClass = nullptr,
-            const char* unitOfMeasurement = nullptr) const;
+            const char* unitOfMeasurement = nullptr,
+            const bool enabled = true) const;
     void createDeviceInfo(JsonObject& object) const;
 
     virtual void publishSensors() const;

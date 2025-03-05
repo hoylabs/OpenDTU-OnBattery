@@ -79,7 +79,7 @@ void Stats::mqttPublish() const
     MqttSettings.publish("battery/chargePower", String(_charge_power));
     MqttSettings.publish("battery/dischargePower", String(_discharge_power));
     MqttSettings.publish("battery/heating", String(static_cast<uint8_t>(_heat_state)));
-    MqttSettings.publish("battery/state", String(static_cast<uint8_t>(_state)));
+    MqttSettings.publish("battery/state", stateToString<String>(_state));
     MqttSettings.publish("battery/numPacks", String(_num_batteries));
     MqttSettings.publish("battery/efficiency", String(_efficiency));
     MqttSettings.publish("battery/serial", _serial);
@@ -96,7 +96,7 @@ void Stats::mqttPublish() const
         MqttSettings.publish("battery/" + id + "/current", String(value->_current));
         MqttSettings.publish("battery/" + id + "/stateOfCharge", String(value->_soc_level, 1));
         MqttSettings.publish("battery/" + id + "/stateOfHealth", String(value->_state_of_health, 1));
-        MqttSettings.publish("battery/" + id + "/state", String(static_cast<uint8_t>(value->_state)));
+        MqttSettings.publish("battery/" + id + "/state", stateToString<String>(value->_state));
         MqttSettings.publish("battery/" + id + "/serial", value->getSerial());
         MqttSettings.publish("battery/" + id + "/name", value->getName());
         MqttSettings.publish("battery/" + id + "/capacity", String(value->_capacity));
@@ -115,8 +115,7 @@ void Stats::mqttPublish() const
     MqttSettings.publish("battery/settings/inputLimitPower", String(_input_limit));
     MqttSettings.publish("battery/settings/stateOfChargeMin", String(_soc_min, 1));
     MqttSettings.publish("battery/settings/stateOfChargeMax", String(_soc_max, 1));
-    MqttSettings.publish("battery/settings/bypassModeString", bypassModeToString<String>(_bypass_mode));
-    MqttSettings.publish("battery/settings/bypassMode", String(static_cast<uint8_t>(_bypass_mode)));
+    MqttSettings.publish("battery/settings/bypassMode", bypassModeToString<String>(_bypass_mode));
 }
 
 std::shared_ptr<PackStats> Stats::getPackData(size_t index) const {
