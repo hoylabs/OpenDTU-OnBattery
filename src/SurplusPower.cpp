@@ -5,20 +5,21 @@
  * The Surplus-Power-Mode regulates the inverter output power based on the surplus solar power.
  * Surplus solar power is available when the battery is almost full and the available
  * solar power is higher than the power consumed in the household.
- * The secondary goal is to fully charge the battery until end of the day.
+ * The secondary intention is not to waste energy, if it is not possible to fully charge the battery
+ * by the end of the day.
  *
  * Basic principle of Surplus-Stage-I (MPPT in bulk mode):
  * In bulk mode the MPPT acts like a current source.
  * In this mode we get reliable maximum solar power information from the MPPT and can use it for regulation.
- * We do not use all solar power for the inverter. We must reserve power for the battery to reach absorption
- * mode until end of the day.
- * The calculation of the "reserve power" is based on actual SoC and remaining time to absorption (sunset).
+ * We do not use all solar power for the inverter. We must reserve power for the battery to reach fully charge
+ * of the battery until end of the day.
+ * The calculation of the "reserve power" is based on actual SoC and remaining time to sunset.
  *
  * Basic principle of Surplus-Stage-II (MPPT in absorption/float mode):
  * In absorption- and float-mode the MPPT acts like a voltage source with current limiter.
  * In these modes we don't get reliable information about the maximum solar power or current from the MPPT.
  * To find the maximum solar power we increase the inverter power, we go higher and higher, step by step,
- * until we reach the solar power limit. On this point the MPPT current limiter will kick in and the voltage
+ * until we reach the maximum solar power. On this point the MPPT current limiter will kick in and the voltage
  * begins to drop. When we go one step back and check if the voltage is back above the target voltage.
  * A kind of simple approximation control.
  *
@@ -30,7 +31,7 @@
  * not regulate the surplus power on this particular system.
  *
  * Notes:
- * We need Victron VE.Direct Rx/Tx (text-mode and hex-mode) to get MPPT configured absorption- and
+ * We need Victron VE.Direct Rx/Tx (text-mode and hex-mode) to get the MPPT absorption- and
  * float-voltage
  *
  * 10.08.2024 - 1.00 - first version, Stage-II (absorption-/float-mode)
@@ -109,11 +110,11 @@ void SurplusPowerClass::updateSettings(void) {
     _durationAbsorptionToSunset = 60;   // [Minutes] stage-I, duration from absorption to sunset
     _surplusIUpperPowerLimit = 0;       // [W] upper power limit, if 0 we use the DPL total upper power limit
 
-    // todo: get the parameter for stage-I from the configuration
+    // todo: get the parameter for stage-I, option slope-mode from the configuration
     // necessary parameter to use the slope mode
     _slopeModeEnabled = false;          // surplus-stage-I (bulk-mode) enable / disable
-    _slopeAddPower = 20;                // [W]
-    _slopeFactor = 3;                   // [W/s] slope power reduction by 3W pro 1sec
+    _slopeAddPower = 25;                // [W] added to the real consumption
+    _slopeFactor = 3;                   // [W/s] slope power reduction by 3W pro 1 sec
 
     // todo: get the parameter for stage-II from the configuration
     // necessary parameter to use stage-II
@@ -170,9 +171,10 @@ uint16_t SurplusPowerClass::calculateSurplus(uint16_t const requestedPower, uint
 
 
 /*
- * Calculates the surplus-power-stage-II
+ * Calculates the surplus-power-stage-II (absorption-/float-mode)
  * requestedPower:  The power based on actual calculation from "Zero feed throttle"
  * modeAF:          Absorption or float mode
+ * nowMillis:       Millis() of the last inverter limit update
  */
 uint16_t SurplusPowerClass::calcAbsorptionFloatMode(uint16_t const requestedPower, SolarChargers::Stats::StateOfOperation const modeAF,
                                                     uint32_t const nowMillis) {
@@ -180,13 +182,13 @@ uint16_t SurplusPowerClass::calcAbsorptionFloatMode(uint16_t const requestedPowe
     // the regulation loop "Inverter -> Solar Charger -> Solar Panel -> Measurement" needs time. And different to
     // "Zero-Feed-Throttle" the "Surplus-Mode" is not in a hurry. We always wait 5 sec before
     // we do the next calculation. In the meantime we use the value from the last calculation
-    if ((_stageIIActive) && (((millis() - _lastCalcMillis) < 5 * 1000) || ((millis() - nowMillis) < 2000))) {
+    if ((_stageIIActive) && (((millis() - _lastCalcMillis) < 5000) || ((millis() - nowMillis) < 2000))) {
         return exitSurplus(requestedPower ,_surplusPower, ExitState::OK_STAGE_II);
     }
 
     // get the absorption and float voltage from the solar charger
-    auto oAbsorptionVoltage = SolarCharger.getStats()->getAbsorptionVoltage();
-    auto oFloatVoltage = SolarCharger.getStats()->getFloatVoltage();
+    auto const& oAbsorptionVoltage = SolarCharger.getStats()->getAbsorptionVoltage();
+    auto const& oFloatVoltage = SolarCharger.getStats()->getFloatVoltage();
     if ((!oAbsorptionVoltage.has_value()) || (!oFloatVoltage.has_value())) {
         return exitSurplus(requestedPower, requestedPower, ExitState::ERR_CHARGER); // we aboard
     }
@@ -199,13 +201,11 @@ uint16_t SurplusPowerClass::calcAbsorptionFloatMode(uint16_t const requestedPowe
     _targetVoltage -= TARGET_RANGE;
 
     // get the actual battery voltage from the solar charger
-    // Note: Like the solar charger we also use the solar charger voltage and not the voltage from the battery for regulation
-    auto oMpptVoltage = SolarCharger.getStats()->getOutputVoltage();
+    // Note: We use the identical voltage like the solar charger
+    auto const& oMpptVoltage = SolarCharger.getStats()->getOutputVoltage();
     if (!oMpptVoltage.has_value()) {
         return exitSurplus(requestedPower, requestedPower, ExitState::ERR_CHARGER); // we aboard
     }
-
-    // actual solar charger voltage [V] and average solar charger voltage [V]
     auto mpptVoltage = oMpptVoltage.value();
     _avgMPPTVoltage.addNumber(mpptVoltage);
     auto avgMPPTVoltage = _avgMPPTVoltage.getAverage();
@@ -219,8 +219,8 @@ uint16_t SurplusPowerClass::calcAbsorptionFloatMode(uint16_t const requestedPowe
             // if stage-I was active before, we can start stage-II maybe with the identical power
             _surplusPower = std::max(_surplusPower, static_cast<int32_t>(requestedPower));
             _surplusState = State::TRY_MORE;
+            _slopePower = 0;
             _qualityCounter = 0;
-            _overruleCounter = 0;
             _qualityAVG.reset();
             triggerStageState(false, true); // for the report
             break;
@@ -285,20 +285,6 @@ uint16_t SurplusPowerClass::calcAbsorptionFloatMode(uint16_t const requestedPowe
                 _surplusState = State::IDLE;
 
     }
-
-    // if available, we can additionally use the battery current
-    auto const& config = Configuration.get();
-    if ((addPower >= 0) && (_surplusPower > 0)) {
-        auto stats = Battery.getStats();
-        if (config.Battery.Enabled && stats->isCurrentValid() && ((millis() - nowMillis) > 4000)) {
-            if (stats->getChargeCurrent() < 0.0f) {
-                // overrule voltage regulation if battery current is negative
-                addPower = -_powerStepSize;
-                _surplusState = State::REDUCE_POWER;
-                _overruleCounter++;
-            }
-        }
-    }
     _surplusPower += addPower;
 
     // we do not go below 0W or above the upper power limit
@@ -327,7 +313,7 @@ uint16_t SurplusPowerClass::calcAbsorptionFloatMode(uint16_t const requestedPowe
 
 
 /*
- * Calculates the surplus-power-stage-I
+ * Calculates the surplus-power-stage-I (bulk-mode)
  * requestedPower:  The power based on actual calculation of "Zero feed throttle" or "Solar passthrough"
  * nowPower:        The actual inverter power
  * nowMillis:       The last inverter update
@@ -338,7 +324,7 @@ uint16_t SurplusPowerClass::calcBulkMode(uint16_t const requestedPower, uint16_t
     // we do the next calculation or 2 sec after any inverter power change.
     // In the meantime we use the values from the last calculation
     // Note: The slope mode keeps the 1 sec calculation time
-    if ((_stageIActive) && (((millis() - _lastCalcMillis) < 10 * 1000) || ((millis() - nowMillis) < 2000))) {
+    if ((_stageIActive) && (((millis() - _lastCalcMillis) < 10000) || ((millis() - nowMillis) < 2000))) {
         auto backPower = _surplusPower;
         if (_slopeModeEnabled) { backPower = calcSlopePower(requestedPower, _surplusPower); }
         return exitSurplus(requestedPower ,backPower, ExitState::OK_STAGE_I);
@@ -358,15 +344,9 @@ uint16_t SurplusPowerClass::calcBulkMode(uint16_t const requestedPower, uint16_t
     actValue = Battery.getStats()->getSoC();
     actBatteryPower = static_cast<int32_t>(Battery.getStats()->getChargeCurrent() * Battery.getStats()->getVoltage());
 
-    // below the stop threshold or below start threshold?
-    if ((actValue <= stopValue) || ((actValue < startValue) && !_stageIActive)) {
+    // below the stop threshold or below start threshold or no time left?
+    if ((actValue <= stopValue) || ((actValue < startValue) && !_stageIActive) || ((getTimeToSunset() - _durationAbsorptionToSunset) < 0)) {
         triggerStageState(false, false);
-
-        #ifdef DEBUG_LOGGING
-        MessageOutput.printf("%s State: %s, Actual value: %0.3f, Start value: %0.3f, Stop value: %0.3f\r\n",
-            getText(Text::T_HEAD1).data(), getStatusText(_surplusState).data(), actValue, startValue, stopValue);
-        #endif
-
         return exitSurplus(requestedPower, requestedPower, ExitState::OK_STAGE_I); // normal stop from Stage-I
     }
 
@@ -380,28 +360,23 @@ uint16_t SurplusPowerClass::calcBulkMode(uint16_t const requestedPower, uint16_t
     }
 
     // calculate the solar power from "the inverter power and the battery power" or from "the solar charger(s)"
-    uint16_t solar1Power = 0;
-    uint16_t solar2Power = 0;
+    uint16_t solarBattPower = 0;
+    uint16_t solarPanelPower = 0;
     if (Battery.getStats()->isCurrentValid()) {
-        solar1Power = nowPower / EFFICIENCY_INVERTER / EFFICIENCY_CABLE + actBatteryPower;
+        solarBattPower = nowPower / EFFICIENCY_INVERTER / EFFICIENCY_CABLE + actBatteryPower;
     }
     if (SolarCharger.getStats()->getPanelPowerWatts().has_value()) {
-        solar2Power = SolarCharger.getStats()->getPanelPowerWatts().value() * EFFICIENCY_MPPT;
+        solarPanelPower = SolarCharger.getStats()->getPanelPowerWatts().value() * EFFICIENCY_MPPT;
     }
 
-    #ifdef DEBUG_LOGGING
-    MessageOutput.printf("%s Solar power = inverter - battery: %u, Solar power = solar charger panel power: %u\r\n",
-        getText(Text::T_HEAD1).data(), solar1Power, solar2Power);
-    #endif
-
-    if ((solar1Power == 0) && (solar2Power == 0)) {
+    if ((solarBattPower == 0) && (solarPanelPower == 0)) {
         return exitSurplus(requestedPower, requestedPower, ExitState::ERR_SOLAR_POWER);
     }
-    if (solar1Power > solar2Power) {
-        _solarPower = solar1Power; // Battery power + Inverter power
+    if (solarBattPower > solarPanelPower) {
+        _solarPower = solarBattPower; // Battery power + Inverter power
         _solarCounter.first++;
     } else {
-        _solarPower = solar2Power; // Solar charger panel power
+        _solarPower = solarPanelPower; // Solar charger panel power
         _solarCounter.second++;
     }
 
@@ -469,7 +444,9 @@ uint16_t SurplusPowerClass::calcSlopePower(uint16_t const requestedPower, int32_
     }
 
     // check the minimum distance between requested power and slope power
-    if (_slopePower < (requestedPower + _slopeAddPower)) { _slopePower = requestedPower + _slopeAddPower; }
+    auto consumption = requestedPower - Configuration.get().PowerLimiter.TargetPowerConsumption;
+    if (consumption < 0) { consumption = 0; } // avoid negative values
+    if (_slopePower < (consumption + _slopeAddPower)) { _slopePower = consumption + _slopeAddPower; }
     _slopePower = std::min(_slopePower, surplusPower);
     return static_cast<uint16_t>(_slopePower);
 }
@@ -513,16 +490,19 @@ uint16_t SurplusPowerClass::exitSurplus(uint16_t const requestedPower, uint16_t 
  * or 0 if actual time is between sunset - 24:00
  */
 int16_t SurplusPowerClass::getTimeToSunset(void) {
-    struct tm actTime, sunsetTime;
-    int16_t timeToSunset = 0;
 
+    // save processing time, if the function is called more than once in a minute
+    if ((_lastTimeMillis != 0) && (millis() - _lastTimeMillis < 60 * 1000)) { return _timeToSunset; }
+
+    _lastTimeMillis = millis();
+    struct tm actTime, sunsetTime;
     if (getLocalTime(&actTime, 10) && SunPosition.sunsetTime(&sunsetTime)) {
-        timeToSunset = sunsetTime.tm_hour * 60 + sunsetTime.tm_min - actTime.tm_hour * 60 - actTime.tm_min;
-        if (timeToSunset < 0) { timeToSunset = 0; }
+        _timeToSunset = sunsetTime.tm_hour * 60 + sunsetTime.tm_min - actTime.tm_hour * 60 - actTime.tm_min;
+        if (_timeToSunset < 0) { _timeToSunset = 0; }
     } else {
         _errorCounter[static_cast<uint8_t>(ExitState::ERR_TIME)]++;
     }
-    return timeToSunset;
+    return _timeToSunset;
 }
 
 
@@ -612,34 +592,38 @@ void SurplusPowerClass::triggerStageState(bool stageI, bool stageII) {
 void SurplusPowerClass::printReport(void)
 {
     MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
-    MessageOutput.printf("%s --------------------------- Surplus Report (every minute) ---------------------------\r\n",
+    MessageOutput.printf("%s ---------------- Surplus Report (every minute) ----------------\r\n",
         getText(Text::T_HEAD).data());
-    MessageOutput.printf("%s State: %s, Actual surplus power: %iW (max: %iW) \r\n",
+
+    MessageOutput.printf("%s Surplus: %s\r\n", getText(Text::T_HEAD).data(),
+        isSurplusEnabled() ? "Enabled" : "Disabled");
+
+    MessageOutput.printf("%s State: %s, Surplus power: %iW (max: %iW)\r\n",
         getText(Text::T_HEAD).data(), getStatusText(_surplusState).data(), _surplusPower,
         (_stageIIActive) ? _surplusIIUpperPowerLimit : _surplusIUpperPowerLimit);
+
     auto oState = SolarCharger.getStats()->getStateOfOperation();
     if (oState.has_value()) {
         auto vStOfOp = oState.value();
         MessageOutput.printf("%s Solar charger operation mode: %s\r\n",
-            getText(Text::T_HEAD).data(), (vStOfOp == CHARGER_STATE::Bulk) ? "Bulk" : (vStOfOp == CHARGER_STATE::Absorption ? "Absorption" :
-            (vStOfOp == CHARGER_STATE::Float) ? "Float" : "Off"));
+            getText(Text::T_HEAD).data(), (vStOfOp==CHARGER_STATE::Bulk) ? "Bulk" : (vStOfOp==CHARGER_STATE::Absorption ? "Absorption" :
+            (vStOfOp==CHARGER_STATE::Float) ? "Float" : "Off"));
     }
-    MessageOutput.printf("%s Detected errors since start-up - Time: %i, Solar charger: %i, Battery: %i\r\n",
+    MessageOutput.printf("%s Errors since start-up, Time: %i, Solar charger: %i, Battery: %i\r\n",
         getText(Text::T_HEAD).data(), _errorCounter[static_cast<uint8_t>(ExitState::ERR_TIME)],
         _errorCounter[static_cast<uint8_t>(ExitState::ERR_CHARGER)], _errorCounter[static_cast<uint8_t>(ExitState::ERR_BATTERY)]);
 
 
     MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
-    MessageOutput.printf("%s 1) Stage-I (Bulk): %s / %s / %s\r\n", getText(Text::T_HEAD).data(),
-    (_stageIEnabled && !_stageITempOff) ? "Enabled" : "Disabled",
-    (_surplusState == State::BULK_POWER) ? "Active" : "Not active",
-    (_surplusPower > 0) ? "Surplus power available" : "No surplus power available");
+    MessageOutput.printf("%s 1) Stage-I (Bulk): %s / %s\r\n",
+        getText(Text::T_HEAD).data(), (_stageIEnabled && !_stageITempOff) ? "Enabled" : "Disabled",
+        (_surplusState == State::BULK_POWER) ? "Active" : "Not active");
 
     MessageOutput.printf("%s SoC Start: %0.1f%%, SoC Stop: %0.1f%%, Actual SoC: %0.1f%%\r\n",
         getText(Text::T_HEAD).data(), _startSoC, _startSoC - SOC_RANGE, Battery.getStats()->getSoC());
 
-    MessageOutput.printf("%s Slope Mode: %s, Slope Power: %iW\r\n", getText(Text::T_HEAD).data(),
-        (_slopeModeEnabled) ? "Enabled" : "Disabled", _slopePower);
+    MessageOutput.printf("%s Slope Mode: %s, Slope Power: %iW (max: %iW)\r\n", getText(Text::T_HEAD).data(),
+        (_slopeModeEnabled) ? "Enabled" : "Disabled", _slopePower, _surplusPower);
 
     if (_surplusState == State::BULK_POWER) {
         MessageOutput.printf("%s Solar power: %iW, Battery reserved power: %iW\r\n",
@@ -654,14 +638,13 @@ void SurplusPowerClass::printReport(void)
             solar = _solarCounter.second / (_solarCounter.second + _solarCounter.first) * 100.0f;
             battery = 100.0f - solar;
         }
-        MessageOutput.printf("%s Use solar power information from: Charger=%0.1f%%, Battery=%0.1f%%\r\n",
+        MessageOutput.printf("%s Use solar power information: Charger=%0.1f%%, Battery=%0.1f%%\r\n",
             getText(Text::T_HEAD).data(), solar, battery);
     }
 
     char time[20];
     strftime(time, 20, "%d.%m.%Y %H:%M", &_stage_I_Time_Start);
-    MessageOutput.printf("%s Last active time of Stage-I: %s",
-            getText(Text::T_HEAD).data(), time);
+    MessageOutput.printf("%s Last active time: %s", getText(Text::T_HEAD).data(), time);
     if (_stageIActive) {
         snprintf(time, sizeof(time), " - ongoing");
     } else {
@@ -670,11 +653,9 @@ void SurplusPowerClass::printReport(void)
     MessageOutput.printf("%s\r\n", time);
 
     MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
-    MessageOutput.printf("%s 2) Stage-II (Absorption/Float): %s / %s / %s\r\n",
-        getText(Text::T_HEAD).data(),
-        (_stageIIEnabled && !_stageIITempOff) ? "Enabled" : "Disabled",
-        (_surplusState != State::BULK_POWER && _surplusState != State::IDLE) ? "Active" : "Not active",
-        (_surplusPower > 0) ? "Surplus power available" : "No surplus power available");
+    MessageOutput.printf("%s 2) Stage-II (Absorption/Float): %s / %s\r\n",
+        getText(Text::T_HEAD).data(), (_stageIIEnabled && !_stageIITempOff) ? "Enabled" : "Disabled",
+        (_surplusState != State::BULK_POWER && _surplusState != State::IDLE) ? "Active" : "Not active");
 
     if (_surplusState != State::BULK_POWER && _surplusState != State::IDLE) {
         if (_targetVoltage != 0.0f) {
@@ -690,17 +671,14 @@ void SurplusPowerClass::printReport(void)
         if (qualityAVG == 0.0f) { text = Text::Q_NODATA; }
         if ((qualityAVG > 0.0f) && (qualityAVG <= 1.1f)) { text = Text::Q_EXCELLENT; }
         if ((qualityAVG > 1.1f) && (qualityAVG <= 1.8f)) { text = Text::Q_GOOD; }
-        MessageOutput.printf("%s Regulation quality: %s, (Average: %0.2f, Min: %0.0f, Max: %0.0f, Amount: %i)\r\n",
-            getText(Text::T_HEAD).data(), getText(text).data(),
-            _qualityAVG.getAverage(), _qualityAVG.getMin(), _qualityAVG.getMax(), _qualityAVG.getCounts());
-
-        MessageOutput.printf("%s Battery current overruled the voltage regulation: %i\r\n",
-            getText(Text::T_HEAD).data(), _overruleCounter);
+        MessageOutput.printf("%s Regulation quality: %s\r\n",
+            getText(Text::T_HEAD).data(), getText(text).data());
+        MessageOutput.printf("%s Regulation quality: (Average: %0.2f, Max: %0.0f, Amount: %i)\r\n",
+            getText(Text::T_HEAD).data(), _qualityAVG.getAverage(), _qualityAVG.getMax(), _qualityAVG.getCounts());
     }
 
     strftime(time, 20, "%d.%m.%Y %H:%M", &_stage_II_Time_Start);
-    MessageOutput.printf("%s Last active time of Stage-II: %s",
-        getText(Text::T_HEAD).data(), time);
+    MessageOutput.printf("%s Last active time: %s", getText(Text::T_HEAD).data(), time);
     if (_stageIIActive) {
         snprintf(time, sizeof(time), " - ongoing");
     } else {
@@ -708,7 +686,7 @@ void SurplusPowerClass::printReport(void)
     }
     MessageOutput.printf("%s\r\n", time);
 
-    MessageOutput.printf("%s -------------------------------------------------------------------------------------\r\n",
+    MessageOutput.printf("%s ---------------------------------------------------------------\r\n",
         getText(Text::T_HEAD).data());
     MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
 }
@@ -750,9 +728,9 @@ frozen::string const& SurplusPowerClass::getText(SurplusPowerClass::Text const t
         { Text::Q_EXCELLENT, "Excellent" },
         { Text::Q_GOOD, "Good" },
         { Text::Q_BAD, "Bad" },
-        { Text::T_HEAD2, "[Surplus II]"},
-        { Text::T_HEAD1, "[Surplus I]"},
-        { Text::T_HEAD, "[Surplus]"}
+        { Text::T_HEAD2, "[SUP II]"},
+        { Text::T_HEAD1, "[SUP I]"},
+        { Text::T_HEAD, "[SUP]"}
     };
 
     auto iter = texts.find(tNr);
@@ -770,8 +748,8 @@ frozen::string const& SurplusPowerClass::getExitText(SurplusPowerClass::ExitStat
     static const frozen::string missing = "programmer error: missing status text";
 
     static const frozen::map<ExitState, frozen::string, 6> texts = {
-        { ExitState::OK_STAGE_I, "Stage_I" },
-        { ExitState::OK_STAGE_II, "Stage_II" },
+        { ExitState::OK_STAGE_I, "Stage-I" },
+        { ExitState::OK_STAGE_II, "Stage-II" },
         { ExitState::ERR_TIME, "Error, local time or sunset time not available" },
         { ExitState::ERR_CHARGER, "Error, solar charger data is not available" },
         { ExitState::ERR_BATTERY, "Error, battery data is not available" },
