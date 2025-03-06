@@ -101,6 +101,25 @@ void MqttHandleHuaweiClass::loop()
     PUB(Slot, "slot_detection/slot");
 #undef PUB
 
+#define PUBACK(l, t) \
+    { \
+        auto oDataPoint = dataPoints.get<GridCharger::Huawei::DataPointLabel::l>(); \
+        if (oDataPoint) { \
+            MqttSettings.publish("huawei/acks/" t, String(*oDataPoint)); \
+        } \
+    }
+
+    PUBACK(OnlineVoltage, "online_voltage");
+    PUBACK(OfflineVoltage, "offline_voltage");
+    PUBACK(OnlineCurrent, "online_current");
+    PUBACK(OfflineCurrent, "offline_current");
+    PUBACK(ProductionEnabled, "production_enabled");
+    PUBACK(FanOnlineFullSpeed, "fan_online_full_speed");
+    PUBACK(FanOfflineFullSpeed, "fan_offline_full_speed");
+    PUBACK(InputCurrentLimit, "input_current_limit");
+#undef PUBACK
+
+
 #define PUBSTR(l, t) \
     { \
         auto oDataPoint = dataPoints.get<GridCharger::Huawei::DataPointLabel::l>(); \
