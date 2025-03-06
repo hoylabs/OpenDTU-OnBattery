@@ -1053,7 +1053,17 @@
         "Close": "close",
         "SetVoltageLimit": "Voltage limit",
         "SetCurrentLimit": "Current limit",
-        "CurrentLimit": "Current limit"
+        "Acknowledgements": "Acknowledgements",
+        "ProductionEnabled": "Production enabled",
+        "FanOnlineFullSpeed": "Online fan speed",
+        "FanOfflineFullSpeed": "Offline fan speed",
+        "InputCurrentLimit": "Input current limit",
+        "OnlineVoltage": "Online voltage",
+        "OfflineVoltage": "Offline voltage",
+        "OnlineCurrent": "Online current",
+        "OfflineCurrent": "Offline current",
+        "FanFullSpeed": "Full speed",
+        "FanAuto": "Auto"
     },
     "acchargeradmin": {
         "ChargerSettings": "AC Charger Settings",

@@ -22,4 +22,12 @@ export interface Huawei {
     product_description?: string;
     row?: number;
     slot?: number;
+    production_enabled?: boolean;
+    fan_online_full_speed?: boolean;
+    fan_offline_full_speed?: boolean;
+    input_current_limit?: ValueObject;
+    online_voltage?: ValueObject;
+    offline_voltage?: ValueObject;
+    online_current?: ValueObject;
+    offline_current?: ValueObject;
 }
