@@ -6,14 +6,29 @@
 namespace GridCharger::Huawei {
 
 enum class DataPointLabel : uint8_t {
+    // board properties message
     BoardType,
     Serial,
     Manufactured,
     VendorName,
     ProductName,
     ProductDescription,
+
+    // device config message
     Row,
     Slot,
+
+    // acknowledgement messages
+    OnlineVoltage,
+    OfflineVoltage,
+    OnlineCurrent,
+    OfflineCurrent,
+    ProductionEnabled,
+    FanOnlineFullSpeed,
+    FanOfflineFullSpeed,
+    InputCurrentLimit,
+
+    // rectifier state message
     InputPower = 0x70,
     InputFrequency = 0x71,
     InputCurrent = 0x72,
@@ -43,6 +58,14 @@ LABEL_TRAIT(ProductName,        std::string, "");
 LABEL_TRAIT(ProductDescription, std::string, "");
 LABEL_TRAIT(Row,                uint8_t,     "");
 LABEL_TRAIT(Slot,               uint8_t,     "");
+LABEL_TRAIT(OnlineVoltage,      float,       "V");
+LABEL_TRAIT(OfflineVoltage,     float,       "V");
+LABEL_TRAIT(OnlineCurrent,      float,       "A");
+LABEL_TRAIT(OfflineCurrent,     float,       "A");
+LABEL_TRAIT(ProductionEnabled,  bool,        "");
+LABEL_TRAIT(FanOnlineFullSpeed, bool,        "");
+LABEL_TRAIT(FanOfflineFullSpeed,bool,        "");
+LABEL_TRAIT(InputCurrentLimit,  float,       "A");
 LABEL_TRAIT(InputPower,         float,       "W");
 LABEL_TRAIT(InputFrequency,     float,       "Hz");
 LABEL_TRAIT(InputCurrent,       float,       "A");
@@ -58,10 +81,10 @@ LABEL_TRAIT(OutputCurrent,      float,       "A");
 
 } // namespace GridCharger::Huawei
 
-template class DataPointContainer<DataPoint<float, std::string, uint8_t>,
+template class DataPointContainer<DataPoint<float, std::string, uint8_t, bool>,
                                   GridCharger::Huawei::DataPointLabel,
                                   GridCharger::Huawei::DataPointLabelTraits>;
 
 namespace GridCharger::Huawei {
-    using DataPointContainer = DataPointContainer<DataPoint<float, std::string, uint8_t>, DataPointLabel, DataPointLabelTraits>;
+    using DataPointContainer = DataPointContainer<DataPoint<float, std::string, uint8_t, bool>, DataPointLabel, DataPointLabelTraits>;
 } // namespace GridCharger::Huawei
