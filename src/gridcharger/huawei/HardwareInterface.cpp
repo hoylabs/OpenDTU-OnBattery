@@ -394,44 +394,6 @@ void HardwareInterface::processQueue()
     }
 }
 
-void HardwareInterface::setFan(bool online, bool fullSpeed)
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_taskHandle == nullptr) { return; }
-
-    _sendQueue.push(command_t {
-        .tries = 3,
-        .deviceAddress = 1,
-        .registerAddress = 0x80FE,
-        .command = static_cast<uint16_t>(online?0x0134:0x0135),
-        .flags = static_cast<uint16_t>(fullSpeed?1:0),
-        .value = 0
-    });
-
-    xTaskNotifyGive(_taskHandle);
-}
-
-void HardwareInterface::setProduction(bool enable)
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_taskHandle == nullptr) { return; }
-
-    _sendQueue.push(command_t {
-        .tries = 3,
-        .deviceAddress = 1,
-        .registerAddress = 0x80FE,
-        .command = 0x0132,
-        .flags = static_cast<uint16_t>(enable?0:1),
-        .value = 0
-    });
-
-    _lastRequestMillis = millis() - DataRequestIntervalMillis; // request early param feedback
-
-    xTaskNotifyGive(_taskHandle);
-}
-
 void HardwareInterface::setParameter(HardwareInterface::Setting setting, float val)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -449,11 +411,19 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
         case Setting::OnlineCurrent:
             val *= _maxCurrentMultiplier;
             break;
-        case Setting::InputCurrent:
+        case Setting::InputCurrentLimit:
             val *= 1024;
             if (val > 0) {
                 flags = 0x0001;
             }
+            break;
+        case Setting::FanOnlineFullSpeed:
+        case Setting::FanOfflineFullSpeed:
+        case Setting::ProductionDisable:
+            if (val > 0) {
+                flags = 0x0001;
+            }
+            val = 0;
             break;
     }
 

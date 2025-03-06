@@ -291,7 +291,9 @@ void Controller::setFan(bool online, bool fullSpeed)
 
     if (!_upHardwareInterface) { return; }
 
-    _upHardwareInterface->setFan(online, fullSpeed);
+    using Setting = HardwareInterface::Setting;
+    auto setting = online ? Setting::FanOnlineFullSpeed : Setting::FanOfflineFullSpeed;
+    _upHardwareInterface->setParameter(setting, fullSpeed ? 1 : 0);
 }
 
 void Controller::setProduction(bool enable)
@@ -300,7 +302,8 @@ void Controller::setProduction(bool enable)
 
     if (!_upHardwareInterface) { return; }
 
-    _upHardwareInterface->setProduction(enable);
+    auto setting = HardwareInterface::Setting::ProductionDisable;
+    _upHardwareInterface->setParameter(setting, enable ? 0 : 1);
 }
 
 void Controller::setParameter(float val, HardwareInterface::Setting setting)
