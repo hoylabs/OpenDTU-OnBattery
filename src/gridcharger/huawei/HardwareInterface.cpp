@@ -273,6 +273,51 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
     return true;
 }
 
+bool HardwareInterface::readAcks(can_message_t const& msg)
+{
+    if (msg.canId != 0x1081807e) { return false; }
+
+    uint32_t valueId = msg.valueId;
+
+    auto setting = static_cast<Setting>(valueId >> 16);
+    auto flags = valueId & 0x0000FFFF;
+    float value = msg.value;
+
+    switch (setting) {
+        case Setting::OnlineVoltage:
+            value /= 1024;
+            _upData->add<DataPointLabel::OnlineVoltage>(value);
+            break;
+        case Setting::OfflineVoltage:
+            value /= 1024;
+            _upData->add<DataPointLabel::OfflineVoltage>(value);
+            break;
+        case Setting::OnlineCurrent:
+            value /= _maxCurrentMultiplier;
+            _upData->add<DataPointLabel::OnlineCurrent>(value);
+            break;
+        case Setting::OfflineCurrent:
+            value /= _maxCurrentMultiplier;
+            _upData->add<DataPointLabel::OfflineCurrent>(value);
+            break;
+        case Setting::InputCurrentLimit:
+            value /= 1024;
+            _upData->add<DataPointLabel::InputCurrentLimit>(value);
+            break;
+        case Setting::ProductionDisable:
+            _upData->add<DataPointLabel::ProductionEnabled>((flags & 0x0001) == 0);
+            break;
+        case Setting::FanOnlineFullSpeed:
+            _upData->add<DataPointLabel::FanOnlineFullSpeed>((flags & 0x0001) > 0);
+            break;
+        case Setting::FanOfflineFullSpeed:
+            _upData->add<DataPointLabel::FanOfflineFullSpeed>((flags & 0x0001) > 0);
+            break;
+    }
+
+    return true;
+}
+
 void HardwareInterface::loop()
 {
     can_message_t msg;
@@ -292,13 +337,13 @@ void HardwareInterface::loop()
     while (getMessage(msg)) {
         if (readBoardProperties(msg) ||
                 readDeviceConfig(msg) ||
-                readRectifierState(msg)) {
+                readRectifierState(msg) ||
+                readAcks(msg)) {
             logIncoming(true);
             continue;
         }
 
         // examples for codes not handled are:
-        //     0x1081407E (Ack), 0x1081807E (Ack Frame),
         //     0x1001117E (Whr meter),
         //     0x100011FE (unclear), 0x108111FE (output enabled),
         //     0x108081FE (unclear).
