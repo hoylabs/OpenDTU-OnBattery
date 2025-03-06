@@ -99,6 +99,8 @@ private:
     bool readDeviceConfig(can_message_t const& msg);
 
     bool readRectifierState(can_message_t const& msg);
+
+    bool readAcks(can_message_t const& msg);
 };
 
 } // namespace GridCharger::Huawei

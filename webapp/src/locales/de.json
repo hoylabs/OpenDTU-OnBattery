@@ -1050,7 +1050,18 @@
         "Close": "Schließen",
         "SetVoltageLimit": "Spannungslimit",
         "SetCurrentLimit": "Stromlimit",
-        "CurrentLimit": "Aktuelles Limit "
+        "CurrentLimit": "Aktuelles Limit",
+        "Acknowledgements": "Bestätigungen",
+        "ProductionEnabled": "Produktionsmodus aktiviert",
+        "FanOnlineFullSpeed": "Online Lüftermodus",
+        "FanOfflineFullSpeed": "Offline Lüftermodus",
+        "InputCurrentLimit": "Eingangsstromlimit",
+        "OnlineVoltage": "Online Spannung",
+        "OfflineVoltage": "Offline Spannung",
+        "OnlineCurrent": "Online Strom",
+        "OfflineCurrent": "Offline Strom",
+        "FanFullSpeed": "Volle Drehzahl",
+        "FanAuto": "Automatisch"
     },
     "acchargeradmin": {
         "ChargerSettings": "AC Ladegerät Einstellungen",
