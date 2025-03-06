@@ -3,6 +3,7 @@
 #include <battery/Stats.h>
 #include <Configuration.h>
 #include <MqttSettings.h>
+#include <BatteryGuard.h>
 
 namespace Batteries {
 
@@ -52,6 +53,10 @@ void Stats::getLiveViewData(JsonVariant& root) const
         addLiveViewValue(root, "voltage", _voltage, "V", 2);
     }
 
+    if (BatteryGuard.getOpenCircuitVoltage().has_value()) {
+        addLiveViewValue(root, "openCircuitVoltage", BatteryGuard.getOpenCircuitVoltage().value(), "V", 2);
+    }
+
     if (isCurrentValid()) {
         addLiveViewValue(root, "current", _current, "A", _currentPrecision);
     }
@@ -62,6 +67,14 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
     if (isChargeCurrentLimitValid()) {
         addLiveViewValue(root, "chargeCurrentLimitation", _chargeCurrentLimit, "A", 1);
+    }
+
+    if (BatteryGuard.getInternalResistance().has_value()) {
+        if (BatteryGuard.isInternalResistanceCalculated()) {
+            addLiveViewValue(root, "resistorCalculated", BatteryGuard.getInternalResistance().value() * 1000.0f, "mOhm", 1);
+        } else {
+            addLiveViewValue(root, "resistorConfigured", BatteryGuard.getInternalResistance().value() * 1000.0f, "mOhm", 1);
+        }
     }
 
     root["showIssues"] = supportsAlarmsAndWarnings();
