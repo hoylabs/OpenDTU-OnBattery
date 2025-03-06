@@ -26,13 +26,12 @@ public:
         OfflineVoltage = 0x0101,
         OnlineCurrent = 0x0103,
         OfflineCurrent = 0x0104,
-        InputCurrent = 0x0109
+        InputCurrentLimit = 0x0109,
+        ProductionDisable = 0x0132,
+        FanOnlineFullSpeed = 0x0134,
+        FanOfflineFullSpeed = 0x0135
     };
     void setParameter(Setting setting, float val);
-
-    void setFan(bool online, bool fullSpeed);
-
-    void setProduction(bool enable);
 
     std::unique_ptr<DataPointContainer> getCurrentData();
 
