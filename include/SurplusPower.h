@@ -75,7 +75,10 @@ class SurplusPowerClass {
         int8_t _qualityCounter = 0;                         // quality counter
         WeightedAVG<float> _qualityAVG {20};                // quality counter average
         int16_t _lastAddPower = 0;                          // last power step
-        uint16_t _overruleCounter = 0;                      // counts how often the voltage regulation was overruled by battery current
+
+        // to handle time to sunset
+        int16_t _timeToSunset = 0;                          // time to sunset [minutes]
+        uint32_t _lastTimeMillis = 0;                       // last millis we calculated the time to sunset
 
         // to handle bulk mode
         bool _stageIEnabled = false;                        // surplus-stage-I enable / disable
