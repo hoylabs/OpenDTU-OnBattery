@@ -5,7 +5,7 @@
  * The Battery-Guard has several features.
  * - Calculate the battery open circuit voltage
  * - Calculate the battery internal resistance
- * - Limit the power drawn from the battery, if the battery voltage is close to the stop threshold. (draft)
+ * - Limit the power drawn from the battery, if the battery voltage is close to the stop threshold.
  * - Periodically recharge the battery to 100% SoC (draft)
  *
  * Basic principe of the feature: "Battery open circuit voltage"
@@ -40,21 +40,16 @@
  * 01.08.2024 - 0.1 - first version. "Low voltage power limiter"
  * 09.12.2024 - 0.2 - add of function "Periodically recharge the battery"
  * 11.12.2024 - 0.3 - add of function "Battery internal resistance" and "Open circuit voltage"
- * 14.02.2025 - 0.4 - works now with all battery providers
+ * 14.02.2025 - 0.4 - works now with all battery providers, accept different time stamps for voltage and current
  */
 
 #include <frozen/map.h>
+#include <battery/Controller.h>
+#include <solarcharger/Controller.h>
 #include "Configuration.h"
 #include "MessageOutput.h"
-#include "Battery.h"
 #include "BatteryGuard.h"
 
-
-#define INVERTER_EFF 0.95f          // inverter efficiency
-#define TARGET_RANGE_V 0.01f        // target range of limit regulation
-#define STOP_REASON_NO 0            // no stop up to now
-#define STOP_REASON_NORMAL 1        // normal below the power limit stop
-#define STOP_REASON_EMERGENCY 2     // emergency stop
 
 // activate the following line to enable debug logging
 #define DEBUG_LOGGING
@@ -80,9 +75,10 @@ void BatteryGuardClass::init(Scheduler& scheduler) {
     _slowLoopTask.setInterval(60*1000);
     _slowLoopTask.enable();
 
-    _determinedResolutionV = 1.0f;
-    _determinedResolutionI = 1.0f;
-    _determinedPeriod.reset(5000);
+    _analyzedResolutionV = 1.0f;
+    _analyzedResolutionI = 1.0f;
+    _analyzedPeriod.reset(5000);
+    _analyzedUIDelay.reset(0);
     updateSettings();
 }
 
@@ -92,32 +88,66 @@ void BatteryGuardClass::init(Scheduler& scheduler) {
  */
 void BatteryGuardClass::updateSettings(void) {
 
-    // todo: get values from the configuration file / web interface
+    // todo: get values from the configuration file / web interface / calibration file
     _useBatteryGuard = true;            // enable the battery guard
-    _verboseLogging = false;            // enable verbose logging
+    _verboseLogging = false;            // disable verbose logging
     _verboseReport = true;              // enable verbose report
 
     // used for "Open circuit voltage"
     _resistanceFromConfig = 0;          // start value for the internal battery resistance [Ohm]
-
-    // used for "Low voltage power limiter"
-    _useLowVoltageLimiter = false;      // enable the low voltage power limiter
-
 }
 
 
 /*
- * Main loop, fetches the battery values (voltage, current and measurement time stemp) from the battery provider
+ * Normal loop, fetches the battery values (voltage, current and measurement time stamp) from the battery provider
  */
 void BatteryGuardClass::loop(void) {
-    if (!_useBatteryGuard) { return; }
-    if (Battery.getStats()->getLastVoltageUpdate() == _lastUpdate) { return; } // millis rollover safe
+    if (!_useBatteryGuard) { return; } // not active, we abort
+    if (!Battery.getStats()->isCurrentValid()) { return; } // not valid, we abort
 
-    // new values are available
-    _lastUpdate = Battery.getStats()->getLastVoltageUpdate();
-    if (Battery.getStats()->isVoltageValid() && Battery.getStats()->isCurrentValid()) {
-        updateBatteryValues(Battery.getStats()->getVoltage(), Battery.getStats()->getChargeCurrent(), _lastUpdate);
+    auto const& u2Value = Battery.getStats()->getVoltage();
+    auto const& u2Time = Battery.getStats()->getLastVoltageUpdate();
+    auto const& i2Value = Battery.getStats()->getChargeCurrent();
+    auto const& i2Time = Battery.getStats()->getLastCurrentUpdate();
+
+    if ( (_u1Data.timeStamp == u2Time) && (_i1Data.timeStamp == i2Time) ) { return; } // same time stamp again, we abort
+
+    if (u2Time == i2Time) {
+        // the simple handling: voltage und current have the same time stamp
+        _i1Data = { i2Value, i2Time, true };
+        _u1Data = { u2Value, u2Time, true };
+        _analyzedUIDelay.addNumber(0.0f);
+        updateBatteryValues(u2Value, i2Value, i2Time);
+        return;
     }
+
+    // the special handling: voltage and current time stamp are different
+    // Note: In worst case, this will add a delay of 1 measurement period
+    if (i2Time != _i1Data.timeStamp) {
+
+        // check if new U1 data is available and check if we have to use U1 or U2
+        Data uxData = _u1Data;
+        if ((u2Time != _u1Data.timeStamp) && ((millis() - u2Time) > (millis() - i2Time))) {
+            uxData = { u2Value, u2Time, true };
+        }
+
+        if (uxData.valid && _i1Data.valid) {
+
+            // check if Ux time stamp is closer to I1 or I2 time stamp
+            if ((i2Time - uxData.timeStamp) < (uxData.timeStamp - _i1Data.timeStamp)) {
+                _analyzedUIDelay.addNumber(static_cast<float>(i2Time - uxData.timeStamp));
+                updateBatteryValues(uxData.value, i2Value, uxData.timeStamp); // we use the older time stamp
+            } else {
+                _analyzedUIDelay.addNumber(-static_cast<float>(uxData.timeStamp - _i1Data.timeStamp));
+                updateBatteryValues(uxData.value, _i1Data.value, _i1Data.timeStamp); // we use the older time stamp
+            }
+            _u1Data.valid = false;
+        }
+
+        _i1Data = { i2Value, i2Time, true }; // store the next I1 data
+    }
+
+    if (u2Time != _u1Data.timeStamp) { _u1Data = { u2Value, u2Time, true }; } // store the next U1 data
 }
 
 
@@ -138,15 +168,6 @@ void BatteryGuardClass::slowLoop(void) {
         // "Open circuit voltage"
         printOpenCircuitVoltageReport();
 
-        // "Low voltage power limiter"
-    }
-
-    // "Periodically recharge the battery"
-    if (_useRechargeTheBattery) {
-
-    }
-
-    if (_verboseReport) {
         //MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
         MessageOutput.printf("%s --------------------------------------------------------------------------------\r\n",
             getText(Text::T_HEAD).data());
@@ -159,28 +180,27 @@ void BatteryGuardClass::slowLoop(void) {
  * Update the battery guard with new values. (voltage[V], current[A], millisStamp[ms])
  * Note: Just call the function if new values are available. Current into the battery must be positive.
  */
-void BatteryGuardClass::updateBatteryValues(float const voltage, float const current, uint32_t const millisStamp) {
-    if (_useBatteryGuard && (voltage >= 0.0f)) {
+void BatteryGuardClass::updateBatteryValues(float const volt, float const current, uint32_t const millisStamp) {
+    if (volt <= 0.0f) { return; }
 
-        // analyse the measurement period, this information is used by the "low voltage limit" feature
-        if ((_battMillis != 0) && (voltage != _battVoltage)) {
-            _determinedPeriod.addNumber(millisStamp - _battMillis);
-        }
-
-        // analyse the voltage and current resolution
-        // SW-Nico: Actual I do not trust the battery stats information (for smart shunt they are wrong)
-        auto resolution = std::abs(voltage - _battVoltage);
-        if ((resolution >= 0.001f) && (resolution < _determinedResolutionV)) { _determinedResolutionV = resolution; }
-        resolution = std::abs(current - _battCurrent);
-        if ((resolution >= 0.001f) && (resolution < _determinedResolutionI)) { _determinedResolutionI = resolution; }
-
-        _battVoltage = voltage;
-        _battCurrent = current;
-        _battMillis = millisStamp;
-        _battVoltageAVG.addNumber(_battVoltage);
-        calculateInternalResistance(_battVoltage, _battCurrent);
-        calculateOpenCircuitVoltage(_battVoltage, _battCurrent);
+    // analyse the measurement period
+    if ((_battMillis != 0) && (millisStamp > _battMillis)) {
+        _analyzedPeriod.addNumber(millisStamp - _battMillis);
     }
+
+    // analyse the voltage and current resolution
+    auto resolution = std::abs(volt - _battVoltage);
+    if ((resolution >= 0.001f) && (resolution < _analyzedResolutionV)) { _analyzedResolutionV = resolution; }
+        resolution = std::abs(current - _battCurrent);
+    if ((resolution >= 0.001f) && (resolution < _analyzedResolutionI)) { _analyzedResolutionI = resolution; }
+
+    // store the values
+    _battMillis = millisStamp;
+    _battVoltage = volt;
+    _battCurrent = current;
+    _battVoltageAVG.addNumber(_battVoltage);
+    calculateInternalResistance(_battVoltage, _battCurrent);
+    calculateOpenCircuitVoltage(_battVoltage, _battCurrent);
 }
 
 
@@ -212,10 +232,18 @@ std::optional<float> BatteryGuardClass::getInternalResistance(void) const {
 
 
 /*
+ * Returns true if we use the calculated resistor and not the configured one
+ */
+bool BatteryGuardClass::isInternalResistanceCalculated(void) const {
+    return (_resistanceFromCalcAVG.getCounts() > 4);
+}
+
+
+/*
  * Returns the battery open circuit voltage or nullopt if value is not valid
  */
 std::optional<float> BatteryGuardClass::getOpenCircuitVoltage(void) {
-  if ((_openCircuitVoltageAVG.getCounts() > 0) && isDataValid()) {
+    if ((_openCircuitVoltageAVG.getCounts() > 0) && isDataValid()) {
         return _openCircuitVoltageAVG.getAverage();
     } else {
 
@@ -232,8 +260,8 @@ std::optional<float> BatteryGuardClass::getOpenCircuitVoltage(void) {
  * true if the measurement resolution and measurement period is sufficient
  */
 bool BatteryGuardClass::isResolutionOK(void) const {
-    return (_determinedResolutionV <= 0.020f) && (_determinedResolutionI <= 0.100f)
-        && (_determinedPeriod.getAverage() <= 4000);
+    return (_analyzedResolutionV <= 0.020f) && (_analyzedResolutionI <= 0.100f)
+        && (_analyzedPeriod.getAverage() <= 4000);
 }
 
 
@@ -293,7 +321,7 @@ bool BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
     // now we have the minimum and maximum values, we can try to calculate the resistance
     // we need a minimum difference to get a sufficiently good result (failure < 10%)
     // SmartShunt: 40mV and 3.5A (about 100W on VDC: 24V, Ri: 12mOhm)
-    auto minDiffVoltage = (_determinedResolutionV > 0.005f) ? 0.07f : 0.04f;
+    auto minDiffVoltage = (_analyzedResolutionV > 0.005f) ? 0.07f : 0.04f;
     auto diffVolt = _pMaxVolt.first - _pMinVolt.first;
     auto diffCurrent = std::abs(_pMaxVolt.second - _pMinVolt.second);   // can be negative
     if ((diffVolt >= minDiffVoltage) && (diffCurrent >= minDiffCurrent)) {
@@ -342,16 +370,19 @@ void BatteryGuardClass::printOpenCircuitVoltageReport(void)
         getText(Text::T_HEAD).data(), _resistanceFromCalcAVG.getAverage()*1000.0f, _resistanceFromCalcAVG.getMin()*1000.0f,
         _resistanceFromCalcAVG.getMax()*1000.0f, _resistanceFromCalcAVG.getLast()*1000.0f, _resistanceFromCalcAVG.getCounts());
 
-        MessageOutput.printf("%s Voltage resolution: %0.0fmV, Current resolution: %0.0fmA, Period: %ims\r\n",
-            getText(Text::T_HEAD).data(), _determinedResolutionV * 1000.0f, _determinedResolutionI * 1000.0f,
-            _determinedPeriod.getAverage());
+        MessageOutput.printf("%s Voltage resolution: %0.0fmV, Current resolution: %0.0fmA\r\n",
+            getText(Text::T_HEAD).data(), _analyzedResolutionV * 1000.0f, _analyzedResolutionI * 1000.0f);
+
+        MessageOutput.printf("%s Measurement period: %0.0fms, Voltage-Current time stamp delay: %0.0fms\r\n",
+            getText(Text::T_HEAD).data(), _analyzedPeriod.getAverage(), _analyzedUIDelay.getAverage());
 
         MessageOutput.printf("%s Open circuit voltage not available counter: %i\r\n",
             getText(Text::T_HEAD).data(),  _notAvailableCounter);
 
-        MessageOutput.printf("%s Battery voltage statistics: %0.3fV (Min: %0.3f, Max: %0.3f, Last: %0.3f, Amount: %i)\r\n",
+        MessageOutput.printf("%s Battery voltage statistics: %0.3fV (Min: %0.3f, Max: %0.3f, Last: %0.3f, Amount: %s%i)\r\n",
             getText(Text::T_HEAD).data(), _battVoltageAVG.getAverage(), _battVoltageAVG.getMin(),
-            _battVoltageAVG.getMax(), _battVoltageAVG.getLast(), _battVoltageAVG.getCounts());
+            _battVoltageAVG.getMax(), _battVoltageAVG.getLast(), (_battVoltageAVG.getCounts() == 10000) ? ">" : "",
+            _battVoltageAVG.getCounts());
     #endif
 }
 
