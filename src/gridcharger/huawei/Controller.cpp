@@ -400,6 +400,11 @@ void Controller::getJsonData(JsonVariant& root) const
     VAL(OutputTemperature, "output_temp");
     VAL(InputFrequency, "input_frequency");
     VAL(Efficiency, "efficiency");
+    VAL(InputCurrentLimit, "input_current_limit");
+    VAL(OnlineVoltage, "online_voltage");
+    VAL(OnlineCurrent, "online_current");
+    VAL(OfflineVoltage, "offline_voltage");
+    VAL(OfflineCurrent, "offline_current");
 #undef VAL
 
 #define VAL(l, n) \
@@ -412,6 +417,9 @@ void Controller::getJsonData(JsonVariant& root) const
 
     VAL(Row, "row");
     VAL(Slot, "slot");
+    VAL(ProductionEnabled, "production_enabled");
+    VAL(FanOnlineFullSpeed, "fan_online_full_speed");
+    VAL(FanOfflineFullSpeed, "fan_offline_full_speed");
 #undef VAL
 
 #define VAL(l, n) \
