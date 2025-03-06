@@ -17,7 +17,8 @@ class BatteryGuardClass {
 
         void init(Scheduler& scheduler);
         void updateSettings(void);
-        void updateBatteryValues(float const nowVoltage, float const nowCurrent, uint32_t const millisStamp);
+        void updateBatteryValues(float const nowVoltage, float const nowCurrent, uint32_t const millisCurrent);
+        bool isInternalResistanceCalculated(void) const;
         std::optional<float> getOpenCircuitVoltage(void);
         std::optional<float> getInternalResistance(void) const;
 
@@ -25,15 +26,17 @@ class BatteryGuardClass {
         void loop(void);
         void slowLoop(void);
 
-        Task _slowLoopTask;                                 // Task
-        Task _fastLoopTask;                                 // Task
+        Task _slowLoopTask;                                 // Task (print the report)
+        Task _fastLoopTask;                                 // Task (get the battery values)
         bool _verboseLogging = false;                       // Logging On/Off
         bool _verboseReport = false;                        // Report On/Off
         bool _useBatteryGuard = false;                      // "Battery guard" On/Off
         bool _useLowVoltageLimiter = false;                 // "Low voltage power limiter" On/Off
         bool _useRechargeTheBattery = false;                // "Periodically recharge the battery" On/Off
-        uint32_t _lastUpdate = 0;                           // last update time stamp
 
+        struct Data { float value; uint32_t timeStamp; bool valid; };
+        Data _i1Data {0.0f, 0, false };                     // buffer the last current data [current, millis(), true/false]
+        Data _u1Data {0.0f, 0, false };                     // buffer the last voltage data [voltage, millis(), true/false]
 
         // used to calculate the "Open circuit voltage"
         enum class Text : uint8_t { Q_NODATA, Q_EXCELLENT, Q_GOOD, Q_BAD, T_HEAD };
@@ -49,9 +52,10 @@ class BatteryGuardClass {
         uint32_t _battMillis = 0;                           // measurement time stamp [millis()]
         WeightedAVG<float> _battVoltageAVG {5};             // average battery voltage [V]
         WeightedAVG<float> _openCircuitVoltageAVG {5};      // average battery open circuit voltage [V]
-        float _determinedResolutionV = 0;                   // determined resolution from the battery voltage [V]
-        float _determinedResolutionI = 0;                   // determined resolution from the battery current [V]
-        WeightedAVG<uint32_t> _determinedPeriod {20};       // determined measurement period [ms]
+        float _analyzedResolutionV = 0;                     // resolution from the battery voltage [V]
+        float _analyzedResolutionI = 0;                     // resolution from the battery current [V]
+        WeightedAVG<float> _analyzedPeriod {20};            // measurement period [ms]
+        WeightedAVG<float> _analyzedUIDelay {20};           // delay between voltage and current [ms]
         size_t _notAvailableCounter = 0;                    // open circuit voltage not available counter
 
 
