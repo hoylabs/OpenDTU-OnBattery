@@ -30,13 +30,7 @@
                                 <div style="padding-right: 2em" v-if="'hwversion' in batteryData">
                                     {{ $t('battery.HwVersion') }}: {{ batteryData.hwversion }}
                                 </div>
-                                <div style="padding-right: 2em">
-                                    {{ $t('battery.DataAge') }}
-                                    {{ $t('battery.Seconds', { val: batteryData.data_age }) }}
-                                    <template v-if="batteryData.data_age > 300">
-                                        / {{ calculateAbsoluteTime(batteryData.data_age) }}
-                                    </template>
-                                </div>
+                                <DataAgeDisplay :data-age-ms="batteryData.data_age * 1000" />
                             </div>
                         </div>
                     </div>
@@ -156,9 +150,12 @@ import { defineComponent } from 'vue';
 import type { Battery, StringValue } from '@/types/BatteryDataStatus';
 import type { ValueObject } from '@/types/LiveDataStatus';
 import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
+import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
 
 export default defineComponent({
-    components: {},
+    components: {
+        DataAgeDisplay,
+    },
     data() {
         return {
             socket: {} as WebSocket,
@@ -251,10 +248,6 @@ export default defineComponent({
                 clearTimeout(this.heartInterval);
             }
             this.isFirstFetchAfterConnect = true;
-        },
-        calculateAbsoluteTime(lastTime: number): string {
-            const date = new Date(Date.now() - lastTime * 1000);
-            return this.$d(date, 'datetime');
         },
     },
     computed: {

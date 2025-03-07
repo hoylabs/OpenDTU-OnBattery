@@ -38,7 +38,9 @@
         "Release": "Release to refresh",
         "Close": "Fermer",
         "Yes": "Oui",
-        "No": "Non"
+        "No": "Non",
+        "DataAge": "Âge des données",
+        "SecondsSince": "{val} secondes"
     },
     "wait": {
         "NotReady": "OpenDTU-OnBattery is not yet ready",
@@ -125,8 +127,6 @@
         "LiveData": "Données en direct",
         "SerialNumber": "Numéro de série : ",
         "CurrentLimit": "Limite de courant : ",
-        "DataAge": "Âge des données : ",
-        "Seconds": "{val} secondes",
         "ShowSetInverterLimit": "Afficher / Régler la limite de l'onduleur",
         "TurnOnOff": "Allumer / Eteindre l'onduleur",
         "ShowInverterInfo": "Afficher les informations sur l'onduleur",
@@ -172,8 +172,6 @@
         "MqttProduct": "Valeurs du contrôleur de charge à partir de MQTT",
         "SerialNumber": "Numéro de série",
         "FirmwareVersion": "Version du Firmware",
-        "DataAge": "@:home.DataAge",
-        "Seconds": "{val} secondes",
         "Property": "Property",
         "Value": "Value",
         "Unit": "Unit",
@@ -837,8 +835,6 @@
         "format_unknown": "Unknown format"
     },
     "huawei": {
-        "DataAge": "@:home.DataAge",
-        "Seconds": " {val} seconds",
         "Input": "Input",
         "Output": "Output",
         "Property": "Property",
@@ -896,8 +892,6 @@
         "battery": "Battery",
         "FwVersion": "Firmware Version",
         "HwVersion": "Hardware Version",
-        "DataAge": "@:home.DataAge",
-        "Seconds": " {val} seconds",
         "status": "Status",
         "Property": "Property",
         "yes": "@:base.Yes",

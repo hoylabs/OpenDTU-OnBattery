@@ -32,13 +32,7 @@
                                 <div v-if="item.firmware_version" style="padding-right: 2em">
                                     {{ $t('solarchargerhome.FirmwareVersion') }}: {{ item.firmware_version }}
                                 </div>
-                                <div style="padding-right: 2em">
-                                    {{ $t('solarchargerhome.DataAge') }}
-                                    {{ $t('solarchargerhome.Seconds', { val: Math.floor(item.data_age_ms / 1000) }) }}
-                                    <template v-if="item.data_age_ms > 300000">
-                                        / {{ calculateAbsoluteTime(item.data_age_ms) }}
-                                    </template>
-                                </div>
+                                <DataAgeDisplay :data-age-ms="item.data_age_ms" />
                             </div>
                         </div>
                         <div class="btn-group me-2" role="group">
@@ -128,6 +122,7 @@ import { defineComponent } from 'vue';
 import type { DynamicPowerLimiter, SolarCharger } from '@/types/SolarChargerLiveDataStatus';
 import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
 import { BIconSun, BIconBatteryCharging, BIconBatteryHalf, BIconXCircleFill } from 'bootstrap-icons-vue';
+import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
 
 export default defineComponent({
     components: {
@@ -135,6 +130,7 @@ export default defineComponent({
         BIconBatteryCharging,
         BIconBatteryHalf,
         BIconXCircleFill,
+        DataAgeDisplay,
     },
     data() {
         return {
@@ -244,10 +240,6 @@ export default defineComponent({
                 clearTimeout(this.heartInterval);
             }
             this.isFirstFetchAfterConnect = true;
-        },
-        calculateAbsoluteTime(lastTime: number): string {
-            const date = new Date(Date.now() - lastTime);
-            return this.$d(date, 'datetime');
         },
     },
 });
