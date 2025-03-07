@@ -37,6 +37,8 @@ void MessageOutputClass::serialWrite(MessageOutputClass::message_t const& m)
     while (written < m.size()) {
         written += Serial.write(m.data() + written, m.size() - written);
     }
+
+    Serial.flush();
 }
 
 size_t MessageOutputClass::write(uint8_t c)
