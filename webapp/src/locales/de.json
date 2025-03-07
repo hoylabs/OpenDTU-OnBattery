@@ -40,7 +40,7 @@
         "Yes": "Ja",
         "No": "Nein",
         "DataAge": "Letzte Aktualisierung",
-        "SecondsSince": "vor {val} Sekunden",
+        "SecondsSince": "vor 0 Sekunden | vor 1 Sekunde | vor {n} Sekunden",
         "Unit": "Einheit",
         "MqttJsonPath": "Optional: JSON-Pfad",
         "MqttJsonPathDescription": "Anwendungsspezifischer JSON-Pfad um den Wert in den JSON Nutzdatzen zu finden, z.B. 'electricLevel'. Leer lassen, falls die Nutzdaten des Topics einen numerischen Wert enthält."

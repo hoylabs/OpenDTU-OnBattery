@@ -40,7 +40,7 @@
         "Yes": "Yes",
         "No": "No",
         "DataAge": "Data Age",
-        "SecondsSince": "{val} seconds",
+        "SecondsSince": "0 seconds | 1 second | {n} seconds",
         "Unit": "Unit",
         "MqttJsonPath": "Optional: JSON Path",
         "MqttJsonPathDescription": "Application specific JSON path to find the value in the JSON payload, e.g., 'electricLevel'. Leave empty if the topic's payload contains a plain numeric value."

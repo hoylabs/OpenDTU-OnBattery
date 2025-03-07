@@ -40,7 +40,7 @@
         "Yes": "Oui",
         "No": "Non",
         "DataAge": "Âge des données",
-        "SecondsSince": "{val} secondes"
+        "SecondsSince": "0 secondes | 1 seconde | {n} secondes"
     },
     "wait": {
         "NotReady": "OpenDTU-OnBattery is not yet ready",
