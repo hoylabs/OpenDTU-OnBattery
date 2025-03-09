@@ -87,7 +87,7 @@ private:
     float getBatteryVoltage(bool log = false);
     uint16_t dcPowerBusToInverterAc(uint16_t dcPower);
     void unconditionalFullSolarPassthrough();
-    int16_t calcConsumption();
+    uint16_t calcTargetOutput();
     using inverter_filter_t = std::function<bool(PowerLimiterInverter const&)>;
     uint16_t updateInverterLimits(uint16_t powerRequested, inverter_filter_t filter, std::string const& filterExpression);
     uint16_t calcPowerBusUsage(uint16_t powerRequested);

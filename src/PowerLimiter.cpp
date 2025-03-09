@@ -339,11 +339,7 @@ void PowerLimiterClass::loop()
             config.PowerLimiter.ConductionLosses);
     };
 
-    // this value is negative if we are exporting power to the grid
-    // from power sources other than DPL-governed inverters.
-    int16_t consumption = calcConsumption();
-
-    uint16_t inverterTotalPower = (consumption > 0) ? static_cast<uint16_t>(consumption) : 0;
+    uint16_t inverterTotalPower = calcTargetOutput();
 
     auto totalAllowance = config.PowerLimiter.TotalUpperPowerLimit;
     inverterTotalPower = std::min(inverterTotalPower, totalAllowance);
@@ -506,7 +502,7 @@ uint8_t PowerLimiterClass::getPowerLimiterState()
     return _batteryDischargeEnabled ? PL_UI_STATE_USE_SOLAR_AND_BATTERY : PL_UI_STATE_USE_SOLAR_ONLY;
 }
 
-int16_t PowerLimiterClass::calcConsumption()
+uint16_t PowerLimiterClass::calcTargetOutput()
 {
     auto const& config = Configuration.get();
     auto targetConsumption = config.PowerLimiter.TargetPowerConsumption;
@@ -524,24 +520,62 @@ int16_t PowerLimiterClass::calcConsumption()
 
     if (!meterValid) { return baseLoad; }
 
-    auto consumption = static_cast<int16_t>(meterValue + (meterValue > 0 ? 0.5 : -0.5));
+    // the desired total output of all eligible inverters is whatever they are
+    // producing right now plus the difference between the target consumption
+    // and the power meter reading
+    auto roundedMeterValue = static_cast<int16_t>(meterValue + (meterValue > 0 ? 0.5 : -0.5));
 
+    // we have to correct the meter reading if there are inverters connected to
+    // AC between the grid (billing meter) and OpenDTU-OnBattery's power meter.
+    // example: billing meter in the basement, inverter connected next to it,
+    // and an additional power meter in the flat which is read by OpenDTU-
+    // OnBattery. in that case power produced by the respective inverter is
+    // still registered as consumed power by the power meter as it flows into
+    // the household, even though it is not billed. essentially, we derive the
+    // billing meter's reading, whose value we actually want to optimize to
+    // reach the target consumption setting value.
     for (auto const& upInv : _inverters) {
-        if (!upInv->isBehindPowerMeter()) { continue; }
+        if (upInv->isBehindPowerMeter()) { continue; }
 
-        // If the inverter is wired behind the power meter, i.e., if its
-        // output is part of the power meter measurement, the produced
-        // power of this inverter has to be taken into account.
+        // it is to be expected that solar-powered inverters are unreachable
+        // during the night, in which case we don't want to account for their
+        // last reported AC output, as they are not producing power.
+        auto isDayPeriod = SunPosition.isDayPeriod();
+        if (upInv->isSolarPowered() && !upInv->isReachable() && !isDayPeriod) { continue; }
+
+        // in all other cases, even for unreachable inverters, we assume that
+        // they still produce the amount of AC output that they last reported.
+        // if we assumed unreachable inverters are not producing, we will
+        // potentially produce way too much power. as information is missing
+        // that could make sure we do the right thing, we have to make an
+        // assumption about unreachable inverters.
+        roundedMeterValue -= upInv->getCurrentOutputAcWatts();
+    }
+
+    int16_t currentTotalOutput = 0;
+    for (auto const& upInv : _inverters) {
+        // non-eligible inverters don't participate in this DPL round at all.
+        // inverters in standby report 0 W output, so we can iterate them.
+        if (PowerLimiterInverter::Eligibility::Eligible != upInv->isEligible()) { continue; }
+
         auto invOutput = upInv->getCurrentOutputAcWatts();
-        consumption += invOutput;
+        currentTotalOutput += invOutput;
         if (_verboseLogging) {
-            MessageOutput.printf("[DPL] inverter %s is "
-                    "behind power meter producing %u W\r\n",
+            MessageOutput.printf("[DPL] inverter %s is producing %u W\r\n",
                     upInv->getSerialStr(), invOutput);
         }
     }
 
-    return consumption - targetConsumption;
+    // this value is negative if we are exporting more than "targetConsumption"
+    // power to the grid using generators other than DPL-governed inverters.
+    int16_t targetOutput = currentTotalOutput + roundedMeterValue - targetConsumption;
+
+    // if we are already exporting more power than the (negative) target
+    // consumption value allows us to, we don't want DPL-governed inverters to
+    // produce any power at all.
+    if (targetOutput < 0) { return 0; }
+
+    return static_cast<uint16_t>(targetOutput);
 }
 
 /**
@@ -558,21 +592,7 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
     for (auto& upInv : _inverters) {
         if (!filter(*upInv)) { continue; }
 
-        if (!upInv->isReachable()) {
-            if (_verboseLogging) {
-                MessageOutput.printf("[DPL] skipping %s "
-                        "as it is not reachable\r\n", upInv->getSerialStr());
-            }
-            continue;
-        }
-
-        if (!upInv->isSendingCommandsEnabled()) {
-            if (_verboseLogging) {
-                MessageOutput.printf("[DPL] skipping %s as sending commands "
-                        "is disabled\r\n", upInv->getSerialStr());
-            }
-            continue;
-        }
+        if (PowerLimiterInverter::Eligibility::Eligible != upInv->isEligible()) { continue; }
 
         producing += upInv->getCurrentOutputAcWatts();
         matchingInverters.push_back(upInv.get());

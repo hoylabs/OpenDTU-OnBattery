@@ -75,9 +75,6 @@ public:
 
     void debug() const;
 
-protected:
-    PowerLimiterInverter(bool verboseLogging, PowerLimiterInverterConfig const& config);
-
     enum class Eligibility : unsigned {
         Unreachable,
         SendingCommandsDisabled,
@@ -86,9 +83,12 @@ protected:
         Eligible
     };
 
-    // returns false if the inverter cannot participate
+    // only returns Eligibility::Eligible if the inverter can participate
     // in achieving the requested change in power output
     Eligibility isEligible() const;
+
+protected:
+    PowerLimiterInverter(bool verboseLogging, PowerLimiterInverterConfig const& config);
 
     uint16_t getCurrentLimitWatts() const;
 
