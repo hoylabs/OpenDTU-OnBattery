@@ -112,8 +112,11 @@ private:
 
     char _serialStr[16];
 
-    // track (target) state
+    // track the number of times an update command
+    // issued to the inverter timed out *or* failed
     uint8_t _updateTimeouts = 0;
+
+    // track (target) state
     std::optional<uint32_t> _oUpdateStartMillis = std::nullopt;
     std::optional<uint16_t> _oTargetPowerLimitWatts = std::nullopt;
     std::optional<bool> _oTargetPowerState = std::nullopt;
