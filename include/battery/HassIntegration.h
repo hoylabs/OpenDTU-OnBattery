@@ -30,11 +30,6 @@ protected:
             const char* stateClass = nullptr,
             const char* unitOfMeasurement = nullptr,
             const bool enabled = true) const;
-    void publishSensor(const String& caption, const char* icon,
-            const char* subTopic, const char* deviceClass = nullptr,
-            const char* stateClass = nullptr,
-            const char* unitOfMeasurement = nullptr,
-            const bool enabled = true) const;
     void publishSensor(const char* caption, const char* icon,
             const String& subTopic, const char* deviceClass = nullptr,
             const char* stateClass = nullptr,
@@ -45,7 +40,7 @@ protected:
     virtual void publishSensors() const;
 
 private:
-    static String santinzeUniqueId(const char* value);
+    static String sanitizeUniqueId(const char* value);
 
     String _serial = "0001"; // pseudo-serial, can be replaced in future with real serialnumber
     std::shared_ptr<Stats> _spStats = nullptr;

@@ -279,29 +279,7 @@ std::optional<T> Utils::getNumericValueFromMqttPayload(char const* client,
 template std::optional<float> Utils::getNumericValueFromMqttPayload(char const* client,
         std::string const& src, char const* topic, char const* jsonPath);
 
-template<typename T>
-std::optional<T> Utils::getJsonElement(JsonObjectConst const root, char const* key, size_t nesting /* = 0*/) {
-    if (!root[key].isNull() && root[key].is<T>() && root[key].nesting() == nesting) {
-        return root[key].as<T>();
-    }
-    return std::nullopt;
-}
-
-template std::optional<const char*> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-template std::optional<String> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-template std::optional<std::string> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-template std::optional<uint8_t> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-template std::optional<uint16_t> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-template std::optional<uint32_t> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-template std::optional<int8_t> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-template std::optional<int16_t> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-template std::optional<int32_t> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-template std::optional<float> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-template std::optional<JsonObjectConst> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-template std::optional<JsonArrayConst> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
-
-
-bool Utils::getEpoch(time_t* epoch, uint32_t ms)
+bool Utils::getEpoch(time_t* epoch, uint32_t ms /* = 20 */)
 {
     uint32_t start = millis();
     while((millis()-start) <= ms) {

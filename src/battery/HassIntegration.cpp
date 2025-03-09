@@ -60,20 +60,13 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
     publishSensor(caption, icon, subTopic.c_str(), deviceClass, stateClass, unitOfMeasurement, enabled);
 }
 
-void HassIntegration::publishSensor(const String& caption, const char* icon,
-        const char* subTopic, const char* deviceClass,
-        const char* stateClass, const char* unitOfMeasurement,
-        const bool enabled) const
-{
-    publishSensor(caption.c_str(), icon, subTopic, deviceClass, stateClass, unitOfMeasurement, enabled);
-}
 
 void HassIntegration::publishSensor(const char* caption, const char* icon,
         const char* subTopic, const char* deviceClass,
         const char* stateClass, const char* unitOfMeasurement,
         const bool enabled) const
 {
-    String sensorId = santinzeUniqueId(caption);
+    String sensorId = sanitizeUniqueId(caption);
 
     String configTopic = "sensor/dtu_battery_" + _serial
         + "/" + sensorId
@@ -130,7 +123,7 @@ void HassIntegration::publishBinarySensor(const char* caption,
         const char* payload_on, const char* payload_off,
         const bool enabled) const
 {
-    String sensorId = santinzeUniqueId(caption);
+    String sensorId = sanitizeUniqueId(caption);
 
     String configTopic = "binary_sensor/dtu_battery_" + _serial
         + "/" + sensorId
@@ -188,7 +181,7 @@ void HassIntegration::publish(const String& subtopic, const String& payload) con
     MqttSettings.publishGeneric(topic.c_str(), payload.c_str(), Configuration.get().Mqtt.Hass.Retain);
 }
 
-String HassIntegration::santinzeUniqueId(const char* value) {
+String HassIntegration::sanitizeUniqueId(const char* value) {
     String sensorId = value;
 
     // replace characters that are invalid for unique_ids

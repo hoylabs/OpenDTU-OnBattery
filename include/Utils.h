@@ -25,7 +25,12 @@ public:
             std::string const& src, char const* topic, char const* jsonPath);
 
     template<typename T>
-    static std::optional<T> getJsonElement(JsonObjectConst root, char const* key, size_t nesting = 0);
+    static std::optional<T> getJsonElement(JsonObjectConst const root, char const* key, size_t nesting = 0) {
+        if (!root[key].isNull() && root[key].is<T>() && root[key].nesting() == nesting) {
+            return root[key].as<T>();
+        }
+        return std::nullopt;
+    }
 
-    static bool getEpoch(time_t* epoch, uint32_t ms);
+    static bool getEpoch(time_t* epoch, uint32_t ms = 20);
 };

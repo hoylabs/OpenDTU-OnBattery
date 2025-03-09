@@ -84,7 +84,7 @@ protected:
     template<typename T>
     static void addLiveViewInSection(JsonVariant& root,
         std::string const& section, std::string const& name,
-        T&& value, std::string const& unit, uint8_t precision, bool dummy = true)
+        T&& value, std::string const& unit, uint8_t precision)
     {
         auto jsonValue = root["values"][section][name];
         jsonValue["v"] = value;

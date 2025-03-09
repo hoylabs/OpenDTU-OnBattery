@@ -304,7 +304,7 @@ void Provider::loop()
 void Provider::calculateFullChargeAge()
 {
     time_t now;
-    if (Utils::getEpoch(&now, 20) && _stats->_last_full_timestamp.has_value()) {
+    if (Utils::getEpoch(&now) && _stats->_last_full_timestamp.has_value()) {
         auto last_full = *(_stats->_last_full_timestamp);
         uint32_t age = now > last_full  ? (now - last_full) / 3600U : 0U;
 
@@ -432,7 +432,7 @@ void Provider::publishProperties(const String& topic, Arg&&... args) const
 void Provider::timesync()
 {
     time_t now;
-    if (!_baseTopic.isEmpty() && Utils::getEpoch(&now, 20)) {
+    if (!_baseTopic.isEmpty() && Utils::getEpoch(&now)) {
         MqttSettings.publishGeneric("iot" + _baseTopic + "time-sync/reply", "{\"zoneOffset\": \"+00:00\", \"messageId\": " + String(++_messageCounter) + ", \"timestamp\": " + String(now) + "}", false, 0);
         log("Timesync Reply");
     }
@@ -850,7 +850,7 @@ void Provider::setSoC(const float soc, const uint32_t timestamp /* = 0 */, const
 {
     time_t now;
 
-    if (Utils::getEpoch(&now, 20)) {
+    if (Utils::getEpoch(&now)) {
         if (soc >= 100.0) {
             _stats->_last_full_timestamp = now;
             publishPersistentSettings(ZENDURE_PERSISTENT_SETTINGS_LAST_FULL, String(now));
