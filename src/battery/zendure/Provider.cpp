@@ -19,10 +19,10 @@ bool Provider::init(bool verboseLogging)
     auto const& config = Configuration.get();
     String deviceType = String();
 
-    log("Settings %d", config.Battery.ZendureDeviceType);
+    log("Settings %d", config.Battery.Zendure.DeviceType);
     {
         String deviceName = String();
-        switch (config.Battery.ZendureDeviceType) {
+        switch (config.Battery.Zendure.DeviceType) {
             case 0:
                 deviceType = ZENDURE_HUB1200;
                 deviceName = String("SolarFlow HUB 1200");
@@ -48,8 +48,8 @@ bool Provider::init(bool verboseLogging)
                 return false;
         }
 
-        if (strlen(config.Battery.ZendureDeviceId) != 8) {
-            MessageOutput.printf("ZendureBattery: Invalid device id '%s'!\r\n", config.Battery.ZendureDeviceId);
+        if (strlen(config.Battery.Zendure.DeviceId) != 8) {
+            MessageOutput.printf("ZendureBattery: Invalid device id '%s'!\r\n", config.Battery.Zendure.DeviceId);
             return false;
         }
 
@@ -60,7 +60,7 @@ bool Provider::init(bool verboseLogging)
     }
 
     // store device ID as we will need them for checking when receiving messages
-    _deviceId = config.Battery.ZendureDeviceId;
+    _deviceId = config.Battery.Zendure.DeviceId;
 
     _baseTopic = "/" + deviceType + "/" + _deviceId + "/";
     _topicRead = "iot" + _baseTopic + "properties/read";
@@ -122,7 +122,7 @@ bool Provider::init(bool verboseLogging)
     _nextUpdate         = 0;
 #endif
 
-    _rateFullUpdateMs   = config.Battery.ZendurePollingInterval * 1000;
+    _rateFullUpdateMs   = config.Battery.Zendure.PollingInterval * 1000;
     _nextFullUpdate     = 0;
     _rateTimesyncMs     = ZENDURE_SECONDS_TIMESYNC * 1000;
     _nextTimesync       = 0;
@@ -134,10 +134,10 @@ bool Provider::init(bool verboseLogging)
     JsonVariant prop = root[ZENDURE_REPORT_PROPERTIES].to<JsonObject>();
     prop[ZENDURE_REPORT_PV_BRAND] = 1; // means Hoymiles
     prop[ZENDURE_REPORT_PV_AUTO_MODEL] = 0; // we did static setup
-    prop[ZENDURE_REPORT_AUTO_RECOVER] = static_cast<uint8_t>(config.Battery.ZendureBypassMode == static_cast<uint8_t>(BypassMode::Automatic));
-    prop[ZENDURE_REPORT_AUTO_SHUTDOWN] = static_cast<uint8_t>(config.Battery.ZendureAutoShutdown);
+    prop[ZENDURE_REPORT_AUTO_RECOVER] = static_cast<uint8_t>(config.Battery.Zendure.BypassMode == static_cast<uint8_t>(BypassMode::Automatic));
+    prop[ZENDURE_REPORT_AUTO_SHUTDOWN] = static_cast<uint8_t>(config.Battery.Zendure.AutoShutdown);
     prop[ZENDURE_REPORT_BUZZER_SWITCH] = 0; // disable, as it is anoying
-    prop[ZENDURE_REPORT_BYPASS_MODE] = config.Battery.ZendureBypassMode;
+    prop[ZENDURE_REPORT_BYPASS_MODE] = config.Battery.Zendure.BypassMode;
     prop[ZENDURE_REPORT_SMART_MODE] = 0; // should be disabled
     serializeJson(root, _payloadSettings);
 
@@ -167,10 +167,10 @@ bool Provider::init(bool verboseLogging)
 #endif
 
     // initial setup
-    if (!config.Battery.ZendureChargeThroughEnable) {
+    if (!config.Battery.Zendure.ChargeThroughEnable) {
         setChargeThrough(false);
     }
-    setTargetSoCs(config.Battery.ZendureMinSoC, config.Battery.ZendureMaxSoC);
+    setTargetSoCs(config.Battery.Zendure.MinSoC, config.Battery.Zendure.MaxSoC);
 
 
     MessageOutput.printf("ZendureBattery: INIT DONE!\r\n");
@@ -210,7 +210,7 @@ void Provider::loop()
     const bool isDayPeriod = SunPosition.isSunsetAvailable() ? SunPosition.isDayPeriod() : true;
 
     // if auto shutdown is enabled and battery switches to idle at night, turn off status requests to prevent keeping battery awake
-    if (config.Battery.ZendureAutoShutdown && !isDayPeriod && _stats->_state == State::Idle) {
+    if (config.Battery.Zendure.AutoShutdown && !isDayPeriod && _stats->_state == State::Idle) {
         return;
     }
 
@@ -229,11 +229,11 @@ void Provider::loop()
             std::time_t sunset = 0;
 
             if (SunPosition.sunriseTime(&timeinfo_sun)) {
-                sunrise = std::mktime(&timeinfo_sun) + config.Battery.ZendureSunriseOffset * 60;
+                sunrise = std::mktime(&timeinfo_sun) + config.Battery.Zendure.SunriseOffset * 60;
             }
 
             if (SunPosition.sunsetTime(&timeinfo_sun)) {
-                sunset = std::mktime(&timeinfo_sun) + config.Battery.ZendureSunsetOffset * 60;
+                sunset = std::mktime(&timeinfo_sun) + config.Battery.Zendure.SunsetOffset * 60;
             }
 
             if (sunrise && sunset) {
@@ -247,11 +247,11 @@ void Provider::loop()
                 }
 
                 // running in appointment mode - set outputlimit accordingly
-                if (config.Battery.ZendureOutputControl == ZendureBatteryOutputControl::ControlSchedule) {
+                if (config.Battery.Zendure.OutputControl == BatteryZendureConfig::ZendureBatteryOutputControl::ControlSchedule) {
                     if (current >= sunrise && current < sunset) {
-                        setOutputLimit(min(config.Battery.ZendureMaxOutput, config.Battery.ZendureOutputLimitDay));
+                        setOutputLimit(min(config.Battery.Zendure.MaxOutput, config.Battery.Zendure.OutputLimitDay));
                     } else if (current >= sunset || current < sunrise) {
-                        setOutputLimit(min(config.Battery.ZendureMaxOutput, config.Battery.ZendureOutputLimitNight));
+                        setOutputLimit(min(config.Battery.Zendure.MaxOutput, config.Battery.Zendure.OutputLimitNight));
                     }
                 }
             }
@@ -260,13 +260,13 @@ void Provider::loop()
         }
 
         // ensure charge through settings
-        if (_stats->_charge_through_state.value_or(false) && config.Battery.ZendureChargeThroughEnable) {
-            setTargetSoCs(config.Battery.ZendureMinSoC, 100);
+        if (_stats->_charge_through_state.value_or(false) && config.Battery.Zendure.ChargeThroughEnable) {
+            setTargetSoCs(config.Battery.Zendure.MinSoC, 100);
             setOutputLimit(0);
         }else{
-            setTargetSoCs(config.Battery.ZendureMinSoC, config.Battery.ZendureMaxSoC);
-            if (config.Battery.ZendureOutputControl == ZendureBatteryOutputControl::ControlFixed) {
-                setOutputLimit(min(config.Battery.ZendureMaxOutput, config.Battery.ZendureOutputLimit));
+            setTargetSoCs(config.Battery.Zendure.MinSoC, config.Battery.Zendure.MaxSoC);
+            if (config.Battery.Zendure.OutputControl == BatteryZendureConfig::ZendureBatteryOutputControl::ControlFixed) {
+                setOutputLimit(min(config.Battery.Zendure.MaxOutput, config.Battery.Zendure.OutputLimit));
             }
         }
     }
@@ -292,7 +292,7 @@ void Provider::loop()
         timesync();
 
         // update settings (will be skipped if unchanged)
-        setInverterMax(config.Battery.ZendureMaxOutput);
+        setInverterMax(config.Battery.Zendure.MaxOutput);
 
         // republish settings - just to be sure
         if (!_topicWrite.isEmpty() && !_payloadSettings.isEmpty()) {
@@ -318,9 +318,9 @@ void Provider::calculateFullChargeAge()
 bool Provider::checkChargeThrough(uint32_t predictHours /* = 0 */)
 {
     auto const& config = Configuration.get();
-    if (config.Battery.ZendureChargeThroughEnable && (
+    if (config.Battery.Zendure.ChargeThroughEnable && (
         !_stats->_last_full_timestamp.has_value() ||
-        _stats->_last_full_charge_hours.value_or(0) + predictHours > config.Battery.ZendureChargeThroughInterval )
+        _stats->_last_full_charge_hours.value_or(0) + predictHours > config.Battery.Zendure.ChargeThroughInterval )
     ) {
         return setChargeThrough(true);
     }
@@ -361,10 +361,10 @@ uint16_t Provider::setOutputLimit(uint16_t limit) const
     }
 
     // force valid limit and ensure fixed output is always dominant
-    if (config.Battery.ZendureOutputControl == ZendureBatteryOutputControl::ControlFixed) {
-        limit = config.Battery.ZendureOutputLimit;
+    if (config.Battery.Zendure.OutputControl == BatteryZendureConfig::ZendureBatteryOutputControl::ControlFixed) {
+        limit = config.Battery.Zendure.OutputLimit;
     } else {
-        limit = min(config.Battery.ZendureMaxOutput, limit);
+        limit = min(config.Battery.Zendure.MaxOutput, limit);
     }
 
     // enforce output limit during charge through

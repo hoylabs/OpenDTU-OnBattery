@@ -252,7 +252,7 @@
                             <select
                                 id="zendure_device_type"
                                 class="form-select"
-                                v-model="batteryConfigList.zendure_device_type"
+                                v-model="batteryConfigList.zendure.device_type"
                             >
                                 <option v-for="u in zendureDeviceTypeList" :key="u.key" :value="u.key">
                                     {{ u.value }}
@@ -263,7 +263,7 @@
 
                     <InputElement
                         :label="$t('batteryadmin.ZendureDeviceId')"
-                        v-model="batteryConfigList.zendure_device_id"
+                        v-model="batteryConfigList.zendure.device_id"
                         type="text"
                         minlength="8"
                         maxlength="8"
@@ -272,7 +272,7 @@
 
                     <InputElement
                         :label="$t('batteryadmin.PollingInterval')"
-                        v-model="batteryConfigList.zendure_polling_interval"
+                        v-model="batteryConfigList.zendure.polling_interval"
                         type="number"
                         min="10"
                         max="120"
@@ -282,7 +282,7 @@
 
                     <InputElement
                         :label="$t('batteryadmin.ZendureMaxOutput')"
-                        v-model="batteryConfigList.zendure_max_output"
+                        v-model="batteryConfigList.zendure.max_output"
                         type="number"
                         min="100"
                         max="1200"
@@ -292,7 +292,7 @@
 
                     <InputElement
                         :label="$t('batteryadmin.ZendureMinSoc')"
-                        v-model="batteryConfigList.zendure_soc_min"
+                        v-model="batteryConfigList.zendure.soc_min"
                         type="number"
                         min="0"
                         max="60"
@@ -302,7 +302,7 @@
 
                     <InputElement
                         :label="$t('batteryadmin.ZendureMaxSoc')"
-                        v-model="batteryConfigList.zendure_soc_max"
+                        v-model="batteryConfigList.zendure.soc_max"
                         type="number"
                         min="40"
                         max="100"
@@ -318,7 +318,7 @@
                             <select
                                 id="zendure_bypass_mode"
                                 class="form-select"
-                                v-model="batteryConfigList.zendure_bypass_mode"
+                                v-model="batteryConfigList.zendure.bypass_mode"
                             >
                                 <option v-for="u in zendureBypassModeList" :key="u.key" :value="u.key">
                                     {{ $t(`batteryadmin.ZendureBypassMode` + u.value) }}
@@ -329,7 +329,7 @@
 
                     <InputElement
                         :label="$t('batteryadmin.ZendureAutoShutdown')"
-                        v-model="batteryConfigList.zendure_auto_shutdown"
+                        v-model="batteryConfigList.zendure.auto_shutdown"
                         type="checkbox"
                         :tooltip="$t('batteryadmin.ZendureAutoShutdownDescription')"
                     />
@@ -338,13 +338,13 @@
                 <CardElement :text="$t('batteryadmin.ZendureChargeThrough')" textVariant="text-bg-primary" addSpace>
                     <InputElement
                         :label="$t('batteryadmin.ZendureChargeThroughEnabled')"
-                        v-model="batteryConfigList.zendure_charge_through_enable"
+                        v-model="batteryConfigList.zendure.charge_through_enable"
                         type="checkbox"
                     />
-                    <template v-if="batteryConfigList.zendure_charge_through_enable">
+                    <template v-if="batteryConfigList.zendure.charge_through_enable">
                         <InputElement
                             :label="$t('batteryadmin.ZendureChargeThroughInterval')"
-                            v-model="batteryConfigList.zendure_charge_through_interval"
+                            v-model="batteryConfigList.zendure.charge_through_interval"
                             type="number"
                             min="0"
                             max="8766"
@@ -363,7 +363,7 @@
                             <select
                                 id="zendure_output_mode"
                                 class="form-select"
-                                v-model="batteryConfigList.zendure_output_control"
+                                v-model="batteryConfigList.zendure.output_control"
                             >
                                 <option v-for="u in zendureOutputControlList" :key="u.key" :value="u.key">
                                     {{ $t(`batteryadmin.ZendureOutputMode` + u.value) }}
@@ -372,10 +372,10 @@
                         </div>
                     </div>
 
-                    <template v-if="batteryConfigList.zendure_output_control == 1">
+                    <template v-if="batteryConfigList.zendure.output_control == 1">
                         <InputElement
                             :label="$t('batteryadmin.ZendureOutputLimit')"
-                            v-model="batteryConfigList.zendure_output_limit"
+                            v-model="batteryConfigList.zendure.output_limit"
                             type="number"
                             min="0"
                             max="1200"
@@ -384,10 +384,10 @@
                         />
                     </template>
 
-                    <template v-if="batteryConfigList.zendure_output_control == 2">
+                    <template v-if="batteryConfigList.zendure.output_control == 2">
                         <InputElement
                             :label="$t('batteryadmin.ZendureSunriseOffset')"
-                            v-model="batteryConfigList.zendure_sunrise_offset"
+                            v-model="batteryConfigList.zendure.sunrise_offset"
                             type="number"
                             min="-360"
                             max="360"
@@ -396,7 +396,7 @@
                         />
                         <InputElement
                             :label="$t('batteryadmin.ZendureOutputLimitDay')"
-                            v-model="batteryConfigList.zendure_output_limit_day"
+                            v-model="batteryConfigList.zendure.output_limit_day"
                             type="number"
                             min="0"
                             max="1200"
@@ -405,7 +405,7 @@
                         />
                         <InputElement
                             :label="$t('batteryadmin.ZendureSunsetOffset')"
-                            v-model="batteryConfigList.zendure_sunset_offset"
+                            v-model="batteryConfigList.zendure.sunset_offset"
                             type="number"
                             min="-360"
                             max="360"
@@ -414,7 +414,7 @@
                         />
                         <InputElement
                             :label="$t('batteryadmin.ZendureOutputLimitNight')"
-                            v-model="batteryConfigList.zendure_output_limit_night"
+                            v-model="batteryConfigList.zendure.output_limit_night"
                             type="number"
                             min="0"
                             max="1200"

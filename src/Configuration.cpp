@@ -138,22 +138,26 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["mqtt_discharge_current_topic"] = config.Battery.MqttDischargeCurrentTopic;
     target["mqtt_discharge_current_json_path"] = config.Battery.MqttDischargeCurrentJsonPath;
     target["mqtt_amperage_unit"] = config.Battery.MqttAmperageUnit;
-    target["zendure_device_type"] = config.Battery.ZendureDeviceType;
-    target["zendure_device_id"] = config.Battery.ZendureDeviceId;
-    target["zendure_polling_interval"] = config.Battery.ZendurePollingInterval;
-    target["zendure_soc_min"] = config.Battery.ZendureMinSoC;
-    target["zendure_soc_max"] = config.Battery.ZendureMaxSoC;
-    target["zendure_bypass_mode"] = config.Battery.ZendureBypassMode;
-    target["zendure_max_output"] = config.Battery.ZendureMaxOutput;
-    target["zendure_auto_shutdown"] = config.Battery.ZendureAutoShutdown;
-    target["zendure_output_limit"] = config.Battery.ZendureOutputLimit;
-    target["zendure_output_control"] = config.Battery.ZendureOutputControl;
-    target["zendure_output_limit_day"] = config.Battery.ZendureOutputLimitDay;
-    target["zendure_output_limit_night"] = config.Battery.ZendureOutputLimitNight;
-    target["zendure_sunrise_offset"] = config.Battery.ZendureSunriseOffset;
-    target["zendure_sunset_offset"] = config.Battery.ZendureSunsetOffset;
-    target["zendure_charge_through_enable"] = config.Battery.ZendureChargeThroughEnable;
-    target["zendure_charge_through_interval"] = config.Battery.ZendureChargeThroughInterval;
+}
+
+void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target)
+{
+    target["device_type"] = source.DeviceType;
+    target["device_id"] = source.DeviceId;
+    target["polling_interval"] = source.PollingInterval;
+    target["soc_min"] = source.MinSoC;
+    target["soc_max"] = source.MaxSoC;
+    target["bypass_mode"] = source.BypassMode;
+    target["max_output"] = source.MaxOutput;
+    target["auto_shutdown"] = source.AutoShutdown;
+    target["output_limit"] = source.OutputLimit;
+    target["output_control"] = source.OutputControl;
+    target["output_limit_day"] = source.OutputLimitDay;
+    target["output_limit_night"] = source.OutputLimitNight;
+    target["sunrise_offset"] = source.SunriseOffset;
+    target["sunset_offset"] = source.SunsetOffset;
+    target["charge_through_enable"] = source.ChargeThroughEnable;
+    target["charge_through_interval"] = source.ChargeThroughInterval;
 }
 
 void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target)
@@ -383,6 +387,9 @@ bool ConfigurationClass::write()
     JsonObject battery = doc["battery"].to<JsonObject>();
     serializeBatteryConfig(config.Battery, battery);
 
+    JsonObject battery_zendure = battery["zendure"].to<JsonObject>();
+    serializeBatteryZendureConfig(config.Battery.Zendure, battery_zendure);
+
     JsonObject huawei = doc["huawei"].to<JsonObject>();
     serializeGridChargerConfig(config.Huawei, huawei);
 
@@ -499,22 +506,26 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     strlcpy(target.MqttDischargeCurrentTopic, source["mqtt_discharge_current_topic"] | "", sizeof(config.Battery.MqttDischargeCurrentTopic));
     strlcpy(target.MqttDischargeCurrentJsonPath, source["mqtt_discharge_current_json_path"] | "", sizeof(config.Battery.MqttDischargeCurrentJsonPath));
     target.MqttAmperageUnit = source["mqtt_amperage_unit"] | BatteryAmperageUnit::Amps;
-    target.ZendureDeviceType = source["zendure_device_type"] | BATTERY_ZENDURE_DEVICE;
-    strlcpy(target.ZendureDeviceId, source["zendure_device_id"] | "", sizeof(config.Battery.ZendureDeviceId));
-    target.ZendurePollingInterval = source["zendure_polling_interval"] | BATTERY_ZENDURE_POLLING_INTERVAL;
-    target.ZendureMinSoC = source["zendure_soc_min"] | BATTERY_ZENDURE_MIN_SOC;
-    target.ZendureMaxSoC = source["zendure_soc_max"] | BATTERY_ZENDURE_MAX_SOC;
-    target.ZendureBypassMode = source["zendure_bypass_mode"] | BATTERY_ZENDURE_BYPASS_MODE;
-    target.ZendureMaxOutput = source["zendure_max_output"] | BATTERY_ZENDURE_MAX_OUTPUT;
-    target.ZendureAutoShutdown = source["zendure_auto_shutdown"] | BATTERY_ZENDURE_AUTO_SHUTDOWN;
-    target.ZendureOutputLimit = source["zendure_output_limit"] | BATTERY_ZENDURE_OUTPUT_LIMIT;
-    target.ZendureOutputControl = source["zendure_output_control"] | ZendureBatteryOutputControl::ControlNone;
-    target.ZendureOutputLimitDay = source["zendure_output_limit_day"] | BATTERY_ZENDURE_OUTPUT_LIMIT_DAY;
-    target.ZendureOutputLimitNight = source["zendure_output_limit_night"] | BATTERY_ZENDURE_OUTPUT_LIMIT_NIGHT;
-    target.ZendureSunriseOffset = source["zendure_sunrise_offset"] | BATTERY_ZENDURE_SUNRISE_OFFSET;
-    target.ZendureSunsetOffset = source["zendure_sunset_offset"] | BATTERY_ZENDURE_SUNSET_OFFSET;
-    target.ZendureChargeThroughEnable = source["zendure_charge_through_enable"] | BATTERY_ZENDURE_CHARGE_THROUGH_ENABLE;
-    target.ZendureChargeThroughInterval = source["zendure_charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
+}
+
+void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target)
+{
+    target.DeviceType = source["device_type"] | BATTERY_ZENDURE_DEVICE;
+    strlcpy(target.DeviceId, source["device_id"] | "", sizeof(target.DeviceId));
+    target.PollingInterval = source["polling_interval"] | BATTERY_ZENDURE_POLLING_INTERVAL;
+    target.MinSoC = source["soc_min"] | BATTERY_ZENDURE_MIN_SOC;
+    target.MaxSoC = source["soc_max"] | BATTERY_ZENDURE_MAX_SOC;
+    target.BypassMode = source["bypass_mode"] | BATTERY_ZENDURE_BYPASS_MODE;
+    target.MaxOutput = source["max_output"] | BATTERY_ZENDURE_MAX_OUTPUT;
+    target.AutoShutdown = source["auto_shutdown"] | BATTERY_ZENDURE_AUTO_SHUTDOWN;
+    target.OutputLimit = source["output_limit"] | BATTERY_ZENDURE_OUTPUT_LIMIT;
+    target.OutputControl = source["output_control"] | BatteryZendureConfig::ZendureBatteryOutputControl::ControlNone;
+    target.OutputLimitDay = source["output_limit_day"] | BATTERY_ZENDURE_OUTPUT_LIMIT_DAY;
+    target.OutputLimitNight = source["output_limit_night"] | BATTERY_ZENDURE_OUTPUT_LIMIT_NIGHT;
+    target.SunriseOffset = source["sunrise_offset"] | BATTERY_ZENDURE_SUNRISE_OFFSET;
+    target.SunsetOffset = source["sunset_offset"] | BATTERY_ZENDURE_SUNSET_OFFSET;
+    target.ChargeThroughEnable = source["charge_through_enable"] | BATTERY_ZENDURE_CHARGE_THROUGH_ENABLE;
+    target.ChargeThroughInterval = source["charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
 }
 
 void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target)
@@ -767,16 +778,15 @@ bool ConfigurationClass::read()
     config.PowerMeter.Source =  powermeter["source"] | POWERMETER_SOURCE;
 
     deserializePowerMeterMqttConfig(powermeter["mqtt"], config.PowerMeter.Mqtt);
-
     deserializePowerMeterSerialSdmConfig(powermeter["serial_sdm"], config.PowerMeter.SerialSdm);
-
     deserializePowerMeterHttpJsonConfig(powermeter["http_json"], config.PowerMeter.HttpJson);
-
     deserializePowerMeterHttpSmlConfig(powermeter["http_sml"], config.PowerMeter.HttpSml);
 
     deserializePowerLimiterConfig(doc["powerlimiter"], config.PowerLimiter);
 
-    deserializeBatteryConfig(doc["battery"], config.Battery);
+    JsonObject battery = doc["battery"];
+    deserializeBatteryConfig(battery, config.Battery);
+    deserializeBatteryZendureConfig(battery["zendure"], config.Battery.Zendure);
 
     deserializeGridChargerConfig(doc["huawei"], config.Huawei);
 
