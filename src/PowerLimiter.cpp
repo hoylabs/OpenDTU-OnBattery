@@ -558,12 +558,7 @@ uint16_t PowerLimiterClass::calcTargetOutput()
         // inverters in standby report 0 W output, so we can iterate them.
         if (PowerLimiterInverter::Eligibility::Eligible != upInv->isEligible()) { continue; }
 
-        auto invOutput = upInv->getCurrentOutputAcWatts();
-        currentTotalOutput += invOutput;
-        if (_verboseLogging) {
-            MessageOutput.printf("[DPL] inverter %s is producing %u W\r\n",
-                    upInv->getSerialStr(), invOutput);
-        }
+        currentTotalOutput += upInv->getCurrentOutputAcWatts();
     }
 
     // this value is negative if we are exporting more than "targetConsumption"

@@ -336,7 +336,7 @@ void PowerLimiterInverter::debug() const
 
     MessageOutput.printf(
         "%s\r\n"
-        "    %s-powered, %s %d W\r\n"
+        "    %s-powered, %s %d W, output %s power meter reading\r\n"
         "    lower/current/upper limit: %d/%d/%d W, output capability: %d W\r\n"
         "    sending commands %s, %s, %s\r\n"
         "    max reduction production/standby: %d/%d W, max increase: %d W\r\n"
@@ -344,6 +344,7 @@ void PowerLimiterInverter::debug() const
         _logPrefix,
         (isSmartBufferPowered()?"smart-buffer":(isSolarPowered()?"solar":"battery")),
         (isProducing()?"producing":"standing by at"), getCurrentOutputAcWatts(),
+        (isBehindPowerMeter()?"included in":"excluded from"),
         _config.LowerPowerLimit, getCurrentLimitWatts(), _config.UpperPowerLimit,
         getInverterMaxPowerWatts(),
         (isSendingCommandsEnabled()?"enabled":"disabled"),
