@@ -15,6 +15,12 @@ public:
     // state is NOT yet reached, false otherwise.
     bool update();
 
+    // retire an inverter from the DPL. the inverter will have it's standby()
+    // function (different outcome for different types of inverters) called
+    // once. afterwards this method returns true as long as the target state
+    // is pending.
+    bool retire();
+
     // returns the timestamp of the oldest stats received for this inverter
     // *after* its last command completed. return std::nullopt if new stats
     // are pending after the last command completed.
@@ -109,6 +115,8 @@ protected:
 
 private:
     virtual void setAcOutput(uint16_t expectedOutputWatts) = 0;
+
+    bool _retired = false; // true if to be abandoned by DPL
 
     char _serialStr[16];
 

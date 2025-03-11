@@ -89,48 +89,25 @@ void PowerLimiterClass::announceStatus(PowerLimiterClass::Status status)
     _lastStatusPrinted = millis();
 }
 
-/**
- * NOTE: this method relies on being called regularly, i.e., as part of the
- * loop(), and that it is called *after* updateInverters().
- */
-bool PowerLimiterClass::isDisabled()
-{
-    auto const& config = Configuration.get();
-
-    if (!config.PowerLimiter.Enabled) {
-        announceStatus(Status::DisabledByConfig);
-    }
-    else if (Mode::Disabled == _mode) {
-        announceStatus(Status::DisabledByMqtt);
-    }
-    else {
-        _shutdownComplete = false;
-        return false;
-    }
-
-    // we only shut down governed inverters once when the DPL is disabled by
-    // configuration or by the MQTT mode setting. afterwards, we leave the
-    // inverter(s) alone so they can be managed through other means.
-    if (_shutdownComplete) { return true; }
-
-    for (auto& upInv : _inverters) { upInv->standby(); }
-
-    // we triggered the shutdown, and we won't trigger it again until the DPL
-    // enabled and disabled again. we rely that updateInverters() is called
-    // in the DPL loop(), applying the standby limit and power state.
-    _shutdownComplete = true;
-
-    return true;
-}
-
 void PowerLimiterClass::reloadConfig()
 {
     auto const& config = Configuration.get();
 
     _verboseLogging = config.PowerLimiter.VerboseLogging;
 
-    // clean up all inverter instances. put inverters into
-    // standby if they will not be governed any more.
+    if (!config.PowerLimiter.Enabled || Mode::Disabled == _mode) {
+        _retirees.insert(
+            _retirees.end(),
+            std::make_move_iterator(_inverters.begin()),
+            std::make_move_iterator(_inverters.end())
+        );
+
+        _inverters.clear();
+
+        _reloadConfigFlag = false;
+        return;
+    }
+
     auto iter = _inverters.begin();
     while (iter != _inverters.end()) {
         bool stillGoverned = false;
@@ -143,8 +120,7 @@ void PowerLimiterClass::reloadConfig()
         }
 
         if (!stillGoverned) {
-            (*iter)->standby();
-            if ((*iter)->update()) { return; }
+            _retirees.push_back(std::move(*iter));
         }
 
         iter = _inverters.erase(iter);
@@ -184,11 +160,17 @@ void PowerLimiterClass::loop()
         return announceStatus(Status::InverterCmdPending);
     }
 
-    if (isDisabled()) { return; }
-
     if (_reloadConfigFlag) {
         reloadConfig();
         return announceStatus(Status::ConfigReload);
+    }
+
+    if (!config.PowerLimiter.Enabled) {
+        return announceStatus(Status::DisabledByConfig);
+    }
+
+    if (Mode::Disabled == _mode) {
+        return announceStatus(Status::DisabledByMqtt);
     }
 
     if (_inverters.empty()) {
@@ -709,6 +691,17 @@ bool PowerLimiterClass::updateInverters()
 
     for (auto& upInv : _inverters) {
         if (upInv->update()) { busy = true; }
+    }
+
+    auto iter = _retirees.begin();
+    while (iter != _retirees.end()) {
+        if ((*iter)->retire()) {
+            busy = true;
+            ++iter;
+            continue;
+        }
+
+        iter = _retirees.erase(iter);
     }
 
     return busy;

@@ -230,6 +230,13 @@ bool PowerLimiterInverter::update()
     return reset();
 }
 
+bool PowerLimiterInverter::retire()
+{
+    if (!_retired) { standby(); }
+    _retired = true;
+    return update();
+}
+
 std::optional<uint32_t> PowerLimiterInverter::getLatestStatsMillis() const
 {
     uint32_t now = millis();
