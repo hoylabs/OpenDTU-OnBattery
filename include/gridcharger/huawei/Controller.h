@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ArduinoJson.h>
 #include <TaskSchedulerDeclarations.h>
 #include <gridcharger/huawei/HardwareInterface.h>
@@ -37,6 +38,7 @@ public:
 private:
     void loop();
     void _setParameter(float val, HardwareInterface::Setting setting);
+    void _setProduction(bool enable);
 
     // these control the pin named "power", which in turn is supposed to control
     // a relay (or similar) to enable or disable the PSU using it's slot detect
@@ -49,6 +51,7 @@ private:
     std::unique_ptr<HardwareInterface> _upHardwareInterface;
 
     std::mutex _mutex;
+    std::optional<bool> _oOutputEnabled;
     uint8_t _mode = HUAWEI_MODE_AUTO_EXT;
 
     DataPointContainer _dataPoints;
