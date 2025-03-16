@@ -37,14 +37,24 @@ void Controller::init(Scheduler& scheduler)
 
 void Controller::enableOutput()
 {
+    if (_oOutputEnabled.value_or(false)) { return; }
+
+    _setProduction(true);
     if (_huaweiPower <= GPIO_NUM_NC) { return; }
     digitalWrite(_huaweiPower, 0);
+
+    _oOutputEnabled = true;
 }
 
 void Controller::disableOutput()
 {
+    if (!_oOutputEnabled.value_or(true)) { return; }
+
+    _setProduction(false);
     if (_huaweiPower <= GPIO_NUM_NC) { return; }
     digitalWrite(_huaweiPower, 1);
+
+    _oOutputEnabled = false;
 }
 
 void Controller::updateSettings()
@@ -296,14 +306,18 @@ void Controller::setFan(bool online, bool fullSpeed)
     _upHardwareInterface->setParameter(setting, fullSpeed ? 1 : 0);
 }
 
+void Controller::_setProduction(bool enable)
+{
+    auto setting = HardwareInterface::Setting::ProductionDisable;
+    _upHardwareInterface->setParameter(setting, enable ? 0 : 1);
+}
+
 void Controller::setProduction(bool enable)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
     if (!_upHardwareInterface) { return; }
-
-    auto setting = HardwareInterface::Setting::ProductionDisable;
-    _upHardwareInterface->setParameter(setting, enable ? 0 : 1);
+    _setProduction(enable);
 }
 
 void Controller::setParameter(float val, HardwareInterface::Setting setting)
