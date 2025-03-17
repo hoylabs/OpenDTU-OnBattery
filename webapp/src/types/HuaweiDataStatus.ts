@@ -2,7 +2,7 @@ import type { ValueObject } from '@/types/LiveDataStatus';
 
 // Huawei
 export interface Huawei {
-    data_age: 0;
+    data_age: number;
     input_voltage: ValueObject;
     input_current: ValueObject;
     input_power: ValueObject;

@@ -29,7 +29,7 @@
                                 <div v-if="huaweiData.serial" style="padding-right: 2em">
                                     {{ $t('huawei.SerialNumber') }}: {{ huaweiData.serial }}
                                 </div>
-                                <DataAgeDisplay :data-age-ms="huaweiData.data_age * 1000" />
+                                <DataAgeDisplay :data-age-ms="huaweiData.data_age" />
                             </div>
                         </div>
                         <div class="btn-toolbar p-2" role="toolbar">
@@ -470,7 +470,7 @@ export default defineComponent({
         initDataAgeing() {
             this.dataAgeInterval = setInterval(() => {
                 if (this.huaweiData) {
-                    this.huaweiData.data_age++;
+                    this.huaweiData.data_age += 1000;
                 }
             }, 1000);
         },
