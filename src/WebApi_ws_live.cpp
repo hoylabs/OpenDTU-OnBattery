@@ -122,9 +122,8 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
         if (config.Huawei.Enabled) {
             auto const& dataPoints = HuaweiCan.getDataPoints();
             auto oInputPower = dataPoints.get<GridCharger::Huawei::DataPointLabel::InputPower>();
-            if (oInputPower) {
-                addTotalField(huaweiObj, "Power", *oInputPower, "W", 2);
-            }
+            float pwr = oInputPower.value_or(0.0f);
+            addTotalField(huaweiObj, "Power", pwr, "W", 2);
         }
 
         if (!all) { _lastPublishHuawei = millis(); }
