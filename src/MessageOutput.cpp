@@ -103,17 +103,11 @@ void MessageOutputClass::loop()
         ++map_iter;
     }
 
-    if (!_ws) {
-        while (!_lines.empty()) {
-            Syslog.write(_lines.front().data(), _lines.front().size());
-            _lines.pop(); // do not hog memory
-        }
-        return;
-    }
-
-    while (!_lines.empty() && _ws->availableForWriteAll()) {
+    while (!_lines.empty()) {
         Syslog.write(_lines.front().data(), _lines.front().size());
-        _ws->textAll(std::make_shared<message_t>(std::move(_lines.front())));
+        if (_ws && _ws->availableForWriteAll()) {
+            _ws->textAll(std::make_shared<message_t>(std::move(_lines.front())));
+        }
         _lines.pop();
     }
 }
