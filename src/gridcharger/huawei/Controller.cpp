@@ -424,30 +424,20 @@ void Controller::getJsonData(JsonVariant& root) const
 #define VAL(l, n) \
     { \
         auto oVal = _dataPoints.get<Label::l>(); \
-        if (oVal) { \
-            root[n] = *oVal; \
-        } \
+        if (oVal) { root[n] = *oVal; } \
     }
 
-    VAL(Row, "row");
-    VAL(Slot, "slot");
-    VAL(ProductionEnabled, "production_enabled");
-    VAL(FanOnlineFullSpeed, "fan_online_full_speed");
+    VAL(Row,                 "row");
+    VAL(Slot,                "slot");
+    VAL(ProductionEnabled,   "production_enabled");
+    VAL(FanOnlineFullSpeed,  "fan_online_full_speed");
     VAL(FanOfflineFullSpeed, "fan_offline_full_speed");
-#undef VAL
-
-#define VAL(l, n) \
-    { \
-        auto oText = _dataPoints.get<Label::l>(); \
-        if (oText) { root[n] = *oText; } \
-    }
-
-    VAL(BoardType,          "board_type");
-    VAL(Serial,             "serial");
-    VAL(Manufactured,       "manufactured");
-    VAL(VendorName,         "vendor_name");
-    VAL(ProductName,        "product_name");
-    VAL(ProductDescription, "product_description");
+    VAL(BoardType,           "board_type");
+    VAL(Serial,              "serial");
+    VAL(Manufactured,        "manufactured");
+    VAL(VendorName,          "vendor_name");
+    VAL(ProductName,         "product_name");
+    VAL(ProductDescription,  "product_description");
 #undef VAL
 }
 
