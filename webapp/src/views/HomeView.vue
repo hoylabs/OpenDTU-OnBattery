@@ -106,11 +106,7 @@
                                         >{{ $n(inverter.limit_relative / 100, 'percentOneDigit') }}
                                     </div>
                                     <div style="padding-right: 2em">
-                                        {{ $t('home.DataAge') }}
-                                        {{ $t('home.Seconds', { val: $n(Math.floor(inverter.data_age_ms / 1000)) }) }}
-                                        <template v-if="inverter.data_age_ms > 300000">
-                                            / {{ calculateAbsoluteTime(inverter.data_age_ms) }}
-                                        </template>
+                                        <DataAgeDisplay :data-age-ms="inverter.data_age_ms" />
                                     </div>
                                 </div>
                             </div>
@@ -534,6 +530,7 @@ import type { LimitStatus } from '@/types/LimitStatus';
 import type { Inverter, LiveData } from '@/types/LiveDataStatus';
 import { authHeader, authUrl, handleResponse, isLoggedIn } from '@/utils/authentication';
 import * as bootstrap from 'bootstrap';
+import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
 import {
     BIconArrowCounterclockwise,
     BIconBroadcast,
@@ -572,6 +569,7 @@ export default defineComponent({
         SolarChargerView,
         HuaweiView,
         BatteryView,
+        DataAgeDisplay,
     },
     data() {
         return {
@@ -970,10 +968,6 @@ export default defineComponent({
                         this.showAlertPower = true;
                     }
                 });
-        },
-        calculateAbsoluteTime(lastTime: number): string {
-            const date = new Date(Date.now() - lastTime);
-            return this.$d(date, 'datetime');
         },
         getSumIrridiation(inv: Inverter): number {
             let total = 0;

@@ -359,7 +359,7 @@ void PowerLimiterClass::loop()
         for (auto const &upInv : _inverters) { upInv->debug(); }
     }
 
-    _lastExpectedInverterOutput = coveredBySolar + coveredByBattery;
+    _lastExpectedInverterOutput = coveredBySolar + coveredBySmartBuffer + coveredByBattery;
 
     bool limitUpdated = updateInverters();
 
