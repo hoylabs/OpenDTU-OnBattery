@@ -108,42 +108,42 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr>
+                                                <tr v-if="huaweiData.input_voltage !== undefined">
                                                     <th scope="row">{{ $t('huawei.input_voltage') }}</th>
                                                     <td class="value">
                                                         {{ formatNumber(huaweiData.input_voltage.v) }}
                                                     </td>
                                                     <td>{{ huaweiData.input_voltage.u }}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr v-if="huaweiData.input_current !== undefined">
                                                     <th scope="row">{{ $t('huawei.input_current') }}</th>
                                                     <td class="value">
                                                         {{ formatNumber(huaweiData.input_current.v) }}
                                                     </td>
                                                     <td>{{ huaweiData.input_current.u }}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr v-if="huaweiData.input_power !== undefined">
                                                     <th scope="row">{{ $t('huawei.input_power') }}</th>
                                                     <td class="value">
                                                         {{ formatNumber(huaweiData.input_power.v) }}
                                                     </td>
                                                     <td>{{ huaweiData.input_power.u }}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr v-if="huaweiData.input_temp !== undefined">
                                                     <th scope="row">{{ $t('huawei.input_temp') }}</th>
                                                     <td class="value">
                                                         {{ Math.round(huaweiData.input_temp.v) }}
                                                     </td>
                                                     <td>{{ huaweiData.input_temp.u }}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr v-if="huaweiData.input_frequency !== undefined">
                                                     <th scope="row">{{ $t('huawei.input_frequency') }}</th>
                                                     <td class="value">
                                                         {{ formatNumber(huaweiData.input_frequency.v) }}
                                                     </td>
                                                     <td>{{ huaweiData.input_frequency.u }}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr v-if="huaweiData.efficiency !== undefined">
                                                     <th scope="row">{{ $t('huawei.efficiency') }}</th>
                                                     <td class="value">
                                                         {{ huaweiData.efficiency.v.toFixed(1) }}
@@ -170,35 +170,35 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr>
+                                                <tr v-if="huaweiData.output_voltage !== undefined">
                                                     <th scope="row">{{ $t('huawei.output_voltage') }}</th>
                                                     <td class="value">
                                                         {{ huaweiData.output_voltage.v.toFixed(1) }}
                                                     </td>
                                                     <td>{{ huaweiData.output_voltage.u }}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr v-if="huaweiData.output_current !== undefined">
                                                     <th scope="row">{{ $t('huawei.output_current') }}</th>
                                                     <td class="value">
                                                         {{ huaweiData.output_current.v.toFixed(2) }}
                                                     </td>
                                                     <td>{{ huaweiData.output_current.u }}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr v-if="huaweiData.max_output_current !== undefined">
                                                     <th scope="row">{{ $t('huawei.max_output_current') }}</th>
                                                     <td class="value">
                                                         {{ huaweiData.max_output_current.v.toFixed(1) }}
                                                     </td>
                                                     <td>{{ huaweiData.max_output_current.u }}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr v-if="huaweiData.output_power !== undefined">
                                                     <th scope="row">{{ $t('huawei.output_power') }}</th>
                                                     <td class="value">
                                                         {{ huaweiData.output_power.v.toFixed(1) }}
                                                     </td>
                                                     <td>{{ huaweiData.output_power.u }}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr v-if="huaweiData.output_temp !== undefined">
                                                     <th scope="row">{{ $t('huawei.output_temp') }}</th>
                                                     <td class="value">
                                                         {{ Math.round(huaweiData.output_temp.v) }}
@@ -223,27 +223,27 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr v-if="huaweiData.online_voltage">
+                                            <tr v-if="huaweiData.online_voltage !== undefined">
                                                 <th scope="row">{{ $t('huawei.OnlineVoltage') }}</th>
                                                 <td class="value">{{ huaweiData.online_voltage.v.toFixed(2) }}</td>
                                                 <td>{{ huaweiData.online_voltage.u }}</td>
                                             </tr>
-                                            <tr v-if="huaweiData.offline_voltage">
+                                            <tr v-if="huaweiData.offline_voltage !== undefined">
                                                 <th scope="row">{{ $t('huawei.OfflineVoltage') }}</th>
                                                 <td class="value">{{ huaweiData.offline_voltage.v.toFixed(2) }}</td>
                                                 <td>{{ huaweiData.offline_voltage.u }}</td>
                                             </tr>
-                                            <tr v-if="huaweiData.online_current">
+                                            <tr v-if="huaweiData.online_current !== undefined">
                                                 <th scope="row">{{ $t('huawei.OnlineCurrent') }}</th>
                                                 <td class="value">{{ huaweiData.online_current.v.toFixed(2) }}</td>
                                                 <td>{{ huaweiData.online_current.u }}</td>
                                             </tr>
-                                            <tr v-if="huaweiData.offline_current">
+                                            <tr v-if="huaweiData.offline_current !== undefined">
                                                 <th scope="row">{{ $t('huawei.OfflineCurrent') }}</th>
                                                 <td class="value">{{ huaweiData.offline_current.v.toFixed(2) }}</td>
                                                 <td>{{ huaweiData.offline_current.u }}</td>
                                             </tr>
-                                            <tr v-if="huaweiData.input_current_limit">
+                                            <tr v-if="huaweiData.input_current_limit !== undefined">
                                                 <th scope="row">{{ $t('huawei.InputCurrentLimit') }}</th>
                                                 <td class="value">{{ huaweiData.input_current_limit.v.toFixed(2) }}</td>
                                                 <td>{{ huaweiData.input_current_limit.u }}</td>
