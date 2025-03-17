@@ -391,7 +391,7 @@ void Controller::setMode(uint8_t mode) {
 
 void Controller::getJsonData(JsonVariant& root) const
 {
-    root["data_age"] = (millis() - _dataPoints.getLastUpdate()) / 1000;
+    root["data_age"] = millis() - _dataPoints.getLastUpdate();
 
     using Label = GridCharger::Huawei::DataPointLabel;
 #define VAL(l, n) \
