@@ -118,6 +118,12 @@ void ConfigurationClass::serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfi
     serializeHttpRequestConfig(source.HttpRequest, target);
 }
 
+void ConfigurationClass::serializePowerMeterUdpVictronConfig(PowerMeterUdpVictronConfig const& source, JsonObject& target)
+{
+    target["polling_interval_ms"] = source.PollingIntervalMs;
+    target["ip_address"] = IPAddress(source.IpAddress).toString();
+}
+
 void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, JsonObject& target)
 {
     target["enabled"] = config.Battery.Enabled;
@@ -361,6 +367,9 @@ bool ConfigurationClass::write()
     JsonObject powermeter_http_sml = powermeter["http_sml"].to<JsonObject>();
     serializePowerMeterHttpSmlConfig(config.PowerMeter.HttpSml, powermeter_http_sml);
 
+    JsonObject powermeter_udp_victron = powermeter["udp_victron"].to<JsonObject>();
+    serializePowerMeterUdpVictronConfig(config.PowerMeter.UdpVictron, powermeter_udp_victron);
+
     JsonObject powerlimiter = doc["powerlimiter"].to<JsonObject>();
     serializePowerLimiterConfig(config.PowerLimiter, powerlimiter);
 
@@ -461,6 +470,17 @@ void ConfigurationClass::deserializePowerMeterHttpSmlConfig(JsonObject const& so
 {
     target.PollingInterval = source["polling_interval"] | POWERMETER_POLLING_INTERVAL;
     deserializeHttpRequestConfig(source["http_request"], target.HttpRequest);
+}
+
+void ConfigurationClass::deserializePowerMeterUdpVictronConfig(JsonObject const& source, PowerMeterUdpVictronConfig& target)
+{
+    target.PollingIntervalMs = source["polling_interval_ms"] | POWERMETER_POLLING_INTERVAL * 1000;
+    IPAddress ip;
+    ip.fromString(source["ip_address"] | "");
+    target.IpAddress[0] = ip[0];
+    target.IpAddress[1] = ip[1];
+    target.IpAddress[2] = ip[2];
+    target.IpAddress[3] = ip[3];
 }
 
 void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target)
@@ -741,6 +761,8 @@ bool ConfigurationClass::read()
     deserializePowerMeterHttpJsonConfig(powermeter["http_json"], config.PowerMeter.HttpJson);
 
     deserializePowerMeterHttpSmlConfig(powermeter["http_sml"], config.PowerMeter.HttpSml);
+
+    deserializePowerMeterUdpVictronConfig(powermeter["udp_victron"], config.PowerMeter.UdpVictron);
 
     deserializePowerLimiterConfig(doc["powerlimiter"], config.PowerLimiter);
 
