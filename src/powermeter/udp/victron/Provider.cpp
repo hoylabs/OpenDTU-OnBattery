@@ -174,6 +174,8 @@ void Provider::parseModbusResponse()
 
     using Label = ::PowerMeters::DataPointLabel;
 
+    auto scopedLock = _dataCurrent.lock();
+
     p += 2; // skip register 0x3032 (AC frequency)
     p += 2; // skip register 0x3033 (PEN voltage)
 
