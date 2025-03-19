@@ -7,6 +7,7 @@
 #include <powermeter/sml/http/Provider.h>
 #include <powermeter/sml/serial/Provider.h>
 #include <powermeter/udp/smahm/Provider.h>
+#include <powermeter/udp/victron/Provider.h>
 
 PowerMeters::Controller PowerMeter;
 
@@ -55,6 +56,9 @@ void Controller::updateSettings()
             break;
         case Provider::Type::HTTP_SML:
             _upProvider = std::make_unique<::PowerMeters::Sml::Http::Provider>(pmcfg.HttpSml);
+            break;
+        case Provider::Type::UDP_VICTRON:
+            _upProvider = std::make_unique<::PowerMeters::Udp::Victron::Provider>(pmcfg.UdpVictron);
             break;
     }
 

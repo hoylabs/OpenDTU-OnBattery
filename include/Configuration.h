@@ -132,6 +132,12 @@ struct POWERMETER_HTTP_SML_CONFIG_T {
 };
 using PowerMeterHttpSmlConfig = struct POWERMETER_HTTP_SML_CONFIG_T;
 
+struct POWERMETER_UDP_VICTRON_CONFIG_T {
+    uint16_t PollingIntervalMs;
+    uint8_t IpAddress[4];
+};
+using PowerMeterUdpVictronConfig = struct POWERMETER_UDP_VICTRON_CONFIG_T;
+
 struct POWERLIMITER_INVERTER_CONFIG_T {
     uint64_t Serial;
     bool IsGoverned;
@@ -369,6 +375,7 @@ struct CONFIG_T {
         PowerMeterSerialSdmConfig SerialSdm;
         PowerMeterHttpJsonConfig HttpJson;
         PowerMeterHttpSmlConfig HttpSml;
+        PowerMeterUdpVictronConfig UdpVictron;
     } PowerMeter;
 
     PowerLimiterConfig PowerLimiter;
@@ -413,6 +420,7 @@ public:
     static void serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target);
+    static void serializePowerMeterUdpVictronConfig(PowerMeterUdpVictronConfig const& source, JsonObject& target);
     static void serializeBatteryConfig(BatteryConfig const& source, JsonObject& target);
     static void serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target);
     static void serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target);
@@ -424,6 +432,7 @@ public:
     static void deserializePowerMeterSerialSdmConfig(JsonObject const& source, PowerMeterSerialSdmConfig& target);
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);
     static void deserializePowerMeterHttpSmlConfig(JsonObject const& source, PowerMeterHttpSmlConfig& target);
+    static void deserializePowerMeterUdpVictronConfig(JsonObject const& source, PowerMeterUdpVictronConfig& target);
     static void deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target);
     static void deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target);
     static void deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target);

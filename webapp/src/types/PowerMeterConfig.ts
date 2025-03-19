@@ -35,6 +35,11 @@ export interface PowerMeterHttpSmlConfig {
     http_request: HttpRequestConfig;
 }
 
+export interface PowerMeterUdpVictronConfig {
+    polling_interval_ms: number;
+    ip_address: string;
+}
+
 export interface PowerMeterConfig {
     enabled: boolean;
     verbose_logging: boolean;
@@ -44,4 +49,5 @@ export interface PowerMeterConfig {
     serial_sdm: PowerMeterSerialSdmConfig;
     http_json: PowerMeterHttpJsonConfig;
     http_sml: PowerMeterHttpSmlConfig;
+    udp_victron: PowerMeterUdpVictronConfig;
 }

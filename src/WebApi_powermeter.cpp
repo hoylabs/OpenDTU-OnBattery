@@ -54,6 +54,9 @@ void WebApiPowerMeterClass::onStatus(AsyncWebServerRequest* request)
     auto httpSml = root["http_sml"].to<JsonObject>();
     Configuration.serializePowerMeterHttpSmlConfig(config.PowerMeter.HttpSml, httpSml);
 
+    auto udpVictron = root["udp_victron"].to<JsonObject>();
+    Configuration.serializePowerMeterUdpVictronConfig(config.PowerMeter.UdpVictron, udpVictron);
+
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
@@ -149,6 +152,25 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
         }
     }
 
+    if (static_cast<::PowerMeters::Provider::Type>(root["source"].as<uint8_t>()) == ::PowerMeters::Provider::Type::UDP_VICTRON) {
+        JsonObject udpVictron = root["udp_victron"];
+        if (!udpVictron["ip_address"].is<String>()
+                || udpVictron["ip_address"].as<String>().length() == 0) {
+            retMsg["message"] = "IP address must not be empty!";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        if (!udpVictron["polling_interval_ms"].is<uint32_t>()
+                || udpVictron["polling_interval_ms"].as<uint32_t>() <= 0) {
+            retMsg["message"] = "Polling interval must be greater than 0 ms!";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+    }
+
     {
         auto guard = Configuration.getWriteGuard();
         auto& config = guard.getConfig();
@@ -167,6 +189,9 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
 
         Configuration.deserializePowerMeterHttpSmlConfig(root["http_sml"].as<JsonObject>(),
                 config.PowerMeter.HttpSml);
+
+        Configuration.deserializePowerMeterUdpVictronConfig(root["udp_victron"].as<JsonObject>(),
+                config.PowerMeter.UdpVictron);
     }
 
     WebApi.writeConfig(retMsg);

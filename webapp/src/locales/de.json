@@ -633,11 +633,13 @@
         "typeSML": "SML/OBIS via serieller Verbindung (z.B. Hichi TTL)",
         "typeSMAHM2": "SMA Homemanager 2.0",
         "typeHTTP_SML": "HTTP(S) + SML (z.B. Tibber Pulse via Tibber Bridge)",
+        "typeUDP_VICTRON": "Victron VM-3P75CT (Modbus UDP)",
         "MqttValue": "Konfiguration Wert {valueNumber}",
         "MqttTopic": "MQTT Topic",
         "mqttJsonPath": "Optional: JSON-Pfad",
         "SDM": "SDM-Stromzähler Konfiguration",
         "sdmaddress": "Modbus Adresse",
+        "ipAddress": "IP-Adresse",
         "HTTP_JSON": "HTTP(S) + JSON - Allgemeine Konfiguration",
         "httpIndividualRequests": "Individuelle HTTP(S) Anfragen pro Wert",
         "urlExamplesHeading": "Beispiele für URLs",
@@ -654,7 +656,8 @@
         "testHttpJsonRequest": "HTTP(S)-Anfrage(n) senden und Antwort(en) verarbeiten",
         "testHttpSmlHeader": "Konfiguration testen",
         "testHttpSmlRequest": "HTTP(S)-Anfrage senden und Antwort verarbeiten",
-        "HTTP_SML": "HTTP(S) + SML - Konfiguration"
+        "HTTP_SML": "HTTP(S) + SML - Konfiguration",
+        "UDP_VICTRON": "Victron VM-3P75CT (Modbus UDP) - Konfiguration"
     },
     "httprequestsettings": {
         "url": "URL",
