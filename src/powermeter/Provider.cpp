@@ -12,27 +12,11 @@ bool Provider::isDataValid() const
 float Provider::getPowerTotal() const
 {
     auto oPowerTotal = _dataCurrent.get<DataPointLabel::PowerTotal>();
+    if (oPowerTotal) { return *oPowerTotal; }
 
-    if (oPowerTotal) {
-        return *oPowerTotal;
-    }
-
-    auto powerTotal = 0.0;
-
-#define ADD(l) \
-    { \
-        auto oDataPoint = _dataCurrent.get<DataPointLabel::l>(); \
-        if (oDataPoint) { \
-            powerTotal += *oDataPoint; \
-        } \
-    }
-
-    ADD(PowerL1);
-    ADD(PowerL2);
-    ADD(PowerL3);
-#undef ADD
-
-    return powerTotal;
+    return _dataCurrent.get<DataPointLabel::PowerL1>().value_or(0.0f)
+        + _dataCurrent.get<DataPointLabel::PowerL2>().value_or(0.0f)
+        + _dataCurrent.get<DataPointLabel::PowerL3>().value_or(0.0f);
 }
 
 void Provider::mqttLoop() const
