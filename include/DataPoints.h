@@ -62,6 +62,7 @@ class DataPointContainer {
 
         template<Label L>
         void add(typename Traits<L>::type val) {
+            _dataPoints.erase(L);
             _dataPoints.emplace(
                     L,
                     DataPoint(
