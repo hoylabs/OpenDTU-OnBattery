@@ -22,7 +22,7 @@ void Provider::processSmlByte(uint8_t byte)
 
                 if (_verboseLogging) {
                     MessageOutput.printf("[%s] decoded %s to %.2f\r\n",
-                            _user.c_str(), "", helper); // TODO(andreasboehm): get name via label from traits
+                            _user.c_str(), handler.name, helper);
                 }
 
                 switch (handler.target)
