@@ -15,8 +15,8 @@ static constexpr unsigned int modbusPort = 502;  // local port to listen on
 static constexpr uint16_t sTransactionId = 0xDEAD; // arbitrary value
 static constexpr uint8_t sUnitId = 0x01;
 static constexpr uint8_t sFunctionCode = 0x03; // read holding registers
-static constexpr uint16_t sRegisterAddress = 0x3040;
-static constexpr uint16_t sRegisterCount = 0x004C;
+static constexpr uint16_t sRegisterAddress = 0x3032;
+static constexpr uint16_t sRegisterCount = 0x005A;
 
 static WiFiUDP VictronUdp;
 
@@ -83,6 +83,14 @@ static float readInt32(uint8_t** buffer, uint8_t factor)
 {
     uint8_t* p = *buffer;
     int32_t value = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+    *buffer += 4;
+    return static_cast<float>(value) / factor;
+}
+
+static float readUint32(uint8_t** buffer, uint8_t factor)
+{
+    uint8_t* p = *buffer;
+    uint32_t value = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
     *buffer += 4;
     return static_cast<float>(value) / factor;
 }
@@ -165,6 +173,13 @@ void Provider::parseModbusResponse()
     }
 
     using Label = ::PowerMeters::DataPointLabel;
+
+    p += 2; // skip register 0x3032 (AC frequency)
+    p += 2; // skip register 0x3033 (PEN voltage)
+
+    _dataCurrent.add<Label::Import>(readUint32(&p, 100)); // 0x3034f
+    _dataCurrent.add<Label::Export>(readUint32(&p, 100)); // 0x3036f
+    p += 16; // jump to register 0x3040
     _dataCurrent.add<Label::VoltageL1>(readInt16(&p, 100)); // 0x3040
     _dataCurrent.add<Label::CurrentL1>(readInt16(&p, 100)); // 0x3041
     p += 12; // jump to register 0x3048
@@ -174,12 +189,12 @@ void Provider::parseModbusResponse()
     _dataCurrent.add<Label::VoltageL3>(readInt16(&p, 100)); // 0x3050
     _dataCurrent.add<Label::CurrentL3>(readInt16(&p, 100)); // 0x3051
     p += 92; // jump from 0x3052 to 0x3080 (0x2E registers = 92 bytes)
-    _dataCurrent.add<Label::PowerTotal>(readInt32(&p, 1)); // 0x3080
-    _dataCurrent.add<Label::PowerL1>(readInt32(&p, 1)); // 0x3082
+    _dataCurrent.add<Label::PowerTotal>(readInt32(&p, 1)); // 0x3080f
+    _dataCurrent.add<Label::PowerL1>(readInt32(&p, 1)); // 0x3082f
     p += 4; // jump to 0x3086
-    _dataCurrent.add<Label::PowerL2>(readInt32(&p, 1)); // 0x3086
+    _dataCurrent.add<Label::PowerL2>(readInt32(&p, 1)); // 0x3086f
     p += 4; // jump to 0x308A
-    _dataCurrent.add<Label::PowerL3>(readInt32(&p, 1)); // 0x308A
+    _dataCurrent.add<Label::PowerL3>(readInt32(&p, 1)); // 0x308Af
 }
 
 void Provider::loop()
