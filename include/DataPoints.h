@@ -8,6 +8,7 @@
 #include <variant>
 #include <limits>
 #include <algorithm>
+#include <mutex>
 
 using tCellVoltages = std::map<uint8_t, uint16_t>;
 
@@ -60,8 +61,23 @@ class DataPointContainer {
     public:
         DataPointContainer() = default;
 
+        DataPointContainer(DataPointContainer const& other)
+        {
+            auto scopedLock = other.lock();
+            _dataPoints = other._dataPoints;
+        }
+
+        // allows to keep the container locked while adding multiple data points
+        // that are supposed to be coherent, and/or to ensure thread safety.
+        std::unique_lock<std::mutex> lock() const {
+            return std::unique_lock<std::mutex>(_mutex);
+        }
+
         template<Label L>
         void add(typename Traits<L>::type val) {
+            // no locking here! iff thread safety is required, use the lock()
+            // method in a scoped block in which this method is called.
+
             _dataPoints.erase(L);
             _dataPoints.emplace(
                     L,
@@ -82,6 +98,8 @@ class DataPointContainer {
 
         template<Label L>
         std::optional<DataPoint const> getDataPointFor() const {
+            auto scopedLock = lock();
+
             auto it = _dataPoints.find(L);
             if (it == _dataPoints.end()) { return std::nullopt; }
             return it->second;
@@ -102,6 +120,9 @@ class DataPointContainer {
         // existing data points in this instance.
         void updateFrom(DataPointContainer const& source)
         {
+            auto scopedLock = lock();
+            auto otherScopedLock = source.lock();
+
             for (auto iter = source.cbegin(); iter != source.cend(); ++iter) {
                 auto pos = _dataPoints.find(iter->first);
 
@@ -117,6 +138,8 @@ class DataPointContainer {
 
         uint32_t getLastUpdate() const
         {
+            auto scopedLock = lock();
+
             uint32_t now = millis();
             uint32_t diff = std::numeric_limits<uint32_t>::max()/2;
             for (auto iter = _dataPoints.cbegin(); iter != _dataPoints.cend(); ++iter) {
@@ -125,6 +148,12 @@ class DataPointContainer {
             return now - diff;
         }
 
+        void clear() {
+            auto scopedLock = lock();
+            _dataPoints.clear();
+        }
+
     private:
         tMap _dataPoints;
+        mutable std::mutex _mutex;
 };
