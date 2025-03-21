@@ -105,8 +105,12 @@ void MessageOutputClass::loop()
 
     while (!_lines.empty()) {
         Syslog.write(_lines.front().data(), _lines.front().size());
-        if (_ws && _ws->availableForWriteAll()) {
-            _ws->textAll(std::make_shared<message_t>(std::move(_lines.front())));
+        if (_ws) {
+            auto msg = std::make_shared<message_t>(std::move(_lines.front()));
+            for (auto& client : _ws->getClients()) {
+                if (client.queueIsFull()) { continue; }
+                client.text(msg);
+            }
         }
         _lines.pop();
     }
