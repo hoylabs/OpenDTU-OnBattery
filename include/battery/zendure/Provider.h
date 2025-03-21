@@ -20,19 +20,18 @@ public:
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
     std::shared_ptr<::Batteries::HassIntegration> getHassIntegration() final { return _hassIntegration; }
 
+private:
     uint16_t setOutputLimit(uint16_t limit) const;
     uint16_t setInverterMax(uint16_t limit) const;
     void shutdown() const;
 
     bool checkChargeThrough(uint32_t predictHours = 0U);
 
-protected:
     void timesync();
     static String parseVersion(uint32_t version);
     uint16_t calcOutputLimit(uint16_t limit) const;
     void setTargetSoCs(const float soc_min, const float soc_max);
 
-private:
     bool _verboseLogging = false;
     uint32_t _lastUpdate = 0;
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
