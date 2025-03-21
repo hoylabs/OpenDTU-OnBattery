@@ -25,16 +25,6 @@ protected:
             const char* stateClass = nullptr,
             const char* unitOfMeasurement = nullptr,
             const bool enabled = true) const;
-    void publishSensor(const String& caption, const char* icon,
-            const String& subTopic, const char* deviceClass = nullptr,
-            const char* stateClass = nullptr,
-            const char* unitOfMeasurement = nullptr,
-            const bool enabled = true) const;
-    void publishSensor(const char* caption, const char* icon,
-            const String& subTopic, const char* deviceClass = nullptr,
-            const char* stateClass = nullptr,
-            const char* unitOfMeasurement = nullptr,
-            const bool enabled = true) const;
     void createDeviceInfo(JsonObject& object) const;
 
     virtual void publishSensors() const;

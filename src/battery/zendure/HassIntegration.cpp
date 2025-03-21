@@ -39,17 +39,17 @@ void HassIntegration::publishSensors() const
     for (size_t i = 1 ; i <= ZENDURE_MAX_PACKS ; i++) {
         const auto id = String(i);
         const auto bat = String("Pack#" + id + ": ");
-        publishSensor(bat + "Cell Min Voltage", NULL, id + "/cellMinMilliVolt", "voltage", "measurement", "mV", false);
-        publishSensor(bat + "Cell Average Voltage", NULL, id + "/cellAvgMilliVolt", "voltage", "measurement", "mV", false);
-        publishSensor(bat + "Cell Max Voltage", NULL, id + "/cellMaxMilliVolt", "voltage", "measurement", "mV", false);
-        publishSensor(bat + "Cell Voltage Diff", "mdi:battery-alert", id + "/cellDiffMilliVolt", "voltage", "measurement", "mV", false);
-        publishSensor(bat + "Cell Max Temperature", NULL, id + "/cellMaxTemperature", "temperature", "measurement", "°C", false);
-        publishSensor(bat + "Power", NULL, id + "/power", "power", "measurement", "W", false);
-        publishSensor(bat + "Voltage", NULL, id + "/voltage", "voltage", "measurement", "V", false);
-        publishSensor(bat + "Current", NULL, id + "/current", "current", "measurement", "A", false);
-        publishSensor(bat + "State Of Charge", NULL, id + "/stateOfCharge", NULL, "measurement", "%", false);
-        publishSensor(bat + "State Of Health", NULL, id + "/stateOfHealth", NULL, "measurement", "%", false);
-        publishSensor(bat + "State", NULL, id + "/state", NULL, NULL, NULL, false);
+        publishSensor(String(bat + "Cell Min Voltage").c_str(), NULL, String(id + "/cellMinMilliVolt").c_str(), "voltage", "measurement", "mV", false);
+        publishSensor(String(bat + "Cell Average Voltage").c_str(), NULL, String(id + "/cellAvgMilliVolt").c_str(), "voltage", "measurement", "mV", false);
+        publishSensor(String(bat + "Cell Max Voltage").c_str(), NULL, String(id + "/cellMaxMilliVolt").c_str(), "voltage", "measurement", "mV", false);
+        publishSensor(String(bat + "Cell Voltage Diff").c_str(), "mdi:battery-alert", String(id + "/cellDiffMilliVolt").c_str(), "voltage", "measurement", "mV", false);
+        publishSensor(String(bat + "Cell Max Temperature").c_str(), NULL, String(id + "/cellMaxTemperature").c_str(), "temperature", "measurement", "°C", false);
+        publishSensor(String(bat + "Power").c_str(), NULL, String(id + "/power").c_str(), "power", "measurement", "W", false);
+        publishSensor(String(bat + "Voltage").c_str(), NULL, String(id + "/voltage").c_str(), "voltage", "measurement", "V", false);
+        publishSensor(String(bat + "Current").c_str(), NULL, String(id + "/current").c_str(), "current", "measurement", "A", false);
+        publishSensor(String(bat + "State Of Charge").c_str(), NULL, String(id + "/stateOfCharge").c_str(), NULL, "measurement", "%", false);
+        publishSensor(String(bat + "State Of Health").c_str(), NULL, String(id + "/stateOfHealth").c_str(), NULL, "measurement", "%", false);
+        publishSensor(String(bat + "State").c_str(), NULL, String(id + "/state").c_str(), NULL, NULL, NULL, false);
     }
 }
 
