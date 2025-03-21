@@ -89,48 +89,25 @@ void PowerLimiterClass::announceStatus(PowerLimiterClass::Status status)
     _lastStatusPrinted = millis();
 }
 
-/**
- * NOTE: this method relies on being called regularly, i.e., as part of the
- * loop(), and that it is called *after* updateInverters().
- */
-bool PowerLimiterClass::isDisabled()
-{
-    auto const& config = Configuration.get();
-
-    if (!config.PowerLimiter.Enabled) {
-        announceStatus(Status::DisabledByConfig);
-    }
-    else if (Mode::Disabled == _mode) {
-        announceStatus(Status::DisabledByMqtt);
-    }
-    else {
-        _shutdownComplete = false;
-        return false;
-    }
-
-    // we only shut down governed inverters once when the DPL is disabled by
-    // configuration or by the MQTT mode setting. afterwards, we leave the
-    // inverter(s) alone so they can be managed through other means.
-    if (_shutdownComplete) { return true; }
-
-    for (auto& upInv : _inverters) { upInv->standby(); }
-
-    // we triggered the shutdown, and we won't trigger it again until the DPL
-    // enabled and disabled again. we rely that updateInverters() is called
-    // in the DPL loop(), applying the standby limit and power state.
-    _shutdownComplete = true;
-
-    return true;
-}
-
 void PowerLimiterClass::reloadConfig()
 {
     auto const& config = Configuration.get();
 
     _verboseLogging = config.PowerLimiter.VerboseLogging;
 
-    // clean up all inverter instances. put inverters into
-    // standby if they will not be governed any more.
+    if (!config.PowerLimiter.Enabled || Mode::Disabled == _mode) {
+        _retirees.insert(
+            _retirees.end(),
+            std::make_move_iterator(_inverters.begin()),
+            std::make_move_iterator(_inverters.end())
+        );
+
+        _inverters.clear();
+
+        _reloadConfigFlag = false;
+        return;
+    }
+
     auto iter = _inverters.begin();
     while (iter != _inverters.end()) {
         bool stillGoverned = false;
@@ -143,8 +120,7 @@ void PowerLimiterClass::reloadConfig()
         }
 
         if (!stillGoverned) {
-            (*iter)->standby();
-            if ((*iter)->update()) { return; }
+            _retirees.push_back(std::move(*iter));
         }
 
         iter = _inverters.erase(iter);
@@ -184,11 +160,17 @@ void PowerLimiterClass::loop()
         return announceStatus(Status::InverterCmdPending);
     }
 
-    if (isDisabled()) { return; }
-
     if (_reloadConfigFlag) {
         reloadConfig();
         return announceStatus(Status::ConfigReload);
+    }
+
+    if (!config.PowerLimiter.Enabled) {
+        return announceStatus(Status::DisabledByConfig);
+    }
+
+    if (Mode::Disabled == _mode) {
+        return announceStatus(Status::DisabledByMqtt);
     }
 
     if (_inverters.empty()) {
@@ -339,11 +321,7 @@ void PowerLimiterClass::loop()
             config.PowerLimiter.ConductionLosses);
     };
 
-    // this value is negative if we are exporting power to the grid
-    // from power sources other than DPL-governed inverters.
-    int16_t consumption = calcConsumption();
-
-    uint16_t inverterTotalPower = (consumption > 0) ? static_cast<uint16_t>(consumption) : 0;
+    uint16_t inverterTotalPower = calcTargetOutput();
 
     auto totalAllowance = config.PowerLimiter.TotalUpperPowerLimit;
     inverterTotalPower = std::min(inverterTotalPower, totalAllowance);
@@ -506,7 +484,7 @@ uint8_t PowerLimiterClass::getPowerLimiterState()
     return _batteryDischargeEnabled ? PL_UI_STATE_USE_SOLAR_AND_BATTERY : PL_UI_STATE_USE_SOLAR_ONLY;
 }
 
-int16_t PowerLimiterClass::calcConsumption()
+uint16_t PowerLimiterClass::calcTargetOutput()
 {
     auto const& config = Configuration.get();
     auto targetConsumption = config.PowerLimiter.TargetPowerConsumption;
@@ -524,24 +502,57 @@ int16_t PowerLimiterClass::calcConsumption()
 
     if (!meterValid) { return baseLoad; }
 
-    auto consumption = static_cast<int16_t>(meterValue + (meterValue > 0 ? 0.5 : -0.5));
+    // the desired total output of all eligible inverters is whatever they are
+    // producing right now plus the difference between the target consumption
+    // and the power meter reading
+    auto roundedMeterValue = static_cast<int16_t>(meterValue + (meterValue > 0 ? 0.5 : -0.5));
 
+    // we have to correct the meter reading if there are inverters connected to
+    // AC between the grid (billing meter) and OpenDTU-OnBattery's power meter.
+    // example: billing meter in the basement, inverter connected next to it,
+    // and an additional power meter in the flat which is read by OpenDTU-
+    // OnBattery. in that case power produced by the respective inverter is
+    // still registered as consumed power by the power meter as it flows into
+    // the household, even though it is not billed. essentially, we derive the
+    // billing meter's reading, whose value we actually want to optimize to
+    // reach the target consumption setting value.
     for (auto const& upInv : _inverters) {
-        if (!upInv->isBehindPowerMeter()) { continue; }
+        if (upInv->isBehindPowerMeter()) { continue; }
 
-        // If the inverter is wired behind the power meter, i.e., if its
-        // output is part of the power meter measurement, the produced
-        // power of this inverter has to be taken into account.
-        auto invOutput = upInv->getCurrentOutputAcWatts();
-        consumption += invOutput;
-        if (_verboseLogging) {
-            MessageOutput.printf("[DPL] inverter %s is "
-                    "behind power meter producing %u W\r\n",
-                    upInv->getSerialStr(), invOutput);
-        }
+        // it is to be expected that solar-powered inverters are unreachable
+        // during the night, in which case we don't want to account for their
+        // last reported AC output, as they are not producing power.
+        auto isDayPeriod = SunPosition.isDayPeriod();
+        if (upInv->isSolarPowered() && !upInv->isReachable() && !isDayPeriod) { continue; }
+
+        // in all other cases, even for unreachable inverters, we assume that
+        // they still produce the amount of AC output that they last reported.
+        // if we assumed unreachable inverters are not producing, we will
+        // potentially produce way too much power. as information is missing
+        // that could make sure we do the right thing, we have to make an
+        // assumption about unreachable inverters.
+        roundedMeterValue -= upInv->getCurrentOutputAcWatts();
     }
 
-    return consumption - targetConsumption;
+    int16_t currentTotalOutput = 0;
+    for (auto const& upInv : _inverters) {
+        // non-eligible inverters don't participate in this DPL round at all.
+        // inverters in standby report 0 W output, so we can iterate them.
+        if (PowerLimiterInverter::Eligibility::Eligible != upInv->isEligible()) { continue; }
+
+        currentTotalOutput += upInv->getCurrentOutputAcWatts();
+    }
+
+    // this value is negative if we are exporting more than "targetConsumption"
+    // power to the grid using generators other than DPL-governed inverters.
+    int16_t targetOutput = currentTotalOutput + roundedMeterValue - targetConsumption;
+
+    // if we are already exporting more power than the (negative) target
+    // consumption value allows us to, we don't want DPL-governed inverters to
+    // produce any power at all.
+    if (targetOutput < 0) { return 0; }
+
+    return static_cast<uint16_t>(targetOutput);
 }
 
 /**
@@ -558,21 +569,7 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
     for (auto& upInv : _inverters) {
         if (!filter(*upInv)) { continue; }
 
-        if (!upInv->isReachable()) {
-            if (_verboseLogging) {
-                MessageOutput.printf("[DPL] skipping %s "
-                        "as it is not reachable\r\n", upInv->getSerialStr());
-            }
-            continue;
-        }
-
-        if (!upInv->isSendingCommandsEnabled()) {
-            if (_verboseLogging) {
-                MessageOutput.printf("[DPL] skipping %s as sending commands "
-                        "is disabled\r\n", upInv->getSerialStr());
-            }
-            continue;
-        }
+        if (PowerLimiterInverter::Eligibility::Eligible != upInv->isEligible()) { continue; }
 
         producing += upInv->getCurrentOutputAcWatts();
         matchingInverters.push_back(upInv.get());
@@ -709,6 +706,17 @@ bool PowerLimiterClass::updateInverters()
 
     for (auto& upInv : _inverters) {
         if (upInv->update()) { busy = true; }
+    }
+
+    auto iter = _retirees.begin();
+    while (iter != _retirees.end()) {
+        if ((*iter)->retire()) {
+            busy = true;
+            ++iter;
+            continue;
+        }
+
+        iter = _retirees.erase(iter);
     }
 
     return busy;

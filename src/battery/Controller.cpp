@@ -100,40 +100,50 @@ float Controller::getDischargeCurrentLimit()
 
     if (!config.Battery.EnableDischargeCurrentLimit) { return FLT_MAX; }
 
-    auto dischargeCurrentLimit = config.Battery.DischargeCurrentLimit;
-    auto dischargeCurrentLimitValid = dischargeCurrentLimit > 0.0f;
-    auto dischargeCurrentLimitBelowSoc = config.Battery.DischargeCurrentLimitBelowSoc;
-    auto dischargeCurrentLimitBelowVoltage = config.Battery.DischargeCurrentLimitBelowVoltage;
-    auto statsSoCValid = getStats()->getSoCAgeSeconds() <= 60 && !config.PowerLimiter.IgnoreSoc;
-    auto statsSoC = statsSoCValid ? getStats()->getSoC() : 100.0; // fail open so we use voltage instead
-    auto statsVoltageValid = getStats()->getVoltageAgeSeconds() <= 60;
-    auto statsVoltage = statsVoltageValid ? getStats()->getVoltage() : 0.0; // fail closed
-    auto statsCurrentLimit = getStats()->getDischargeCurrentLimit();
-    auto statsLimitValid = config.Battery.UseBatteryReportedDischargeCurrentLimit
-        && statsCurrentLimit >= 0.0f
-        && getStats()->getDischargeCurrentLimitAgeSeconds() <= 60;
+    /**
+     * we are looking at two limits: (1) the static discharge current limit
+     * setup by the user as part of the configuration, which is effective below
+     * a (SoC or voltage) threshold, and (2) the dynamic discharge current
+     * limit reported by the BMS.
+     *
+     * for both types of limits, we will determine its value, then test a bunch
+     * of excuses why the limit might not be applicable.
+     *
+     * the smaller limit will be enforced, i.e., returned here.
+     */
+    auto spStats = getStats();
 
+    auto getConfiguredLimit = [&config,&spStats]() -> float {
+        auto configuredLimit = config.Battery.DischargeCurrentLimit;
+        if (configuredLimit <= 0.0f) { return FLT_MAX; } // invalid setting
 
-    if (statsSoC > dischargeCurrentLimitBelowSoc && statsVoltage > dischargeCurrentLimitBelowVoltage) {
-        // Above SoC and Voltage thresholds, ignore custom limit.
-        // Battery-provided limit will still be applied.
-        dischargeCurrentLimitValid = false;
-    }
+        bool useSoC = spStats->getSoCAgeSeconds() <= 60 && !config.PowerLimiter.IgnoreSoc;
 
-    if (statsLimitValid && dischargeCurrentLimitValid) {
-        // take the lowest limit
-        return min(statsCurrentLimit, dischargeCurrentLimit);
-    }
+        if (useSoC) {
+            auto threshold = config.Battery.DischargeCurrentLimitBelowSoc;
+            if (spStats->getSoC() >= threshold) { return FLT_MAX; }
 
-    if (statsLimitValid) {
-        return statsCurrentLimit;
-    }
+            return configuredLimit;
+        }
 
-    if (dischargeCurrentLimitValid) {
-        return dischargeCurrentLimit;
-    }
+        bool voltageValid = spStats->getVoltageAgeSeconds() <= 60;
+        if (!voltageValid) { return FLT_MAX; }
 
-    return FLT_MAX;
+        auto threshold = config.Battery.DischargeCurrentLimitBelowVoltage;
+        if (spStats->getVoltage() >= threshold) { return FLT_MAX; }
+
+        return configuredLimit;
+    };
+
+    auto getBatteryLimit = [&config,&spStats]() -> float {
+        if (!config.Battery.UseBatteryReportedDischargeCurrentLimit) { return FLT_MAX; }
+
+        if (spStats->getDischargeCurrentLimitAgeSeconds() > 60) { return FLT_MAX; } // unusable
+
+        return spStats->getDischargeCurrentLimit();
+    };
+
+    return std::min(getConfiguredLimit(), getBatteryLimit());
 }
 
 } // namespace Batteries

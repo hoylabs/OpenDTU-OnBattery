@@ -54,6 +54,9 @@ void WebApiPowerMeterClass::onStatus(AsyncWebServerRequest* request)
     auto httpSml = root["http_sml"].to<JsonObject>();
     Configuration.serializePowerMeterHttpSmlConfig(config.PowerMeter.HttpSml, httpSml);
 
+    auto udpVictron = root["udp_victron"].to<JsonObject>();
+    Configuration.serializePowerMeterUdpVictronConfig(config.PowerMeter.UdpVictron, udpVictron);
+
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
@@ -149,6 +152,25 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
         }
     }
 
+    if (static_cast<::PowerMeters::Provider::Type>(root["source"].as<uint8_t>()) == ::PowerMeters::Provider::Type::UDP_VICTRON) {
+        JsonObject udpVictron = root["udp_victron"];
+        if (!udpVictron["ip_address"].is<String>()
+                || udpVictron["ip_address"].as<String>().length() == 0) {
+            retMsg["message"] = "IP address must not be empty!";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        if (!udpVictron["polling_interval_ms"].is<uint32_t>()
+                || udpVictron["polling_interval_ms"].as<uint32_t>() <= 0) {
+            retMsg["message"] = "Polling interval must be greater than 0 ms!";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+    }
+
     {
         auto guard = Configuration.getWriteGuard();
         auto& config = guard.getConfig();
@@ -167,6 +189,9 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
 
         Configuration.deserializePowerMeterHttpSmlConfig(root["http_sml"].as<JsonObject>(),
                 config.PowerMeter.HttpSml);
+
+        Configuration.deserializePowerMeterUdpVictronConfig(root["udp_victron"].as<JsonObject>(),
+                config.PowerMeter.UdpVictron);
     }
 
     WebApi.writeConfig(retMsg);
@@ -198,14 +223,16 @@ void WebApiPowerMeterClass::onTestHttpJsonRequest(AsyncWebServerRequest* request
     auto upMeter = std::make_unique<::PowerMeters::Json::Http::Provider>(*powerMeterConfig);
     upMeter->init();
     auto res = upMeter->poll();
-    using values_t = ::PowerMeters::Json::Http::Provider::power_values_t;
+    using values_t = ::PowerMeters::DataPointContainer;
     if (std::holds_alternative<values_t>(res)) {
         retMsg["type"] = "success";
-        auto vals = std::get<values_t>(res);
-        auto pos = snprintf(response, sizeof(response), "Result: %5.2fW", vals[0]);
-        for (size_t i = 1; i < vals.size(); ++i) {
-            if (!powerMeterConfig->Values[i].Enabled) { continue; }
-            pos += snprintf(response + pos, sizeof(response) - pos, ", %5.2fW", vals[i]);
+        auto const& vals = std::get<values_t>(res);
+        auto iter = vals.cbegin();
+        auto pos = snprintf(response, sizeof(response), "Result: %sW", iter->second.getValueText().c_str());
+        ++iter;
+        while (iter != vals.cend()) {
+            pos += snprintf(response + pos, sizeof(response) - pos, ", %sW", iter->second.getValueText().c_str());
+            ++iter;
         }
         snprintf(response + pos, sizeof(response) - pos, ", Total: %5.2f", upMeter->getPowerTotal());
     } else {

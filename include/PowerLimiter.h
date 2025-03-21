@@ -49,7 +49,7 @@ public:
         UnconditionalFullSolarPassthrough = 2
     };
 
-    void setMode(Mode m) { _mode = m; }
+    void setMode(Mode m) { _mode = m; _reloadConfigFlag = true; }
     Mode getMode() const { return _mode; }
     bool usesBatteryPoweredInverter();
     bool usesSmartBufferPoweredInverter();
@@ -72,22 +72,21 @@ private:
     Mode _mode = Mode::Normal;
 
     std::deque<std::unique_ptr<PowerLimiterInverter>> _inverters;
+    std::deque<std::unique_ptr<PowerLimiterInverter>> _retirees;
     bool _batteryDischargeEnabled = false;
     bool _nighttimeDischarging = false;
     std::pair<bool, uint32_t> _nextInverterRestart = { false, 0 };
     bool _fullSolarPassThroughEnabled = false;
     bool _verboseLogging = true;
-    bool _shutdownComplete = false;
 
     frozen::string const& getStatusText(Status status);
     void announceStatus(Status status);
-    bool isDisabled();
     void reloadConfig();
     std::pair<float, char const*> getInverterDcVoltage();
     float getBatteryVoltage(bool log = false);
     uint16_t dcPowerBusToInverterAc(uint16_t dcPower);
     void unconditionalFullSolarPassthrough();
-    int16_t calcConsumption();
+    uint16_t calcTargetOutput();
     using inverter_filter_t = std::function<bool(PowerLimiterInverter const&)>;
     uint16_t updateInverterLimits(uint16_t powerRequested, inverter_filter_t filter, std::string const& filterExpression);
     uint16_t calcPowerBusUsage(uint16_t powerRequested);

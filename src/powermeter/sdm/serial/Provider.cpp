@@ -68,32 +68,10 @@ void Provider::loop()
             stackSize, this, 1/*prio*/, &_taskHandle);
 }
 
-float Provider::getPowerTotal() const
-{
-    std::lock_guard<std::mutex> l(_valueMutex);
-    return _phase1Power + _phase2Power + _phase3Power;
-}
-
 bool Provider::isDataValid() const
 {
     uint32_t age = millis() - getLastUpdate();
     return getLastUpdate() > 0 && (age < (3 * _cfg.PollingInterval * 1000));
-}
-
-void Provider::doMqttPublish() const
-{
-    std::lock_guard<std::mutex> l(_valueMutex);
-    mqttPublish("power1", _phase1Power);
-    mqttPublish("voltage1", _phase1Voltage);
-    mqttPublish("import", _energyImport);
-    mqttPublish("export", _energyExport);
-
-    if (_phases == Phases::Three) {
-        mqttPublish("power2", _phase2Power);
-        mqttPublish("power3", _phase3Power);
-        mqttPublish("voltage2", _phase2Voltage);
-        mqttPublish("voltage3", _phase3Voltage);
-    }
 }
 
 void Provider::pollingLoopHelper(void* context)
@@ -171,6 +149,7 @@ void Provider::pollingLoop()
         // reading takes a "very long" time as each readVal() is a synchronous
         // exchange of serial messages. cache the values and write later to
         // enforce consistent values.
+        std::optional<float> oTotalPower = std::nullopt;
         float phase1Power = 0.0;
         float phase2Power = 0.0;
         float phase3Power = 0.0;
@@ -179,6 +158,13 @@ void Provider::pollingLoop()
         float phase3Voltage = 0.0;
         float energyImport = 0.0;
         float energyExport = 0.0;
+
+        if (_phases == Phases::Three) {
+            float totalPower = 0.0;
+            if (readValue(lock, SDM_TOTAL_SYSTEM_POWER, totalPower)) {
+                oTotalPower = totalPower;
+            }
+        }
 
         bool success = readValue(lock, SDM_PHASE_1_POWER, phase1Power) &&
             readValue(lock, SDM_PHASE_1_VOLTAGE, phase1Voltage) &&
@@ -195,20 +181,25 @@ void Provider::pollingLoop()
         if (!success) { continue; }
 
         {
-            std::lock_guard<std::mutex> l(_valueMutex);
-            _phase1Power = static_cast<float>(phase1Power);
-            _phase2Power = static_cast<float>(phase2Power);
-            _phase3Power = static_cast<float>(phase3Power);
-            _phase1Voltage = static_cast<float>(phase1Voltage);
-            _phase2Voltage = static_cast<float>(phase2Voltage);
-            _phase3Voltage = static_cast<float>(phase3Voltage);
-            _energyImport = static_cast<float>(energyImport);
-            _energyExport = static_cast<float>(energyExport);
+            auto scopedLock = _dataCurrent.lock();
+
+            _dataCurrent.add<DataPointLabel::PowerL1>(phase1Power);
+            _dataCurrent.add<DataPointLabel::VoltageL1>(phase1Voltage);
+            _dataCurrent.add<DataPointLabel::Import>(energyImport);
+            _dataCurrent.add<DataPointLabel::Export>(energyExport);
+
+            if (_phases == Phases::Three) {
+                if (oTotalPower.has_value()) {
+                    _dataCurrent.add<DataPointLabel::PowerTotal>(*oTotalPower);
+                }
+                _dataCurrent.add<DataPointLabel::PowerL2>(phase2Power);
+                _dataCurrent.add<DataPointLabel::PowerL3>(phase3Power);
+                _dataCurrent.add<DataPointLabel::VoltageL2>(phase2Voltage);
+                _dataCurrent.add<DataPointLabel::VoltageL3>(phase3Voltage);
+            }
         }
 
         MessageOutput.printf("[PowerMeters::Sdm::Serial] TotalPower: %5.2f\r\n", getPowerTotal());
-
-        gotUpdate();
     }
 }
 

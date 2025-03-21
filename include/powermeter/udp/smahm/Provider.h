@@ -15,8 +15,6 @@ public:
 
     bool init() final;
     void loop() final;
-    float getPowerTotal() const final { return _powerMeterPower; }
-    void doMqttPublish() const final;
 
 private:
     void Soutput(int kanal, int index, int art, int tarif,
@@ -24,10 +22,6 @@ private:
 
     uint8_t* decodeGroup(uint8_t* offset, uint16_t grouplen);
 
-    float _powerMeterPower = 0.0;
-    float _powerMeterL1 = 0.0;
-    float _powerMeterL2 = 0.0;
-    float _powerMeterL3 = 0.0;
     uint32_t _previousMillis = 0;
     uint32_t _serial = 0;
 };
