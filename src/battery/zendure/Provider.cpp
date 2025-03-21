@@ -107,21 +107,6 @@ bool Provider::init(bool verboseLogging)
             );
     log("Subscribed to '%s' for timesync requests", _topicTimesync.c_str());
 
-#ifndef ZENDURE_NO_REDUCED_UPDATE
-    // subscribe for read messages
-    _topicReadReply = _baseTopic + "properties/read/reply";
-    MqttSettings.subscribe(_topicReadReply, 0/*QoS*/,
-            std::bind(&Provider::onMqttMessageReport,
-                this, std::placeholders::_1, std::placeholders::_2,
-                std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6)
-            );
-    log("Subscribed to '%s' for status readings\r\n", _topicReadReply.c_str());
-
-    _rateUpdateMs       = min(static_cast<uint32_t>(config.Battery.ZendurePollingInterval * 100), 10U * 1000);
-    _nextUpdate         = 0;
-#endif
-
     _rateFullUpdateMs   = config.Battery.Zendure.PollingInterval * 1000;
     _nextFullUpdate     = 0;
     _rateTimesyncMs     = ZENDURE_SECONDS_TIMESYNC * 1000;
@@ -147,24 +132,6 @@ bool Provider::init(bool verboseLogging)
     array.add("getAll");
     array.add("getInfo");
     serializeJson(root, _payloadFullUpdate);
-
-#ifndef ZENDURE_NO_REDUCED_UPDATE
-    // pre-generate the partitial update request
-    root.clear();
-    array = root[ZENDURE_REPORT_PROPERTIES].to<JsonArray>();
-    array.add(ZENDURE_REPORT_MIN_SOC);
-    array.add(ZENDURE_REPORT_MAX_SOC);
-    array.add(ZENDURE_REPORT_INPUT_LIMIT);
-    array.add(ZENDURE_REPORT_OUTPUT_LIMIT);
-    array.add(ZENDURE_REPORT_INVERSE_MAX_POWER);
-    array.add(ZENDURE_REPORT_BATTERY_STATE);
-    array.add(ZENDURE_REPORT_HEAT_STATE);
-    array.add(ZENDURE_REPORT_AUTO_SHUTDOWN);
-    array.add(ZENDURE_REPORT_BUZZER_SWITCH);
-    array.add(ZENDURE_REPORT_REMAIN_OUT_TIME);
-    array.add(ZENDURE_REPORT_REMAIN_IN_TIME);
-    serializeJson(root, _payloadUpdate);
-#endif
 
     // initial setup
     if (!config.Battery.Zendure.ChargeThroughEnable) {
@@ -195,12 +162,6 @@ void Provider::deinit()
         MqttSettings.unsubscribe(_topicPersistentSettings + "#");
         _topicPersistentSettings.clear();
     }
-#ifndef ZENDURE_NO_REDUCED_UPDATE
-    if (!_topicReadReply.isEmpty()) {
-        MqttSettings.unsubscribe(_topicReadReply);
-        _topicReadReply.clear();
-    }
-#endif
 }
 
 void Provider::loop()
@@ -274,17 +235,8 @@ void Provider::loop()
     if (!_topicRead.isEmpty()) {
         if (!_payloadFullUpdate.isEmpty() && ms >= _nextFullUpdate) {
             _nextFullUpdate = ms + _rateFullUpdateMs;
-#ifndef ZENDURE_NO_REDUCED_UPDATE
-            _nextUpdate = ms + _rateUpdateMs;
-#endif
             MqttSettings.publishGeneric(_topicRead, _payloadFullUpdate, false, 0);
         }
-#ifndef ZENDURE_NO_REDUCED_UPDATE
-        if (!_payloadUpdate.isEmpty() && ms >= _nextUpdate) {
-            _nextUpdate = ms + _rateUpdateMs;
-            MqttSettings.publishGeneric(_topicRead, _payloadUpdate, false, 0);
-        }
-#endif
     }
 
     if (ms >= _nextTimesync) {
@@ -453,13 +405,6 @@ bool Provider::setChargeThrough(const bool value, const bool publish /* = true *
 
     return value;
 }
-
-#ifndef ZENDURE_NO_REDUCED_UPDATE
-void Provider::onMqttMessageRead(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)
-{
-}
-#endif
 
 void Provider::onMqttMessagePersistentSettings(espMqttClientTypes::MessageProperties const& properties,
         char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)

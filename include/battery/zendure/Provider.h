@@ -63,11 +63,6 @@ private:
         return;
     };
 
-#ifndef ZENDURE_NO_REDUCED_UPDATE
-    uint32_t _rateUpdateMs;
-    uint64_t _nextUpdate;
-#endif
-
     uint32_t _rateFullUpdateMs = 0;
     uint64_t _nextFullUpdate = 0;
 
@@ -92,9 +87,6 @@ private:
 
     String _payloadSettings = String();
     String _payloadFullUpdate = String();
-#ifndef ZENDURE_NO_REDUCED_UPDATE
-    String _payloadUpdate;
-#endif
 
     void onMqttMessageReport(espMqttClientTypes::MessageProperties const& properties,
             char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
@@ -107,11 +99,6 @@ private:
 
     void onMqttMessagePersistentSettings(espMqttClientTypes::MessageProperties const& properties,
             char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
-
-#ifndef ZENDURE_NO_REDUCED_UPDATE
-    void onMqttMessageRead(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
-#endif
 
 };
 

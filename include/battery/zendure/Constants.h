@@ -187,7 +187,6 @@ namespace Batteries::Zendure {
 #define ZENDURE_REPORT_PACK_HEALTH                  "soh"
 
 #define ZENDURE_ALIVE_SECONDS                       ( 5 * 60 )
-#define ZENDURE_NO_REDUCED_UPDATE
 
 #define ZENDURE_PERSISTENT_SETTINGS_LAST_FULL      "lastFullEpoch"
 #define ZENDURE_PERSISTENT_SETTINGS_LAST_EMPTY     "lastEmptyEpoch"

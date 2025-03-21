@@ -11,9 +11,6 @@ void HassIntegration::publishSensors() const
 {
     ::Batteries::HassIntegration::publishSensors();
 
-    publishSensor("Voltage", "mdi:battery-charging", "voltage", "voltage", "measurement", "V");
-    publishSensor("Current", "mdi:current-dc", "current", "current", "measurement", "A");
-
     publishSensor("Cell Min Voltage", NULL, "cellMinMilliVolt", "voltage", "measurement", "mV");
     publishSensor("Cell Average Voltage", NULL, "cellAvgMilliVolt", "voltage", "measurement", "mV");
     publishSensor("Cell Max Voltage", NULL, "cellMaxMilliVolt", "voltage", "measurement", "mV");
