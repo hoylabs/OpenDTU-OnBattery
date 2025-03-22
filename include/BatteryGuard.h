@@ -31,8 +31,7 @@ class BatteryGuardClass {
         bool _verboseLogging = false;                       // Logging On/Off
         bool _verboseReport = false;                        // Report On/Off
         bool _useBatteryGuard = false;                      // "Battery guard" On/Off
-        bool _useLowVoltageLimiter = false;                 // "Low voltage power limiter" On/Off
-        bool _useRechargeTheBattery = false;                // "Periodically recharge the battery" On/Off
+
 
         struct Data { float value; uint32_t timeStamp; bool valid; };
         Data _i1Data {0.0f, 0, false };                     // buffer the last current data [current, millis(), true/false]

@@ -18,10 +18,8 @@ public:
     // the last time *any* data was updated
     uint32_t getAgeSeconds() const { return (millis() - _lastUpdate) / 1000; }
     bool updateAvailable(uint32_t since) const;
-    uint32_t getLastUpdate() const { return _lastUpdate; }
 
     float getSoC() const { return _soc; }
-    uint32_t getLastSoCUpdate() const { return _lastUpdateSoC; }
     uint32_t getSoCAgeSeconds() const { return (millis() - _lastUpdateSoC) / 1000; }
     uint8_t getSoCPrecision() const { return _socPrecision; }
 
