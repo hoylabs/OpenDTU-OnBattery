@@ -109,7 +109,14 @@ void MessageOutputClass::loop()
             auto msg = std::make_shared<message_t>(std::move(_lines.front()));
             for (auto& client : _ws->getClients()) {
                 if (client.queueIsFull()) { continue; }
+
                 client.text(msg);
+
+                if (client.queueIsFull()) {
+                    static char const warningStr[] = "WARNING: dropping log line(s) as websocket client's queue is full\r\n";
+                    message_t warningVec(warningStr, warningStr + sizeof(warningStr) - 1);
+                    msg->swap(warningVec);
+                }
             }
         }
         _lines.pop();
