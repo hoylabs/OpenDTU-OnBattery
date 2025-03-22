@@ -21,7 +21,7 @@ public:
           _countNum = 1;
       } else {
           if (_count < _countMax) { _count++; }
-          _avgV = (_avgV * (_count - 1) + num) / _count;
+          _avgV = (_avgV * (static_cast<T>(_count) - 1) + num) / static_cast<T>(_count);
           if (num < _minV) { _minV = num; }
           if (num > _maxV) { _maxV = num; }
           if (_countNum < 10000) { _countNum++; }
