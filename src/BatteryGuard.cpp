@@ -168,7 +168,6 @@ void BatteryGuardClass::slowLoop(void) {
         // "Open circuit voltage"
         printOpenCircuitVoltageReport();
 
-        //MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
         MessageOutput.printf("%s --------------------------------------------------------------------------------\r\n",
             getText(Text::T_HEAD).data());
         MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
