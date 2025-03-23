@@ -27,7 +27,10 @@ uint16_t PowerLimiterSmartBufferInverter::getMaxIncreaseWatts() const
 
     // The inverter can produce more than the set limit and as such
     // also more than the configured max power.
-    if (getCurrentOutputAcWatts() > getConfiguredMaxPowerWatts()) { return 0; }
+    if (getCurrentOutputAcWatts() >= getConfiguredMaxPowerWatts()) { return 0; }
+
+    // The limit is already at the max or higher.
+    if (getCurrentLimitWatts() >= getInverterMaxPowerWatts()) { return 0; }
 
     // when overscaling is in use we must not substract the current limit
     // because it might be scaled and higher than the configured max power.
@@ -42,7 +45,7 @@ uint16_t PowerLimiterSmartBufferInverter::getMaxIncreaseWatts() const
     // this should not happen, but we want to
     // be robust in case something else set a limit on the inverter (or in
     // case we did something wrong...) or overscaling was in use but then disabled.
-    if (getCurrentLimitWatts() > getConfiguredMaxPowerWatts()) { return 0; }
+    if (getCurrentLimitWatts() >= getConfiguredMaxPowerWatts()) { return 0; }
 
     // we must not substract the current AC output here, but the current
     // limit value, so we avoid trying to produce even more even if the
