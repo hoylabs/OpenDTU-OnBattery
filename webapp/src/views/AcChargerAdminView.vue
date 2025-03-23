@@ -75,6 +75,60 @@
                     />
                 </template>
             </CardElement>
+            <CardElement
+                :text="$t('acchargeradmin.HuaweiSettings')"
+                textVariant="text-bg-primary"
+                add-space
+                v-if="acChargerConfigList.enabled"
+            >
+                <InputElement
+                    :label="$t('acchargeradmin.OfflineVoltage')"
+                    v-model="acChargerConfigList.offline_voltage"
+                    postfix="V"
+                    type="number"
+                    wide
+                    step="0.01"
+                    min="48"
+                    max="58.5"
+                />
+
+                <InputElement
+                    :label="$t('acchargeradmin.OfflineCurrent')"
+                    v-model="acChargerConfigList.offline_current"
+                    postfix="A"
+                    type="number"
+                    wide
+                    step="0.1"
+                    min="0"
+                    max="75"
+                />
+
+                <InputElement
+                    :label="$t('acchargeradmin.InputCurrentLimit')"
+                    v-model="acChargerConfigList.input_current_limit"
+                    postfix="A"
+                    type="number"
+                    wide
+                    step="0.1"
+                    min="0"
+                    max="20"
+                    :tooltip="$t('acchargeradmin.InputCurrentLimitHint')"
+                />
+
+                <InputElement
+                    :label="$t('acchargeradmin.FanOnlineFullSpeed')"
+                    v-model="acChargerConfigList.fan_online_full_speed"
+                    type="checkbox"
+                    wide
+                />
+
+                <InputElement
+                    :label="$t('acchargeradmin.FanOfflineFullSpeed')"
+                    v-model="acChargerConfigList.fan_offline_full_speed"
+                    type="checkbox"
+                    wide
+                />
+            </CardElement>
 
             <CardElement
                 :text="$t('acchargeradmin.Limits')"
