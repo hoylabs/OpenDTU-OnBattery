@@ -333,6 +333,20 @@ bool HardwareInterface::readAcks(can_message_t const& msg)
     return true;
 }
 
+void HardwareInterface::sendSettings()
+{
+    auto const& config = Configuration.get().Huawei;
+
+    using Setting = HardwareInterface::Setting;
+    enqueueParameter(Setting::OfflineVoltage, config.OfflineVoltage);
+    enqueueParameter(Setting::OfflineCurrent, config.OfflineCurrent);
+    enqueueParameter(Setting::InputCurrentLimit, config.InputCurrentLimit);
+    enqueueParameter(Setting::FanOnlineFullSpeed, config.FanOnlineFullSpeed ? 1 : 0);
+    enqueueParameter(Setting::FanOfflineFullSpeed, config.FanOfflineFullSpeed ? 1 : 0);
+
+    _lastSettingsUpdateMillis = millis();
+}
+
 void HardwareInterface::loop()
 {
     can_message_t msg;
@@ -384,9 +398,15 @@ void HardwareInterface::loop()
     if ((millis() - *_lastDeviceConfigMillis) > DeviceConfigTimeoutMillis) {
         MessageOutput.print("[Huawei::HwIfc] PSU is unreachable (no CAN communication)\r\n");
         _lastDeviceConfigMillis = std::nullopt;
+        _lastSettingsUpdateMillis = std::nullopt;
         _boardPropertiesState = StringState::Unknown;
         _upData->add<DataPointLabel::Reachable>(false);
         return; // restart by re-requesting device config in next iteration
+    }
+
+    if (!_lastSettingsUpdateMillis) {
+        sendSettings();
+        return processQueue();
     }
 
     if (StringState::Complete != _boardPropertiesState) {
@@ -471,12 +491,8 @@ void HardwareInterface::processQueue()
     }
 }
 
-void HardwareInterface::setParameter(HardwareInterface::Setting setting, float val)
+void HardwareInterface::enqueueParameter(HardwareInterface::Setting setting, float val)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    if (_taskHandle == nullptr) { return; }
-
     uint16_t flags = 0;
 
     switch (setting) {
@@ -512,6 +528,15 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
         .flags = flags,
         .value = static_cast<uint32_t>(val)
     });
+}
+
+void HardwareInterface::setParameter(HardwareInterface::Setting setting, float val)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (_taskHandle == nullptr) { return; }
+
+    enqueueParameter(setting, val);
 
     _lastRequestMillis = millis() - DataRequestIntervalMillis; // request early param feedback
 
