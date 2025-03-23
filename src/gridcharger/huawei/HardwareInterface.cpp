@@ -162,9 +162,24 @@ bool HardwareInterface::readDeviceConfig(can_message_t const& msg)
     else if (counter == 6) {
         _upData->add<DataPointLabel::Row>(static_cast<uint8_t>((msg.valueId >> 8) & 0xFF));
         _upData->add<DataPointLabel::Slot>(static_cast<uint8_t>(msg.valueId & 0xFF));
+        _upData->add<DataPointLabel::Reachable>(true);
+
+        _lastDeviceConfigMillis = millis();
     }
 
     return true;
+}
+
+void HardwareInterface::requestDeviceConfig()
+{
+    _sendQueue.push(command_t {
+        .tries = 1,
+        .deviceAddress = 1,
+        .registerAddress = 0x50FE,
+        .command = 0,
+        .flags = 0,
+        .value = 0
+    });
 }
 
 bool HardwareInterface::readRectifierState(can_message_t const& msg)
@@ -352,6 +367,28 @@ void HardwareInterface::loop()
         logIncoming(false);
     }
 
+    // the first thing we need to do is to request the device config so we know
+    // the max current multiplier. that is required to process the ACK for
+    // the offline current setting, or even send that setting in particular.
+    if (!_lastDeviceConfigMillis) {
+        // stand by while processing the device config request and not timed out
+        if ((millis() - _lastRequestMillis) < 5000) { return; }
+
+        requestDeviceConfig();
+
+        _lastRequestMillis = millis();
+
+        return processQueue();
+    }
+
+    if ((millis() - *_lastDeviceConfigMillis) > DeviceConfigTimeoutMillis) {
+        MessageOutput.print("[Huawei::HwIfc] PSU is unreachable (no CAN communication)\r\n");
+        _lastDeviceConfigMillis = std::nullopt;
+        _boardPropertiesState = StringState::Unknown;
+        _upData->add<DataPointLabel::Reachable>(false);
+        return; // restart by re-requesting device config in next iteration
+    }
+
     if (StringState::Complete != _boardPropertiesState) {
         // stand by while processing the board properties replies and not timed out
         if (StringState::Reading == _boardPropertiesState &&
@@ -372,15 +409,10 @@ void HardwareInterface::loop()
     }
 
     if ((millis() - _lastRequestMillis) >= DataRequestIntervalMillis) {
-        // request device config (max amps, row, slot)
-        _sendQueue.push(command_t {
-            .tries = 1,
-            .deviceAddress = 1,
-            .registerAddress = 0x50FE,
-            .command = 0,
-            .flags = 0,
-            .value = 0
-        });
+        // we request the device config regularly as the row and index (slot detection)
+        // might change by use of the "power" pin, and we use the device config to
+        // determine whether the PSU is reachable.
+        requestDeviceConfig();
 
         // request rectifier state
         _sendQueue.push(command_t {
@@ -393,9 +425,9 @@ void HardwareInterface::loop()
         });
 
         _lastRequestMillis = millis();
-    }
 
-    processQueue();
+        return processQueue();
+    }
 }
 
 void HardwareInterface::processQueue()
