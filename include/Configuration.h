@@ -260,6 +260,11 @@ struct GRID_CHARGER_CONFIG_T {
     float Auto_Power_Upper_Power_Limit;
     uint8_t Auto_Power_Stop_BatterySoC_Threshold;
     float Auto_Power_Target_Power_Consumption;
+    float OfflineVoltage;
+    float OfflineCurrent;
+    float InputCurrentLimit;
+    bool FanOnlineFullSpeed;
+    bool FanOfflineFullSpeed;
 };
 using GridChargerConfig = struct GRID_CHARGER_CONFIG_T;
 

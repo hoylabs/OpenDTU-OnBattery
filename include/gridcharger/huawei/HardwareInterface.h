@@ -104,6 +104,11 @@ private:
     bool readRectifierState(can_message_t const& msg);
 
     bool readAcks(can_message_t const& msg);
+
+    std::optional<uint32_t> _lastSettingsUpdateMillis = std::nullopt;
+    void sendSettings();
+
+    void enqueueParameter(Setting setting, float val);
 };
 
 } // namespace GridCharger::Huawei

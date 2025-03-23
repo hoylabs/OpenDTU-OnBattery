@@ -245,6 +245,11 @@ void ConfigurationClass::serializeGridChargerConfig(GridChargerConfig const& sou
     target["upper_power_limit"] = source.Auto_Power_Upper_Power_Limit;
     target["stop_batterysoc_threshold"] = source.Auto_Power_Stop_BatterySoC_Threshold;
     target["target_power_consumption"] = source.Auto_Power_Target_Power_Consumption;
+    target["offline_voltage"] = roundedFloat(source.OfflineVoltage);
+    target["offline_current"] = roundedFloat(source.OfflineCurrent);
+    target["input_current_limit"] = roundedFloat(source.InputCurrentLimit);
+    target["fan_online_full_speed"] = source.FanOnlineFullSpeed;
+    target["fan_offline_full_speed"] = source.FanOfflineFullSpeed;
 }
 
 bool ConfigurationClass::write()
@@ -649,6 +654,11 @@ void ConfigurationClass::deserializeGridChargerConfig(JsonObject const& source, 
     target.Auto_Power_Upper_Power_Limit = source["upper_power_limit"] | HUAWEI_AUTO_POWER_UPPER_POWER_LIMIT;
     target.Auto_Power_Stop_BatterySoC_Threshold = source["stop_batterysoc_threshold"] | HUAWEI_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
     target.Auto_Power_Target_Power_Consumption = source["target_power_consumption"] | HUAWEI_AUTO_POWER_TARGET_POWER_CONSUMPTION;
+    target.OfflineVoltage = source["offline_voltage"] | HUAWEI_OFFLINE_VOLTAGE;
+    target.OfflineCurrent = source["offline_current"] | HUAWEI_OFFLINE_CURRENT;
+    target.InputCurrentLimit = source["input_current_limit"] | HUAWEI_INPUT_CURRENT_LIMIT;
+    target.FanOnlineFullSpeed = source["fan_online_full_speed"] | false;
+    target.FanOfflineFullSpeed = source["fan_offline_full_speed"] | false;
 }
 
 bool ConfigurationClass::read()
