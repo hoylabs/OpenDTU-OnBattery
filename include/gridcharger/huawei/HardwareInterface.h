@@ -97,6 +97,9 @@ private:
     uint32_t _boardPropertiesRequestMillis = 0;
 
     bool readDeviceConfig(can_message_t const& msg);
+    void requestDeviceConfig();
+    std::optional<uint32_t> _lastDeviceConfigMillis = std::nullopt;
+    static constexpr uint32_t DeviceConfigTimeoutMillis = DataRequestIntervalMillis * 4;
 
     bool readRectifierState(can_message_t const& msg);
 

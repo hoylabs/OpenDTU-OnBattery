@@ -12,8 +12,8 @@
                     <div
                         class="card-header d-flex justify-content-between align-items-center"
                         :class="{
-                            'text-bg-danger': huaweiData.data_age > 10,
-                            'text-bg-success': huaweiData.data_age <= 10
+                            'text-bg-danger': huaweiData.reachable !== true,
+                            'text-bg-success': huaweiData.reachable === true
                         }"
                     >
                         <div class="p-1 flex-grow-1">

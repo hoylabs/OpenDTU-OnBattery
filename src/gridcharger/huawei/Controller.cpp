@@ -394,6 +394,10 @@ void Controller::getJsonData(JsonVariant& root) const
     root["data_age"] = millis() - _dataPoints.getLastUpdate();
 
     using Label = GridCharger::Huawei::DataPointLabel;
+
+    auto oReachable = _dataPoints.get<Label::Reachable>();
+    root["reachable"] = oReachable.value_or(false);
+
 #define VAL(l, n) \
     { \
         auto oDataPoint = _dataPoints.getDataPointFor<Label::l>(); \

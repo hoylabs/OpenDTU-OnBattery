@@ -14,7 +14,8 @@ enum class DataPointLabel : uint8_t {
     ProductName,
     ProductDescription,
 
-    // device config message
+    // device config message (except for max current multiplier)
+    Reachable,
     Row,
     Slot,
 
@@ -56,6 +57,7 @@ LABEL_TRAIT(Manufactured,       std::string, "");
 LABEL_TRAIT(VendorName,         std::string, "");
 LABEL_TRAIT(ProductName,        std::string, "");
 LABEL_TRAIT(ProductDescription, std::string, "");
+LABEL_TRAIT(Reachable,          bool,        "");
 LABEL_TRAIT(Row,                uint8_t,     "");
 LABEL_TRAIT(Slot,               uint8_t,     "");
 LABEL_TRAIT(OnlineVoltage,      float,       "V");

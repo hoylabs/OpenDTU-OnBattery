@@ -136,6 +136,11 @@ void MqttHandleHuaweiClass::loop()
     PUBSTR(ProductDescription, "product_description");
 #undef PUBSTR
 
+    auto const& oReachable = dataPoints.get<GridCharger::Huawei::DataPointLabel::Reachable>();
+    if (oReachable) {
+        MqttSettings.publish("huawei/reachable", String(*oReachable?1:0));
+    }
+
     MqttSettings.publish("huawei/data_age", String((millis() - dataPoints.getLastUpdate()) / 1000));
     MqttSettings.publish("huawei/mode", String(HuaweiCan.getMode()));
 
