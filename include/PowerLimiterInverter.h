@@ -86,7 +86,8 @@ public:
         SendingCommandsDisabled,
         MaxOutputUnknown,
         CurrentLimitUnknown,
-        Eligible
+        Eligible,
+        Nighttime
     };
 
     // only returns Eligibility::Eligible if the inverter can participate
