@@ -113,9 +113,8 @@ void MessageOutputClass::loop()
                 client.text(msg);
 
                 if (client.queueIsFull()) {
-                    static char const warningStr[] = "WARNING: dropping log line(s) as websocket client's queue is full\r\n";
-                    message_t warningVec(warningStr, warningStr + sizeof(warningStr) - 1);
-                    msg->swap(warningVec);
+                    static char const warningStr[] = "\r\nWARNING: websocket client's queue is full, expect log lines missing\r\n";
+                    msg->insert(msg->end(), warningStr, warningStr + sizeof(warningStr) - 1);
                 }
             }
         }
