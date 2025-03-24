@@ -724,16 +724,15 @@ bool PowerLimiterClass::updateInverters()
 
 uint16_t PowerLimiterClass::getSolarPassthroughPower()
 {
-    auto solarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
-
-    if (!isSolarPassThroughEnabled()
-            || isBelowStopThreshold()
-            || !solarChargerOutput
-            ) {
+    if (!isSolarPassThroughEnabled() || isBelowStopThreshold()) {
         return 0;
     }
 
-    return *solarChargerOutput;
+    std::optional<float> oSolarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
+
+    // do not trust this value to be positive. in particular, the MQTT solar
+    // provider happily processes negative values as well.
+    return std::max<float>(0, oSolarChargerOutput.value_or(0));
 }
 
 float PowerLimiterClass::getBatteryInvertersOutputAcWatts()
