@@ -28,7 +28,9 @@ uint16_t PowerLimiterSmartBufferInverter::getMaxIncreaseWatts() const
     // when overscaling is in use we must not substract the current limit
     // because it might be scaled and higher than the configured max power.
     if (_config.UseOverscaling && !_spInverter->supportsPowerDistributionLogic()) {
-        return getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
+        // The inverter can produce more than the set limit and as such
+        // also more than the configured max power.
+        return std::max(0, getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts());
     }
 
     // we must not substract the current AC output here, but the current
