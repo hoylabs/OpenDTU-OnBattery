@@ -242,8 +242,8 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 
             // A dataset can be fragmented across multiple frames,
             // so we give just frames containing the field-label "V" a timestamp to avoid
-            // multible timestamps on related data. We also take care to have a complete dataset from
-            // multible frames after a start or restart or fault before we set the data as valid.
+            // multible timestamps on related data. We also take care to have the dataset complete
+            // after a start or restart or fault before we set the data as valid.
             // Note: At startup, it may take up to 2 seconds for the first timestamp to be available
             if (_frameContainsFieldV) {
                 if (_startUpPassed) {
