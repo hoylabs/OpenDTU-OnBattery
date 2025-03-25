@@ -24,15 +24,15 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
         return getConfiguredMaxPowerWatts();
     }
 
-    // The maximum increase possible for this inverter.
     // The inverter can produce more than the set limit and as such
-    // also more than the configured max power.
-    uint16_t maxTotalIncrease  = std::max(0, getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts());
-
-    // The inverter can't increase the power limit anymore.
-    if (maxTotalIncrease == 0) {
+    // also more than the configured max power or
+    // the inverter can't increase the power limit anymore.
+    if (getCurrentOutputAcWatts() >= getConfiguredMaxPowerWatts()) {
         return 0;
     }
+
+    // The maximum increase possible for this inverter.
+    uint16_t maxTotalIncrease = getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
 
     auto pStats = _spInverter->Statistics();
     std::vector<MpptNum_t> dcMppts = _spInverter->getMppts();
@@ -91,8 +91,12 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
 
     uint16_t currentPowerPerNonShadedMppt = nonShadedMpptACPowerSum / dcNonShadedMppts;
 
+    uint16_t maxIncreasePerNonShadedMppt = 0;
+
     // unshaded mppts could produce more power than the max power per MPPT.
-    uint16_t maxIncreasePerNonShadedMppt = std::min(0, maxPowerPerMppt - currentPowerPerNonShadedMppt);
+    if (maxPowerPerMppt > currentPowerPerNonShadedMppt) {
+        maxIncreasePerNonShadedMppt = maxPowerPerMppt - currentPowerPerNonShadedMppt;
+    }
 
     // maximum increase based on the non-shaded mppts, can be higher than maxTotalIncrease for inverters
     // with PDL when getConfiguredMaxPowerWatts() is less than getInverterMaxPowerWatts() divided by

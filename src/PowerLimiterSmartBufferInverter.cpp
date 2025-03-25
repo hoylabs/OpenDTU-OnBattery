@@ -30,14 +30,22 @@ uint16_t PowerLimiterSmartBufferInverter::getMaxIncreaseWatts() const
     if (_config.UseOverscaling && !_spInverter->supportsPowerDistributionLogic()) {
         // The inverter can produce more than the set limit and as such
         // also more than the configured max power.
-        return std::max(0, getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts());
+        if (getCurrentOutputAcWatts() > getConfiguredMaxPowerWatts()) {
+            return 0;
+        }
+
+        return getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
     }
 
     // we must not substract the current AC output here, but the current
     // limit value, so we avoid trying to produce even more even if the
     // inverter is already at the maximum limit value (the actual AC
     // output may be less than the inverter's current power limit).
-    return std::max(0, getConfiguredMaxPowerWatts() - getCurrentLimitWatts());
+    if (getCurrentLimitWatts() > getConfiguredMaxPowerWatts()) {
+        return 0;
+    }
+
+    return getConfiguredMaxPowerWatts() - getCurrentLimitWatts();
 }
 
 uint16_t PowerLimiterSmartBufferInverter::applyReduction(uint16_t reduction, bool allowStandby)
