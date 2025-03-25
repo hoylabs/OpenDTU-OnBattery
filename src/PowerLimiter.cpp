@@ -855,14 +855,13 @@ bool PowerLimiterClass::isBelowStopThreshold()
 
 void PowerLimiterClass::calcNextInverterRestart()
 {
-    auto const& config = Configuration.get();
-
-    if (config.PowerLimiter.RestartHour < 0) {
+    if (!usesBatteryPoweredInverter() && !usesSmartBufferPoweredInverter()) {
         _nextInverterRestart = { false, 0 };
         MessageOutput.println("[DPL] automatic inverter restart disabled");
         return;
     }
 
+    auto const& config = Configuration.get();
     struct tm timeinfo;
     getLocalTime(&timeinfo, 5); // always succeeds as we call this method only
                                 // from the DPL loop *after* we already made

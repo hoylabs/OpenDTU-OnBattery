@@ -738,8 +738,7 @@
         "VoltageThresholds": "Battery Voltage Thresholds",
         "VoltageLoadCorrectionInfo": "<b>Hint:</b> When the battery is discharged, its voltage drops. The voltage drop scales with the discharge current. In order to not stop inverters too early (stop threshold), this load correction factor can be specified to calculate the battery voltage if it was idle. Corrected voltage = DC Voltage + (Current power * correction factor).",
         "InverterRestartHour": "Automatic Inverter Restart Time",
-        "InverterRestartDisabled": "Do not execute automatic restart",
-        "InverterRestartHint": "When used with solar modules, the inverter's daily yield is usually reset at night when the inverter turns off due to lack of light. To reset the daily yield even though the inverter is continuously powered by a battery, the inverter can be automatically restarted daily at the desired time."
+        "InverterRestartHint": "The inverter(s) will be automatically restarted daily at the desired time. This is necessary because the inverter may behave unexpectedly if not restarted and powered continuously for days/weeks/months. A restart is also required to reset the daily yield."
     },
     "batteryadmin": {
         "BatterySettings": "Battery Settings",

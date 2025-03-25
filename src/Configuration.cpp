@@ -1053,6 +1053,16 @@ void ConfigurationClass::migrateOnBattery()
         }
     }
 
+    if (config.Cfg.VersionOnBattery < 6) {
+        int8_t restartHour = doc["powerlimiter"]["inverter_restart_hour"].as<int8_t>() | POWERLIMITER_RESTART_HOUR;
+
+        if (restartHour < 0) {
+            restartHour = POWERLIMITER_RESTART_HOUR;
+        }
+
+        config.PowerLimiter.RestartHour = static_cast<uint8_t>(restartHour);
+    }
+
     f.close();
 
     config.Cfg.VersionOnBattery = CONFIG_VERSION_ONBATTERY;
