@@ -666,6 +666,14 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested)
         return 0;
     }
 
+    if (Battery.getStats()->getImmediateChargingRequest()) {
+        if (_verboseLogging) {
+            MessageOutput.println("[DPL] DC power bus usage blocked by "
+                    "immediate charging request");
+        }
+        return 0;
+    }
+
     auto solarOutputDc = getSolarPassthroughPower();
     auto solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
     if (isFullSolarPassthroughActive() && solarOutputAc > powerRequested) {
