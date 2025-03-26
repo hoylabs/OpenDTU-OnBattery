@@ -157,67 +157,57 @@ float Controller::getChargeCurrentLimit()
 
     if (!config.Battery.EnableChargeCurrentLimit) { return FLT_MAX; }
 
-    auto maxChargeCurrentLimit = config.Battery.MaxChargeCurrentLimit;
-    auto maxChargeCurrentLimitValid = maxChargeCurrentLimit > 0.0f;
-    auto minChargeCurrentLimit = config.Battery.MinChargeCurrentLimit;
-    auto minChargeCurrentLimitValid = minChargeCurrentLimit > 0.0f;
-    auto chargeCurrentLimitBelowSoc = config.Battery.ChargeCurrentLimitBelowSoc;
-    auto chargeCurrentLimitBelowVoltage = config.Battery.ChargeCurrentLimitBelowVoltage;
-    auto statsSoCValid = getStats()->getSoCAgeSeconds() <= 60 && !config.PowerLimiter.IgnoreSoc;
-    auto statsSoC = statsSoCValid ? getStats()->getSoC() : 100.0; // fail open so we use voltage instead
-    auto statsVoltageValid = getStats()->getVoltageAgeSeconds() <= 60;
-    auto statsVoltage = statsVoltageValid ? getStats()->getVoltage() : 0.0; // fail closed
-    auto statsCurrentLimit = getStats()->getChargeCurrentLimit();
-    auto statsLimitValid = config.Battery.UseBatteryReportedChargeCurrentLimit
-        && statsCurrentLimit >= 0.0f
-        && getStats()->getChargeCurrentLimitAgeSeconds() <= 60;
+    /**
+     * we are looking at three limits: (1) the static max charge current limit
+     * setup by the user as part of the configuration, which is effective below
+     * a (SoC or voltage) threshold, (2) the dynamic charge current
+     * limit reported by the BMS and (3) the static min charge current limit, setup by
+     * the user which defines the lowest possible charge current limit.
+     * for the first both types of limits, we will determine its value, then test a bunch
+     * of excuses why the limit might not be applicable.
+     *
+     * the smaller limit will be enforced.
+     * If the resulting limit is smaller than (3), (3) will be used instead
+     */
+    auto spStats = getStats();
 
-    if (statsSoCValid) {
-        if (statsSoC > chargeCurrentLimitBelowSoc) {
-            // Above SoC and Voltage thresholds, ignore custom limit.
-            // Battery-provided limit will still be applied.
-            maxChargeCurrentLimitValid = false;
+    auto getConfiguredMinLimit = [&config,&spStats]() -> float {
+        auto configuredMinLimit = config.Battery.MinChargeCurrentLimit;
+        if (configuredMinLimit < 0.0f) { return 0.0f; } // invalid setting
+
+        return configuredMinLimit;
+    };
+
+    auto getConfiguredMaxLimit = [&config,&spStats]() -> float {
+        auto configuredMaxLimit = config.Battery.MaxChargeCurrentLimit;
+        if (configuredMaxLimit <= 0.0f) { return FLT_MAX; } // invalid setting
+
+        bool useSoC = spStats->getSoCAgeSeconds() <= 60 && !config.PowerLimiter.IgnoreSoc;
+        if (useSoC) {
+            auto threshold = config.Battery.ChargeCurrentLimitBelowSoc;
+            if (spStats->getSoC() >= threshold) { return FLT_MAX; }
+
+            return configuredMaxLimit;
         }
-    } else {
-        if (statsVoltage > chargeCurrentLimitBelowVoltage) {
-            // Above SoC and Voltage thresholds, ignore custom limit.
-            // Battery-provided limit will still be applied.
-            maxChargeCurrentLimitValid = false;
+
+        bool voltageValid = spStats->getVoltageAgeSeconds() <= 60;
+        if (voltageValid) {
+            auto threshold = config.Battery.DischargeCurrentLimitBelowVoltage;
+            if (spStats->getVoltage() >= threshold) { return FLT_MAX; }
+
+            return configuredMaxLimit;
         }
-    }
+        return configuredMaxLimit;
+    };
 
-    if (statsLimitValid && maxChargeCurrentLimitValid) {
-        // take the lowest limit
-        return min(statsCurrentLimit, maxChargeCurrentLimit);
-    }
+    auto getBatteryLimit = [&config,&spStats]() -> float {
+        if (!config.Battery.UseBatteryReportedChargeCurrentLimit) { return FLT_MAX; }
 
-    if (statsSoCValid) {
-        if (statsSoC <= chargeCurrentLimitBelowSoc) {
-            // below SoC and Voltage thresholds, ignore custom limit.
-            // Battery-provided limit will still be applied.
-            minChargeCurrentLimitValid = false;
-        }
-    } else {
-        if (statsVoltage <= chargeCurrentLimitBelowVoltage) {
-            // below SoC and Voltage thresholds, ignore custom limit.
-            // Battery-provided limit will still be applied.
-            minChargeCurrentLimitValid = false;
-        }
-    }
+        if (spStats->getChargeCurrentLimitAgeSeconds() > 60) { return FLT_MAX; } // unusable
 
-    if (statsLimitValid && minChargeCurrentLimitValid) {
-        // take the highest limit
-        return max(statsCurrentLimit, minChargeCurrentLimit);
-    }
-
-    if (statsLimitValid) {
-        return statsCurrentLimit;
-    }
-
-    if (maxChargeCurrentLimitValid) {
-        return maxChargeCurrentLimit;
-    }
-
-    return FLT_MAX;
+        return spStats->getChargeCurrentLimit();
+    };
+    auto maxChargeLimit = std::min(getConfiguredMaxLimit(), getBatteryLimit());
+    return std::max(maxChargeLimit, getConfiguredMinLimit());
 }
 } // namespace Batteries
