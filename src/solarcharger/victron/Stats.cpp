@@ -6,13 +6,13 @@
 
 namespace SolarChargers::Victron {
 
-void Stats::update(const String serial, const VeDirectMpptController::data_t mpptData, uint32_t lastUpdate) const
+void Stats::update(const String key, const VeDirectMpptController::data_t mpptData, uint32_t lastUpdate) const
 {
-    // serial required as index
-    if (serial.isEmpty()) { return; }
+    // key required as index
+    if (key.isEmpty()) { return; }
 
-    _data[serial] = mpptData;
-    _lastUpdate[serial] = lastUpdate;
+    _data[key] = mpptData;
+    _lastUpdate[key] = lastUpdate;
 }
 
 uint32_t Stats::getAgeMillis() const
@@ -171,7 +171,7 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
         auto hasUpdate = age != 0 && age < millis() - lastPublish;
         if (!fullUpdate && !hasUpdate) { continue; }
 
-        JsonObject instance = instances[entry.first].to<JsonObject>();
+        JsonObject instance = instances[entry.second.serialNr_SER].to<JsonObject>();
         instance["data_age_ms"] = age;
         instance["hide_serial"] = false;
         populateJsonWithInstanceStats(instance, entry.second);

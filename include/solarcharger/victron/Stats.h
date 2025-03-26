@@ -24,7 +24,7 @@ public:
     void mqttPublish() const final;
     void mqttPublishSensors(const boolean forcePublish) const final;
 
-    void update(const String serial, const VeDirectMpptController::data_t mpptData, uint32_t lastUpdate) const;
+    void update(const String key, const VeDirectMpptController::data_t mpptData, uint32_t lastUpdate) const;
 
 private:
     // TODO(andreasboehm): _data and _lastUpdate in two different structures is not ideal and needs to change
