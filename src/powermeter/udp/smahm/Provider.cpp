@@ -5,7 +5,7 @@
 #include <powermeter/udp/smahm/Provider.h>
 #include <Arduino.h>
 #include <WiFiUdp.h>
-#include "MessageOutput.h"
+#include <MessageOutput.h>
 
 namespace PowerMeters::Udp::SmaHM {
 
@@ -34,13 +34,6 @@ bool Provider::init()
 Provider::~Provider()
 {
     SMAUdp.stop();
-}
-
-void Provider::doMqttPublish() const
-{
-    mqttPublish("power1", _powerMeterL1);
-    mqttPublish("power2", _powerMeterL2);
-    mqttPublish("power3", _powerMeterL3);
 }
 
 uint8_t* Provider::decodeGroup(uint8_t* offset, uint16_t grouplen)
@@ -132,16 +125,24 @@ uint8_t* Provider::decodeGroup(uint8_t* offset, uint16_t grouplen)
             }
 
             if (count == 8) {
-                _powerMeterPower = Pbezug - Peinspeisung;
-                _powerMeterL1 = BezugL1 - EinspeisungL1;
-                _powerMeterL2 = BezugL2 - EinspeisungL2;
-                _powerMeterL3 = BezugL3 - EinspeisungL3;
-                Soutput(kanal, index, art, tarif, "Leistung", _powerMeterPower, timestamp);
-                Soutput(kanal, index, art, tarif, "Leistung L1", _powerMeterL1, timestamp);
-                Soutput(kanal, index, art, tarif, "Leistung L2", _powerMeterL2, timestamp);
-                Soutput(kanal, index, art, tarif, "Leistung L3", _powerMeterL3, timestamp);
+                auto powerTotal = Pbezug - Peinspeisung;
+                auto powerL1 = BezugL1 - EinspeisungL1;
+                auto powerL2 = BezugL2 - EinspeisungL2;
+                auto powerL3 = BezugL3 - EinspeisungL3;
+
+                {
+                    auto scopedLock = _dataCurrent.lock();
+                    _dataCurrent.add<DataPointLabel::PowerTotal>(powerTotal);
+                    _dataCurrent.add<DataPointLabel::PowerL1>(powerL1);
+                    _dataCurrent.add<DataPointLabel::PowerL2>(powerL2);
+                    _dataCurrent.add<DataPointLabel::PowerL3>(powerL3);
+                }
+
+                Soutput(kanal, index, art, tarif, "Leistung", powerTotal, timestamp);
+                Soutput(kanal, index, art, tarif, "Leistung L1", powerL1, timestamp);
+                Soutput(kanal, index, art, tarif, "Leistung L2", powerL2, timestamp);
+                Soutput(kanal, index, art, tarif, "Leistung L3", powerL3, timestamp);
                 count = 0;
-                gotUpdate();
             }
 
             continue;

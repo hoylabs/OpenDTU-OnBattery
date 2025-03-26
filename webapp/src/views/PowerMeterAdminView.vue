@@ -277,6 +277,29 @@
                         </BootstrapAlert>
                     </CardElement>
                 </template>
+
+                <template v-if="powerMeterConfigList.source === 7">
+                    <CardElement :text="$t('powermeteradmin.UDP_VICTRON')" textVariant="text-bg-primary" add-space>
+                        <InputElement
+                            :label="$t('powermeteradmin.pollingInterval')"
+                            v-model="udpVictronPollIntervalSeconds"
+                            type="number"
+                            min="0.5"
+                            max="15.0"
+                            step="0.1"
+                            :postfix="$t('powermeteradmin.seconds')"
+                            wide
+                        />
+
+                        <InputElement
+                            :label="$t('powermeteradmin.ipAddress')"
+                            v-model="powerMeterConfigList.udp_victron.ip_address"
+                            type="text"
+                            maxlength="15"
+                            wide
+                        />
+                    </CardElement>
+                </template>
             </template>
 
             <FormFooter @reload="getPowerMeterConfig" />
@@ -316,6 +339,7 @@ export default defineComponent({
                 { key: 4, value: this.$t('powermeteradmin.typeSML') },
                 { key: 5, value: this.$t('powermeteradmin.typeSMAHM2') },
                 { key: 6, value: this.$t('powermeteradmin.typeHTTP_SML') },
+                { key: 7, value: this.$t('powermeteradmin.typeUDP_VICTRON') },
             ],
             unitTypeList: [
                 { key: 1, value: 'mW' },
@@ -339,6 +363,16 @@ export default defineComponent({
     },
     created() {
         this.getPowerMeterConfig();
+    },
+    computed: {
+        udpVictronPollIntervalSeconds: {
+            get(): number {
+                return this.powerMeterConfigList.udp_victron.polling_interval_ms / 1000;
+            },
+            set(value: number) {
+                this.powerMeterConfigList.udp_victron.polling_interval_ms = value * 1000;
+            },
+        },
     },
     methods: {
         getPowerMeterConfig() {

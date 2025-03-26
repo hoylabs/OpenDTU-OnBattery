@@ -100,14 +100,11 @@ void Provider::pollingLoop()
         }
 
         MessageOutput.printf("[PowerMeters::Json::Http] New total: %.2f\r\n", getPowerTotal());
-
-        gotUpdate();
     }
 }
 
 Provider::poll_result_t Provider::poll()
 {
-    power_values_t cache;
     JsonDocument jsonResponse;
 
     auto prefixedError = [](uint8_t idx, char const* err) -> String {
@@ -120,7 +117,6 @@ Provider::poll_result_t Provider::poll()
         auto const& cfg = _cfg.Values[i];
 
         if (!cfg.Enabled) {
-            cache[i] = 0.0;
             continue;
         }
 
@@ -150,47 +146,49 @@ Provider::poll_result_t Provider::poll()
         }
 
         // this value is supposed to be in Watts and positive if energy is consumed
-        cache[i] = pathResolutionResult.first;
+        float newValue = pathResolutionResult.first;
 
         switch (cfg.PowerUnit) {
             case Unit_t::MilliWatts:
-                cache[i] /= 1000;
+                newValue /= 1000;
                 break;
             case Unit_t::KiloWatts:
-                cache[i] *= 1000;
+                newValue *= 1000;
                 break;
             default:
                 break;
         }
 
-        if (cfg.SignInverted) { cache[i] *= -1; }
+        if (cfg.SignInverted) { newValue *= -1; }
+
+        {
+            auto scopedLock = _dataCurrent.lock();
+            switch (i) {
+                case 0:
+                    _dataCurrent.add<DataPointLabel::PowerL1>(newValue);
+                    break;
+
+                case 1:
+                    _dataCurrent.add<DataPointLabel::PowerL2>(newValue);
+                    break;
+
+                case 2:
+                    _dataCurrent.add<DataPointLabel::PowerL3>(newValue);
+                    break;
+
+                default:
+                    break;
+            }
+        }
     }
 
-    std::unique_lock<std::mutex> lock(_valueMutex);
-    _powerValues = cache;
-    return cache;
-}
-
-float Provider::getPowerTotal() const
-{
-    float sum = 0.0;
-    std::unique_lock<std::mutex> lock(_valueMutex);
-    for (auto v: _powerValues) { sum += v; }
-    return sum;
+    return _dataCurrent;
 }
 
 bool Provider::isDataValid() const
 {
     uint32_t age = millis() - getLastUpdate();
     return getLastUpdate() > 0 && (age < (3 * _cfg.PollingInterval * 1000));
-}
-
-void Provider::doMqttPublish() const
-{
-    std::unique_lock<std::mutex> lock(_valueMutex);
-    mqttPublish("power1", _powerValues[0]);
-    mqttPublish("power2", _powerValues[1]);
-    mqttPublish("power3", _powerValues[2]);
 }
 
 } // namespace PowerMeters::Json::Http

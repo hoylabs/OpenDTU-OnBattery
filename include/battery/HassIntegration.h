@@ -18,16 +18,20 @@ protected:
     void publish(const String& subtopic, const String& payload) const;
     void publishBinarySensor(const char* caption,
             const char* icon, const char* subTopic,
-            const char* payload_on, const char* payload_off) const;
+            const char* payload_on, const char* payload_off,
+            const bool enabled = true) const;
     void publishSensor(const char* caption, const char* icon,
             const char* subTopic, const char* deviceClass = nullptr,
             const char* stateClass = nullptr,
-            const char* unitOfMeasurement = nullptr) const;
+            const char* unitOfMeasurement = nullptr,
+            const bool enabled = true) const;
     void createDeviceInfo(JsonObject& object) const;
 
     virtual void publishSensors() const;
 
 private:
+    static String sanitizeUniqueId(const char* value);
+
     String _serial = "0001"; // pseudo-serial, can be replaced in future with real serialnumber
     std::shared_ptr<Stats> _spStats = nullptr;
 

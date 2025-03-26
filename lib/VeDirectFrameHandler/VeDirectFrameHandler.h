@@ -28,6 +28,7 @@ public:
     T const& getData() const { return _tmpFrame; }
     bool sendHexCommand(VeDirectHexCommand cmd, VeDirectHexRegister addr, uint32_t value = 0, uint8_t valsize = 0);
     bool isStateIdle() const { return (_state == State::IDLE); }
+    String getLogId() const { return String(_logId); }
 
 protected:
     VeDirectFrameHandler();

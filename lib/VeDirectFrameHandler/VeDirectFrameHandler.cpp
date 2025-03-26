@@ -118,6 +118,23 @@ void VeDirectFrameHandler<T>::loop()
 	}
 }
 
+static bool isValidChar(uint8_t inbyte)
+{
+	// Except the checksum and allowed control characters, everything should
+	// be ASCII and non-ASCII values indicate data corruption.
+
+	// Allowed control characters.
+	if (inbyte == '\t' || inbyte == '\n' || inbyte == '\r') {
+		return true;
+	}
+	// Valid ASCII non-control range.
+	if (inbyte >= 32 && inbyte < 128) {
+		return true;
+	}
+	// Invalid character indicating data corruption.
+	return false;
+}
+
 /*
  *  rxData
  *  This function is called by loop() which passes a byte of serial data
@@ -132,6 +149,11 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 		if (0 == _debugIn) {
 			_msgOut->printf("%s ERROR: debug buffer overrun!\r\n", _logId);
 		}
+	}
+	if (_state != State::CHECKSUM && !isValidChar(inbyte)) {
+		_msgOut->printf("%s non-ASCII character 0x%02x, invalid frame\r\n", _logId, inbyte);
+		reset();
+		return;
 	}
 
 	if ( (inbyte == ':') && (_state != State::CHECKSUM) ) {

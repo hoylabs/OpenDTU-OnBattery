@@ -26,9 +26,7 @@ public:
 
     bool init() final;
     void loop() final;
-    float getPowerTotal() const final;
     bool isDataValid() const final;
-    void doMqttPublish() const final;
 
 private:
     static void pollingLoopHelper(void* context);
@@ -40,17 +38,6 @@ private:
     PowerMeterSerialSdmConfig const _cfg;
 
     uint32_t _lastPoll = 0;
-
-    float _phase1Power = 0.0;
-    float _phase2Power = 0.0;
-    float _phase3Power = 0.0;
-    float _phase1Voltage = 0.0;
-    float _phase2Voltage = 0.0;
-    float _phase3Voltage = 0.0;
-    float _energyImport = 0.0;
-    float _energyExport = 0.0;
-
-    mutable std::mutex _valueMutex;
 
     std::unique_ptr<SoftwareSerial> _upSdmSerial = nullptr;
     std::unique_ptr<SDM> _upSdm = nullptr;

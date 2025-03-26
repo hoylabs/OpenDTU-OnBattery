@@ -7,6 +7,7 @@
 #include <powermeter/sml/http/Provider.h>
 #include <powermeter/sml/serial/Provider.h>
 #include <powermeter/udp/smahm/Provider.h>
+#include <powermeter/udp/victron/Provider.h>
 
 PowerMeters::Controller PowerMeter;
 
@@ -56,6 +57,9 @@ void Controller::updateSettings()
         case Provider::Type::HTTP_SML:
             _upProvider = std::make_unique<::PowerMeters::Sml::Http::Provider>(pmcfg.HttpSml);
             break;
+        case Provider::Type::UDP_VICTRON:
+            _upProvider = std::make_unique<::PowerMeters::Udp::Victron::Provider>(pmcfg.UdpVictron);
+            break;
     }
 
     if (!_upProvider->init()) {
@@ -91,6 +95,7 @@ void Controller::loop()
     _upProvider->loop();
 
     auto const& pmcfg = Configuration.get().PowerMeter;
+    // we don't need to republish data received from MQTT
     if (pmcfg.Source == static_cast<uint8_t>(Provider::Type::MQTT)) { return; }
     _upProvider->mqttLoop();
 }

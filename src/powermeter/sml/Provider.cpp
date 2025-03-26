@@ -4,38 +4,10 @@
 
 namespace PowerMeters::Sml {
 
-float Provider::getPowerTotal() const
-{
-    std::lock_guard<std::mutex> l(_mutex);
-    if (_values.activePowerTotal.has_value()) { return *_values.activePowerTotal; }
-    return 0;
-}
-
-void Provider::doMqttPublish() const
-{
-#define PUB(t, m) \
-    if (_values.m.has_value()) { mqttPublish(t, *_values.m); }
-
-    std::lock_guard<std::mutex> l(_mutex);
-    PUB("power1", activePowerL1);
-    PUB("power2", activePowerL2);
-    PUB("power3", activePowerL3);
-    PUB("voltage1", voltageL1);
-    PUB("voltage2", voltageL2);
-    PUB("voltage3", voltageL3);
-    PUB("current1", currentL1);
-    PUB("current2", currentL2);
-    PUB("current3", currentL3);
-    PUB("import", energyImport);
-    PUB("export", energyExport);
-
-#undef PUB
-}
-
 void Provider::reset()
 {
     smlReset();
-    _cache = { std::nullopt };
+    _dataInFlight.clear();
 }
 
 void Provider::processSmlByte(uint8_t byte)
@@ -53,13 +25,63 @@ void Provider::processSmlByte(uint8_t byte)
                             _user.c_str(), handler.name, helper);
                 }
 
-                std::lock_guard<std::mutex> l(_mutex);
-                *handler.target = helper;
+                switch (handler.target)
+                {
+                case DataPointLabel::PowerTotal:
+                    _dataInFlight.add<DataPointLabel::PowerTotal>(helper);
+                    break;
+
+                case DataPointLabel::PowerL1:
+                    _dataInFlight.add<DataPointLabel::PowerL1>(helper);
+                    break;
+
+                case DataPointLabel::PowerL2:
+                    _dataInFlight.add<DataPointLabel::PowerL2>(helper);
+                    break;
+
+                case DataPointLabel::PowerL3:
+                    _dataInFlight.add<DataPointLabel::PowerL3>(helper);
+                    break;
+
+                case DataPointLabel::VoltageL1:
+                    _dataInFlight.add<DataPointLabel::VoltageL1>(helper);
+                    break;
+
+                case DataPointLabel::VoltageL2:
+                    _dataInFlight.add<DataPointLabel::VoltageL2>(helper);
+                    break;
+
+                case DataPointLabel::VoltageL3:
+                    _dataInFlight.add<DataPointLabel::VoltageL3>(helper);
+                    break;
+
+                case DataPointLabel::CurrentL1:
+                    _dataInFlight.add<DataPointLabel::CurrentL1>(helper);
+                    break;
+
+                case DataPointLabel::CurrentL2:
+                    _dataInFlight.add<DataPointLabel::CurrentL2>(helper);
+                    break;
+
+                case DataPointLabel::CurrentL3:
+                    _dataInFlight.add<DataPointLabel::CurrentL3>(helper);
+                    break;
+
+                case DataPointLabel::Import:
+                    _dataInFlight.add<DataPointLabel::Import>(helper);
+                    break;
+
+                case DataPointLabel::Export:
+                    _dataInFlight.add<DataPointLabel::Export>(helper);
+                    break;
+
+                default:
+                    break;
+                }
             }
             break;
         case SML_FINAL:
-            gotUpdate();
-            _values = _cache;
+            _dataCurrent.updateFrom(_dataInFlight);
             reset();
             MessageOutput.printf("[%s] TotalPower: %5.2f\r\n",
                     _user.c_str(), getPowerTotal());
