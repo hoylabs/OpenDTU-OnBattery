@@ -117,9 +117,6 @@
                                 class="form-select"
                                 v-model="powerLimiterConfigList.inverter_restart_hour"
                             >
-                                <option value="-1">
-                                    {{ $t('powerlimiteradmin.InverterRestartDisabled') }}
-                                </option>
                                 <option v-for="hour in range(24)" :key="hour" :value="hour">
                                     {{ hour > 9 ? hour : '0' + hour }}:00
                                 </option>

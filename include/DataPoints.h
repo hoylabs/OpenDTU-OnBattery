@@ -140,6 +140,8 @@ class DataPointContainer {
         {
             auto scopedLock = lock();
 
+            if (_dataPoints.empty()) { return 0; }
+
             uint32_t now = millis();
             uint32_t diff = std::numeric_limits<uint32_t>::max()/2;
             for (auto iter = _dataPoints.cbegin(); iter != _dataPoints.cend(); ++iter) {

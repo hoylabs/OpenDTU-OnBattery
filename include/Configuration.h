@@ -10,7 +10,7 @@
 
 #define CONFIG_FILENAME "/config.json"
 #define CONFIG_VERSION 0x00011d00 // 0.1.29 // make sure to clean all after change
-#define CONFIG_VERSION_ONBATTERY 5
+#define CONFIG_VERSION_ONBATTERY 6
 
 #define WIFI_MAX_SSID_STRLEN 32
 #define WIFI_MAX_PASSWORD_STRLEN 64
@@ -48,6 +48,8 @@
 
 #define POWERMETER_MQTT_MAX_VALUES 3
 #define POWERMETER_HTTP_JSON_MAX_VALUES 3
+
+#define ZENDURE_MAX_SERIAL_STRLEN 8
 
 struct CHANNEL_CONFIG_T {
     uint16_t MaxChannelPower;
@@ -172,16 +174,35 @@ struct POWERLIMITER_CONFIG_T {
     float FullSolarPassThroughStopVoltage;
     uint64_t InverterSerialForDcVoltage;
     uint8_t InverterChannelIdForDcVoltage;
-    int8_t RestartHour;
+    uint8_t RestartHour;
     uint16_t TotalUpperPowerLimit;
     PowerLimiterInverterConfig Inverters[INV_MAX_COUNT];
 };
 using PowerLimiterConfig = struct POWERLIMITER_CONFIG_T;
 
+struct BATTERY_ZENDURE_CONFIG_T {
+    uint8_t DeviceType;
+    char DeviceId[ZENDURE_MAX_SERIAL_STRLEN + 1];
+    uint8_t PollingInterval;
+    uint8_t MinSoC;
+    uint8_t MaxSoC;
+    uint8_t BypassMode;
+    uint16_t MaxOutput;
+    bool AutoShutdown;
+    uint16_t OutputLimit;
+    enum ZendureBatteryOutputControl { ControlNone = 0, ControlFixed = 1, ControlSchedule = 2 };
+    ZendureBatteryOutputControl OutputControl;
+    int16_t SunriseOffset;
+    int16_t SunsetOffset;
+    uint16_t OutputLimitDay;
+    uint16_t OutputLimitNight;
+    bool ChargeThroughEnable;
+    uint16_t ChargeThroughInterval;
+};
+using BatteryZendureConfig = struct BATTERY_ZENDURE_CONFIG_T;
+
 enum BatteryVoltageUnit { Volts = 0, DeciVolts = 1, CentiVolts = 2, MilliVolts = 3 };
-
 enum BatteryAmperageUnit { Amps = 0, MilliAmps = 1 };
-
 struct BATTERY_CONFIG_T {
     bool Enabled;
     bool VerboseLogging;
@@ -201,6 +222,7 @@ struct BATTERY_CONFIG_T {
     char MqttDischargeCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
     char MqttDischargeCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryAmperageUnit MqttAmperageUnit;
+    BatteryZendureConfig Zendure;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
@@ -438,6 +460,7 @@ public:
     static void serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target);
     static void serializePowerMeterUdpVictronConfig(PowerMeterUdpVictronConfig const& source, JsonObject& target);
     static void serializeBatteryConfig(BatteryConfig const& source, JsonObject& target);
+    static void serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target);
     static void serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target);
     static void serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target);
 
@@ -450,6 +473,7 @@ public:
     static void deserializePowerMeterHttpSmlConfig(JsonObject const& source, PowerMeterHttpSmlConfig& target);
     static void deserializePowerMeterUdpVictronConfig(JsonObject const& source, PowerMeterUdpVictronConfig& target);
     static void deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target);
+    static void deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target);
     static void deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target);
     static void deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target);
 

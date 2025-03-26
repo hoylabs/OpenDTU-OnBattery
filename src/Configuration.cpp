@@ -146,6 +146,26 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["mqtt_amperage_unit"] = config.Battery.MqttAmperageUnit;
 }
 
+void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target)
+{
+    target["device_type"] = source.DeviceType;
+    target["device_id"] = source.DeviceId;
+    target["polling_interval"] = source.PollingInterval;
+    target["soc_min"] = source.MinSoC;
+    target["soc_max"] = source.MaxSoC;
+    target["bypass_mode"] = source.BypassMode;
+    target["max_output"] = source.MaxOutput;
+    target["auto_shutdown"] = source.AutoShutdown;
+    target["output_limit"] = source.OutputLimit;
+    target["output_control"] = source.OutputControl;
+    target["output_limit_day"] = source.OutputLimitDay;
+    target["output_limit_night"] = source.OutputLimitNight;
+    target["sunrise_offset"] = source.SunriseOffset;
+    target["sunset_offset"] = source.SunsetOffset;
+    target["charge_through_enable"] = source.ChargeThroughEnable;
+    target["charge_through_interval"] = source.ChargeThroughInterval;
+}
+
 void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target)
 {
     char serialBuffer[sizeof(uint64_t) * 8 + 1];
@@ -376,6 +396,9 @@ bool ConfigurationClass::write()
     JsonObject battery = doc["battery"].to<JsonObject>();
     serializeBatteryConfig(config.Battery, battery);
 
+    JsonObject battery_zendure = battery["zendure"].to<JsonObject>();
+    serializeBatteryZendureConfig(config.Battery.Zendure, battery_zendure);
+
     JsonObject huawei = doc["huawei"].to<JsonObject>();
     serializeGridChargerConfig(config.Huawei, huawei);
 
@@ -518,6 +541,26 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     strlcpy(target.MqttDischargeCurrentTopic, source["mqtt_discharge_current_topic"] | "", sizeof(config.Battery.MqttDischargeCurrentTopic));
     strlcpy(target.MqttDischargeCurrentJsonPath, source["mqtt_discharge_current_json_path"] | "", sizeof(config.Battery.MqttDischargeCurrentJsonPath));
     target.MqttAmperageUnit = source["mqtt_amperage_unit"] | BatteryAmperageUnit::Amps;
+}
+
+void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target)
+{
+    target.DeviceType = source["device_type"] | BATTERY_ZENDURE_DEVICE;
+    strlcpy(target.DeviceId, source["device_id"] | "", sizeof(target.DeviceId));
+    target.PollingInterval = source["polling_interval"] | BATTERY_ZENDURE_POLLING_INTERVAL;
+    target.MinSoC = source["soc_min"] | BATTERY_ZENDURE_MIN_SOC;
+    target.MaxSoC = source["soc_max"] | BATTERY_ZENDURE_MAX_SOC;
+    target.BypassMode = source["bypass_mode"] | BATTERY_ZENDURE_BYPASS_MODE;
+    target.MaxOutput = source["max_output"] | BATTERY_ZENDURE_MAX_OUTPUT;
+    target.AutoShutdown = source["auto_shutdown"] | BATTERY_ZENDURE_AUTO_SHUTDOWN;
+    target.OutputLimit = source["output_limit"] | BATTERY_ZENDURE_OUTPUT_LIMIT;
+    target.OutputControl = source["output_control"] | BatteryZendureConfig::ZendureBatteryOutputControl::ControlNone;
+    target.OutputLimitDay = source["output_limit_day"] | BATTERY_ZENDURE_OUTPUT_LIMIT_DAY;
+    target.OutputLimitNight = source["output_limit_night"] | BATTERY_ZENDURE_OUTPUT_LIMIT_NIGHT;
+    target.SunriseOffset = source["sunrise_offset"] | BATTERY_ZENDURE_SUNRISE_OFFSET;
+    target.SunsetOffset = source["sunset_offset"] | BATTERY_ZENDURE_SUNSET_OFFSET;
+    target.ChargeThroughEnable = source["charge_through_enable"] | BATTERY_ZENDURE_CHARGE_THROUGH_ENABLE;
+    target.ChargeThroughInterval = source["charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
 }
 
 void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target)
@@ -770,18 +813,17 @@ bool ConfigurationClass::read()
     config.PowerMeter.Source =  powermeter["source"] | POWERMETER_SOURCE;
 
     deserializePowerMeterMqttConfig(powermeter["mqtt"], config.PowerMeter.Mqtt);
-
     deserializePowerMeterSerialSdmConfig(powermeter["serial_sdm"], config.PowerMeter.SerialSdm);
-
     deserializePowerMeterHttpJsonConfig(powermeter["http_json"], config.PowerMeter.HttpJson);
-
     deserializePowerMeterHttpSmlConfig(powermeter["http_sml"], config.PowerMeter.HttpSml);
 
     deserializePowerMeterUdpVictronConfig(powermeter["udp_victron"], config.PowerMeter.UdpVictron);
 
     deserializePowerLimiterConfig(doc["powerlimiter"], config.PowerLimiter);
 
-    deserializeBatteryConfig(doc["battery"], config.Battery);
+    JsonObject battery = doc["battery"];
+    deserializeBatteryConfig(battery, config.Battery);
+    deserializeBatteryZendureConfig(battery["zendure"], config.Battery.Zendure);
 
     deserializeGridChargerConfig(doc["huawei"], config.Huawei);
 
@@ -1040,6 +1082,16 @@ void ConfigurationClass::migrateOnBattery()
                 inv.PowerSource = PowerLimiterInverterConfig::InverterPowerSource::Battery;
             }
         }
+    }
+
+    if (config.Cfg.VersionOnBattery < 6) {
+        int8_t restartHour = doc["powerlimiter"]["inverter_restart_hour"].as<int8_t>() | POWERLIMITER_RESTART_HOUR;
+
+        if (restartHour < 0) {
+            restartHour = POWERLIMITER_RESTART_HOUR;
+        }
+
+        config.PowerLimiter.RestartHour = static_cast<uint8_t>(restartHour);
     }
 
     f.close();

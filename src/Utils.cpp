@@ -278,3 +278,16 @@ std::optional<T> Utils::getNumericValueFromMqttPayload(char const* client,
 
 template std::optional<float> Utils::getNumericValueFromMqttPayload(char const* client,
         std::string const& src, char const* topic, char const* jsonPath);
+
+bool Utils::getEpoch(time_t* epoch, uint32_t ms /* = 20 */)
+{
+    uint32_t start = millis();
+    while((millis()-start) <= ms) {
+        time(epoch);
+        if (*epoch > 1577836800) { /* epoch 2020-01-01T00:00:00 */
+            return true;
+        }
+        delay(10);
+    }
+    return false;
+}

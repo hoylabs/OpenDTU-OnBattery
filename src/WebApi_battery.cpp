@@ -36,6 +36,9 @@ void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
 
     ConfigurationClass::serializeBatteryConfig(config.Battery, root);
 
+    auto zendure = root["zendure"].to<JsonObject>();
+    ConfigurationClass::serializeBatteryZendureConfig(config.Battery.Zendure, zendure);
+
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
@@ -73,6 +76,8 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
         auto guard = Configuration.getWriteGuard();
         auto& config = guard.getConfig();
         ConfigurationClass::deserializeBatteryConfig(root.as<JsonObject>(), config.Battery);
+
+        ConfigurationClass::deserializeBatteryZendureConfig(root["zendure"].as<JsonObject>(), config.Battery.Zendure);
     }
 
     WebApi.writeConfig(retMsg);

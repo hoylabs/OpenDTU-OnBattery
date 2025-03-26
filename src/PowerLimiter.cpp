@@ -666,6 +666,14 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested)
         return 0;
     }
 
+    if (Battery.getStats()->getImmediateChargingRequest()) {
+        if (_verboseLogging) {
+            MessageOutput.println("[DPL] DC power bus usage blocked by "
+                    "immediate charging request");
+        }
+        return 0;
+    }
+
     auto solarOutputDc = getSolarPassthroughPower();
     auto solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
     if (isFullSolarPassthroughActive() && solarOutputAc > powerRequested) {
@@ -724,16 +732,15 @@ bool PowerLimiterClass::updateInverters()
 
 uint16_t PowerLimiterClass::getSolarPassthroughPower()
 {
-    auto solarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
-
-    if (!isSolarPassThroughEnabled()
-            || isBelowStopThreshold()
-            || !solarChargerOutput
-            ) {
+    if (!isSolarPassThroughEnabled() || isBelowStopThreshold()) {
         return 0;
     }
 
-    return *solarChargerOutput;
+    std::optional<float> oSolarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
+
+    // do not trust this value to be positive. in particular, the MQTT solar
+    // provider happily processes negative values as well.
+    return std::max<float>(0, oSolarChargerOutput.value_or(0));
 }
 
 float PowerLimiterClass::getBatteryInvertersOutputAcWatts()
@@ -848,14 +855,13 @@ bool PowerLimiterClass::isBelowStopThreshold()
 
 void PowerLimiterClass::calcNextInverterRestart()
 {
-    auto const& config = Configuration.get();
-
-    if (config.PowerLimiter.RestartHour < 0) {
+    if (!usesBatteryPoweredInverter() && !usesSmartBufferPoweredInverter()) {
         _nextInverterRestart = { false, 0 };
         MessageOutput.println("[DPL] automatic inverter restart disabled");
         return;
     }
 
+    auto const& config = Configuration.get();
     struct tm timeinfo;
     getLocalTime(&timeinfo, 5); // always succeeds as we call this method only
                                 // from the DPL loop *after* we already made

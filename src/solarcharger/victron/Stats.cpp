@@ -37,8 +37,9 @@ std::optional<float> Stats::getOutputPowerWatts() const
 
     for (auto const& entry : _data) {
         if (!entry.second) { continue; }
-        
-        sum = sum.has_value() ? *sum + entry.second->batteryOutputPower_W : entry.second->batteryOutputPower_W;
+
+        // NOTE: batteryOutputPower_W can be negative if the load output is in use
+        sum = sum.value_or(0) + std::max<int16_t>(0, entry.second->batteryOutputPower_W);
     }
 
     return sum;

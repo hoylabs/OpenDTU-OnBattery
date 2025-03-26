@@ -16,8 +16,16 @@ WebApiWsConsoleClass::WebApiWsConsoleClass()
 
 void WebApiWsConsoleClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    using std::placeholders::_3;
+    using std::placeholders::_4;
+    using std::placeholders::_5;
+    using std::placeholders::_6;
+
     server.addHandler(&_ws);
     MessageOutput.register_ws_output(&_ws);
+    _ws.onEvent(std::bind(&WebApiWsConsoleClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
 
     scheduler.addTask(_wsCleanupTask);
     _wsCleanupTask.enable();
@@ -26,6 +34,21 @@ void WebApiWsConsoleClass::init(AsyncWebServer& server, Scheduler& scheduler)
     _simpleDigestAuth.setRealm("console websocket");
 
     reload();
+}
+
+void WebApiWsConsoleClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
+{
+    if (type == WS_EVT_CONNECT) {
+        char str[64];
+        snprintf(str, sizeof(str), "Websocket: [%s][%u] connect", server->url(), client->id());
+        Serial.println(str);
+        MessageOutput.println(str);
+    } else if (type == WS_EVT_DISCONNECT) {
+        char str[64];
+        snprintf(str, sizeof(str), "Websocket: [%s][%u] disconnect", server->url(), client->id());
+        Serial.println(str);
+        MessageOutput.println(str);
+    }
 }
 
 void WebApiWsConsoleClass::reload()

@@ -11,6 +11,8 @@ public:
     void reload();
 
 private:
+    void onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len);
+
     AsyncWebSocket _ws;
     AsyncAuthenticationMiddleware _simpleDigestAuth;
 

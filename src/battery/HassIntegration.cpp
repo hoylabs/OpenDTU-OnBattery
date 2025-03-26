@@ -46,14 +46,10 @@ void HassIntegration::publishSensors() const
 
 void HassIntegration::publishSensor(const char* caption, const char* icon,
         const char* subTopic, const char* deviceClass,
-        const char* stateClass, const char* unitOfMeasurement) const
+        const char* stateClass, const char* unitOfMeasurement,
+        const bool enabled) const
 {
-    String sensorId = caption;
-    sensorId.replace(" ", "_");
-    sensorId.replace(".", "");
-    sensorId.replace("(", "");
-    sensorId.replace(")", "");
-    sensorId.toLowerCase();
+    String sensorId = sanitizeUniqueId(caption);
 
     String configTopic = "sensor/dtu_battery_" + _serial
         + "/" + sensorId
@@ -72,6 +68,10 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
 
     if (icon != NULL) {
         root["icon"] = icon;
+    }
+
+    if (!enabled) {
+        root["enabled_by_default"] = "false";
     }
 
     if (unitOfMeasurement != NULL) {
@@ -103,15 +103,10 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
 
 void HassIntegration::publishBinarySensor(const char* caption,
         const char* icon, const char* subTopic,
-        const char* payload_on, const char* payload_off) const
+        const char* payload_on, const char* payload_off,
+        const bool enabled) const
 {
-    String sensorId = caption;
-    sensorId.replace(" ", "_");
-    sensorId.replace(".", "");
-    sensorId.replace("(", "");
-    sensorId.replace(")", "");
-    sensorId.replace(":", "");
-    sensorId.toLowerCase();
+    String sensorId = sanitizeUniqueId(caption);
 
     String configTopic = "binary_sensor/dtu_battery_" + _serial
         + "/" + sensorId
@@ -133,6 +128,10 @@ void HassIntegration::publishBinarySensor(const char* caption,
 
     if (icon != NULL) {
         root["icon"] = icon;
+    }
+
+    if (!enabled) {
+        root["enabled_by_default"] = "false";
     }
 
     auto deviceObj = root["dev"].to<JsonObject>();
@@ -163,6 +162,28 @@ void HassIntegration::publish(const String& subtopic, const String& payload) con
     String topic = Configuration.get().Mqtt.Hass.Topic;
     topic += subtopic;
     MqttSettings.publishGeneric(topic.c_str(), payload.c_str(), Configuration.get().Mqtt.Hass.Retain);
+}
+
+String HassIntegration::sanitizeUniqueId(const char* value) {
+    String sensorId = value;
+
+    // replace characters that are invalid for unique_ids
+    sensorId.replace(" ", "_");
+    sensorId.replace(".", "");
+    sensorId.replace("(", "");
+    sensorId.replace(")", "");
+    sensorId.replace(":", "");
+    // replaces characters that are not allowed in published topics
+    sensorId.replace("#", "");
+    sensorId.replace("+", "");
+    // replaces characters that should not be used in published topics
+    sensorId.replace("*", "");
+    sensorId.replace("$", "");
+    sensorId.replace(">", "");
+    // normalize
+    sensorId.toLowerCase();
+
+    return sensorId;
 }
 
 } // namespace Batteries
