@@ -24,14 +24,15 @@ public:
     void mqttPublish() const final;
     void mqttPublishSensors(const boolean forcePublish) const final;
 
-    void update(const String serial, const std::optional<VeDirectMpptController::data_t> mpptData, uint32_t lastUpdate) const;
+    void update(const String serial, const VeDirectMpptController::data_t mpptData, uint32_t lastUpdate) const;
 
 private:
     // TODO(andreasboehm): _data and _lastUpdate in two different structures is not ideal and needs to change
-    mutable std::map<String, std::optional<VeDirectMpptController::data_t>> _data;
-    mutable std::map<String, uint32_t> _lastUpdate;
+    using data_map_t = std::map<String, VeDirectMpptController::data_t>;
+    mutable data_map_t _data;
+    mutable data_map_t _previousData;
 
-    mutable std::map<String, VeDirectMpptController::data_t> _previousData;
+    mutable std::map<String, uint32_t> _lastUpdate;
 
     // point of time in millis() when updated values will be published
     mutable uint32_t _nextPublishUpdatesOnly = 0;
@@ -42,6 +43,8 @@ private:
     mutable bool _PublishFull;
 
     HassIntegration _hassIntegration;
+
+    bool isStale(data_map_t::value_type const& data) const;
 
     void populateJsonWithInstanceStats(const JsonObject &root, const VeDirectMpptController::data_t &mpptData) const;
 
