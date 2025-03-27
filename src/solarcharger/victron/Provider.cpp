@@ -69,10 +69,8 @@ void Provider::loop()
     for (auto const& upController : _controllers) {
         upController->loop();
 
-        if(upController->isDataValid()) {
-            _stats->update(upController->getData().serialNr_SER, upController->getData(), upController->getLastUpdate());
-        } else {
-            _stats->update(upController->getData().serialNr_SER, std::nullopt, upController->getLastUpdate());
+        if (upController->isDataValid()) {
+            _stats->update(upController->getLogId(), upController->getData(), upController->getLastUpdate());
         }
     }
 }
