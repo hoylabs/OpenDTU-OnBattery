@@ -11,6 +11,7 @@ public:
 
 protected:
     void setAcOutput(uint16_t expectedOutputWatts) final;
+    bool overscalingEnabled() const;
 
 private:
     uint16_t scaleLimit(uint16_t expectedOutputWatts);
