@@ -25,26 +25,29 @@ uint16_t PowerLimiterSmartBufferInverter::getMaxIncreaseWatts() const
         return getConfiguredMaxPowerWatts();
     }
 
+    // The inverter can produce more than the set limit and as such
+    // also more than the configured max power.
+    if (getCurrentOutputAcWatts() > getConfiguredMaxPowerWatts()) { return 0; }
+
     // when overscaling is in use we must not substract the current limit
     // because it might be scaled and higher than the configured max power.
-    if (_config.UseOverscaling && !_spInverter->supportsPowerDistributionLogic()) {
-        // The inverter can produce more than the set limit and as such
-        // also more than the configured max power.
-        if (getCurrentOutputAcWatts() > getConfiguredMaxPowerWatts()) {
-            return 0;
-        }
+    if (overscalingEnabled()) {
+        uint16_t maxOutputIncrease = getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
+        uint16_t maxLimitIncrease = getInverterMaxPowerWatts() - getCurrentLimitWatts();
 
-        return getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
+        // constrains the increase to the limit of the inverter.
+        return std::min(maxOutputIncrease, maxLimitIncrease);
     }
+
+    // this should not happen, but we want to
+    // be robust in case something else set a limit on the inverter (or in
+    // case we did something wrong...) or overscaling was in use but then disabled.
+    if (getCurrentLimitWatts() > getConfiguredMaxPowerWatts()) { return 0; }
 
     // we must not substract the current AC output here, but the current
     // limit value, so we avoid trying to produce even more even if the
     // inverter is already at the maximum limit value (the actual AC
     // output may be less than the inverter's current power limit).
-    if (getCurrentLimitWatts() > getConfiguredMaxPowerWatts()) {
-        return 0;
-    }
-
     return getConfiguredMaxPowerWatts() - getCurrentLimitWatts();
 }
 
@@ -63,8 +66,16 @@ uint16_t PowerLimiterSmartBufferInverter::applyReduction(uint16_t reduction, boo
         return 0;
     }
 
-    if ((getCurrentOutputAcWatts() - _config.LowerPowerLimit) >= reduction) {
-        setAcOutput(getCurrentOutputAcWatts() - reduction);
+    uint16_t baseline = getCurrentLimitWatts();
+
+    // when overscaling is in use we must not use the current limit
+    // because it might be scaled.
+    if (overscalingEnabled()) {
+        baseline = getCurrentOutputAcWatts();
+    }
+
+    if ((baseline - _config.LowerPowerLimit) >= reduction) {
+        setAcOutput(baseline - reduction);
         return reduction;
     }
 

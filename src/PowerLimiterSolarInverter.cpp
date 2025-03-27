@@ -8,6 +8,8 @@ uint16_t PowerLimiterSolarInverter::getMaxReductionWatts(bool) const
 {
     if (isEligible() != Eligibility::Eligible) { return 0; }
 
+    if (!isProducing()) { return 0; }
+
     auto low = std::min(getCurrentLimitWatts(), getCurrentOutputAcWatts());
     if (low <= _config.LowerPowerLimit) { return 0; }
 
@@ -24,15 +26,12 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
         return getConfiguredMaxPowerWatts();
     }
 
-    // The inverter can produce more than the set limit and as such
-    // also more than the configured max power or
-    // the inverter can't increase the power limit anymore.
-    if (getCurrentOutputAcWatts() >= getConfiguredMaxPowerWatts()) {
-        return 0;
-    }
+    // The inverter produces the max power or more.
+    if (getCurrentOutputAcWatts() >= getConfiguredMaxPowerWatts()) { return 0; }
 
-    // The maximum increase possible for this inverter.
-    uint16_t maxTotalIncrease = getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
+    // when overscaling is NOT in use and the limit is already at the max power
+    // we can't increase the power.
+    if (!overscalingEnabled() && getCurrentLimitWatts() >= getConfiguredMaxPowerWatts()) { return 0; }
 
     auto pStats = _spInverter->Statistics();
     std::vector<MpptNum_t> dcMppts = _spInverter->getMppts();
@@ -45,7 +44,7 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
 
     // use the scaling threshold as the expected power percentage if lower,
     // but only when overscaling is enabled and the inverter does not support PDL
-    if (_config.UseOverscaling && !_spInverter->supportsPowerDistributionLogic()) {
+    if (overscalingEnabled()) {
         expectedPowerPercentage = std::min(expectedPowerPercentage, static_cast<float>(_config.ScalingThreshold) / 100.0);
     }
 
@@ -69,14 +68,18 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
         }
     }
 
+    // all mppts are shaded, we can't increase the power
     if (dcNonShadedMppts == 0) {
-        // all mppts are shaded, we can't increase the power
         return 0;
     }
 
+    // no MPPT is shaded, we assume that we can increase the power by the maximum.
+    // based on the current limit, because overscaling should not be active when all
+    // MPPTs are NOT shaded.
     if (dcNonShadedMppts == dcTotalMppts) {
-        // no MPPT is shaded, we assume that we can increase the power by the maximum
-        return maxTotalIncrease;
+        // prevent overflow
+        if (getCurrentLimitWatts() > getConfiguredMaxPowerWatts()) { return 0; }
+        return getConfiguredMaxPowerWatts() - getCurrentLimitWatts();
     }
 
     // for inverters without PDL we use the configured max power, because the limit will be divided equally across the MPPTs by the inverter.
@@ -103,6 +106,23 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
     // the number of used/unshaded MPPTs.
     uint16_t maxIncreaseNonShadedMppts = maxIncreasePerNonShadedMppt * dcNonShadedMppts;
 
+    uint16_t maxTotalIncrease = getConfiguredMaxPowerWatts() - getCurrentLimitWatts();
+
+    // prevent overflow
+    if (getCurrentLimitWatts() > getConfiguredMaxPowerWatts()) {
+        maxTotalIncrease = 0;
+    }
+
+    // when overscaling is in use we must not use the current limit
+    // because it might be higher than the configured max power.
+    if (overscalingEnabled()) {
+        uint16_t maxOutputIncrease = getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
+        uint16_t maxLimitIncrease = getInverterMaxPowerWatts() - getCurrentLimitWatts();
+
+        // constrains the increase to the limit of the inverter.
+        maxTotalIncrease = std::min(maxOutputIncrease, maxLimitIncrease);
+    }
+
     // maximum increase should not exceed the max total increase
     return std::min(maxTotalIncrease, maxIncreaseNonShadedMppts);
 }
@@ -113,8 +133,16 @@ uint16_t PowerLimiterSolarInverter::applyReduction(uint16_t reduction, bool)
 
     if (reduction == 0) { return 0; }
 
-    if ((getCurrentOutputAcWatts() - _config.LowerPowerLimit) >= reduction) {
-        setAcOutput(getCurrentOutputAcWatts() - reduction);
+    uint16_t baseline = getCurrentLimitWatts();
+
+    // when overscaling is in use we must not use the current limit
+    // because it might be scaled.
+    if (overscalingEnabled()) {
+        baseline = getCurrentOutputAcWatts();
+    }
+
+    if ((baseline - _config.LowerPowerLimit) >= reduction) {
+        setAcOutput(baseline - reduction);
         return reduction;
     }
 
