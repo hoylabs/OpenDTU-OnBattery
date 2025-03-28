@@ -40,7 +40,7 @@ class BatteryGuardClass {
         // used to calculate the "Open circuit voltage"
         enum class Text : uint8_t { Q_NODATA, Q_EXCELLENT, Q_GOOD, Q_BAD, T_HEAD };
 
-        bool calculateOpenCircuitVoltage(float const nowVoltage, float const nowCurrent);
+        void calculateOpenCircuitVoltage(float const nowVoltage, float const nowCurrent);
         bool isDataValid() { return (millis() - _battMillis) < 30*1000; }
         void printOpenCircuitVoltageReport(void);
         bool isResolutionOK(void) const;
@@ -59,8 +59,13 @@ class BatteryGuardClass {
 
 
         // used to calculate the "Battery internal resistance"
-        bool calculateInternalResistance(float const nowVoltage, float const nowCurrent);
+        enum class RState : uint8_t { IDLE, RESOLUTION, TIME, FIRST_PAIR, TRIGGER, SECOND_PAIR, DELTA_POWER, TOO_BAD, CALCULATED };
 
+        void calculateInternalResistance(float const nowVoltage, float const nowCurrent);
+        frozen::string const& getResistanceStateText(RState state);
+
+        RState _rState = RState::IDLE;                      // holds the actual calculation state
+        RState _rStateMax = RState::IDLE;                   // holds the maximum calculation state
         float _resistanceFromConfig = 0.0f;                 // configured battery resistance [Ohm]
         WeightedAVG<float> _resistanceFromCalcAVG {10};     // calculated battery resistance [Ohm]
         bool _firstOfTwoAvailable = false;                  // true after to got the first of two values

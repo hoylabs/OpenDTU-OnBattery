@@ -51,8 +51,8 @@
 #include "BatteryGuard.h"
 
 
-// activate the following line to enable debug logging
-#define DEBUG_LOGGING
+#define MINIMUM_RESISTANCE_CALC 5   // minimum number of calculations to use the calculated resistance
+
 
 BatteryGuardClass BatteryGuard;
 
@@ -77,7 +77,7 @@ void BatteryGuardClass::init(Scheduler& scheduler) {
 
     _analyzedResolutionV = 1.0f;
     _analyzedResolutionI = 1.0f;
-    _analyzedPeriod.reset(5000);
+    _analyzedPeriod.reset(10000);
     _analyzedUIDelay.reset(0);
     updateSettings();
 }
@@ -159,16 +159,16 @@ void BatteryGuardClass::slowLoop(void) {
 
     if (_verboseReport) {
         MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
-        MessageOutput.printf("%s --------------------- Battery Guard Report (every minute) ----------------------\r\n",
+        MessageOutput.printf("%s ------------- Battery Guard Report (every minute) -------------\r\n",
             getText(Text::T_HEAD).data());
         MessageOutput.printf("%s Battery Guard: %s\r\n",
-        getText(Text::T_HEAD).data(), (_useBatteryGuard) ? "Enabled" : "Disabled");
+            getText(Text::T_HEAD).data(), (_useBatteryGuard) ? "Enabled" : "Disabled");
         MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
 
         // "Open circuit voltage"
         printOpenCircuitVoltageReport();
 
-        MessageOutput.printf("%s --------------------------------------------------------------------------------\r\n",
+        MessageOutput.printf("%s ---------------------------------------------------------------\r\n",
             getText(Text::T_HEAD).data());
         MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
     }
@@ -190,7 +190,7 @@ void BatteryGuardClass::updateBatteryValues(float const volt, float const curren
     // analyse the voltage and current resolution
     auto resolution = std::abs(volt - _battVoltage);
     if ((resolution >= 0.001f) && (resolution < _analyzedResolutionV)) { _analyzedResolutionV = resolution; }
-        resolution = std::abs(current - _battCurrent);
+    resolution = std::abs(current - _battCurrent);
     if ((resolution >= 0.001f) && (resolution < _analyzedResolutionI)) { _analyzedResolutionI = resolution; }
 
     // store the values
@@ -205,140 +205,140 @@ void BatteryGuardClass::updateBatteryValues(float const volt, float const curren
 
 /*
  * Calculate the battery open circuit voltage.
- * Returns true if a new value was calculated
  */
-bool BatteryGuardClass::calculateOpenCircuitVoltage(float const nowVoltage, float const nowCurrent) {
-
-    // calculate the open circuit battery voltage (current flow into the battery must be positive)
+void BatteryGuardClass::calculateOpenCircuitVoltage(float const nowVoltage, float const nowCurrent) {
+    // resistance must be available and current flow into the battery must be positive
     auto oResistor = getInternalResistance();
     if (oResistor.has_value()) {
         _openCircuitVoltageAVG.addNumber(nowVoltage - nowCurrent * oResistor.value());
-        return true;
     }
-    return false;
 }
 
 
 /*
- * Returns the battery internal resistance, calculated / configured or nullopt if neither value is valid
+ * The battery internal resistance, calculated or configured or nullopt if neither value is valid
  */
 std::optional<float> BatteryGuardClass::getInternalResistance(void) const {
-    // we use the calculated value if we have enough data (5 calculations minimum)
-    if (_resistanceFromCalcAVG.getCounts() > 4) { return _resistanceFromCalcAVG.getAverage(); }
+    // we use the calculated value if we have 5 calculations minimum
+    if (_resistanceFromCalcAVG.getCounts() >= MINIMUM_RESISTANCE_CALC) { return _resistanceFromCalcAVG.getAverage(); }
     if (_resistanceFromConfig != 0.0f) { return _resistanceFromConfig; }
     return std::nullopt;
 }
 
 
 /*
- * Returns true if we use the calculated resistor and not the configured one
+ * True if we use the calculated resistor and not the configured one
  */
 bool BatteryGuardClass::isInternalResistanceCalculated(void) const {
-    return (_resistanceFromCalcAVG.getCounts() > 4);
+    return (_resistanceFromCalcAVG.getCounts() >= MINIMUM_RESISTANCE_CALC);
 }
 
 
 /*
- * Returns the battery open circuit voltage or nullopt if value is not valid
+ * The battery open circuit voltage or nullopt if value is not valid
  */
 std::optional<float> BatteryGuardClass::getOpenCircuitVoltage(void) {
     if ((_openCircuitVoltageAVG.getCounts() > 0) && isDataValid()) {
         return _openCircuitVoltageAVG.getAverage();
-    } else {
-
-        #ifdef DEBUG_LOGGING
-        _notAvailableCounter++;
-        #endif
-
-        return std::nullopt;
     }
+    _notAvailableCounter++;
+    return std::nullopt;
 }
 
 
 /*
- * true if the measurement resolution and measurement period is sufficient
+ * True if the measurement resolution, period and time delay between voltage and current is sufficient
+ * Requirement: Voltage <= 20mV, Current <= 200mA, Period <= 4s, Time delay <= 1s
  */
 bool BatteryGuardClass::isResolutionOK(void) const {
-    return (_analyzedResolutionV <= 0.020f) && (_analyzedResolutionI <= 0.100f)
-        && (_analyzedPeriod.getAverage() <= 4000);
+    return (_analyzedResolutionV <= 0.020f) && (_analyzedResolutionI <= 0.200f)
+        && (_analyzedPeriod.getAverage() <= 4000) && (std::abs(_analyzedUIDelay.getAverage()) <= 1000);
 }
 
 
 /*
- * Calculate the battery resistance between the battery cells and the voltage measurement device.
- * Returns true if a new resistance value was calculated
- * Note: The calculation will not work if the power change is too low or too slow.
+ * Calculate the battery resistance between the battery cells and the voltage measurement point.
+ * Note: The calculation will not work, if the performance of the battery provider is not good enough
+ * or if the power difference is not big enough or too slow.
  */
-bool BatteryGuardClass::calculateInternalResistance(float const nowVoltage, float const nowCurrent) {
+void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, float const nowCurrent) {
 
-    bool result = false;
-    auto minDiffCurrent = 3.5f; // seems to be a good value for all batteries
+    // lambda function to avoid nested if-else statements and code doubleing
+    auto cleanExit = [&](RState state) -> void {
 
-    // check the resolution of the voltage and current measurement
-    if (!isResolutionOK()) { return result; }
+        if (_verboseLogging) {
+            MessageOutput.printf("%s Resistance calculation state: %s\r\n",
+                getText(Text::T_HEAD).data(), getResistanceStateText(state).data());
+        }
+        if (state > _rStateMax) { _rStateMax = state; }
+    };
 
-    // the timebase for the calculation should not be below 1 second
-    if ((millis() - _lastDataInMillis) < 950 ) { return result; }
+    // check the resolution and the calculation frequency
+    if (!isResolutionOK()) { return cleanExit(RState::RESOLUTION); }
+    if ((millis() - _lastDataInMillis) < 900 ) { return cleanExit(RState::TIME); }
     _lastDataInMillis = millis();
+    if (!_minMaxAvailable) { _rState = RState::IDLE; }
 
-    // check for trigger (sufficient current change)
-    if (!_triggerEvent && _minMaxAvailable && (std::abs(nowCurrent - _pMinVolt.second) > (minDiffCurrent/3.0f))) {
+    // check for trigger event (sufficient current change)
+    auto const minDiffCurrent = 4.0f; // seems to be a good value for all battery providers
+    if (!_triggerEvent && _minMaxAvailable && (std::abs(nowCurrent - _pMinVolt.second) > (minDiffCurrent/2.0f))) {
         _lastTriggerMillis = millis();
         _triggerEvent = true;
+        _rState = RState::TRIGGER;
     }
 
     // we evaluate min and max values in a time duration of 15 sec after the trigger event
     if (!_triggerEvent || (_triggerEvent && (millis() - _lastTriggerMillis) < 15*1000)) {
 
-        // we must avoid to use measurement values during any power transition or if voltage and
-        // current measurement have different time stamps
-        // To solve this problem, we check whether two consecutive measurements are almost identical
-        if (!_firstOfTwoAvailable || (std::abs(_pFirstVolt.first - nowVoltage) > 0.005f) ||
-            (std::abs(_pFirstVolt.second - nowCurrent) > 0.2f)) {
-            _pFirstVolt.first = nowVoltage;
-            _pFirstVolt.second = nowCurrent;
-            _firstOfTwoAvailable = true;
-            return result;
-        }
-        _firstOfTwoAvailable = false;  // preparation for the next two consecutive values
+        // we must avoid to use measurement values during any power transitions
+        // to solve this problem, we check whether two consecutive measurements are almost identical
+        auto minVoltage = 0.1f; // after trigger event
+        if (!_triggerEvent) { minVoltage = std::max(_analyzedResolutionV * 3.0f, 0.01f);} // before trigger event
+        auto minCurrent = std::max(_analyzedResolutionI * 3.0f, 0.2f);
+        if (_firstOfTwoAvailable && (std::abs(_pFirstVolt.first - nowVoltage) <= minVoltage) &&
+            (std::abs(_pFirstVolt.second - nowCurrent) <= minCurrent)) {
 
         auto avgVolt = std::make_pair((nowVoltage+_pFirstVolt.first)/2.0f, (nowCurrent+_pFirstVolt.second)/2.0f);
         if (!_minMaxAvailable || !_triggerEvent) {
             _pMinVolt = _pMaxVolt = avgVolt;
             _minMaxAvailable = true;
+            _rState = RState::FIRST_PAIR;
         } else {
             if (avgVolt.first < _pMinVolt.first) { _pMinVolt = avgVolt; }
             if (avgVolt.first > _pMaxVolt.first) { _pMaxVolt = avgVolt; }
+            _rState = RState::SECOND_PAIR;
+            }
         }
-        return result;
+        _pFirstVolt = { nowVoltage, nowCurrent }; // preparation for the next two consecutive values
+        _firstOfTwoAvailable = true;
+        return cleanExit(_rState);
     }
+
     // reset conditions for the next calculation
     _firstOfTwoAvailable = false;
     _minMaxAvailable = false;
     _triggerEvent = false;
 
-    // now we have the minimum and maximum values, we can try to calculate the resistance
-    // we need a minimum difference to get a sufficiently good result (failure < 10%)
-    // SmartShunt: 40mV and 3.5A (about 100W on VDC: 24V, Ri: 12mOhm)
-    auto minDiffVoltage = (_analyzedResolutionV > 0.005f) ? 0.07f : 0.04f;
+    // now we have minimum and maximum values and we can try to calculate the resistance
+    // we need a minimum power difference to get a sufficiently good result (failure < 20%)
+    // SmartShunt: 40mV and 4A (about 100W on VDC=24V, Ri=12mOhm)
+    auto minDiffVoltage = std::max(_analyzedResolutionV * 5.0f, 0.04f);
     auto diffVolt = _pMaxVolt.first - _pMinVolt.first;
     auto diffCurrent = std::abs(_pMaxVolt.second - _pMinVolt.second);   // can be negative
     if ((diffVolt >= minDiffVoltage) && (diffCurrent >= minDiffCurrent)) {
         float resistor = diffVolt / diffCurrent;
-
-        // safety feature: we try to keep out bad values from the average
         auto reference = getInternalResistance();
-        if (reference.has_value()) {
-            if ((resistor > reference.value() / 2.0f) && (resistor < reference.value() * 2.0f)) {
-                _resistanceFromCalcAVG.addNumber(resistor);
-                result = true;
-            }
+        if (reference.has_value() && ((resistor > reference.value() * 2.0f) || (resistor < reference.value() / 2.0f))) {
+            _rState = RState::TOO_BAD; // safety feature: we try to keep out bad values from the average
         } else {
             _resistanceFromCalcAVG.addNumber(resistor);
-            result = true;
+            _rState = RState::CALCULATED;
         }
+    } else {
+        _rState = RState::DELTA_POWER;
     }
-    return result;
+
+    return cleanExit(_rState);
 }
 
 
@@ -348,41 +348,37 @@ bool BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
 void BatteryGuardClass::printOpenCircuitVoltageReport(void)
 {
     //MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
-    MessageOutput.printf("%s 1) Battery open circuit voltage: %s / Battery data %s\r\n",
+    MessageOutput.printf("%s 1) Open circuit voltage: %s / Battery data %s\r\n",
         getText(Text::T_HEAD).data(), (_useBatteryGuard) ? "Enabled" : "Disabled",
         (isResolutionOK()) ? "sufficient" : "not sufficient");
 
-    MessageOutput.printf("%s Open circuit voltage: %0.3fV (Actual voltage: %0.3fV, Avarage voltage: %0.3fV)\r\n",
-        getText(Text::T_HEAD).data(), _openCircuitVoltageAVG.getAverage(), _battVoltage, _battVoltageAVG.getAverage());
+    MessageOutput.printf("%s Open circuit voltage: %0.3fV (Actual battery voltage: %0.3fV)\r\n",
+        getText(Text::T_HEAD).data(), _openCircuitVoltageAVG.getAverage(), _battVoltage);
 
-  auto oResistance = getInternalResistance();
+    auto oResistance = getInternalResistance();
     if (!oResistance.has_value()) {
         MessageOutput.printf("%s Resistance neither calculated (5 times) nor configured\r\n", getText(Text::T_HEAD).data());
     } else {
         auto resCalc = (_resistanceFromCalcAVG.getCounts() > 4) ? _resistanceFromCalcAVG.getAverage() * 1000.0f : 0.0f;
-        MessageOutput.printf("%s Resistance in use: %0.1fmOhm (Calculated: %0.1fmOhm, Configured: %0.1fmOhm)\r\n",
+        MessageOutput.printf("%s Resistance in use: %0.1fmOhm (Calc.: %0.1fmOhm, Config.: %0.1fmOhm)\r\n",
             getText(Text::T_HEAD).data(), oResistance.value() * 1000.0f, resCalc, _resistanceFromConfig * 1000.0f);
     }
 
-    #ifdef DEBUG_LOGGING
-    MessageOutput.printf("%s Calculated resistance: %0.1fmOhm (Min: %0.1f, Max: %0.1f, Last: %0.1f, Amount: %i)\r\n",
+    MessageOutput.printf("%s Resistance calc.: %0.1fmOhm (Min: %0.1f, Max: %0.1f, Amount: %i)\r\n",
         getText(Text::T_HEAD).data(), _resistanceFromCalcAVG.getAverage()*1000.0f, _resistanceFromCalcAVG.getMin()*1000.0f,
-        _resistanceFromCalcAVG.getMax()*1000.0f, _resistanceFromCalcAVG.getLast()*1000.0f, _resistanceFromCalcAVG.getCounts());
+        _resistanceFromCalcAVG.getMax()*1000.0f, _resistanceFromCalcAVG.getCounts());
 
-        MessageOutput.printf("%s Voltage resolution: %0.0fmV, Current resolution: %0.0fmA\r\n",
-            getText(Text::T_HEAD).data(), _analyzedResolutionV * 1000.0f, _analyzedResolutionI * 1000.0f);
+    MessageOutput.printf("%s Resistance calculation state: %s\r\n",
+        getText(Text::T_HEAD).data(), getResistanceStateText(_rStateMax).data());
 
-        MessageOutput.printf("%s Measurement period: %0.0fms, Voltage-Current time stamp delay: %0.0fms\r\n",
-            getText(Text::T_HEAD).data(), _analyzedPeriod.getAverage(), _analyzedUIDelay.getAverage());
+    MessageOutput.printf("%s Voltage resolution: %0.0fmV, Current resolution: %0.0fmA\r\n",
+        getText(Text::T_HEAD).data(), _analyzedResolutionV * 1000.0f, _analyzedResolutionI * 1000.0f);
 
-        MessageOutput.printf("%s Open circuit voltage not available counter: %i\r\n",
-            getText(Text::T_HEAD).data(),  _notAvailableCounter);
+    MessageOutput.printf("%s Measurement period: %0.0fms, V-I time stamp delay: %0.0fms\r\n",
+        getText(Text::T_HEAD).data(), _analyzedPeriod.getAverage(), _analyzedUIDelay.getAverage());
 
-        MessageOutput.printf("%s Battery voltage statistics: %0.3fV (Min: %0.3f, Max: %0.3f, Last: %0.3f, Amount: %s%i)\r\n",
-            getText(Text::T_HEAD).data(), _battVoltageAVG.getAverage(), _battVoltageAVG.getMin(),
-            _battVoltageAVG.getMax(), _battVoltageAVG.getLast(), (_battVoltageAVG.getCounts() == 10000) ? ">" : "",
-            _battVoltageAVG.getCounts());
-    #endif
+    MessageOutput.printf("%s Open circuit voltage not available counter: %i\r\n",
+        getText(Text::T_HEAD).data(),  _notAvailableCounter);
 }
 
 
@@ -398,7 +394,33 @@ frozen::string const& BatteryGuardClass::getText(BatteryGuardClass::Text tNr)
         { Text::Q_EXCELLENT, "Excellent" },
         { Text::Q_GOOD, "Good" },
         { Text::Q_BAD, "Bad" },
-        { Text::T_HEAD, "[BatteryGuard]"}
+        { Text::T_HEAD, "[BGA]"}
+    };
+
+    auto iter = texts.find(tNr);
+    if (iter == texts.end()) { return missing; }
+
+    return iter->second;
+}
+
+
+/*
+ * Returns a string according to resistance calculation state
+ */
+frozen::string const& BatteryGuardClass::getResistanceStateText(BatteryGuardClass::RState tNr)
+{
+    static const frozen::string missing = "programmer error: missing status text";
+
+    static const frozen::map<RState, frozen::string, 9> texts = {
+        { RState::IDLE, "Idle" },
+        { RState::RESOLUTION, "Battery data insufficient" },
+        { RState::TIME, "Measurement time to fast" },
+        { RState::FIRST_PAIR, "Start data available" },
+        { RState::TRIGGER, "Trigger event" },
+        { RState::SECOND_PAIR, "Collecting data after trigger" },
+        { RState::DELTA_POWER, "Power difference not high enough" },
+        { RState::TOO_BAD, "Resistance out of safety range" },
+        { RState::CALCULATED, "Resistance calculated" }
     };
 
     auto iter = texts.find(tNr);
