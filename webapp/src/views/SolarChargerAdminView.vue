@@ -40,6 +40,15 @@
                         wide
                     />
 
+                    <InputElement
+                        :label="$t('solarchargeradmin.ForwardBatteryData')"
+                        v-model="solarChargerConfigList.forward_battery_data"
+                        v-if="solarChargerConfigList.provider === 0"
+                        :tooltip="$t('solarchargeradmin.ForwardBatteryDataDescription')"
+                        type="checkbox"
+                        wide
+                    />
+
                     <template v-if="solarChargerConfigList.provider === 1">
                         <InputElement
                             :label="$t('solarchargeradmin.CalculateOutputPower')"

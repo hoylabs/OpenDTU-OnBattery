@@ -116,6 +116,7 @@
 // values specific to downstream project OpenDTU-OnBattery start here:
 #define SOLAR_CHARGER_ENABLED false
 #define SOLAR_CHARGER_PUBLISH_UPDATES_ONLY true
+#define SOLAR_CHARGER_FORWARD_BATTERY_DATA false
 
 #define POWERMETER_ENABLED false
 #define POWERMETER_POLLING_INTERVAL 10

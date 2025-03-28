@@ -316,6 +316,24 @@ frozen::string const& veMpptStruct::getOrAsString() const
 	return getAsString(values, offReason_OR); // in case of 0x00000000 or not found
 }
 
+/*
+ * This function returns the network status as readable text.
+ */
+frozen::string const& veMpptStruct::getNetworkStatusAsString() const
+{
+	static constexpr frozen::map<uint8_t, frozen::string, 5> values = {
+		{ 0, "BMS or ESS controlled" },
+		{ 1, "Group primary" },
+		{ 2, "Instance primary" },
+		{ 3, "Group and instance primary" },
+		{ 4, "Stand-alone" },
+	};
+
+	// Clear high nibble, which has sense status bits.
+	uint8_t status = NetworkStatus.second & 0x0f;
+	return getAsString(values, status);
+}
+
 frozen::string const& VeDirectHexData::getResponseAsString() const
 {
 	using Response = VeDirectHexResponse;
@@ -335,12 +353,14 @@ frozen::string const& VeDirectHexData::getResponseAsString() const
 frozen::string const& VeDirectHexData::getRegisterAsString() const
 {
 	using Register = VeDirectHexRegister;
-	static constexpr frozen::map<Register, frozen::string, 20> values = {
+	static constexpr frozen::map<Register, frozen::string, 28> values = {
+		{ Register::DeviceCapabilities, "Device Capabilities" },
 		{ Register::DeviceMode, "Device Mode" },
 		{ Register::DeviceState, "Device State" },
 		{ Register::RemoteControlUsed, "Remote Control Used" },
 		{ Register::PanelVoltage, "Panel Voltage" },
 		{ Register::PanelPower, "Panel Power" },
+		{ Register::PanelCurrent, "Panel Current" },
 		{ Register::ChargerVoltage, "Charger Voltage" },
 		{ Register::ChargerCurrent, "Charger Current" },
 		{ Register::NetworkTotalDcInputPower, "Network Total DC Input Power" },
@@ -349,11 +369,17 @@ frozen::string const& VeDirectHexData::getRegisterAsString() const
 		{ Register::NetworkInfo, "Network Info" },
 		{ Register::NetworkMode, "Network Mode" },
 		{ Register::NetworkStatus, "Network Status" },
+		{ Register::BatteryVoltage, "Battery Voltage" },
+		{ Register::BatteryVoltageSetting, "Battery Voltage Setting" },
 		{ Register::BatteryAbsorptionVoltage, "Battery Absorption Voltage" },
 		{ Register::BatteryFloatVoltage, "Battery Float Voltage" },
 		{ Register::TotalChargeCurrent, "Total Charge Current" },
 		{ Register::ChargeStateElapsedTime, "Charge State Elapsed Time" },
 		{ Register::BatteryVoltageSense, "Battery Voltage Sense" },
+		{ Register::BatteryTemperatureSense, "Battery Temperature Sense" },
+		{ Register::BatteryChargeCurrent, "Battery Charge Current" },
+		{ Register::ChargeCurrentLimit, "Charge Current Limit" },
+		{ Register::ChargeVoltageSetPoint, "Charge Voltage Set Point" },
 		{ Register::LoadCurrent, "Load current" },
 		{ Register::LoadOutputVoltage, "Load Output Voltage" }
 	};

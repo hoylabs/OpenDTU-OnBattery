@@ -51,11 +51,14 @@ struct veMpptStruct : veStruct {
     // value is the timestamp the respective info was last received. if it is
     // zero, the value is deemed invalid. the timestamp is reset if no current
     // value could be retrieved.
+    std::pair<uint32_t, uint32_t> Capabilities;
     std::pair<uint32_t, int32_t> MpptTemperatureMilliCelsius;
     std::pair<uint32_t, int32_t> SmartBatterySenseTemperatureMilliCelsius;
     std::pair<uint32_t, uint32_t> NetworkTotalDcInputPowerMilliWatts;
+    std::pair<uint32_t, uint8_t> BatteryVoltageSettingVolt;
     std::pair<uint32_t, uint32_t> BatteryAbsorptionMilliVolt;
     std::pair<uint32_t, uint32_t> BatteryFloatMilliVolt;
+    std::pair<uint32_t, uint32_t> ChargeCurrentLimit;
     std::pair<uint32_t, uint8_t> NetworkInfo;
     std::pair<uint32_t, uint8_t> NetworkMode;
     std::pair<uint32_t, uint8_t> NetworkStatus;
@@ -64,6 +67,7 @@ struct veMpptStruct : veStruct {
     frozen::string const& getCsAsString() const;   // current state as string
     frozen::string const& getErrAsString() const;  // error state as string
     frozen::string const& getOrAsString() const;   // off reason as string
+    frozen::string const& getNetworkStatusAsString() const; // network status as string
 };
 
 struct veShuntStruct : veStruct {
@@ -127,29 +131,73 @@ enum class VeDirectHexResponse : uint8_t {
     ASYNC = 0xA
 };
 
+enum class VeDirectNetworkMode : uint8_t {
+    STANDALONE =       0b0000000,
+    CHARGE_MASTER =    0b0100001,
+    CHARGE_SLAVE =     0b0000011,
+    EXTERNAL_CONTROL = 0b0000101,
+    BMS =              0b0001001,
+};
+
+enum class VeDirectCapabilities : uint32_t {
+    LOAD_OUTPUT_PRESENT = 1 << 0,
+    ROTARY_ENCODER_PRESENT = 1 << 1,
+    HISTORY_SUPPORT = 1 << 2,
+    BATTERYSAFE_MODE = 1 << 3,
+    ADAPTIVE_MODE = 1 << 4,
+    MANUAL_EQUALISE = 1 << 5,
+    AUTOMATIC_EQUALISE = 1 << 6,
+    STORAGE_MODE = 1 << 7,
+    REMOTE_ON_OFF_VIA_RX_PIN = 1 << 8,
+    SOLAR_TIMER_STREETLIGHTING = 1 << 9,
+    ALTERNATIVE_TX_PIN_FUNCTION = 1 << 10,
+    USER_DEFINED_LOAD_SWITCH = 1 << 11,
+    LOAD_CURRENT_IN_TEXT_PROTOCOL = 1 << 12,
+    PANEL_CURRENT = 1 << 13,
+    BMS_SUPPORT = 1 << 14,
+    EXTERNAL_CONTROL_SUPPORT = 1 << 15,
+    SYNCHRONIZED_CHARGING_SUPPORT = 1 << 16,
+    ALARM_RELAY = 1 << 17,
+    ALTERNATIVE_RX_PIN_FUNCTION = 1 << 18,
+    VIRTUAL_LOAD_OUTPUT = 1 << 19,
+    VIRTUAL_RELAY = 1 << 20,
+    PLUGIN_DISPLAY_SUPPORT = 1 << 21,
+    LOAD_AUTOMATIC_ENERGY_SELECTOR = 1 << 25,
+    BATTERY_TEST = 1 << 26,
+    PAYGO_SUPPORT = 1 << 27
+};
+
 enum class VeDirectHexRegister : uint16_t {
+    DeviceCapabilities = 0x0140,
     DeviceMode = 0x0200,
     DeviceState = 0x0201,
     RemoteControlUsed = 0x0202,
-    PanelVoltage = 0xEDBB,
-    PanelPower = 0xEDBC,
-    ChargerVoltage = 0xEDD5,
-    ChargerCurrent = 0xEDD7,
-    NetworkTotalDcInputPower = 0x2027,
-    ChargeControllerTemperature = 0xEDDB,
-    SmartBatterySenseTemperature = 0xEDEC,
+    HistoryTotal = 0x104F,
+    HistoryMPPTD30 = 0x10BE,
+    ChargeVoltageSetPoint = 0x2001,
+    BatteryVoltageSense = 0x2002,
+    BatteryTemperatureSense = 0x2003,
+    ChargeStateElapsedTime= 0x2007,
+    BatteryChargeCurrent = 0x200A,
     NetworkInfo = 0x200D,
     NetworkMode = 0x200E,
     NetworkStatus = 0x200F,
-    HistoryTotal = 0x104F,
-    HistoryMPPTD30 = 0x10BE,
+    TotalChargeCurrent = 0x2013,
+    ChargeCurrentLimit = 0x2015,
+    NetworkTotalDcInputPower = 0x2027,
+    BatteryVoltageSetting = 0xEDEA,
+    BatteryVoltage = 0xEDEF,
     BatteryAbsorptionVoltage = 0xEDF7,
     BatteryFloatVoltage = 0xEDF6,
-    TotalChargeCurrent = 0x2013,
-    ChargeStateElapsedTime= 0x2007,
-    BatteryVoltageSense = 0x2002,
     LoadCurrent = 0xEDAD,
-    LoadOutputVoltage = 0xEDA9
+    LoadOutputVoltage = 0xEDA9,
+    PanelVoltage = 0xEDBB,
+    PanelPower = 0xEDBC,
+    PanelCurrent = 0xEDBD,
+    ChargerVoltage = 0xEDD5,
+    ChargerCurrent = 0xEDD7,
+    ChargeControllerTemperature = 0xEDDB,
+    SmartBatterySenseTemperature = 0xEDEC,
 };
 
 struct VeDirectHexData {

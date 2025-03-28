@@ -35,6 +35,8 @@ public:
     float getChargeCurrentLimit() const { return _chargeCurrentLimit; };
     uint32_t getChargeCurrentLimitAgeSeconds() const { return (millis() - _lastUpdateChargeCurrentLimit) / 1000; }
 
+    virtual std::optional<float> getTemperature() const { return std::nullopt; }
+
     // convert stats to JSON for web application live view
     virtual void getLiveViewData(JsonVariant& root) const;
 

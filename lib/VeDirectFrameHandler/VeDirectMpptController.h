@@ -40,6 +40,8 @@ struct VeDirectHexQueue {
     VeDirectHexRegister _hexRegister;   // hex register
     uint8_t _readPeriod;                // time period in sec until we send the command again
     uint32_t _lastSendTime;             // time stamp in milli sec of last send
+    uint8_t _writeSize = 0;
+    std::optional<uint32_t> _writeData = std::nullopt;
 };
 
 class VeDirectMpptController : public VeDirectFrameHandler<veMpptStruct> {
@@ -51,6 +53,13 @@ public:
     using data_t = veMpptStruct;
 
     void loop() final;
+
+    void setRemoteMode(VeDirectNetworkMode mode);
+    void setRemoteChargeVoltageSetPoint(float volt);
+    void setRemoteVoltage(float volt);
+    void setRemoteTemperature(float degreeCelsius);
+    void setRemoteCurrent(float ampere);
+    void setRemoteChargeCurrentLimit(float ampere);
 
 private:
     bool hexDataHandler(VeDirectHexData const &data) final;
@@ -65,9 +74,21 @@ private:
 
     // for slow changing values we use a send time period of 4 sec
     #define HIGH_PRIO_COMMAND 1
-    std::array<VeDirectHexQueue, 5> _hexQueue { VeDirectHexRegister::NetworkTotalDcInputPower, HIGH_PRIO_COMMAND, 0,
-                                                VeDirectHexRegister::ChargeControllerTemperature, 4, 0,
-                                                VeDirectHexRegister::SmartBatterySenseTemperature, 4, 0,
-                                                VeDirectHexRegister::BatteryFloatVoltage, 4, 0,
-                                                VeDirectHexRegister::BatteryAbsorptionVoltage, 4, 0 };
+    #define WRITE_ONLY_COMMAND 0
+    std::array<VeDirectHexQueue, 14> _hexQueue {{
+         { VeDirectHexRegister::NetworkTotalDcInputPower, HIGH_PRIO_COMMAND, 0 },
+         { VeDirectHexRegister::NetworkStatus, 4, 0 },
+         { VeDirectHexRegister::DeviceCapabilities, 4, 0 },
+         { VeDirectHexRegister::ChargeControllerTemperature, 4, 0 },
+         { VeDirectHexRegister::SmartBatterySenseTemperature, 4, 0 },
+         { VeDirectHexRegister::BatteryVoltageSetting, 4, 0 },
+         { VeDirectHexRegister::BatteryFloatVoltage, 4, 0 },
+         { VeDirectHexRegister::BatteryAbsorptionVoltage, 4, 0 },
+         { VeDirectHexRegister::ChargeCurrentLimit, 4, 0, 16 },
+         { VeDirectHexRegister::NetworkMode, WRITE_ONLY_COMMAND, 0, 8 },
+         { VeDirectHexRegister::ChargeVoltageSetPoint, WRITE_ONLY_COMMAND, 0, 16 },
+         { VeDirectHexRegister::BatteryChargeCurrent, WRITE_ONLY_COMMAND, 0, 32 },
+         { VeDirectHexRegister::BatteryVoltageSense, WRITE_ONLY_COMMAND, 0, 16 },
+         { VeDirectHexRegister::BatteryTemperatureSense, WRITE_ONLY_COMMAND, 0, 16 },
+    }};
 };

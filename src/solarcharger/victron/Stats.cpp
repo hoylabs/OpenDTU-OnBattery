@@ -270,6 +270,11 @@ void Stats::populateJsonWithInstanceStats(const JsonObject &root, const VeDirect
         output["SBSTemperature"]["u"] = "°C";
         output["SBSTemperature"]["d"] = "0";
     }
+    if (mpptData.BatteryVoltageSettingVolt.first > 0) {
+        output["VoltageSetting"]["v"] = mpptData.BatteryVoltageSettingVolt.second;
+        output["VoltageSetting"]["u"] = "V";
+        output["VoltageSetting"]["d"] = "0";
+    }
     if (mpptData.BatteryAbsorptionMilliVolt.first > 0) {
         output["AbsorptionVoltage"]["v"] = mpptData.BatteryAbsorptionMilliVolt.second / 1000.0;
         output["AbsorptionVoltage"]["u"] = "V";
@@ -280,6 +285,20 @@ void Stats::populateJsonWithInstanceStats(const JsonObject &root, const VeDirect
         output["FloatVoltage"]["u"] = "V";
         output["FloatVoltage"]["d"] = "2";
     }
+    if (mpptData.ChargeCurrentLimit.first > 0) {
+        output["ChargeCurrentLimit"]["v"] = mpptData.ChargeCurrentLimit.second / 1000.0;
+        output["ChargeCurrentLimit"]["u"] = "A";
+        output["ChargeCurrentLimit"]["d"] = "1";
+    }
+    if (mpptData.NetworkStatus.first > 0) {
+        auto value = mpptData.NetworkStatus.second;
+        device["NetworkStatus"] = mpptData.getNetworkStatusAsString();
+        output["RemoteVoltage"] = value & 0x80 ? "ON" : "OFF";
+        output["RemoteTemperature"] = value & 0x40 ? "ON" : "OFF";
+        output["RemoteCurrent"] = value & 0x20 ? "ON" : "OFF";
+        output["RemoteCurrentLimit"] = value & 0x10 ? "ON" : "OFF";
+    }
+
 
     const JsonObject input = values["input"].to<JsonObject>();
     if (mpptData.NetworkTotalDcInputPowerMilliWatts.first > 0) {

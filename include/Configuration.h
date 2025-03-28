@@ -311,6 +311,7 @@ using SolarChargerMqttConfig = struct SOLARCHARGER_MQTT_CONFIG_T;
 struct SOLAR_CHARGER_CONFIG_T {
     bool Enabled;
     bool PublishUpdatesOnly;
+    bool ForwardBatteryData;
     SolarChargerProviderType Provider;
     SolarChargerMqttConfig Mqtt;
 };
