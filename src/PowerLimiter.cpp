@@ -180,6 +180,12 @@ void PowerLimiterClass::loop()
     uint32_t latestInverterStats = 0;
 
     for (auto const& upInv : _inverters) {
+        // in particular, we don't want to wait for stats from inverters that
+        // are not eligible because they are (currently) unreachable. this is
+        // fine as we ignore them throughout the DPL loop if they are not eligible.
+        auto eligible = PowerLimiterInverter::Eligibility::Eligible;
+        if (eligible != upInv->isEligible()) { continue; }
+
         auto oStatsMillis = upInv->getLatestStatsMillis();
         if (!oStatsMillis) {
             return announceStatus(Status::InverterStatsPending);
