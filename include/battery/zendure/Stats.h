@@ -3,6 +3,10 @@
 
 #include <MqttSettings.h>
 #include <battery/Stats.h>
+#include <battery/zendure/Constants.h>
+#include <solarcharger/Controller.h>
+#include <solarcharger/smartbufferbatteries/Provider.h>
+#include <solarcharger/smartbufferbatteries/Stats.h>
 #include <map>
 #include <Configuration.h>
 
@@ -139,18 +143,45 @@ private:
         _device = std::move(device);
     }
 
-    inline void updateSolarInputPower() {
+    std::shared_ptr<SolarChargers::SmartBufferBatteries::Stats> getSolarCharger() {
+        auto mppt = SolarCharger.getSmartBufferBatteryStats();
+
+        if (mppt == nullptr) {
+            return nullptr;
+        }
+
+        // Doe we need to add our charger, first?
+        if (!mppt->hasDevice(_solarcharger_id)) {
+            _solarcharger_id = mppt->addDevice(*getManufacturer(), _device, *getSerial(), ZENDURE_NUM_MPPTS);
+        }
+
+        return mppt;
+    }
+
+    inline void updateSolarInputPower(const size_t num, const float power) {
         _input_power = _solar_power_1 + _solar_power_2;
+
+        auto mppt = getSolarCharger();
+        if (mppt != nullptr) {
+            mppt->setMpptPower(_solarcharger_id, num, power, millis());;
+        }
+    }
+
+    inline void updateSolarInputVoltage(const size_t num, const float voltage) {
+        auto mppt = getSolarCharger();
+        if (mppt != nullptr) {
+            mppt->setMpptVoltage(_solarcharger_id, num, voltage, millis());
+        }
     }
 
     inline void setSolarPower1(const uint16_t power) {
         _solar_power_1 = power;
-        updateSolarInputPower();
+        updateSolarInputPower(1, power);
     }
 
     inline void setSolarPower2(const uint16_t power) {
         _solar_power_2 = power;
-        updateSolarInputPower();
+        updateSolarInputPower(2, power);
     }
 
     void setChargePower(const uint16_t power) {
@@ -175,6 +206,20 @@ private:
 
     inline void setOutputPower(const uint16_t power) {
         _output_power = power;
+    }
+
+    inline void setSolarVoltage1(const float voltage) {
+        _solar_voltage_1 = voltage;
+        updateSolarInputVoltage(1, voltage);
+    }
+
+    inline void setSolarVoltage2(const float voltage) {
+        _solar_voltage_2 = voltage;
+        updateSolarInputVoltage(2, voltage);
+    }
+
+    inline void setOutputVoltage(const float voltage) {
+        _output_voltage = voltage;
     }
 
     inline void setOutputLimit(const uint16_t power) {
@@ -212,6 +257,8 @@ private:
 
     std::map<size_t, std::shared_ptr<PackStats>> _packData = std::map<size_t, std::shared_ptr<PackStats> >();
 
+    std::optional<uint32_t> _solarcharger_id = std::nullopt;
+
     int16_t _cellTemperature = 0;
     uint16_t _cellMinMilliVolt = 0;
     uint16_t _cellMaxMilliVolt = 0;
@@ -235,6 +282,10 @@ private:
     uint16_t _input_power = 0;
     uint16_t _solar_power_1 = 0;
     uint16_t _solar_power_2 = 0;
+
+    float _solar_voltage_1 = 0.0;
+    float _solar_voltage_2 = 0.0;
+    float _output_voltage = 0.0;
 
     uint16_t _charge_power_cycle = 0;
     uint16_t _discharge_power_cycle = 0;
