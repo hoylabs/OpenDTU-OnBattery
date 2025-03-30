@@ -34,8 +34,7 @@ public:
     void mqttPublishSensors(const boolean forcePublish) const final {}
 
     // ToDo @vaterlangen: rework battery interface for pushing updates
-    std::optional<uint32_t> addDevice(const String& manufacture, const String& device, const String& serial, const size_t numMppts);
-    bool verifyDevice(std::optional<const uint32_t> id, const String& serial);
+    std::optional<uint32_t> addDevice(std::optional<String> const& manufacture, std::optional<String> const& device, std::optional<String> const& serial, const size_t numMppts);
     bool hasDevice(std::optional<const uint32_t> id);
     void setMpptPower(std::optional<const uint32_t> id, const size_t num, const float power, const uint32_t updated);
     void setMpptVoltage(std::optional<const uint32_t> id, const size_t num, const float voltage, const uint32_t lastUpdate);

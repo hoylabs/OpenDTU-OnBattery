@@ -158,13 +158,13 @@ void DeviceData::setMpptData(const size_t num, const uint32_t lastUpdate, const 
 
 }
 
-std::optional<uint32_t> Stats::addDevice(const String& manufacture, const String& device, const String& serial, const size_t numMppts) {
-    if (numMppts < 1 || serial.length() < 5 || device.isEmpty() || manufacture.isEmpty()) {
+std::optional<uint32_t> Stats::addDevice(std::optional<String> const& manufacture, std::optional<String> const& device, std::optional<String> const& serial, const size_t numMppts) {
+    if (numMppts < 1 || !serial || !device || !manufacture) {
         return std::nullopt;
     }
 
     // calculate CRC32 of device data to generate an (almost) unique idenitfier to be used as key in the map
-    const String name = manufacture + device + serial + String(numMppts);
+    const String name = *manufacture + *device + *serial + String(numMppts);
     CRC32 crc(CRC32_POLYNOME, CRC32_INITIAL, CRC32_XOR_OUT, false, false);
     crc.add(reinterpret_cast<const uint8_t*>(name.c_str()), name.length());
     const uint32_t hash = crc.calc();
@@ -176,9 +176,9 @@ std::optional<uint32_t> Stats::addDevice(const String& manufacture, const String
 
         // if device found is the same, return the hash
         if (d->_numMppts == numMppts &&
-            d->_serial == serial &&
-            d->_manufacture == manufacture &&
-            d->_device == device
+            d->_serial == *serial &&
+            d->_manufacture == *manufacture &&
+            d->_device == *device
         ) {
             return hash;
         }
@@ -189,26 +189,12 @@ std::optional<uint32_t> Stats::addDevice(const String& manufacture, const String
     catch(const std::out_of_range& ex) {;}
 
     // if no device found for our "hash", add a new one
-    _deviceData[hash] = std::make_shared<DeviceData>(manufacture, device, serial, numMppts);
+    _deviceData[hash] = std::make_shared<DeviceData>(*manufacture, *device, *serial, numMppts);
     return hash;
 }
 
 bool Stats::hasDevice(std::optional<const uint32_t> id) {
     return id.has_value() ? _deviceData.count(*id) : false;
-}
-
-bool Stats::verifyDevice(std::optional<const uint32_t> id, const String& serial) {
-    if (!id.has_value()) {
-        return false;
-    }
-
-    try
-    {
-        return _deviceData.at(*id)->_serial == serial;
-    }
-    catch(const std::out_of_range& ex) {;}
-
-    return false;
 }
 
 }; // namespace SolarChargers::SmartBufferBatteries

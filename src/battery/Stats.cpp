@@ -33,8 +33,8 @@ void Stats::getLiveViewData(JsonVariant& root) const
     if (_oManufacturer.has_value()) { manufacturer = *_oManufacturer; }
 
     root["manufacturer"] = manufacturer;
-    if (!_serial.isEmpty()) {
-        root["serial"] = _serial;
+    if (_serial.has_value()) {
+        root["serial"] = *_serial;
     }
     if (!_fwversion.isEmpty()) {
         root["fwversion"] = _fwversion;
