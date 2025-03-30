@@ -6,6 +6,7 @@
 #include <TaskSchedulerDeclarations.h>
 #include <solarcharger/Provider.h>
 #include <solarcharger/Stats.h>
+#include <solarcharger/smartbufferbatteries/Stats.h>
 
 namespace SolarChargers {
 
@@ -15,6 +16,7 @@ public:
     void updateSettings();
 
     std::shared_ptr<Stats const> getStats() const;
+    std::shared_ptr<SmartBufferBatteries::Stats> getSmartBufferBatteryStats();
 
 private:
     void loop();

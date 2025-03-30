@@ -17,6 +17,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
     addLiveViewInSection(root, section, "chargePower", _charge_power, "W", 0);
     addLiveViewInSection(root, section, "dischargePower", _discharge_power, "W", 0);
     addLiveViewInSection(root, section, "totalOutputPower", _output_power, "W", 0);
+    addLiveViewInSection(root, section, "outputVoltage", _output_voltage, "V", 2);
     addLiveViewInSection(root, section, "efficiency", _efficiency, "%", 3);
     addLiveViewInSection(root, section, "batteries", _num_batteries, "", 0);
     addLiveViewInSection(root, section, "capacity", _capacity, "Wh", 0);
@@ -42,11 +43,6 @@ void Stats::getLiveViewData(JsonVariant& root) const
     addLiveViewBooleanInSection(root, section, "autoShutdown", _auto_shutdown);
     addLiveViewTextInSection(root, section, "bypassMode", std::string(bypassModeToString(_bypass_mode)));
     addLiveViewBooleanInSection(root, section, "buzzer", _buzzer);
-
-    // values go into the "Solar Panels" card of the web application
-    section = "panels";
-    addLiveViewInSection(root, section, "solarInputPower1", _solar_power_1, "W", 0);
-    addLiveViewInSection(root, section, "solarInputPower2", _solar_power_2, "W", 0);
 
     // pack data goes to dedicated cards of the web application
     char buff[30];
