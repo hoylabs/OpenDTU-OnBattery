@@ -216,7 +216,17 @@
             "MaximumPowerToday": "Maximale Leistung heute",
             "MaximumPowerYesterday": "Maximale Leistung gestern"
         },
-        "PowerLimiterState": "Power limiter Status [aus (laden), nur die Sonne nutzen, Nutzung der Batterie]"
+        "PowerLimiterState": "Power limiter Status [aus (laden), nur die Sonne nutzen, Nutzung der Batterie]",
+        "section_mppt1": "Solareingang 1",
+        "section_mppt2": "Solareingang 2",
+        "mppt1": {
+            "Power": "Leistung",
+            "Voltage": "Voltage"
+        },
+        "mppt2": {
+            "Power": "@:solarchargerhome.mppt1.Power",
+            "Voltage": "@:solarchargerhome.mppt1.Voltage"
+        }
     },
     "eventlog": {
         "Start": "Beginn",
@@ -1147,8 +1157,6 @@
         "midpointVoltage": "Mittelpunktspannung",
         "midpointDeviation": "Mittelpunktsabweichung",
         "lastFullCharge": "Letztes mal Vollgeladen",
-        "solarInputPower1": "Leistung MPPT1",
-        "solarInputPower2": "Leistung MPPT2",
         "totalInputPower": "Eingangsleistung",
         "chargePower": "Ladeleistung",
         "dischargePower": "Entladeleistung",
@@ -1176,12 +1184,12 @@
         "alwaysoff": "Dauerhaft Ausgeschaltet",
         "alwayson": "Dauerhaft Eingeschaltet",
         "efficiency": "Wirkungsgrad",
-        "panels": "Solar Eingänge",
         "settings": "Einstellungen",
         "remainOutTime": "Verbleibende Entladezeit",
         "remainInTime": "Verbleibende Ladezeit",
         "unavail": "N/A",
         "useableCapacity": "Nutzbare Kapazität",
-        "chargethrough": "Vollladezyklus"
+        "chargethrough": "Vollladezyklus",
+        "outputVoltage": "Ausgangsspannung"
     }
 }

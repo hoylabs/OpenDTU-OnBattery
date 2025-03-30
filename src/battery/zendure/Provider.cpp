@@ -739,7 +739,11 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
     _stats->_capacity = capacity;
     _stats->_capacity_avail = capacity_avail;
 
-    _stats->setVoltage(v[ZENDURE_LOG_OFFSET_VOLTAGE].as<float>() / 10.0, ms);
+    _stats->setOutputVoltage(v[ZENDURE_LOG_OFFSET_OUTPUT_VOLTAGE].as<float>() / 10.0);
+    _stats->setSolarVoltage1(v[ZENDURE_LOG_OFFSET_SOLAR_VOLTAGE_MPPT_1].as<float>() / 10.0);
+    _stats->setSolarVoltage2(v[ZENDURE_LOG_OFFSET_SOLAR_VOLTAGE_MPPT_2].as<float>() / 10.0);
+
+    _stats->setVoltage(v[ZENDURE_LOG_OFFSET_INPUT_VOLTAGE].as<float>() / 10.0, ms);
     _stats->setCurrent(static_cast<float>(current) / 10.0, 1, ms);
     _stats->setDischargeCurrentLimit(static_cast<float>(_stats->_inverse_max) / _stats->getVoltage(), ms);
 

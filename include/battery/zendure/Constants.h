@@ -12,6 +12,7 @@ namespace Batteries::Zendure {
 
 #define ZENDURE_MAX_PACKS                           4U
 #define ZENDURE_REMAINING_TIME_OVERFLOW             59940U
+#define ZENDURE_NUM_MPPTS                           2U
 
 #define ZENDURE_SECONDS_SUNPOSITION                 60U
 #define ZENDURE_SECONDS_TIMESYNC                    3600U
@@ -47,11 +48,11 @@ namespace Batteries::Zendure {
 #define ZENDURE_LOG_OFFSET_PACK_UNKOWN_3(pack)      (30U+(pack)-1U)     // ? => always (8449 | 257 | 0 | 0)
 #define ZENDURE_LOG_OFFSET_PACK_TEMPERATURE(pack)   (34U+(pack)-1U)     // [°C]
 #define ZENDURE_LOG_OFFSET_PACK_UNKOWN_5(pack)      (38U+(pack)-1U)     // ? => always (1340 | 99 | 0 | 0)
-#define ZENDURE_LOG_OFFSET_VOLTAGE                  42U                 // [dV]
+#define ZENDURE_LOG_OFFSET_INPUT_VOLTAGE            42U                 // [dV]
 #define ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_2       43U                 // [W]
 #define ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1       44U                 // [W]
 #define ZENDURE_LOG_OFFSET_OUTPUT_POWER             45U                 // [W]
-#define ZENDURE_LOG_OFFSET_UNKOWN_05                46U                 // ? => 1, 413
+#define ZENDURE_LOG_OFFSET_OUTPUT_VOLTAGE           46U                 // [dV]
 #define ZENDURE_LOG_OFFSET_DISCHARGE_POWER          47U                 // [W]
 #define ZENDURE_LOG_OFFSET_CHARGE_POWER             48U                 // [W]
 #define ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT       49U                 // [cA]
@@ -74,8 +75,8 @@ namespace Batteries::Zendure {
 #define ZENDURE_LOG_OFFSET_UNKOWN_24                66U                 // ? => always 0
 #define ZENDURE_LOG_OFFSET_UNKOWN_25                67U                 // ? => always 0
 #define ZENDURE_LOG_OFFSET_UNKOWN_26                68U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_27                69U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_28                70U                 // ? => always 1
+#define ZENDURE_LOG_OFFSET_SOLAR_VOLTAGE_MPPT_1     69U                 // [dV]
+#define ZENDURE_LOG_OFFSET_SOLAR_VOLTAGE_MPPT_2     70U                 // [dV]
 #define ZENDURE_LOG_OFFSET_UNKOWN_29                71U                 // ? => always 0
 #define ZENDURE_LOG_OFFSET_UNKOWN_30                72U                 // ? some counter => 258, 263, 25
 #define ZENDURE_LOG_OFFSET_UNKOWN_31                73U                 // ? some counter => 309, 293, 23
