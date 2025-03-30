@@ -2,13 +2,11 @@
 #pragma once
 
 #include <MqttSettings.h>
-#include <battery/Stats.h>
+#include <battery/SmartBufferStats.h>
 #include <battery/zendure/Constants.h>
-#include <solarcharger/Controller.h>
-#include <solarcharger/smartbufferbatteries/Provider.h>
-#include <solarcharger/smartbufferbatteries/Stats.h>
-#include <map>
 #include <Configuration.h>
+#include <map>
+
 
 namespace Batteries::Zendure {
 
@@ -28,7 +26,7 @@ enum class BypassMode : uint8_t {
 
 class PackStats;
 
-class Stats : public ::Batteries::Stats {
+class Stats : public ::Batteries::SmartBufferStats {
     friend class Provider;
 
     static const char* controlModeToString(uint8_t controlMode) {
@@ -86,12 +84,15 @@ public:
     void mqttPublish() const final;
 
     std::optional<String> getHassDeviceName() const final {
-        return String(*getManufacturer() + " " + _device);
+        return String(*getManufacturer() + " " + *_device);
     }
 
     bool supportsAlarmsAndWarnings() const final { return false; }
 
     std::map<size_t, std::shared_ptr<PackStats>> getPackDataList() const { return _packData; }
+
+    virtual std::optional<String> const& getDeviceName() const { return _device; }
+    virtual size_t getNumberMppts() const { return ZENDURE_NUM_MPPTS; };
 
 protected:
     std::shared_ptr<PackStats> getPackData(size_t index) const;
@@ -122,10 +123,10 @@ private:
     }
 
     void setHwVersion(String&& version) {
+        _hwversion = _device.value_or("UNKOWN");
+
         if (!version.isEmpty()) {
-            _hwversion = _device + " (" + std::move(version) + ")";
-        }else{
-            _hwversion = _device;
+            _hwversion += " (" + std::move(version) + ")";
         }
     }
     void setFwVersion(String&& version) { _fwversion = std::move(version); }
@@ -134,9 +135,7 @@ private:
         _serial = serial;
     }
     void setSerial(std::optional<String> serial) {
-        if (serial.has_value()) {
-            setSerial(*serial);
-        }
+        _serial = serial;
     }
 
     void setDevice(String&& device) {
@@ -160,18 +159,7 @@ private:
 
     inline void updateSolarInputPower(const size_t num, const float power) {
         _input_power = _solar_power_1 + _solar_power_2;
-
-        auto mppt = getSolarCharger();
-        if (mppt != nullptr) {
-            mppt->setMpptPower(_solarcharger_id, num, power, millis());;
-        }
-    }
-
-    inline void updateSolarInputVoltage(const size_t num, const float voltage) {
-        auto mppt = getSolarCharger();
-        if (mppt != nullptr) {
-            mppt->setMpptVoltage(_solarcharger_id, num, voltage, millis());
-        }
+        setMpptPower(num, power);
     }
 
     inline void setSolarPower1(const uint16_t power) {
@@ -210,12 +198,12 @@ private:
 
     inline void setSolarVoltage1(const float voltage) {
         _solar_voltage_1 = voltage;
-        updateSolarInputVoltage(1, voltage);
+        setMpptVoltage(1, voltage);
     }
 
     inline void setSolarVoltage2(const float voltage) {
         _solar_voltage_2 = voltage;
-        updateSolarInputVoltage(2, voltage);
+        setMpptVoltage(2, voltage);
     }
 
     inline void setOutputVoltage(const float voltage) {
@@ -253,7 +241,7 @@ private:
         Batteries::Stats::setVoltage(voltage, timestamp);
     }
 
-    String _device = String("Unknown");
+    std::optional<String> _device = std::nullopt;
 
     std::map<size_t, std::shared_ptr<PackStats>> _packData = std::map<size_t, std::shared_ptr<PackStats> >();
 
