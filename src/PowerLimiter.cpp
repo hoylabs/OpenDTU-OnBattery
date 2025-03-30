@@ -183,8 +183,7 @@ void PowerLimiterClass::loop()
         // in particular, we don't want to wait for stats from inverters that
         // are not eligible because they are (currently) unreachable. this is
         // fine as we ignore them throughout the DPL loop if they are not eligible.
-        auto eligible = PowerLimiterInverter::Eligibility::Eligible;
-        if (eligible != upInv->isEligible()) { continue; }
+        if (!upInv->isEligible()) { continue; }
 
         auto oStatsMillis = upInv->getLatestStatsMillis();
         if (!oStatsMillis) {
@@ -451,7 +450,7 @@ void PowerLimiterClass::unconditionalFullSolarPassthrough()
     _lastCalculation = now;
 
     for (auto const& upInv : _inverters) {
-        if (PowerLimiterInverter::Eligibility::Eligible != upInv->isEligible()) { continue; }
+        if (!upInv->isEligible()) { continue; }
         if (!upInv->isBatteryPowered()) { upInv->setMaxOutput(); }
     }
 
@@ -551,7 +550,7 @@ uint16_t PowerLimiterClass::calcTargetOutput()
     for (auto const& upInv : _inverters) {
         // non-eligible inverters don't participate in this DPL round at all.
         // inverters in standby report 0 W output, so we can iterate them.
-        if (PowerLimiterInverter::Eligibility::Eligible != upInv->isEligible()) { continue; }
+        if (!upInv->isEligible()) { continue; }
 
         currentTotalOutput += upInv->getCurrentOutputAcWatts();
     }
@@ -582,7 +581,7 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
     for (auto& upInv : _inverters) {
         if (!filter(*upInv)) { continue; }
 
-        if (PowerLimiterInverter::Eligibility::Eligible != upInv->isEligible()) { continue; }
+        if (!upInv->isEligible()) { continue; }
 
         producing += upInv->getCurrentOutputAcWatts();
         matchingInverters.push_back(upInv.get());

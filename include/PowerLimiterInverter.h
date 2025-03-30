@@ -90,9 +90,9 @@ public:
         Nighttime
     };
 
-    // only returns Eligibility::Eligible if the inverter can participate
+    // only returns true if the inverter can participate
     // in achieving the requested change in power output
-    Eligibility isEligible() const;
+    bool isEligible() const;
 
 protected:
     PowerLimiterInverter(bool verboseLogging, PowerLimiterInverterConfig const& config);
@@ -115,6 +115,9 @@ protected:
     char _logPrefix[32];
 
 private:
+    // returns the detailed eligibility status of the inverter
+    Eligibility getEligibility() const;
+
     virtual void setAcOutput(uint16_t expectedOutputWatts) = 0;
 
     bool _retired = false; // true if to be abandoned by DPL

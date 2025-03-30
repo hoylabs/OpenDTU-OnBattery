@@ -6,7 +6,7 @@ PowerLimiterOverscalingInverter::PowerLimiterOverscalingInverter(bool verboseLog
 
 uint16_t PowerLimiterOverscalingInverter::applyIncrease(uint16_t increase)
 {
-    if (isEligible() != Eligibility::Eligible) { return 0; }
+    if (!isEligible()) { return 0; }
 
     if (increase == 0) { return 0; }
 
