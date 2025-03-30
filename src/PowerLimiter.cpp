@@ -361,19 +361,24 @@ void PowerLimiterClass::loop()
 std::pair<float, char const*> PowerLimiterClass::getInverterDcVoltage() {
     auto const& config = Configuration.get();
 
-    auto iter = _inverters.begin();
-    while(iter != _inverters.end()) {
+    auto iter = _inverters.cbegin();
+    while(iter != _inverters.cend()) {
         if ((*iter)->getSerial() == config.PowerLimiter.InverterSerialForDcVoltage) {
             break;
         }
         ++iter;
     }
 
-    if (iter == _inverters.end()) {
-        return { -1.0, "<unknown>" };
+    auto voltage = -1.0;
+
+    if (iter == _inverters.cend()) {
+        return { voltage, "<unknown>" };
     }
 
-    auto voltage = (*iter)->getDcVoltage(config.PowerLimiter.InverterChannelIdForDcVoltage);
+    if ((*iter)->isReachable()) {
+        voltage = (*iter)->getDcVoltage(config.PowerLimiter.InverterChannelIdForDcVoltage);
+    }
+
     return { voltage, (*iter)->getSerialStr() };
 }
 
