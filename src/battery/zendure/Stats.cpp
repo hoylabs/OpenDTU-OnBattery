@@ -78,7 +78,9 @@ void Stats::mqttPublish() const
     MqttSettings.publish("battery/state", stateToString<String>(_state));
     MqttSettings.publish("battery/numPacks", String(_num_batteries));
     MqttSettings.publish("battery/efficiency", String(_efficiency));
-    MqttSettings.publish("battery/serial", _serial);
+    if (_serial.has_value()) {
+        MqttSettings.publish("battery/serial", *_serial);
+    }
 
     for (const auto& [index, value] : _packData) {
         auto id = String(index);

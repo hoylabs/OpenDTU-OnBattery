@@ -745,7 +745,7 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
 
     _stats->setVoltage(v[ZENDURE_LOG_OFFSET_INPUT_VOLTAGE].as<float>() / 10.0, ms);
     _stats->setCurrent(static_cast<float>(current) / 10.0, 1, ms);
-    _stats->setDischargeCurrentLimit(static_cast<float>(_stats->_inverse_max) / _stats->getVoltage(), ms);
+    _stats->setDischargeCurrentLimit(_stats->_output_voltage ? static_cast<float>(_stats->_inverse_max) / _stats->_output_voltage : 0, ms);
 
     _stats->_auto_recover = static_cast<bool>(v[ZENDURE_LOG_OFFSET_AUTO_RECOVER].as<uint8_t>());
     _stats->_bypass_mode = static_cast<BypassMode>(v[ZENDURE_LOG_OFFSET_BYPASS_MODE].as<uint8_t>());
