@@ -457,9 +457,9 @@ void PowerLimiterClass::unconditionalFullSolarPassthrough()
 
     uint16_t targetOutput = 0;
 
-    auto solarChargerOuput = SolarCharger.getStats()->getOutputPowerWatts();
-    if (solarChargerOuput) {
-        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, *solarChargerOuput));
+    auto solarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
+    if (solarChargerOutput) {
+        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, *solarChargerOutput));
         targetOutput = dcPowerBusToInverterAc(targetOutput);
     }
 
