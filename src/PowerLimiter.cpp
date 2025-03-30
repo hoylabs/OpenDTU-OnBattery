@@ -446,10 +446,12 @@ uint16_t PowerLimiterClass::dcPowerBusToInverterAc(uint16_t dcPower)
  */
 void PowerLimiterClass::unconditionalFullSolarPassthrough()
 {
-    if ((millis() - _lastCalculation) < _calculationBackoffMs) { return; }
-    _lastCalculation = millis();
+    auto now = millis();
+    if ((now - _lastCalculation) < _calculationBackoffMs) { return; }
+    _lastCalculation = now;
 
-    for (auto& upInv : _inverters) {
+    for (auto const& upInv : _inverters) {
+        if (PowerLimiterInverter::Eligibility::Eligible != upInv->isEligible()) { continue; }
         if (!upInv->isBatteryPowered()) { upInv->setMaxOutput(); }
     }
 
