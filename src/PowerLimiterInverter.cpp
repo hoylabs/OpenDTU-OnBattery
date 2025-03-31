@@ -4,6 +4,7 @@
 #include "PowerLimiterBatteryInverter.h"
 #include "PowerLimiterSolarInverter.h"
 #include "PowerLimiterSmartBufferInverter.h"
+#include "SunPosition.h"
 
 std::unique_ptr<PowerLimiterInverter> PowerLimiterInverter::create(
         bool verboseLogging, PowerLimiterInverterConfig const& config)
@@ -43,6 +44,12 @@ PowerLimiterInverter::PowerLimiterInverter(bool verboseLogging, PowerLimiterInve
 
 PowerLimiterInverter::Eligibility PowerLimiterInverter::isEligible() const
 {
+    // at dawn, solar-powered inverters switch to standby, but are still
+    // reachable. during this time, we shall not use them. we assume that
+    // it is already "night" when the inverter switches to standby, so this
+    // check makes sense.
+    if (isSolarPowered() && !SunPosition.isDayPeriod()) { return Eligibility::Nighttime; }
+
     if (!isReachable()) { return Eligibility::Unreachable; }
 
     if (!isSendingCommandsEnabled()) { return Eligibility::SendingCommandsDisabled; }
@@ -339,6 +346,9 @@ void PowerLimiterInverter::debug() const
 
     String eligibility("disqualified");
     switch (isEligible()) {
+        case Eligibility::Nighttime:
+            eligibility += " (nighttime)";
+            break;
         case Eligibility::Unreachable:
             eligibility += " (unreachable)";
             break;

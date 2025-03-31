@@ -13,10 +13,17 @@ uint16_t PowerLimiterOverscalingInverter::applyIncrease(uint16_t increase)
     // do not wake inverter up if it would produce too much power
     if (!isProducing() && _config.LowerPowerLimit > increase) { return 0; }
 
-    // the limit might be scaled, so we use the
-    // current output as the baseline. inverters in standby have
-    // no output (baseline is zero).
-    auto baseline = getCurrentOutputAcWatts();
+    uint16_t baseline = getCurrentLimitWatts();
+
+    // when overscaling is in use we must not use the current limit
+    // because it might be scaled.
+    if (overscalingEnabled()) {
+        baseline = getCurrentOutputAcWatts();
+    }
+
+    // inverters in standby can have an arbitrary limit, yet
+    // the baseline is 0 in case we are about to wake it up from standby.
+    if (!isProducing()) { baseline = 0; }
 
     auto actualIncrease = std::min(increase, getMaxIncreaseWatts());
     setAcOutput(baseline + actualIncrease);
@@ -31,7 +38,7 @@ uint16_t PowerLimiterOverscalingInverter::scaleLimit(uint16_t expectedOutputWatt
     // as the inverter will take care of the power distribution across the MPPTs itself.
     // (added in inverter firmware 01.01.12 on supported models (HMS-1600/1800/2000))
     // When disabled we return the expected output.
-    if (!_config.UseOverscaling || _spInverter->supportsPowerDistributionLogic()) { return expectedOutputWatts; }
+    if (!overscalingEnabled()) { return expectedOutputWatts; }
 
     // prevent scaling if inverter is not producing, as input channels are not
     // producing energy and hence are detected as not-producing, causing
@@ -138,4 +145,9 @@ void PowerLimiterOverscalingInverter::setAcOutput(uint16_t expectedOutputWatts)
     setExpectedOutputAcWatts(expectedOutputWatts);
     setTargetPowerLimitWatts(scaleLimit(expectedOutputWatts));
     setTargetPowerState(true);
+}
+
+bool PowerLimiterOverscalingInverter::overscalingEnabled() const
+{
+    return _config.UseOverscaling && !_spInverter->supportsPowerDistributionLogic();
 }
