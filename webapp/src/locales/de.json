@@ -131,6 +131,10 @@
         "11002": "@:apiresponse.5004",
         "12001": "Profilname muss zwischen 1 und {max} Zeichen lang sein!"
     },
+    "onbatteryapiresponse": {
+        "1001": "Spannungsbegrenzung muss zwischen {min} und {max} V liegen",
+        "1002": "Strombegrenzung muss zwischen {min} und {max} A liegen"
+    },
     "home": {
         "LiveData": "Live-Daten",
         "SerialNumber": "Seriennummer: ",
@@ -1042,15 +1046,11 @@
         "max_output_current": "Maximaler Ausgangsstrom",
         "output_power": "Ausgangsleistung",
         "output_temp": "Ausgangstemperatur",
-        "ShowSetLimit": "Zeige / Setze Limit",
-        "LimitSettings": "Limit-Einstellungen",
-        "SetOffline": "Limit setzen, CAN Bus nicht verbunden",
-        "SetOnline": "Limit setzen, CAN Bus verbunden",
-        "LimitHint": "<b>Hinweis:</b> Spannungsbereich wenn CAN Bus nicht verbunden ist 48V-58.5V ",
+        "LimitSettings": "Online Limits Setzen",
+        "SetLimits": "Limits setzen",
         "Close": "Schließen",
         "SetVoltageLimit": "Spannungslimit",
         "SetCurrentLimit": "Stromlimit",
-        "CurrentLimit": "Aktuelles Limit",
         "Acknowledgements": "Bestätigungen",
         "ProductionEnabled": "Produktionsmodus aktiviert",
         "FanOnlineFullSpeed": "Online Lüftermodus",

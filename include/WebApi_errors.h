@@ -96,4 +96,8 @@ enum WebApiError {
 
     HardwareBase = 12000,
     HardwarePinMappingLength,
+
+    // OpenDTU-OnBattery-specific
+    R48xxVoltageLimitOutOfRange = 1001,
+    R48xxCurrentLimitOutOfRange = 1002,
 };

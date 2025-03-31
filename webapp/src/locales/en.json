@@ -131,6 +131,10 @@
         "11002": "@:apiresponse.5004",
         "12001": "Profile name must between 1 and {max} characters long!"
     },
+    "onbatteryapiresponse": {
+        "1001": "Valid voltage limit range is between {min} and {max} V",
+        "1002": "Valid current limit range is between {min} and {max} A"
+    },
     "home": {
         "LiveData": "Live Data",
         "SerialNumber": "Serial Number: ",
@@ -1045,14 +1049,11 @@
         "max_output_current": "Maximum output current",
         "output_power": "Output power",
         "output_temp": "Output temperature",
-        "ShowSetLimit": "Show / Set Huawei Limit",
-        "LimitSettings": "Limit Settings",
-        "SetOffline": "Set limit, CAN bus not connected",
-        "SetOnline": "Set limit, CAN bus connected",
-        "LimitHint": "<b>Hint:</b> CAN bus not connected voltage limit is 48V-58.5V.",
-        "Close": "close",
-        "SetVoltageLimit": "Voltage limit",
-        "SetCurrentLimit": "Current limit",
+        "LimitSettings": "Set Online Limits",
+        "SetLimits": "Set Limits",
+        "Close": "Close",
+        "SetVoltageLimit": "Voltage Limit",
+        "SetCurrentLimit": "Current Limit",
         "Acknowledgements": "Acknowledgements",
         "ProductionEnabled": "Production enabled",
         "FanOnlineFullSpeed": "Online fan speed",
