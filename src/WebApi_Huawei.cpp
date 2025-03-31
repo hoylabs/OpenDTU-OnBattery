@@ -21,7 +21,7 @@ void WebApiHuaweiClass::init(AsyncWebServer& server, Scheduler& scheduler)
     _server->on("/api/huawei/status", HTTP_GET, std::bind(&WebApiHuaweiClass::onStatus, this, _1));
     _server->on("/api/huawei/config", HTTP_GET, std::bind(&WebApiHuaweiClass::onAdminGet, this, _1));
     _server->on("/api/huawei/config", HTTP_POST, std::bind(&WebApiHuaweiClass::onAdminPost, this, _1));
-    _server->on("/api/huawei/limit/config", HTTP_POST, std::bind(&WebApiHuaweiClass::onPost, this, _1));
+    _server->on("/api/huawei/limit", HTTP_POST, std::bind(&WebApiHuaweiClass::onLimitPost, this, _1));
 }
 
 void WebApiHuaweiClass::onStatus(AsyncWebServerRequest* request)
@@ -38,7 +38,7 @@ void WebApiHuaweiClass::onStatus(AsyncWebServerRequest* request)
     request->send(response);
 }
 
-void WebApiHuaweiClass::onPost(AsyncWebServerRequest* request)
+void WebApiHuaweiClass::onLimitPost(AsyncWebServerRequest* request)
 {
     if (!WebApi.checkCredentials(request)) {
         return;
@@ -50,72 +50,41 @@ void WebApiHuaweiClass::onPost(AsyncWebServerRequest* request)
         return;
     }
 
-    float value;
-    uint8_t online = true;
-    float minimal_voltage;
-
     auto& retMsg = response->getRoot();
-
-    if (root["online"].is<bool>()) {
-        online = root["online"].as<bool>();
-        if (online) {
-            minimal_voltage = HUAWEI_MINIMAL_ONLINE_VOLTAGE;
-        } else {
-            minimal_voltage = HUAWEI_MINIMAL_OFFLINE_VOLTAGE;
-        }
-    } else {
-        retMsg["message"] = "Could not read info if data should be set for online/offline operation!";
-        retMsg["code"] = WebApiError::LimitInvalidType;
-        response->setLength();
-        request->send(response);
-        return;
-    }
 
     using Setting = GridCharger::Huawei::HardwareInterface::Setting;
 
-    if (root["voltage_valid"].is<bool>()) {
-        if (root["voltage_valid"].as<bool>()) {
-            if (root["voltage"].as<float>() < minimal_voltage || root["voltage"].as<float>() > 58) {
-                retMsg["message"] = "voltage not in range between 42 (online)/48 (offline and 58V !";
-                retMsg["code"] = WebApiError::LimitInvalidLimit;
-                retMsg["param"]["max"] = 58;
-                retMsg["param"]["min"] = minimal_voltage;
-                response->setLength();
-                request->send(response);
-                return;
-            } else {
-                value = root["voltage"].as<float>();
-                if (online) {
-                    HuaweiCan.setParameter(value, Setting::OnlineVoltage);
-                } else {
-                    HuaweiCan.setParameter(value, Setting::OfflineVoltage);
-                }
-            }
+    if (root.containsKey("voltage") && root["voltage"].is<float>()) {
+        auto value = root["voltage"].as<float>();
+        if (value < HUAWEI_MINIMAL_ONLINE_VOLTAGE || value > 58) {
+            retMsg["message"] = "voltage out of range [" + String(HUAWEI_MINIMAL_ONLINE_VOLTAGE) + ", 58]";
+            retMsg["code"] = WebApiError::R48xxVoltageLimitOutOfRange;
+            retMsg["param"]["min"] = HUAWEI_MINIMAL_ONLINE_VOLTAGE;
+            retMsg["param"]["max"] = 58;
+            WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
+            return;
         }
+
+        HuaweiCan.setParameter(value, Setting::OnlineVoltage);
     }
 
-    if (root["current_valid"].is<bool>()) {
-        if (root["current_valid"].as<bool>()) {
-            if (root["current"].as<float>() < 0 || root["current"].as<float>() > 60) {
-                retMsg["message"] = "current must be in range between 0 and 60!";
-                retMsg["code"] = WebApiError::LimitInvalidLimit;
-                retMsg["param"]["max"] = 60;
-                retMsg["param"]["min"] = 0;
-                response->setLength();
-                request->send(response);
-                return;
-            } else {
-                value = root["current"].as<float>();
-                if (online) {
-                    HuaweiCan.setParameter(value, Setting::OnlineCurrent);
-                } else {
-                    HuaweiCan.setParameter(value, Setting::OfflineCurrent);
-                }
-            }
+    if (root.containsKey("current") && root["current"].is<float>()) {
+        auto value = root["current"].as<float>();
+        if (value < 0 || value > 75) {
+            retMsg["message"] = "current out of range [0, 75]";
+            retMsg["code"] = WebApiError::R48xxCurrentLimitOutOfRange;
+            retMsg["param"]["min"] = 0;
+            retMsg["param"]["max"] = 75;
+            WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
+            return;
         }
+
+        HuaweiCan.setParameter(value, Setting::OnlineCurrent);
     }
 
-    WebApi.writeConfig(retMsg);
+    retMsg["type"] = "success";
+    retMsg["message"] = "Limits applied!";
+    retMsg["code"] = WebApiError::GenericSuccess;
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
