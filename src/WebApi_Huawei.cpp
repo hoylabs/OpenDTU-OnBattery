@@ -22,6 +22,7 @@ void WebApiHuaweiClass::init(AsyncWebServer& server, Scheduler& scheduler)
     _server->on("/api/huawei/config", HTTP_GET, std::bind(&WebApiHuaweiClass::onAdminGet, this, _1));
     _server->on("/api/huawei/config", HTTP_POST, std::bind(&WebApiHuaweiClass::onAdminPost, this, _1));
     _server->on("/api/huawei/limit", HTTP_POST, std::bind(&WebApiHuaweiClass::onLimitPost, this, _1));
+    _server->on("/api/huawei/power", HTTP_POST, std::bind(&WebApiHuaweiClass::onPowerPost, this, _1));
 }
 
 void WebApiHuaweiClass::onStatus(AsyncWebServerRequest* request)
@@ -84,6 +85,37 @@ void WebApiHuaweiClass::onLimitPost(AsyncWebServerRequest* request)
 
     retMsg["type"] = "success";
     retMsg["message"] = "Limits applied!";
+    retMsg["code"] = WebApiError::GenericSuccess;
+
+    WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
+}
+
+void WebApiHuaweiClass::onPowerPost(AsyncWebServerRequest* request)
+{
+    if (!WebApi.checkCredentials(request)) {
+        return;
+    }
+
+    AsyncJsonResponse* response = new AsyncJsonResponse();
+    JsonDocument root;
+    if (!WebApi.parseRequestData(request, response, root)) {
+        return;
+    }
+
+    auto& retMsg = response->getRoot();
+
+    if (!root["power"].is<bool>()) {
+        retMsg["message"] = "Value missing!";
+        retMsg["code"] = WebApiError::GenericValueMissing;
+        WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
+        return;
+    }
+
+    bool power = root["power"].as<bool>();
+    HuaweiCan.setProduction(power);
+
+    retMsg["type"] = "success";
+    retMsg["message"] = "Power production " + String(power ? "en" : "dis") + "abled!";
     retMsg["code"] = WebApiError::GenericSuccess;
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
