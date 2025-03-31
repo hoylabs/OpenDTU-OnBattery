@@ -35,12 +35,12 @@
                         <div class="btn-toolbar p-2" role="toolbar">
                             <div class="btn-group me-2" role="group">
                                 <button
-                                    :disabled="false"
+                                    :disabled="!huaweiData.reachable"
                                     type="button"
                                     class="btn btn-sm btn-danger"
                                     @click="onShowLimitSettings()"
                                     v-tooltip
-                                    :title="$t('huawei.ShowSetLimit')"
+                                    :title="$t('huawei.LimitSettings')"
                                 >
                                     <BIconSpeedometer style="font-size: 24px" />
                                 </button>
@@ -277,99 +277,40 @@
         <div class="modal" id="huaweiLimitSettingView" ref="huaweiLimitSettingView" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
+                    <BootstrapAlert v-model="showAlertLimit" :variant="alertTypeLimit">
+                        {{ alertMessageLimit }}
+                    </BootstrapAlert>
+
                     <form @submit="onSubmitLimit">
                         <div class="modal-header">
                             <h5 class="modal-title">{{ $t('huawei.LimitSettings') }}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="row mb-3">
-                                <label for="inputCurrentLimit" class="col-sm-3 col-form-label"
-                                    >{{ $t('huawei.CurrentLimit') }}
-                                </label>
-                            </div>
+                            <InputElement
+                                :label="$t('huawei.SetVoltageLimit')"
+                                type="number"
+                                step="0.01"
+                                min="42"
+                                max="58"
+                                v-model="targetLimitList.voltage"
+                                postfix="V"
+                            />
 
-                            <div class="row mb-3 align-items-center">
-                                <label for="inputVoltageTargetLimit" class="col-sm-3 col-form-label">{{
-                                    $t('huawei.SetVoltageLimit')
-                                }}</label>
-
-                                <div class="col-sm-1">
-                                    <div class="form-switch form-check-inline">
-                                        <input
-                                            class="form-check-input"
-                                            type="checkbox"
-                                            id="flexSwitchVoltage"
-                                            v-model="targetLimitList.voltage_valid"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div class="col-sm-7">
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        name="inputVoltageTargetLimit"
-                                        class="form-control"
-                                        id="inputVoltageTargetLimit"
-                                        :min="targetVoltageLimitMin"
-                                        :max="targetVoltageLimitMax"
-                                        v-model="targetLimitList.voltage"
-                                        :disabled="!targetLimitList.voltage_valid"
-                                    />
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-sm-9">
-                                    <div
-                                        v-if="targetLimitList.voltage < targetVoltageLimitMinOffline"
-                                        class="alert alert-secondary mt-3"
-                                        role="alert"
-                                        v-html="$t('huawei.LimitHint')"
-                                    ></div>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3 align-items-center">
-                                <label for="inputCurrentTargetLimit" class="col-sm-3 col-form-label">{{
-                                    $t('huawei.SetCurrentLimit')
-                                }}</label>
-
-                                <div class="col-sm-1">
-                                    <div class="form-switch form-check-inline">
-                                        <input
-                                            class="form-check-input"
-                                            type="checkbox"
-                                            id="flexSwitchCurrentt"
-                                            v-model="targetLimitList.current_valid"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div class="col-sm-7">
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        name="inputCurrentTargetLimit"
-                                        class="form-control"
-                                        id="inputCurrentTargetLimit"
-                                        :min="targetCurrentLimitMin"
-                                        :max="targetCurrentLimitMax"
-                                        v-model="targetLimitList.current"
-                                        :disabled="!targetLimitList.current_valid"
-                                    />
-                                </div>
-                            </div>
+                            <InputElement
+                                :label="$t('huawei.SetCurrentLimit')"
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="75"
+                                v-model="targetLimitList.current"
+                                postfix="A"
+                            />
                         </div>
 
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-danger" @click="onSetLimitSettings(true)">
-                                {{ $t('huawei.SetOnline') }}
-                            </button>
-
-                            <button type="submit" class="btn btn-danger" @click="onSetLimitSettings(false)">
-                                {{ $t('huawei.SetOffline') }}
+                            <button type="submit" class="btn btn-danger">
+                                {{ $t('huawei.SetLimits') }}
                             </button>
 
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -392,11 +333,15 @@ import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
 import * as bootstrap from 'bootstrap';
 import { BIconSpeedometer } from 'bootstrap-icons-vue';
 import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
+import InputElement from '@/components/InputElement.vue';
+import BootstrapAlert from '@/components/BootstrapAlert.vue';
 
 export default defineComponent({
     components: {
         BIconSpeedometer,
+        InputElement,
         DataAgeDisplay,
+        BootstrapAlert,
     },
     data() {
         return {
@@ -406,19 +351,11 @@ export default defineComponent({
             dataLoading: true,
             huaweiData: {} as Huawei,
             isFirstFetchAfterConnect: true,
-            targetVoltageLimitMin: 42,
-            targetVoltageLimitMinOffline: 48,
-            targetVoltageLimitMax: 58,
-            targetCurrentLimitMin: 0,
-            targetCurrentLimitMax: 60,
             targetLimitList: {} as HuaweiLimitConfig,
-            targetLimitPersistent: false,
             huaweiLimitSettingView: {} as bootstrap.Modal,
-
             alertMessageLimit: '',
             alertTypeLimit: 'info',
             showAlertLimit: false,
-            checked: false,
         };
     },
     created() {
@@ -499,15 +436,9 @@ export default defineComponent({
         formatNumber(num: number) {
             return new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
         },
-        onHideLimitSettings() {
-            this.showAlertLimit = false;
-        },
         onShowLimitSettings() {
             this.huaweiLimitSettingView = new bootstrap.Modal('#huaweiLimitSettingView');
             this.huaweiLimitSettingView.show();
-        },
-        onSetLimitSettings(online: boolean) {
-            this.targetLimitList.online = online;
         },
         onSubmitLimit(e: Event) {
             e.preventDefault();
@@ -517,7 +448,7 @@ export default defineComponent({
 
             console.log(this.targetLimitList);
 
-            fetch('/api/huawei/limit/config', {
+            fetch('/api/huawei/limit', {
                 method: 'POST',
                 headers: authHeader(),
                 body: formData,
@@ -526,8 +457,9 @@ export default defineComponent({
                 .then((response) => {
                     if (response.type == 'success') {
                         this.huaweiLimitSettingView.hide();
+                        this.showAlertLimit = false;
                     } else {
-                        this.alertMessageLimit = this.$t('apiresponse.' + response.code, response.param);
+                        this.alertMessageLimit = this.$t('onbatteryapiresponse.' + response.code, response.param);
                         this.alertTypeLimit = response.type;
                         this.showAlertLimit = true;
                     }
