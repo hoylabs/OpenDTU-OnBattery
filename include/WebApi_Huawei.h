@@ -14,6 +14,7 @@ private:
     void onAdminGet(AsyncWebServerRequest* request);
     void onAdminPost(AsyncWebServerRequest* request);
     void onLimitPost(AsyncWebServerRequest* request);
+    void onPowerPost(AsyncWebServerRequest* request);
 
     AsyncWebServer* _server;
 };

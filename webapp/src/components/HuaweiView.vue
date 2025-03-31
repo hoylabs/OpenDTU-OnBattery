@@ -45,6 +45,18 @@
                                     <BIconSpeedometer style="font-size: 24px" />
                                 </button>
                             </div>
+                            <div class="btn-group me-2" role="group">
+                                <button
+                                    :disabled="!huaweiData.reachable"
+                                    type="button"
+                                    class="btn btn-sm btn-danger"
+                                    @click="onShowPowerModal()"
+                                    v-tooltip
+                                    :title="$t('huawei.TurnOnOff')"
+                                >
+                                    <BIconPower style="font-size: 24px" />
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -348,6 +360,17 @@
                 </div>
             </div>
         </div>
+
+        <ModalDialog modalId="huaweiPowerView" :title="$t('huawei.PowerControl')" :loading="dataLoading">
+            <div class="d-grid gap-2 col-6 mx-auto">
+                <button type="button" class="btn btn-success" @click="onSetPower(true)">
+                    <BIconToggleOn class="fs-4" />&nbsp;{{ $t('huawei.TurnOn') }}
+                </button>
+                <button type="button" class="btn btn-danger" @click="onSetPower(false)">
+                    <BIconToggleOff class="fs-4" />&nbsp;{{ $t('huawei.TurnOff') }}
+                </button>
+            </div>
+        </ModalDialog>
     </template>
 </template>
 
@@ -358,17 +381,22 @@ import type { HuaweiLimitConfig } from '@/types/HuaweiLimitConfig';
 import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
 
 import * as bootstrap from 'bootstrap';
-import { BIconSpeedometer } from 'bootstrap-icons-vue';
+import { BIconSpeedometer, BIconPower, BIconToggleOn, BIconToggleOff } from 'bootstrap-icons-vue';
 import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
 import InputElement from '@/components/InputElement.vue';
 import BootstrapAlert from '@/components/BootstrapAlert.vue';
+import ModalDialog from '@/components/ModalDialog.vue';
 
 export default defineComponent({
     components: {
         BIconSpeedometer,
+        BIconPower,
+        BIconToggleOn,
+        BIconToggleOff,
         InputElement,
         DataAgeDisplay,
         BootstrapAlert,
+        ModalDialog,
     },
     data() {
         return {
@@ -380,6 +408,7 @@ export default defineComponent({
             isFirstFetchAfterConnect: true,
             targetLimitList: {} as HuaweiLimitConfig,
             huaweiLimitSettingView: {} as bootstrap.Modal,
+            huaweiPowerView: {} as bootstrap.Modal,
             alertMessageLimit: '',
             alertTypeLimit: 'info',
             showAlertLimit: false,
@@ -467,6 +496,10 @@ export default defineComponent({
             this.huaweiLimitSettingView = new bootstrap.Modal('#huaweiLimitSettingView');
             this.huaweiLimitSettingView.show();
         },
+        onShowPowerModal() {
+            this.huaweiPowerView = new bootstrap.Modal('#huaweiPowerView');
+            this.huaweiPowerView.show();
+        },
         onSubmitLimit(e: Event) {
             e.preventDefault();
 
@@ -489,6 +522,23 @@ export default defineComponent({
                         this.alertMessageLimit = this.$t('onbatteryapiresponse.' + response.code, response.param);
                         this.alertTypeLimit = response.type;
                         this.showAlertLimit = true;
+                    }
+                });
+        },
+        onSetPower(power: boolean) {
+            const formData = new FormData();
+            formData.append('data', JSON.stringify({ power }));
+
+            fetch('/api/huawei/power', {
+                method: 'POST',
+                headers: authHeader(),
+                body: formData,
+            })
+                .then((response) => handleResponse(response, this.$emitter, this.$router))
+                .then((response) => {
+                    console.log(response);
+                    if (response.type == 'success') {
+                        this.huaweiPowerView.hide();
                     }
                 });
         },
