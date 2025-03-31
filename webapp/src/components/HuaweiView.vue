@@ -313,53 +313,36 @@
             </div>
         </div>
 
-        <div class="modal" id="huaweiLimitSettingView" ref="huaweiLimitSettingView" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <BootstrapAlert v-model="showAlertLimit" :variant="alertTypeLimit">
-                        {{ alertMessageLimit }}
-                    </BootstrapAlert>
+        <ModalDialog modalId="huaweiLimitSettingView" :title="$t('huawei.LimitSettings')" :loading="dataLoading">
+            <BootstrapAlert v-model="showAlertLimit" :variant="alertTypeLimit">
+                {{ alertMessageLimit }}
+            </BootstrapAlert>
 
-                    <form @submit="onSubmitLimit">
-                        <div class="modal-header">
-                            <h5 class="modal-title">{{ $t('huawei.LimitSettings') }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <InputElement
-                                :label="$t('huawei.SetVoltageLimit')"
-                                type="number"
-                                step="0.01"
-                                min="42"
-                                max="58"
-                                v-model="targetLimitList.voltage"
-                                postfix="V"
-                            />
+            <InputElement
+                :label="$t('huawei.SetVoltageLimit')"
+                type="number"
+                step="0.01"
+                min="42"
+                max="58"
+                v-model="targetLimitList.voltage"
+                postfix="V"
+            />
 
-                            <InputElement
-                                :label="$t('huawei.SetCurrentLimit')"
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                max="75"
-                                v-model="targetLimitList.current"
-                                postfix="A"
-                            />
-                        </div>
-
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-danger">
-                                {{ $t('huawei.SetLimits') }}
-                            </button>
-
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                {{ $t('huawei.Close') }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+            <InputElement
+                :label="$t('huawei.SetCurrentLimit')"
+                type="number"
+                step="0.1"
+                min="0"
+                max="75"
+                v-model="targetLimitList.current"
+                postfix="A"
+            />
+            <template #footer>
+                <button type="button" class="btn btn-danger" @click="onSubmitLimit">
+                    {{ $t('huawei.SetLimits') }}
+                </button>
+            </template>
+        </ModalDialog>
 
         <ModalDialog modalId="huaweiPowerView" :title="$t('huawei.PowerControl')" :loading="dataLoading">
             <div class="d-grid gap-2 col-6 mx-auto">
