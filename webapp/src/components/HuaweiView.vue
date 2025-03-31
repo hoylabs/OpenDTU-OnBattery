@@ -16,12 +16,15 @@
                         <div class="p-1 flex-grow-1">
                             <div class="d-flex flex-wrap">
                                 <div style="padding-right: 2em">
-                                    <template v-if="huaweiData.vendor_name !== undefined && huaweiData.product_name !== undefined">
+                                    <template
+                                        v-if="
+                                            huaweiData.vendor_name !== undefined &&
+                                            huaweiData.product_name !== undefined
+                                        "
+                                    >
                                         {{ huaweiData.vendor_name }} {{ huaweiData.product_name }}
                                     </template>
-                                    <template v-else>
-                                        Huawei PSU
-                                    </template>
+                                    <template v-else>Huawei PSU</template>
                                 </div>
                                 <div v-if="huaweiData.serial" style="padding-right: 2em">
                                     {{ $t('huawei.SerialNumber') }}: {{ huaweiData.serial }}
@@ -79,10 +82,17 @@
                                                         {{ huaweiData.product_description }}
                                                     </td>
                                                 </tr>
-                                                <tr v-if="huaweiData.row !== undefined && huaweiData.slot !== undefined">
+                                                <tr
+                                                    v-if="huaweiData.row !== undefined && huaweiData.slot !== undefined"
+                                                >
                                                     <th scope="row">{{ $t('huawei.SlotLabel') }}</th>
                                                     <td>
-                                                        {{ $t('huawei.SlotText', { row: huaweiData.row, slot: huaweiData.slot }) }}
+                                                        {{
+                                                            $t('huawei.SlotText', {
+                                                                row: huaweiData.row,
+                                                                slot: huaweiData.slot,
+                                                            })
+                                                        }}
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -212,55 +222,75 @@
                                     <div class="card-header">{{ $t('huawei.Acknowledgements') }}</div>
                                     <div class="card-body">
                                         <table class="table table-striped table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">{{ $t('huawei.Property') }}</th>
-                                                <th class="value" scope="col">{{ $t('huawei.Value') }}</th>
-                                                <th scope="col">{{ $t('huawei.Unit') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-if="huaweiData.online_voltage !== undefined">
-                                                <th scope="row">{{ $t('huawei.OnlineVoltage') }}</th>
-                                                <td class="value">{{ huaweiData.online_voltage.v.toFixed(2) }}</td>
-                                                <td>{{ huaweiData.online_voltage.u }}</td>
-                                            </tr>
-                                            <tr v-if="huaweiData.offline_voltage !== undefined">
-                                                <th scope="row">{{ $t('huawei.OfflineVoltage') }}</th>
-                                                <td class="value">{{ huaweiData.offline_voltage.v.toFixed(2) }}</td>
-                                                <td>{{ huaweiData.offline_voltage.u }}</td>
-                                            </tr>
-                                            <tr v-if="huaweiData.online_current !== undefined">
-                                                <th scope="row">{{ $t('huawei.OnlineCurrent') }}</th>
-                                                <td class="value">{{ huaweiData.online_current.v.toFixed(2) }}</td>
-                                                <td>{{ huaweiData.online_current.u }}</td>
-                                            </tr>
-                                            <tr v-if="huaweiData.offline_current !== undefined">
-                                                <th scope="row">{{ $t('huawei.OfflineCurrent') }}</th>
-                                                <td class="value">{{ huaweiData.offline_current.v.toFixed(2) }}</td>
-                                                <td>{{ huaweiData.offline_current.u }}</td>
-                                            </tr>
-                                            <tr v-if="huaweiData.input_current_limit !== undefined">
-                                                <th scope="row">{{ $t('huawei.InputCurrentLimit') }}</th>
-                                                <td class="value">{{ huaweiData.input_current_limit.v.toFixed(2) }}</td>
-                                                <td>{{ huaweiData.input_current_limit.u }}</td>
-                                            </tr>
-                                            <tr v-if="huaweiData.production_enabled !== undefined">
-                                                <th scope="row">{{ $t('huawei.ProductionEnabled') }}</th>
-                                                <td class="value">{{ huaweiData.production_enabled ? $t('base.Yes') : $t('base.No') }}</td>
-                                                <td></td>
-                                            </tr>
-                                            <tr v-if="huaweiData.fan_online_full_speed !== undefined">
-                                                <th scope="row">{{ $t('huawei.FanOnlineFullSpeed') }}</th>
-                                                <td class="value">{{ huaweiData.fan_online_full_speed ? $t('huawei.FanFullSpeed') : $t('huawei.FanAuto') }}</td>
-                                                <td></td>
-                                            </tr>
-                                            <tr v-if="huaweiData.fan_offline_full_speed !== undefined">
-                                                <th scope="row">{{ $t('huawei.FanOfflineFullSpeed') }}</th>
-                                                <td class="value">{{ huaweiData.fan_offline_full_speed ? $t('huawei.FanFullSpeed') : $t('huawei.FanAuto') }}</td>
-                                                <td></td>
-                                            </tr>
-                                        </tbody>
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">{{ $t('huawei.Property') }}</th>
+                                                    <th class="value" scope="col">{{ $t('huawei.Value') }}</th>
+                                                    <th scope="col">{{ $t('huawei.Unit') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-if="huaweiData.online_voltage !== undefined">
+                                                    <th scope="row">{{ $t('huawei.OnlineVoltage') }}</th>
+                                                    <td class="value">{{ huaweiData.online_voltage.v.toFixed(2) }}</td>
+                                                    <td>{{ huaweiData.online_voltage.u }}</td>
+                                                </tr>
+                                                <tr v-if="huaweiData.offline_voltage !== undefined">
+                                                    <th scope="row">{{ $t('huawei.OfflineVoltage') }}</th>
+                                                    <td class="value">{{ huaweiData.offline_voltage.v.toFixed(2) }}</td>
+                                                    <td>{{ huaweiData.offline_voltage.u }}</td>
+                                                </tr>
+                                                <tr v-if="huaweiData.online_current !== undefined">
+                                                    <th scope="row">{{ $t('huawei.OnlineCurrent') }}</th>
+                                                    <td class="value">{{ huaweiData.online_current.v.toFixed(2) }}</td>
+                                                    <td>{{ huaweiData.online_current.u }}</td>
+                                                </tr>
+                                                <tr v-if="huaweiData.offline_current !== undefined">
+                                                    <th scope="row">{{ $t('huawei.OfflineCurrent') }}</th>
+                                                    <td class="value">{{ huaweiData.offline_current.v.toFixed(2) }}</td>
+                                                    <td>{{ huaweiData.offline_current.u }}</td>
+                                                </tr>
+                                                <tr v-if="huaweiData.input_current_limit !== undefined">
+                                                    <th scope="row">{{ $t('huawei.InputCurrentLimit') }}</th>
+                                                    <td class="value">
+                                                        {{ huaweiData.input_current_limit.v.toFixed(2) }}
+                                                    </td>
+                                                    <td>{{ huaweiData.input_current_limit.u }}</td>
+                                                </tr>
+                                                <tr v-if="huaweiData.production_enabled !== undefined">
+                                                    <th scope="row">{{ $t('huawei.ProductionEnabled') }}</th>
+                                                    <td class="value">
+                                                        {{
+                                                            huaweiData.production_enabled
+                                                                ? $t('base.Yes')
+                                                                : $t('base.No')
+                                                        }}
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr v-if="huaweiData.fan_online_full_speed !== undefined">
+                                                    <th scope="row">{{ $t('huawei.FanOnlineFullSpeed') }}</th>
+                                                    <td class="value">
+                                                        {{
+                                                            huaweiData.fan_online_full_speed
+                                                                ? $t('huawei.FanFullSpeed')
+                                                                : $t('huawei.FanAuto')
+                                                        }}
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr v-if="huaweiData.fan_offline_full_speed !== undefined">
+                                                    <th scope="row">{{ $t('huawei.FanOfflineFullSpeed') }}</th>
+                                                    <td class="value">
+                                                        {{
+                                                            huaweiData.fan_offline_full_speed
+                                                                ? $t('huawei.FanFullSpeed')
+                                                                : $t('huawei.FanAuto')
+                                                        }}
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
+                                            </tbody>
                                         </table>
                                     </div>
                                 </div>
