@@ -11,10 +11,7 @@
                 <div class="card">
                     <div
                         class="card-header d-flex justify-content-between align-items-center"
-                        :class="{
-                            'text-bg-danger': huaweiData.reachable !== true,
-                            'text-bg-success': huaweiData.reachable === true
-                        }"
+                        :class="getStatusClass()"
                     >
                         <div class="p-1 flex-grow-1">
                             <div class="d-flex flex-wrap">
@@ -464,6 +461,21 @@ export default defineComponent({
                         this.showAlertLimit = true;
                     }
                 });
+        },
+        getStatusClass() {
+            if (this.huaweiData.reachable !== true) {
+                return 'text-bg-danger';
+            }
+
+            if (
+                this.huaweiData.reachable === true &&
+                this.huaweiData.output_power?.v < 10 &&
+                this.huaweiData.output_current?.v < 0.1
+            ) {
+                return 'text-bg-warning';
+            }
+
+            return 'text-bg-success';
         },
     },
 });
