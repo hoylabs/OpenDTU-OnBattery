@@ -280,7 +280,7 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
                         rawLabel, msg.value, msg.value,
                         static_cast<float>(msg.value)/1024,
                         _maxCurrentMultiplier,
-                        static_cast<float>(msg.value)/_maxCurrentMultiplier);
+                        static_cast<float>(msg.value)/std::max(_maxCurrentMultiplier, 1.0f));
             }
             break;
     }
@@ -308,10 +308,20 @@ bool HardwareInterface::readAcks(can_message_t const& msg)
             _upData->add<DataPointLabel::OfflineVoltage>(value);
             break;
         case Setting::OnlineCurrent:
+            if (_maxCurrentMultiplier == 0) {
+                MessageOutput.print("[Huawei::HwIfc] max current multiplier unknown, "
+                        "cannot process online current ACK\r\n");
+                return true;
+            }
             value /= _maxCurrentMultiplier;
             _upData->add<DataPointLabel::OnlineCurrent>(value);
             break;
         case Setting::OfflineCurrent:
+            if (_maxCurrentMultiplier == 0) {
+                MessageOutput.print("[Huawei::HwIfc] max current multiplier unknown, "
+                        "cannot process offline current ACK\r\n");
+                return true;
+            }
             value /= _maxCurrentMultiplier;
             _upData->add<DataPointLabel::OfflineCurrent>(value);
             break;
@@ -397,6 +407,7 @@ void HardwareInterface::loop()
 
     if ((millis() - *_lastDeviceConfigMillis) > DeviceConfigTimeoutMillis) {
         MessageOutput.print("[Huawei::HwIfc] PSU is unreachable (no CAN communication)\r\n");
+        _maxCurrentMultiplier = 0;
         _lastDeviceConfigMillis = std::nullopt;
         _lastSettingsUpdateMillis = std::nullopt;
         _boardPropertiesState = StringState::Unknown;
@@ -502,6 +513,11 @@ void HardwareInterface::enqueueParameter(HardwareInterface::Setting setting, flo
             break;
         case Setting::OfflineCurrent:
         case Setting::OnlineCurrent:
+            if (_maxCurrentMultiplier == 0) {
+                MessageOutput.print("[Huawei::HwIfc] max current multiplier unknown, "
+                        "cannot send current setting\r\n");
+                return;
+            }
             val *= _maxCurrentMultiplier;
             break;
         case Setting::InputCurrentLimit:
