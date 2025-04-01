@@ -90,6 +90,7 @@ void MqttHandleHuaweiClass::loop()
     PUB(InputVoltage, "input_voltage");
     PUB(InputCurrent, "input_current");
     PUB(InputPower, "input_power");
+    PUB(InputFrequency, "input_frequency");
     PUB(OutputVoltage, "output_voltage");
     PUB(OutputCurrent, "output_current");
     PUB(OutputCurrentMax, "max_output_current");
