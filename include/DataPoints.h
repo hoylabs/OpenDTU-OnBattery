@@ -74,7 +74,7 @@ class DataPointContainer {
         }
 
         template<Label L>
-        void add(typename Traits<L>::type val) {
+        void add(typename Traits<L>::type val, bool ignoreAge = false) {
             // no locking here! iff thread safety is required, use the lock()
             // method in a scoped block in which this method is called.
 
@@ -86,7 +86,7 @@ class DataPointContainer {
                         dataPointValueToStr(val),
                         Traits<L>::unit,
                         typename DataPoint::tValue(std::move(val)),
-                        millis()
+                        (ignoreAge ? 0 : millis())
                     )
             );
         }
