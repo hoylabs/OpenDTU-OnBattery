@@ -162,7 +162,7 @@ bool HardwareInterface::readDeviceConfig(can_message_t const& msg)
     else if (counter == 6) {
         _upData->add<DataPointLabel::Row>(static_cast<uint8_t>((msg.valueId >> 8) & 0xFF));
         _upData->add<DataPointLabel::Slot>(static_cast<uint8_t>(msg.valueId & 0xFF));
-        _upData->add<DataPointLabel::Reachable>(true);
+        _upData->add<DataPointLabel::Reachable>(true, true/*ignore age*/);
 
         _lastDeviceConfigMillis = millis();
     }
@@ -411,7 +411,7 @@ void HardwareInterface::loop()
         _lastDeviceConfigMillis = std::nullopt;
         _lastSettingsUpdateMillis = std::nullopt;
         _boardPropertiesState = StringState::Unknown;
-        _upData->add<DataPointLabel::Reachable>(false);
+        _upData->add<DataPointLabel::Reachable>(false, true/*ignore age*/);
         return; // restart by re-requesting device config in next iteration
     }
 
