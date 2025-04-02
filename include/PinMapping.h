@@ -71,11 +71,11 @@ struct PinMapping_t {
     gpio_num_t huawei_rx;
     gpio_num_t huawei_tx;
     gpio_num_t huawei_power;
-    int8_t powermeter_rx;
-    int8_t powermeter_tx;
-    int8_t powermeter_dere;
-    int8_t powermeter_rxen;
-    int8_t powermeter_txen;
+    gpio_num_t powermeter_rx;
+    gpio_num_t powermeter_tx;
+    gpio_num_t powermeter_dere;
+    gpio_num_t powermeter_rxen;
+    gpio_num_t powermeter_txen;
 };
 
 class PinMappingClass {
