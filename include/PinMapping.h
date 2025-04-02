@@ -59,10 +59,10 @@ struct PinMapping_t {
     gpio_num_t victron_rx2;
     gpio_num_t victron_tx3;
     gpio_num_t victron_rx3;
-    int8_t battery_rx;
-    int8_t battery_rxen;
-    int8_t battery_tx;
-    int8_t battery_txen;
+    gpio_num_t battery_rx;
+    gpio_num_t battery_rxen;
+    gpio_num_t battery_tx;
+    gpio_num_t battery_txen;
     int8_t huawei_miso;
     int8_t huawei_mosi;
     int8_t huawei_clk;

@@ -163,7 +163,7 @@
 #endif
 
 #ifndef BATTERY_PIN_RX
-#define BATTERY_PIN_RX -1
+#define BATTERY_PIN_RX GPIO_NUM_NC
 #endif
 
 #ifdef PYLONTECH_PIN_RX
@@ -172,11 +172,11 @@
 #endif
 
 #ifndef BATTERY_PIN_RXEN
-#define BATTERY_PIN_RXEN -1
+#define BATTERY_PIN_RXEN GPIO_NUM_NC
 #endif
 
 #ifndef BATTERY_PIN_TX
-#define BATTERY_PIN_TX -1
+#define BATTERY_PIN_TX GPIO_NUM_NC
 #endif
 
 #ifdef PYLONTECH_PIN_TX
@@ -185,7 +185,7 @@
 #endif
 
 #ifndef BATTERY_PIN_TXEN
-#define BATTERY_PIN_TXEN -1
+#define BATTERY_PIN_TXEN GPIO_NUM_NC
 #endif
 
 #ifndef HUAWEI_PIN_MISO

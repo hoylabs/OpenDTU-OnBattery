@@ -18,15 +18,13 @@ bool CanReceiver::init(bool verboseLogging, char const* providerName)
     MessageOutput.printf("[%s] Interface rx = %d, tx = %d\r\n",
             _providerName, pin.battery_rx, pin.battery_tx);
 
-    if (pin.battery_rx < 0 || pin.battery_tx < 0) {
+    if (pin.battery_rx <= GPIO_NUM_NC || pin.battery_tx <= GPIO_NUM_NC) {
         MessageOutput.printf("[%s] Invalid pin config\r\n",
                 _providerName);
         return false;
     }
 
-    auto tx = static_cast<gpio_num_t>(pin.battery_tx);
-    auto rx = static_cast<gpio_num_t>(pin.battery_rx);
-    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(tx, rx, TWAI_MODE_NORMAL);
+    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(pin.battery_tx, pin.battery_rx, TWAI_MODE_NORMAL);
 
     // interrupts at level 1 are in high demand, at least on ESP32-S3 boards,
     // but only a limited amount can be allocated. failing to allocate an

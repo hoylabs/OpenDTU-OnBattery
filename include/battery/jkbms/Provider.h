@@ -74,8 +74,8 @@ private:
     }
 
     bool _verboseLogging = true;
-    int8_t _rxEnablePin = -1;
-    int8_t _txEnablePin = -1;
+    gpio_num_t _rxEnablePin = GPIO_NUM_NC;
+    gpio_num_t _txEnablePin = GPIO_NUM_NC;
     Status _lastStatus = Status::Initializing;
     uint32_t _lastStatusPrinted = 0;
     uint32_t _lastRequest = 0;
