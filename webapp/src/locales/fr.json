@@ -54,6 +54,10 @@
         "Light": "Clair",
         "Auto": "Auto"
     },
+    "dataagedisplay": {
+        "DataAge": "Âge des données",
+        "SecondsSince": "0 secondes | 1 seconde | {n} secondes"
+    },
     "apiresponse": {
         "1001": "Paramètres enregistrés !",
         "1002": "Aucune valeur trouvée !",

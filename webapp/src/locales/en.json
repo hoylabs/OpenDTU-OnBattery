@@ -57,6 +57,10 @@
         "Light": "Light",
         "Auto": "Auto"
     },
+    "dataagedisplay": {
+        "DataAge": "Data Age",
+        "SecondsSince": "0 seconds | 1 second | {n} seconds"
+    },
     "apiresponse": {
         "1001": "Settings saved!",
         "1002": "No values found!",
