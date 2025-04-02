@@ -189,35 +189,35 @@
 #endif
 
 #ifndef HUAWEI_PIN_MISO
-#define HUAWEI_PIN_MISO -1
+#define HUAWEI_PIN_MISO GPIO_NUM_NC
 #endif
 
 #ifndef HUAWEI_PIN_MOSI
-#define HUAWEI_PIN_MOSI -1
+#define HUAWEI_PIN_MOSI GPIO_NUM_NC
 #endif
 
 #ifndef HUAWEI_PIN_SCLK
-#define HUAWEI_PIN_SCLK -1
+#define HUAWEI_PIN_SCLK GPIO_NUM_NC
 #endif
 
 #ifndef HUAWEI_PIN_CS
-#define HUAWEI_PIN_CS -1
+#define HUAWEI_PIN_CS GPIO_NUM_NC
 #endif
 
 #ifndef HUAWEI_PIN_IRQ
-#define HUAWEI_PIN_IRQ -1
+#define HUAWEI_PIN_IRQ GPIO_NUM_NC
 #endif
 
 #ifndef HUAWEI_PIN_RX
-#define HUAWEI_PIN_RX -1
+#define HUAWEI_PIN_RX GPIO_NUM_NC
 #endif
 
 #ifndef HUAWEI_PIN_TX
-#define HUAWEI_PIN_TX -1
+#define HUAWEI_PIN_TX GPIO_NUM_NC
 #endif
 
 #ifndef HUAWEI_PIN_POWER
-#define HUAWEI_PIN_POWER -1
+#define HUAWEI_PIN_POWER GPIO_NUM_NC
 #endif
 
 #ifndef POWERMETER_PIN_RX
