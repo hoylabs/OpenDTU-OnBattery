@@ -62,7 +62,7 @@ VeDirectFrameHandler<T>::VeDirectFrameHandler() :
 }
 
 template<typename T>
-void VeDirectFrameHandler<T>::init(char const* who, int8_t rx, int8_t tx,
+void VeDirectFrameHandler<T>::init(char const* who, gpio_num_t rx, gpio_num_t tx,
 		Print* msgOut, bool verboseLogging, uint8_t hwSerialPort)
 {
 	_vedirectSerial = std::make_unique<HardwareSerial>(hwSerialPort);
@@ -70,7 +70,7 @@ void VeDirectFrameHandler<T>::init(char const* who, int8_t rx, int8_t tx,
 	_vedirectSerial->end(); // make sure the UART will be re-initialized
 	_vedirectSerial->begin(19200, SERIAL_8N1, rx, tx);
 	_vedirectSerial->flush();
-	_canSend = (tx != -1);
+	_canSend = (tx != GPIO_NUM_NC);
 	_msgOut = msgOut;
 	_verboseLogging = verboseLogging;
 	_debugIn = 0;

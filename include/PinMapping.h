@@ -53,12 +53,12 @@ struct PinMapping_t {
     gpio_num_t led[PINMAPPING_LED_COUNT];
 
     // OpenDTU-OnBattery-specific pins below
-    int8_t victron_tx;
-    int8_t victron_rx;
-    int8_t victron_tx2;
-    int8_t victron_rx2;
-    int8_t victron_tx3;
-    int8_t victron_rx3;
+    gpio_num_t victron_tx;
+    gpio_num_t victron_rx;
+    gpio_num_t victron_tx2;
+    gpio_num_t victron_rx2;
+    gpio_num_t victron_tx3;
+    gpio_num_t victron_rx3;
     int8_t battery_rx;
     int8_t battery_rxen;
     int8_t battery_tx;

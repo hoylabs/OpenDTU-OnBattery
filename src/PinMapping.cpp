@@ -139,27 +139,27 @@
 #endif // CONFIG_ETH_USE_ESP32_EMAC
 
 #ifndef VICTRON_PIN_TX
-#define VICTRON_PIN_TX -1
+#define VICTRON_PIN_TX GPIO_NUM_NC
 #endif
 
 #ifndef VICTRON_PIN_RX
-#define VICTRON_PIN_RX -1
+#define VICTRON_PIN_RX GPIO_NUM_NC
 #endif
 
 #ifndef VICTRON_PIN_TX2
-#define VICTRON_PIN_TX2 -1
+#define VICTRON_PIN_TX2 GPIO_NUM_NC
 #endif
 
 #ifndef VICTRON_PIN_RX2
-#define VICTRON_PIN_RX2 -1
+#define VICTRON_PIN_RX2 GPIO_NUM_NC
 #endif
 
 #ifndef VICTRON_PIN_TX3
-#define VICTRON_PIN_TX3 -1
+#define VICTRON_PIN_TX3 GPIO_NUM_NC
 #endif
 
 #ifndef VICTRON_PIN_RX3
-#define VICTRON_PIN_RX3 -1
+#define VICTRON_PIN_RX3 GPIO_NUM_NC
 #endif
 
 #ifndef BATTERY_PIN_RX

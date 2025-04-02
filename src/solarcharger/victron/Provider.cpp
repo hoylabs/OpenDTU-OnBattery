@@ -38,13 +38,13 @@ void Provider::deinit()
     _serialPortOwners.clear();
 }
 
-bool Provider::initController(int8_t rx, int8_t tx, bool logging,
+bool Provider::initController(gpio_num_t rx, gpio_num_t tx, bool logging,
         uint8_t instance)
 {
     MessageOutput.printf("[VictronMppt Instance %d] rx = %d, tx = %d\r\n",
             instance, rx, tx);
 
-    if (rx < 0) {
+    if (rx <= GPIO_NUM_NC) {
         MessageOutput.printf("[VictronMppt Instance %d] invalid pin config\r\n", instance);
         return false;
     }
