@@ -38,9 +38,7 @@
         "Release": "Release to refresh",
         "Close": "Fermer",
         "Yes": "Oui",
-        "No": "Non",
-        "DataAge": "Âge des données",
-        "SecondsSince": "0 secondes | 1 seconde | {n} secondes"
+        "No": "Non"
     },
     "wait": {
         "NotReady": "OpenDTU-OnBattery is not yet ready",
