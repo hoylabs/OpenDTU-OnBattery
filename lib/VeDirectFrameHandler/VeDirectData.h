@@ -16,6 +16,7 @@ typedef struct {
     uint32_t batteryVoltage_V_mV = 0;       // battery voltage in mV
     int32_t batteryCurrent_I_mA = 0;        // battery current in mA (can be negative)
     float mpptEfficiency_Percent = 0;       // efficiency in percent (calculated, moving average)
+    float transmissionErrors_Day = 0;       // transmissions errors per day
 
     frozen::string const& getPidAsString() const; // product ID as string
     uint32_t getFwVersionAsInteger() const;

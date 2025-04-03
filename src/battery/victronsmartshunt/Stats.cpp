@@ -43,6 +43,7 @@ void Stats::getLiveViewData(JsonVariant& root) const {
     addLiveViewValue(root, "midpointVoltage", _midpointVoltage, "V", 2);
     addLiveViewValue(root, "midpointDeviation", _midpointDeviation, "%", 1);
     addLiveViewValue(root, "lastFullCharge", _lastFullCharge, "min", 0);
+    addLiveViewValue(root, "transmitError", 0, "1/d", 1);
     if (_tempPresent) {
         addLiveViewValue(root, "temperature", _temperature, "°C", 0);
     }
