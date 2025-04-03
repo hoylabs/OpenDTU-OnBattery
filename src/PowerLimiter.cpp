@@ -19,6 +19,7 @@
 #include <frozen/map.h>
 #include "SunPosition.h"
 #include <LogHelper.h>
+#include "RuntimeData.h"
 
 #undef TAG
 static const char* TAG = "dynamicPowerLimiter";
@@ -142,6 +143,7 @@ void PowerLimiterClass::reloadConfig()
 
     calcNextInverterRestart();
 
+    _checkATF = true; // ATF: re-check ATF initialization on next loop
     _reloadConfigFlag = false;
 }
 
@@ -195,6 +197,9 @@ void PowerLimiterClass::loop()
 
         latestInverterStats = std::max(*oStatsMillis, latestInverterStats);
     }
+
+    // ATF, we do this here because we need inverter max power info to initialize the ATF
+    if (_checkATF) { _checkATF = !initATF(); }
 
     // note that we can only perform unconditional full solar-passthrough or any
     // calculation at all after surviving the loop above, which ensures that we
@@ -392,6 +397,21 @@ void PowerLimiterClass::loop()
         DTU_LOGD("total max AC power is %u W, conduction losses are %u %%",
             config.PowerLimiter.TotalUpperPowerLimit,
             config.PowerLimiter.ConductionLosses);
+    }
+
+    // ATF: Check if it is time to print the ATF report
+    bool printReport = false;
+    if (millis() - _lastATFPrint > 60*1000) {
+        printReport = true;
+        _lastATFPrint = millis();
+    }
+
+    // ATF: Update the adaptive transfer function with the current power and limit
+    for (auto& upInv : _inverters) {
+        if (!upInv->isATFActive()) { continue; }
+        upInv->setATFData();
+
+        if (printReport) { upInv->printATFReport(); }
     }
 
     uint16_t inverterTotalPower = calcTargetOutput();
@@ -1004,4 +1024,104 @@ void PowerLimiterClass::deserializeRTD(JsonObject const& obj)
     // Note: Up to now the PowerLimiterClass does not use a mutex
     // Use of atomic<bool> would be an solution but I want to avoid the overhead
     _fromStart =  obj["battery_from_start"] | false;
+}
+
+/*
+ * Initialize or deinitialize the Adaptive Transfer Function (ATF) data structure
+ * We need late initialization because it cannot be done directly after starting the DPL:
+ * - we need the power limiter inverter class
+ * - we need inverter stats about the inverter max power to initialize the ATF data
+ * - we must check if the runtime file contains already ATF data
+ */
+bool PowerLimiterClass::initATF(void) {
+
+    bool allDone = true;
+    uint16_t counter = 0;
+    for (auto const& upInv : _inverters) {
+        if (!upInv->isBatteryPowered()) { continue; } // ATF only for battery-powered inverters
+        if (counter >= 1) { continue; }               // limit to 1 inverters for now
+
+        if (!upInv->isEligible()) {
+            allDone = false; // inverter not reachable yet, that is normal short after DPL start
+            continue;
+        }
+
+        if (upInv->isATFEnabled() && !upInv->isATFActive()) {
+
+            auto maxPower = upInv->getInverterMaxPowerWatts();
+            //if (maxPower == 0) { maxPower = upInv->getATFConfigPower(); } // todo: delete after testing
+            if (maxPower == 0) {
+                //DTU_LOGW("cannot initialize ATF: inverter max power unknown");
+                allDone = false;
+                continue;
+            }
+            if (!upInv->activateATF(maxPower)) {
+                //DTU_LOGW("cannot initialize ATF: activate data structure");
+                allDone = false;
+                continue;
+            }
+
+            // trigger read of ATF data from the runtime data file
+            RuntimeData.requestReadOnNextTaskLoop();
+            ++counter;
+
+        } else if (!upInv->isATFEnabled() && upInv->isATFActive()) {
+            upInv->deactivateATF();
+        }
+    }
+
+    return allDone;
+}
+
+/*
+ * Serialize the Adaptive Transfer Function (ATF) data to/from the runtime data file (RTD)
+ */
+void PowerLimiterClass::serializeATFtoRTD(JsonVariant var) const {
+
+    auto arr = var["inverter_atf"].to<JsonArray>();
+
+    // serialize ATF data for every inverter with active ATF
+    for (auto const& upInv : _inverters) {
+        if (!upInv->isATFActive()) { continue; }
+
+        auto inv = arr.add<JsonObject>();
+        inv["serial"] = upInv->getSerialStr();  // human-readable serial number
+        upInv->serializeATFData(inv);
+    }
+}
+
+/*
+ * Deserialize the Adaptive Transfer Function (ATF) data from the runtime data file (RTD)
+ */
+void PowerLimiterClass::deserializeRTDtoATF(JsonVariant var) {
+
+    for (JsonObject inv : var["inverter_atf"].as<JsonArray>()) {
+
+        // Interpret the string as a hex value and convert it to uint64_t
+        const uint64_t serial = strtoll(inv["serial"].as<String>().c_str(), NULL, 16);
+        if (serial == 0ULL) { continue; }
+
+        for (auto& upInv : _inverters) {
+
+            // we use the serial to find the matching inverter
+            if (upInv->getSerial() != serial) { continue; }
+            upInv->deserializeATFData(inv);
+        }
+    }
+}
+
+/*
+ * Get the power limit from the Adaptive Transfer Function (ATF) for a given inverter
+ * Used to show the ATF calculated power in the webapp-UI
+ */
+std::optional<uint16_t> PowerLimiterClass::getATFInverterPower(uint64_t inverterSerial, float limit) const {
+    for (auto& upInv : _inverters) {
+        if (!upInv->isATFActive()) { continue; }
+        if (upInv->getSerial() != inverterSerial) { continue; }
+
+        // found matching inverter, get power from its ATF
+        auto power = upInv->getATFPower(limit);
+        if (power != 0) { return power; }
+    }
+    return std::nullopt;
 }

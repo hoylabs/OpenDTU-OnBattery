@@ -14,6 +14,7 @@
 #include "defaults.h"
 #include <solarcharger/Controller.h>
 #include <AsyncJson.h>
+#include "PowerLimiter.h"
 
 #undef TAG
 static const char* TAG = "webapi";
@@ -272,7 +273,12 @@ void WebApiWsLiveClass::generateInverterCommonJsonResponse(JsonObject& root, std
     root["producing"] = inv->isProducing();
     root["limit_relative"] = inv->SystemConfigPara()->getLimitPercent();
     if (inv->DevInfo()->getMaxPower() > 0) {
-        root["limit_absolute"] = inv->SystemConfigPara()->getLimitPercent() * inv->DevInfo()->getMaxPower() / 100.0;
+        auto oATFPower = PowerLimiter.getATFInverterPower(inv->serial(), inv->SystemConfigPara()->getLimitPercent());
+        if (oATFPower.has_value()) {
+            root["limit_absolute"] = oATFPower.value();
+        } else {
+            root["limit_absolute"] = inv->SystemConfigPara()->getLimitPercent() * inv->DevInfo()->getMaxPower() / 100.0;
+        }
     } else {
         root["limit_absolute"] = -1;
     }

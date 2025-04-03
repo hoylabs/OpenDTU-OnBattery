@@ -111,6 +111,7 @@ bool RuntimeClass::write(uint16_t const freezeMinutes)
 
         // Insert additional runtime data here and protect the shared data with a local mutex
         PowerLimiter.serializeRTD(doc["power_limiter"].to<JsonObject>());
+        PowerLimiter.serializeATFtoRTD(doc.as<JsonVariant>());
 
 
 
@@ -172,7 +173,7 @@ bool RuntimeClass::read(ReadMode const mode)
     if (mode == ReadMode::START_UP) {
         PowerLimiter.deserializeRTD(doc["power_limiter"]);
     } else {
-        ;
+        PowerLimiter.deserializeRTDtoATF(doc.as<JsonVariant>());
     }
 
 

@@ -192,7 +192,13 @@ bool PowerLimiterInverter::update()
             return true;
         }
 
-        float newRelativeLimit = static_cast<float>(*_oTargetPowerLimitWatts * 100) / getInverterMaxPowerWatts();
+        // ATF: get the relative limit from ATF if active
+        float newRelativeLimit = 0.0f;
+        if (isATFActive()) {
+            newRelativeLimit = getATFLimit(*_oTargetPowerLimitWatts); // ATF
+        } else {
+            newRelativeLimit = static_cast<float>(*_oTargetPowerLimitWatts * 100) / getInverterMaxPowerWatts(); // linear
+        }
 
         // if no limit command is pending, the SystemConfigPara does report the
         // current limit, as the answer by the inverter to a limit command is
@@ -348,7 +354,13 @@ float PowerLimiterInverter::getDcVoltage(uint8_t input)
 uint16_t PowerLimiterInverter::getCurrentLimitWatts() const
 {
     auto currentLimitPercent = _spInverter->SystemConfigPara()->getLimitPercent();
-    return static_cast<uint16_t>(currentLimitPercent * getInverterMaxPowerWatts() / 100);
+
+    // get the power from ATF or from the linear calculation
+    if (isATFActive()) {
+        return getATFPower(currentLimitPercent); // ATF
+    } else {
+        return static_cast<uint16_t>(currentLimitPercent * getInverterMaxPowerWatts() / 100); // linear
+    }
 }
 
 void PowerLimiterInverter::debug() const

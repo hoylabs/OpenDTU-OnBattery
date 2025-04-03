@@ -5,8 +5,9 @@
 #include <Hoymiles.h>
 #include <optional>
 #include <memory>
+#include "InverterATF.h"
 
-class PowerLimiterInverter {
+class PowerLimiterInverter  : public InverterATF {
 public:
     static std::unique_ptr<PowerLimiterInverter> create(PowerLimiterInverterConfig const& config);
 
@@ -79,6 +80,21 @@ public:
     // returns true if the value is accepted or if further waiting makes no sense
     // returns false if we want to wait longer for a newer value
     bool setCurrentOutputAcWatts(float power, uint32_t timestamp);
+
+    // indicates whether ATF is enabled in the configuration
+    // use isATFActive() to check whether ATF is actually active
+    bool isATFEnabled(void) const { return _config.UseATF; }
+
+    // update the ATF data with the current power and limit pair
+    // just call this method after getting new stats from the inverter
+    // because the values must be in sync
+    void setATFData(void) { InverterATF::setATFData(getCurrentOutputAcWatts(), _spInverter->SystemConfigPara()->getLimitPercent()); }
+
+    // print the ATF report to the log
+    void printATFReport(void) const { InverterATF::printATFReport(getSerialStr()); }
+
+    // todo: delete after testing
+    uint16_t getATFConfigPower(void) const { return _config.UpperPowerLimit; }
 
     uint64_t getSerial() const { return _config.Serial; }
     char const* getSerialStr() const { return _serialStr; }

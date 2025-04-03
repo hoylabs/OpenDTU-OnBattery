@@ -61,6 +61,12 @@ public:
     void serializeRTD(JsonObject const& obj) const;
     void deserializeRTD(JsonObject const& obj);
 
+    // ATF: used for the ATF functionality
+    bool initATF(void);
+    void serializeATFtoRTD(JsonVariant obj) const;
+    void deserializeRTDtoATF(JsonVariant obj);
+    std::optional<uint16_t> getATFInverterPower(uint64_t inverterSerial, float limit) const;
+
 private:
     void loop();
 
@@ -86,6 +92,10 @@ private:
     std::pair<bool, uint32_t> _nextInverterRestart = { false, 0 };
     bool _fullSolarPassThroughActive = false;
     float _loadCorrectedVoltage = 0.0f;
+
+    // ATF: used for the ATF functionality
+    bool _checkATF = true;
+    uint32_t _lastATFPrint = 0;
 
     frozen::string const& getStatusText(Status status) const;
     void announceStatus(Status status);
