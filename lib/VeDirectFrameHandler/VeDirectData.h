@@ -18,7 +18,11 @@ typedef struct {
     float mpptEfficiency_Percent = 0;       // efficiency in percent (calculated, moving average)
     float transmissionErrors_Day = 0;       // transmissions errors per day
 
+    enum class Error { SUM, TIMEOUT, TEXT_CHECKSUM, HEX_CHECKSUM, HEX_BUFFER, NESTED_HEX, DEBUG_BUFFER,
+        UNKNOWN_TEXT_DATA, NON_VALID_CHAR, LAST };
+
     frozen::string const& getPidAsString() const; // product ID as string
+    frozen::string const& getTransmissionErrorAsString(Error error) const;
     uint32_t getFwVersionAsInteger() const;
     String getFwVersionFormatted() const;
 } veStruct;
