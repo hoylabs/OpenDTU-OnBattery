@@ -3,6 +3,7 @@
 #include <MqttSettings.h>
 #include <MessageOutput.h>
 #include <solarcharger/victron/Stats.h>
+#include <numeric>
 
 namespace SolarChargers::Victron {
 
@@ -31,8 +32,43 @@ uint32_t Stats::getAgeMillis() const
 
 std::optional<float> Stats::getOutputPowerWatts() const
 {
-    std::optional<float> sum = std::nullopt;
+    // if any charge controller is part of a VE.Smart network, and if the charge
+    // controller is connected in a way that allows to send requests, we should
+    // have the "network total DC input power" available, which is preferred
+    // over the sum of the battery output power, which may not include the power
+    // of all networked controllers. we will deduct the input power of connected
+    // controllers from the network total DC input power and use their battery
+    // output power instead. the remainder will be treated with a good guess of
+    // the efficiency of the networked controllers that we are not wired to.
+    std::vector<float> efficiencies;
+    std::optional<float> oNetworkPower = std::nullopt;
+    float accountedInputPower = 0;
+    float accountedOutputPower = 0;
+    for (auto const& entry : _data) {
+        if (isStale(entry)) { continue; }
 
+        auto const& data = entry.second;
+        if (!oNetworkPower.has_value() && data.NetworkTotalDcInputPowerMilliWatts.first > 0) {
+            oNetworkPower = data.NetworkTotalDcInputPowerMilliWatts.second / 1000.0;
+        }
+
+        efficiencies.push_back(data.mpptEfficiency_Percent);
+        accountedInputPower += data.panelPower_PPV_W;
+        accountedOutputPower += std::max<int16_t>(0, data.batteryOutputPower_W);
+    }
+
+    if (oNetworkPower.has_value()) {
+        *oNetworkPower -= accountedInputPower;
+        *oNetworkPower = std::max<float>(0, *oNetworkPower);
+
+        // average efficiency of all controllers we are wired to
+        float efficiency = std::accumulate(efficiencies.begin(), efficiencies.end(), 0.0f) / efficiencies.size();
+
+        return accountedOutputPower + (*oNetworkPower * efficiency / 100.0f);
+    }
+
+    // return sum of the battery output power of all controllers we are wired to
+    std::optional<float> sum = std::nullopt;
     for (auto const& entry : _data) {
         if (isStale(entry)) { continue; }
 
