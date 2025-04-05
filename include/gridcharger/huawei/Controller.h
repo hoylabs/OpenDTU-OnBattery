@@ -11,9 +11,6 @@
 
 namespace GridCharger::Huawei {
 
-#define HUAWEI_MINIMAL_OFFLINE_VOLTAGE 48
-#define HUAWEI_MINIMAL_ONLINE_VOLTAGE 42
-
 // Modes of operation
 #define HUAWEI_MODE_OFF 0
 #define HUAWEI_MODE_ON 1
@@ -34,6 +31,17 @@ public:
 
     bool getAutoPowerStatus() const { return _autoPowerEnabled; };
     uint8_t getMode() const { return _mode; };
+
+    // determined through trial and error (voltage limits, R4850G2)
+    // and some educated guessing (current limits, no R4875 at hand)
+    static constexpr float MIN_ONLINE_VOLTAGE = 41.0f;
+    static constexpr float MAX_ONLINE_VOLTAGE = 58.6f;
+    static constexpr float MIN_ONLINE_CURRENT = 0.0f;
+    static constexpr float MAX_ONLINE_CURRENT = 84.0f;
+    static constexpr float MIN_OFFLINE_VOLTAGE = 48.0f;
+    static constexpr float MAX_OFFLINE_VOLTAGE = 58.4f;
+    static constexpr float MIN_OFFLINE_CURRENT = 0.0f;
+    static constexpr float MAX_OFFLINE_CURRENT = 84.0f;
 
 private:
     void loop();
