@@ -167,29 +167,46 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic enumTopic,
     std::lock_guard<std::mutex> mqttLock(_mqttMutex);
     using Setting = GridCharger::Huawei::HardwareInterface::Setting;
 
+    auto validateAndSetParameter = [this, payload_val](float min, float max,
+            Setting setting, const char* paramName, const char* unit) -> bool {
+        if (payload_val < min || payload_val > max) {
+            MessageOutput.printf("Invalid %s %.2f %s (valid range: %.2f-%.2f %s)\r\n",
+                paramName, payload_val, unit, min, max, unit);
+            return false;
+        }
+        MessageOutput.printf("Limit %s: %.2f %s\r\n", paramName, payload_val, unit);
+        _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setParameter,
+                    &HuaweiCan, payload_val, setting));
+        return true;
+    };
+
     switch (enumTopic) {
         case Topic::LimitOnlineVoltage:
-            MessageOutput.printf("Limit Voltage: %f V\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setParameter,
-                        &HuaweiCan, payload_val, Setting::OnlineVoltage));
+            validateAndSetParameter(
+                GridCharger::Huawei::Controller::MIN_ONLINE_VOLTAGE,
+                GridCharger::Huawei::Controller::MAX_ONLINE_VOLTAGE,
+                Setting::OnlineVoltage, "online voltage", "V");
             break;
 
         case Topic::LimitOfflineVoltage:
-            MessageOutput.printf("Offline Limit Voltage: %f V\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setParameter,
-                        &HuaweiCan, payload_val, Setting::OfflineVoltage));
+            validateAndSetParameter(
+                GridCharger::Huawei::Controller::MIN_OFFLINE_VOLTAGE,
+                GridCharger::Huawei::Controller::MAX_OFFLINE_VOLTAGE,
+                Setting::OfflineVoltage, "offline voltage", "V");
             break;
 
         case Topic::LimitOnlineCurrent:
-            MessageOutput.printf("Limit Current: %f A\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setParameter,
-                        &HuaweiCan, payload_val, Setting::OnlineCurrent));
+            validateAndSetParameter(
+                GridCharger::Huawei::Controller::MIN_ONLINE_CURRENT,
+                GridCharger::Huawei::Controller::MAX_ONLINE_CURRENT,
+                Setting::OnlineCurrent, "online current", "A");
             break;
 
         case Topic::LimitOfflineCurrent:
-            MessageOutput.printf("Offline Limit Current: %f A\r\n", payload_val);
-            _mqttCallbacks.push_back(std::bind(&GridCharger::Huawei::Controller::setParameter,
-                        &HuaweiCan, payload_val, Setting::OfflineCurrent));
+            validateAndSetParameter(
+                GridCharger::Huawei::Controller::MIN_OFFLINE_CURRENT,
+                GridCharger::Huawei::Controller::MAX_OFFLINE_CURRENT,
+                Setting::OfflineCurrent, "offline current", "A");
             break;
 
         case Topic::Mode:
