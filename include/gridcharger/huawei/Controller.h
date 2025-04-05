@@ -42,6 +42,8 @@ public:
     static constexpr float MAX_OFFLINE_VOLTAGE = 58.4f;
     static constexpr float MIN_OFFLINE_CURRENT = 0.0f;
     static constexpr float MAX_OFFLINE_CURRENT = 84.0f;
+    static constexpr float MIN_INPUT_CURRENT_LIMIT = 0.0f;
+    static constexpr float MAX_INPUT_CURRENT_LIMIT = 40.0f;
 
 private:
     void loop();
