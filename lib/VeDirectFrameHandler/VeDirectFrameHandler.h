@@ -79,7 +79,7 @@ private:
     unsigned _debugIn;
     uint32_t _lastByteMillis;                  // time of last parsed byte
     bool _dataValid;                           // true if data is valid and not outdated
-    bool _startUpPassed;                       // helps to handle correct start up on multible frames
+    bool _startUpPassed;                       // helps to handle correct start up on multiple frames
     bool _frameContainsFieldV;                 // true if frame contains field "V"
 
     /**
