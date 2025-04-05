@@ -227,12 +227,15 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
 
     auto label = static_cast<DataPointLabel>((valueId & 0x00FF0000) >> 16);
 
-    float divisor = (label == DataPointLabel::OutputCurrentMax) ? _maxCurrentMultiplier : 1024;
+    float divisor = 1024;
 
-    if (divisor == 0) {
-        MessageOutput.print("[Huawei::HwIfc] cannot process output current max "
-                "value while respective multiplier unknown\r\n");
-        return false;
+    if (label == DataPointLabel::OutputCurrentMax) {
+        if (_maxCurrentMultiplier == 0) {
+            MessageOutput.print("[Huawei::HwIfc] cannot process output current max "
+                    "value while respective multiplier unknown\r\n");
+            return false;
+        }
+        divisor = _maxCurrentMultiplier;
     }
 
     float value = static_cast<float>(msg.value)/divisor;
