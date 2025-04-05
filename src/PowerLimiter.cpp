@@ -602,7 +602,10 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
                 (plural?"s":""), producing, diff, hysteresis);
     }
 
-    if (std::abs(diff) < static_cast<int32_t>(hysteresis)) { return producing; }
+    // if 0 W are requested, we ignore the hysteresis to allow
+    // battery-powered inverters to go into standby and avoid that the battery
+    // gets fully discharged.
+    if (powerRequested != 0 && std::abs(diff) < static_cast<int32_t>(hysteresis)) { return producing; }
 
     uint16_t covered = 0;
 
