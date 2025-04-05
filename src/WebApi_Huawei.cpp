@@ -55,32 +55,40 @@ void WebApiHuaweiClass::onLimitPost(AsyncWebServerRequest* request)
 
     using Setting = GridCharger::Huawei::HardwareInterface::Setting;
 
-    if (root.containsKey("voltage") && root["voltage"].is<float>()) {
-        auto value = root["voltage"].as<float>();
-        if (value < HUAWEI_MINIMAL_ONLINE_VOLTAGE || value > 58) {
-            retMsg["message"] = "voltage out of range [" + String(HUAWEI_MINIMAL_ONLINE_VOLTAGE) + ", 58]";
-            retMsg["code"] = WebApiError::R48xxVoltageLimitOutOfRange;
-            retMsg["param"]["min"] = HUAWEI_MINIMAL_ONLINE_VOLTAGE;
-            retMsg["param"]["max"] = 58;
+    auto applySetting = [&](const char* key, float min, float max, WebApiError error, Setting setting) -> bool {
+        if (!root[key].is<float>()) { return true; }
+
+        auto value = root[key].as<float>();
+        if (value < min || value > max) {
+            retMsg["message"] = String(key) + " out of range [" +
+                String(min) + ", " + String(max) + "]";
+            retMsg["code"] = error;
+            retMsg["param"]["min"] = min;
+            retMsg["param"]["max"] = max;
             WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
-            return;
+            return false;
         }
 
-        HuaweiCan.setParameter(value, Setting::OnlineVoltage);
+        HuaweiCan.setParameter(value, setting);
+        return true;
+    };
+
+    using Controller = GridCharger::Huawei::Controller;
+
+    if (!applySetting("voltage",
+        Controller::MIN_ONLINE_VOLTAGE,
+        Controller::MAX_ONLINE_VOLTAGE,
+        WebApiError::R48xxVoltageLimitOutOfRange,
+        Setting::OnlineVoltage)) {
+        return;
     }
 
-    if (root.containsKey("current") && root["current"].is<float>()) {
-        auto value = root["current"].as<float>();
-        if (value < 0 || value > 75) {
-            retMsg["message"] = "current out of range [0, 75]";
-            retMsg["code"] = WebApiError::R48xxCurrentLimitOutOfRange;
-            retMsg["param"]["min"] = 0;
-            retMsg["param"]["max"] = 75;
-            WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
-            return;
-        }
-
-        HuaweiCan.setParameter(value, Setting::OnlineCurrent);
+    if (!applySetting("current",
+        Controller::MIN_ONLINE_CURRENT,
+        Controller::MAX_ONLINE_CURRENT,
+        WebApiError::R48xxCurrentLimitOutOfRange,
+        Setting::OnlineCurrent)) {
+        return;
     }
 
     retMsg["type"] = "success";
@@ -155,13 +163,37 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
         !(root["can_controller_frequency"].is<uint32_t>()) ||
         !(root["auto_power_enabled"].is<bool>()) ||
         !(root["emergency_charge_enabled"].is<bool>()) ||
+        !(root["offline_voltage"].is<float>()) ||
+        !(root["offline_current"].is<float>()) ||
+        !(root["input_current_limit"].is<float>()) ||
+        !(root["fan_online_full_speed"].is<bool>()) ||
+        !(root["fan_offline_full_speed"].is<bool>()) ||
         !(root["voltage_limit"].is<float>()) ||
         !(root["lower_power_limit"].is<float>()) ||
         !(root["upper_power_limit"].is<float>())) {
-        retMsg["message"] = "Values are missing!";
+        retMsg["message"] = "Values are missing or of wrong type!";
         retMsg["code"] = WebApiError::GenericValueMissing;
         response->setLength();
         request->send(response);
+        return;
+    }
+
+    using Controller = GridCharger::Huawei::Controller;
+
+    auto isValidRange = [&](const char* valueName, float min, float max, WebApiError error) -> bool {
+        if (root[valueName].as<float>() < min || root[valueName].as<float>() > max) {
+            retMsg["message"] = String(valueName) + " out of range [" + String(min) + ", " + String(max) + "]";
+            retMsg["code"] = error;
+            retMsg["param"]["min"] = min;
+            retMsg["param"]["max"] = max;
+            WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
+            return false;
+        }
+        return true;
+    };
+
+    if (!isValidRange("offline_voltage", Controller::MIN_OFFLINE_VOLTAGE, Controller::MAX_OFFLINE_VOLTAGE, WebApiError::R48xxVoltageLimitOutOfRange) ||
+        !isValidRange("offline_current", Controller::MIN_OFFLINE_CURRENT, Controller::MAX_OFFLINE_CURRENT, WebApiError::R48xxCurrentLimitOutOfRange)) {
         return;
     }
 
