@@ -193,7 +193,8 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
     };
 
     if (!isValidRange("offline_voltage", Controller::MIN_OFFLINE_VOLTAGE, Controller::MAX_OFFLINE_VOLTAGE, WebApiError::R48xxVoltageLimitOutOfRange) ||
-        !isValidRange("offline_current", Controller::MIN_OFFLINE_CURRENT, Controller::MAX_OFFLINE_CURRENT, WebApiError::R48xxCurrentLimitOutOfRange)) {
+        !isValidRange("offline_current", Controller::MIN_OFFLINE_CURRENT, Controller::MAX_OFFLINE_CURRENT, WebApiError::R48xxCurrentLimitOutOfRange) ||
+        !isValidRange("input_current_limit", Controller::MIN_INPUT_CURRENT_LIMIT, Controller::MAX_INPUT_CURRENT_LIMIT, WebApiError::R48xxCurrentLimitOutOfRange)) {
         return;
     }
 
