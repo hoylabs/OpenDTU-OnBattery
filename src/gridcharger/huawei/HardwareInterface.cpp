@@ -299,37 +299,35 @@ bool HardwareInterface::readAcks(can_message_t const& msg)
 
     auto setting = static_cast<Setting>(valueId >> 16);
     auto flags = valueId & 0x0000FFFF;
-    float value = msg.value;
+
+    float divisor = 1024;
+
+    if (setting == Setting::OnlineCurrent || setting == Setting::OfflineCurrent) {
+        if (_maxCurrentMultiplier == 0) {
+            MessageOutput.printf("[Huawei::HwIfc] cannot process %s current "
+                    "setting while respective multiplier unknown\r\n",
+                    setting == Setting::OnlineCurrent ? "online" : "offline");
+            return false;
+        }
+        divisor = _maxCurrentMultiplier;
+    }
+
+    float value = static_cast<float>(msg.value)/divisor;
 
     switch (setting) {
         case Setting::OnlineVoltage:
-            value /= 1024;
             _upData->add<DataPointLabel::OnlineVoltage>(value);
             break;
         case Setting::OfflineVoltage:
-            value /= 1024;
             _upData->add<DataPointLabel::OfflineVoltage>(value);
             break;
         case Setting::OnlineCurrent:
-            if (_maxCurrentMultiplier == 0) {
-                MessageOutput.print("[Huawei::HwIfc] max current multiplier unknown, "
-                        "cannot process online current ACK\r\n");
-                return true;
-            }
-            value /= _maxCurrentMultiplier;
             _upData->add<DataPointLabel::OnlineCurrent>(value);
             break;
         case Setting::OfflineCurrent:
-            if (_maxCurrentMultiplier == 0) {
-                MessageOutput.print("[Huawei::HwIfc] max current multiplier unknown, "
-                        "cannot process offline current ACK\r\n");
-                return true;
-            }
-            value /= _maxCurrentMultiplier;
             _upData->add<DataPointLabel::OfflineCurrent>(value);
             break;
         case Setting::InputCurrentLimit:
-            value /= 1024;
             _upData->add<DataPointLabel::InputCurrentLimit>(value);
             break;
         case Setting::ProductionDisable:
