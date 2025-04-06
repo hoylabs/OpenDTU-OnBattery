@@ -322,8 +322,6 @@
                 :label="$t('huawei.SetVoltageLimit')"
                 type="number"
                 step="0.01"
-                min="42"
-                max="58"
                 v-model="targetLimitList.voltage"
                 postfix="V"
             />
@@ -332,8 +330,6 @@
                 :label="$t('huawei.SetCurrentLimit')"
                 type="number"
                 step="0.1"
-                min="0"
-                max="75"
                 v-model="targetLimitList.current"
                 postfix="A"
             />

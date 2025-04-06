@@ -88,8 +88,6 @@
                     type="number"
                     wide
                     step="0.01"
-                    min="48"
-                    max="58.5"
                 />
 
                 <InputElement
@@ -99,8 +97,6 @@
                     type="number"
                     wide
                     step="0.1"
-                    min="0"
-                    max="75"
                 />
 
                 <InputElement
@@ -110,8 +106,6 @@
                     type="number"
                     wide
                     step="0.1"
-                    min="0"
-                    max="20"
                     :tooltip="$t('acchargeradmin.InputCurrentLimitHint')"
                 />
 
