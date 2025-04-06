@@ -6,7 +6,7 @@ PowerLimiterSolarInverter::PowerLimiterSolarInverter(bool verboseLogging, PowerL
 
 uint16_t PowerLimiterSolarInverter::getMaxReductionWatts(bool) const
 {
-    if (isEligible() != Eligibility::Eligible) { return 0; }
+    if (!isEligible()) { return 0; }
 
     if (!isProducing()) { return 0; }
 
@@ -18,7 +18,7 @@ uint16_t PowerLimiterSolarInverter::getMaxReductionWatts(bool) const
 
 uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
 {
-    if (isEligible() != Eligibility::Eligible) { return 0; }
+    if (!isEligible()) { return 0; }
 
     if (!isProducing()) {
         // the inverter is not producing, we don't know how much we can increase
@@ -129,7 +129,7 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
 
 uint16_t PowerLimiterSolarInverter::applyReduction(uint16_t reduction, bool)
 {
-    if (isEligible() != Eligibility::Eligible) { return 0; }
+    if (!isEligible()) { return 0; }
 
     if (reduction == 0) { return 0; }
 

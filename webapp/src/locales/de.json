@@ -39,8 +39,6 @@
         "Close": "Schließen",
         "Yes": "Ja",
         "No": "Nein",
-        "DataAge": "Letzte Aktualisierung",
-        "SecondsSince": "vor 0 Sekunden | vor 1 Sekunde | vor {n} Sekunden",
         "Unit": "Einheit",
         "MqttJsonPath": "Optional: JSON-Pfad",
         "MqttJsonPathDescription": "Anwendungsspezifischer JSON-Pfad um den Wert in den JSON Nutzdatzen zu finden, z.B. 'electricLevel'. Leer lassen, falls die Nutzdaten des Topics einen numerischen Wert enthält."
@@ -56,6 +54,10 @@
         "Dark": "Dunkel",
         "Light": "Hell",
         "Auto": "Automatisch"
+    },
+    "dataagedisplay": {
+        "DataAge": "Letzte Aktualisierung",
+        "SecondsSince": "vor 0 Sekunden | vor 1 Sekunde | vor {n} Sekunden"
     },
     "apiresponse": {
         "1001": "Einstellungen gespeichert!",
@@ -129,7 +131,7 @@
     "home": {
         "LiveData": "Live-Daten",
         "SerialNumber": "Seriennummer: ",
-        "CurrentLimit": "Aktuelles Limit: ",
+        "CurrentLimit": "Aktuelles Limit",
         "ShowSetInverterLimit": "Zeige / Setze Wechselrichterlimit",
         "TurnOnOff": "Schalte Wechselrichter ein oder aus",
         "ShowInverterInfo": "Zeige Wechselrichter-Informationen",
@@ -139,15 +141,15 @@
         "EventLog": "Ereignisanzeige",
         "InverterInfo": "Wechselrichter-Informationen",
         "LimitSettings": "Limit-Einstellungen",
-        "LastLimitSetStatus": "Letzter Übertragungsstatus:",
-        "SetLimit": "Setze Limit:",
+        "LastLimitSetStatus": "Letzter Übertragungsstatus",
+        "SetLimit": "Setze Limit",
         "Relative": "Relativ (%)",
         "Absolute": "Absolut (W)",
         "LimitHint": "<b>Hinweis:</b> Wenn das Limit als Absolutwert eingestellt wird, wird die Anzeige des aktuellen Wertes erst nach ~4 Minuten aktualisiert.",
         "SetPersistent": "Limit dauerhaft setzen",
         "SetNonPersistent": "Limit temporär setzen",
         "PowerSettings": "Energieeinstellungen",
-        "LastPowerSetStatus": "Letzer Übertragungsstatus:",
+        "LastPowerSetStatus": "Letzer Übertragungsstatus",
         "TurnOn": "Einschalten",
         "TurnOff": "Ausschalten",
         "Restart": "Neustarten",

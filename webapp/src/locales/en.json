@@ -39,8 +39,6 @@
         "Close": "Close",
         "Yes": "Yes",
         "No": "No",
-        "DataAge": "Data Age",
-        "SecondsSince": "0 seconds | 1 second | {n} seconds",
         "Unit": "Unit",
         "MqttJsonPath": "Optional: JSON Path",
         "MqttJsonPathDescription": "Application specific JSON path to find the value in the JSON payload, e.g., 'electricLevel'. Leave empty if the topic's payload contains a plain numeric value."
@@ -56,6 +54,10 @@
         "Dark": "Dark",
         "Light": "Light",
         "Auto": "Auto"
+    },
+    "dataagedisplay": {
+        "DataAge": "Data Age",
+        "SecondsSince": "0 seconds | 1 second | {n} seconds"
     },
     "apiresponse": {
         "1001": "Settings saved!",
@@ -129,7 +131,7 @@
     "home": {
         "LiveData": "Live Data",
         "SerialNumber": "Serial Number: ",
-        "CurrentLimit": "Current Limit: ",
+        "CurrentLimit": "Current Limit",
         "ShowSetInverterLimit": "Show / Set Inverter Limit",
         "TurnOnOff": "Turn Inverter on/off",
         "ShowInverterInfo": "Show Inverter Info",
@@ -139,15 +141,15 @@
         "EventLog": "Event Log",
         "InverterInfo": "Inverter Info",
         "LimitSettings": "Limit Settings",
-        "LastLimitSetStatus": "Last Limit Set Status:",
-        "SetLimit": "Set Limit:",
+        "LastLimitSetStatus": "Last Limit Set Status",
+        "SetLimit": "Set Limit",
         "Relative": "Relative (%)",
         "Absolute": "Absolute (W)",
         "LimitHint": "<b>Hint:</b> If you set the limit as absolute value the display of the current value will only be updated after ~4 minutes.",
         "SetPersistent": "Set Limit Persistent",
         "SetNonPersistent": "Set Limit Non-Persistent",
         "PowerSettings": "Power Settings",
-        "LastPowerSetStatus": "Last Power Set Status:",
+        "LastPowerSetStatus": "Last Power Set Status",
         "TurnOn": "Turn On",
         "TurnOff": "Turn Off",
         "Restart": "Restart",

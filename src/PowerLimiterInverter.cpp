@@ -42,7 +42,7 @@ PowerLimiterInverter::PowerLimiterInverter(bool verboseLogging, PowerLimiterInve
     snprintf(_logPrefix, sizeof(_logPrefix), "[DPL inverter %s]:", _serialStr);
 }
 
-PowerLimiterInverter::Eligibility PowerLimiterInverter::isEligible() const
+PowerLimiterInverter::Eligibility PowerLimiterInverter::getEligibility() const
 {
     // at dawn, solar-powered inverters switch to standby, but are still
     // reachable. during this time, we shall not use them. we assume that
@@ -68,6 +68,11 @@ PowerLimiterInverter::Eligibility PowerLimiterInverter::isEligible() const
     return Eligibility::Eligible;
 }
 
+bool PowerLimiterInverter::isEligible() const
+{
+    return getEligibility() == Eligibility::Eligible;
+}
+
 bool PowerLimiterInverter::update()
 {
     auto reset = [this]() -> bool {
@@ -77,7 +82,7 @@ bool PowerLimiterInverter::update()
         return false;
     };
 
-    switch (isEligible()) {
+    switch (getEligibility()) {
         case Eligibility::Eligible:
             break;
 
@@ -345,7 +350,7 @@ void PowerLimiterInverter::debug() const
     if (!_verboseLogging) { return; }
 
     String eligibility("disqualified");
-    switch (isEligible()) {
+    switch (getEligibility()) {
         case Eligibility::Nighttime:
             eligibility += " (nighttime)";
             break;

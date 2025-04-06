@@ -41,7 +41,7 @@ private:
     // pins.
     void enableOutput();
     void disableOutput();
-    int8_t _huaweiPower;
+    gpio_num_t _huaweiPower;
 
     Task _loopTask;
     std::unique_ptr<HardwareInterface> _upHardwareInterface;

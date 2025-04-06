@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022-2024 Thomas Basler and others
+ * Copyright (C) 2022-2025 Thomas Basler and others
  */
 #include "WebApi_ws_live.h"
 #include "Datastore.h"
@@ -58,7 +58,9 @@ void WebApiWsLiveClass::reload()
 
     auto const& config = Configuration.get();
 
-    if (config.Security.AllowReadonly) { return; }
+    if (config.Security.AllowReadonly) {
+        return;
+    }
 
     _ws.enable(false);
     _simpleDigestAuth.setPassword(config.Security.Password);
@@ -272,6 +274,7 @@ void WebApiWsLiveClass::generateInverterCommonJsonResponse(JsonObject& root, std
     root["serial"] = inv->serialString();
     root["name"] = inv->name();
     root["order"] = inv_cfg->Order;
+    root["data_age"] = (millis() - inv->Statistics()->getLastUpdate()) / 1000;
     root["data_age_ms"] = millis() - inv->Statistics()->getLastUpdate();
     root["poll_enabled"] = inv->getEnablePolling();
     root["reachable"] = inv->isReachable();

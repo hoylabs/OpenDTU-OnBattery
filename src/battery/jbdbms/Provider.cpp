@@ -28,7 +28,7 @@ bool Provider::init(bool verboseLogging)
     MessageOutput.printf("[JBD BMS] rx = %d, rxen = %d, tx = %d, txen = %d\r\n",
             pin.battery_rx, pin.battery_rxen, pin.battery_tx, pin.battery_txen);
 
-    if (pin.battery_rx < 0 || pin.battery_tx < 0) {
+    if (pin.battery_rx <= GPIO_NUM_NC || pin.battery_tx <= GPIO_NUM_NC) {
         MessageOutput.println("[JBD BMS] Invalid RX/TX pin config");
         return false;
     }

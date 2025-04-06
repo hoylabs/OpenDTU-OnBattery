@@ -6,7 +6,7 @@ PowerLimiterSmartBufferInverter::PowerLimiterSmartBufferInverter(bool verboseLog
 
 uint16_t PowerLimiterSmartBufferInverter::getMaxReductionWatts(bool allowStandby) const
 {
-    if (isEligible() != Eligibility::Eligible) { return 0; }
+    if (!isEligible()) { return 0; }
 
     if (!isProducing()) { return 0; }
 
@@ -19,7 +19,7 @@ uint16_t PowerLimiterSmartBufferInverter::getMaxReductionWatts(bool allowStandby
 
 uint16_t PowerLimiterSmartBufferInverter::getMaxIncreaseWatts() const
 {
-    if (isEligible() != Eligibility::Eligible) { return 0; }
+    if (!isEligible()) { return 0; }
 
     if (!isProducing()) {
         return getConfiguredMaxPowerWatts();
@@ -53,7 +53,7 @@ uint16_t PowerLimiterSmartBufferInverter::getMaxIncreaseWatts() const
 
 uint16_t PowerLimiterSmartBufferInverter::applyReduction(uint16_t reduction, bool allowStandby)
 {
-    if (isEligible() != Eligibility::Eligible) { return 0; }
+    if (!isEligible()) { return 0; }
 
     if (reduction == 0) { return 0; }
 
