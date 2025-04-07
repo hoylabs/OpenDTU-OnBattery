@@ -31,7 +31,7 @@ std::optional<float> Stats::getOutputVoltage() const
             if (!getValueIfNotOutdated(mppt->_lastUpdate, mppt->_voltage).has_value()) {
                 continue;
             }
-            minimum = min(minimum, mppt->_voltage);
+            minimum = std::min(minimum, mppt->_voltage);
         }
     }
 
@@ -163,7 +163,7 @@ std::optional<uint32_t> Stats::addDevice(std::optional<String> const& manufactur
         return std::nullopt;
     }
 
-    // calculate CRC32 of device data to generate an (almost) unique idenitfier to be used as key in the map
+    // calculate CRC32 of device data to generate an (almost) unique identifier to be used as key in the map
     const String name = *manufacture + *device + *serial + String(numMppts);
     CRC32 crc(CRC32_POLYNOME, CRC32_INITIAL, CRC32_XOR_OUT, false, false);
     crc.add(reinterpret_cast<const uint8_t*>(name.c_str()), name.length());
