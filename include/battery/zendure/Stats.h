@@ -170,7 +170,7 @@ private:
     }
 
     void setHwVersion(String&& version) {
-        _hwversion = _device.value_or("UNKOWN");
+        _hwversion = _device.value_or("UNKNOWN");
 
         if (!version.isEmpty()) {
             _hwversion += " (" + std::move(version) + ")";
