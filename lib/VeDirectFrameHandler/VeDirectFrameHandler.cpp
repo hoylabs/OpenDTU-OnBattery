@@ -119,7 +119,16 @@ void VeDirectFrameHandler<T>::loop()
 		reset();
     }
 
-    if (_verboseLogging) { printErrorCounter(); }
+    if ((millis() - _lastErrorPrint) > 60*1000) {
+        _lastErrorPrint = millis();
+
+        // calculate the average transmission errors per day
+        _tmpFrame.transmissionErrors_Day = _errorCounter.at(static_cast<size_t>(veStruct::Error::SUM));
+        float errorDays = esp_timer_get_time() / (24*60*60*1000*1000.0f); // 24h, use float to avoid int overflow
+        if (errorDays > 1.0f) { _tmpFrame.transmissionErrors_Day /= errorDays; }
+
+        if (_verboseLogging) { printErrorCounter(); }
+    }
 }
 
 static bool isValidChar(uint8_t inbyte)
@@ -380,11 +389,6 @@ void VeDirectFrameHandler<T>::setErrorCounter(veStruct::Error type)
         _errorCounter.at(static_cast<size_t>(veStruct::Error::SUM))++;
         _errorCounter.at(static_cast<size_t>(type))++;
         if (_errorCounter.at(static_cast<size_t>(veStruct::Error::SUM)) > 50000) { _errorCounter.fill(0); }
-
-        // calculate the average transmission errors per day
-        _tmpFrame.transmissionErrors_Day = _errorCounter.at(static_cast<size_t>(veStruct::Error::SUM));
-        float days = esp_timer_get_time() / 24*60*60*1000;
-        if (days > 1.0f) { _tmpFrame.transmissionErrors_Day /= days; };
     //}
 }
 
@@ -394,8 +398,6 @@ void VeDirectFrameHandler<T>::setErrorCounter(veStruct::Error type)
 template<typename T>
 void VeDirectFrameHandler<T>::printErrorCounter(void)
 {
-    if ((millis() - _lastErrorPrint) > 60*1000) {
-        _lastErrorPrint = millis();
         _msgOut->printf("%s Average transmission errors per day: %0.1f", _logId, _tmpFrame.transmissionErrors_Day);
 
         for(auto idx = 0; idx < _errorCounter.size(); idx++) {
@@ -404,5 +406,4 @@ void VeDirectFrameHandler<T>::printErrorCounter(void)
                 _errorCounter.at(static_cast<size_t>(idx)), ((idx+1) % 3) ? ',' : ' ' );
         }
         _msgOut->printf("\r\n");
-	}
 }
