@@ -242,6 +242,13 @@ void ConfigurationClass::serializeGridChargerConfig(GridChargerConfig const& sou
     target["target_power_consumption"] = source.Auto_Power_Target_Power_Consumption;
 }
 
+void ConfigurationClass::serializeBatteryGuardConfig(BatteryGuardConfig const& source, JsonObject& target)
+{
+    target["enabled"] = source.Enabled;
+    target["verbose_logging"] = source.VerboseLogging;
+    target["internal_resistance"] = source.InternalResistance;
+}
+
 bool ConfigurationClass::write()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "w");
@@ -417,6 +424,9 @@ bool ConfigurationClass::write()
 
     JsonObject huawei = doc["huawei"].to<JsonObject>();
     serializeGridChargerConfig(config.Huawei, huawei);
+
+    JsonObject batteryGuard = doc["batteryguard"].to<JsonObject>();
+    serializeBatteryGuardConfig(config.BatteryGuard, batteryGuard);
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
@@ -635,6 +645,13 @@ void ConfigurationClass::deserializeGridChargerConfig(JsonObject const& source, 
     target.Auto_Power_Target_Power_Consumption = source["target_power_consumption"] | HUAWEI_AUTO_POWER_TARGET_POWER_CONSUMPTION;
 }
 
+void ConfigurationClass::deserializeBatteryGuardConfig(JsonObject const& source, BatteryGuardConfig& target)
+{
+    target.Enabled = source["enabled"] | BATTERYGUARD_ENABLED;
+    target.VerboseLogging = source["verbose_logging"] | BATTERYGUARD_VERBOSE_LOGGING;
+    target.InternalResistance = source["internal_resistance"] | BATTERYGUARD_INTERNAL_RESISTANCE;
+}
+
 bool ConfigurationClass::read()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "r", false);
@@ -839,6 +856,8 @@ bool ConfigurationClass::read()
     deserializeBatterySerialConfig(battery["serial"], config.Battery.Serial);
 
     deserializeGridChargerConfig(doc["huawei"], config.Huawei);
+
+    deserializeBatteryGuardConfig(doc["batteryguard"], config.BatteryGuard);
 
     f.close();
 
