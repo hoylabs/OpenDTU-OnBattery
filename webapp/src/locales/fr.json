@@ -38,9 +38,7 @@
         "Release": "Release to refresh",
         "Close": "Fermer",
         "Yes": "Oui",
-        "No": "Non",
-        "DataAge": "Âge des données",
-        "SecondsSince": "0 secondes | 1 seconde | {n} secondes"
+        "No": "Non"
     },
     "wait": {
         "NotReady": "OpenDTU-OnBattery is not yet ready",
@@ -53,6 +51,10 @@
         "Dark": "Sombre",
         "Light": "Clair",
         "Auto": "Auto"
+    },
+    "dataagedisplay": {
+        "DataAge": "Âge des données",
+        "SecondsSince": "0 secondes | 1 seconde | {n} secondes"
     },
     "apiresponse": {
         "1001": "Paramètres enregistrés !",
@@ -126,7 +128,7 @@
     "home": {
         "LiveData": "Données en direct",
         "SerialNumber": "Numéro de série : ",
-        "CurrentLimit": "Limite de courant : ",
+        "CurrentLimit": "Limite de courant",
         "ShowSetInverterLimit": "Afficher / Régler la limite de l'onduleur",
         "TurnOnOff": "Allumer / Eteindre l'onduleur",
         "ShowInverterInfo": "Afficher les informations sur l'onduleur",
@@ -776,8 +778,6 @@
         "VoltageLoadCorrectionFactor": "Load correction factor",
         "BatterySocInfo": "<b>Hint:</b> The use of battery State of Charge (SoC) thresholds is prioritized. However, SoC thresholds are only used if the battery communication interface has processed valid SoC values in the last minute. Otherwise, the voltage thresholds will be used as fallback.",
         "InverterIsBehindPowerMeter": "PowerMeter reading includes inverter output",
-        "ScalingPowerThreshold": "Overscaling input power threshold",
-        "ScalingPowerThresholdHint": "Set the minimum power input threshold (%). Inputs below this percentage are considered shaded/unused.",
         "InverterIsBehindPowerMeterHint": "Enable this option if the power meter reading is reduced by the inverter's output when it produces power. This is typically true.",
         "UseOverscaling": "Compensate shaded or unused inputs",
         "UseOverscalingHint": "Allow to overscale the inverter limit to compensate for unused inputs or shading of one or multiple inputs.",

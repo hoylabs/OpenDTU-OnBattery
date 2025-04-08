@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022-2024 Thomas Basler and others
+ * Copyright (C) 2022-2025 Thomas Basler and others
  */
 #include "Configuration.h"
 #include "MessageOutput.h"
@@ -217,7 +217,6 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
         t["use_overscaling_to_compensate_shading"] = s.UseOverscaling;
         t["lower_power_limit"] = s.LowerPowerLimit;
         t["upper_power_limit"] = s.UpperPowerLimit;
-        t["scaling_threshold"] = s.ScalingThreshold;
     }
 }
 
@@ -600,7 +599,6 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
         inv.UseOverscaling = s["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING;
         inv.LowerPowerLimit = s["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
         inv.UpperPowerLimit = s["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
-        inv.ScalingThreshold = s["scaling_threshold"] | POWERLIMITER_SCALING_THRESHOLD;
     }
 }
 
@@ -1139,7 +1137,9 @@ void ConfigurationClass::deleteInverterById(const uint8_t id)
 void ConfigurationClass::loop()
 {
     std::unique_lock<std::mutex> lock(sWriterMutex);
-    if (sWriterCount == 0) { return; }
+    if (sWriterCount == 0) {
+        return;
+    }
 
     sWriterCv.notify_all();
     sWriterCv.wait(lock, [] { return sWriterCount == 0; });
@@ -1157,9 +1157,12 @@ ConfigurationClass::WriteGuard::WriteGuard()
     sWriterCv.wait(_lock);
 }
 
-ConfigurationClass::WriteGuard::~WriteGuard() {
+ConfigurationClass::WriteGuard::~WriteGuard()
+{
     sWriterCount--;
-    if (sWriterCount == 0) { sWriterCv.notify_all(); }
+    if (sWriterCount == 0) {
+        sWriterCv.notify_all();
+    }
 }
 
 ConfigurationClass Configuration;

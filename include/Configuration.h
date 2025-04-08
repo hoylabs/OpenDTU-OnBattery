@@ -2,11 +2,11 @@
 #pragma once
 
 #include "PinMapping.h"
+#include <TaskSchedulerDeclarations.h>
+#include <condition_variable>
 #include <cstdint>
 #include <ArduinoJson.h>
-#include <TaskSchedulerDeclarations.h>
 #include <mutex>
-#include <condition_variable>
 
 #define CONFIG_FILENAME "/config.json"
 #define CONFIG_VERSION 0x00011d00 // 0.1.29 // make sure to clean all after change
@@ -147,7 +147,6 @@ struct POWERLIMITER_INVERTER_CONFIG_T {
     bool UseOverscaling;
     uint16_t LowerPowerLimit;
     uint16_t UpperPowerLimit;
-    uint8_t ScalingThreshold;
 
     enum InverterPowerSource { Battery = 0, Solar = 1, SmartBuffer = 2 };
     InverterPowerSource PowerSource;

@@ -32,7 +32,7 @@ public:
 
 protected:
     VeDirectFrameHandler();
-    void init(char const* who, int8_t rx, int8_t tx, Print* msgOut,
+    void init(char const* who, gpio_num_t rx, gpio_num_t tx, Print* msgOut,
         bool verboseLogging, uint8_t hwSerialPort);
     virtual bool hexDataHandler(VeDirectHexData const &data) { return false; } // handles the disassembled hex response
 

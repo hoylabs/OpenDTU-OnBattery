@@ -1,7 +1,7 @@
 <template>
     <div style="padding-right: 2em">
-        {{ $t('base.DataAge') }}:
-        {{ $t('base.SecondsSince', { n: dataAgeSeconds }) }}
+        {{ $t('dataagedisplay.DataAge') }}:
+        {{ $t('dataagedisplay.SecondsSince', { n: dataAgeSeconds }) }}
         <template v-if="dataAgeMs > thresholdMs"> ({{ calculateAbsoluteTime(dataAgeMs) }}) </template>
     </div>
 </template>

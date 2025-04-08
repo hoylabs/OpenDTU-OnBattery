@@ -11,7 +11,7 @@ bool Provider::init()
 
     MessageOutput.printf("[PowerMeters::Sml::Serial] rx = %d\r\n", pin.powermeter_rx);
 
-    if (pin.powermeter_rx < 0) {
+    if (pin.powermeter_rx <= GPIO_NUM_NC) {
         MessageOutput.println("[PowerMeters::Sml::Serial] invalid pin config "
                 "for serial SML power meter (RX pin must be defined)");
         return false;

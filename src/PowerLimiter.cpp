@@ -180,6 +180,11 @@ void PowerLimiterClass::loop()
     uint32_t latestInverterStats = 0;
 
     for (auto const& upInv : _inverters) {
+        // in particular, we don't want to wait for stats from inverters that
+        // are not eligible because they are (currently) unreachable. this is
+        // fine as we ignore them throughout the DPL loop if they are not eligible.
+        if (!upInv->isEligible()) { continue; }
+
         auto oStatsMillis = upInv->getLatestStatsMillis();
         if (!oStatsMillis) {
             return announceStatus(Status::InverterStatsPending);
@@ -355,19 +360,24 @@ void PowerLimiterClass::loop()
 std::pair<float, char const*> PowerLimiterClass::getInverterDcVoltage() {
     auto const& config = Configuration.get();
 
-    auto iter = _inverters.begin();
-    while(iter != _inverters.end()) {
+    auto iter = _inverters.cbegin();
+    while(iter != _inverters.cend()) {
         if ((*iter)->getSerial() == config.PowerLimiter.InverterSerialForDcVoltage) {
             break;
         }
         ++iter;
     }
 
-    if (iter == _inverters.end()) {
-        return { -1.0, "<unknown>" };
+    auto voltage = -1.0;
+
+    if (iter == _inverters.cend()) {
+        return { voltage, "<unknown>" };
     }
 
-    auto voltage = (*iter)->getDcVoltage(config.PowerLimiter.InverterChannelIdForDcVoltage);
+    if ((*iter)->isReachable()) {
+        voltage = (*iter)->getDcVoltage(config.PowerLimiter.InverterChannelIdForDcVoltage);
+    }
+
     return { voltage, (*iter)->getSerialStr() };
 }
 
@@ -435,18 +445,20 @@ uint16_t PowerLimiterClass::dcPowerBusToInverterAc(uint16_t dcPower)
  */
 void PowerLimiterClass::unconditionalFullSolarPassthrough()
 {
-    if ((millis() - _lastCalculation) < _calculationBackoffMs) { return; }
-    _lastCalculation = millis();
+    auto now = millis();
+    if ((now - _lastCalculation) < _calculationBackoffMs) { return; }
+    _lastCalculation = now;
 
-    for (auto& upInv : _inverters) {
+    for (auto const& upInv : _inverters) {
+        if (!upInv->isEligible()) { continue; }
         if (!upInv->isBatteryPowered()) { upInv->setMaxOutput(); }
     }
 
     uint16_t targetOutput = 0;
 
-    auto solarChargerOuput = SolarCharger.getStats()->getOutputPowerWatts();
-    if (solarChargerOuput) {
-        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, *solarChargerOuput));
+    auto solarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
+    if (solarChargerOutput) {
+        targetOutput = static_cast<uint16_t>(std::max<int32_t>(0, *solarChargerOutput));
         targetOutput = dcPowerBusToInverterAc(targetOutput);
     }
 
@@ -538,7 +550,7 @@ uint16_t PowerLimiterClass::calcTargetOutput()
     for (auto const& upInv : _inverters) {
         // non-eligible inverters don't participate in this DPL round at all.
         // inverters in standby report 0 W output, so we can iterate them.
-        if (PowerLimiterInverter::Eligibility::Eligible != upInv->isEligible()) { continue; }
+        if (!upInv->isEligible()) { continue; }
 
         currentTotalOutput += upInv->getCurrentOutputAcWatts();
     }
@@ -569,7 +581,7 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
     for (auto& upInv : _inverters) {
         if (!filter(*upInv)) { continue; }
 
-        if (PowerLimiterInverter::Eligibility::Eligible != upInv->isEligible()) { continue; }
+        if (!upInv->isEligible()) { continue; }
 
         producing += upInv->getCurrentOutputAcWatts();
         matchingInverters.push_back(upInv.get());
@@ -590,7 +602,10 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
                 (plural?"s":""), producing, diff, hysteresis);
     }
 
-    if (std::abs(diff) < static_cast<int32_t>(hysteresis)) { return producing; }
+    // if 0 W are requested, we ignore the hysteresis to allow
+    // battery-powered inverters to go into standby and avoid that the battery
+    // gets fully discharged.
+    if (powerRequested != 0 && std::abs(diff) < static_cast<int32_t>(hysteresis)) { return producing; }
 
     uint16_t covered = 0;
 

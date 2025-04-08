@@ -33,7 +33,7 @@ bool Provider::init()
     MessageOutput.printf("[PowerMeters::Sdm::Serial] rx = %d, tx = %d, dere = %d, rxen = %d, txen = %d \r\n",
             pin.powermeter_rx, pin.powermeter_tx, pin.powermeter_dere, pin.powermeter_rxen, pin.powermeter_txen);
 
-    if (pin.powermeter_rx < 0 || pin.powermeter_tx < 0) {
+    if (pin.powermeter_rx <= GPIO_NUM_NC || pin.powermeter_tx <= GPIO_NUM_NC) {
         MessageOutput.println("[PowerMeters::Sdm::Serial] invalid pin config for SDM "
                 "power meter (RX and TX pins must be defined)");
         return false;
@@ -41,7 +41,7 @@ bool Provider::init()
 
     _upSdmSerial = std::make_unique<SoftwareSerial>();
 
-    if (pin.powermeter_rxen > -1 && pin.powermeter_txen > -1) {
+    if (pin.powermeter_rxen > GPIO_NUM_NC && pin.powermeter_txen > GPIO_NUM_NC) {
         _upSdm = std::make_unique<SDM>(*_upSdmSerial, 9600, pin.powermeter_rxen, pin.powermeter_txen,
             SWSERIAL_8N1, pin.powermeter_rx, pin.powermeter_tx);
     }

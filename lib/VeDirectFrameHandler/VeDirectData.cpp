@@ -22,11 +22,12 @@ frozen::string const& veStruct::getPidAsString() const
 	 * not fully align. PID 0xA07F is only present in [1]. PIDs 0xA048, 0xA110,
 	 * and 0xA111 are only present in [2]. PIDs 0xA06D and 0xA078 are rev3 in
 	 * [1] but rev2 in [2].
+     * additionally, the PID 0xC038 is not listed in either
 	 *
 	 * [1] https://www.victronenergy.com/upload/documents/VE.Direct-Protocol-3.33.pdf
 	 * [2] https://www.victronenergy.com/upload/documents/BlueSolar-HEX-protocol.pdf
 	 */
-	static constexpr frozen::map<uint16_t, frozen::string, 105> values = {
+	static constexpr frozen::map<uint16_t, frozen::string, 106> values = {
 		{ 0x0203, "BMV-700" },
 		{ 0x0204, "BMV-702" },
 		{ 0x0205, "BMV-700H" },
@@ -132,6 +133,7 @@ frozen::string const& veStruct::getPidAsString() const
 		{ 0xA38A, "SmartShunt 1000A/50mV" },
 		{ 0xA38B, "SmartShunt 2000A/50mV" },
 		{ 0xA3F0, "Smart BuckBoost 12V/12V-50A" },
+        { 0xC038, "SmartShunt 300A/50mV"}
 	};
 
 	return getAsString(values, productID_PID);

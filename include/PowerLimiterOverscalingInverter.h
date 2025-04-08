@@ -11,7 +11,10 @@ public:
 
 protected:
     void setAcOutput(uint16_t expectedOutputWatts) final;
+    bool overscalingEnabled() const;
+    float calculateRequiredOutputThreshold(uint16_t limitWatts) const;
+    float calculateMpptPowerAC(MpptNum_t mppt) const;
 
 private:
-    uint16_t scaleLimit(uint16_t expectedOutputWatts);
+    uint16_t scaleLimit(uint16_t newExpectedOutputWatts);
 };

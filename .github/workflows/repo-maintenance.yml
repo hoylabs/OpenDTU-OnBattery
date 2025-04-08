@@ -16,7 +16,7 @@ concurrency:
 jobs:
     stale:
         name: 'Stale'
-        runs-on: ubuntu-24.04
+        runs-on: ubuntu-latest
         steps:
           - uses: actions/stale@v9
             with:
@@ -46,7 +46,7 @@ jobs:
 
     lock-threads:
         name: 'Lock Old Threads'
-        runs-on: ubuntu-24.04
+        runs-on: ubuntu-latest
         steps:
           - uses: dessant/lock-threads@v5
             with:

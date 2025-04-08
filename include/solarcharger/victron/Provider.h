@@ -35,7 +35,7 @@ private:
     float _chargeLimit { 0.0f };
     float _chargeCurrent { 0.0f };
 
-    bool initController(int8_t rx, int8_t tx, bool logging, uint8_t instance);
+    bool initController(gpio_num_t rx, gpio_num_t tx, bool logging, uint8_t instance);
 };
 
 } // namespace SolarChargers::Victron

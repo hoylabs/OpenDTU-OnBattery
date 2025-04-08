@@ -26,7 +26,7 @@ bool Provider::init(bool verboseLogging)
     MessageOutput.printf("[JK BMS] rx = %d, rxen = %d, tx = %d, txen = %d\r\n",
             pin.battery_rx, pin.battery_rxen, pin.battery_tx, pin.battery_txen);
 
-    if (pin.battery_rx < 0 || pin.battery_tx < 0) {
+    if (pin.battery_rx <= GPIO_NUM_NC || pin.battery_tx <= GPIO_NUM_NC) {
         MessageOutput.println("[JK BMS] Invalid RX/TX pin config");
         return false;
     }
@@ -49,7 +49,7 @@ bool Provider::init(bool verboseLogging)
     _rxEnablePin = pin.battery_rxen;
     _txEnablePin = pin.battery_txen;
 
-    if (_rxEnablePin < 0 || _txEnablePin < 0) {
+    if (_rxEnablePin <= GPIO_NUM_NC || _txEnablePin <= GPIO_NUM_NC) {
         MessageOutput.println("[JK BMS] Invalid transceiver pin config");
         return false;
     }

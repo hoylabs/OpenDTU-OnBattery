@@ -61,6 +61,10 @@
             "Light": "Claro",
             "Auto": "Automático"
         },
+        "dataagedisplay": {
+            "DataAge": "Edad de los Datos",
+            "SecondsSince": "0 segundos | 1 segundos | {n} segundos"
+        },
         "apiresponse": {
             "1001": "¡Opciones guardadas!",
             "1002": "No se encontraron valores",
@@ -133,9 +137,7 @@
         "home": {
             "LiveData": "Datos en Vivo",
             "SerialNumber": "Número de Serie: ",
-            "CurrentLimit": "Límite de Corriente: ",
-            "DataAge": "Edad de los Datos: ",
-            "Seconds": "{val} segundos",
+            "CurrentLimit": "Límite de Corriente",
             "ShowSetInverterLimit": "Ver / Establecer Límite del Inversor",
             "TurnOnOff": "Encender/Apagar el Inversor",
             "ShowInverterInfo": "Ver Información del Inversor",
@@ -145,15 +147,15 @@
             "EventLog": "Registro de Eventos",
             "InverterInfo": "Información del Inversor",
             "LimitSettings": "Configuración de Límites",
-            "LastLimitSetStatus": "Último Estado de Configuración del Límite:",
-            "SetLimit": "Establecer Límite:",
+            "LastLimitSetStatus": "Último Estado de Configuración del Límite",
+            "SetLimit": "Establecer Límite",
             "Relative": "Relativo (%)",
             "Absolute": "Absoluto (W)",
             "LimitHint": "<b>Consejo:</b> Si establece el límite como un valor absoluto, la visualización del valor actual solo se actualizará después de ~4 minutos.",
             "SetPersistent": "Establecer Límite Permanente",
             "SetNonPersistent": "Establecer Límite No Permanente",
             "PowerSettings": "Configuración de Energía",
-            "LastPowerSetStatus": "Último Estado de Configuración de Energía:",
+            "LastPowerSetStatus": "Último Estado de Configuración de Energía",
             "TurnOn": "Encender",
             "TurnOff": "Apagar",
             "Restart": "Reiniciar",

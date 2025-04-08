@@ -23,18 +23,15 @@ bool Provider::init(bool verboseLogging)
     MessageOutput.printf("[VictronSmartShunt] Interface rx = %d, tx = %d\r\n",
             pin.battery_rx, pin.battery_tx);
 
-    if (pin.battery_rx < 0) {
+    if (pin.battery_rx <= GPIO_NUM_NC) {
         MessageOutput.println("[VictronSmartShunt] Invalid pin config");
         return false;
     }
 
-    auto tx = static_cast<gpio_num_t>(pin.battery_tx);
-    auto rx = static_cast<gpio_num_t>(pin.battery_rx);
-
     auto oHwSerialPort = SerialPortManager.allocatePort(_serialPortOwner);
     if (!oHwSerialPort) { return false; }
 
-    VeDirectShunt.init(rx, tx, &MessageOutput, verboseLogging, *oHwSerialPort);
+    VeDirectShunt.init(pin.battery_rx, pin.battery_tx, &MessageOutput, verboseLogging, *oHwSerialPort);
     return true;
 }
 

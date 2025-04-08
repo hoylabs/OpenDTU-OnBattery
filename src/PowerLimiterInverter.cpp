@@ -4,6 +4,7 @@
 #include "PowerLimiterBatteryInverter.h"
 #include "PowerLimiterSolarInverter.h"
 #include "PowerLimiterSmartBufferInverter.h"
+#include "SunPosition.h"
 
 std::unique_ptr<PowerLimiterInverter> PowerLimiterInverter::create(
         bool verboseLogging, PowerLimiterInverterConfig const& config)
@@ -41,8 +42,14 @@ PowerLimiterInverter::PowerLimiterInverter(bool verboseLogging, PowerLimiterInve
     snprintf(_logPrefix, sizeof(_logPrefix), "[DPL inverter %s]:", _serialStr);
 }
 
-PowerLimiterInverter::Eligibility PowerLimiterInverter::isEligible() const
+PowerLimiterInverter::Eligibility PowerLimiterInverter::getEligibility() const
 {
+    // at dawn, solar-powered inverters switch to standby, but are still
+    // reachable. during this time, we shall not use them. we assume that
+    // it is already "night" when the inverter switches to standby, so this
+    // check makes sense.
+    if (isSolarPowered() && !SunPosition.isDayPeriod()) { return Eligibility::Nighttime; }
+
     if (!isReachable()) { return Eligibility::Unreachable; }
 
     if (!isSendingCommandsEnabled()) { return Eligibility::SendingCommandsDisabled; }
@@ -61,6 +68,11 @@ PowerLimiterInverter::Eligibility PowerLimiterInverter::isEligible() const
     return Eligibility::Eligible;
 }
 
+bool PowerLimiterInverter::isEligible() const
+{
+    return getEligibility() == Eligibility::Eligible;
+}
+
 bool PowerLimiterInverter::update()
 {
     auto reset = [this]() -> bool {
@@ -70,7 +82,7 @@ bool PowerLimiterInverter::update()
         return false;
     };
 
-    switch (isEligible()) {
+    switch (getEligibility()) {
         case Eligibility::Eligible:
             break;
 
@@ -338,7 +350,10 @@ void PowerLimiterInverter::debug() const
     if (!_verboseLogging) { return; }
 
     String eligibility("disqualified");
-    switch (isEligible()) {
+    switch (getEligibility()) {
+        case Eligibility::Nighttime:
+            eligibility += " (nighttime)";
+            break;
         case Eligibility::Unreachable:
             eligibility += " (unreachable)";
             break;
@@ -379,7 +394,7 @@ void PowerLimiterInverter::debug() const
         getUpdateTimeouts()
     );
 
-    MessageOutput.printf("    MPPTs AC power:");
+    MessageOutput.printf("    MPPTs AC power/DC voltage:");
 
     auto pStats = _spInverter->Statistics();
     float inverterEfficiencyFactor = pStats->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF) / 100;
@@ -387,14 +402,16 @@ void PowerLimiterInverter::debug() const
 
     for (auto& m : dcMppts) {
         float mpptPowerAC = 0.0;
+        float mpptVoltageDC = 0.0;
         std::vector<ChannelNum_t> mpptChnls = _spInverter->getChannelsDCByMppt(m);
 
         for (auto& c : mpptChnls) {
             mpptPowerAC += pStats->getChannelFieldValue(TYPE_DC, c, FLD_PDC) * inverterEfficiencyFactor;
+            mpptVoltageDC = std::max(mpptVoltageDC, pStats->getChannelFieldValue(TYPE_DC, c, FLD_UDC));
         }
 
-        MessageOutput.printf(" %c: %.0f W",
-                mpptName(m), mpptPowerAC);
+        MessageOutput.printf(" %c: %.0f W/%.1f V",
+                mpptName(m), mpptPowerAC, mpptVoltageDC);
     }
 
     MessageOutput.printf("\r\n");
