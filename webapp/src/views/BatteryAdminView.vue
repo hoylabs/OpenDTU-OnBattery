@@ -126,6 +126,42 @@
                         </div>
                     </div>
                 </CardElement>
+
+                <CardElement :text="$t('batteryadmin.MqttCurrentConfiguration')" textVariant="text-bg-primary" addSpace>
+                    <InputElement
+                        :label="$t('batteryadmin.MqttCurrentTopic')"
+                        v-model="batteryConfigList.mqtt_current_topic"
+                        type="text"
+                        maxlength="256"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('batteryadmin.MqttJsonPath')"
+                        v-model="batteryConfigList.mqtt_current_json_path"
+                        type="text"
+                        maxlength="256"
+                        :tooltip="$t('batteryadmin.MqttJsonPathDescription')"
+                        wide
+                    />
+
+                    <div class="row mb-3">
+                        <label for="mqtt_current_unit" class="col-sm-4 col-form-label">
+                            {{ $t('batteryadmin.MqttAmperageUnit') }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select
+                                id="mqtt_current_unit"
+                                class="form-select"
+                                v-model="batteryConfigList.mqtt_current_unit"
+                            >
+                                <option v-for="u in amperageUnitTypeList" :key="u.key" :value="u.key">
+                                    {{ u.value }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </CardElement>
             </template>
 
             <CardElement
@@ -527,6 +563,7 @@ export default defineComponent({
                     this.alertMessage = this.$t('apiresponse.' + response.code, response.param);
                     this.alertType = response.type;
                     this.showAlert = true;
+                    window.scrollTo(0, 0);
                 });
         },
     },
