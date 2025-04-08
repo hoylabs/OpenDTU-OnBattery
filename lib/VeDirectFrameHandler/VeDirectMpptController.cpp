@@ -121,7 +121,7 @@ void VeDirectMpptController::setChargeLimit( float limit )
 		_chargeLimit = 0xFFFF;
 	} else {
 		_chargeLimit = static_cast<uint16_t>( limit * 10.0f );
-	}   
+	}
 }
 
 void VeDirectMpptController::loop()
@@ -153,6 +153,7 @@ void VeDirectMpptController::loop()
 	resetTimestamp(_tmpFrame.NetworkTotalDcInputPowerMilliWatts);
 	resetTimestamp(_tmpFrame.BatteryFloatMilliVolt);
 	resetTimestamp(_tmpFrame.BatteryAbsorptionMilliVolt);
+    resetTimestamp(_tmpFrame.BatteryMaximumCurrent);
     resetTimestamp(_tmpFrame.ChargeCurrentLimit);
 
 #ifdef PROCESS_NETWORK_STATE
@@ -251,6 +252,18 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 				_msgOut->printf("%s Hex Data: MPPT Float Voltage (0x%04X): %.2fV\r\n",
 						_logId, regLog,
 						_tmpFrame.BatteryFloatMilliVolt.second / 1000.0);
+			}
+			return true;
+			break;
+
+        case VeDirectHexRegister::BatteryMaximumCurrent:
+			_tmpFrame.BatteryMaximumCurrent =
+				{ millis(), static_cast<uint16_t>(data.value) };
+
+			if (_verboseLogging) {
+				_msgOut->printf("%s Hex Data: MPPT Bettery Max Current (0x%04X): %.1fA\r\n",
+						_logId, regLog,
+						_tmpFrame.BatteryMaximumCurrent.second / 10.0);
 			}
 			return true;
 			break;
