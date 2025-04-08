@@ -155,6 +155,7 @@ void VeDirectMpptController::loop()
 	resetTimestamp(_tmpFrame.NetworkTotalDcInputPowerMilliWatts);
 	resetTimestamp(_tmpFrame.BatteryFloatMilliVolt);
 	resetTimestamp(_tmpFrame.BatteryAbsorptionMilliVolt);
+    resetTimestamp(_tmpFrame.BatteryMaximumCurrent);
     resetTimestamp(_tmpFrame.ChargeCurrentLimit);
 
 #ifdef PROCESS_NETWORK_STATE
@@ -240,6 +241,16 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			ESP_LOGD(TAG, "%s Hex Data: MPPT Float Voltage (0x%04X): %.2fV",
 					_logId, regLog,
 					_tmpFrame.BatteryFloatMilliVolt.second / 1000.0);
+			return true;
+			break;
+
+        case VeDirectHexRegister::BatteryMaximumCurrent:
+			_tmpFrame.BatteryMaximumCurrent =
+				{ millis(), static_cast<uint16_t>(data.value) };
+
+			ESP_LOGD(TAG, "%s Hex Data: MPPT Bettery Max Current (0x%04X): %.1fA",
+					_logId, regLog,
+					_tmpFrame.BatteryMaximumCurrent.second / 10.0);
 			return true;
 			break;
 
