@@ -26,105 +26,59 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
         return getConfiguredMaxPowerWatts();
     }
 
-    // The inverter produces the max power or more.
+    // The inverter produces the configured max power or more.
     if (getCurrentOutputAcWatts() >= getConfiguredMaxPowerWatts()) { return 0; }
 
-    // when overscaling is NOT in use and the limit is already at the max power
-    // we can't increase the power.
-    if (!overscalingEnabled() && getCurrentLimitWatts() >= getConfiguredMaxPowerWatts()) { return 0; }
+    // The limit is already at the max or higher.
+    if (getCurrentLimitWatts() >= getInverterMaxPowerWatts()) { return 0; }
 
-    auto pStats = _spInverter->Statistics();
+    float requiredOutputThreshold = calculateRequiredOutputThreshold(getCurrentLimitWatts());
+
+    // when overscaling is NOT in use
+    if (!overscalingEnabled()) {
+        // when the limit is already at the max power or higher,
+        // we can't increase the power.
+        if (getCurrentLimitWatts() >= getConfiguredMaxPowerWatts()) { return 0; }
+
+        // if the inverter's output is within the limit, we can increase the power
+        if (getCurrentOutputAcWatts() >= getCurrentLimitWatts() * requiredOutputThreshold) {
+            return getConfiguredMaxPowerWatts() - getCurrentLimitWatts();
+        }
+
+        return 0;
+    }
+
     std::vector<MpptNum_t> dcMppts = _spInverter->getMppts();
     size_t dcTotalMppts = dcMppts.size();
 
-    float inverterEfficiencyFactor = pStats->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF) / 100;
+    float expectedAcPowerPerMppt = (getCurrentLimitWatts() / dcTotalMppts) * requiredOutputThreshold;
 
-    // with 97% we are a bit less strict than when we scale the limit
-    auto expectedPowerPercentage = 0.97;
-
-    // use the scaling threshold as the expected power percentage if lower,
-    // but only when overscaling is enabled and the inverter does not support PDL
-    if (overscalingEnabled()) {
-        expectedPowerPercentage = std::min(expectedPowerPercentage, static_cast<float>(_config.ScalingThreshold) / 100.0);
-    }
-
-    // x% of the expected power is good enough
-    auto expectedAcPowerPerMppt = (getCurrentLimitWatts() / dcTotalMppts) * expectedPowerPercentage;
+    // we use the inverter's max power, because each MPPT can deliver its max power individually
+    uint16_t inverterMaxPower = getInverterMaxPowerWatts();
+    uint16_t maxPowerPerMppt = inverterMaxPower / dcTotalMppts;
 
     size_t dcNonShadedMppts = 0;
-    auto nonShadedMpptACPowerSum = 0.0;
+    uint16_t nonShadedMaxIncrease = 0;
 
     for (auto& m : dcMppts) {
-        float mpptPowerAC = 0.0;
-        std::vector<ChannelNum_t> mpptChnls = _spInverter->getChannelsDCByMppt(m);
-
-        for (auto& c : mpptChnls) {
-            mpptPowerAC += pStats->getChannelFieldValue(TYPE_DC, c, FLD_PDC) * inverterEfficiencyFactor;
-        }
+        float mpptPowerAC = calculateMpptPowerAC(m);
 
         if (mpptPowerAC >= expectedAcPowerPerMppt) {
-            nonShadedMpptACPowerSum += mpptPowerAC;
+            if (maxPowerPerMppt > mpptPowerAC) {
+                nonShadedMaxIncrease += maxPowerPerMppt - mpptPowerAC;
+            }
             dcNonShadedMppts++;
         }
     }
 
-    // all mppts are shaded, we can't increase the power
-    if (dcNonShadedMppts == 0) {
-        return 0;
-    }
+    uint16_t maxOutputIncrease = getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
+    uint16_t maxLimitIncrease = getInverterMaxPowerWatts() - getCurrentLimitWatts();
 
-    // no MPPT is shaded, we assume that we can increase the power by the maximum.
-    // based on the current limit, because overscaling should not be active when all
-    // MPPTs are NOT shaded.
-    if (dcNonShadedMppts == dcTotalMppts) {
-        // prevent overflow
-        if (getCurrentLimitWatts() > getConfiguredMaxPowerWatts()) { return 0; }
-        return getConfiguredMaxPowerWatts() - getCurrentLimitWatts();
-    }
+    // find the max total increase
+    uint16_t maxTotalIncrease = std::min(maxOutputIncrease, maxLimitIncrease);
 
-    // for inverters without PDL we use the configured max power, because the limit will be divided equally across the MPPTs by the inverter.
-    uint16_t inverterMaxPower = getConfiguredMaxPowerWatts();
-
-    // for inverter with PDL or when overscaling is enabled we use the max power of the inverter because each MPPT can deliver its max power.
-    if (_spInverter->supportsPowerDistributionLogic() || _config.UseOverscaling) {
-        inverterMaxPower = getInverterMaxPowerWatts();
-    }
-
-    uint16_t maxPowerPerMppt = inverterMaxPower / dcTotalMppts;
-
-    uint16_t currentPowerPerNonShadedMppt = nonShadedMpptACPowerSum / dcNonShadedMppts;
-
-    uint16_t maxIncreasePerNonShadedMppt = 0;
-
-    // unshaded mppts could produce more power than the max power per MPPT.
-    if (maxPowerPerMppt > currentPowerPerNonShadedMppt) {
-        maxIncreasePerNonShadedMppt = maxPowerPerMppt - currentPowerPerNonShadedMppt;
-    }
-
-    // maximum increase based on the non-shaded mppts, can be higher than maxTotalIncrease for inverters
-    // with PDL when getConfiguredMaxPowerWatts() is less than getInverterMaxPowerWatts() divided by
-    // the number of used/unshaded MPPTs.
-    uint16_t maxIncreaseNonShadedMppts = maxIncreasePerNonShadedMppt * dcNonShadedMppts;
-
-    uint16_t maxTotalIncrease = getConfiguredMaxPowerWatts() - getCurrentLimitWatts();
-
-    // prevent overflow
-    if (getCurrentLimitWatts() > getConfiguredMaxPowerWatts()) {
-        maxTotalIncrease = 0;
-    }
-
-    // when overscaling is in use we must not use the current limit
-    // because it might be higher than the configured max power.
-    if (overscalingEnabled()) {
-        uint16_t maxOutputIncrease = getConfiguredMaxPowerWatts() - getCurrentOutputAcWatts();
-        uint16_t maxLimitIncrease = getInverterMaxPowerWatts() - getCurrentLimitWatts();
-
-        // constrains the increase to the limit of the inverter.
-        maxTotalIncrease = std::min(maxOutputIncrease, maxLimitIncrease);
-    }
-
-    // maximum increase should not exceed the max total increase
-    return std::min(maxTotalIncrease, maxIncreaseNonShadedMppts);
+    // calculated increase should not exceed the max total increase
+    return std::min(maxTotalIncrease, nonShadedMaxIncrease);
 }
 
 uint16_t PowerLimiterSolarInverter::applyReduction(uint16_t reduction, bool)

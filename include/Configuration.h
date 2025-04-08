@@ -147,7 +147,6 @@ struct POWERLIMITER_INVERTER_CONFIG_T {
     bool UseOverscaling;
     uint16_t LowerPowerLimit;
     uint16_t UpperPowerLimit;
-    uint8_t ScalingThreshold;
 
     enum InverterPowerSource { Battery = 0, Solar = 1, SmartBuffer = 2 };
     InverterPowerSource PowerSource;

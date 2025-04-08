@@ -394,7 +394,7 @@ void PowerLimiterInverter::debug() const
         getUpdateTimeouts()
     );
 
-    MessageOutput.printf("    MPPTs AC power:");
+    MessageOutput.printf("    MPPTs AC power/DC voltage:");
 
     auto pStats = _spInverter->Statistics();
     float inverterEfficiencyFactor = pStats->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF) / 100;
@@ -402,14 +402,16 @@ void PowerLimiterInverter::debug() const
 
     for (auto& m : dcMppts) {
         float mpptPowerAC = 0.0;
+        float mpptVoltageDC = 0.0;
         std::vector<ChannelNum_t> mpptChnls = _spInverter->getChannelsDCByMppt(m);
 
         for (auto& c : mpptChnls) {
             mpptPowerAC += pStats->getChannelFieldValue(TYPE_DC, c, FLD_PDC) * inverterEfficiencyFactor;
+            mpptVoltageDC = std::max(mpptVoltageDC, pStats->getChannelFieldValue(TYPE_DC, c, FLD_UDC));
         }
 
-        MessageOutput.printf(" %c: %.0f W",
-                mpptName(m), mpptPowerAC);
+        MessageOutput.printf(" %c: %.0f W/%.1f V",
+                mpptName(m), mpptPowerAC, mpptVoltageDC);
     }
 
     MessageOutput.printf("\r\n");
