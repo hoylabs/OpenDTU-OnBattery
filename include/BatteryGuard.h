@@ -29,7 +29,6 @@ class BatteryGuardClass {
         Task _slowLoopTask;                                 // Task (print the report)
         Task _fastLoopTask;                                 // Task (get the battery values)
         bool _verboseLogging = false;                       // Logging On/Off
-        bool _verboseReport = false;                        // Report On/Off
         bool _useBatteryGuard = false;                      // "Battery guard" On/Off
 
 

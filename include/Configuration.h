@@ -288,6 +288,13 @@ struct SOLAR_CHARGER_CONFIG_T {
 };
 using SolarChargerConfig = struct SOLAR_CHARGER_CONFIG_T;
 
+struct BATTERY_GUARD_CONFIG_T {
+    bool Enabled;
+    bool VerboseLogging;
+    float InternalResistance;
+};
+using BatteryGuardConfig = struct BATTERY_GUARD_CONFIG_T;
+
 struct CONFIG_T {
     struct {
         uint32_t Version;
@@ -418,6 +425,8 @@ struct CONFIG_T {
 
     GridChargerConfig Huawei;
 
+    BatteryGuardConfig BatteryGuard;
+
     INVERTER_CONFIG_T Inverter[INV_MAX_COUNT];
     char Dev_PinMapping[DEV_MAX_MAPPING_NAME_STRLEN + 1];
 };
@@ -461,6 +470,7 @@ public:
     static void serializeBatterySerialConfig(BatterySerialConfig const& source, JsonObject& target);
     static void serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target);
     static void serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target);
+    static void serializeBatteryGuardConfig(BatteryGuardConfig const& source, JsonObject& target);
 
     static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
     static void deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target);
@@ -476,6 +486,7 @@ public:
     static void deserializeBatterySerialConfig(JsonObject const& source, BatterySerialConfig& target);
     static void deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target);
     static void deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target);
+    static void deserializeBatteryGuardConfig(JsonObject const& source, BatteryGuardConfig& target);
 
 private:
     void loop();
