@@ -61,7 +61,6 @@ BatteryGuardClass BatteryGuard;
  * Initialize the battery guard
  */
 void BatteryGuardClass::init(Scheduler& scheduler) {
-
     // init the fast loop
     scheduler.addTask(_fastLoopTask);
     _fastLoopTask.setCallback(std::bind(&BatteryGuardClass::loop, this));
@@ -87,22 +86,20 @@ void BatteryGuardClass::init(Scheduler& scheduler) {
  * Update some settings of the battery guard
  */
 void BatteryGuardClass::updateSettings(void) {
+    const auto& config = Configuration.get();
 
-    // todo: get values from the configuration file / web interface / calibration file
-    _useBatteryGuard = true;            // enable the battery guard
-    _verboseLogging = false;            // disable verbose logging
-    _verboseReport = true;              // enable verbose report
-
-    // used for "Open circuit voltage"
-    _resistanceFromConfig = 0;          // start value for the internal battery resistance [Ohm]
+    // Check if BatteryGuard is enabled and battery provider is configured
+    _useBatteryGuard = config.BatteryGuard.Enabled && config.Battery.Enabled;
+    _verboseLogging = config.BatteryGuard.VerboseLogging;
+    _resistanceFromConfig = config.BatteryGuard.InternalResistance / 1000.0f; // mOhm -> Ohm
 }
-
 
 /*
  * Normal loop, fetches the battery values (voltage, current and measurement time stamp) from the battery provider
  */
 void BatteryGuardClass::loop(void) {
-    if (!_useBatteryGuard) { return; } // not active, we abort
+    const auto& config = Configuration.get();
+    if (!_useBatteryGuard || !config.Battery.Enabled) { return; } // not active or no battery, we abort
     if (!Battery.getStats()->isCurrentValid()) { return; } // not valid, we abort
 
     auto const& u2Value = Battery.getStats()->getVoltage();
@@ -155,9 +152,10 @@ void BatteryGuardClass::loop(void) {
  * Slow periodical tasks, will be called once a minute
  */
 void BatteryGuardClass::slowLoop(void) {
-    if (!_useBatteryGuard) { return; }
+    const auto& config = Configuration.get();
+    if (!_useBatteryGuard || !config.Battery.Enabled) { return; }
 
-    if (_verboseReport) {
+    if (_verboseLogging) {
         MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
         MessageOutput.printf("%s ------------- Battery Guard Report (every minute) -------------\r\n",
             getText(Text::T_HEAD).data());
