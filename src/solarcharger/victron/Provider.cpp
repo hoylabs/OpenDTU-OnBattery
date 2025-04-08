@@ -101,8 +101,18 @@ void Provider::loop()
     }
     for (auto const& upController : _controllers) {
         const float batCurrent { static_cast<float>( upController->getData().batteryCurrent_I_mA ) / 1000.0f };
-        const float factor { batCurrent / overallChargeCurrent };
-        float controllerLimit { factor * remainingLimit + reservedChargeCurrent};
+        float factor { 0.0f };
+        // if there is not current for automatic distribution --> distribute the limit uniformly to all controllers
+        if (overallChargeCurrent <= 0.0f) {
+            factor = 1.0 / static_cast<float>(numControllers);
+        } else {
+            factor = batCurrent / overallChargeCurrent;
+        }
+        float controllerLimit { reservedChargeCurrent};
+        // no limit left for this controller? Only apply the absolute minimum
+        if (remainingLimit > 0.0f) {
+            controllerLimit += factor * remainingLimit;
+        }
         // get the maximum allowed battery current of the charger
         auto batMaxCurrent { upController->getData().BatteryMaximumCurrent };
         // is the data valid?

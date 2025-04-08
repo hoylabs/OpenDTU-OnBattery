@@ -121,9 +121,11 @@ void VeDirectMpptController::setChargeLimit( float limit )
     // Victron MPPT needs limit with a resolution of 0.1A
 	if (limit == __FLT_MAX__) {
 		_chargeLimit = 0xFFFF;
-	} else {
+	} else if (limit > 0.0f) {
 		_chargeLimit = static_cast<uint16_t>( limit * 10.0f );
-	}
+	} else {
+        _chargeLimit = 0;
+    }
 }
 
 void VeDirectMpptController::loop()
