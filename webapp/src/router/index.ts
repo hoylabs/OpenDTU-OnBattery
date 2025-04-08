@@ -24,6 +24,7 @@ import NtpInfoView from '@/views/NtpInfoView.vue';
 import SecurityAdminView from '@/views/SecurityAdminView.vue';
 import SystemInfoView from '@/views/SystemInfoView.vue';
 import WaitRestartView from '@/views/WaitRestartView.vue';
+import BatteryGuardAdminView from '@/views/BatteryGuardAdminView.vue';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
@@ -166,6 +167,14 @@ const router = createRouter({
             path: '/wait',
             name: 'Wait Restart',
             component: WaitRestartView,
+        },
+        {
+            path: '/settings/batteryguard',
+            name: 'BatteryGuardSettings',
+            component: BatteryGuardAdminView,
+            meta: {
+                requiresAuth: true,
+            },
         },
     ],
 });
