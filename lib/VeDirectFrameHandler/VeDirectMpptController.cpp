@@ -426,6 +426,8 @@ void VeDirectMpptController::setChargeLimit(float limit){
                 float value = limit * 10.0f;
                 if (value > 0 && value < UINT16_MAX) {
                     cmd._data = static_cast<uint32_t>(static_cast<uint16_t>(value));
+                } else {
+                    cmd._data = 0; // invalid value, we set the limit to 0A to be on the safe side
                 }
             }
         }
