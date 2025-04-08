@@ -97,6 +97,11 @@
                                 }}</router-link>
                             </li>
                             <li>
+                                <router-link @click="onClick" class="dropdown-item" to="/settings/batteryguard">
+                                    {{ $t('menu.BatteryGuardSettings') }}
+                                </router-link>
+                            </li>
+                            <li>
                                 <router-link @click="onClick" class="dropdown-item" to="/settings/chargerac">{{
                                     $t('menu.AcChargerSettings')
                                 }}</router-link>
