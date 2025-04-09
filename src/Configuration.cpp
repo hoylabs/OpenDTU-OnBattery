@@ -129,24 +129,11 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["enabled"] = config.Battery.Enabled;
     target["verbose_logging"] = config.Battery.VerboseLogging;
     target["provider"] = config.Battery.Provider;
-    target["jkbms_interface"] = config.Battery.JkBmsInterface;
-    target["jkbms_polling_interval"] = config.Battery.JkBmsPollingInterval;
-    target["mqtt_soc_topic"] = config.Battery.MqttSocTopic;
-    target["mqtt_soc_json_path"] = config.Battery.MqttSocJsonPath;
-    target["mqtt_voltage_topic"] = config.Battery.MqttVoltageTopic;
-    target["mqtt_voltage_json_path"] = config.Battery.MqttVoltageJsonPath;
-    target["mqtt_voltage_unit"] = config.Battery.MqttVoltageUnit;
-    target["mqtt_current_topic"] = config.Battery.MqttCurrentTopic;
-    target["mqtt_current_json_path"] = config.Battery.MqttCurrentJsonPath;
-    target["mqtt_current_unit"] = config.Battery.MqttCurrentUnit;
     target["enable_discharge_current_limit"] = config.Battery.EnableDischargeCurrentLimit;
     target["discharge_current_limit"] = config.Battery.DischargeCurrentLimit;
     target["discharge_current_limit_below_soc"] = config.Battery.DischargeCurrentLimitBelowSoc;
     target["discharge_current_limit_below_voltage"] = config.Battery.DischargeCurrentLimitBelowVoltage;
     target["use_battery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
-    target["mqtt_discharge_current_topic"] = config.Battery.MqttDischargeCurrentTopic;
-    target["mqtt_discharge_current_json_path"] = config.Battery.MqttDischargeCurrentJsonPath;
-    target["mqtt_amperage_unit"] = config.Battery.MqttDischargeCurrentUnit;
 }
 
 void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target)
@@ -167,6 +154,27 @@ void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig cons
     target["sunset_offset"] = source.SunsetOffset;
     target["charge_through_enable"] = source.ChargeThroughEnable;
     target["charge_through_interval"] = source.ChargeThroughInterval;
+}
+
+void ConfigurationClass::serializeBatteryMqttConfig(BatteryMqttConfig const& source, JsonObject& target)
+{
+    target["soc_topic"] = source.SocTopic;
+    target["soc_json_path"] = source.SocJsonPath;
+    target["voltage_topic"] = source.VoltageTopic;
+    target["voltage_json_path"] = source.VoltageJsonPath;
+    target["voltage_unit"] = source.VoltageUnit;
+    target["current_topic"] = source.CurrentTopic;
+    target["current_json_path"] = source.CurrentJsonPath;
+    target["current_unit"] = source.CurrentUnit;
+    target["discharge_current_topic"] = source.DischargeCurrentTopic;
+    target["discharge_current_json_path"] = source.DischargeCurrentJsonPath;
+    target["discharge_current_unit"] = source.DischargeCurrentUnit;
+}
+
+void ConfigurationClass::serializeBatterySerialConfig(BatterySerialConfig const& source, JsonObject& target)
+{
+    target["interface"] = source.Interface;
+    target["polling_interval"] = source.PollingInterval;
 }
 
 void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target)
@@ -401,6 +409,12 @@ bool ConfigurationClass::write()
     JsonObject battery_zendure = battery["zendure"].to<JsonObject>();
     serializeBatteryZendureConfig(config.Battery.Zendure, battery_zendure);
 
+    JsonObject battery_mqtt = battery["mqtt"].to<JsonObject>();
+    serializeBatteryMqttConfig(config.Battery.Mqtt, battery_mqtt);
+
+    JsonObject battery_serial = battery["serial"].to<JsonObject>();
+    serializeBatterySerialConfig(config.Battery.Serial, battery_serial);
+
     JsonObject huawei = doc["huawei"].to<JsonObject>();
     serializeGridChargerConfig(config.Huawei, huawei);
 
@@ -513,24 +527,11 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     target.Enabled = source["enabled"] | BATTERY_ENABLED;
     target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
     target.Provider = source["provider"] | BATTERY_PROVIDER;
-    target.JkBmsInterface = source["jkbms_interface"] | BATTERY_JKBMS_INTERFACE;
-    target.JkBmsPollingInterval = source["jkbms_polling_interval"] | BATTERY_JKBMS_POLLING_INTERVAL;
-    strlcpy(target.MqttSocTopic, source["mqtt_soc_topic"] | source["mqtt_topic"] | "", sizeof(config.Battery.MqttSocTopic)); // mqtt_soc_topic was previously saved as mqtt_topic. Be nice and also try old key.
-    strlcpy(target.MqttSocJsonPath, source["mqtt_soc_json_path"] | source["mqtt_json_path"] | "", sizeof(config.Battery.MqttSocJsonPath)); // mqtt_soc_json_path was previously saved as mqtt_json_path. Be nice and also try old key.
-    strlcpy(target.MqttVoltageTopic, source["mqtt_voltage_topic"] | "", sizeof(config.Battery.MqttVoltageTopic));
-    strlcpy(target.MqttVoltageJsonPath, source["mqtt_voltage_json_path"] | "", sizeof(config.Battery.MqttVoltageJsonPath));
-    target.MqttVoltageUnit = source["mqtt_voltage_unit"] | BatteryVoltageUnit::Volts;
-    strlcpy(target.MqttCurrentTopic, source["mqtt_current_topic"] | "", sizeof(config.Battery.MqttCurrentTopic));
-    strlcpy(target.MqttCurrentJsonPath, source["mqtt_current_json_path"] | "", sizeof(config.Battery.MqttCurrentJsonPath));
-    target.MqttCurrentUnit = source["mqtt_current_unit"] | BatteryAmperageUnit::Amps;
     target.EnableDischargeCurrentLimit = source["enable_discharge_current_limit"] | BATTERY_ENABLE_DISCHARGE_CURRENT_LIMIT;
     target.DischargeCurrentLimit = source["discharge_current_limit"] | BATTERY_DISCHARGE_CURRENT_LIMIT;
     target.DischargeCurrentLimitBelowSoc = source["discharge_current_limit_below_soc"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_SOC;
     target.DischargeCurrentLimitBelowVoltage = source["discharge_current_limit_below_voltage"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_VOLTAGE;
     target.UseBatteryReportedDischargeCurrentLimit = source["use_battery_reported_discharge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_DISCHARGE_CURRENT_LIMIT;
-    strlcpy(target.MqttDischargeCurrentTopic, source["mqtt_discharge_current_topic"] | "", sizeof(config.Battery.MqttDischargeCurrentTopic));
-    strlcpy(target.MqttDischargeCurrentJsonPath, source["mqtt_discharge_current_json_path"] | "", sizeof(config.Battery.MqttDischargeCurrentJsonPath));
-    target.MqttDischargeCurrentUnit = source["mqtt_amperage_unit"] | BatteryAmperageUnit::Amps;
 }
 
 void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target)
@@ -551,6 +552,27 @@ void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& sourc
     target.SunsetOffset = source["sunset_offset"] | BATTERY_ZENDURE_SUNSET_OFFSET;
     target.ChargeThroughEnable = source["charge_through_enable"] | BATTERY_ZENDURE_CHARGE_THROUGH_ENABLE;
     target.ChargeThroughInterval = source["charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
+}
+
+void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, BatteryMqttConfig& target)
+{
+    strlcpy(target.SocTopic, source["soc_topic"] | "", sizeof(target.SocTopic));
+    strlcpy(target.SocJsonPath, source["soc_json_path"] | "", sizeof(target.SocJsonPath));
+    strlcpy(target.VoltageTopic, source["voltage_topic"] | "", sizeof(target.VoltageTopic));
+    strlcpy(target.VoltageJsonPath, source["voltage_json_path"] | "", sizeof(target.VoltageJsonPath));
+    target.VoltageUnit = source["voltage_unit"] | BatteryVoltageUnit::Volts;
+    strlcpy(target.CurrentTopic, source["current_topic"] | "", sizeof(target.CurrentTopic));
+    strlcpy(target.CurrentJsonPath, source["current_json_path"] | "", sizeof(target.CurrentJsonPath));
+    target.CurrentUnit = source["current_unit"] | BatteryAmperageUnit::Amps;
+    strlcpy(target.DischargeCurrentTopic, source["discharge_current_topic"] | "", sizeof(target.DischargeCurrentTopic));
+    strlcpy(target.DischargeCurrentJsonPath, source["discharge_current_json_path"] | "", sizeof(target.DischargeCurrentJsonPath));
+    target.DischargeCurrentUnit = source["discharge_current_unit"] | BatteryAmperageUnit::Amps;
+}
+
+void ConfigurationClass::deserializeBatterySerialConfig(JsonObject const& source, BatterySerialConfig& target)
+{
+    target.Interface = source["interface"] | BATTERY_SERIAL_INTERFACE;
+    target.PollingInterval = source["polling_interval"] | BATTERY_SERIAL_POLLING_INTERVAL;
 }
 
 void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target)
@@ -813,6 +835,8 @@ bool ConfigurationClass::read()
     JsonObject battery = doc["battery"];
     deserializeBatteryConfig(battery, config.Battery);
     deserializeBatteryZendureConfig(battery["zendure"], config.Battery.Zendure);
+    deserializeBatteryMqttConfig(battery["mqtt"], config.Battery.Mqtt);
+    deserializeBatterySerialConfig(battery["serial"], config.Battery.Serial);
 
     deserializeGridChargerConfig(doc["huawei"], config.Huawei);
 
@@ -1065,6 +1089,25 @@ void ConfigurationClass::migrateOnBattery()
         }
 
         config.PowerLimiter.RestartHour = static_cast<uint8_t>(restartHour);
+    }
+
+    if (config.Cfg.VersionOnBattery < 7) {
+        JsonObject battery = doc["battery"];
+        config.Battery.Serial.Interface = battery["jkbms_interface"] | BATTERY_SERIAL_INTERFACE;
+        config.Battery.Serial.PollingInterval = battery["jkbms_polling_interval"] | BATTERY_SERIAL_POLLING_INTERVAL;
+        // mqtt_soc_topic was previously saved as mqtt_topic. Be nice and also try old key.
+        strlcpy(config.Battery.Mqtt.SocTopic, battery["mqtt_soc_topic"] | battery["mqtt_topic"] | "", sizeof(config.Battery.Mqtt.SocTopic));
+        // mqtt_soc_json_path was previously saved as mqtt_json_path. Be nice and also try old key.
+        strlcpy(config.Battery.Mqtt.SocJsonPath, battery["mqtt_soc_json_path"] | battery["mqtt_json_path"] | "", sizeof(config.Battery.Mqtt.SocJsonPath));
+        strlcpy(config.Battery.Mqtt.VoltageTopic, battery["mqtt_voltage_topic"] | "", sizeof(config.Battery.Mqtt.VoltageTopic));
+        strlcpy(config.Battery.Mqtt.VoltageJsonPath, battery["mqtt_voltage_json_path"] | "", sizeof(config.Battery.Mqtt.VoltageJsonPath));
+        config.Battery.Mqtt.VoltageUnit = battery["mqtt_voltage_unit"] | BatteryVoltageUnit::Volts;
+        strlcpy(config.Battery.Mqtt.CurrentTopic, battery["mqtt_current_topic"] | "", sizeof(config.Battery.Mqtt.CurrentTopic));
+        strlcpy(config.Battery.Mqtt.CurrentJsonPath, battery["mqtt_current_json_path"] | "", sizeof(config.Battery.Mqtt.CurrentJsonPath));
+        config.Battery.Mqtt.CurrentUnit = battery["mqtt_current_unit"] | BatteryAmperageUnit::Amps;
+        strlcpy(config.Battery.Mqtt.DischargeCurrentTopic, battery["mqtt_discharge_current_topic"] | "", sizeof(config.Battery.Mqtt.DischargeCurrentTopic));
+        strlcpy(config.Battery.Mqtt.DischargeCurrentJsonPath, battery["mqtt_discharge_current_json_path"] | "", sizeof(config.Battery.Mqtt.DischargeCurrentJsonPath));
+        config.Battery.Mqtt.DischargeCurrentUnit = battery["mqtt_amperage_unit"] | BatteryAmperageUnit::Amps;
     }
 
     f.close();

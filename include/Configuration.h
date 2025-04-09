@@ -10,7 +10,7 @@
 
 #define CONFIG_FILENAME "/config.json"
 #define CONFIG_VERSION 0x00011d00 // 0.1.29 // make sure to clean all after change
-#define CONFIG_VERSION_ONBATTERY 6
+#define CONFIG_VERSION_ONBATTERY 7
 
 #define WIFI_MAX_SSID_STRLEN 32
 #define WIFI_MAX_PASSWORD_STRLEN 64
@@ -202,29 +202,39 @@ using BatteryZendureConfig = struct BATTERY_ZENDURE_CONFIG_T;
 
 enum BatteryVoltageUnit { Volts = 0, DeciVolts = 1, CentiVolts = 2, MilliVolts = 3 };
 enum BatteryAmperageUnit { Amps = 0, MilliAmps = 1 };
+struct BATTERY_MQTT_CONFIG_T {
+    char SocTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char SocJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    char VoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char VoltageJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    BatteryVoltageUnit VoltageUnit;
+    char CurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char CurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    BatteryAmperageUnit CurrentUnit;
+    char DischargeCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char DischargeCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    BatteryAmperageUnit DischargeCurrentUnit;
+};
+using BatteryMqttConfig = struct BATTERY_MQTT_CONFIG_T;
+
+struct BATTERY_SERIAL_CONFIG_T {
+    uint8_t Interface;
+    uint8_t PollingInterval;
+};
+using BatterySerialConfig = struct BATTERY_SERIAL_CONFIG_T;
+
 struct BATTERY_CONFIG_T {
     bool Enabled;
     bool VerboseLogging;
     uint8_t Provider;
-    uint8_t JkBmsInterface;
-    uint8_t JkBmsPollingInterval;
-    char MqttSocTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttSocJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
-    char MqttVoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttVoltageJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
-    BatteryVoltageUnit MqttVoltageUnit;
-    char MqttCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
-    BatteryAmperageUnit MqttCurrentUnit;
+    BatteryMqttConfig Mqtt;
+    BatteryZendureConfig Zendure;
+    BatterySerialConfig Serial;
     bool EnableDischargeCurrentLimit;
     float DischargeCurrentLimit;
     float DischargeCurrentLimitBelowSoc;
     float DischargeCurrentLimitBelowVoltage;
     bool UseBatteryReportedDischargeCurrentLimit;
-    char MqttDischargeCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttDischargeCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
-    BatteryAmperageUnit MqttDischargeCurrentUnit;
-    BatteryZendureConfig Zendure;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
@@ -447,6 +457,8 @@ public:
     static void serializePowerMeterUdpVictronConfig(PowerMeterUdpVictronConfig const& source, JsonObject& target);
     static void serializeBatteryConfig(BatteryConfig const& source, JsonObject& target);
     static void serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target);
+    static void serializeBatteryMqttConfig(BatteryMqttConfig const& source, JsonObject& target);
+    static void serializeBatterySerialConfig(BatterySerialConfig const& source, JsonObject& target);
     static void serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target);
     static void serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target);
 
@@ -460,6 +472,8 @@ public:
     static void deserializePowerMeterUdpVictronConfig(JsonObject const& source, PowerMeterUdpVictronConfig& target);
     static void deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target);
     static void deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target);
+    static void deserializeBatteryMqttConfig(JsonObject const& source, BatteryMqttConfig& target);
+    static void deserializeBatterySerialConfig(JsonObject const& source, BatterySerialConfig& target);
     static void deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target);
     static void deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target);
 
