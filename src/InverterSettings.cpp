@@ -112,8 +112,21 @@ void InverterSettingsClass::settingsLoop()
             continue;
         }
 
-        inv->setEnablePolling(inv_cfg.Poll_Enable && (isDayPeriod || inv_cfg.Poll_Enable_Night));
-        inv->setEnableCommands(inv_cfg.Command_Enable && (isDayPeriod || inv_cfg.Command_Enable_Night));
+        bool solarPowered = false;
+
+        for (uint8_t j = 0; j < INV_MAX_COUNT; j++) {
+            auto const& powerLimiterInvConfig = config.PowerLimiter.Inverters[j];
+
+            if (powerLimiterInvConfig.Serial == inv_cfg.Serial) {
+                solarPowered = powerLimiterInvConfig.IsGoverned && powerLimiterInvConfig.PowerSource == PowerLimiterInverterConfig::InverterPowerSource::Solar;
+                break;
+            }
+        }
+
+        bool pollAtNight = !solarPowered && inv_cfg.Poll_Enable_Night;
+        bool commandAtNight = !solarPowered && inv_cfg.Command_Enable_Night;
+        inv->setEnablePolling(inv_cfg.Poll_Enable && (isDayPeriod || pollAtNight));
+        inv->setEnableCommands(inv_cfg.Command_Enable && (isDayPeriod || commandAtNight));
     }
 }
 
