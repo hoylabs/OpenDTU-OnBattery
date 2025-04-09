@@ -26,9 +26,9 @@ export interface BatteryMqttConfig {
     current_topic: string;
     current_json_path: string;
     current_unit: number;
-    discharge_current_topic: string;
-    discharge_current_json_path: string;
-    discharge_current_unit: number;
+    discharge_current_limit_topic: string;
+    discharge_current_limit_json_path: string;
+    discharge_current_limit_unit: number;
 }
 
 export interface BatterySerialConfig {

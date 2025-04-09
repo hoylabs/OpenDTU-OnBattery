@@ -63,7 +63,7 @@ bool Provider::init(bool verboseLogging)
     }
 
     if (config.Battery.EnableDischargeCurrentLimit && config.Battery.UseBatteryReportedDischargeCurrentLimit) {
-        _dischargeCurrentLimitTopic = config.Battery.Mqtt.DischargeCurrentTopic;
+        _dischargeCurrentLimitTopic = config.Battery.Mqtt.DischargeCurrentLimitTopic;
 
         if (!_dischargeCurrentLimitTopic.isEmpty()) {
             MqttSettings.subscribe(_dischargeCurrentLimitTopic, 0/*QoS*/,
@@ -71,7 +71,7 @@ bool Provider::init(bool verboseLogging)
                         this, std::placeholders::_1, std::placeholders::_2,
                         std::placeholders::_3, std::placeholders::_4,
                         std::placeholders::_5, std::placeholders::_6,
-                        config.Battery.Mqtt.DischargeCurrentJsonPath)
+                        config.Battery.Mqtt.DischargeCurrentLimitJsonPath)
                     );
 
             if (_verboseLogging) {
@@ -217,7 +217,7 @@ void Provider::onMqttMessageDischargeCurrentLimit(espMqttClientTypes::MessagePro
 
     auto const& config = Configuration.get();
     using Unit_t = BatteryAmperageUnit;
-    switch (config.Battery.Mqtt.DischargeCurrentUnit) {
+    switch (config.Battery.Mqtt.DischargeCurrentLimitUnit) {
         case Unit_t::MilliAmps:
             *amperage /= 1000;
             break;

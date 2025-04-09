@@ -239,8 +239,8 @@
 
                             <template v-if="batteryConfigList.provider == 2">
                                 <InputElement
-                                    :label="$t('batteryadmin.MqttDischargeCurrentTopic')"
-                                    v-model="batteryConfigList.mqtt.discharge_current_topic"
+                                    :label="$t('batteryadmin.MqttDischargeCurrentLimitTopic')"
+                                    v-model="batteryConfigList.mqtt.discharge_current_limit_topic"
                                     wide
                                     type="text"
                                     maxlength="256"
@@ -248,7 +248,7 @@
 
                                 <InputElement
                                     :label="$t('batteryadmin.MqttJsonPath')"
-                                    v-model="batteryConfigList.mqtt.discharge_current_json_path"
+                                    v-model="batteryConfigList.mqtt.discharge_current_limit_json_path"
                                     wide
                                     type="text"
                                     maxlength="256"
@@ -256,15 +256,15 @@
                                 />
 
                                 <div class="row mb-3">
-                                    <label for="discharge_current_unit" class="col-sm-4 col-form-label">
+                                    <label for="discharge_current_limit_unit" class="col-sm-4 col-form-label">
                                         {{ $t('batteryadmin.MqttAmperageUnit') }}
                                     </label>
 
                                     <div class="col-sm-8">
                                         <select
-                                            id="discharge_current_unit"
+                                            id="discharge_current_limit_unit"
                                             class="form-select"
-                                            v-model="batteryConfigList.mqtt.discharge_current_unit"
+                                            v-model="batteryConfigList.mqtt.discharge_current_limit_unit"
                                         >
                                             <option v-for="u in amperageUnitTypeList" :key="u.key" :value="u.key">
                                                 {{ u.value }}
