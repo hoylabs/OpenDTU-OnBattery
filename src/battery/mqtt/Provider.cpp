@@ -14,14 +14,14 @@ bool Provider::init(bool verboseLogging)
 
     auto const& config = Configuration.get();
 
-    _socTopic = config.Battery.MqttSocTopic;
+    _socTopic = config.Battery.Mqtt.SocTopic;
     if (!_socTopic.isEmpty()) {
         MqttSettings.subscribe(_socTopic, 0/*QoS*/,
                 std::bind(&Provider::onMqttMessageSoC,
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
                     std::placeholders::_5, std::placeholders::_6,
-                    config.Battery.MqttSocJsonPath)
+                    config.Battery.Mqtt.SocJsonPath)
                 );
 
         if (_verboseLogging) {
@@ -30,14 +30,14 @@ bool Provider::init(bool verboseLogging)
         }
     }
 
-    _voltageTopic = config.Battery.MqttVoltageTopic;
+    _voltageTopic = config.Battery.Mqtt.VoltageTopic;
     if (!_voltageTopic.isEmpty()) {
         MqttSettings.subscribe(_voltageTopic, 0/*QoS*/,
                 std::bind(&Provider::onMqttMessageVoltage,
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
                     std::placeholders::_5, std::placeholders::_6,
-                    config.Battery.MqttVoltageJsonPath)
+                    config.Battery.Mqtt.VoltageJsonPath)
                 );
 
         if (_verboseLogging) {
@@ -46,14 +46,14 @@ bool Provider::init(bool verboseLogging)
         }
     }
 
-    _currentTopic = config.Battery.MqttCurrentTopic;
+    _currentTopic = config.Battery.Mqtt.CurrentTopic;
     if (!_currentTopic.isEmpty()) {
         MqttSettings.subscribe(_currentTopic, 0/*QoS*/,
                 std::bind(&Provider::onMqttMessageCurrent,
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
                     std::placeholders::_5, std::placeholders::_6,
-                    config.Battery.MqttCurrentJsonPath)
+                    config.Battery.Mqtt.CurrentJsonPath)
                 );
 
         if (_verboseLogging) {
@@ -63,7 +63,7 @@ bool Provider::init(bool verboseLogging)
     }
 
     if (config.Battery.EnableDischargeCurrentLimit && config.Battery.UseBatteryReportedDischargeCurrentLimit) {
-        _dischargeCurrentLimitTopic = config.Battery.MqttDischargeCurrentTopic;
+        _dischargeCurrentLimitTopic = config.Battery.Mqtt.DischargeCurrentLimitTopic;
 
         if (!_dischargeCurrentLimitTopic.isEmpty()) {
             MqttSettings.subscribe(_dischargeCurrentLimitTopic, 0/*QoS*/,
@@ -71,7 +71,7 @@ bool Provider::init(bool verboseLogging)
                         this, std::placeholders::_1, std::placeholders::_2,
                         std::placeholders::_3, std::placeholders::_4,
                         std::placeholders::_5, std::placeholders::_6,
-                        config.Battery.MqttDischargeCurrentJsonPath)
+                        config.Battery.Mqtt.DischargeCurrentLimitJsonPath)
                     );
 
             if (_verboseLogging) {
@@ -142,7 +142,7 @@ void Provider::onMqttMessageVoltage(espMqttClientTypes::MessageProperties const&
 
     auto const& config = Configuration.get();
     using Unit_t = BatteryVoltageUnit;
-    switch (config.Battery.MqttVoltageUnit) {
+    switch (config.Battery.Mqtt.VoltageUnit) {
         case Unit_t::DeciVolts:
             *voltage /= 10;
             break;
@@ -186,7 +186,7 @@ void Provider::onMqttMessageCurrent(espMqttClientTypes::MessageProperties const&
 
     auto const& config = Configuration.get();
     using Unit_t = BatteryAmperageUnit;
-    switch (config.Battery.MqttCurrentUnit) {
+    switch (config.Battery.Mqtt.CurrentUnit) {
         case Unit_t::MilliAmps:
             *amperage /= 1000;
             break;
@@ -217,7 +217,7 @@ void Provider::onMqttMessageDischargeCurrentLimit(espMqttClientTypes::MessagePro
 
     auto const& config = Configuration.get();
     using Unit_t = BatteryAmperageUnit;
-    switch (config.Battery.MqttDischargeCurrentUnit) {
+    switch (config.Battery.Mqtt.DischargeCurrentLimitUnit) {
         case Unit_t::MilliAmps:
             *amperage /= 1000;
             break;
