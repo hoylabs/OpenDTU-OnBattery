@@ -213,6 +213,9 @@ struct BATTERY_CONFIG_T {
     char MqttVoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
     char MqttVoltageJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryVoltageUnit MqttVoltageUnit;
+    char MqttCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char MqttCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    BatteryAmperageUnit MqttCurrentUnit;
     bool EnableDischargeCurrentLimit;
     float DischargeCurrentLimit;
     float DischargeCurrentLimitBelowSoc;
@@ -220,7 +223,7 @@ struct BATTERY_CONFIG_T {
     bool UseBatteryReportedDischargeCurrentLimit;
     char MqttDischargeCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
     char MqttDischargeCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
-    BatteryAmperageUnit MqttAmperageUnit;
+    BatteryAmperageUnit MqttDischargeCurrentUnit;
     BatteryZendureConfig Zendure;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
