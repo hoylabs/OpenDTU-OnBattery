@@ -99,14 +99,7 @@ void Provider::onMqttMessageSoC(espMqttClientTypes::MessageProperties const& pro
         return;
     }
 
-    unsigned factor = 10;
-    uint8_t precision = 0;
-    while (precision < 2) {
-        if (std::floor(*soc * factor) == std::floor(*soc) * factor) { break; }
-        ++precision;
-        factor *= 10;
-    }
-    _socPrecision = std::max(_socPrecision, precision);
+    _socPrecision = std::max(_socPrecision, calculatePrecision(*soc));
 
     _stats->setSoC(*soc, _socPrecision, millis());
 
@@ -193,6 +186,19 @@ void Provider::onMqttMessageDischargeCurrentLimit(espMqttClientTypes::MessagePro
         MessageOutput.printf("MqttBattery: Updated amperage to %.2f from '%s'\r\n",
                 *amperage, topic);
     }
+}
+
+uint8_t Provider::calculatePrecision(float value) {
+    unsigned factor = 1;
+    uint8_t precision = 0;
+    while (precision < 2) {
+        if (std::floor(value * factor) == value * factor) {
+            break;
+        }
+        ++precision;
+        factor *= 10;
+    }
+    return precision;
 }
 
 } // namespace Batteries::Mqtt
