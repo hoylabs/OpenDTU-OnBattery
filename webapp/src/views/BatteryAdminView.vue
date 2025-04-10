@@ -527,6 +527,7 @@ export default defineComponent({
                     this.alertMessage = this.$t('apiresponse.' + response.code, response.param);
                     this.alertType = response.type;
                     this.showAlert = true;
+                    window.scrollTo(0, 0);
                 });
         },
     },
