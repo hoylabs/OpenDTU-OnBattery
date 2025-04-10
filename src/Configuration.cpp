@@ -136,6 +136,9 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["mqtt_voltage_topic"] = config.Battery.MqttVoltageTopic;
     target["mqtt_voltage_json_path"] = config.Battery.MqttVoltageJsonPath;
     target["mqtt_voltage_unit"] = config.Battery.MqttVoltageUnit;
+    target["mqtt_current_topic"] = config.Battery.MqttCurrentTopic;
+    target["mqtt_current_json_path"] = config.Battery.MqttCurrentJsonPath;
+    target["mqtt_current_unit"] = config.Battery.MqttCurrentUnit;
     target["enable_discharge_current_limit"] = config.Battery.EnableDischargeCurrentLimit;
     target["discharge_current_limit"] = config.Battery.DischargeCurrentLimit;
     target["discharge_current_limit_below_soc"] = config.Battery.DischargeCurrentLimitBelowSoc;
@@ -143,7 +146,7 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["use_battery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
     target["mqtt_discharge_current_topic"] = config.Battery.MqttDischargeCurrentTopic;
     target["mqtt_discharge_current_json_path"] = config.Battery.MqttDischargeCurrentJsonPath;
-    target["mqtt_amperage_unit"] = config.Battery.MqttAmperageUnit;
+    target["mqtt_amperage_unit"] = config.Battery.MqttDischargeCurrentUnit;
 }
 
 void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target)
@@ -517,6 +520,9 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     strlcpy(target.MqttVoltageTopic, source["mqtt_voltage_topic"] | "", sizeof(config.Battery.MqttVoltageTopic));
     strlcpy(target.MqttVoltageJsonPath, source["mqtt_voltage_json_path"] | "", sizeof(config.Battery.MqttVoltageJsonPath));
     target.MqttVoltageUnit = source["mqtt_voltage_unit"] | BatteryVoltageUnit::Volts;
+    strlcpy(target.MqttCurrentTopic, source["mqtt_current_topic"] | "", sizeof(config.Battery.MqttCurrentTopic));
+    strlcpy(target.MqttCurrentJsonPath, source["mqtt_current_json_path"] | "", sizeof(config.Battery.MqttCurrentJsonPath));
+    target.MqttCurrentUnit = source["mqtt_current_unit"] | BatteryAmperageUnit::Amps;
     target.EnableDischargeCurrentLimit = source["enable_discharge_current_limit"] | BATTERY_ENABLE_DISCHARGE_CURRENT_LIMIT;
     target.DischargeCurrentLimit = source["discharge_current_limit"] | BATTERY_DISCHARGE_CURRENT_LIMIT;
     target.DischargeCurrentLimitBelowSoc = source["discharge_current_limit_below_soc"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_SOC;
@@ -524,7 +530,7 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     target.UseBatteryReportedDischargeCurrentLimit = source["use_battery_reported_discharge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_DISCHARGE_CURRENT_LIMIT;
     strlcpy(target.MqttDischargeCurrentTopic, source["mqtt_discharge_current_topic"] | "", sizeof(config.Battery.MqttDischargeCurrentTopic));
     strlcpy(target.MqttDischargeCurrentJsonPath, source["mqtt_discharge_current_json_path"] | "", sizeof(config.Battery.MqttDischargeCurrentJsonPath));
-    target.MqttAmperageUnit = source["mqtt_amperage_unit"] | BatteryAmperageUnit::Amps;
+    target.MqttDischargeCurrentUnit = source["mqtt_amperage_unit"] | BatteryAmperageUnit::Amps;
 }
 
 void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target)
