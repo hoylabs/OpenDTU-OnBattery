@@ -34,6 +34,7 @@ private:
     void onMqttMessageDischargeCurrentLimit(espMqttClientTypes::MessageProperties const& properties,
             char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
             char const* jsonPath);
+    uint8_t calculatePrecision(float value);
 };
 
 } // namespace Batteries::Mqtt
