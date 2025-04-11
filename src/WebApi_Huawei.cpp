@@ -139,7 +139,13 @@ void WebApiHuaweiClass::onAdminGet(AsyncWebServerRequest* request)
     auto root = response->getRoot().as<JsonObject>();
     auto const& config = Configuration.get();
 
-    ConfigurationClass::serializeGridChargerConfig(config.Huawei, root);
+    ConfigurationClass::serializeGridChargerConfig(config.GridCharger, root);
+
+    auto can = root["can"].to<JsonObject>();
+    ConfigurationClass::serializeGridChargerCanConfig(config.GridCharger.Can, can);
+
+    auto huawei = root["huawei"].to<JsonObject>();
+    ConfigurationClass::serializeGridChargerHuaweiConfig(config.GridCharger.Huawei, huawei);
 
     response->setLength();
     request->send(response);
@@ -160,14 +166,14 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
     auto& retMsg = response->getRoot();
 
     if (!(root["enabled"].is<bool>()) ||
-        !(root["can_controller_frequency"].is<uint32_t>()) ||
+        !(root["can"]["controller_frequency"].is<uint32_t>()) ||
         !(root["auto_power_enabled"].is<bool>()) ||
         !(root["emergency_charge_enabled"].is<bool>()) ||
-        !(root["offline_voltage"].is<float>()) ||
-        !(root["offline_current"].is<float>()) ||
-        !(root["input_current_limit"].is<float>()) ||
-        !(root["fan_online_full_speed"].is<bool>()) ||
-        !(root["fan_offline_full_speed"].is<bool>()) ||
+        !(root["huawei"]["offline_voltage"].is<float>()) ||
+        !(root["huawei"]["offline_current"].is<float>()) ||
+        !(root["huawei"]["input_current_limit"].is<float>()) ||
+        !(root["huawei"]["fan_online_full_speed"].is<bool>()) ||
+        !(root["huawei"]["fan_offline_full_speed"].is<bool>()) ||
         !(root["voltage_limit"].is<float>()) ||
         !(root["lower_power_limit"].is<float>()) ||
         !(root["upper_power_limit"].is<float>())) {
@@ -181,7 +187,7 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
     using Controller = GridCharger::Huawei::Controller;
 
     auto isValidRange = [&](const char* valueName, float min, float max, WebApiError error) -> bool {
-        if (root[valueName].as<float>() < min || root[valueName].as<float>() > max) {
+        if (root["huawei"][valueName].as<float>() < min || root["huawei"][valueName].as<float>() > max) {
             retMsg["message"] = String(valueName) + " out of range [" + String(min) + ", " + String(max) + "]";
             retMsg["code"] = error;
             retMsg["param"]["min"] = min;
@@ -201,7 +207,9 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
     {
         auto guard = Configuration.getWriteGuard();
         auto& config = guard.getConfig();
-        ConfigurationClass::deserializeGridChargerConfig(root.as<JsonObject>(), config.Huawei);
+        ConfigurationClass::deserializeGridChargerConfig(root.as<JsonObject>(), config.GridCharger);
+        ConfigurationClass::deserializeGridChargerCanConfig(root["can"].as<JsonObject>(), config.GridCharger.Can);
+        ConfigurationClass::deserializeGridChargerHuaweiConfig(root["huawei"].as<JsonObject>(), config.GridCharger.Huawei);
     }
 
     WebApi.writeConfig(retMsg);

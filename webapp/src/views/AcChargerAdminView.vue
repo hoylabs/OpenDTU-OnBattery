@@ -26,7 +26,7 @@
                             {{ $t('acchargeradmin.HardwareInterface') }}
                         </label>
                         <div class="col-sm-8">
-                            <select class="form-select" v-model="acChargerConfigList.hardware_interface">
+                            <select class="form-select" v-model="acChargerConfigList.can.hardware_interface">
                                 <option v-for="type in hardwareInterfaceList" :key="type.key" :value="type.key">
                                     {{ $t('acchargeradmin.HardwareInterface' + type.value) }}
                                 </option>
@@ -34,12 +34,12 @@
                         </div>
                     </div>
 
-                    <div class="row mb-3" v-if="acChargerConfigList.hardware_interface === 0">
+                    <div class="row mb-3" v-if="acChargerConfigList.can.hardware_interface === 0">
                         <label class="col-sm-4 col-form-label">
                             {{ $t('acchargeradmin.CanControllerFrequency') }}
                         </label>
                         <div class="col-sm-8">
-                            <select class="form-select" v-model="acChargerConfigList.can_controller_frequency">
+                            <select class="form-select" v-model="acChargerConfigList.can.controller_frequency">
                                 <option
                                     v-for="frequency in frequencyTypeList"
                                     :key="frequency.key"
@@ -83,7 +83,7 @@
             >
                 <InputElement
                     :label="$t('acchargeradmin.OfflineVoltage')"
-                    v-model="acChargerConfigList.offline_voltage"
+                    v-model="acChargerConfigList.huawei.offline_voltage"
                     postfix="V"
                     type="number"
                     wide
@@ -92,7 +92,7 @@
 
                 <InputElement
                     :label="$t('acchargeradmin.OfflineCurrent')"
-                    v-model="acChargerConfigList.offline_current"
+                    v-model="acChargerConfigList.huawei.offline_current"
                     postfix="A"
                     type="number"
                     wide
@@ -101,7 +101,7 @@
 
                 <InputElement
                     :label="$t('acchargeradmin.InputCurrentLimit')"
-                    v-model="acChargerConfigList.input_current_limit"
+                    v-model="acChargerConfigList.huawei.input_current_limit"
                     postfix="A"
                     type="number"
                     wide
@@ -111,14 +111,14 @@
 
                 <InputElement
                     :label="$t('acchargeradmin.FanOnlineFullSpeed')"
-                    v-model="acChargerConfigList.fan_online_full_speed"
+                    v-model="acChargerConfigList.huawei.fan_online_full_speed"
                     type="checkbox"
                     wide
                 />
 
                 <InputElement
                     :label="$t('acchargeradmin.FanOfflineFullSpeed')"
-                    v-model="acChargerConfigList.fan_offline_full_speed"
+                    v-model="acChargerConfigList.huawei.fan_offline_full_speed"
                     type="checkbox"
                     wide
                 />
@@ -221,7 +221,7 @@ import BootstrapAlert from '@/components/BootstrapAlert.vue';
 import CardElement from '@/components/CardElement.vue';
 import FormFooter from '@/components/FormFooter.vue';
 import InputElement from '@/components/InputElement.vue';
-import type { AcChargerConfig } from '@/types/AcChargerConfig';
+import type { GridChargerConfig } from '@/types/GridChargerConfig';
 import { authHeader, handleResponse } from '@/utils/authentication';
 import { defineComponent } from 'vue';
 
@@ -236,7 +236,7 @@ export default defineComponent({
     data() {
         return {
             dataLoading: true,
-            acChargerConfigList: {} as AcChargerConfig,
+            acChargerConfigList: {} as GridChargerConfig,
             alertMessage: '',
             alertType: 'info',
             showAlert: false,
