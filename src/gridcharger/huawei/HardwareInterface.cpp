@@ -97,7 +97,7 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
 
     _boardPropertiesState = StringState::Complete;
 
-    if (config.Huawei.VerboseLogging) {
+    if (config.GridCharger.VerboseLogging) {
         MessageOutput.printf("[Huawei::HwIfc] board properties:\r\n%s\r\n",
                 _boardProperties.c_str());
     }
@@ -154,7 +154,7 @@ bool HardwareInterface::readDeviceConfig(can_message_t const& msg)
         // (not quite for a R4830 it seems, but the derived multiplier is spot on)
         uint8_t maxAmps = (msg.value >> 16) & 0xFF;
         _maxCurrentMultiplier = 2048 / static_cast<float>(maxAmps);
-        if (config.Huawei.VerboseLogging) {
+        if (config.GridCharger.VerboseLogging) {
             MessageOutput.printf("[Huawei::HwIfc] max current multiplier is %.2f\r\n",
                     _maxCurrentMultiplier);
         }
@@ -195,7 +195,7 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
     // sometimes the last bit of the value ID of a message with CAN ID
     // 0x1081407E is set. TODO(schlimmchen): why?
     if (msg.canId == 0x1081407E && (valueId & 0x01) > 0) {
-        if (config.Huawei.VerboseLogging) {
+        if (config.GridCharger.VerboseLogging) {
             MessageOutput.printf("[Huawei::HwIfc] last bit in value ID %08x is "
                     "set, resetting\r\n", valueId);
         }
@@ -206,7 +206,7 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
     // set on a R4830G1. this unit supports DC input as well, but these bits
     // do not change when powered the unit using DC. TODO(schlimmchen): why?
     if (msg.canId == 0x1081407F && (valueId & 0x03) > 0) {
-        if (config.Huawei.VerboseLogging) {
+        if (config.GridCharger.VerboseLogging) {
             MessageOutput.printf("[Huawei::HwIfc] last two bits in value ID "
                     "%08x are set, resetting\r\n", valueId);
         }
@@ -216,7 +216,7 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
     // during start-up and when shortening or opening the slot detect pins,
     // the value ID starts with 0x31 rather than 0x01. TODO(schlimmchen): why?
     if ((valueId >> 24) == 0x31) {
-        if (config.Huawei.VerboseLogging) {
+        if (config.GridCharger.VerboseLogging) {
             MessageOutput.print("[Huawei::HwIfc] processing value for value ID "
                     "starting with 0x31\r\n");
         }
@@ -277,7 +277,7 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
         default:
             uint8_t rawLabel = static_cast<uint8_t>(label);
             // 0x0E/0x0A seems to be a static label/value pair, so we don't print it
-            if (config.Huawei.VerboseLogging && (rawLabel != 0x0E || msg.value != 0x0A)) {
+            if (config.GridCharger.VerboseLogging && (rawLabel != 0x0E || msg.value != 0x0A)) {
                 MessageOutput.printf("[Huawei::HwIfc] raw value for 0x%02x is "
                         "0x%08x (%d), scaled by 1024: %.2f, scaled by %.2f: %.2f\r\n",
                         rawLabel, msg.value, msg.value,
@@ -346,14 +346,14 @@ bool HardwareInterface::readAcks(can_message_t const& msg)
 
 void HardwareInterface::sendSettings()
 {
-    auto const& config = Configuration.get().Huawei;
+    auto const& config = Configuration.get().GridCharger;
 
     using Setting = HardwareInterface::Setting;
-    enqueueParameter(Setting::OfflineVoltage, config.OfflineVoltage);
-    enqueueParameter(Setting::OfflineCurrent, config.OfflineCurrent);
-    enqueueParameter(Setting::InputCurrentLimit, config.InputCurrentLimit);
-    enqueueParameter(Setting::FanOnlineFullSpeed, config.FanOnlineFullSpeed ? 1 : 0);
-    enqueueParameter(Setting::FanOfflineFullSpeed, config.FanOfflineFullSpeed ? 1 : 0);
+    enqueueParameter(Setting::OfflineVoltage, config.Huawei.OfflineVoltage);
+    enqueueParameter(Setting::OfflineCurrent, config.Huawei.OfflineCurrent);
+    enqueueParameter(Setting::InputCurrentLimit, config.Huawei.InputCurrentLimit);
+    enqueueParameter(Setting::FanOnlineFullSpeed, config.Huawei.FanOnlineFullSpeed ? 1 : 0);
+    enqueueParameter(Setting::FanOfflineFullSpeed, config.Huawei.FanOfflineFullSpeed ? 1 : 0);
 
     _lastSettingsUpdateMillis = millis();
 }
@@ -366,7 +366,7 @@ void HardwareInterface::loop()
     if (!_upData) { _upData = std::make_unique<DataPointContainer>(); }
 
     auto logIncoming = [&config,&msg](bool processed) -> void {
-        if (!config.Huawei.VerboseLogging) { return; }
+        if (!config.GridCharger.VerboseLogging) { return; }
 
         MessageOutput.printf("[Huawei::HwIfc] %s message with CAN ID "
                 "0x%08x, value ID 0x%08x, and value 0x%08x\r\n",
@@ -483,7 +483,7 @@ void HardwareInterface::processQueue()
 
         uint32_t addr = 0x10800000 | (cmd.deviceAddress << 16) | cmd.registerAddress;
 
-        if (config.Huawei.VerboseLogging) {
+        if (config.GridCharger.VerboseLogging) {
             MessageOutput.printf("[Huawei::HwIfc] sending to 0x%08x: %04x%04x%08x\r\n",
                     addr, cmd.command, cmd.flags, cmd.value);
         }
@@ -570,7 +570,7 @@ std::unique_ptr<DataPointContainer> HardwareInterface::getCurrentData()
     }
 
     auto const& config = Configuration.get();
-    if (upData && config.Huawei.VerboseLogging) {
+    if (upData && config.GridCharger.VerboseLogging) {
         auto iter = upData->cbegin();
         while (iter != upData->cend()) {
             MessageOutput.printf("[Huawei::HwIfc] [%.3f] %s: %s%s\r\n",
