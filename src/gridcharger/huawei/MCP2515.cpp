@@ -65,7 +65,7 @@ bool MCP2515::init()
     digitalWrite(pin.huawei_cs, HIGH);
 
     auto mcp_frequency = MCP_8MHZ;
-    auto frequency = Configuration.get().Huawei.CAN_Controller_Frequency;
+    auto frequency = Configuration.get().GridCharger.Can.Controller_Frequency;
     if (16000000UL == frequency) { mcp_frequency = MCP_16MHZ; }
     else if (8000000UL != frequency) {
         MessageOutput.printf("[Huawei::MCP2515] unknown frequency %d Hz, using 8 MHz\r\n", mcp_frequency);
