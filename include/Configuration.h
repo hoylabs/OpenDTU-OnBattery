@@ -10,7 +10,7 @@
 
 #define CONFIG_FILENAME "/config.json"
 #define CONFIG_VERSION 0x00011e00 // 0.1.30 // make sure to clean all after change
-#define CONFIG_VERSION_ONBATTERY 7
+#define CONFIG_VERSION_ONBATTERY 8
 
 #define WIFI_MAX_SSID_STRLEN 32
 #define WIFI_MAX_PASSWORD_STRLEN 64
@@ -244,27 +244,39 @@ struct BATTERY_CONFIG_T {
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
+enum GridChargerProviderType { HUAWEI = 0 };
 enum GridChargerHardwareInterface { MCP2515 = 0, TWAI = 1 };
 
-struct GRID_CHARGER_CONFIG_T {
-    bool Enabled;
-    bool VerboseLogging;
+struct GRID_CHARGER_CAN_CONFIG_T {
     GridChargerHardwareInterface HardwareInterface;
-    uint32_t CAN_Controller_Frequency;
-    bool Auto_Power_Enabled;
-    bool Auto_Power_BatterySoC_Limits_Enabled;
-    bool Emergency_Charge_Enabled;
-    float Auto_Power_Voltage_Limit;
-    float Auto_Power_Enable_Voltage_Limit;
-    float Auto_Power_Lower_Power_Limit;
-    float Auto_Power_Upper_Power_Limit;
-    uint8_t Auto_Power_Stop_BatterySoC_Threshold;
-    float Auto_Power_Target_Power_Consumption;
+    uint32_t Controller_Frequency;
+};
+using GridChargerCanConfig = struct GRID_CHARGER_CAN_CONFIG_T;
+
+struct GRID_CHARGER_HUAWEI_CONFIG_T {
     float OfflineVoltage;
     float OfflineCurrent;
     float InputCurrentLimit;
     bool FanOnlineFullSpeed;
     bool FanOfflineFullSpeed;
+};
+using GridChargerHuaweiConfig = struct GRID_CHARGER_HUAWEI_CONFIG_T;
+
+struct GRID_CHARGER_CONFIG_T {
+    bool Enabled;
+    bool VerboseLogging;
+    bool AutoPowerEnabled;
+    bool AutoPowerBatterySoCLimitsEnabled;
+    bool EmergencyChargeEnabled;
+    float AutoPowerVoltageLimit;
+    float AutoPowerEnableVoltageLimit;
+    float AutoPowerLowerPowerLimit;
+    float AutoPowerUpperPowerLimit;
+    uint8_t AutoPowerStopBatterySoCThreshold;
+    float AutoPowerTargetPowerConsumption;
+    GridChargerProviderType Provider;
+    GridChargerCanConfig Can;
+    GridChargerHuaweiConfig Huawei;
 };
 using GridChargerConfig = struct GRID_CHARGER_CONFIG_T;
 
@@ -427,7 +439,7 @@ struct CONFIG_T {
 
     BatteryConfig Battery;
 
-    GridChargerConfig Huawei;
+    GridChargerConfig GridCharger;
 
     INVERTER_CONFIG_T Inverter[INV_MAX_COUNT];
     char Dev_PinMapping[DEV_MAX_MAPPING_NAME_STRLEN + 1];
@@ -482,6 +494,8 @@ public:
     static void serializeBatterySerialConfig(BatterySerialConfig const& source, JsonObject& target);
     static void serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target);
     static void serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target);
+    static void serializeGridChargerCanConfig(GridChargerCanConfig const& source, JsonObject& target);
+    static void serializeGridChargerHuaweiConfig(GridChargerHuaweiConfig const& source, JsonObject& target);
 
     static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
     static void deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target);
@@ -497,7 +511,8 @@ public:
     static void deserializeBatterySerialConfig(JsonObject const& source, BatterySerialConfig& target);
     static void deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target);
     static void deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target);
-
+    static void deserializeGridChargerCanConfig(JsonObject const& source, GridChargerCanConfig& target);
+    static void deserializeGridChargerHuaweiConfig(JsonObject const& source, GridChargerHuaweiConfig& target);
 private:
     void loop();
     static double roundedFloat(float val);

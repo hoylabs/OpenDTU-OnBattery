@@ -117,9 +117,9 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
 
     if (all || (HuaweiCan.getDataPoints().getLastUpdate() - _lastPublishHuawei) < halfOfAllMillis ) {
         auto huaweiObj = root["huawei"].to<JsonObject>();
-        huaweiObj["enabled"] = config.Huawei.Enabled;
+        huaweiObj["enabled"] = config.GridCharger.Enabled;
 
-        if (config.Huawei.Enabled) {
+        if (config.GridCharger.Enabled) {
             auto const& dataPoints = HuaweiCan.getDataPoints();
             auto oInputPower = dataPoints.get<GridCharger::Huawei::DataPointLabel::InputPower>();
             float pwr = oInputPower.value_or(0.0f);
