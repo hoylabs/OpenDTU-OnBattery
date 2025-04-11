@@ -234,17 +234,26 @@ void ConfigurationClass::serializeGridChargerConfig(GridChargerConfig const& sou
 {
     target["enabled"] = source.Enabled;
     target["verbose_logging"] = source.VerboseLogging;
+    target["provider"] = source.Provider;
+    target["auto_power_enabled"] = source.AutoPowerEnabled;
+    target["auto_power_batterysoc_limits_enabled"] = source.AutoPowerBatterySoCLimitsEnabled;
+    target["emergency_charge_enabled"] = source.EmergencyChargeEnabled;
+    target["voltage_limit"] = roundedFloat(source.AutoPowerVoltageLimit);
+    target["enable_voltage_limit"] = roundedFloat(source.AutoPowerEnableVoltageLimit);
+    target["lower_power_limit"] = source.AutoPowerLowerPowerLimit;
+    target["upper_power_limit"] = source.AutoPowerUpperPowerLimit;
+    target["stop_batterysoc_threshold"] = source.AutoPowerStopBatterySoCThreshold;
+    target["target_power_consumption"] = source.AutoPowerTargetPowerConsumption;
+}
+
+void ConfigurationClass::serializeGridChargerCanConfig(GridChargerCanConfig const& source, JsonObject& target)
+{
     target["hardware_interface"] = source.HardwareInterface;
-    target["can_controller_frequency"] = source.CAN_Controller_Frequency;
-    target["auto_power_enabled"] = source.Auto_Power_Enabled;
-    target["auto_power_batterysoc_limits_enabled"] = source.Auto_Power_BatterySoC_Limits_Enabled;
-    target["emergency_charge_enabled"] = source.Emergency_Charge_Enabled;
-    target["voltage_limit"] = roundedFloat(source.Auto_Power_Voltage_Limit);
-    target["enable_voltage_limit"] = roundedFloat(source.Auto_Power_Enable_Voltage_Limit);
-    target["lower_power_limit"] = source.Auto_Power_Lower_Power_Limit;
-    target["upper_power_limit"] = source.Auto_Power_Upper_Power_Limit;
-    target["stop_batterysoc_threshold"] = source.Auto_Power_Stop_BatterySoC_Threshold;
-    target["target_power_consumption"] = source.Auto_Power_Target_Power_Consumption;
+    target["controller_frequency"] = source.Controller_Frequency;
+}
+
+void ConfigurationClass::serializeGridChargerHuaweiConfig(GridChargerHuaweiConfig const& source, JsonObject& target)
+{
     target["offline_voltage"] = roundedFloat(source.OfflineVoltage);
     target["offline_current"] = roundedFloat(source.OfflineCurrent);
     target["input_current_limit"] = roundedFloat(source.InputCurrentLimit);
@@ -434,8 +443,14 @@ bool ConfigurationClass::write()
     JsonObject battery_serial = battery["serial"].to<JsonObject>();
     serializeBatterySerialConfig(config.Battery.Serial, battery_serial);
 
-    JsonObject huawei = doc["huawei"].to<JsonObject>();
-    serializeGridChargerConfig(config.Huawei, huawei);
+    JsonObject gridcharger = doc["gridcharger"].to<JsonObject>();
+    serializeGridChargerConfig(config.GridCharger, gridcharger);
+
+    JsonObject gridcharger_can = gridcharger["can"].to<JsonObject>();
+    serializeGridChargerCanConfig(config.GridCharger.Can, gridcharger_can);
+
+    JsonObject gridcharger_huawei = gridcharger["huawei"].to<JsonObject>();
+    serializeGridChargerHuaweiConfig(config.GridCharger.Huawei, gridcharger_huawei);
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
@@ -641,24 +656,33 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
 
 void ConfigurationClass::deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target)
 {
-    target.Enabled = source["enabled"] | HUAWEI_ENABLED;
+    target.Enabled = source["enabled"] | GRIDCHARGER_ENABLED;
     target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
+    target.Provider = source["provider"] | GridChargerProviderType::HUAWEI;
+    target.AutoPowerEnabled = source["auto_power_enabled"] | false;
+    target.AutoPowerBatterySoCLimitsEnabled = source["auto_power_batterysoc_limits_enabled"] | false;
+    target.EmergencyChargeEnabled = source["emergency_charge_enabled"] | false;
+    target.AutoPowerVoltageLimit = source["voltage_limit"] | GRIDCHARGER_AUTO_POWER_VOLTAGE_LIMIT;
+    target.AutoPowerEnableVoltageLimit =  source["enable_voltage_limit"] | GRIDCHARGER_AUTO_POWER_ENABLE_VOLTAGE_LIMIT;
+    target.AutoPowerLowerPowerLimit = source["lower_power_limit"] | GRIDCHARGER_AUTO_POWER_LOWER_POWER_LIMIT;
+    target.AutoPowerUpperPowerLimit = source["upper_power_limit"] | GRIDCHARGER_AUTO_POWER_UPPER_POWER_LIMIT;
+    target.AutoPowerStopBatterySoCThreshold = source["stop_batterysoc_threshold"] | GRIDCHARGER_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
+    target.AutoPowerTargetPowerConsumption = source["target_power_consumption"] | GRIDCHARGER_AUTO_POWER_TARGET_POWER_CONSUMPTION;
+}
+
+void ConfigurationClass::deserializeGridChargerCanConfig(JsonObject const& source, GridChargerCanConfig& target)
+{
     target.HardwareInterface = source["hardware_interface"] | GridChargerHardwareInterface::MCP2515;
-    target.CAN_Controller_Frequency = source["can_controller_frequency"] | HUAWEI_CAN_CONTROLLER_FREQUENCY;
-    target.Auto_Power_Enabled = source["auto_power_enabled"] | false;
-    target.Auto_Power_BatterySoC_Limits_Enabled = source["auto_power_batterysoc_limits_enabled"] | false;
-    target.Emergency_Charge_Enabled = source["emergency_charge_enabled"] | false;
-    target.Auto_Power_Voltage_Limit = source["voltage_limit"] | HUAWEI_AUTO_POWER_VOLTAGE_LIMIT;
-    target.Auto_Power_Enable_Voltage_Limit =  source["enable_voltage_limit"] | HUAWEI_AUTO_POWER_ENABLE_VOLTAGE_LIMIT;
-    target.Auto_Power_Lower_Power_Limit = source["lower_power_limit"] | HUAWEI_AUTO_POWER_LOWER_POWER_LIMIT;
-    target.Auto_Power_Upper_Power_Limit = source["upper_power_limit"] | HUAWEI_AUTO_POWER_UPPER_POWER_LIMIT;
-    target.Auto_Power_Stop_BatterySoC_Threshold = source["stop_batterysoc_threshold"] | HUAWEI_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
-    target.Auto_Power_Target_Power_Consumption = source["target_power_consumption"] | HUAWEI_AUTO_POWER_TARGET_POWER_CONSUMPTION;
-    target.OfflineVoltage = source["offline_voltage"] | HUAWEI_OFFLINE_VOLTAGE;
-    target.OfflineCurrent = source["offline_current"] | HUAWEI_OFFLINE_CURRENT;
-    target.InputCurrentLimit = source["input_current_limit"] | HUAWEI_INPUT_CURRENT_LIMIT;
-    target.FanOnlineFullSpeed = source["fan_online_full_speed"] | false;
-    target.FanOfflineFullSpeed = source["fan_offline_full_speed"] | false;
+    target.Controller_Frequency = source["controller_frequency"] | GRIDCHARGER_CAN_CONTROLLER_FREQUENCY;
+}
+
+void ConfigurationClass::deserializeGridChargerHuaweiConfig(JsonObject const& source, GridChargerHuaweiConfig& target)
+{
+    target.OfflineVoltage = source["offline_voltage"] | GRIDCHARGER_HUAWEI_OFFLINE_VOLTAGE;
+    target.OfflineCurrent = source["offline_current"] | GRIDCHARGER_HUAWEI_OFFLINE_CURRENT;
+    target.InputCurrentLimit = source["input_current_limit"] | GRIDCHARGER_HUAWEI_INPUT_CURRENT_LIMIT;
+    target.FanOnlineFullSpeed = source["fan_online_full_speed"] | GRIDCHARGER_HUAWEI_FAN_ONLINE_FULL_SPEED;
+    target.FanOfflineFullSpeed = source["fan_offline_full_speed"] | GRIDCHARGER_HUAWEI_FAN_OFFLINE_FULL_SPEED;
 }
 
 bool ConfigurationClass::read()
@@ -873,7 +897,10 @@ bool ConfigurationClass::read()
     deserializeBatteryMqttConfig(battery["mqtt"], config.Battery.Mqtt);
     deserializeBatterySerialConfig(battery["serial"], config.Battery.Serial);
 
-    deserializeGridChargerConfig(doc["huawei"], config.Huawei);
+    JsonObject gridcharger = doc["gridcharger"];
+    deserializeGridChargerConfig(gridcharger, config.GridCharger);
+    deserializeGridChargerCanConfig(gridcharger["can"], config.GridCharger.Can);
+    deserializeGridChargerHuaweiConfig(gridcharger["huawei"], config.GridCharger.Huawei);
 
     f.close();
 
@@ -1148,6 +1175,28 @@ void ConfigurationClass::migrateOnBattery()
         strlcpy(config.Battery.Mqtt.DischargeCurrentLimitTopic, battery["mqtt_discharge_current_topic"] | "", sizeof(config.Battery.Mqtt.DischargeCurrentLimitTopic));
         strlcpy(config.Battery.Mqtt.DischargeCurrentLimitJsonPath, battery["mqtt_discharge_current_json_path"] | "", sizeof(config.Battery.Mqtt.DischargeCurrentLimitJsonPath));
         config.Battery.Mqtt.DischargeCurrentLimitUnit = battery["mqtt_amperage_unit"] | BatteryAmperageUnit::Amps;
+    }
+
+    if (config.Cfg.VersionOnBattery < 8) {
+        JsonObject huawei = doc["huawei"];
+        config.GridCharger.Enabled = huawei["enabled"] | GRIDCHARGER_ENABLED;
+        config.GridCharger.VerboseLogging = huawei["verbose_logging"] | VERBOSE_LOGGING;
+        config.GridCharger.AutoPowerEnabled = huawei["auto_power_enabled"] | GRIDCHARGER_AUTO_POWER_ENABLED;
+        config.GridCharger.AutoPowerBatterySoCLimitsEnabled = huawei["auto_power_batterysoc_limits_enabled"] | GRIDCHARGER_AUTO_POWER_BATTERYSOC_LIMITS_ENABLED;
+        config.GridCharger.EmergencyChargeEnabled = huawei["emergency_charge_enabled"] | GRIDCHARGER_EMERGENCY_CHARGE_ENABLED;
+        config.GridCharger.AutoPowerVoltageLimit = huawei["voltage_limit"] | GRIDCHARGER_AUTO_POWER_VOLTAGE_LIMIT;
+        config.GridCharger.AutoPowerEnableVoltageLimit = huawei["enable_voltage_limit"] | GRIDCHARGER_AUTO_POWER_ENABLE_VOLTAGE_LIMIT;
+        config.GridCharger.AutoPowerLowerPowerLimit = huawei["lower_power_limit"] | GRIDCHARGER_AUTO_POWER_LOWER_POWER_LIMIT;
+        config.GridCharger.AutoPowerUpperPowerLimit = huawei["upper_power_limit"] | GRIDCHARGER_AUTO_POWER_UPPER_POWER_LIMIT;
+        config.GridCharger.AutoPowerStopBatterySoCThreshold = huawei["stop_batterysoc_threshold"] | GRIDCHARGER_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
+        config.GridCharger.AutoPowerTargetPowerConsumption = huawei["target_power_consumption"] | GRIDCHARGER_AUTO_POWER_TARGET_POWER_CONSUMPTION;
+        config.GridCharger.Can.Controller_Frequency = huawei["can_controller_frequency"] | GRIDCHARGER_CAN_CONTROLLER_FREQUENCY;
+        config.GridCharger.Can.HardwareInterface = huawei["hardware_interface"] | GridChargerHardwareInterface::MCP2515;
+        config.GridCharger.Huawei.OfflineVoltage = huawei["offline_voltage"] | GRIDCHARGER_HUAWEI_OFFLINE_VOLTAGE;
+        config.GridCharger.Huawei.OfflineCurrent = huawei["offline_current"] | GRIDCHARGER_HUAWEI_OFFLINE_CURRENT;
+        config.GridCharger.Huawei.InputCurrentLimit = huawei["input_current_limit"] | GRIDCHARGER_HUAWEI_INPUT_CURRENT_LIMIT;
+        config.GridCharger.Huawei.FanOnlineFullSpeed = huawei["fan_online_full_speed"] | GRIDCHARGER_HUAWEI_FAN_ONLINE_FULL_SPEED;
+        config.GridCharger.Huawei.FanOfflineFullSpeed = huawei["fan_offline_full_speed"] | GRIDCHARGER_HUAWEI_FAN_OFFLINE_FULL_SPEED;
     }
 
     f.close();

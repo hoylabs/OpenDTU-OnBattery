@@ -59,7 +59,7 @@ void MqttHandleHuaweiClass::loop()
 
     std::unique_lock<std::mutex> mqttLock(_mqttMutex);
 
-    if (!config.Huawei.Enabled) {
+    if (!config.GridCharger.Enabled) {
         _mqttCallbacks.clear();
         return;
     }
