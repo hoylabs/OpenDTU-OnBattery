@@ -20,7 +20,6 @@ bool Provider::init(bool verboseLogging)
                 std::bind(&Provider::onMqttMessageSoC,
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
-                    std::placeholders::_5, std::placeholders::_6,
                     config.Battery.Mqtt.SocJsonPath)
                 );
 
@@ -36,7 +35,6 @@ bool Provider::init(bool verboseLogging)
                 std::bind(&Provider::onMqttMessageVoltage,
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
-                    std::placeholders::_5, std::placeholders::_6,
                     config.Battery.Mqtt.VoltageJsonPath)
                 );
 
@@ -52,7 +50,6 @@ bool Provider::init(bool verboseLogging)
                 std::bind(&Provider::onMqttMessageCurrent,
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
-                    std::placeholders::_5, std::placeholders::_6,
                     config.Battery.Mqtt.CurrentJsonPath)
                 );
 
@@ -70,7 +67,6 @@ bool Provider::init(bool verboseLogging)
                     std::bind(&Provider::onMqttMessageDischargeCurrentLimit,
                         this, std::placeholders::_1, std::placeholders::_2,
                         std::placeholders::_3, std::placeholders::_4,
-                        std::placeholders::_5, std::placeholders::_6,
                         config.Battery.Mqtt.DischargeCurrentLimitJsonPath)
                     );
 
@@ -104,7 +100,7 @@ void Provider::deinit()
 }
 
 void Provider::onMqttMessageSoC(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+        char const* topic, uint8_t const* payload, size_t len,
         char const* jsonPath)
 {
     auto soc = Utils::getNumericValueFromMqttPayload<float>("MqttBattery",
@@ -130,7 +126,7 @@ void Provider::onMqttMessageSoC(espMqttClientTypes::MessageProperties const& pro
 }
 
 void Provider::onMqttMessageVoltage(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+        char const* topic, uint8_t const* payload, size_t len,
         char const* jsonPath)
 {
     auto voltage = Utils::getNumericValueFromMqttPayload<float>("MqttBattery",
@@ -174,7 +170,7 @@ void Provider::onMqttMessageVoltage(espMqttClientTypes::MessageProperties const&
 }
 
 void Provider::onMqttMessageCurrent(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+        char const* topic, uint8_t const* payload, size_t len,
         char const* jsonPath)
 {
     auto amperage = Utils::getNumericValueFromMqttPayload<float>("MqttBattery",
@@ -205,7 +201,7 @@ void Provider::onMqttMessageCurrent(espMqttClientTypes::MessageProperties const&
 }
 
 void Provider::onMqttMessageDischargeCurrentLimit(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+        char const* topic, uint8_t const* payload, size_t len,
         char const* jsonPath)
 {
     auto amperage = Utils::getNumericValueFromMqttPayload<float>("MqttBattery",
