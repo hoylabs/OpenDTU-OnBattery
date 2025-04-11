@@ -1102,7 +1102,7 @@ void ConfigurationClass::migrateOnBattery()
     if (config.Cfg.VersionOnBattery < 4) {
         JsonObject vedirect = doc["vedirect"];
         config.SolarCharger.Enabled = vedirect["enabled"] | SOLAR_CHARGER_ENABLED;
-        config.SolarCharger.VerboseLogging = vedirect["verbose_logging"] | SOLAR_CHARGER_VERBOSE_LOGGING;
+        config.SolarCharger.VerboseLogging = vedirect["verbose_logging"] | VERBOSE_LOGGING;
         config.SolarCharger.PublishUpdatesOnly = vedirect["updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
     }
 
