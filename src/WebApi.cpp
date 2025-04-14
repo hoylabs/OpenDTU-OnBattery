@@ -45,7 +45,7 @@ void WebApiClass::init(Scheduler& scheduler)
     _webApiWsSolarChargerLive.init(_server, scheduler);
     _webApiSolarCharger.init(_server, scheduler);
     _webApiWsHuaweiLive.init(_server, scheduler);
-    _webApiHuaweiClass.init(_server, scheduler);
+    _webApiGridCharger.init(_server, scheduler);
     _webApiWsBatteryLive.init(_server, scheduler);
 
     _server.begin();

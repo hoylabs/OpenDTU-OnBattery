@@ -487,7 +487,7 @@ export default defineComponent({
 
             console.log(this.targetLimitList);
 
-            fetch('/api/huawei/limit', {
+            fetch('/api/gridcharger/limit', {
                 method: 'POST',
                 headers: authHeader(),
                 body: formData,
@@ -508,7 +508,7 @@ export default defineComponent({
             const formData = new FormData();
             formData.append('data', JSON.stringify({ power }));
 
-            fetch('/api/huawei/power', {
+            fetch('/api/gridcharger/power', {
                 method: 'POST',
                 headers: authHeader(),
                 body: formData,
