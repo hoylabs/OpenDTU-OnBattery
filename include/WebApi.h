@@ -30,7 +30,7 @@
 #include <AsyncJson.h>
 #include "WebApi_ws_solarcharger_live.h"
 #include "WebApi_solarcharger.h"
-#include "WebApi_ws_Huawei.h"
+#include "WebApi_ws_gridcharger.h"
 #include "WebApi_gridcharger.h"
 #include "WebApi_ws_battery.h"
 #include <ESPAsyncWebServer.h>
@@ -84,7 +84,7 @@ private:
     WebApiWsSolarChargerLiveClass _webApiWsSolarChargerLive;
     WebApiSolarChargerlass _webApiSolarCharger;
     WebApiGridChargerClass _webApiGridCharger;
-    WebApiWsHuaweiLiveClass _webApiWsHuaweiLive;
+    WebApiWsGridChargerLiveClass _webApiWsGridChargerLive;
     WebApiWsBatteryLiveClass _webApiWsBatteryLive;
 };
 
