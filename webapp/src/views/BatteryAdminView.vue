@@ -47,7 +47,7 @@
                         {{ $t('batteryadmin.SerialInterfaceType') }}
                     </label>
                     <div class="col-sm-8">
-                        <select class="form-select" v-model="batteryConfigList.jkbms_interface">
+                        <select class="form-select" v-model="batteryConfigList.serial.interface">
                             <option
                                 v-for="serialInterface in serialBmsInterfaceTypeList"
                                 :key="serialInterface.key"
@@ -61,7 +61,7 @@
 
                 <InputElement
                     :label="$t('batteryadmin.PollingInterval')"
-                    v-model="batteryConfigList.jkbms_polling_interval"
+                    v-model="batteryConfigList.serial.polling_interval"
                     type="number"
                     min="2"
                     max="90"
@@ -75,7 +75,7 @@
                 <CardElement :text="$t('batteryadmin.MqttSocConfiguration')" textVariant="text-bg-primary" addSpace>
                     <InputElement
                         :label="$t('batteryadmin.MqttSocTopic')"
-                        v-model="batteryConfigList.mqtt_soc_topic"
+                        v-model="batteryConfigList.mqtt.soc_topic"
                         type="text"
                         maxlength="256"
                         wide
@@ -83,7 +83,7 @@
 
                     <InputElement
                         :label="$t('batteryadmin.MqttJsonPath')"
-                        v-model="batteryConfigList.mqtt_soc_json_path"
+                        v-model="batteryConfigList.mqtt.soc_json_path"
                         type="text"
                         maxlength="256"
                         :tooltip="$t('batteryadmin.MqttJsonPathDescription')"
@@ -94,7 +94,7 @@
                 <CardElement :text="$t('batteryadmin.MqttVoltageConfiguration')" textVariant="text-bg-primary" addSpace>
                     <InputElement
                         :label="$t('batteryadmin.MqttVoltageTopic')"
-                        v-model="batteryConfigList.mqtt_voltage_topic"
+                        v-model="batteryConfigList.mqtt.voltage_topic"
                         type="text"
                         maxlength="256"
                         wide
@@ -102,7 +102,7 @@
 
                     <InputElement
                         :label="$t('batteryadmin.MqttJsonPath')"
-                        v-model="batteryConfigList.mqtt_voltage_json_path"
+                        v-model="batteryConfigList.mqtt.voltage_json_path"
                         type="text"
                         maxlength="256"
                         :tooltip="$t('batteryadmin.MqttJsonPathDescription')"
@@ -117,9 +117,45 @@
                             <select
                                 id="mqtt_voltage_unit"
                                 class="form-select"
-                                v-model="batteryConfigList.mqtt_voltage_unit"
+                                v-model="batteryConfigList.mqtt.voltage_unit"
                             >
                                 <option v-for="u in voltageUnitTypeList" :key="u.key" :value="u.key">
+                                    {{ u.value }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </CardElement>
+
+                <CardElement :text="$t('batteryadmin.MqttCurrentConfiguration')" textVariant="text-bg-primary" addSpace>
+                    <InputElement
+                        :label="$t('batteryadmin.MqttCurrentTopic')"
+                        v-model="batteryConfigList.mqtt.current_topic"
+                        type="text"
+                        maxlength="256"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('batteryadmin.MqttJsonPath')"
+                        v-model="batteryConfigList.mqtt.current_json_path"
+                        type="text"
+                        maxlength="256"
+                        :tooltip="$t('batteryadmin.MqttJsonPathDescription')"
+                        wide
+                    />
+
+                    <div class="row mb-3">
+                        <label for="mqtt_current_unit" class="col-sm-4 col-form-label">
+                            {{ $t('batteryadmin.MqttAmperageUnit') }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select
+                                id="mqtt_current_unit"
+                                class="form-select"
+                                v-model="batteryConfigList.mqtt.current_unit"
+                            >
+                                <option v-for="u in amperageUnitTypeList" :key="u.key" :value="u.key">
                                     {{ u.value }}
                                 </option>
                             </select>
@@ -203,8 +239,8 @@
 
                             <template v-if="batteryConfigList.provider == 2">
                                 <InputElement
-                                    :label="$t('batteryadmin.MqttDischargeCurrentTopic')"
-                                    v-model="batteryConfigList.mqtt_discharge_current_topic"
+                                    :label="$t('batteryadmin.MqttDischargeCurrentLimitTopic')"
+                                    v-model="batteryConfigList.mqtt.discharge_current_limit_topic"
                                     wide
                                     type="text"
                                     maxlength="256"
@@ -212,7 +248,7 @@
 
                                 <InputElement
                                     :label="$t('batteryadmin.MqttJsonPath')"
-                                    v-model="batteryConfigList.mqtt_discharge_current_json_path"
+                                    v-model="batteryConfigList.mqtt.discharge_current_limit_json_path"
                                     wide
                                     type="text"
                                     maxlength="256"
@@ -220,15 +256,15 @@
                                 />
 
                                 <div class="row mb-3">
-                                    <label for="mqtt_amperage_unit" class="col-sm-4 col-form-label">
+                                    <label for="discharge_current_limit_unit" class="col-sm-4 col-form-label">
                                         {{ $t('batteryadmin.MqttAmperageUnit') }}
                                     </label>
 
                                     <div class="col-sm-8">
                                         <select
-                                            id="mqtt_amperage_unit"
+                                            id="discharge_current_limit_unit"
                                             class="form-select"
-                                            v-model="batteryConfigList.mqtt_amperage_unit"
+                                            v-model="batteryConfigList.mqtt.discharge_current_limit_unit"
                                         >
                                             <option v-for="u in amperageUnitTypeList" :key="u.key" :value="u.key">
                                                 {{ u.value }}
@@ -527,6 +563,7 @@ export default defineComponent({
                     this.alertMessage = this.$t('apiresponse.' + response.code, response.param);
                     this.alertType = response.type;
                     this.showAlert = true;
+                    window.scrollTo(0, 0);
                 });
         },
     },
