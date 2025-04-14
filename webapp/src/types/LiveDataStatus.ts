@@ -69,7 +69,7 @@ export interface SolarCharger {
     yieldTotal?: ValueObject;
 }
 
-export interface Huawei {
+export interface GridCharger {
     enabled: boolean;
     Power: ValueObject;
 }
@@ -92,7 +92,7 @@ export interface LiveData {
     total: Total;
     hints: Hints;
     solarcharger: SolarCharger;
-    huawei: Huawei;
+    gridcharger: GridCharger;
     battery: Battery;
     power_meter: PowerMeter;
 }
