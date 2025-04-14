@@ -22,8 +22,9 @@ uint16_t PowerLimiterSolarInverter::getMaxIncreaseWatts() const
 
     if (!isProducing()) {
         // the inverter is not producing, we don't know how much we can increase
-        // the power, so we return the maximum possible increase
-        return getConfiguredMaxPowerWatts();
+        // the power, but its likely that its early in the morning when this happens,
+        // so we return the lower power limit.
+        return _config.LowerPowerLimit;
     }
 
     // The inverter produces the configured max power or more.
