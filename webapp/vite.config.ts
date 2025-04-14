@@ -81,7 +81,7 @@ export default defineConfig(({ command }) => { return {
         ws: true,
         changeOrigin: true
       },
-      '^/huaweilivedata': {
+      '^/gridchargerlivedata': {
         target: 'ws://' + proxy_target,
         ws: true,
         changeOrigin: true
