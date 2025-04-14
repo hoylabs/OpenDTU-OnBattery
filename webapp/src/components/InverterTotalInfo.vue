@@ -181,16 +181,16 @@
                 </h2>
             </CardElement>
         </div>
-        <div class="col" v-if="huaweiData.enabled">
+        <div class="col" v-if="gridChargerData.enabled">
             <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.HuaweiPower')">
                 <h2>
                     {{
-                        $n(huaweiData.Power.v, 'decimal', {
-                            minimumFractionDigits: huaweiData.Power.d,
-                            maximumFractionDigits: huaweiData.Power.d,
+                        $n(gridChargerData.Power.v, 'decimal', {
+                            minimumFractionDigits: gridChargerData.Power.d,
+                            maximumFractionDigits: gridChargerData.Power.d,
                         })
                     }}
-                    <small class="text-muted">{{ huaweiData.Power.u }}</small>
+                    <small class="text-muted">{{ gridChargerData.Power.u }}</small>
                 </h2>
             </CardElement>
         </div>
@@ -200,7 +200,7 @@
 <script lang="ts">
 import BootstrapAlert from '@/components/BootstrapAlert.vue';
 import { BIconGear } from 'bootstrap-icons-vue';
-import type { Battery, Total, SolarCharger, Huawei, PowerMeter } from '@/types/LiveDataStatus';
+import type { Battery, Total, SolarCharger, GridCharger, PowerMeter } from '@/types/LiveDataStatus';
 import CardElement from './CardElement.vue';
 import { defineComponent, type PropType, useTemplateRef } from 'vue';
 
@@ -216,7 +216,7 @@ export default defineComponent({
         solarChargerData: { type: Object as PropType<SolarCharger>, required: true },
         totalBattData: { type: Object as PropType<Battery>, required: true },
         powerMeterData: { type: Object as PropType<PowerMeter>, required: true },
-        huaweiData: { type: Object as PropType<Huawei>, required: true },
+        gridChargerData: { type: Object as PropType<GridCharger>, required: true },
     },
     data() {
         return {
