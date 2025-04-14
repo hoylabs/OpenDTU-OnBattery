@@ -6,7 +6,6 @@
 #include "MessageOutput.h"
 #include "MqttSettings.h"
 #include <gridcharger/huawei/Controller.h>
-#include "WebApi_Huawei.h"
 #include <ctime>
 
 MqttHandleHuaweiClass MqttHandleHuawei;
