@@ -44,7 +44,7 @@ void WebApiClass::init(Scheduler& scheduler)
     _webApiPowerLimiter.init(_server, scheduler);
     _webApiWsSolarChargerLive.init(_server, scheduler);
     _webApiSolarCharger.init(_server, scheduler);
-    _webApiWsHuaweiLive.init(_server, scheduler);
+    _webApiWsGridChargerLive.init(_server, scheduler);
     _webApiGridCharger.init(_server, scheduler);
     _webApiWsBatteryLive.init(_server, scheduler);
 
@@ -57,7 +57,7 @@ void WebApiClass::reload()
     _webApiWsLive.reload();
     _webApiWsBatteryLive.reload();
     _webApiWsSolarChargerLive.reload();
-    _webApiWsHuaweiLive.reload();
+    _webApiWsGridChargerLive.reload();
 }
 
 bool WebApiClass::checkCredentials(AsyncWebServerRequest* request)
