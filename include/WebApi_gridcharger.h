@@ -5,7 +5,7 @@
 #include <TaskSchedulerDeclarations.h>
 #include <AsyncJson.h>
 
-class WebApiHuaweiClass {
+class WebApiGridChargerClass {
 public:
     void init(AsyncWebServer& server, Scheduler& scheduler);
     void getJsonData(JsonVariant& root);
