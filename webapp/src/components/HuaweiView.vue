@@ -403,10 +403,10 @@ export default defineComponent({
     },
     methods: {
         getInitialData() {
-            console.log('Get initalData for Huawei');
+            console.log('Get initalData for GridCharger');
             this.dataLoading = true;
 
-            fetch('/api/huaweilivedata/status', { headers: authHeader() })
+            fetch('/api/gridchargerlivedata/status', { headers: authHeader() })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
                     this.huaweiData = data;
@@ -414,11 +414,11 @@ export default defineComponent({
                 });
         },
         initSocket() {
-            console.log('Starting connection to Huawei WebSocket Server');
+            console.log('Starting connection to GridCharger WebSocket Server');
 
             const { protocol, host } = location;
             const authString = authUrl();
-            const webSocketUrl = `${protocol === 'https:' ? 'wss' : 'ws'}://${authString}${host}/huaweilivedata`;
+            const webSocketUrl = `${protocol === 'https:' ? 'wss' : 'ws'}://${authString}${host}/gridchargerlivedata`;
 
             this.socket = new WebSocket(webSocketUrl);
 
@@ -431,7 +431,7 @@ export default defineComponent({
 
             this.socket.onopen = function (event) {
                 console.log(event);
-                console.log('Successfully connected to the Huawei websocket server...');
+                console.log('Successfully connected to the GridCharger websocket server...');
             };
 
             // Listen to window events , When the window closes , Take the initiative to disconnect websocket Connect
