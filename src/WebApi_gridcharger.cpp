@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2022-2024 Thomas Basler and others
  */
-#include "WebApi_Huawei.h"
+#include "WebApi_gridcharger.h"
 #include <gridcharger/huawei/Controller.h>
 #include "Configuration.h"
 #include "MessageOutput.h"
@@ -12,20 +12,20 @@
 #include <AsyncJson.h>
 #include <Hoymiles.h>
 
-void WebApiHuaweiClass::init(AsyncWebServer& server, Scheduler& scheduler)
+void WebApiGridChargerClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
     using std::placeholders::_1;
 
     _server = &server;
 
-    _server->on("/api/huawei/status", HTTP_GET, std::bind(&WebApiHuaweiClass::onStatus, this, _1));
-    _server->on("/api/huawei/config", HTTP_GET, std::bind(&WebApiHuaweiClass::onAdminGet, this, _1));
-    _server->on("/api/huawei/config", HTTP_POST, std::bind(&WebApiHuaweiClass::onAdminPost, this, _1));
-    _server->on("/api/huawei/limit", HTTP_POST, std::bind(&WebApiHuaweiClass::onLimitPost, this, _1));
-    _server->on("/api/huawei/power", HTTP_POST, std::bind(&WebApiHuaweiClass::onPowerPost, this, _1));
+    _server->on("/api/gridcharger/status", HTTP_GET, std::bind(&WebApiGridChargerClass::onStatus, this, _1));
+    _server->on("/api/gridcharger/config", HTTP_GET, std::bind(&WebApiGridChargerClass::onAdminGet, this, _1));
+    _server->on("/api/gridcharger/config", HTTP_POST, std::bind(&WebApiGridChargerClass::onAdminPost, this, _1));
+    _server->on("/api/gridcharger/limit", HTTP_POST, std::bind(&WebApiGridChargerClass::onLimitPost, this, _1));
+    _server->on("/api/gridcharger/power", HTTP_POST, std::bind(&WebApiGridChargerClass::onPowerPost, this, _1));
 }
 
-void WebApiHuaweiClass::onStatus(AsyncWebServerRequest* request)
+void WebApiGridChargerClass::onStatus(AsyncWebServerRequest* request)
 {
     if (!WebApi.checkCredentialsReadonly(request)) {
         return;
@@ -39,7 +39,7 @@ void WebApiHuaweiClass::onStatus(AsyncWebServerRequest* request)
     request->send(response);
 }
 
-void WebApiHuaweiClass::onLimitPost(AsyncWebServerRequest* request)
+void WebApiGridChargerClass::onLimitPost(AsyncWebServerRequest* request)
 {
     if (!WebApi.checkCredentials(request)) {
         return;
@@ -98,7 +98,7 @@ void WebApiHuaweiClass::onLimitPost(AsyncWebServerRequest* request)
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
-void WebApiHuaweiClass::onPowerPost(AsyncWebServerRequest* request)
+void WebApiGridChargerClass::onPowerPost(AsyncWebServerRequest* request)
 {
     if (!WebApi.checkCredentials(request)) {
         return;
@@ -129,7 +129,7 @@ void WebApiHuaweiClass::onPowerPost(AsyncWebServerRequest* request)
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
-void WebApiHuaweiClass::onAdminGet(AsyncWebServerRequest* request)
+void WebApiGridChargerClass::onAdminGet(AsyncWebServerRequest* request)
 {
     if (!WebApi.checkCredentials(request)) {
         return;
@@ -151,7 +151,7 @@ void WebApiHuaweiClass::onAdminGet(AsyncWebServerRequest* request)
     request->send(response);
 }
 
-void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
+void WebApiGridChargerClass::onAdminPost(AsyncWebServerRequest* request)
 {
     if (!WebApi.checkCredentials(request)) {
         return;

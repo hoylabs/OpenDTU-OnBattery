@@ -270,7 +270,7 @@ export default defineComponent({
     methods: {
         getChargerConfig() {
             this.dataLoading = true;
-            fetch('/api/huawei/config', { headers: authHeader() })
+            fetch('/api/gridcharger/config', { headers: authHeader() })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
                     this.acChargerConfigList = data;
@@ -283,7 +283,7 @@ export default defineComponent({
             const formData = new FormData();
             formData.append('data', JSON.stringify(this.acChargerConfigList));
 
-            fetch('/api/huawei/config', {
+            fetch('/api/gridcharger/config', {
                 method: 'POST',
                 headers: authHeader(),
                 body: formData,
