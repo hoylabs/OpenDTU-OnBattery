@@ -132,8 +132,10 @@
         "12001": "Profilname muss zwischen 1 und {max} Zeichen lang sein!"
     },
     "onbatteryapiresponse": {
-        "1001": "Spannungsbegrenzung muss zwischen {min} und {max} V liegen",
-        "1002": "Strombegrenzung muss zwischen {min} und {max} A liegen"
+        "1001": "@:apiresponse.1001",
+        "1002": "Spannungsbegrenzung muss zwischen {min} und {max} V liegen",
+        "1003": "Strombegrenzung muss zwischen {min} und {max} A liegen",
+        "1005": "@:apiresponse.1005"
     },
     "home": {
         "LiveData": "Live-Daten",
