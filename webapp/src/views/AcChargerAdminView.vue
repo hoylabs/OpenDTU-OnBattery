@@ -276,7 +276,7 @@ export default defineComponent({
             })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((response) => {
-                    this.alertMessage = this.$t('apiresponse.' + response.code, response.param);
+                    this.alertMessage = this.$t('onbatteryapiresponse.' + response.code, response.param);
                     this.alertType = response.type;
                     this.showAlert = true;
                 });
