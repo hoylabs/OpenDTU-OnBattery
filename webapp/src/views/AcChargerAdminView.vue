@@ -279,6 +279,7 @@ export default defineComponent({
                     this.alertMessage = this.$t('onbatteryapiresponse.' + response.code, response.param);
                     this.alertType = response.type;
                     this.showAlert = true;
+                    window.scrollTo(0, 0);
                 });
         },
     },
