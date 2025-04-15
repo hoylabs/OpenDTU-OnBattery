@@ -182,7 +182,7 @@
             </CardElement>
         </div>
         <div class="col" v-if="gridChargerData.enabled">
-            <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.HuaweiPower')">
+            <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.GridChargerPower')">
                 <h2>
                     {{
                         $n(gridChargerData.Power.v, 'decimal', {

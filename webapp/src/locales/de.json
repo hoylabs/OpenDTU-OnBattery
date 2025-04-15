@@ -457,7 +457,7 @@
         "BatteryCharge": "Batterie Ladezustand",
         "BatteryPower": "Batterie Leistung",
         "HomePower": "Leistung / Netz",
-        "HuaweiPower": "Huawei AC Leistung"
+        "GridChargerPower": "Netzladegerät AC Leistung"
     },
     "inverterchannelproperty": {
         "Power": "Leistung",

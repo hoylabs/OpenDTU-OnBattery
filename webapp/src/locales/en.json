@@ -458,7 +458,7 @@
         "BatteryCharge": "Battery Charge",
         "BatteryPower": "Battery Power",
         "HomePower": "Grid Power",
-        "HuaweiPower": "Huawei AC Power"
+        "GridChargerPower": "Grid Charger AC Power"
     },
     "inverterchannelproperty": {
         "Power": "Power",
