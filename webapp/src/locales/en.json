@@ -132,8 +132,10 @@
         "12001": "Profile name must between 1 and {max} characters long!"
     },
     "onbatteryapiresponse": {
-        "1001": "Valid voltage limit range is between {min} and {max} V",
-        "1002": "Valid current limit range is between {min} and {max} A"
+        "1001": "@:apiresponse.1001",
+        "1002": "Valid voltage limit range is between {min} and {max} V",
+        "1003": "Valid current limit range is between {min} and {max} A",
+        "1005": "@:apiresponse.1005"
     },
     "home": {
         "LiveData": "Live Data",
