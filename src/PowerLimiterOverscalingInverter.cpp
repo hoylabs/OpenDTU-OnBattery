@@ -73,7 +73,6 @@ uint16_t PowerLimiterOverscalingInverter::scaleLimit(uint16_t newExpectedOutputW
     // unreasonable scaling.
     if (!isProducing()) { return newExpectedOutputWatts; }
 
-    auto pStats = _spInverter->Statistics();
     std::vector<ChannelNum_t> dcChnls = _spInverter->getChannelsDC();
     std::vector<MpptNum_t> dcMppts = _spInverter->getMppts();
     size_t dcTotalChnls = dcChnls.size();
