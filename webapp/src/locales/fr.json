@@ -427,8 +427,7 @@
         "MpptTotalPower": "Puissance totale solaire",
         "BatteryCharge": "Battery Charge",
         "BatteryPower": "Battery Power",
-        "HomePower": "Grid Power",
-        "HuaweiPower": "Huawei AC Power"
+        "HomePower": "Grid Power"
     },
     "inverterchannelproperty": {
         "Power": "Puissance",
