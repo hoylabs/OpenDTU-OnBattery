@@ -403,7 +403,7 @@ export default defineComponent({
     },
     methods: {
         getInitialData() {
-            console.log('Get initalData for GridCharger');
+            console.log('Get initialData for GridCharger');
             this.dataLoading = true;
 
             fetch('/api/gridchargerlivedata/status', { headers: authHeader() })
