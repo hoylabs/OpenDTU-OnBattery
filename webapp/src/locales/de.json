@@ -13,6 +13,7 @@
         "SolarChargerSettings": "Solarladeregler",
         "PowerMeterSettings": "Stromzähler",
         "BatterySettings": "Batterie",
+        "BatteryGuardSettings": "Battery Guard",
         "AcChargerSettings": "AC-Ladegerät",
         "ConfigManagement": "Konfigurationsverwaltung",
         "FirmwareUpgrade": "Firmware-Aktualisierung",
@@ -1266,5 +1267,19 @@
         "full-access": "@:batteryadmin.zendure.controlModes.Full",
         "write-once": "Einmalig Schreiben",
         "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly"
+    },
+    "batteryguardadmin": {
+        "BatteryGuardSettings": "Battery Guard Einstellungen",
+        "ConfigAlertMessage": "Eine oder mehrere Voraussetzungen zum Betrieb des Battery Guard sind nicht erfüllt.",
+        "ConfigHints": "Konfigurationshinweise",
+        "ConfigHintsIntro": "Folgende Hinweise zur Konfiguration des Battery Guard sollten beachtet werden:",
+        "ConfigHintRequirement": "Erforderlich",
+        "ConfigHintOptional": "Optional",
+        "ConfigHintBatteryRequired": "Battery Guard kann nur mit konfigurierter Batteriekommunikationsschnittstelle genutzt werden.",
+        "BatteryGuardConfiguration": "Battery Guard Konfiguration",
+        "EnableBatteryGuard": "Battery Guard aktivieren",
+        "VerboseLogging": "Ausführliches Logging aktivieren",
+        "InternalResistance": "Interner Widerstand",
+        "InternalResistanceHint": "Das System versucht den Wert aus Laständerungen zu berechnen. Bis ein berechneter Wert zur Verfügung steht wird der hier konfigurierte Wert verwendet. Der aktuelle Wert wird bei den Batteriedaten angezeigt."
     }
 }
