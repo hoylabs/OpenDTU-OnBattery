@@ -14,6 +14,7 @@ export interface GridChargerHuaweiConfig {
 export interface GridChargerConfig {
     enabled: boolean;
     verbose_logging: boolean;
+    provider: number;
     auto_power_enabled: boolean;
     auto_power_batterysoc_limits_enabled: boolean;
     voltage_limit: number;
