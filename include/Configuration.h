@@ -245,7 +245,6 @@ struct BATTERY_CONFIG_T {
     char MqttDischargeCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
     char MqttDischargeCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryAmperageUnit MqttAmperageUnit;
-    BatteryZendureConfig Zendure;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 

@@ -57,5 +57,4 @@ export interface BatteryConfig {
     mqtt_discharge_current_topic: string;
     mqtt_discharge_current_json_path: string;
     mqtt_amperage_unit: number;
-    zendure: BatteryZendureConfig;
 }
