@@ -166,6 +166,7 @@ void WebApiHuaweiClass::onAdminPost(AsyncWebServerRequest* request)
     auto& retMsg = response->getRoot();
 
     if (!(root["enabled"].is<bool>()) ||
+        !(root["provider"].is<uint8_t>()) ||
         !(root["can"]["controller_frequency"].is<uint32_t>()) ||
         !(root["auto_power_enabled"].is<bool>()) ||
         !(root["emergency_charge_enabled"].is<bool>()) ||
