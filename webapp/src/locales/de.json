@@ -1068,7 +1068,9 @@
     "acchargeradmin": {
         "ChargerSettings": "AC Ladegerät Einstellungen",
         "Configuration": "AC Ladegerät Konfiguration",
-        "EnableHuawei": "Huawei R4850G2 an CAN Bus Interface aktiv",
+        "EnableGridCharger": "Aktiviere Schnittstelle",
+        "Provider": "Datenanbieter",
+        "ProviderHuawei": "Huawei R48xx an CAN Bus Interface",
         "VerboseLogging": "@:base.VerboseLogging",
         "HardwareInterface": "Schnittstellentyp",
         "HardwareInterfaceMCP2515": "Externer CAN-Controller MCP2515 über SPI",

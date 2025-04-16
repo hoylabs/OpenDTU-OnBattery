@@ -894,7 +894,6 @@
     "acchargeradmin": {
         "ChargerSettings": "AC Charger Settings",
         "Configuration": "AC Charger Configuration",
-        "EnableHuawei": "Enable Huawei R4850G2 on CAN Bus Interface",
         "VerboseLogging": "@:base.VerboseLogging",
         "HardwareInterface": "Interface Type",
         "HardwareInterfaceMCP2515": "External CAN-Controller MCP2515 over SPI",
