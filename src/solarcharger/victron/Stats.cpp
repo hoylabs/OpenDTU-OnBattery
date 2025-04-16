@@ -54,7 +54,9 @@ std::optional<float> Stats::getOutputPowerWatts() const
 
         efficiencies.push_back(data.mpptEfficiency_Percent);
         accountedInputPower += data.panelPower_PPV_W;
-        accountedOutputPower += std::max<int16_t>(0, data.batteryOutputPower_W);
+
+        // NOTE: batteryOutputPower_W can be negative if the load output is in use
+        accountedOutputPower += data.batteryOutputPower_W;
     }
 
     if (oNetworkPower.has_value()) {

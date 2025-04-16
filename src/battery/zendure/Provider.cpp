@@ -72,8 +72,7 @@ bool Provider::init(bool verboseLogging)
     MqttSettings.subscribe(topic, 0/*QoS*/,
             std::bind(&Provider::onMqttMessagePersistentSettings,
                 this, std::placeholders::_1, std::placeholders::_2,
-                std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6)
+                std::placeholders::_3, std::placeholders::_4)
             );
     log("Subscribed to '%s' for persistent settings", topic.c_str());
 
@@ -82,8 +81,7 @@ bool Provider::init(bool verboseLogging)
     MqttSettings.subscribe(_topicLog, 0/*QoS*/,
             std::bind(&Provider::onMqttMessageLog,
                 this, std::placeholders::_1, std::placeholders::_2,
-                std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6)
+                std::placeholders::_3, std::placeholders::_4)
             );
     log("Subscribed to '%s' for status readings", _topicLog.c_str());
 
@@ -92,8 +90,7 @@ bool Provider::init(bool verboseLogging)
     MqttSettings.subscribe(_topicReport, 0/*QoS*/,
             std::bind(&Provider::onMqttMessageReport,
                 this, std::placeholders::_1, std::placeholders::_2,
-                std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6)
+                std::placeholders::_3, std::placeholders::_4)
             );
     log("Subscribed to '%s' for status readings", _topicReport.c_str());
 
@@ -102,8 +99,7 @@ bool Provider::init(bool verboseLogging)
     MqttSettings.subscribe(_topicTimesync, 0/*QoS*/,
             std::bind(&Provider::onMqttMessageTimesync,
                 this, std::placeholders::_1, std::placeholders::_2,
-                std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6)
+                std::placeholders::_3, std::placeholders::_4)
             );
     log("Subscribed to '%s' for timesync requests", _topicTimesync.c_str());
 
@@ -407,7 +403,7 @@ bool Provider::setChargeThrough(const bool value, const bool publish /* = true *
 }
 
 void Provider::onMqttMessagePersistentSettings(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)
+        char const* topic, uint8_t const* payload, size_t len)
 {
     String t(topic);
     String p(reinterpret_cast<const char*>(payload), len);
@@ -430,13 +426,13 @@ void Provider::onMqttMessagePersistentSettings(espMqttClientTypes::MessageProper
 }
 
 void Provider::onMqttMessageTimesync(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)
+        char const* topic, uint8_t const* payload, size_t len)
 {
     timesync();
 }
 
 void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)
+        char const* topic, uint8_t const* payload, size_t len)
 {
     auto ms = millis();
 
@@ -623,7 +619,7 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
 }
 
 void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)
+        char const* topic, uint8_t const* payload, size_t len)
 {
     auto ms = millis();
 

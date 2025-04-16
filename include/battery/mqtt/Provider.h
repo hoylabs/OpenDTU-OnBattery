@@ -28,16 +28,16 @@ private:
     uint8_t _currentPrecision = 0;
 
     void onMqttMessageSoC(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+            char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath);
     void onMqttMessageVoltage(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+            char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath);
     void onMqttMessageCurrent(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+            char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath);
     void onMqttMessageDischargeCurrentLimit(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+            char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath);
     uint8_t calculatePrecision(float value);
 };
