@@ -7,7 +7,7 @@
         <form @submit="saveChargerConfig">
             <CardElement :text="$t('acchargeradmin.Configuration')" textVariant="text-bg-primary">
                 <InputElement
-                    :label="$t('acchargeradmin.EnableHuawei')"
+                    :label="$t('acchargeradmin.EnableGridCharger')"
                     v-model="acChargerConfigList.enabled"
                     type="checkbox"
                     wide
@@ -20,6 +20,19 @@
                         type="checkbox"
                         wide
                     />
+
+                    <div class="row mb-3">
+                        <label class="col-sm-4 col-form-label">
+                            {{ $t('acchargeradmin.Provider') }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select class="form-select" v-model="acChargerConfigList.provider">
+                                <option v-for="provider in providerTypeList" :key="provider.key" :value="provider.key">
+                                    {{ $t(`acchargeradmin.Provider` + provider.value) }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
 
                     <div class="row mb-3">
                         <label class="col-sm-4 col-form-label">
@@ -240,6 +253,7 @@ export default defineComponent({
             alertMessage: '',
             alertType: 'info',
             showAlert: false,
+            providerTypeList: [{ key: 0, value: 'Huawei' }],
             frequencyTypeList: [
                 { key: 8, value: 8000000 },
                 { key: 16, value: 16000000 },
