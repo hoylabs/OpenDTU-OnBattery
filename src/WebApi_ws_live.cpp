@@ -121,7 +121,7 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
 
         if (config.GridCharger.Enabled) {
             auto const& dataPoints = HuaweiCan.getDataPoints();
-            auto oInputPower = dataPoints.get<GridCharger::Huawei::DataPointLabel::InputPower>();
+            auto oInputPower = dataPoints.get<GridChargers::Huawei::DataPointLabel::InputPower>();
             float pwr = oInputPower.value_or(0.0f);
             addTotalField(gridChargerObj, "Power", pwr, "W", 2);
         }
