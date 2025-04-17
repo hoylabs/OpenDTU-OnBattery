@@ -15,6 +15,7 @@ public:
     void updateSettings();
 
     float getDischargeCurrentLimit();
+    float getChargeCurrentLimit();
 
     std::shared_ptr<Stats const> getStats() const;
 

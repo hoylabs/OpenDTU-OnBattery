@@ -35,13 +35,13 @@ void Provider::onMessage(twai_message_t rx_message)
         case 0x351:
         case 0x400: {
             _stats->_chargeVoltageLimit = this->scaleValue(this->readUnsignedInt16(rx_message.data), 0.1);
-            _stats->_chargeCurrentLimit = this->scaleValue(this->readUnsignedInt16(rx_message.data + 2), 0.1);
+            _stats->setChargeCurrentLimit(this->scaleValue(this->readUnsignedInt16(rx_message.data + 2), 0.1), millis());
             _stats->setDischargeCurrentLimit(this->scaleValue(this->readUnsignedInt16(rx_message.data + 4), 0.1), millis());
             _stats->_dischargeVoltageLimit = this->scaleValue(this->readSignedInt16(rx_message.data + 6), 0.1);
 
             if (_verboseLogging) {
                 MessageOutput.printf("[Pytes] chargeVoltageLimit: %f chargeCurrentLimit: %f dischargeCurrentLimit: %f dischargeVoltageLimit: %f\r\n",
-                        _stats->_chargeVoltageLimit, _stats->_chargeCurrentLimit,
+                        _stats->_chargeVoltageLimit, _stats->getChargeCurrentLimit(),
                         _stats->getDischargeCurrentLimit(), _stats->_dischargeVoltageLimit);
             }
             break;
