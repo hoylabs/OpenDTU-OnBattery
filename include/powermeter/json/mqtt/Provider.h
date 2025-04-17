@@ -23,8 +23,8 @@ public:
 private:
     using MsgProperties = espMqttClientTypes::MessageProperties;
     void onMessage(MsgProperties const& properties, char const* topic,
-            uint8_t const* payload, size_t len, size_t index,
-            size_t total, uint8_t const phaseIndex, PowerMeterMqttValue const* cfg);
+            uint8_t const* payload, size_t len,
+            uint8_t const phaseIndex, PowerMeterMqttValue const* cfg);
 
     PowerMeterMqttConfig const _cfg;
 

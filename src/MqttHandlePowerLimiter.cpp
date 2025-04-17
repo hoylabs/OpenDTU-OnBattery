@@ -22,8 +22,6 @@ void MqttHandlePowerLimiterClass::init(Scheduler& scheduler)
     using std::placeholders::_2;
     using std::placeholders::_3;
     using std::placeholders::_4;
-    using std::placeholders::_5;
-    using std::placeholders::_6;
 
     subscribeTopics();
 
@@ -44,8 +42,7 @@ void MqttHandlePowerLimiterClass::subscribeTopics()
         MqttSettings.subscribe(fullTopic.c_str(), 0,
                 std::bind(&MqttHandlePowerLimiterClass::onMqttCmd, this, command,
                     std::placeholders::_1, std::placeholders::_2,
-                    std::placeholders::_3, std::placeholders::_4,
-                    std::placeholders::_5, std::placeholders::_6));
+                    std::placeholders::_3, std::placeholders::_4));
     };
 
     for (auto const& s : _subscriptions) {
@@ -116,7 +113,7 @@ void MqttHandlePowerLimiterClass::loop()
     }
 }
 
-void MqttHandlePowerLimiterClass::onMqttCmd(MqttPowerLimiterCommand command, const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total)
+void MqttHandlePowerLimiterClass::onMqttCmd(MqttPowerLimiterCommand command, const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len)
 {
     std::string strValue(reinterpret_cast<const char*>(payload), len);
     float payload_val = -1;

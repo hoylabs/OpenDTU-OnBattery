@@ -16,7 +16,6 @@ bool Provider::init()
                 std::bind(&Provider::onMessage,
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
-                    std::placeholders::_5, std::placeholders::_6,
                     phaseIndex, &val)
                 );
         _mqttSubscriptions.push_back(topic);
@@ -36,8 +35,8 @@ Provider::~Provider()
 }
 
 void Provider::onMessage(Provider::MsgProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len, size_t index,
-        size_t total, uint8_t const phaseIndex, PowerMeterMqttValue const* cfg)
+        char const* topic, uint8_t const* payload, size_t len,
+        uint8_t const phaseIndex, PowerMeterMqttValue const* cfg)
 {
     auto extracted = Utils::getNumericValueFromMqttPayload<float>("PowerMeters::Json::Mqtt",
             std::string(reinterpret_cast<const char*>(payload), len), topic,
