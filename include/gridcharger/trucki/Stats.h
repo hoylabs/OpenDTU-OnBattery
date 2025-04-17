@@ -2,24 +2,24 @@
 #pragma once
 
 #include <gridcharger/Stats.h>
-#include <gridcharger/huawei/DataPoints.h>
+#include <gridcharger/trucki/DataPoints.h>
 
-namespace GridChargers::Huawei {
+namespace GridChargers::Trucki {
 
 class Stats : public ::GridChargers::Stats {
 friend class Provider;
 
 public:
-    uint32_t getLastUpdate() const final;
+    uint32_t getLastUpdate() const;
 
-    std::optional<float> getInputPower() const final;
+    std::optional<float> getInputPower() const;
 
-    void getLiveViewData(JsonVariant& root) const final;
+    void getLiveViewData(JsonVariant& root) const;
 
 protected:
-    void mqttPublish() const final;
+    void mqttPublish() const final {}
 
-    void updateFrom(DataPointContainer const& dataPoints) const;
+    void updateFrom(DataPointContainer const& dataPoints);
 
 private:
     template<DataPointLabel L>
@@ -47,4 +47,4 @@ private:
     mutable DataPointContainer _dataPoints;
 };
 
-} // namespace GridChargers::Huawei
+} // namespace GridChargers::Trucki

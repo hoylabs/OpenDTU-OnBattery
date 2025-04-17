@@ -127,11 +127,8 @@ void Utils::skipBom(File& f)
 }
 
 /* OpenDTU-OnBatter-specific utils go here: */
-template<typename T>
-std::optional<T> getFromString(char const* val);
-
 template<>
-std::optional<float> getFromString(char const* val)
+std::optional<float> Utils::getFromString(char const* val)
 {
     float res = 0;
 

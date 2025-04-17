@@ -62,7 +62,19 @@
                                 </select>
                             </div>
                         </div>
+                    </template>
 
+                    <template v-if="gridChargerConfigList.provider === 1">
+                        <InputElement
+                            :label="$t('gridchargeradmin.IpAddress')"
+                            v-model="gridChargerConfigList.trucki.ip_address"
+                            type="text"
+                            maxlength="15"
+                            wide
+                        />
+                    </template>
+
+                    <template v-if="gridChargerConfigList.provider === 0">
                         <InputElement
                             :label="$t('gridchargeradmin.EnableAutoPower')"
                             v-model="gridChargerConfigList.auto_power_enabled"
@@ -265,7 +277,10 @@ export default defineComponent({
             alertMessage: '',
             alertType: 'info',
             showAlert: false,
-            providerTypeList: [{ key: 0, value: 'Huawei' }],
+            providerTypeList: [
+                { key: 0, value: 'Huawei' },
+                { key: 1, value: 'Trucki' },
+            ],
             frequencyTypeList: [
                 { key: 8, value: 8000000 },
                 { key: 16, value: 16000000 },

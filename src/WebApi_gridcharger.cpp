@@ -172,6 +172,9 @@ void WebApiGridChargerClass::onAdminGet(AsyncWebServerRequest* request)
     auto huawei = root["huawei"].to<JsonObject>();
     ConfigurationClass::serializeGridChargerHuaweiConfig(config.GridCharger.Huawei, huawei);
 
+    auto trucki = root["trucki"].to<JsonObject>();
+    ConfigurationClass::serializeGridChargerTruckiConfig(config.GridCharger.Trucki, trucki);
+
     response->setLength();
     request->send(response);
 }
@@ -236,6 +239,7 @@ void WebApiGridChargerClass::onAdminPost(AsyncWebServerRequest* request)
         ConfigurationClass::deserializeGridChargerConfig(root.as<JsonObject>(), config.GridCharger);
         ConfigurationClass::deserializeGridChargerCanConfig(root["can"].as<JsonObject>(), config.GridCharger.Can);
         ConfigurationClass::deserializeGridChargerHuaweiConfig(root["huawei"].as<JsonObject>(), config.GridCharger.Huawei);
+        ConfigurationClass::deserializeGridChargerTruckiConfig(root["trucki"].as<JsonObject>(), config.GridCharger.Trucki);
     }
 
     WebApi.writeConfig(retMsg);
