@@ -241,10 +241,6 @@ struct BATTERY_CONFIG_T {
     float ChargeCurrentLimitBelowSoc;
     float ChargeCurrentLimitBelowVoltage;
     bool UseBatteryReportedChargeCurrentLimit;
-
-    char MqttDischargeCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttDischargeCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
-    BatteryAmperageUnit MqttAmperageUnit;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
