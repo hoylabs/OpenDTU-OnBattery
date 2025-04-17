@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <gridcharger/huawei/DataPoints.h>
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
 
 class HardwareInterface {
 public:
@@ -112,4 +112,4 @@ private:
     void enqueueParameter(Setting setting, float val);
 };
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei

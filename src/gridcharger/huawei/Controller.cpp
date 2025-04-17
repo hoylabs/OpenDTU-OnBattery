@@ -14,9 +14,9 @@
 #include <functional>
 #include <algorithm>
 
-GridCharger::Huawei::Controller HuaweiCan;
+GridChargers::Huawei::Controller HuaweiCan;
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
 
 // Wait time/current before shuting down the PSU / charger
 // This is set to allow the fan to run for some time
@@ -393,7 +393,7 @@ void Controller::getJsonData(JsonVariant& root) const
 {
     root["data_age"] = millis() - _dataPoints.getLastUpdate();
 
-    using Label = GridCharger::Huawei::DataPointLabel;
+    using Label = GridChargers::Huawei::DataPointLabel;
 
     auto oReachable = _dataPoints.get<Label::Reachable>();
     root["reachable"] = oReachable.value_or(false);
@@ -445,4 +445,4 @@ void Controller::getJsonData(JsonVariant& root) const
 #undef VAL
 }
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei

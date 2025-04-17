@@ -5,7 +5,7 @@
 #include <MessageOutput.h>
 #include <gridcharger/huawei/HardwareInterface.h>
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
 
 void HardwareInterface::staticLoopHelper(void* context)
 {
@@ -597,4 +597,4 @@ std::unique_ptr<DataPointContainer> HardwareInterface::getCurrentData()
     return std::move(upData);
 }
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei

@@ -7,7 +7,7 @@
 #include "PinMapping.h"
 #include "Configuration.h"
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
 
 TaskHandle_t sIsrTaskHandle = nullptr;
 
@@ -143,4 +143,4 @@ bool MCP2515::sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data)
     return _upCAN->sendMsgBuf(canId, 1, 8, rwData) == CAN_OK;
 }
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei
