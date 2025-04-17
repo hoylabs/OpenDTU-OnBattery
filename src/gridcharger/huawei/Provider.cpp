@@ -3,22 +3,21 @@
  * Copyright (C) 2023 Malte Schmidt and others
  */
 #include <battery/Controller.h>
-#include <gridcharger/huawei/Controller.h>
+#include <gridcharger/huawei/Provider.h>
 #include <gridcharger/huawei/MCP2515.h>
 #include <gridcharger/huawei/TWAI.h>
 #include <powermeter/Controller.h>
-#include "PowerLimiter.h"
-#include "Configuration.h"
+#include <PowerLimiter.h>
+#include <Configuration.h>
 #include <LogHelper.h>
+#include <MqttSettings.h>
 
 #undef TAG
 static const char* TAG = "gridCharger";
-static const char* SUBTAG = "Controller";
+static const char* SUBTAG = "Huawei";
 
 #include <functional>
 #include <algorithm>
-
-GridChargers::Huawei::Controller HuaweiCan;
 
 namespace GridChargers::Huawei {
 
@@ -27,49 +26,13 @@ namespace GridChargers::Huawei {
 #define HUAWEI_AUTO_MODE_SHUTDOWN_DELAY 60000
 #define HUAWEI_AUTO_MODE_SHUTDOWN_CURRENT 0.75
 
-void Controller::init(Scheduler& scheduler)
+bool Provider::init()
 {
     DTU_LOGI("Initialize Huawei AC charger interface...");
-
-    scheduler.addTask(_loopTask);
-    _loopTask.setCallback(std::bind(&Controller::loop, this));
-    _loopTask.setIterations(TASK_FOREVER);
-    _loopTask.enable();
-
-    updateSettings();
-}
-
-void Controller::enableOutput()
-{
-    if (_oOutputEnabled.value_or(false)) { return; }
-
-    _setProduction(true);
-    _oOutputEnabled = true;
-
-    if (_huaweiPower <= GPIO_NUM_NC) { return; }
-    digitalWrite(_huaweiPower, 0);
-}
-
-void Controller::disableOutput()
-{
-    if (!_oOutputEnabled.value_or(true)) { return; }
-
-    _setProduction(false);
-    _oOutputEnabled = false;
-
-    if (_huaweiPower <= GPIO_NUM_NC) { return; }
-    digitalWrite(_huaweiPower, 1);
-}
-
-void Controller::updateSettings()
-{
-    std::lock_guard<std::mutex> lock(_mutex);
 
     _upHardwareInterface.reset(nullptr);
 
     auto const& config = Configuration.get();
-
-    if (!config.GridCharger.Enabled) { return; }
 
     switch (config.GridCharger.Can.HardwareInterface) {
         case GridChargerHardwareInterface::MCP2515:
@@ -80,14 +43,14 @@ void Controller::updateSettings()
             break;
         default:
             DTU_LOGE("Unknown hardware interface setting %d", config.GridCharger.Can.HardwareInterface);
-            return;
+            return false;
             break;
     }
 
     if (!_upHardwareInterface->init()) {
         DTU_LOGE("Error initializing hardware interface");
         _upHardwareInterface.reset(nullptr);
-        return;
+        return false;
     };
 
     auto const& pin = PinMapping.get();
@@ -102,10 +65,71 @@ void Controller::updateSettings()
         _mode = HUAWEI_MODE_AUTO_INT;
     }
 
+    // Set initial mode in datapoints
+    _dataPoints.add<DataPointLabel::Mode>(_mode, true);
+
+    subscribeTopics();
+
     DTU_LOGI("Hardware Interface initialized successfully");
+    return true;
 }
 
-void Controller::loop()
+void Provider::deinit()
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    _upHardwareInterface.reset(nullptr);
+    unsubscribeTopics();
+}
+
+void Provider::enableOutput()
+{
+    if (_oOutputEnabled.value_or(false)) { return; }
+
+    _setProduction(true);
+    _oOutputEnabled = true;
+
+    if (_huaweiPower <= GPIO_NUM_NC) { return; }
+    digitalWrite(_huaweiPower, 0);
+}
+
+void Provider::disableOutput()
+{
+    if (!_oOutputEnabled.value_or(true)) { return; }
+
+    _setProduction(false);
+    _oOutputEnabled = false;
+
+    if (_huaweiPower <= GPIO_NUM_NC) { return; }
+    digitalWrite(_huaweiPower, 1);
+}
+
+void Provider::subscribeTopics()
+{
+    String const& prefix = MqttSettings.getPrefix();
+
+    auto subscribe = [&prefix, this](char const* subTopic, Topic t) {
+        String fullTopic(prefix + _cmdtopic.data() + subTopic);
+        MqttSettings.subscribe(fullTopic.c_str(), 0,
+                std::bind(&Provider::onMqttMessage, this, t,
+                    std::placeholders::_1, std::placeholders::_2,
+                    std::placeholders::_3, std::placeholders::_4));
+    };
+
+    for (auto const& s : _subscriptions) {
+        subscribe(s.first.data(), s.second);
+    }
+}
+
+void Provider::unsubscribeTopics()
+{
+    String const prefix = MqttSettings.getPrefix() + _cmdtopic.data();
+    for (auto const& s : _subscriptions) {
+        MqttSettings.unsubscribe(prefix + s.first.data());
+    }
+}
+
+void Provider::loop()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -113,9 +137,18 @@ void Controller::loop()
 
     auto const& config = Configuration.get();
 
+    if (!config.GridCharger.Enabled) {
+        _mqttCallbacks.clear();
+        return;
+    }
+
+    for (auto& callback : _mqttCallbacks) { callback(); }
+    _mqttCallbacks.clear();
+
     auto upNewData = _upHardwareInterface->getCurrentData();
     if (upNewData) {
         _dataPoints.updateFrom(*upNewData);
+        _stats->updateFrom(*upNewData);
     }
 
     auto oOutputCurrent = _dataPoints.get<DataPointLabel::OutputCurrent>();
@@ -280,7 +313,7 @@ void Controller::loop()
     }
 }
 
-void Controller::setFan(bool online, bool fullSpeed)
+void Provider::setFan(bool online, bool fullSpeed)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -291,13 +324,13 @@ void Controller::setFan(bool online, bool fullSpeed)
     _upHardwareInterface->setParameter(setting, fullSpeed ? 1 : 0);
 }
 
-void Controller::_setProduction(bool enable)
+void Provider::_setProduction(bool enable)
 {
     auto setting = HardwareInterface::Setting::ProductionDisable;
     _upHardwareInterface->setParameter(setting, enable ? 0 : 1);
 }
 
-void Controller::setProduction(bool enable)
+void Provider::setProduction(bool enable)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -305,7 +338,7 @@ void Controller::setProduction(bool enable)
     _setProduction(enable);
 }
 
-void Controller::setParameter(float val, HardwareInterface::Setting setting)
+void Provider::setParameter(float val, HardwareInterface::Setting setting)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -319,7 +352,7 @@ void Controller::setParameter(float val, HardwareInterface::Setting setting)
     _setParameter(val, setting, true/*pollFeedback*/);
 }
 
-void Controller::_setParameter(float val, HardwareInterface::Setting setting, bool pollFeedback)
+void Provider::_setParameter(float val, HardwareInterface::Setting setting, bool pollFeedback)
 {
     // NOTE: the mutex is locked by any method calling this private method
 
@@ -343,7 +376,7 @@ void Controller::_setParameter(float val, HardwareInterface::Setting setting, bo
     _upHardwareInterface->setParameter(setting, val, pollFeedback);
 }
 
-void Controller::setMode(uint8_t mode) {
+void Provider::setMode(uint8_t mode) {
     std::lock_guard<std::mutex> lock(_mutex);
 
     if (!_upHardwareInterface) { return; }
@@ -356,6 +389,9 @@ void Controller::setMode(uint8_t mode) {
         enableOutput();
         _mode = HUAWEI_MODE_ON;
     }
+
+    // Update mode in datapoints
+    _dataPoints.add<DataPointLabel::Mode>(_mode, true);
 
     auto const& config = Configuration.get();
 
@@ -372,73 +408,114 @@ void Controller::setMode(uint8_t mode) {
 
     if (mode == HUAWEI_MODE_AUTO_EXT || mode == HUAWEI_MODE_AUTO_INT) {
         _mode = mode;
+        // Update mode in datapoints for AUTO modes too
+        _dataPoints.add<DataPointLabel::Mode>(_mode, true);
     }
 }
 
-void Controller::getJsonData(JsonVariant& root) const
+void Provider::onMqttMessage(Topic enumTopic,
+        const espMqttClientTypes::MessageProperties& properties,
+        const char* topic, const uint8_t* payload, size_t len)
 {
-    root["dataAge"] = millis() - _dataPoints.getLastUpdate();
-    root["showSettings"] = true;
-
-    using Label = GridChargers::Huawei::DataPointLabel;
-
-    auto oReachable = _dataPoints.get<Label::Reachable>();
-    root["reachable"] = oReachable.value_or(false);
-
-    auto oOutputPower = _dataPoints.get<Label::OutputPower>();
-    auto oOutputCurrent = _dataPoints.get<Label::OutputCurrent>();
-    root["producing"] = oOutputPower.value_or(0) > 10 && oOutputCurrent.value_or(0) > 0.1;
-
-#define VAL(l, n) \
-    { \
-        auto oVal = _dataPoints.get<Label::l>(); \
-        if (oVal) { root[n] = *oVal; } \
+    std::string strValue(reinterpret_cast<const char*>(payload), len);
+    float payload_val = -1;
+    try {
+        payload_val = std::stof(strValue);
+    }
+    catch (std::invalid_argument const& e) {
+        DTU_LOGE("Huawei MQTT handler: cannot parse payload of topic '%s' as float: %s",
+                topic, strValue.c_str());
+        return;
     }
 
-    VAL(Serial,              "serial");
-    VAL(VendorName,          "vendorName");
-    VAL(ProductName,         "productName");
-#undef VAL
+    std::lock_guard<std::mutex> mqttLock(_mutex);
+    using Setting = GridChargers::Huawei::HardwareInterface::Setting;
 
-    addStringInSection<Label::BoardType>(root, "device", "boardType");
-    addStringInSection<Label::Manufactured>(root, "device", "manufactured");
-    addStringInSection<Label::ProductDescription>(root, "device", "productDescription");
-    addStringInSection<Label::Row>(root, "device", "row");
-    addStringInSection<Label::Slot>(root, "device", "slot");
+    auto validateAndSetParameter = [this, payload_val](float min, float max,
+            Setting setting, const char* paramName, const char* unit) -> bool {
+        if (payload_val < min || payload_val > max) {
+            DTU_LOGE("Invalid %s %.2f %s (valid range: %.2f-%.2f %s)",
+                paramName, payload_val, unit, min, max, unit);
+            return false;
+        }
+        DTU_LOGI("Limit %s: %.2f %s", paramName, payload_val, unit);
+        _mqttCallbacks.push_back(std::bind(&Provider::setParameter, this, payload_val, setting));
+        return true;
+    };
 
-    addValueInSection<Label::InputVoltage>(root, "input", "voltage");
-    addValueInSection<Label::InputCurrent>(root, "input", "current");
-    addValueInSection<Label::InputPower>(root, "input", "power");
-    addValueInSection<Label::InputTemperature>(root, "input", "temp");
-    addValueInSection<Label::InputFrequency>(root, "input", "frequency");
-    addValueInSection<Label::Efficiency>(root, "input", "efficiency");
+    switch (enumTopic) {
+        case Topic::LimitOnlineVoltage:
+            validateAndSetParameter(Provider::MIN_ONLINE_VOLTAGE, Provider::MAX_ONLINE_VOLTAGE,
+                Setting::OnlineVoltage, "online voltage", "V");
+            break;
 
-    addValueInSection<Label::OutputVoltage>(root, "output", "voltage");
-    addValueInSection<Label::OutputCurrent>(root, "output", "current");
-    addValueInSection<Label::OutputPower>(root, "output", "power");
-    addValueInSection<Label::OutputTemperature>(root, "output", "temp");
-    addValueInSection<Label::OutputCurrentMax>(root, "output", "maxCurrent");
+        case Topic::LimitOfflineVoltage:
+            validateAndSetParameter(Provider::MIN_OFFLINE_VOLTAGE, Provider::MAX_OFFLINE_VOLTAGE,
+                Setting::OfflineVoltage, "offline voltage", "V");
+            break;
 
-    addValueInSection<Label::OnlineVoltage>(root, "acknowledgements", "onlineVoltage");
-    addValueInSection<Label::OfflineVoltage>(root, "acknowledgements", "offlineVoltage");
-    addValueInSection<Label::OnlineCurrent>(root, "acknowledgements", "onlineCurrent");
-    addValueInSection<Label::OfflineCurrent>(root, "acknowledgements", "offlineCurrent");
-    addValueInSection<Label::InputCurrentLimit>(root, "acknowledgements", "inputCurrentLimit");
+        case Topic::LimitOnlineCurrent:
+            validateAndSetParameter(Provider::MIN_ONLINE_CURRENT, Provider::MAX_ONLINE_CURRENT,
+                Setting::OnlineCurrent, "online current", "A");
+            break;
 
-    auto oProductionEnabled = _dataPoints.get<Label::ProductionEnabled>();
-    if (oProductionEnabled) {
-        addStringInSection(root, "acknowledgements", "productionEnabled", *oProductionEnabled?"yes":"no");
-    }
+        case Topic::LimitOfflineCurrent:
+            validateAndSetParameter(Provider::MIN_OFFLINE_CURRENT, Provider::MAX_OFFLINE_CURRENT,
+                Setting::OfflineCurrent, "offline current", "A");
+            break;
 
-    auto oFanOnlineFullSpeed = _dataPoints.get<Label::FanOnlineFullSpeed>();
-    if (oFanOnlineFullSpeed) {
-        addStringInSection(root, "acknowledgements", "fanOnlineFullSpeed", *oFanOnlineFullSpeed?"FanFullSpeed":"FanAuto");
-    }
+        case Topic::Mode:
+            switch (static_cast<int>(payload_val)) {
+                case 3:
+                    DTU_LOGI("Received MQTT msg. New mode: Full internal control");
+                    _mqttCallbacks.push_back(std::bind(&Provider::setMode, this, HUAWEI_MODE_AUTO_INT));
+                    break;
 
-    auto oFanOfflineFullSpeed = _dataPoints.get<Label::FanOfflineFullSpeed>();
-    if (oFanOfflineFullSpeed) {
-        addStringInSection(root, "acknowledgements", "fanOfflineFullSpeed", *oFanOfflineFullSpeed?"FanFullSpeed":"FanAuto");
+                case 2:
+                    DTU_LOGI("Received MQTT msg. New mode: Internal on/off control, external power limit");
+                    _mqttCallbacks.push_back(std::bind(&Provider::setMode, this, HUAWEI_MODE_AUTO_EXT));
+                    break;
+
+                case 1:
+                    DTU_LOGI("Received MQTT msg. New mode: Turned ON");
+                    _mqttCallbacks.push_back(std::bind(&Provider::setMode, this, HUAWEI_MODE_ON));
+                    break;
+
+                case 0:
+                    DTU_LOGI("Received MQTT msg. New mode: Turned OFF");
+                    _mqttCallbacks.push_back(std::bind(&Provider::setMode, this, HUAWEI_MODE_OFF));
+                    break;
+
+                default:
+                    DTU_LOGE("Invalid mode %.0f", payload_val);
+                    break;
+            }
+            break;
+
+        case Topic::Production:
+        {
+            bool enable = payload_val > 0;
+            DTU_LOGI("Production to be %sabled", (enable?"en":"dis"));
+            _mqttCallbacks.push_back(std::bind(&Provider::setProduction, this, enable));
+            break;
+        }
+
+        case Topic::LimitInputCurrent:
+            validateAndSetParameter(Provider::MIN_INPUT_CURRENT_LIMIT, Provider::MAX_INPUT_CURRENT_LIMIT,
+                Setting::InputCurrentLimit, "input current", "A");
+            break;
+
+        case Topic::FanOnlineFullSpeed:
+        case Topic::FanOfflineFullSpeed:
+        {
+            bool online = (Topic::FanOnlineFullSpeed == enumTopic);
+            bool fullSpeed = payload_val > 0;
+            DTU_LOGI("%sline fan %s speed", (online?"On":"Off"), (fullSpeed?"full":"auto"));
+            _mqttCallbacks.push_back(std::bind(&Provider::setFan, this, online, fullSpeed));
+            break;
+        }
     }
 }
+
 
 } // namespace GridChargers::Huawei

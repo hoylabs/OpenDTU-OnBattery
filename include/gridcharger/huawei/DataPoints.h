@@ -28,6 +28,7 @@ enum class DataPointLabel : uint8_t {
     FanOnlineFullSpeed,
     FanOfflineFullSpeed,
     InputCurrentLimit,
+    Mode,
 
     // rectifier state message
     InputPower = 0x70,
@@ -68,6 +69,7 @@ LABEL_TRAIT(ProductionEnabled,  bool,        "");
 LABEL_TRAIT(FanOnlineFullSpeed, bool,        "");
 LABEL_TRAIT(FanOfflineFullSpeed,bool,        "");
 LABEL_TRAIT(InputCurrentLimit,  float,       "A");
+LABEL_TRAIT(Mode,               uint8_t,     "");
 LABEL_TRAIT(InputPower,         float,       "W");
 LABEL_TRAIT(InputFrequency,     float,       "Hz");
 LABEL_TRAIT(InputCurrent,       float,       "A");
