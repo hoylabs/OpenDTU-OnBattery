@@ -80,7 +80,7 @@ void MqttHandleHuaweiClass::loop()
 
 #define PUB(l, t) \
     { \
-        auto oDataPoint = dataPoints.get<GridCharger::Huawei::DataPointLabel::l>(); \
+        auto oDataPoint = dataPoints.get<GridChargers::Huawei::DataPointLabel::l>(); \
         if (oDataPoint) { \
             MqttSettings.publish("huawei/" t, String(*oDataPoint)); \
         } \
@@ -103,7 +103,7 @@ void MqttHandleHuaweiClass::loop()
 
 #define PUBACK(l, t) \
     { \
-        auto oDataPoint = dataPoints.get<GridCharger::Huawei::DataPointLabel::l>(); \
+        auto oDataPoint = dataPoints.get<GridChargers::Huawei::DataPointLabel::l>(); \
         if (oDataPoint) { \
             MqttSettings.publish("huawei/acks/" t, String(*oDataPoint)); \
         } \
@@ -122,7 +122,7 @@ void MqttHandleHuaweiClass::loop()
 
 #define PUBSTR(l, t) \
     { \
-        auto oDataPoint = dataPoints.get<GridCharger::Huawei::DataPointLabel::l>(); \
+        auto oDataPoint = dataPoints.get<GridChargers::Huawei::DataPointLabel::l>(); \
         if (oDataPoint) { \
             MqttSettings.publish("huawei/" t, String(oDataPoint->c_str())); \
         } \
@@ -136,7 +136,7 @@ void MqttHandleHuaweiClass::loop()
     PUBSTR(ProductDescription, "product_description");
 #undef PUBSTR
 
-    auto const& oReachable = dataPoints.get<GridCharger::Huawei::DataPointLabel::Reachable>();
+    auto const& oReachable = dataPoints.get<GridChargers::Huawei::DataPointLabel::Reachable>();
     if (oReachable) {
         MqttSettings.publish("huawei/reachable", String(*oReachable?1:0));
     }
@@ -164,8 +164,8 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic enumTopic,
     }
 
     std::lock_guard<std::mutex> mqttLock(_mqttMutex);
-    using Controller = GridCharger::Huawei::Controller;
-    using Setting = GridCharger::Huawei::HardwareInterface::Setting;
+    using Controller = GridChargers::Huawei::Controller;
+    using Setting = GridChargers::Huawei::HardwareInterface::Setting;
 
     auto validateAndSetParameter = [this, payload_val](float min, float max,
             Setting setting, const char* paramName, const char* unit) -> bool {

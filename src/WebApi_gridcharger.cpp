@@ -53,7 +53,7 @@ void WebApiGridChargerClass::onLimitPost(AsyncWebServerRequest* request)
 
     auto& retMsg = response->getRoot();
 
-    using Setting = GridCharger::Huawei::HardwareInterface::Setting;
+    using Setting = GridChargers::Huawei::HardwareInterface::Setting;
 
     auto applySetting = [&](const char* key, float min, float max, WebApiError error, Setting setting) -> bool {
         if (!root[key].is<float>()) { return true; }
@@ -73,7 +73,7 @@ void WebApiGridChargerClass::onLimitPost(AsyncWebServerRequest* request)
         return true;
     };
 
-    using Controller = GridCharger::Huawei::Controller;
+    using Controller = GridChargers::Huawei::Controller;
 
     if (!applySetting("voltage",
         Controller::MIN_ONLINE_VOLTAGE,
@@ -185,7 +185,7 @@ void WebApiGridChargerClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
-    using Controller = GridCharger::Huawei::Controller;
+    using Controller = GridChargers::Huawei::Controller;
 
     auto isValidRange = [&](const char* valueName, float min, float max, WebApiError error) -> bool {
         if (root["huawei"][valueName].as<float>() < min || root["huawei"][valueName].as<float>() > max) {
