@@ -120,6 +120,8 @@ bool VeDirectFrameHandler<T>::disassembleHexData(VeDirectHexData &data) {
             default:
                 break;  // something went wrong
         }
+    } else {
+        setErrorCounter(veStruct::Error::HEX_CHECKSUM);
     }
 
     if (!state)

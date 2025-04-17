@@ -191,7 +191,8 @@
             "RELAY": "Status Fehlerrelais",
             "ERR": "Fehlerbeschreibung",
             "HSDS": "Anzahl der Tage (0..364)",
-            "MpptTemperature": "Ladereglertemperatur"
+            "MpptTemperature": "Ladereglertemperatur",
+            "MpptTransmitError": "Übertragungsfehler"
         },
         "section_output": "Ausgang (Batterie)",
         "output": {
@@ -1183,6 +1184,7 @@
         "remainInTime": "Verbleibende Ladezeit",
         "unavail": "N/A",
         "useableCapacity": "Nutzbare Kapazität",
-        "chargethrough": "Vollladezyklus"
+        "chargethrough": "Vollladezyklus",
+        "transmitError": "Übertragungsfehler"
     }
 }
