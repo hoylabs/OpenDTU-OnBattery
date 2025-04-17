@@ -19,9 +19,7 @@
                         <div class="p-1 flex-grow-1">
                             <div class="d-flex flex-wrap">
                                 <div style="padding-right: 2em">Huawei R4850G2</div>
-                                <div style="padding-right: 2em">
-                                    {{ $t('huawei.DataAge') }} {{ $t('huawei.Seconds', { val: huaweiData.data_age }) }}
-                                </div>
+                                <DataAgeDisplay :data-age-ms="huaweiData.data_age * 1000" />
                             </div>
                         </div>
                         <div class="btn-toolbar p-2" role="toolbar">
@@ -275,10 +273,12 @@ import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
 
 import * as bootstrap from 'bootstrap';
 import { BIconSpeedometer } from 'bootstrap-icons-vue';
+import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
 
 export default defineComponent({
     components: {
         BIconSpeedometer,
+        DataAgeDisplay,
     },
     data() {
         return {

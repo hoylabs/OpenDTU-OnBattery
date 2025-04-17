@@ -50,20 +50,19 @@ void HoymilesRadio_NRF::loop()
     if (_packetReceived) {
         Hoymiles.getVerboseMessageOutput()->println("Interrupt received");
         while (_radio->available()) {
-            if (!(_rxBuffer.size() > FRAGMENT_BUFFER_SIZE)) {
-                fragment_t f;
-                memset(f.fragment, 0xcc, MAX_RF_PAYLOAD_SIZE);
-                f.len = _radio->getDynamicPayloadSize();
-                f.channel = _radio->getChannel();
-                f.rssi = _radio->testRPD() ? -30 : -80;
-                if (f.len > MAX_RF_PAYLOAD_SIZE)
-                    f.len = MAX_RF_PAYLOAD_SIZE;
-                _radio->read(f.fragment, f.len);
-                _rxBuffer.push(f);
-            } else {
+            if (_rxBuffer.size() > FRAGMENT_BUFFER_SIZE) {
                 Hoymiles.getMessageOutput()->println("NRF: Buffer full");
                 _radio->flush_rx();
+                continue;
             }
+
+            fragment_t f;
+            memset(f.fragment, 0xcc, MAX_RF_PAYLOAD_SIZE);
+            f.len = std::min<uint8_t>(_radio->getDynamicPayloadSize(), MAX_RF_PAYLOAD_SIZE);
+            f.channel = _radio->getChannel();
+            f.rssi = _radio->testRPD() ? -30 : -80;
+            _radio->read(f.fragment, f.len);
+            _rxBuffer.push(f);
         }
         _packetReceived = false;
 
@@ -76,7 +75,7 @@ void HoymilesRadio_NRF::loop()
 
                 if (nullptr != inv) {
                     // Save packet in inverter rx buffer
-                    Hoymiles.getVerboseMessageOutput()->printf("RX Channel: %" PRId8 " --> ", f.channel);
+                    Hoymiles.getVerboseMessageOutput()->printf("RX Channel: %" PRIu8 " --> ", f.channel);
                     dumpBuf(f.fragment, f.len, false);
                     Hoymiles.getVerboseMessageOutput()->printf("| %" PRId8 " dBm\r\n", f.rssi);
 
@@ -183,7 +182,7 @@ void HoymilesRadio_NRF::sendEsbPacket(CommandAbstract& cmd)
     openWritingPipe(s);
     _radio->setRetries(3, 15);
 
-    Hoymiles.getVerboseMessageOutput()->printf("TX %s Channel: %" PRId8 " --> ",
+    Hoymiles.getVerboseMessageOutput()->printf("TX %s Channel: %" PRIu8 " --> ",
         cmd.getCommandName().c_str(), _radio->getChannel());
     cmd.dumpDataPayload(Hoymiles.getVerboseMessageOutput());
     _radio->write(cmd.getDataPayload(), cmd.getDataSize());

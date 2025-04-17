@@ -2,12 +2,12 @@
 /*
  * Copyright (C) 2023 Malte Schmidt and others
  */
-#include "Battery.h"
+#include <battery/Controller.h>
 #include <gridcharger/huawei/Controller.h>
 #include <gridcharger/huawei/MCP2515.h>
 #include <gridcharger/huawei/TWAI.h>
 #include "MessageOutput.h"
-#include "PowerMeter.h"
+#include <powermeter/Controller.h>
 #include "PowerLimiter.h"
 #include "Configuration.h"
 
@@ -37,13 +37,13 @@ void Controller::init(Scheduler& scheduler)
 
 void Controller::enableOutput()
 {
-    if (_huaweiPower < 0) { return; }
+    if (_huaweiPower <= GPIO_NUM_NC) { return; }
     digitalWrite(_huaweiPower, 0);
 }
 
 void Controller::disableOutput()
 {
-    if (_huaweiPower < 0) { return; }
+    if (_huaweiPower <= GPIO_NUM_NC) { return; }
     digitalWrite(_huaweiPower, 1);
 }
 
@@ -78,7 +78,7 @@ void Controller::updateSettings()
     };
 
     auto const& pin = PinMapping.get();
-    if (pin.huawei_power >= 0) {
+    if (pin.huawei_power > GPIO_NUM_NC) {
         _huaweiPower = pin.huawei_power;
         pinMode(_huaweiPower, OUTPUT);
         disableOutput();

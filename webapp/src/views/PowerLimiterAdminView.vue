@@ -117,9 +117,6 @@
                                 class="form-select"
                                 v-model="powerLimiterConfigList.inverter_restart_hour"
                             >
-                                <option value="-1">
-                                    {{ $t('powerlimiteradmin.InverterRestartDisabled') }}
-                                </option>
                                 <option v-for="hour in range(24)" :key="hour" :value="hour">
                                     {{ hour > 9 ? hour : '0' + hour }}:00
                                 </option>
@@ -175,21 +172,6 @@
                             :tooltip="$t('powerlimiteradmin.UseOverscalingHint')"
                             v-model="powerLimiterConfigList.inverters[idx].use_overscaling_to_compensate_shading"
                             type="checkbox"
-                            wide
-                        />
-
-                        <InputElement
-                            v-if="
-                                powerLimiterConfigList.inverters[idx].use_overscaling_to_compensate_shading &&
-                                inverterSupportsOverscaling(inv.serial)
-                            "
-                            :label="$t('powerlimiteradmin.ScalingPowerThreshold')"
-                            v-model="powerLimiterConfigList.inverters[idx].scaling_threshold"
-                            :tooltip="$t('powerlimiteradmin.ScalingPowerThresholdHint')"
-                            :min="(0).toString()"
-                            :max="(100).toString()"
-                            postfix="%"
-                            type="number"
                             wide
                         />
 
@@ -570,6 +552,8 @@ export default defineComponent({
                 hints.push({ severity: 'requirement', subject: 'NoInverter' });
                 this.configAlert = true;
             } else {
+                let showCommDayHint = false;
+                let showCommNightHint = false;
                 for (const inv of this.powerLimiterMetaData.inverters) {
                     if (
                         !this.powerLimiterConfigList.inverters.some(
@@ -578,16 +562,40 @@ export default defineComponent({
                     ) {
                         continue;
                     }
-                    const commEnabled =
-                        inv.poll_enable && inv.command_enable && inv.poll_enable_night && inv.command_enable_night;
+
                     const governed = this.governedInverters.some(
                         (cfgInv: PowerLimiterInverterConfig) => cfgInv.serial === inv.serial
                     );
 
-                    if (governed && !commEnabled) {
-                        hints.push({ severity: 'requirement', subject: 'InverterCommunication' });
-                        break;
+                    if (!governed) {
+                        continue;
                     }
+
+                    const commDayEnabled = inv.poll_enable && inv.command_enable;
+                    const commNightEnabled = inv.poll_enable_night && inv.command_enable_night;
+                    const solarPowered = this.governedInverters.some(
+                        (cfgInv: PowerLimiterInverterConfig) =>
+                            cfgInv.serial === inv.serial && cfgInv.power_source === 1
+                    );
+
+                    if (!commDayEnabled) {
+                        showCommDayHint = true;
+                    }
+                    if (!solarPowered && !commNightEnabled) {
+                        showCommNightHint = true;
+                    }
+                }
+                if (showCommDayHint) {
+                    hints.push({
+                        severity: 'requirement',
+                        subject: 'InverterCommunicationDay',
+                    });
+                }
+                if (showCommNightHint) {
+                    hints.push({
+                        severity: 'requirement',
+                        subject: 'InverterCommunicationNight',
+                    });
                 }
             }
 
@@ -720,7 +728,6 @@ export default defineComponent({
                 newInv.upper_power_limit = Math.max(metaInv.max_power, 300);
                 newInv.power_source = 0; // battery
                 newInv.use_overscaling_to_compensate_shading = false;
-                newInv.scaling_threshold = 98;
                 inverters.push(newInv);
             }
 

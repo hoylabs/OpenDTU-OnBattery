@@ -49,7 +49,7 @@ private:
         { "target_power_consumption",                       MqttPowerLimiterCommand::TargetPowerConsumption },
     };
 
-    void onMqttCmd(MqttPowerLimiterCommand command, const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total);
+    void onMqttCmd(MqttPowerLimiterCommand command, const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len);
 
     Task _loopTask;
 

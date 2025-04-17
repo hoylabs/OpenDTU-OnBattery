@@ -34,7 +34,7 @@ uint32_t HoymilesRadio_CMT::getFrequencyFromChannel(const uint8_t channel) const
 uint8_t HoymilesRadio_CMT::getChannelFromFrequency(const uint32_t frequency) const
 {
     if ((frequency % getChannelWidth()) != 0) {
-        Hoymiles.getMessageOutput()->printf("%.3f MHz is not divisible by %" PRId32 " kHz!\r\n", frequency / 1000000.0, getChannelWidth());
+        Hoymiles.getMessageOutput()->printf("%.3f MHz is not divisible by %" PRIu32 " kHz!\r\n", frequency / 1000000.0, getChannelWidth());
         return 0xFF; // ERROR
     }
     if (frequency < getMinFrequency() || frequency > getMaxFrequency()) {
@@ -43,7 +43,7 @@ uint8_t HoymilesRadio_CMT::getChannelFromFrequency(const uint32_t frequency) con
         return 0xFF; // ERROR
     }
     if (frequency < countryDefinition.at(_countryMode).Freq_Legal_Min || frequency > countryDefinition.at(_countryMode).Freq_Legal_Max) {
-        Hoymiles.getMessageOutput()->printf("!!! caution: %.2f MHz is out of region legal range! (%" PRId32 " - %" PRId32 " MHz)\r\n",
+        Hoymiles.getMessageOutput()->printf("!!! caution: %.2f MHz is out of region legal range! (%" PRIu32 " - %" PRIu32 " MHz)\r\n",
             frequency / 1000000.0,
             static_cast<uint32_t>(countryDefinition.at(_countryMode).Freq_Legal_Min / 1e6),
             static_cast<uint32_t>(countryDefinition.at(_countryMode).Freq_Legal_Max / 1e6));
@@ -128,23 +128,21 @@ void HoymilesRadio_CMT::loop()
     if (_packetReceived) {
         Hoymiles.getVerboseMessageOutput()->println("Interrupt received");
         while (_radio->available()) {
-            if (!(_rxBuffer.size() > FRAGMENT_BUFFER_SIZE)) {
-                fragment_t f;
-                memset(f.fragment, 0xcc, MAX_RF_PAYLOAD_SIZE);
-                f.len = _radio->getDynamicPayloadSize();
-                f.channel = _radio->getChannel();
-                f.rssi = _radio->getRssiDBm();
-                f.wasReceived = false;
-                f.mainCmd = 0x00;
-                if (f.len > MAX_RF_PAYLOAD_SIZE) {
-                    f.len = MAX_RF_PAYLOAD_SIZE;
-                }
-                _radio->read(f.fragment, f.len);
-                _rxBuffer.push(f);
-            } else {
+            if (_rxBuffer.size() > FRAGMENT_BUFFER_SIZE) {
                 Hoymiles.getMessageOutput()->println("CMT: Buffer full");
                 _radio->flush_rx();
+                continue;
             }
+
+            fragment_t f;
+            memset(f.fragment, 0xcc, MAX_RF_PAYLOAD_SIZE);
+            f.len = std::min<uint8_t>(_radio->getDynamicPayloadSize(), MAX_RF_PAYLOAD_SIZE);
+            f.channel = _radio->getChannel();
+            f.rssi = _radio->getRssiDBm();
+            f.wasReceived = false;
+            f.mainCmd = 0x00;
+            _radio->read(f.fragment, f.len);
+            _rxBuffer.push(f);
         }
         _radio->flush_rx();
         _packetReceived = false;

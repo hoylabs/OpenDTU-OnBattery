@@ -1,8 +1,8 @@
 <template>
     <BasePage :title="$t('console.Console')" :isLoading="dataLoading">
         <CardElement :text="$t('console.VirtualDebugConsole')" textVariant="text-bg-primary">
-            <div class="row g-3 align-items-center">
-                <div class="col">
+            <div class="row align-items-center mb-3">
+                <div class="col-auto mt-2">
                     <div class="form-check form-switch">
                         <input
                             class="form-check-input"
@@ -16,7 +16,7 @@
                         </label>
                     </div>
                 </div>
-                <div class="col text-end">
+                <div class="col-auto ms-auto">
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-primary" :onClick="clearConsole">
                             {{ $t('console.ClearConsole') }}
@@ -106,16 +106,17 @@ export default defineComponent({
                 this.closeSocket();
             };
         },
-        // Send heartbeat packets regularly * 59s Send a heartbeat
+        // Send heartbeat packets regularly * 5s Send a heartbeat
         heartCheck() {
             if (this.heartInterval) {
-                clearTimeout(this.heartInterval);
+                clearInterval(this.heartInterval);
             }
             this.heartInterval = setInterval(() => {
-                if (this.socket.readyState === 1) {
+                if (this.socket.readyState === WebSocket.OPEN) {
                     // Connection status
                     this.socket.send('ping');
                 } else {
+                    clearInterval(this.heartInterval);
                     this.initSocket(); // Breakpoint reconnection 5 Time
                 }
             }, 5 * 1000);
@@ -129,7 +130,7 @@ export default defineComponent({
             }
 
             if (this.heartInterval) {
-                clearTimeout(this.heartInterval);
+                clearInterval(this.heartInterval);
             }
         },
         getOutDate(): string {

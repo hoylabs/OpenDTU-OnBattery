@@ -12,7 +12,7 @@
 
 //#define PROCESS_NETWORK_STATE
 
-void VeDirectMpptController::init(int8_t rx, int8_t tx, Print* msgOut,
+void VeDirectMpptController::init(gpio_num_t rx, gpio_num_t tx, Print* msgOut,
 		bool verboseLogging, uint8_t hwSerialPort)
 {
 	VeDirectFrameHandler::init("MPPT", rx, tx, msgOut,

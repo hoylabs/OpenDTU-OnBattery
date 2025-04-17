@@ -4,7 +4,7 @@
  */
 #include "WebApi_mqtt.h"
 #include "Configuration.h"
-#include "MqttHandleBatteryHass.h"
+#include <battery/Controller.h>
 #include "MqttHandleHass.h"
 #include "MqttHandlePowerLimiterHass.h"
 #include "MqttHandleInverter.h"
@@ -15,7 +15,7 @@
 #include "WebApi_errors.h"
 #include "helper.h"
 #include "PowerLimiter.h"
-#include "PowerMeter.h"
+#include <powermeter/Controller.h>
 #include <AsyncJson.h>
 #include <solarcharger/Controller.h>
 
@@ -330,9 +330,9 @@ void WebApiMqttClass::onMqttAdminPost(AsyncWebServerRequest* request)
 
     MqttSettings.performReconnect();
 
-    MqttHandleBatteryHass.forceUpdate();
     MqttHandleHass.forceUpdate();
     MqttHandlePowerLimiterHass.forceUpdate();
+    Battery.updateSettings();
 
     MqttHandleHuawei.forceUpdate();
     MqttHandlePowerLimiter.forceUpdate();

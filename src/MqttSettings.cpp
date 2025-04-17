@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022 Thomas Basler and others
+ * Copyright (C) 2022-2025 Thomas Basler and others
  */
 #include "MqttSettings.h"
 #include "Configuration.h"
@@ -40,7 +40,7 @@ void MqttSettingsClass::onMqttConnect(const bool sessionPresent)
     }
 }
 
-void MqttSettingsClass::subscribe(const String& topic, const uint8_t qos, const espMqttClientTypes::OnMessageCallback& cb)
+void MqttSettingsClass::subscribe(const String& topic, const uint8_t qos, const OnMessageCallback& cb)
 {
     _mqttSubscribeParser.register_callback(topic.c_str(), qos, cb);
     std::lock_guard<std::mutex> lock(_clientLock);
@@ -92,10 +92,34 @@ void MqttSettingsClass::onMqttDisconnect(espMqttClientTypes::DisconnectReason re
 void MqttSettingsClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, const size_t len, const size_t index, const size_t total)
 {
     if (_verboseLogging) {
-        MessageOutput.printf("Received MQTT message on topic: %s\r\n", topic);
+        MessageOutput.printf("Received MQTT message on topic '%s' "
+            "(Bytes %zu-%zu/%zu)\r\n", topic, index + 1, (index + len), total);
     }
 
-    _mqttSubscribeParser.handle_message(properties, topic, payload, len, index, total);
+    // shortcut for most MQTT messages, which are not fragmented
+    if (index == 0 && len == total) {
+        return _mqttSubscribeParser.handle_message(properties, topic, payload, len);
+    }
+
+    auto& fragment = _fragments[String(topic)];
+
+    // first fragment of a new message
+    if (index == 0) {
+        fragment.clear();
+        fragment.reserve(total);
+    }
+
+    fragment.insert(fragment.end(), payload, payload + len);
+
+    if (fragment.size() < total) { return; } // wait for last fragment
+
+    if (_verboseLogging) {
+        MessageOutput.printf("Fragmented MQTT message reassembled for topic '%s'\r\n", topic);
+    }
+
+    _mqttSubscribeParser.handle_message(properties, topic, fragment.data(), total);
+
+    _fragments.erase(String(topic));
 }
 
 void MqttSettingsClass::performConnect()

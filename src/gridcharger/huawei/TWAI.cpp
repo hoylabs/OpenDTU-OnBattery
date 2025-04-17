@@ -42,14 +42,12 @@ bool TWAI::init()
     MessageOutput.printf("[Huawei::TWAI] rx = %d, tx = %d\r\n",
             pin.huawei_rx, pin.huawei_tx);
 
-    if (pin.huawei_rx < 0 || pin.huawei_tx < 0) {
+    if (pin.huawei_rx <= GPIO_NUM_NC || pin.huawei_tx <= GPIO_NUM_NC) {
         MessageOutput.print("[Huawei::TWAI] invalid pin config\r\n");
         return false;
     }
 
-    auto tx = static_cast<gpio_num_t>(pin.huawei_tx);
-    auto rx = static_cast<gpio_num_t>(pin.huawei_rx);
-    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(tx, rx, TWAI_MODE_NORMAL);
+    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(pin.huawei_tx, pin.huawei_rx, TWAI_MODE_NORMAL);
 
     // interrupts at level 1 are in high demand, at least on ESP32-S3 boards,
     // but only a limited amount can be allocated. failing to allocate an

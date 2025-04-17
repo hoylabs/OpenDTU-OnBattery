@@ -10,11 +10,10 @@
 #include "Led_Single.h"
 #include "MessageOutput.h"
 #include "SerialPortManager.h"
-#include "Battery.h"
+#include <battery/Controller.h>
 #include <gridcharger/huawei/Controller.h>
 #include "MqttHandleDtu.h"
 #include "MqttHandleHass.h"
-#include "MqttHandleBatteryHass.h"
 #include "MqttHandleInverter.h"
 #include "MqttHandleInverterTotal.h"
 #include "MqttHandleHuawei.h"
@@ -29,13 +28,12 @@
 #include "SunPosition.h"
 #include "Utils.h"
 #include "WebApi.h"
-#include "PowerMeter.h"
+#include <powermeter/Controller.h>
 #include "PowerLimiter.h"
 #include "defaults.h"
 #include <solarcharger/Controller.h>
 #include <Arduino.h>
 #include <LittleFS.h>
-#include <SpiManager.h>
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
 
@@ -43,12 +41,6 @@ void setup()
 {
     // Move all dynamic allocations >512byte to psram (if available)
     heap_caps_malloc_extmem_enable(512);
-
-    // Initialize SpiManager
-    SpiManagerInst.register_bus(SPI2_HOST);
-#if SOC_SPI_PERIPH_NUM > 2
-    SpiManagerInst.register_bus(SPI3_HOST);
-#endif
 
     // Initialize serial output
     Serial.begin(SERIAL_BAUDRATE);
@@ -92,7 +84,6 @@ void setup()
         Configuration.migrateOnBattery();
         MessageOutput.print("migrated OpenDTU-OnBattery-specific config... ");
     }
-    auto& config = Configuration.get();
     MessageOutput.println("done");
 
     // Read languate pack
@@ -107,7 +98,6 @@ void setup()
     } else {
         MessageOutput.print("using default config ");
     }
-    const auto& pin = PinMapping.get();
     MessageOutput.println("done");
 
     SerialPortManager.init();
@@ -135,7 +125,6 @@ void setup()
     MqttHandleInverter.init(scheduler);
     MqttHandleInverterTotal.init(scheduler);
     MqttHandleHass.init(scheduler);
-    MqttHandleBatteryHass.init(scheduler);
     MqttHandleHuawei.init(scheduler);
     MqttHandlePowerLimiter.init(scheduler);
     MqttHandlePowerLimiterHass.init(scheduler);
@@ -148,20 +137,7 @@ void setup()
 
     // Initialize Display
     MessageOutput.print("Initialize Display... ");
-    Display.init(
-        scheduler,
-        static_cast<DisplayType_t>(pin.display_type),
-        pin.display_data,
-        pin.display_clk,
-        pin.display_cs,
-        pin.display_reset);
-    Display.setDiagramMode(static_cast<DiagramMode_t>(config.Display.Diagram.Mode));
-    Display.setOrientation(config.Display.Rotation);
-    Display.enablePowerSafe = config.Display.PowerSafe;
-    Display.enableScreensaver = config.Display.ScreenSaver;
-    Display.setContrast(config.Display.Contrast);
-    Display.setLocale(config.Display.Locale);
-    Display.setStartupDisplay();
+    Display.init(scheduler);
     MessageOutput.println("done");
 
     // Initialize Single LEDs

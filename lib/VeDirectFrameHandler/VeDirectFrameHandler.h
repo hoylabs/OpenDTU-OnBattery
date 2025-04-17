@@ -28,10 +28,11 @@ public:
     T const& getData() const { return _tmpFrame; }
     bool sendHexCommand(VeDirectHexCommand cmd, VeDirectHexRegister addr, uint32_t value = 0, uint8_t valsize = 0);
     bool isStateIdle() const { return (_state == State::IDLE); }
+    String getLogId() const { return String(_logId); }
 
 protected:
     VeDirectFrameHandler();
-    void init(char const* who, int8_t rx, int8_t tx, Print* msgOut,
+    void init(char const* who, gpio_num_t rx, gpio_num_t tx, Print* msgOut,
         bool verboseLogging, uint8_t hwSerialPort);
     virtual bool hexDataHandler(VeDirectHexData const &data) { return false; } // handles the disassembled hex response
 

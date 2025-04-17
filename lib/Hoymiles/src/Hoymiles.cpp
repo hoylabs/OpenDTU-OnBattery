@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022-2024 Thomas Basler and others
+ * Copyright (C) 2022-2025 Thomas Basler and others
  */
 #include "Hoymiles.h"
 #include "Utils.h"
@@ -43,34 +43,35 @@ void HoymilesClass::loop()
     _radioNrf->loop();
     _radioCmt->loop();
 
-    if (getNumInverters() == 0) {
+    if (getNumInverters() == 0 || millis() - _lastPoll <= _pollInterval) {
         return;
     }
 
-    if (millis() - _lastPoll > _pollInterval) {
-        static uint8_t inverterPos = 0;
+    static uint8_t inverterPos = 0;
 
-        std::shared_ptr<InverterAbstract> iv = getInverterByPos(inverterPos);
-        if ((iv == nullptr) || ((iv != nullptr) && (!iv->getRadio()->isInitialized()))) {
-            if (++inverterPos >= getNumInverters()) {
-                inverterPos = 0;
-            }
+    std::shared_ptr<InverterAbstract> iv = getInverterByPos(inverterPos);
+    if ((iv == nullptr) || ((iv != nullptr) && (!iv->getRadio()->isInitialized()))) {
+        if (++inverterPos >= getNumInverters()) {
+            inverterPos = 0;
+        }
+    }
+
+    if (iv != nullptr && iv->getRadio()->isInitialized()) {
+
+        if (iv->getZeroValuesIfUnreachable() && !iv->isReachable()) {
+            iv->Statistics()->zeroRuntimeData();
         }
 
-        if (iv != nullptr && iv->getRadio()->isInitialized()) {
+        if (iv->getEnablePolling() || iv->getEnableCommands()) {
+            _messageOutput->print("Fetch inverter: ");
+            _messageOutput->println(iv->serial(), HEX);
 
-            if (iv->getZeroValuesIfUnreachable() && !iv->isReachable()) {
-                iv->Statistics()->zeroRuntimeData();
+            if (!iv->isReachable()) {
+                iv->sendChangeChannelRequest();
             }
 
-            if (iv->getEnablePolling() || iv->getEnableCommands()) {
-                _messageOutput->print("Fetch inverter: ");
-                _messageOutput->println(iv->serial(), HEX);
-
-                if (!iv->isReachable()) {
-                    iv->sendChangeChannelRequest();
-                }
-
+            if (Utils::getTimeAvailable()) {
+                // Fetch statistics
                 iv->sendStatsRequest();
 
                 // Fetch event log
@@ -84,16 +85,9 @@ void HoymilesClass::loop()
                     iv->sendSystemConfigParaRequest();
                 }
 
-                // Set limit if required
-                if (iv->SystemConfigPara()->getLastLimitCommandSuccess() == CMD_NOK) {
-                    _messageOutput->println("Resend ActivePowerControl");
-                    iv->resendActivePowerControlRequest();
-                }
-
-                // Set power status if required
-                if (iv->PowerCommand()->getLastPowerCommandSuccess() == CMD_NOK) {
-                    _messageOutput->println("Resend PowerCommand");
-                    iv->resendPowerControlRequest();
+                // Fetch grid profile
+                if (iv->Statistics()->getLastUpdate() > 0 && (iv->GridProfile()->getLastUpdate() == 0 || !iv->GridProfile()->containsValidData())) {
+                    iv->sendGridOnProFileParaRequest();
                 }
 
                 // Fetch dev info (but first fetch stats)
@@ -113,35 +107,42 @@ void HoymilesClass::loop()
                         iv->sendDevInfoRequest();
                     }
                 }
-
-                // Fetch grid profile
-                if (iv->Statistics()->getLastUpdate() > 0 && (iv->GridProfile()->getLastUpdate() == 0 || !iv->GridProfile()->containsValidData())) {
-                    iv->sendGridOnProFileParaRequest();
-                }
-
-                 _messageOutput->printf("Queue size - NRF: %" PRId32 " CMT: %" PRId32 "\r\n", _radioNrf->getQueueSize(), _radioCmt->getQueueSize());
-                _lastPoll = millis();
             }
 
-            if (++inverterPos >= getNumInverters()) {
-                inverterPos = 0;
+            // Set limit if required
+            if (iv->SystemConfigPara()->getLastLimitCommandSuccess() == CMD_NOK) {
+                _messageOutput->println("Resend ActivePowerControl");
+                iv->resendActivePowerControlRequest();
             }
+
+            // Set power status if required
+            if (iv->PowerCommand()->getLastPowerCommandSuccess() == CMD_NOK) {
+                _messageOutput->println("Resend PowerCommand");
+                iv->resendPowerControlRequest();
+            }
+
+            _messageOutput->printf("Queue size - NRF: %" PRIu32 " CMT: %" PRIu32 "\r\n", _radioNrf->getQueueSize(), _radioCmt->getQueueSize());
+            _lastPoll = millis();
         }
 
-        // Perform housekeeping of all inverters on day change
-        const int8_t currentWeekDay = Utils::getWeekDay();
-        static int8_t lastWeekDay = -1;
-        if (lastWeekDay == -1) {
-            lastWeekDay = currentWeekDay;
-        } else {
-            if (currentWeekDay != lastWeekDay) {
+        if (++inverterPos >= getNumInverters()) {
+            inverterPos = 0;
+        }
+    }
 
-                for (auto& inv : _inverters) {
-                    inv->performDailyTask();
-                }
+    // Perform housekeeping of all inverters on day change
+    const int8_t currentWeekDay = Utils::getWeekDay();
+    static int8_t lastWeekDay = -1;
+    if (lastWeekDay == -1) {
+        lastWeekDay = currentWeekDay;
+    } else {
+        if (currentWeekDay != lastWeekDay) {
 
-                lastWeekDay = currentWeekDay;
+            for (auto& inv : _inverters) {
+                inv->performDailyTask();
             }
+
+            lastWeekDay = currentWeekDay;
         }
     }
 }

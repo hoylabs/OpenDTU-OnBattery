@@ -32,7 +32,7 @@ private:
     std::vector<String> _serialPortOwners;
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
 
-    bool initController(int8_t rx, int8_t tx, bool logging, uint8_t instance);
+    bool initController(gpio_num_t rx, gpio_num_t tx, bool logging, uint8_t instance);
 };
 
 } // namespace SolarChargers::Victron

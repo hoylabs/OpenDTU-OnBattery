@@ -27,7 +27,7 @@ private:
 
     std::unique_ptr<SPIClass> _upSPI;
     std::unique_ptr<MCP_CAN> _upCAN;
-    uint8_t _huaweiIrq; // IRQ pin
+    gpio_num_t _huaweiIrq; // IRQ pin
 };
 
 } // namespace GridCharger::Huawei

@@ -35,15 +35,15 @@ private:
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
 
     void onMqttMessageOutputPower(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+            char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath) const;
 
     void onMqttMessageOutputVoltage(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+            char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath) const;
 
     void onMqttMessageOutputCurrent(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+            char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath) const;
 };
 

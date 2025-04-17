@@ -99,17 +99,13 @@
                                         {{ $t('home.SerialNumber') }}{{ inverter.serial }}
                                     </div>
                                     <div style="padding-right: 2em">
-                                        {{ $t('home.CurrentLimit')
-                                        }}<template v-if="inverter.limit_absolute > -1">
+                                        {{ $t('home.CurrentLimit') }}:
+                                        <template v-if="inverter.limit_absolute > -1">
                                             {{ $n(inverter.limit_absolute, 'decimalNoDigits') }} W | </template
                                         >{{ $n(inverter.limit_relative / 100, 'percentOneDigit') }}
                                     </div>
                                     <div style="padding-right: 2em">
-                                        {{ $t('home.DataAge') }}
-                                        {{ $t('home.Seconds', { val: $n(Math.floor(inverter.data_age_ms / 1000)) }) }}
-                                        <template v-if="inverter.data_age_ms > 300000">
-                                            / {{ calculateAbsoluteTime(inverter.data_age_ms) }}
-                                        </template>
+                                        <DataAgeDisplay :data-age-ms="inverter.data_age_ms" />
                                     </div>
                                 </div>
                             </div>
@@ -514,6 +510,7 @@
 <script lang="ts">
 import BasePage from '@/components/BasePage.vue';
 import BootstrapAlert from '@/components/BootstrapAlert.vue';
+import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
 import DevInfo from '@/components/DevInfo.vue';
 import EventLog from '@/components/EventLog.vue';
 import GridProfile from '@/components/GridProfile.vue';
@@ -526,8 +523,8 @@ import HuaweiView from '@/components/HuaweiView.vue';
 import BatteryView from '@/components/BatteryView.vue';
 import type { DevInfoStatus } from '@/types/DevInfoStatus';
 import type { EventlogItems } from '@/types/EventlogStatus';
-import type { GridProfileStatus } from '@/types/GridProfileStatus';
 import type { GridProfileRawdata } from '@/types/GridProfileRawdata';
+import type { GridProfileStatus } from '@/types/GridProfileStatus';
 import type { LimitConfig } from '@/types/LimitConfig';
 import type { LimitStatus } from '@/types/LimitStatus';
 import type { Inverter, LiveData } from '@/types/LiveDataStatus';
@@ -551,6 +548,7 @@ export default defineComponent({
     components: {
         BasePage,
         BootstrapAlert,
+        DataAgeDisplay,
         DevInfo,
         EventLog,
         GridProfile,
@@ -968,10 +966,6 @@ export default defineComponent({
                         this.showAlertPower = true;
                     }
                 });
-        },
-        calculateAbsoluteTime(lastTime: number): string {
-            const date = new Date(Date.now() - lastTime);
-            return this.$d(date, 'datetime');
         },
         getSumIrridiation(inv: Inverter): number {
             let total = 0;

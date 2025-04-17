@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022-2024 Thomas Basler and others
+ * Copyright (C) 2022-2025 Thomas Basler and others
  */
 #include "WebApi_ws_live.h"
 #include "Datastore.h"
 #include "MessageOutput.h"
 #include "Utils.h"
 #include "WebApi.h"
-#include "Battery.h"
+#include <battery/Controller.h>
+#include <battery/Stats.h>
 #include <gridcharger/huawei/Controller.h>
-#include "PowerMeter.h"
+#include <powermeter/Controller.h>
 #include "defaults.h"
 #include <solarcharger/Controller.h>
 #include <AsyncJson.h>
@@ -56,7 +57,9 @@ void WebApiWsLiveClass::reload()
 
     auto const& config = Configuration.get();
 
-    if (config.Security.AllowReadonly) { return; }
+    if (config.Security.AllowReadonly) {
+        return;
+    }
 
     _ws.enable(false);
     _simpleDigestAuth.setPassword(config.Security.Password);
@@ -260,6 +263,7 @@ void WebApiWsLiveClass::generateInverterCommonJsonResponse(JsonObject& root, std
     root["serial"] = inv->serialString();
     root["name"] = inv->name();
     root["order"] = inv_cfg->Order;
+    root["data_age"] = (millis() - inv->Statistics()->getLastUpdate()) / 1000;
     root["data_age_ms"] = millis() - inv->Statistics()->getLastUpdate();
     root["poll_enabled"] = inv->getEnablePolling();
     root["reachable"] = inv->isReachable();
@@ -351,9 +355,9 @@ void WebApiWsLiveClass::addTotalField(JsonObject& root, const String& name, cons
 void WebApiWsLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
 {
     if (type == WS_EVT_CONNECT) {
-        MessageOutput.printf("Websocket: [%s][%u] connect\r\n", server->url(), client->id());
+        MessageOutput.printf("Websocket: [%s][%" PRIu32 "] connect\r\n", server->url(), client->id());
     } else if (type == WS_EVT_DISCONNECT) {
-        MessageOutput.printf("Websocket: [%s][%u] disconnect\r\n", server->url(), client->id());
+        MessageOutput.printf("Websocket: [%s][%" PRIu32 "] disconnect\r\n", server->url(), client->id());
     }
 }
 

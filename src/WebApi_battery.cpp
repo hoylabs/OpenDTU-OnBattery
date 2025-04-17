@@ -5,9 +5,8 @@
 
 #include "ArduinoJson.h"
 #include "AsyncJson.h"
-#include "Battery.h"
+#include <battery/Controller.h>
 #include "Configuration.h"
-#include "MqttHandleBatteryHass.h"
 #include "MqttHandlePowerLimiterHass.h"
 #include "WebApi.h"
 #include "WebApi_battery.h"
@@ -36,6 +35,15 @@ void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
     auto const& config = Configuration.get();
 
     ConfigurationClass::serializeBatteryConfig(config.Battery, root);
+
+    auto zendure = root["zendure"].to<JsonObject>();
+    ConfigurationClass::serializeBatteryZendureConfig(config.Battery.Zendure, zendure);
+
+    auto mqtt = root["mqtt"].to<JsonObject>();
+    ConfigurationClass::serializeBatteryMqttConfig(config.Battery.Mqtt, mqtt);
+
+    auto serial = root["serial"].to<JsonObject>();
+    ConfigurationClass::serializeBatterySerialConfig(config.Battery.Serial, serial);
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
@@ -74,6 +82,9 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
         auto guard = Configuration.getWriteGuard();
         auto& config = guard.getConfig();
         ConfigurationClass::deserializeBatteryConfig(root.as<JsonObject>(), config.Battery);
+        ConfigurationClass::deserializeBatteryZendureConfig(root["zendure"].as<JsonObject>(), config.Battery.Zendure);
+        ConfigurationClass::deserializeBatteryMqttConfig(root["mqtt"].as<JsonObject>(), config.Battery.Mqtt);
+        ConfigurationClass::deserializeBatterySerialConfig(root["serial"].as<JsonObject>(), config.Battery.Serial);
     }
 
     WebApi.writeConfig(retMsg);
@@ -81,7 +92,6 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 
     Battery.updateSettings();
-    MqttHandleBatteryHass.forceUpdate();
 
     // potentially make SoC thresholds auto-discoverable
     MqttHandlePowerLimiterHass.forceUpdate();

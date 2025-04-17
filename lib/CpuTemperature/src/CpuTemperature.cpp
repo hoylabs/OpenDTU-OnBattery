@@ -19,8 +19,9 @@ CpuTemperatureClass CpuTemperature;
 
 float CpuTemperatureClass::read()
 {
-#ifdef CONFIG_IDF_TARGET_ESP32S2
+#if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     // Disabling temperature reading for ESP32-S2 models as it might lead to WDT resets.
+    // Same issue with ESP32-S3, where such WDT resets have been observed multiple times.
     // See: https://github.com/espressif/esp-idf/issues/8088
     return NAN;
 #endif
@@ -32,7 +33,7 @@ float CpuTemperatureClass::read()
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
     uint8_t raw = temprature_sens_read();
-    ESP_LOGV(TAG, "Raw temperature value: %d", raw);
+    ESP_LOGV(TAG, "Raw temperature value: %" PRIu8, raw);
     temperature = (raw - 32) / 1.8f;
     success = (raw != 128);
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -51,7 +52,7 @@ float CpuTemperatureClass::read()
     if (success && std::isfinite(temperature)) {
         return temperature;
     } else {
-        ESP_LOGD(TAG, "Ignoring invalid temperature (success=%d, value=%.1f)", success, temperature);
+        ESP_LOGD(TAG, "Ignoring invalid temperature (success=%s, value=%.1f)", (success:"true":"false"), temperature);
         return NAN;
     }
 }
