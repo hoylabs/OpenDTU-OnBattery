@@ -9,7 +9,7 @@
 #include <gridcharger/huawei/HardwareInterface.h>
 #include <gridcharger/huawei/DataPoints.h>
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
 
 // Modes of operation
 #define HUAWEI_MODE_OFF 0
@@ -76,6 +76,6 @@ private:
     bool _batteryEmergencyCharging = false;
 };
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei
 
-extern GridCharger::Huawei::Controller HuaweiCan;
+extern GridChargers::Huawei::Controller HuaweiCan;

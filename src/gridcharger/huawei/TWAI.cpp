@@ -8,7 +8,7 @@
 #include "Configuration.h"
 #include <driver/twai.h>
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
 
 TWAI::~TWAI()
 {
@@ -147,4 +147,4 @@ bool TWAI::sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data)
     return twai_transmit(&txMsg, pdMS_TO_TICKS(1000)) == ESP_OK;
 }
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei

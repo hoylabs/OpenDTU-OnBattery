@@ -4,7 +4,7 @@
 #include <atomic>
 #include <gridcharger/huawei/HardwareInterface.h>
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
 
 class TWAI : public HardwareInterface {
 public:
@@ -24,4 +24,4 @@ private:
     static void pollAlerts(void* context);
 };
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei

@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <DataPoints.h>
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
 
 enum class DataPointLabel : uint8_t {
     // board properties message
@@ -81,12 +81,12 @@ LABEL_TRAIT(InputTemperature,   float,       "°C");
 LABEL_TRAIT(OutputCurrent,      float,       "A");
 #undef LABEL_TRAIT
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei
 
 template class DataPointContainer<DataPoint<float, std::string, uint8_t, bool>,
-                                  GridCharger::Huawei::DataPointLabel,
-                                  GridCharger::Huawei::DataPointLabelTraits>;
+                                  GridChargers::Huawei::DataPointLabel,
+                                  GridChargers::Huawei::DataPointLabelTraits>;
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
     using DataPointContainer = DataPointContainer<DataPoint<float, std::string, uint8_t, bool>, DataPointLabel, DataPointLabelTraits>;
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei
