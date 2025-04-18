@@ -52,7 +52,7 @@ float CpuTemperatureClass::read()
     if (success && std::isfinite(temperature)) {
         return temperature;
     } else {
-        ESP_LOGD(TAG, "Ignoring invalid temperature (success=%s, value=%.1f)", (success:"true":"false"), temperature);
+        ESP_LOGD(TAG, "Ignoring invalid temperature (success=%s, value=%.1f)", (success?"true":"false"), temperature);
         return NAN;
     }
 }
