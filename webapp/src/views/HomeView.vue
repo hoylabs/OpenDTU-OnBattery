@@ -14,7 +14,7 @@
             :solarChargerData="liveData.solarcharger"
             :totalBattData="liveData.battery"
             :powerMeterData="liveData.power_meter"
-            :huaweiData="liveData.huawei"
+            :gridChargerData="liveData.gridcharger"
         />
         <div class="row gy-3 mt-0">
             <div class="col-sm-3 col-md-2" :style="[inverterData.length == 1 ? { display: 'none' } : {}]">
@@ -351,7 +351,7 @@
         </div>
         <SolarChargerView v-if="liveData.solarcharger.enabled" />
         <BatteryView v-if="liveData.battery.enabled" />
-        <HuaweiView v-if="liveData.huawei.enabled" />
+        <HuaweiView v-if="liveData.gridcharger.enabled" />
     </BasePage>
 
     <ModalDialog modalId="eventView" :title="$t('home.EventLog')" :loading="eventLogLoading">
@@ -718,8 +718,8 @@ export default defineComponent({
                     if (typeof newData.solarcharger !== 'undefined') {
                         Object.assign(this.liveData.solarcharger, newData.solarcharger);
                     }
-                    if (typeof newData.huawei !== 'undefined') {
-                        Object.assign(this.liveData.huawei, newData.huawei);
+                    if (typeof newData.gridcharger !== 'undefined') {
+                        Object.assign(this.liveData.gridcharger, newData.gridcharger);
                     }
                     if (typeof newData.battery !== 'undefined') {
                         Object.assign(this.liveData.battery, newData.battery);

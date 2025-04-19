@@ -7,7 +7,7 @@
         <form @submit="saveChargerConfig">
             <CardElement :text="$t('acchargeradmin.Configuration')" textVariant="text-bg-primary">
                 <InputElement
-                    :label="$t('acchargeradmin.EnableHuawei')"
+                    :label="$t('acchargeradmin.EnableGridCharger')"
                     v-model="acChargerConfigList.enabled"
                     type="checkbox"
                     wide
@@ -23,10 +23,23 @@
 
                     <div class="row mb-3">
                         <label class="col-sm-4 col-form-label">
+                            {{ $t('acchargeradmin.Provider') }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select class="form-select" v-model="acChargerConfigList.provider">
+                                <option v-for="provider in providerTypeList" :key="provider.key" :value="provider.key">
+                                    {{ $t(`acchargeradmin.Provider` + provider.value) }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <label class="col-sm-4 col-form-label">
                             {{ $t('acchargeradmin.HardwareInterface') }}
                         </label>
                         <div class="col-sm-8">
-                            <select class="form-select" v-model="acChargerConfigList.hardware_interface">
+                            <select class="form-select" v-model="acChargerConfigList.can.hardware_interface">
                                 <option v-for="type in hardwareInterfaceList" :key="type.key" :value="type.key">
                                     {{ $t('acchargeradmin.HardwareInterface' + type.value) }}
                                 </option>
@@ -34,12 +47,12 @@
                         </div>
                     </div>
 
-                    <div class="row mb-3" v-if="acChargerConfigList.hardware_interface === 0">
+                    <div class="row mb-3" v-if="acChargerConfigList.can.hardware_interface === 0">
                         <label class="col-sm-4 col-form-label">
                             {{ $t('acchargeradmin.CanControllerFrequency') }}
                         </label>
                         <div class="col-sm-8">
-                            <select class="form-select" v-model="acChargerConfigList.can_controller_frequency">
+                            <select class="form-select" v-model="acChargerConfigList.can.controller_frequency">
                                 <option
                                     v-for="frequency in frequencyTypeList"
                                     :key="frequency.key"
@@ -74,6 +87,54 @@
                         wide
                     />
                 </template>
+            </CardElement>
+            <CardElement
+                :text="$t('acchargeradmin.HuaweiSettings')"
+                textVariant="text-bg-primary"
+                add-space
+                v-if="acChargerConfigList.enabled"
+            >
+                <InputElement
+                    :label="$t('acchargeradmin.OfflineVoltage')"
+                    v-model="acChargerConfigList.huawei.offline_voltage"
+                    postfix="V"
+                    type="number"
+                    wide
+                    step="0.01"
+                />
+
+                <InputElement
+                    :label="$t('acchargeradmin.OfflineCurrent')"
+                    v-model="acChargerConfigList.huawei.offline_current"
+                    postfix="A"
+                    type="number"
+                    wide
+                    step="0.1"
+                />
+
+                <InputElement
+                    :label="$t('acchargeradmin.InputCurrentLimit')"
+                    v-model="acChargerConfigList.huawei.input_current_limit"
+                    postfix="A"
+                    type="number"
+                    wide
+                    step="0.1"
+                    :tooltip="$t('acchargeradmin.InputCurrentLimitHint')"
+                />
+
+                <InputElement
+                    :label="$t('acchargeradmin.FanOnlineFullSpeed')"
+                    v-model="acChargerConfigList.huawei.fan_online_full_speed"
+                    type="checkbox"
+                    wide
+                />
+
+                <InputElement
+                    :label="$t('acchargeradmin.FanOfflineFullSpeed')"
+                    v-model="acChargerConfigList.huawei.fan_offline_full_speed"
+                    type="checkbox"
+                    wide
+                />
             </CardElement>
 
             <CardElement
@@ -173,7 +234,7 @@ import BootstrapAlert from '@/components/BootstrapAlert.vue';
 import CardElement from '@/components/CardElement.vue';
 import FormFooter from '@/components/FormFooter.vue';
 import InputElement from '@/components/InputElement.vue';
-import type { AcChargerConfig } from '@/types/AcChargerConfig';
+import type { GridChargerConfig } from '@/types/GridChargerConfig';
 import { authHeader, handleResponse } from '@/utils/authentication';
 import { defineComponent } from 'vue';
 
@@ -188,10 +249,11 @@ export default defineComponent({
     data() {
         return {
             dataLoading: true,
-            acChargerConfigList: {} as AcChargerConfig,
+            acChargerConfigList: {} as GridChargerConfig,
             alertMessage: '',
             alertType: 'info',
             showAlert: false,
+            providerTypeList: [{ key: 0, value: 'Huawei' }],
             frequencyTypeList: [
                 { key: 8, value: 8000000 },
                 { key: 16, value: 16000000 },
@@ -208,7 +270,7 @@ export default defineComponent({
     methods: {
         getChargerConfig() {
             this.dataLoading = true;
-            fetch('/api/huawei/config', { headers: authHeader() })
+            fetch('/api/gridcharger/config', { headers: authHeader() })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
                     this.acChargerConfigList = data;
@@ -221,16 +283,17 @@ export default defineComponent({
             const formData = new FormData();
             formData.append('data', JSON.stringify(this.acChargerConfigList));
 
-            fetch('/api/huawei/config', {
+            fetch('/api/gridcharger/config', {
                 method: 'POST',
                 headers: authHeader(),
                 body: formData,
             })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((response) => {
-                    this.alertMessage = this.$t('apiresponse.' + response.code, response.param);
+                    this.alertMessage = this.$t('onbatteryapiresponse.' + response.code, response.param);
                     this.alertType = response.type;
                     this.showAlert = true;
+                    window.scrollTo(0, 0);
                 });
         },
     },

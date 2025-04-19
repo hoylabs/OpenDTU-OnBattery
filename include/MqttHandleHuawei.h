@@ -27,19 +27,27 @@ private:
         LimitOnlineCurrent,
         LimitOfflineVoltage,
         LimitOfflineCurrent,
-        Mode
+        LimitInputCurrent,
+        Mode,
+        Production,
+        FanOnlineFullSpeed,
+        FanOfflineFullSpeed
     };
 
     static constexpr frozen::string _cmdtopic = "huawei/cmd/";
-    static constexpr frozen::map<frozen::string, Topic, 5> _subscriptions = {
-        { "limit_online_voltage",  Topic::LimitOnlineVoltage },
-        { "limit_online_current",  Topic::LimitOnlineCurrent },
-        { "limit_offline_voltage", Topic::LimitOfflineVoltage },
-        { "limit_offline_current", Topic::LimitOfflineCurrent },
-        { "mode",                  Topic::Mode },
+    static constexpr frozen::map<frozen::string, Topic, 9> _subscriptions = {
+        { "limit_online_voltage",   Topic::LimitOnlineVoltage },
+        { "limit_online_current",   Topic::LimitOnlineCurrent },
+        { "limit_offline_voltage",  Topic::LimitOfflineVoltage },
+        { "limit_offline_current",  Topic::LimitOfflineCurrent },
+        { "limit_input_current",    Topic::LimitInputCurrent },
+        { "mode",                   Topic::Mode },
+        { "production",             Topic::Production },
+        { "fan_online_full_speed",  Topic::FanOnlineFullSpeed },
+        { "fan_offline_full_speed", Topic::FanOfflineFullSpeed },
     };
 
-    void onMqttMessage(Topic t,
+    void onMqttMessage(Topic enumTopic,
             const espMqttClientTypes::MessageProperties& properties,
             const char* topic, const uint8_t* payload, size_t len);
 

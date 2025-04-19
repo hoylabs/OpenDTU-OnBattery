@@ -11,28 +11,50 @@
                 <div class="card">
                     <div
                         class="card-header d-flex justify-content-between align-items-center"
-                        :class="{
-                            'text-bg-danger': huaweiData.data_age > 20,
-                            'text-bg-success': huaweiData.data_age < 19,
-                        }"
+                        :class="getStatusClass()"
                     >
                         <div class="p-1 flex-grow-1">
                             <div class="d-flex flex-wrap">
-                                <div style="padding-right: 2em">Huawei R4850G2</div>
-                                <DataAgeDisplay :data-age-ms="huaweiData.data_age * 1000" />
+                                <div style="padding-right: 2em">
+                                    <template
+                                        v-if="
+                                            huaweiData.vendor_name !== undefined &&
+                                            huaweiData.product_name !== undefined
+                                        "
+                                    >
+                                        {{ huaweiData.vendor_name }} {{ huaweiData.product_name }}
+                                    </template>
+                                    <template v-else>Huawei PSU</template>
+                                </div>
+                                <div v-if="huaweiData.serial" style="padding-right: 2em">
+                                    {{ $t('huawei.SerialNumber') }}: {{ huaweiData.serial }}
+                                </div>
+                                <DataAgeDisplay :data-age-ms="huaweiData.data_age" />
                             </div>
                         </div>
                         <div class="btn-toolbar p-2" role="toolbar">
                             <div class="btn-group me-2" role="group">
                                 <button
-                                    :disabled="false"
+                                    :disabled="!huaweiData.reachable"
                                     type="button"
                                     class="btn btn-sm btn-danger"
                                     @click="onShowLimitSettings()"
                                     v-tooltip
-                                    :title="$t('huawei.ShowSetLimit')"
+                                    :title="$t('huawei.LimitSettings')"
                                 >
                                     <BIconSpeedometer style="font-size: 24px" />
+                                </button>
+                            </div>
+                            <div class="btn-group me-2" role="group">
+                                <button
+                                    :disabled="!huaweiData.reachable"
+                                    type="button"
+                                    class="btn btn-sm btn-danger"
+                                    @click="onShowPowerModal()"
+                                    v-tooltip
+                                    :title="$t('huawei.TurnOnOff')"
+                                >
+                                    <BIconPower style="font-size: 24px" />
                                 </button>
                             </div>
                         </div>
@@ -41,8 +63,58 @@
                     <div class="card-body">
                         <div class="row flex-row flex-wrap align-items-start g-3">
                             <div class="col order-0">
-                                <div class="card card-table" :class="{ 'border-info': true }">
-                                    <div class="card-header bg-info">{{ $t('huawei.Input') }}</div>
+                                <div class="card card-table border-info">
+                                    <div class="card-header text-bg-info">{{ $t('huawei.Device') }}</div>
+                                    <div class="card-body">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">{{ $t('huawei.Property') }}</th>
+                                                    <th scope="col">
+                                                        {{ $t('huawei.Value') }}
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-if="huaweiData.board_type">
+                                                    <th scope="row">{{ $t('huawei.BoardType') }}</th>
+                                                    <td>
+                                                        {{ huaweiData.board_type }}
+                                                    </td>
+                                                </tr>
+                                                <tr v-if="huaweiData.manufactured">
+                                                    <th scope="row">{{ $t('huawei.Manufactured') }}</th>
+                                                    <td>
+                                                        {{ huaweiData.manufactured }}
+                                                    </td>
+                                                </tr>
+                                                <tr v-if="huaweiData.product_description">
+                                                    <th scope="row">{{ $t('huawei.ProductDescription') }}</th>
+                                                    <td>
+                                                        {{ huaweiData.product_description }}
+                                                    </td>
+                                                </tr>
+                                                <tr
+                                                    v-if="huaweiData.row !== undefined && huaweiData.slot !== undefined"
+                                                >
+                                                    <th scope="row">{{ $t('huawei.SlotLabel') }}</th>
+                                                    <td>
+                                                        {{
+                                                            $t('huawei.SlotText', {
+                                                                row: huaweiData.row,
+                                                                slot: huaweiData.slot,
+                                                            })
+                                                        }}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col order-0">
+                                <div class="card card-table">
+                                    <div class="card-header">{{ $t('huawei.Input') }}</div>
                                     <div class="card-body">
                                         <table class="table table-striped table-hover">
                                             <thead>
@@ -55,35 +127,42 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr>
-                                                    <th scope="row">{{ $t('huawei.input_voltage') }}</th>
+                                                <tr v-if="huaweiData.input_voltage !== undefined">
+                                                    <th scope="row">{{ $t('huawei.voltage') }}</th>
                                                     <td class="value">
                                                         {{ formatNumber(huaweiData.input_voltage.v) }}
                                                     </td>
                                                     <td>{{ huaweiData.input_voltage.u }}</td>
                                                 </tr>
-                                                <tr>
-                                                    <th scope="row">{{ $t('huawei.input_current') }}</th>
+                                                <tr v-if="huaweiData.input_current !== undefined">
+                                                    <th scope="row">{{ $t('huawei.current') }}</th>
                                                     <td class="value">
                                                         {{ formatNumber(huaweiData.input_current.v) }}
                                                     </td>
                                                     <td>{{ huaweiData.input_current.u }}</td>
                                                 </tr>
-                                                <tr>
-                                                    <th scope="row">{{ $t('huawei.input_power') }}</th>
+                                                <tr v-if="huaweiData.input_power !== undefined">
+                                                    <th scope="row">{{ $t('huawei.power') }}</th>
                                                     <td class="value">
                                                         {{ formatNumber(huaweiData.input_power.v) }}
                                                     </td>
                                                     <td>{{ huaweiData.input_power.u }}</td>
                                                 </tr>
-                                                <tr>
-                                                    <th scope="row">{{ $t('huawei.input_temp') }}</th>
+                                                <tr v-if="huaweiData.input_temp !== undefined">
+                                                    <th scope="row">{{ $t('huawei.temp') }}</th>
                                                     <td class="value">
                                                         {{ Math.round(huaweiData.input_temp.v) }}
                                                     </td>
                                                     <td>{{ huaweiData.input_temp.u }}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr v-if="huaweiData.input_frequency !== undefined">
+                                                    <th scope="row">{{ $t('huawei.frequency') }}</th>
+                                                    <td class="value">
+                                                        {{ formatNumber(huaweiData.input_frequency.v) }}
+                                                    </td>
+                                                    <td>{{ huaweiData.input_frequency.u }}</td>
+                                                </tr>
+                                                <tr v-if="huaweiData.efficiency !== undefined">
                                                     <th scope="row">{{ $t('huawei.efficiency') }}</th>
                                                     <td class="value">
                                                         {{ huaweiData.efficiency.v.toFixed(1) }}
@@ -96,8 +175,8 @@
                                 </div>
                             </div>
                             <div class="col order-1">
-                                <div class="card card-table" :class="{ 'border-info': false }">
-                                    <div class="card-header bg-info">{{ $t('huawei.Output') }}</div>
+                                <div class="card card-table">
+                                    <div class="card-header">{{ $t('huawei.Output') }}</div>
                                     <div class="card-body">
                                         <table class="table table-striped table-hover">
                                             <thead>
@@ -110,40 +189,118 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr>
-                                                    <th scope="row">{{ $t('huawei.output_voltage') }}</th>
+                                                <tr v-if="huaweiData.output_voltage !== undefined">
+                                                    <th scope="row">{{ $t('huawei.voltage') }}</th>
                                                     <td class="value">
                                                         {{ huaweiData.output_voltage.v.toFixed(1) }}
                                                     </td>
                                                     <td>{{ huaweiData.output_voltage.u }}</td>
                                                 </tr>
-                                                <tr>
-                                                    <th scope="row">{{ $t('huawei.output_current') }}</th>
+                                                <tr v-if="huaweiData.output_current !== undefined">
+                                                    <th scope="row">{{ $t('huawei.current') }}</th>
                                                     <td class="value">
                                                         {{ huaweiData.output_current.v.toFixed(2) }}
                                                     </td>
                                                     <td>{{ huaweiData.output_current.u }}</td>
                                                 </tr>
-                                                <tr>
-                                                    <th scope="row">{{ $t('huawei.max_output_current') }}</th>
+                                                <tr v-if="huaweiData.max_output_current !== undefined">
+                                                    <th scope="row">{{ $t('huawei.max_current') }}</th>
                                                     <td class="value">
                                                         {{ huaweiData.max_output_current.v.toFixed(1) }}
                                                     </td>
                                                     <td>{{ huaweiData.max_output_current.u }}</td>
                                                 </tr>
-                                                <tr>
-                                                    <th scope="row">{{ $t('huawei.output_power') }}</th>
+                                                <tr v-if="huaweiData.output_power !== undefined">
+                                                    <th scope="row">{{ $t('huawei.power') }}</th>
                                                     <td class="value">
                                                         {{ huaweiData.output_power.v.toFixed(1) }}
                                                     </td>
                                                     <td>{{ huaweiData.output_power.u }}</td>
                                                 </tr>
-                                                <tr>
-                                                    <th scope="row">{{ $t('huawei.output_temp') }}</th>
+                                                <tr v-if="huaweiData.output_temp !== undefined">
+                                                    <th scope="row">{{ $t('huawei.temp') }}</th>
                                                     <td class="value">
                                                         {{ Math.round(huaweiData.output_temp.v) }}
                                                     </td>
                                                     <td>{{ huaweiData.output_temp.u }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col order-2">
+                                <div class="card card-table">
+                                    <div class="card-header">{{ $t('huawei.Acknowledgements') }}</div>
+                                    <div class="card-body">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">{{ $t('huawei.Property') }}</th>
+                                                    <th class="value" scope="col">{{ $t('huawei.Value') }}</th>
+                                                    <th scope="col">{{ $t('huawei.Unit') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-if="huaweiData.online_voltage !== undefined">
+                                                    <th scope="row">{{ $t('huawei.OnlineVoltage') }}</th>
+                                                    <td class="value">{{ huaweiData.online_voltage.v.toFixed(2) }}</td>
+                                                    <td>{{ huaweiData.online_voltage.u }}</td>
+                                                </tr>
+                                                <tr v-if="huaweiData.offline_voltage !== undefined">
+                                                    <th scope="row">{{ $t('huawei.OfflineVoltage') }}</th>
+                                                    <td class="value">{{ huaweiData.offline_voltage.v.toFixed(2) }}</td>
+                                                    <td>{{ huaweiData.offline_voltage.u }}</td>
+                                                </tr>
+                                                <tr v-if="huaweiData.online_current !== undefined">
+                                                    <th scope="row">{{ $t('huawei.OnlineCurrent') }}</th>
+                                                    <td class="value">{{ huaweiData.online_current.v.toFixed(2) }}</td>
+                                                    <td>{{ huaweiData.online_current.u }}</td>
+                                                </tr>
+                                                <tr v-if="huaweiData.offline_current !== undefined">
+                                                    <th scope="row">{{ $t('huawei.OfflineCurrent') }}</th>
+                                                    <td class="value">{{ huaweiData.offline_current.v.toFixed(2) }}</td>
+                                                    <td>{{ huaweiData.offline_current.u }}</td>
+                                                </tr>
+                                                <tr v-if="huaweiData.input_current_limit !== undefined">
+                                                    <th scope="row">{{ $t('huawei.InputCurrentLimit') }}</th>
+                                                    <td class="value">
+                                                        {{ huaweiData.input_current_limit.v.toFixed(2) }}
+                                                    </td>
+                                                    <td>{{ huaweiData.input_current_limit.u }}</td>
+                                                </tr>
+                                                <tr v-if="huaweiData.production_enabled !== undefined">
+                                                    <th scope="row">{{ $t('huawei.ProductionEnabled') }}</th>
+                                                    <td class="value">
+                                                        {{
+                                                            huaweiData.production_enabled
+                                                                ? $t('base.Yes')
+                                                                : $t('base.No')
+                                                        }}
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr v-if="huaweiData.fan_online_full_speed !== undefined">
+                                                    <th scope="row">{{ $t('huawei.FanOnlineFullSpeed') }}</th>
+                                                    <td class="value">
+                                                        {{
+                                                            huaweiData.fan_online_full_speed
+                                                                ? $t('huawei.FanFullSpeed')
+                                                                : $t('huawei.FanAuto')
+                                                        }}
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr v-if="huaweiData.fan_offline_full_speed !== undefined">
+                                                    <th scope="row">{{ $t('huawei.FanOfflineFullSpeed') }}</th>
+                                                    <td class="value">
+                                                        {{
+                                                            huaweiData.fan_offline_full_speed
+                                                                ? $t('huawei.FanFullSpeed')
+                                                                : $t('huawei.FanAuto')
+                                                        }}
+                                                    </td>
+                                                    <td></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -156,112 +313,43 @@
             </div>
         </div>
 
-        <div class="modal" id="huaweiLimitSettingView" ref="huaweiLimitSettingView" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <form @submit="onSubmitLimit">
-                        <div class="modal-header">
-                            <h5 class="modal-title">{{ $t('huawei.LimitSettings') }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row mb-3">
-                                <label for="inputCurrentLimit" class="col-sm-3 col-form-label"
-                                    >{{ $t('huawei.CurrentLimit') }}
-                                </label>
-                            </div>
+        <ModalDialog modalId="huaweiLimitSettingView" :title="$t('huawei.LimitSettings')" :loading="dataLoading">
+            <BootstrapAlert v-model="showAlertLimit" :variant="alertTypeLimit">
+                {{ alertMessageLimit }}
+            </BootstrapAlert>
 
-                            <div class="row mb-3 align-items-center">
-                                <label for="inputVoltageTargetLimit" class="col-sm-3 col-form-label">{{
-                                    $t('huawei.SetVoltageLimit')
-                                }}</label>
+            <InputElement
+                :label="$t('huawei.SetVoltageLimit')"
+                type="number"
+                step="0.01"
+                v-model="targetLimitList.voltage"
+                postfix="V"
+            />
 
-                                <div class="col-sm-1">
-                                    <div class="form-switch form-check-inline">
-                                        <input
-                                            class="form-check-input"
-                                            type="checkbox"
-                                            id="flexSwitchVoltage"
-                                            v-model="targetLimitList.voltage_valid"
-                                        />
-                                    </div>
-                                </div>
+            <InputElement
+                :label="$t('huawei.SetCurrentLimit')"
+                type="number"
+                step="0.1"
+                v-model="targetLimitList.current"
+                postfix="A"
+            />
+            <template #footer>
+                <button type="button" class="btn btn-danger" @click="onSubmitLimit">
+                    {{ $t('huawei.SetLimits') }}
+                </button>
+            </template>
+        </ModalDialog>
 
-                                <div class="col-sm-7">
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        name="inputVoltageTargetLimit"
-                                        class="form-control"
-                                        id="inputVoltageTargetLimit"
-                                        :min="targetVoltageLimitMin"
-                                        :max="targetVoltageLimitMax"
-                                        v-model="targetLimitList.voltage"
-                                        :disabled="!targetLimitList.voltage_valid"
-                                    />
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-sm-9">
-                                    <div
-                                        v-if="targetLimitList.voltage < targetVoltageLimitMinOffline"
-                                        class="alert alert-secondary mt-3"
-                                        role="alert"
-                                        v-html="$t('huawei.LimitHint')"
-                                    ></div>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3 align-items-center">
-                                <label for="inputCurrentTargetLimit" class="col-sm-3 col-form-label">{{
-                                    $t('huawei.SetCurrentLimit')
-                                }}</label>
-
-                                <div class="col-sm-1">
-                                    <div class="form-switch form-check-inline">
-                                        <input
-                                            class="form-check-input"
-                                            type="checkbox"
-                                            id="flexSwitchCurrentt"
-                                            v-model="targetLimitList.current_valid"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div class="col-sm-7">
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        name="inputCurrentTargetLimit"
-                                        class="form-control"
-                                        id="inputCurrentTargetLimit"
-                                        :min="targetCurrentLimitMin"
-                                        :max="targetCurrentLimitMax"
-                                        v-model="targetLimitList.current"
-                                        :disabled="!targetLimitList.current_valid"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-danger" @click="onSetLimitSettings(true)">
-                                {{ $t('huawei.SetOnline') }}
-                            </button>
-
-                            <button type="submit" class="btn btn-danger" @click="onSetLimitSettings(false)">
-                                {{ $t('huawei.SetOffline') }}
-                            </button>
-
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                {{ $t('huawei.Close') }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+        <ModalDialog modalId="huaweiPowerView" :title="$t('huawei.PowerControl')" :loading="dataLoading">
+            <div class="d-grid gap-2 col-6 mx-auto">
+                <button type="button" class="btn btn-success" @click="onSetPower(true)">
+                    <BIconToggleOn class="fs-4" />&nbsp;{{ $t('huawei.TurnOn') }}
+                </button>
+                <button type="button" class="btn btn-danger" @click="onSetPower(false)">
+                    <BIconToggleOff class="fs-4" />&nbsp;{{ $t('huawei.TurnOff') }}
+                </button>
             </div>
-        </div>
+        </ModalDialog>
     </template>
 </template>
 
@@ -272,13 +360,22 @@ import type { HuaweiLimitConfig } from '@/types/HuaweiLimitConfig';
 import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
 
 import * as bootstrap from 'bootstrap';
-import { BIconSpeedometer } from 'bootstrap-icons-vue';
+import { BIconSpeedometer, BIconPower, BIconToggleOn, BIconToggleOff } from 'bootstrap-icons-vue';
 import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
+import InputElement from '@/components/InputElement.vue';
+import BootstrapAlert from '@/components/BootstrapAlert.vue';
+import ModalDialog from '@/components/ModalDialog.vue';
 
 export default defineComponent({
     components: {
         BIconSpeedometer,
+        BIconPower,
+        BIconToggleOn,
+        BIconToggleOff,
+        InputElement,
         DataAgeDisplay,
+        BootstrapAlert,
+        ModalDialog,
     },
     data() {
         return {
@@ -288,19 +385,12 @@ export default defineComponent({
             dataLoading: true,
             huaweiData: {} as Huawei,
             isFirstFetchAfterConnect: true,
-            targetVoltageLimitMin: 42,
-            targetVoltageLimitMinOffline: 48,
-            targetVoltageLimitMax: 58,
-            targetCurrentLimitMin: 0,
-            targetCurrentLimitMax: 60,
             targetLimitList: {} as HuaweiLimitConfig,
-            targetLimitPersistent: false,
             huaweiLimitSettingView: {} as bootstrap.Modal,
-
+            huaweiPowerView: {} as bootstrap.Modal,
             alertMessageLimit: '',
             alertTypeLimit: 'info',
             showAlertLimit: false,
-            checked: false,
         };
     },
     created() {
@@ -313,10 +403,10 @@ export default defineComponent({
     },
     methods: {
         getInitialData() {
-            console.log('Get initalData for Huawei');
+            console.log('Get initialData for GridCharger');
             this.dataLoading = true;
 
-            fetch('/api/huaweilivedata/status', { headers: authHeader() })
+            fetch('/api/gridchargerlivedata/status', { headers: authHeader() })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
                     this.huaweiData = data;
@@ -324,11 +414,11 @@ export default defineComponent({
                 });
         },
         initSocket() {
-            console.log('Starting connection to Huawei WebSocket Server');
+            console.log('Starting connection to GridCharger WebSocket Server');
 
             const { protocol, host } = location;
             const authString = authUrl();
-            const webSocketUrl = `${protocol === 'https:' ? 'wss' : 'ws'}://${authString}${host}/huaweilivedata`;
+            const webSocketUrl = `${protocol === 'https:' ? 'wss' : 'ws'}://${authString}${host}/gridchargerlivedata`;
 
             this.socket = new WebSocket(webSocketUrl);
 
@@ -341,7 +431,7 @@ export default defineComponent({
 
             this.socket.onopen = function (event) {
                 console.log(event);
-                console.log('Successfully connected to the Huawei websocket server...');
+                console.log('Successfully connected to the GridCharger websocket server...');
             };
 
             // Listen to window events , When the window closes , Take the initiative to disconnect websocket Connect
@@ -352,7 +442,7 @@ export default defineComponent({
         initDataAgeing() {
             this.dataAgeInterval = setInterval(() => {
                 if (this.huaweiData) {
-                    this.huaweiData.data_age++;
+                    this.huaweiData.data_age += 1000;
                 }
             }, 1000);
         },
@@ -381,15 +471,13 @@ export default defineComponent({
         formatNumber(num: number) {
             return new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
         },
-        onHideLimitSettings() {
-            this.showAlertLimit = false;
-        },
         onShowLimitSettings() {
             this.huaweiLimitSettingView = new bootstrap.Modal('#huaweiLimitSettingView');
             this.huaweiLimitSettingView.show();
         },
-        onSetLimitSettings(online: boolean) {
-            this.targetLimitList.online = online;
+        onShowPowerModal() {
+            this.huaweiPowerView = new bootstrap.Modal('#huaweiPowerView');
+            this.huaweiPowerView.show();
         },
         onSubmitLimit(e: Event) {
             e.preventDefault();
@@ -399,7 +487,7 @@ export default defineComponent({
 
             console.log(this.targetLimitList);
 
-            fetch('/api/huawei/limit/config', {
+            fetch('/api/gridcharger/limit', {
                 method: 'POST',
                 headers: authHeader(),
                 body: formData,
@@ -408,12 +496,45 @@ export default defineComponent({
                 .then((response) => {
                     if (response.type == 'success') {
                         this.huaweiLimitSettingView.hide();
+                        this.showAlertLimit = false;
                     } else {
-                        this.alertMessageLimit = this.$t('apiresponse.' + response.code, response.param);
+                        this.alertMessageLimit = this.$t('onbatteryapiresponse.' + response.code, response.param);
                         this.alertTypeLimit = response.type;
                         this.showAlertLimit = true;
                     }
                 });
+        },
+        onSetPower(power: boolean) {
+            const formData = new FormData();
+            formData.append('data', JSON.stringify({ power }));
+
+            fetch('/api/gridcharger/power', {
+                method: 'POST',
+                headers: authHeader(),
+                body: formData,
+            })
+                .then((response) => handleResponse(response, this.$emitter, this.$router))
+                .then((response) => {
+                    console.log(response);
+                    if (response.type == 'success') {
+                        this.huaweiPowerView.hide();
+                    }
+                });
+        },
+        getStatusClass() {
+            if (this.huaweiData.reachable !== true) {
+                return 'text-bg-danger';
+            }
+
+            if (
+                this.huaweiData.reachable === true &&
+                this.huaweiData.output_power?.v < 10 &&
+                this.huaweiData.output_current?.v < 0.1
+            ) {
+                return 'text-bg-warning';
+            }
+
+            return 'text-bg-success';
         },
     },
 });

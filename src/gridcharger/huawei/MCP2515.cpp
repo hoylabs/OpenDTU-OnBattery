@@ -65,7 +65,7 @@ bool MCP2515::init()
     digitalWrite(pin.huawei_cs, HIGH);
 
     auto mcp_frequency = MCP_8MHZ;
-    auto frequency = Configuration.get().Huawei.CAN_Controller_Frequency;
+    auto frequency = Configuration.get().GridCharger.Can.Controller_Frequency;
     if (16000000UL == frequency) { mcp_frequency = MCP_16MHZ; }
     else if (8000000UL != frequency) {
         MessageOutput.printf("[Huawei::MCP2515] unknown frequency %d Hz, using 8 MHz\r\n", mcp_frequency);
@@ -77,8 +77,8 @@ bool MCP2515::init()
         return false;
     }
 
-    const uint32_t myMask = 0xFFFFFFFF;         // Look at all incoming bits and...
-    const uint32_t myFilter = 0x1081407F;       // filter for this message only
+    const uint32_t myMask = 0xFFFF0000;      // filter for the first two bytes...
+    const uint32_t myFilter = 0x10810000;    // ...with this value
     _upCAN->init_Mask(0, 1, myMask);
     _upCAN->init_Filt(0, 1, myFilter);
     _upCAN->init_Mask(1, 1, myMask);
@@ -123,7 +123,7 @@ bool MCP2515::getMessage(HardwareInterface::can_message_t& msg)
 
         if (len != 8) { continue; }
 
-        msg.canId = rxId;
+        msg.canId = rxId & 0x1FFFFFFF; // mask piggy-backed MCP2515 bits
         msg.valueId = rxBuf[0] << 24 | rxBuf[1] << 16 | rxBuf[2] << 8 | rxBuf[3];
         msg.value = rxBuf[4] << 24 | rxBuf[5] << 16 | rxBuf[6] << 8 | rxBuf[7];
 

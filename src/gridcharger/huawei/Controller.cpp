@@ -37,14 +37,24 @@ void Controller::init(Scheduler& scheduler)
 
 void Controller::enableOutput()
 {
+    if (_oOutputEnabled.value_or(false)) { return; }
+
+    _setProduction(true);
     if (_huaweiPower <= GPIO_NUM_NC) { return; }
     digitalWrite(_huaweiPower, 0);
+
+    _oOutputEnabled = true;
 }
 
 void Controller::disableOutput()
 {
+    if (!_oOutputEnabled.value_or(true)) { return; }
+
+    _setProduction(false);
     if (_huaweiPower <= GPIO_NUM_NC) { return; }
     digitalWrite(_huaweiPower, 1);
+
+    _oOutputEnabled = false;
 }
 
 void Controller::updateSettings()
@@ -55,9 +65,9 @@ void Controller::updateSettings()
 
     auto const& config = Configuration.get();
 
-    if (!config.Huawei.Enabled) { return; }
+    if (!config.GridCharger.Enabled) { return; }
 
-    switch (config.Huawei.HardwareInterface) {
+    switch (config.GridCharger.Can.HardwareInterface) {
         case GridChargerHardwareInterface::MCP2515:
             _upHardwareInterface = std::make_unique<MCP2515>();
             break;
@@ -66,7 +76,7 @@ void Controller::updateSettings()
             break;
         default:
             MessageOutput.printf("[Huawei::Controller] Unknown hardware "
-                    "interface setting %d\r\n", config.Huawei.HardwareInterface);
+                    "interface setting %d\r\n", config.GridCharger.Can.HardwareInterface);
             return;
             break;
     }
@@ -84,7 +94,7 @@ void Controller::updateSettings()
         disableOutput();
     }
 
-    if (config.Huawei.Auto_Power_Enabled) {
+    if (config.GridCharger.AutoPowerEnabled) {
         _mode = HUAWEI_MODE_AUTO_INT;
     }
 
@@ -99,7 +109,7 @@ void Controller::loop()
 
     auto const& config = Configuration.get();
 
-    bool verboseLogging = config.Huawei.VerboseLogging;
+    bool verboseLogging = config.GridCharger.VerboseLogging;
 
     auto upNewData = _upHardwareInterface->getCurrentData();
     if (upNewData) {
@@ -110,7 +120,7 @@ void Controller::loop()
     auto oOutputVoltage = _dataPoints.get<DataPointLabel::OutputVoltage>();
     auto oOutputPower = _dataPoints.get<DataPointLabel::OutputPower>();
     auto oEfficiency = _dataPoints.get<DataPointLabel::Efficiency>();
-    auto efficiency = oEfficiency ? (*oEfficiency > 0.5 ? *oEfficiency : 1.0) : 1.0;
+    auto efficiency = oEfficiency ? (*oEfficiency > 50 ? *oEfficiency / 100 : 1.0) : 1.0;
 
     // Internal PSU power pin (slot detect) control
     if (oOutputCurrent && *oOutputCurrent > HUAWEI_AUTO_MODE_SHUTDOWN_CURRENT) {
@@ -129,8 +139,8 @@ void Controller::loop()
         // Set voltage limit in periodic intervals if we're in auto mode or if emergency battery charge is requested.
         if ( _nextAutoModePeriodicIntMillis < millis()) {
             MessageOutput.printf("[Huawei::Controller] Periodically setting "
-                "voltage limit: %f \r\n", config.Huawei.Auto_Power_Voltage_Limit);
-            _setParameter(config.Huawei.Auto_Power_Voltage_Limit, Setting::OnlineVoltage);
+                "voltage limit: %f \r\n", config.GridCharger.AutoPowerVoltageLimit);
+            _setParameter(config.GridCharger.AutoPowerVoltageLimit, Setting::OnlineVoltage);
             _nextAutoModePeriodicIntMillis = millis() + 60000;
         }
     }
@@ -139,7 +149,7 @@ void Controller::loop()
     // Emergency charge
     // ***********************
     auto stats = Battery.getStats();
-    if (!_batteryEmergencyCharging && config.Huawei.Emergency_Charge_Enabled && stats->getImmediateChargingRequest()) {
+    if (!_batteryEmergencyCharging && config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
         if (!oOutputVoltage) {
             // TODO(schlimmchen): if this situation actually occurs, this message
             // will be printed with high frequency for a prolonged time. how can
@@ -152,7 +162,7 @@ void Controller::loop()
         _batteryEmergencyCharging = true;
 
         // Set output current
-        float outputCurrent = efficiency * (config.Huawei.Auto_Power_Upper_Power_Limit / *oOutputVoltage);
+        float outputCurrent = efficiency * (config.GridCharger.AutoPowerUpperPowerLimit / *oOutputVoltage);
         MessageOutput.printf("[Huawei::Controller] Emergency Charge Output "
             "current %.02f \r\n", outputCurrent);
         _setParameter(outputCurrent, Setting::OnlineCurrent);
@@ -188,7 +198,7 @@ void Controller::loop()
         }
 
         // Re-enable automatic power control if the output voltage has dropped below threshold
-        if (oOutputVoltage && *oOutputVoltage < config.Huawei.Auto_Power_Enable_Voltage_Limit ) {
+        if (oOutputVoltage && *oOutputVoltage < config.GridCharger.AutoPowerEnableVoltageLimit ) {
             _autoPowerEnabledCounter = 10;
         }
 
@@ -211,7 +221,7 @@ void Controller::loop()
             float newPowerLimit = -1 * round(PowerMeter.getPowerTotal());
 
             // Powerlimit is the requested output power + permissable Grid consumption factoring in the efficiency factor
-            newPowerLimit += *oOutputPower + config.Huawei.Auto_Power_Target_Power_Consumption / efficiency;
+            newPowerLimit += *oOutputPower + config.GridCharger.AutoPowerTargetPowerConsumption / efficiency;
 
             if (verboseLogging) {
                 MessageOutput.printf("[Huawei::Controller] newPowerLimit: %.0f, "
@@ -219,25 +229,25 @@ void Controller::loop()
             }
 
             // Check whether the battery SoC limit setting is enabled
-            if (config.Battery.Enabled && config.Huawei.Auto_Power_BatterySoC_Limits_Enabled) {
+            if (config.Battery.Enabled && config.GridCharger.AutoPowerBatterySoCLimitsEnabled) {
                 uint8_t _batterySoC = Battery.getStats()->getSoC();
                 // Sets power limit to 0 if the BMS reported SoC reaches or exceeds the user configured value
-                if (_batterySoC >= config.Huawei.Auto_Power_Stop_BatterySoC_Threshold) {
+                if (_batterySoC >= config.GridCharger.AutoPowerStopBatterySoCThreshold) {
                     newPowerLimit = 0;
                     if (verboseLogging) {
                         MessageOutput.printf("[Huawei::Controller] Current battery SoC %i reached "
                                 "stop threshold %i, set newPowerLimit to %f \r\n", _batterySoC,
-                                config.Huawei.Auto_Power_Stop_BatterySoC_Threshold, newPowerLimit);
+                                config.GridCharger.AutoPowerStopBatterySoCThreshold, newPowerLimit);
                     }
                 }
             }
 
-            if (newPowerLimit > config.Huawei.Auto_Power_Lower_Power_Limit) {
+            if (newPowerLimit > config.GridCharger.AutoPowerLowerPowerLimit) {
 
                 // Check if the output power has dropped below the lower limit (i.e. the battery is full)
                 // and if the PSU should be turned off. Also we use a simple counter mechanism here to be able
                 // to ramp up from zero output power when starting up
-                if (*oOutputPower < config.Huawei.Auto_Power_Lower_Power_Limit) {
+                if (*oOutputPower < config.GridCharger.AutoPowerLowerPowerLimit) {
                     MessageOutput.print("[Huawei::Controller] Power and "
                         "voltage limit reached. Disabling automatic power "
                         "control.\r\n");
@@ -252,8 +262,8 @@ void Controller::loop()
                 }
 
                 // Limit power to maximum
-                if (newPowerLimit > config.Huawei.Auto_Power_Upper_Power_Limit) {
-                    newPowerLimit = config.Huawei.Auto_Power_Upper_Power_Limit;
+                if (newPowerLimit > config.GridCharger.AutoPowerUpperPowerLimit) {
+                    newPowerLimit = config.GridCharger.AutoPowerUpperPowerLimit;
                 }
 
                 // Calculate output current
@@ -283,6 +293,31 @@ void Controller::loop()
             }
         }
     }
+}
+
+void Controller::setFan(bool online, bool fullSpeed)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (!_upHardwareInterface) { return; }
+
+    using Setting = HardwareInterface::Setting;
+    auto setting = online ? Setting::FanOnlineFullSpeed : Setting::FanOfflineFullSpeed;
+    _upHardwareInterface->setParameter(setting, fullSpeed ? 1 : 0);
+}
+
+void Controller::_setProduction(bool enable)
+{
+    auto setting = HardwareInterface::Setting::ProductionDisable;
+    _upHardwareInterface->setParameter(setting, enable ? 0 : 1);
+}
+
+void Controller::setProduction(bool enable)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (!_upHardwareInterface) { return; }
+    _setProduction(enable);
 }
 
 void Controller::setParameter(float val, HardwareInterface::Setting setting)
@@ -337,7 +372,7 @@ void Controller::setMode(uint8_t mode) {
 
     auto const& config = Configuration.get();
 
-    if (mode == HUAWEI_MODE_AUTO_INT && !config.Huawei.Auto_Power_Enabled ) {
+    if (mode == HUAWEI_MODE_AUTO_INT && !config.GridCharger.AutoPowerEnabled ) {
         MessageOutput.println("[Huawei::Controller] WARNING: Trying to set "
             "mode to internal automatic power control without being enabled "
             "in the UI. Ignoring command.");
@@ -356,9 +391,13 @@ void Controller::setMode(uint8_t mode) {
 
 void Controller::getJsonData(JsonVariant& root) const
 {
-    root["data_age"] = (millis() - _dataPoints.getLastUpdate()) / 1000;
+    root["data_age"] = millis() - _dataPoints.getLastUpdate();
 
     using Label = GridCharger::Huawei::DataPointLabel;
+
+    auto oReachable = _dataPoints.get<Label::Reachable>();
+    root["reachable"] = oReachable.value_or(false);
+
 #define VAL(l, n) \
     { \
         auto oDataPoint = _dataPoints.getDataPointFor<Label::l>(); \
@@ -377,15 +416,33 @@ void Controller::getJsonData(JsonVariant& root) const
     VAL(OutputPower, "output_power");
     VAL(InputTemperature, "input_temp");
     VAL(OutputTemperature, "output_temp");
+    VAL(InputFrequency, "input_frequency");
+    VAL(Efficiency, "efficiency");
+    VAL(InputCurrentLimit, "input_current_limit");
+    VAL(OnlineVoltage, "online_voltage");
+    VAL(OnlineCurrent, "online_current");
+    VAL(OfflineVoltage, "offline_voltage");
+    VAL(OfflineCurrent, "offline_current");
 #undef VAL
 
-    // special handling for efficiency, as we need to multiply it
-    // to get the percentage (rather than the decimal notation).
-    auto oEfficiency = _dataPoints.getDataPointFor<Label::Efficiency>();
-    if (oEfficiency) {
-        root["efficiency"]["v"] = *_dataPoints.get<Label::Efficiency>() * 100;
-        root["efficiency"]["u"] = oEfficiency->getUnitText();
+#define VAL(l, n) \
+    { \
+        auto oVal = _dataPoints.get<Label::l>(); \
+        if (oVal) { root[n] = *oVal; } \
     }
+
+    VAL(Row,                 "row");
+    VAL(Slot,                "slot");
+    VAL(ProductionEnabled,   "production_enabled");
+    VAL(FanOnlineFullSpeed,  "fan_online_full_speed");
+    VAL(FanOfflineFullSpeed, "fan_offline_full_speed");
+    VAL(BoardType,           "board_type");
+    VAL(Serial,              "serial");
+    VAL(Manufactured,        "manufactured");
+    VAL(VendorName,          "vendor_name");
+    VAL(ProductName,         "product_name");
+    VAL(ProductDescription,  "product_description");
+#undef VAL
 }
 
 } // namespace GridCharger::Huawei
