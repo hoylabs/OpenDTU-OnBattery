@@ -820,7 +820,8 @@
                 "Ace2000": "Ace 2000",
                 "Hyper2000A": "Hyper 2000 (ältere Ausführungen)",
                 "Hyper2000B": "Hyper 2000 (neuere Ausführungen)"
-            }
+            },
+            "buzzerEnable": "Akustische Signale"
         }
     },
     "inverteradmin": {
@@ -1173,9 +1174,9 @@
         "bypassMode": "Bypass Modus",
         "bypassState": "Bypass Status",
         "heatState": "Batterieheizung",
-        "autoRecover": "Automatischer Wiederanlauf",
+        "autoRecover": "Automatischer Reset des Bypass Modus",
         "autoShutdown": "Automatisches Herunterfahren",
-        "buzzer": "Integrierter Summer",
+        "buzzer": "Akustische Signale",
         "batteries": "Anzahl installierter Batterien",
         "charging": "Laden",
         "discharging": "Entladen",
