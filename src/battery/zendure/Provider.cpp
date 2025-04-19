@@ -40,7 +40,11 @@ bool Provider::init(bool verboseLogging)
                 deviceName = String("SolarFlow Ace 1500");
                 break;
             case 4:
-                deviceType = ZENDURE_HYPER2000;
+                deviceType = ZENDURE_HYPER2000_A;
+                deviceName = String("SolarFlow Hyper 2000");
+                break;
+            case 5:
+                deviceType = ZENDURE_HYPER2000_B;
                 deviceName = String("SolarFlow Hyper 2000");
                 break;
             default:

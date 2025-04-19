@@ -811,7 +811,17 @@
         "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
         "ZendureChargeThrough": "Vollladeeinstellungen",
         "ZendureChargeThroughEnabled": "Vollladen",
-        "ZendureChargeThroughInterval": "Maximales Interval"
+        "ZendureChargeThroughInterval": "Maximales Interval",
+        "zendure": {
+            "deviceTypes": {
+                "Hub1200": "Hub 1200",
+                "Hub2000": "Hub 2000",
+                "AIO2400": "AIO 2400",
+                "Ace2000": "Ace 2000",
+                "Hyper2000A": "Hyper 2000 (ältere Ausführungen)",
+                "Hyper2000B": "Hyper 2000 (neuere Ausführungen)"
+            }
+        }
     },
     "inverteradmin": {
         "InverterSettings": "Wechselrichter Einstellungen",
