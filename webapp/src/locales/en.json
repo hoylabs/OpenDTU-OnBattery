@@ -814,7 +814,17 @@
         "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
         "ZendureChargeThrough": "Charge Through Settings",
         "ZendureChargeThroughEnabled": "Charge Through",
-        "ZendureChargeThroughInterval": "Maximum time without full charge"
+        "ZendureChargeThroughInterval": "Maximum time without full charge",
+        "zendure": {
+            "deviceTypes": {
+                "Hub1200": "Hub 1200",
+                "Hub2000": "Hub 2000",
+                "AIO2400": "AIO 2400",
+                "Ace2000": "Ace 2000",
+                "Hyper2000A": "Hyper 2000 (older revisions)",
+                "Hyper2000B": "Hyper 2000 (newer revisions)"
+            }
+        }
     },
     "inverteradmin": {
         "InverterSettings": "Inverter Settings",
