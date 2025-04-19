@@ -117,7 +117,7 @@ bool Provider::init(bool verboseLogging)
     prop[ZENDURE_REPORT_PV_AUTO_MODEL] = 0; // we did static setup
     prop[ZENDURE_REPORT_AUTO_RECOVER] = static_cast<uint8_t>(config.Battery.Zendure.BypassMode == static_cast<uint8_t>(BypassMode::Automatic));
     prop[ZENDURE_REPORT_AUTO_SHUTDOWN] = static_cast<uint8_t>(config.Battery.Zendure.AutoShutdown);
-    prop[ZENDURE_REPORT_BUZZER_SWITCH] = 0; // disable, as it is anoying
+    prop[ZENDURE_REPORT_BUZZER_SWITCH] = static_cast<uint8_t>(config.Battery.Zendure.BuzzerEnable);
     prop[ZENDURE_REPORT_BYPASS_MODE] = config.Battery.Zendure.BypassMode;
     prop[ZENDURE_REPORT_SMART_MODE] = 0; // should be disabled
     serializeJson(root, _payloadSettings);
@@ -546,6 +546,11 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
             _stats->setSolarPower2(*solar_power_2);
         }
 
+        auto bypass_mode = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BYPASS_MODE);
+        if (bypass_mode.has_value() && *bypass_mode <= 2) {
+            _stats->_bypass_mode = static_cast<BypassMode>(*bypass_mode);
+        }
+
         _stats->_lastUpdate = ms;
     }
 
@@ -740,7 +745,6 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
     _stats->setDischargeCurrentLimit(static_cast<float>(_stats->_inverse_max) / _stats->getVoltage(), ms);
 
     _stats->_auto_recover = static_cast<bool>(v[ZENDURE_LOG_OFFSET_AUTO_RECOVER].as<uint8_t>());
-    _stats->_bypass_mode = static_cast<BypassMode>(v[ZENDURE_LOG_OFFSET_BYPASS_MODE].as<uint8_t>());
     _stats->_soc_min = v[ZENDURE_LOG_OFFSET_MIN_SOC].as<float>();
 
     _stats->_output_limit = static_cast<uint16_t>(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT].as<uint32_t>() / 100);

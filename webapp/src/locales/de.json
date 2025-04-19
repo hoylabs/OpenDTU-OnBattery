@@ -811,7 +811,8 @@
         "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
         "ZendureChargeThrough": "Vollladeeinstellungen",
         "ZendureChargeThroughEnabled": "Vollladen",
-        "ZendureChargeThroughInterval": "Maximales Interval"
+        "ZendureChargeThroughInterval": "Maximales Interval",
+        "ZendureBuzzerEnable": "Akustische Signale"
     },
     "inverteradmin": {
         "InverterSettings": "Wechselrichter Einstellungen",
@@ -1163,9 +1164,9 @@
         "bypassMode": "Bypass Modus",
         "bypassState": "Bypass Status",
         "heatState": "Batterieheizung",
-        "autoRecover": "Automatischer Wiederanlauf",
+        "autoRecover": "Automatischer Reset des Bypass Modus",
         "autoShutdown": "Automatisches Herunterfahren",
-        "buzzer": "Integrierter Summer",
+        "buzzer": "Akustische Signale",
         "batteries": "Anzahl installierter Batterien",
         "charging": "Laden",
         "discharging": "Entladen",

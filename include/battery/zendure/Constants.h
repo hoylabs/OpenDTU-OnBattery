@@ -8,7 +8,7 @@ namespace Batteries::Zendure {
 #define ZENDURE_HUB2000     "A8yh63"
 #define ZENDURE_AIO2400     "yWF7hV)"
 #define ZENDURE_ACE1500     "8bM93H"
-#define ZENDURE_HYPER2000   "ja72U0ha)"
+#define ZENDURE_HYPER2000   "gDa3tb"
 
 #define ZENDURE_MAX_PACKS                           4U
 #define ZENDURE_REMAINING_TIME_OVERFLOW             59940U
