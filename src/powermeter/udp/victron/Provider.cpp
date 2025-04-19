@@ -64,9 +64,13 @@ void Provider::sendModbusRequest()
     payload.push_back(sRegisterCount >> 8);
     payload.push_back(sRegisterCount & 0xFF);
 
-    VictronUdp.beginPacket(_cfg.IpAddress, modbusPort);
+    bool begin = VictronUdp.beginPacket(_cfg.IpAddress, modbusPort);
     VictronUdp.write(payload.data(), payload.size());
-    VictronUdp.endPacket();
+    bool end = VictronUdp.endPacket();
+
+    if (_verboseLogging) {
+        MessageOutput.printf("[PowerMeters::Udp::Victron] sent request. status: begin: %s, end: %s\r\n", begin ? "success" : "failed", end ? "success" : "failed");
+    }
 
     _lastRequest = currentMillis;
 }
@@ -101,12 +105,12 @@ void Provider::parseModbusResponse()
     if (!packetSize) { return; }
 
     uint8_t buffer[256];
-    VictronUdp.read(buffer, sizeof(buffer));
+    int readBytes = VictronUdp.read(buffer, sizeof(buffer));
 
     uint8_t* p = buffer;
 
     if (_verboseLogging) {
-        MessageOutput.printf("[PowerMeters::Udp::Victron] received %d bytes:", packetSize);
+        MessageOutput.printf("[PowerMeters::Udp::Victron] received/read %d/%d bytes:", packetSize, readBytes);
 
         for (int i = 0; i < packetSize; i++) {
             if (i % 16 == 0) {
@@ -197,6 +201,8 @@ void Provider::parseModbusResponse()
     _dataCurrent.add<Label::PowerL2>(readInt32(&p, 1)); // 0x3086f
     p += 4; // jump to 0x308A
     _dataCurrent.add<Label::PowerL3>(readInt32(&p, 1)); // 0x308Af
+
+    MessageOutput.printf("[PowerMeters::Udp::Victron] New total: %.2f\r\n", getPowerTotal());
 }
 
 void Provider::loop()
