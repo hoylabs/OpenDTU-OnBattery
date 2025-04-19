@@ -197,6 +197,7 @@ struct BATTERY_ZENDURE_CONFIG_T {
     uint16_t OutputLimitNight;
     bool ChargeThroughEnable;
     uint16_t ChargeThroughInterval;
+    bool BuzzerEnable;
 };
 using BatteryZendureConfig = struct BATTERY_ZENDURE_CONFIG_T;
 
