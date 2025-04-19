@@ -550,6 +550,11 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
             _stats->setSolarPower2(*solar_power_2);
         }
 
+        auto bypass_mode = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BYPASS_MODE);
+        if (bypass_mode.has_value() && *bypass_mode <= 2) {
+            _stats->_bypass_mode = static_cast<BypassMode>(*bypass_mode);
+        }
+
         _stats->_lastUpdate = ms;
     }
 
@@ -744,7 +749,6 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
     _stats->setDischargeCurrentLimit(static_cast<float>(_stats->_inverse_max) / _stats->getVoltage(), ms);
 
     _stats->_auto_recover = static_cast<bool>(v[ZENDURE_LOG_OFFSET_AUTO_RECOVER].as<uint8_t>());
-    _stats->_bypass_mode = static_cast<BypassMode>(v[ZENDURE_LOG_OFFSET_BYPASS_MODE].as<uint8_t>());
     _stats->_soc_min = v[ZENDURE_LOG_OFFSET_MIN_SOC].as<float>();
 
     _stats->_output_limit = static_cast<uint16_t>(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT].as<uint32_t>() / 100);
