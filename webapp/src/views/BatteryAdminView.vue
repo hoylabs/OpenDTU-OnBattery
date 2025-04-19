@@ -369,6 +369,12 @@
                         type="checkbox"
                         :tooltip="$t('batteryadmin.ZendureAutoShutdownDescription')"
                     />
+
+                    <InputElement
+                        :label="$t('batteryadmin.zendure.buzzerEnable')"
+                        v-model="batteryConfigList.zendure.buzzer_enable"
+                        type="checkbox"
+                    />
                 </CardElement>
 
                 <CardElement :text="$t('batteryadmin.ZendureChargeThrough')" textVariant="text-bg-primary" addSpace>

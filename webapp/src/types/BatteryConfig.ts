@@ -15,6 +15,7 @@ export interface BatteryZendureConfig {
     sunset_offset: number;
     charge_through_enable: boolean;
     charge_through_interval: number;
+    buzzer_enable: boolean;
 }
 
 export interface BatteryMqttConfig {

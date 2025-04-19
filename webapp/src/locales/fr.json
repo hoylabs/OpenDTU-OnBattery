@@ -641,7 +641,8 @@
         "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
         "ZendureChargeThrough": "Charge Through Settings",
         "ZendureChargeThroughEnabled": "Charge Through",
-        "ZendureChargeThroughInterval": "Maximum time without full charge"
+        "ZendureChargeThroughInterval": "Maximum time without full charge",
+        "ZendureBuzzerEnable": "Audible signals"
     },
     "inverteradmin": {
         "InverterSettings": "Paramètres des onduleurs",
@@ -1034,9 +1035,9 @@
         "bypassMode": "Bypass mode",
         "bypassState": "Bypass switch",
         "heatState": "Battery heating",
-        "autoRecover": "Automatic recover",
+        "autoRecover": "Automatic reset of bypass mode",
         "autoShutdown": "Automatic shutdown",
-        "buzzer": "Integrated buzzer",
+        "buzzer": "Audible signals",
         "batteries": "Number of batteries",
         "charging": "Charging",
         "discharging": "Discharging",
@@ -1054,6 +1055,6 @@
         "remainInTime": "Remaining charge time",
         "unavail": "N/A",
         "useableCapacity": "Useable capacity",
-        "chargethrough": "Charge through"
+        "chargethrough": "Charge through cycle"
     }
 }
