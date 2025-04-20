@@ -52,6 +52,7 @@ protected:
 
 private:
     static void staticLoopHelper(void* context);
+    void logMessage(char const* msg, uint32_t canId, uint32_t valueId, uint32_t value);
     void loop();
     void processQueue();
 
