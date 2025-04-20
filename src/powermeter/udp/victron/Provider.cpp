@@ -98,9 +98,13 @@ static float readUint32(uint8_t** buffer, uint8_t factor)
 void Provider::parseModbusResponse()
 {
     int packetSize = VictronUdp.parsePacket();
-    if (!packetSize) { return; }
+    if (0 == packetSize) { return; }
 
     uint8_t buffer[256];
+    if (packetSize > sizeof(buffer)) {
+        MessageOutput.printf("[PowerMeters::Udp::Victron] packet too large: %d bytes\r\n", packetSize);
+        return;
+    }
     VictronUdp.read(buffer, sizeof(buffer));
 
     uint8_t* p = buffer;
@@ -118,24 +122,38 @@ void Provider::parseModbusResponse()
         MessageOutput.print("\r\n");
     }
 
-    uint16_t transactionId = (p[0] << 8) | p[1];
-    p += 2;
+    uint16_t length = 0;
 
-    if (transactionId != sTransactionId) {
-        MessageOutput.printf("[PowerMeters::Udp::Victron] invalid transaction ID: %04X\r\n", transactionId);
-        return;
+    while (true) {
+        size_t processed = p - buffer;
+        size_t remaining = packetSize - processed;
+        if (remaining < 6) {
+            MessageOutput.printf("[PowerMeters::Udp::Victron] unexpected end of packet\r\n");
+            return;
+        }
+
+        uint16_t transactionId = (p[0] << 8) | p[1];
+        p += 2;
+
+        uint16_t protocolId = (p[0] << 8) | p[1];
+        p += 2;
+
+        length = (p[0] << 8) | p[1];
+        p += 2;
+
+        if (transactionId != sTransactionId) {
+            MessageOutput.printf("[PowerMeters::Udp::Victron] skipping message with unexpected transaction ID: %04X\r\n", transactionId);
+            p += length;
+            continue;
+        }
+
+        if (protocolId != 0x0000) {
+            MessageOutput.printf("[PowerMeters::Udp::Victron] invalid protocol ID: %04X\r\n", protocolId);
+            return;
+        }
+
+        break;
     }
-
-    uint16_t protocolId = (p[0] << 8) | p[1];
-    p += 2;
-
-    if (protocolId != 0x0000) {
-        MessageOutput.printf("[PowerMeters::Udp::Victron] invalid protocol ID: %04X\r\n", protocolId);
-        return;
-    }
-
-    uint16_t length = (p[0] << 8) | p[1];
-    p += 2;
 
     uint16_t expectedLength = (sRegisterCount * 2) + 3;
     if (length != expectedLength) {
