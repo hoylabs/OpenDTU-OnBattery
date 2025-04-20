@@ -69,6 +69,10 @@ void Provider::sendModbusRequest()
     VictronUdp.endPacket();
 
     _lastRequest = currentMillis;
+
+    if (_verboseLogging) {
+        MessageOutput.printf("[PowerMeters::Udp::Victron] sent modbus request\r\n");
+    }
 }
 
 static float readInt16(uint8_t** buffer, uint8_t factor)
