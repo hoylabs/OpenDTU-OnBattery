@@ -358,28 +358,44 @@ void HardwareInterface::sendSettings()
     _lastSettingsUpdateMillis = millis();
 }
 
+void HardwareInterface::logMessage(char const* msg, uint32_t canId, uint32_t valueId, uint32_t value)
+{
+    auto const& config = Configuration.get();
+    if (!config.GridCharger.VerboseLogging) { return; }
+
+    MessageOutput.printf("[Huawei::HwIfc] %9s: address "
+            "%08x ID %08x value %08x | ",
+            msg, canId, valueId, value);
+
+    auto printAscii = [](uint32_t value) {
+        for (int i = 24; i >= 0; i -= 8) {
+            uint8_t byte = (value >> i) & 0xFF;
+            if (byte >= 0x20 && byte <= 0x7E) {
+                MessageOutput.printf("%c", byte);
+            } else {
+                MessageOutput.printf(".");
+            }
+        }
+    };
+
+    printAscii(valueId);
+    MessageOutput.printf(" ");
+    printAscii(value);
+    MessageOutput.printf("\r\n");
+}
+
 void HardwareInterface::loop()
 {
     can_message_t msg;
-    auto const& config = Configuration.get();
 
     if (!_upData) { _upData = std::make_unique<DataPointContainer>(); }
-
-    auto logIncoming = [&config,&msg](bool processed) -> void {
-        if (!config.GridCharger.VerboseLogging) { return; }
-
-        MessageOutput.printf("[Huawei::HwIfc] %s message with CAN ID "
-                "0x%08x, value ID 0x%08x, and value 0x%08x\r\n",
-                (processed?"processed":"  ignored"),
-                msg.canId, msg.valueId, msg.value);
-    };
 
     while (getMessage(msg)) {
         if (readBoardProperties(msg) ||
                 readDeviceConfig(msg) ||
                 readRectifierState(msg) ||
                 readAcks(msg)) {
-            logIncoming(true);
+            logMessage("processed", msg.canId, msg.valueId, msg.value);
             continue;
         }
 
@@ -389,7 +405,7 @@ void HardwareInterface::loop()
         //     0x108081FE (unclear).
         // https://github.com/craigpeacock/Huawei_R4850G2_CAN/blob/main/r4850.c
         // https://www.beyondlogic.org/review-huawei-r4850g2-power-supply-53-5vdc-3kw/
-        logIncoming(false);
+        logMessage("ignored", msg.canId, msg.valueId, msg.value);
     }
 
     // the first thing we need to do is to request the device config so we know
@@ -464,8 +480,6 @@ void HardwareInterface::loop()
 
 void HardwareInterface::processQueue()
 {
-    auto const& config = Configuration.get();
-
     size_t queueSize = _sendQueue.size();
     for (size_t i = 0; i < queueSize; ++i) {
         auto& cmd = _sendQueue.front();
@@ -483,10 +497,8 @@ void HardwareInterface::processQueue()
 
         uint32_t addr = 0x10800000 | (cmd.deviceAddress << 16) | cmd.registerAddress;
 
-        if (config.GridCharger.VerboseLogging) {
-            MessageOutput.printf("[Huawei::HwIfc] sending to 0x%08x: %04x%04x%08x\r\n",
-                    addr, cmd.command, cmd.flags, cmd.value);
-        }
+        uint32_t valueId = (static_cast<uint32_t>(cmd.command) << 16) | cmd.flags;
+        logMessage("sending", addr, valueId, cmd.value);
 
         if (sendMessage(addr, data)) {
             _sendQueue.pop();
