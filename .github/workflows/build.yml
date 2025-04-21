@@ -1,9 +1,5 @@
 name: OpenDTU-OnBattery Build
 
-permissions:
-  pull-requests: write # For commenting on PRs
-  actions: read # For listing artifacts
-
 on:
   push:
     paths-ignore:
@@ -138,35 +134,21 @@ jobs:
 
   # This snippet is public-domain, taken from
   # https://github.com/oprypin/nightly.link/blob/master/.github/workflows/pr-comment.yml
-  pr_artifacts_comment:
-    name: Comment on PR with links to artifacts
+  # and modified to store the comment as an artifact instead of posting it because
+  # the action does not have sufficient permissions to post a comment when triggered
+  # by a forked repository.
+  # source: https://github.com/live-codes/pr-comment-from-artifact/blob/main/action.yml
+  generate_pr_artifacts_comment:
+    name: Generate PR artifacts comment and store it as artifact
     needs: build
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/github-script@v7
+      - name: Generate PR artifacts comment
+        id: generate_pr_artifacts_comment
+        uses: actions/github-script@v7
         with:
           script: |
-            async function upsertComment(owner, repo, issue_number, purpose, body) {
-              const {data: comments} = await github.rest.issues.listComments(
-                {owner, repo, issue_number});
-              const marker = `<!-- bot: ${purpose} -->`;
-              body = marker + "\n" + body;
-              const existing = comments.filter((c) => c.body.includes(marker));
-              if (existing.length > 0) {
-                const last = existing[existing.length - 1];
-                core.info(`Updating comment ${last.id}`);
-                await github.rest.issues.updateComment({
-                  owner, repo,
-                  body,
-                  comment_id: last.id,
-                });
-              } else {
-                core.info(`Creating a comment in PR #${issue_number}`);
-                await github.rest.issues.createComment({issue_number, body, owner, repo});
-              }
-            }
-
             const {owner, repo} = context.repo;
             const pr_number = context.issue.number;
 
@@ -195,8 +177,21 @@ jobs:
               + `  Extract the binaries from the ZIP files first. Do not use the ZIP files themselves to perform an update.\n`
               + `* These links point to artifacts of the latest [**successful** build run](${build_run_url}).\n`
               + `* The linked artifacts were built from ${context.sha}.`;
+            core.setOutput("message", body);
 
-            await upsertComment(owner, repo, pr_number, "build-artifacts", body);
+      - name: Save output and PR number
+        shell: bash
+        run: |
+          mkdir -p ./pr
+          echo "${{ steps.generate_pr_artifacts_comment.outputs.message }}" > ./pr/${{ github.event.number }}.md
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr
+          path: pr/
+          retention-days: 1
+          overwrite: true
 
   release:
     name: Create Release
