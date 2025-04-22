@@ -31,6 +31,7 @@ private:
     static String parseVersion(uint32_t version);
     uint16_t calcOutputLimit(uint16_t limit) const;
     void setTargetSoCs(const float soc_min, const float soc_max);
+    void writeSettings();
 
     bool _verboseLogging = false;
     uint32_t _lastUpdate = 0;
