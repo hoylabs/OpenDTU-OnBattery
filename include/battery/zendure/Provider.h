@@ -88,16 +88,16 @@ private:
     String _payloadFullUpdate = String();
 
     void onMqttMessageReport(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
+            char const* topic, uint8_t const* payload, size_t len);
 
     void onMqttMessageLog(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
+            char const* topic, uint8_t const* payload, size_t len);
 
     void onMqttMessageTimesync(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
+            char const* topic, uint8_t const* payload, size_t len);
 
     void onMqttMessagePersistentSettings(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
+            char const* topic, uint8_t const* payload, size_t len);
 
 };
 

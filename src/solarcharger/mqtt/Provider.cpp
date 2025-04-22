@@ -41,7 +41,6 @@ bool Provider::init(bool verboseLogging)
                 std::bind(&Provider::onMqttMessageOutputPower,
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
-                    std::placeholders::_5, std::placeholders::_6,
                     config.PowerJsonPath)
                 );
 
@@ -58,7 +57,6 @@ bool Provider::init(bool verboseLogging)
                 std::bind(&Provider::onMqttMessageOutputCurrent,
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
-                    std::placeholders::_5, std::placeholders::_6,
                     config.CurrentJsonPath)
                 );
 
@@ -75,7 +73,6 @@ bool Provider::init(bool verboseLogging)
                 std::bind(&Provider::onMqttMessageOutputVoltage,
                     this, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4,
-                    std::placeholders::_5, std::placeholders::_6,
                     config.VoltageJsonPath)
                 );
 
@@ -97,7 +94,7 @@ void Provider::deinit()
 }
 
 void Provider::onMqttMessageOutputPower(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+            char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath) const
 {
     auto outputPower = Utils::getNumericValueFromMqttPayload<float>("SolarChargers::Mqtt",
@@ -134,7 +131,7 @@ void Provider::onMqttMessageOutputPower(espMqttClientTypes::MessageProperties co
 }
 
 void Provider::onMqttMessageOutputVoltage(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+            char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath) const
 {
     auto outputVoltage = Utils::getNumericValueFromMqttPayload<float>("SolarChargers::Mqtt",
@@ -177,7 +174,7 @@ void Provider::onMqttMessageOutputVoltage(espMqttClientTypes::MessageProperties 
 }
 
 void Provider::onMqttMessageOutputCurrent(espMqttClientTypes::MessageProperties const& properties,
-            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total,
+            char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath) const
 {
     auto outputCurrent = Utils::getNumericValueFromMqttPayload<float>("SolarChargers::Mqtt",
