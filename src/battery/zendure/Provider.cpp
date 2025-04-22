@@ -171,6 +171,12 @@ void Provider::loop()
         return;
     }
 
+    // zero stats if  offline
+    if (!alive()) {
+        _stats->zeroAllStats();
+        return;
+    }
+
     // check if we run in schedule mode
     if (ms >= _nextSunCalc) {
         _nextSunCalc = ms + _rateSunCalcMs;
