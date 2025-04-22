@@ -178,4 +178,39 @@ void Stats::zeroAllStats()
     }
 }
 
+bool Stats::isZeroed() const
+{
+    if (!_packData.empty()) {
+        for (const auto& [index, value] : _packData) {
+            if (value->_cell_voltage_min != 0 ||
+                value->_cell_voltage_avg != 0 ||
+                value->_cell_voltage_max != 0 ||
+                value->_cell_voltage_spread != 0 ||
+                value->_cell_temperature_max != 0 ||
+                value->_voltage_total != 0 ||
+                value->_power != 0 ||
+                value->_current != 0 ||
+                value->_soc_level != 0 ||
+                value->_state_of_health != 0 ||
+                value->_capacity != 0 ||
+                value->_capacity_avail != 0) {
+                return false;
+            }
+        }
+    }
+
+    return _input_power == 0 &&
+           _charge_power == 0 &&
+           _discharge_power == 0 &&
+           _output_power == 0 &&
+           _efficiency == 0 &&
+           _num_batteries == 0 &&
+           _capacity == 0 &&
+           _capacity_avail == 0 &&
+           _solar_power_1 == 0 &&
+           _solar_power_2 == 0 &&
+           _remain_out_time == 0 &&
+           _remain_in_time == 0;
+}
+
 } // namespace Batteries::Zendure
