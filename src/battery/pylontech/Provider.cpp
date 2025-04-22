@@ -21,13 +21,13 @@ void Provider::onMessage(twai_message_t rx_message)
     switch (rx_message.identifier) {
         case 0x351: {
             _stats->_chargeVoltage = this->scaleValue(this->readUnsignedInt16(rx_message.data), 0.1);
-            _stats->_chargeCurrentLimitation = this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1);
+            _stats->setChargeCurrentLimit(this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1), millis());
             _stats->setDischargeCurrentLimit(this->scaleValue(this->readSignedInt16(rx_message.data + 4), 0.1), millis());
             _stats->_dischargeVoltageLimitation = this->scaleValue(this->readUnsignedInt16(rx_message.data + 6), 0.1);
 
             if (_verboseLogging) {
                 MessageOutput.printf("[Pylontech] chargeVoltage: %f chargeCurrentLimitation: %f dischargeCurrentLimitation: %f dischargeVoltageLimitation: %f\r\n",
-                        _stats->_chargeVoltage, _stats->_chargeCurrentLimitation, _stats->getDischargeCurrentLimit(),
+                        _stats->_chargeVoltage, _stats->getChargeCurrentLimit(), _stats->getDischargeCurrentLimit(),
                         _stats->_dischargeVoltageLimitation);
             }
             break;
@@ -167,7 +167,7 @@ void Provider::dummyData()
     _stats->setManufacturer("Pylontech US3000C");
     _stats->setSoC(42, 0/*precision*/, millis());
     _stats->_chargeVoltage = dummyFloat(50);
-    _stats->_chargeCurrentLimitation = dummyFloat(33);
+    _stats->setChargeCurrentLimit(dummyFloat(33), millis());
     _stats->setDischargeCurrentLimit(dummyFloat(12), millis());
     _stats->_dischargeVoltageLimitation = dummyFloat(46);
     _stats->_stateOfHealth = 99;

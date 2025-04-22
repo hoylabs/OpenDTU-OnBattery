@@ -2,6 +2,7 @@
 #include <Configuration.h>
 #include <MessageOutput.h>
 #include <MqttSettings.h>
+#include <battery/Controller.h>
 #include <solarcharger/Controller.h>
 #include <solarcharger/DummyStats.h>
 #include <solarcharger/victron/Provider.h>
@@ -70,6 +71,12 @@ void Controller::loop()
 
     if (!_upProvider) { return; }
 
+    //get charge current limitation from battery
+    auto stats = Battery.getStats();
+
+    float chargeCurrentLimit = Battery.getChargeCurrentLimit();
+    float actChargeCurrent = stats->getChargeCurrent();
+    _upProvider->setChargeLimit(chargeCurrentLimit, actChargeCurrent);
     _upProvider->loop();
 
     // TODO(schlimmchen): this cannot make sure that transient
