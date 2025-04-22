@@ -168,14 +168,12 @@ void Provider::loop()
 
     // if auto shutdown is enabled and battery switches to idle at night, turn off status requests to prevent keeping battery awake
     if (config.Battery.Zendure.AutoShutdown && !isDayPeriod && _stats->_state == State::Idle) {
+        if (!_stats->isZeroed()) { // Check if stats are already zeroed
+            _stats->zeroAllStats();
+        }
         return;
     }
 
-    // zero stats if  offline
-    if (!alive()) {
-        _stats->zeroAllStats();
-        return;
-    }
 
     // check if we run in schedule mode
     if (ms >= _nextSunCalc) {
