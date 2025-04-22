@@ -8,7 +8,7 @@ namespace Batteries::Zendure {
 // - https://github.com/reinhard-brandstaedter/solarflow-bt-manager/blob/master/README.md
 #define ZENDURE_HUB1200     "73bkTV"
 #define ZENDURE_HUB2000     "A8yh63"
-#define ZENDURE_AIO2400     "yWF7hV)"
+#define ZENDURE_AIO2400     "yWF7hV"
 #define ZENDURE_ACE1500     "8bM93H"
 #define ZENDURE_HYPER2000_A "ja72U0ha"
 #define ZENDURE_HYPER2000_B "gDa3tb"
