@@ -525,7 +525,7 @@ export default defineComponent({
                 { key: 0, value: 'Hub1200' },
                 { key: 1, value: 'Hub2000' },
                 { key: 2, value: 'AIO2400' },
-                { key: 3, value: 'Ace2000' },
+                { key: 3, value: 'Ace1500' },
                 { key: 4, value: 'Hyper2000A' },
                 { key: 5, value: 'Hyper2000B' },
             ],
