@@ -345,7 +345,6 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
  */
 void BatteryGuardClass::printOpenCircuitVoltageReport(void)
 {
-    //MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
     MessageOutput.printf("%s 1) Open circuit voltage: %s / Battery data %s\r\n",
         getText(Text::T_HEAD).data(), (_useBatteryGuard) ? "Enabled" : "Disabled",
         (isResolutionOK()) ? "sufficient" : "not sufficient");
@@ -405,7 +404,7 @@ frozen::string const& BatteryGuardClass::getText(BatteryGuardClass::Text tNr)
 /*
  * Returns a string according to resistance calculation state
  */
-frozen::string const& BatteryGuardClass::getResistanceStateText(BatteryGuardClass::RState tNr)
+frozen::string const& BatteryGuardClass::getResistanceStateText(BatteryGuardClass::RState tNr) const
 {
     static const frozen::string missing = "programmer error: missing status text";
 
