@@ -24,6 +24,7 @@ import SecurityAdminView from '@/views/SecurityAdminView.vue';
 import SystemInfoView from '@/views/SystemInfoView.vue';
 import WaitRestartView from '@/views/WaitRestartView.vue';
 import BatteryGuardAdminView from '@/views/BatteryGuardAdminView.vue';
+import BatteryGuardInfoView from '@/views/BatteryGuardInfoView.vue';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
@@ -81,6 +82,11 @@ const router = createRouter({
             path: '/info/console',
             name: 'Web Console',
             component: ConsoleInfoView,
+        },
+        {
+            path: '/info/batteryguard',
+            name: 'Battery Guard',
+            component: BatteryGuardInfoView,
         },
         {
             path: '/settings/network',

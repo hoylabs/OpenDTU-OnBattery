@@ -22,6 +22,14 @@ class BatteryGuardClass {
         std::optional<float> getOpenCircuitVoltage(void);
         std::optional<float> getInternalResistance(void) const;
 
+        size_t getResistanceCalculationCount() const { return _resistanceFromCalcAVG.getCounts(); }
+        const char* getResistanceCalculationState() const { return getResistanceStateText(_rStateMax).data(); }
+        float getVoltageResolution() const { return _analyzedResolutionV; }
+        float getCurrentResolution() const { return _analyzedResolutionI; }
+        float getMeasurementPeriod() const { return _analyzedPeriod.getAverage(); }
+        float getVIStampDelay() const { return _analyzedUIDelay.getAverage(); }
+        bool isResolutionOK(void) const;
+
     private:
         void loop(void);
         void slowLoop(void);
@@ -42,7 +50,6 @@ class BatteryGuardClass {
         void calculateOpenCircuitVoltage(float const nowVoltage, float const nowCurrent);
         bool isDataValid() { return (millis() - _battMillis) < 30*1000; }
         void printOpenCircuitVoltageReport(void);
-        bool isResolutionOK(void) const;
         frozen::string const& getText(Text tNr);
 
         float _battVoltage = 0.0f;                          // actual battery voltage [V]
@@ -61,7 +68,7 @@ class BatteryGuardClass {
         enum class RState : uint8_t { IDLE, RESOLUTION, TIME, FIRST_PAIR, TRIGGER, SECOND_PAIR, DELTA_POWER, TOO_BAD, CALCULATED };
 
         void calculateInternalResistance(float const nowVoltage, float const nowCurrent);
-        frozen::string const& getResistanceStateText(RState state);
+        frozen::string const& getResistanceStateText(RState state) const;
 
         RState _rState = RState::IDLE;                      // holds the actual calculation state
         RState _rStateMax = RState::IDLE;                   // holds the maximum calculation state
