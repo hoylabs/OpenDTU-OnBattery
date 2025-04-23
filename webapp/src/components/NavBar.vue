@@ -164,6 +164,11 @@
                                 }}</router-link>
                             </li>
                             <li>
+                                <router-link @click="onClick" class="dropdown-item" to="/info/batteryguard">{{
+                                    $t('menu.BatteryGuard')
+                                }}</router-link>
+                            </li>
+                            <li>
                                 <hr class="dropdown-divider" />
                             </li>
                             <li>
