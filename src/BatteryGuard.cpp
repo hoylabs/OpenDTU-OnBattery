@@ -270,7 +270,7 @@ bool BatteryGuardClass::isResolutionOK(void) const {
 
 
 /*
- * Calculate the battery resistance between the battery cells and the voltage measurement point.
+ * Calculate the battery DC-Pulse-Resistance based on the voltage measurement position of the battery provider.
  * Note: The calculation will not work, if the performance of the battery provider is not good enough
  * or if the power difference is not big enough or too slow.
  */
@@ -292,7 +292,7 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
     _lastDataInMillis = millis();
     if (!_minMaxAvailable) { _rState = RState::IDLE; }
 
-    // check for trigger event (sufficient current change)
+    // check for the trigger event (sufficient current change)
     auto const minDiffCurrent = 4.0f; // seems to be a good value for all battery providers
     if (!_triggerEvent && _minMaxAvailable && (std::abs(nowCurrent - _pMinVolt.second) > (minDiffCurrent/2.0f))) {
         _lastTriggerMillis = millis();
@@ -303,11 +303,23 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
     // we evaluate min and max values in a time duration of 15 sec after the trigger event
     if (!_triggerEvent || (_triggerEvent && (millis() - _lastTriggerMillis) < 15*1000)) {
 
+        // we use the measurement resolution to decide if two consecutive values are almost identical
+        auto minVoltage = (_triggerEvent) ? 0.2f : std::max(_analyzedResolutionV * 3.0f, 0.01f);
+        auto minCurrent = std::max(_analyzedResolutionI * 3.0f, 0.2f);
+
+        // after the first-pair-after-the-trigger, we check if the current is stable
+        // if the current is not stable we break the calculation because we have again a power transition
+        // which influences the quality of the calculation
+        if (_pairAfterTriggerAvailable && (std::abs(_checkCurrent - nowCurrent) > minCurrent)) {
+            _firstOfTwoAvailable = false;
+            _minMaxAvailable = false;
+            _triggerEvent = false;
+            _pairAfterTriggerAvailable = false;
+            return cleanExit(RState::SECOND_BREAK);
+        }
+
         // we must avoid to use measurement values during any power transitions
         // to solve this problem, we check whether two consecutive measurements are almost identical
-        auto minVoltage = 0.1f; // after trigger event
-        if (!_triggerEvent) { minVoltage = std::max(_analyzedResolutionV * 3.0f, 0.01f);} // before trigger event
-        auto minCurrent = std::max(_analyzedResolutionI * 3.0f, 0.2f);
         if (_firstOfTwoAvailable && (std::abs(_pFirstVolt.first - nowVoltage) <= minVoltage) &&
             (std::abs(_pFirstVolt.second - nowCurrent) <= minCurrent)) {
 
@@ -315,11 +327,13 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
         if (!_minMaxAvailable || !_triggerEvent) {
             _pMinVolt = _pMaxVolt = avgVolt;
             _minMaxAvailable = true;
-            _rState = RState::FIRST_PAIR;
+            _rState = RState::FIRST_PAIR; // we have the first pair (before the trigger event)
         } else {
             if (avgVolt.first < _pMinVolt.first) { _pMinVolt = avgVolt; }
             if (avgVolt.first > _pMaxVolt.first) { _pMaxVolt = avgVolt; }
-            _rState = RState::SECOND_PAIR;
+                _pairAfterTriggerAvailable = true;
+                _checkCurrent = nowCurrent;
+                _rState = RState::SECOND_PAIR; // we have the second pair (after the trigger event)
             }
         }
         _pFirstVolt = { nowVoltage, nowCurrent }; // preparation for the next two consecutive values
@@ -331,6 +345,7 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
     _firstOfTwoAvailable = false;
     _minMaxAvailable = false;
     _triggerEvent = false;
+    _pairAfterTriggerAvailable = false;
 
     // now we have minimum and maximum values and we can try to calculate the resistance
     // we need a minimum power difference to get a sufficiently good result (failure < 20%)
@@ -423,13 +438,14 @@ frozen::string const& BatteryGuardClass::getResistanceStateText(BatteryGuardClas
 {
     static const frozen::string missing = "programmer error: missing status text";
 
-    static const frozen::map<RState, frozen::string, 9> texts = {
+    static const frozen::map<RState, frozen::string, 10> texts = {
         { RState::IDLE, "Idle" },
         { RState::RESOLUTION, "Battery data insufficient" },
         { RState::TIME, "Measurement time to fast" },
         { RState::FIRST_PAIR, "Start data available" },
         { RState::TRIGGER, "Trigger event" },
         { RState::SECOND_PAIR, "Collecting data after trigger" },
+        { RState::SECOND_BREAK, "Second power change after trigger" },
         { RState::DELTA_POWER, "Power difference not high enough" },
         { RState::TOO_BAD, "Resistance out of safety range" },
         { RState::CALCULATED, "Resistance calculated" }
