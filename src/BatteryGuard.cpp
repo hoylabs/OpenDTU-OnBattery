@@ -99,8 +99,18 @@ void BatteryGuardClass::updateSettings(void) {
  */
 void BatteryGuardClass::loop(void) {
     const auto& config = Configuration.get();
-    if (!_useBatteryGuard || !config.Battery.Enabled) { return; } // not active or no battery, we abort
-    if (!Battery.getStats()->isCurrentValid()) { return; } // not valid, we abort
+
+    if (!_useBatteryGuard
+        || !config.Battery.Enabled) {
+        // not active or no battery, we abort
+        return;
+    }
+
+    if (!Battery.getStats()->isVoltageValid()
+        || !Battery.getStats()->isCurrentValid()) {
+        // stats not valid, we abort
+        return;
+    }
 
     auto const& u2Value = Battery.getStats()->getVoltage();
     auto const& u2Time = Battery.getStats()->getLastVoltageUpdate();
@@ -153,23 +163,26 @@ void BatteryGuardClass::loop(void) {
  */
 void BatteryGuardClass::slowLoop(void) {
     const auto& config = Configuration.get();
-    if (!_useBatteryGuard || !config.Battery.Enabled) { return; }
-
-    if (_verboseLogging) {
-        MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
-        MessageOutput.printf("%s ------------- Battery Guard Report (every minute) -------------\r\n",
-            getText(Text::T_HEAD).data());
-        MessageOutput.printf("%s Battery Guard: %s\r\n",
-            getText(Text::T_HEAD).data(), (_useBatteryGuard) ? "Enabled" : "Disabled");
-        MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
-
-        // "Open circuit voltage"
-        printOpenCircuitVoltageReport();
-
-        MessageOutput.printf("%s ---------------------------------------------------------------\r\n",
-            getText(Text::T_HEAD).data());
-        MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
+    if (!_useBatteryGuard
+        || !config.Battery.Enabled
+        || !_verboseLogging) {
+        // not active or no battery or no verbose logging, we abort
+        return;
     }
+
+    MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
+    MessageOutput.printf("%s ------------- Battery Guard Report (every minute) -------------\r\n",
+        getText(Text::T_HEAD).data());
+    MessageOutput.printf("%s Battery Guard: %s\r\n",
+        getText(Text::T_HEAD).data(), (_useBatteryGuard) ? "Enabled" : "Disabled");
+    MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
+
+    // "Open circuit voltage"
+    printOpenCircuitVoltageReport();
+
+    MessageOutput.printf("%s ---------------------------------------------------------------\r\n",
+        getText(Text::T_HEAD).data());
+    MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
 }
 
 
@@ -382,7 +395,7 @@ void BatteryGuardClass::printOpenCircuitVoltageReport(void)
 /*
  * Returns a string according to current text number
  */
-frozen::string const& BatteryGuardClass::getText(BatteryGuardClass::Text tNr)
+frozen::string const& BatteryGuardClass::getText(BatteryGuardClass::Text tNr) const
 {
     static const frozen::string missing = "programmer error: missing status text";
 

@@ -48,9 +48,9 @@ class BatteryGuardClass {
         enum class Text : uint8_t { Q_NODATA, Q_EXCELLENT, Q_GOOD, Q_BAD, T_HEAD };
 
         void calculateOpenCircuitVoltage(float const nowVoltage, float const nowCurrent);
-        bool isDataValid() { return (millis() - _battMillis) < 30*1000; }
+        bool isDataValid() const { return (millis() - _battMillis) < 30*1000; }
         void printOpenCircuitVoltageReport(void);
-        frozen::string const& getText(Text tNr);
+        frozen::string const& getText(Text tNr) const;
 
         float _battVoltage = 0.0f;                          // actual battery voltage [V]
         float _battCurrent = 0.0f;                          // actual battery current [A]
