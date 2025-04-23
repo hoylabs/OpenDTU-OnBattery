@@ -231,8 +231,10 @@ void BatteryGuardClass::calculateOpenCircuitVoltage(float const nowVoltage, floa
  */
 std::optional<float> BatteryGuardClass::getInternalResistance(void) const {
     // we use the calculated value if we have 5 calculations minimum
-    if (_resistanceFromCalcAVG.getCounts() >= MINIMUM_RESISTANCE_CALC) { return _resistanceFromCalcAVG.getAverage(); }
-    if (_resistanceFromConfig != 0.0f) { return _resistanceFromConfig; }
+    if (_useBatteryGuard) {
+        if (_resistanceFromCalcAVG.getCounts() >= MINIMUM_RESISTANCE_CALC) { return _resistanceFromCalcAVG.getAverage(); }
+        if (_resistanceFromConfig != 0.0f) { return _resistanceFromConfig; }
+    }
     return std::nullopt;
 }
 
@@ -246,10 +248,10 @@ bool BatteryGuardClass::isInternalResistanceCalculated(void) const {
 
 
 /*
- * The battery open circuit voltage or nullopt if value is not valid
+ * The battery open circuit voltage or nullopt if value is not valid or not enabled
  */
 std::optional<float> BatteryGuardClass::getOpenCircuitVoltage(void) {
-    if ((_openCircuitVoltageAVG.getCounts() > 0) && isDataValid()) {
+    if ((_useBatteryGuard && _openCircuitVoltageAVG.getCounts() > 0) && isDataValid()) {
         return _openCircuitVoltageAVG.getAverage();
     }
     _notAvailableCounter++;
