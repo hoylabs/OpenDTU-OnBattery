@@ -23,6 +23,7 @@
         "Network": "Network",
         "NTP": "NTP",
         "MQTT": "MQTT",
+        "BatteryGuard": "Battery Guard",
         "Console": "Console",
         "About": "About",
         "Logout": "Logout",
