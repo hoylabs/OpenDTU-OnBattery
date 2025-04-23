@@ -555,6 +555,11 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
             _stats->_bypass_mode = static_cast<BypassMode>(*bypass_mode);
         }
 
+        auto bypass_state = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BYPASS_STATE);
+        if (bypass_state.has_value()) {
+            _stats->_bypass_state = static_cast<bool>(*bypass_state);
+        }
+
         _stats->_lastUpdate = ms;
     }
 
