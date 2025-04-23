@@ -65,7 +65,7 @@ class BatteryGuardClass {
 
 
         // used to calculate the "Battery internal resistance"
-        enum class RState : uint8_t { IDLE, RESOLUTION, TIME, FIRST_PAIR, TRIGGER, SECOND_PAIR, DELTA_POWER, TOO_BAD, CALCULATED };
+        enum class RState : uint8_t { IDLE, RESOLUTION, TIME, FIRST_PAIR, TRIGGER, SECOND_PAIR, SECOND_BREAK, DELTA_POWER, TOO_BAD, CALCULATED };
 
         void calculateInternalResistance(float const nowVoltage, float const nowCurrent);
         frozen::string const& getResistanceStateText(RState state) const;
@@ -77,9 +77,11 @@ class BatteryGuardClass {
         bool _firstOfTwoAvailable = false;                  // true after to got the first of two values
         bool _minMaxAvailable = false;                      // true if minimum and maximum values are available
         bool _triggerEvent = false;                         // true if we have sufficient current change
+        bool _pairAfterTriggerAvailable = false;            // true if after the trigger the first second pair is available
         std::pair<float,float> _pFirstVolt = {0.0f,0.0f};   // first of two voltages and related current [V,A]
         std::pair<float,float> _pMaxVolt = {0.0f,0.0f};     // maximum voltage and related current [V,A]
         std::pair<float,float> _pMinVolt = {0.0f,0.0f};     // minimum voltage and related current [V,A]
+        float _checkCurrent = 0.0f;                         // used to check the current [A] after the trigger
         uint32_t _lastTriggerMillis = 0;                    // last millis from the first min/max values [millis()]
         uint32_t _lastDataInMillis = 0;                     // last millis for data in [millis()]
 
