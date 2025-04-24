@@ -287,7 +287,6 @@ void Provider::setTargetSoCs(const float soc_min, const float soc_max)
     }
 
     if (_stats->_soc_min != soc_min || _stats->_soc_max != soc_max) {
-        MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_MIN_SOC "\": " + String(soc_min * 10, 0) + ", \"" ZENDURE_REPORT_MAX_SOC  "\": " + String(soc_max * 10, 0) + "} }", false, 0);
         publishProperties(_topicWrite, ZENDURE_REPORT_MIN_SOC, String(soc_min * 10, 0), ZENDURE_REPORT_MAX_SOC, String(soc_max * 10, 0));
         log("Setting target minSoC from %.1f %% to %.1f %% and target maxSoC from %.1f %% to %.1f %%", _stats->_soc_min, soc_min, _stats->_soc_max, soc_max);
     }
@@ -368,14 +367,19 @@ void Provider::publishProperties(const String& topic, Arg&&... args) const
 
     String out = "{\"properties\": {";
     bool even = true;
+    bool first = true;
     for (const String d : std::initializer_list<String>({args...}))
     {
         if (even) {
+            if (!first) {
+                out += ", ";
+            }
             out += "\"" + d + "\": ";
         } else {
-            out += d + ", ";
+            out += d;
         }
-        even = !even;
+        even  = !even;
+        first = false;
     }
     out += "} }";
     MqttSettings.publishGeneric(topic, out, false, 0);
