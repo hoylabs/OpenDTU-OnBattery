@@ -235,7 +235,7 @@ class PackStats {
                 if (serial.startsWith("CO4F")) {
                     return std::make_shared<PackStats>(PackStats(serial, "AB2000S", 1920));
                 }
-                if (serial.startsWith("R04Y")) {
+                if (serial.startsWith("ABB3")) {
                     return std::make_shared<PackStats>(PackStats(serial, "AIO2400", 2400));
                 }
                 return std::make_shared<PackStats>(PackStats(serial));
