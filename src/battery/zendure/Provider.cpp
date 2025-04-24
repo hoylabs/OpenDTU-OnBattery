@@ -33,7 +33,7 @@ bool Provider::init(bool verboseLogging)
                 break;
             case 2:
                 deviceType = ZENDURE_AIO2400;
-                deviceName = String("SolarFlow AIO 2400");
+                deviceName = String("AIO 2400");
                 break;
             case 3:
                 deviceType = ZENDURE_ACE1500;
