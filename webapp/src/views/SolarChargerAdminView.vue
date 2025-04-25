@@ -156,7 +156,7 @@
                 >
                     <InputElement
                         :label="$t('solarchargeradmin.MqttOutputVoltageTopic')"
-                        :tooltip="$t('solarchargeradmin.MqttOutputVoltagetUsageHint')"
+                        :tooltip="$t('solarchargeradmin.MqttOutputVoltageUsageHint')"
                         v-model="solarChargerConfigList.mqtt.voltage_topic"
                         type="text"
                         maxlength="256"
