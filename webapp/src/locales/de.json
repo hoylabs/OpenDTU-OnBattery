@@ -616,7 +616,7 @@
         "MqttOutputCurrentTopic": "Ausgangsstrom Topic",
         "MqttOutputCurrentUnit": "@:base.Unit",
         "MqttOutputVoltageConfiguration": "Einstellungen Ausgangsspannung",
-        "MqttOutputVoltagetUsageHint": "Die Ausgangsspannung wird als Ersatzspannung für die DPL verwendet, wenn die Batteriespannung nicht bekannt ist, und ist erforderlich, wenn 'Solarladeregler-Ausgangsleistung berechnen' aktiviert ist. Weitere Details findest du in der Solar-Passthrough Dokumentation.",
+        "MqttOutputVoltageUsageHint": "Die Ausgangsspannung wird als Ersatzspannung für die DPL verwendet, wenn die Batteriespannung nicht bekannt ist, und ist erforderlich, wenn 'Solarladeregler-Ausgangsleistung berechnen' aktiviert ist. Weitere Details findest du in der Solar-Passthrough Dokumentation.",
         "MqttOutputVoltageTopic": "Ausgangsspannung Topic",
         "MqttOutputVoltageUnit": "@:base.Unit"
     },
