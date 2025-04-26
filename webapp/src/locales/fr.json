@@ -122,7 +122,7 @@
         "10001": "Le mot de passe doit comporter entre 8 et {max} caractères !",
         "10002": "Authentification réussie !",
         "11001": "@:apiresponse.2001",
-        "11002": "@:apiresponse:5004",
+        "11002": "@:apiresponse.5004",
         "12001": "Le profil doit comporter entre 1 et {max} caractères !"
     },
     "home": {
@@ -642,7 +642,8 @@
         "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
         "ZendureChargeThrough": "Charge Through Settings",
         "ZendureChargeThroughEnabled": "Charge Through",
-        "ZendureChargeThroughInterval": "Maximum time without full charge"
+        "ZendureChargeThroughInterval": "Maximum time without full charge",
+        "ZendureBuzzerEnable": "Audible signals"
     },
     "inverteradmin": {
         "InverterSettings": "Paramètres des onduleurs",
@@ -1053,9 +1054,9 @@
         "bypassMode": "Bypass mode",
         "bypassState": "Bypass switch",
         "heatState": "Battery heating",
-        "autoRecover": "Automatic recover",
+        "autoRecover": "Automatic reset of bypass mode",
         "autoShutdown": "Automatic shutdown",
-        "buzzer": "Integrated buzzer",
+        "buzzer": "Audible signals",
         "batteries": "Number of batteries",
         "charging": "Charging",
         "discharging": "Discharging",
@@ -1073,6 +1074,6 @@
         "remainInTime": "Remaining charge time",
         "unavail": "N/A",
         "useableCapacity": "Useable capacity",
-        "chargethrough": "Charge through"
+        "chargethrough": "Charge through cycle"
     }
 }

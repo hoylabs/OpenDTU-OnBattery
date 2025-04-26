@@ -40,7 +40,11 @@ bool Provider::init(bool verboseLogging)
                 deviceName = String("SolarFlow Ace 1500");
                 break;
             case 4:
-                deviceType = ZENDURE_HYPER2000;
+                deviceType = ZENDURE_HYPER2000_A;
+                deviceName = String("SolarFlow Hyper 2000");
+                break;
+            case 5:
+                deviceType = ZENDURE_HYPER2000_B;
                 deviceName = String("SolarFlow Hyper 2000");
                 break;
             default:
@@ -117,7 +121,7 @@ bool Provider::init(bool verboseLogging)
     prop[ZENDURE_REPORT_PV_AUTO_MODEL] = 0; // we did static setup
     prop[ZENDURE_REPORT_AUTO_RECOVER] = static_cast<uint8_t>(config.Battery.Zendure.BypassMode == static_cast<uint8_t>(BypassMode::Automatic));
     prop[ZENDURE_REPORT_AUTO_SHUTDOWN] = static_cast<uint8_t>(config.Battery.Zendure.AutoShutdown);
-    prop[ZENDURE_REPORT_BUZZER_SWITCH] = 0; // disable, as it is anoying
+    prop[ZENDURE_REPORT_BUZZER_SWITCH] = static_cast<uint8_t>(config.Battery.Zendure.BuzzerEnable);
     prop[ZENDURE_REPORT_BYPASS_MODE] = config.Battery.Zendure.BypassMode;
     prop[ZENDURE_REPORT_SMART_MODE] = 0; // should be disabled
     serializeJson(root, _payloadSettings);
@@ -283,7 +287,6 @@ void Provider::setTargetSoCs(const float soc_min, const float soc_max)
     }
 
     if (_stats->_soc_min != soc_min || _stats->_soc_max != soc_max) {
-        MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_MIN_SOC "\": " + String(soc_min * 10, 0) + ", \"" ZENDURE_REPORT_MAX_SOC  "\": " + String(soc_max * 10, 0) + "} }", false, 0);
         publishProperties(_topicWrite, ZENDURE_REPORT_MIN_SOC, String(soc_min * 10, 0), ZENDURE_REPORT_MAX_SOC, String(soc_max * 10, 0));
         log("Setting target minSoC from %.1f %% to %.1f %% and target maxSoC from %.1f %% to %.1f %%", _stats->_soc_min, soc_min, _stats->_soc_max, soc_max);
     }
@@ -364,14 +367,19 @@ void Provider::publishProperties(const String& topic, Arg&&... args) const
 
     String out = "{\"properties\": {";
     bool even = true;
+    bool first = true;
     for (const String d : std::initializer_list<String>({args...}))
     {
         if (even) {
+            if (!first) {
+                out += ", ";
+            }
             out += "\"" + d + "\": ";
         } else {
-            out += d + ", ";
+            out += d;
         }
-        even = !even;
+        even  = !even;
+        first = false;
     }
     out += "} }";
     MqttSettings.publishGeneric(topic, out, false, 0);
@@ -544,6 +552,16 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
         auto solar_power_2 = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_SOLAR_POWER_MPPT_2);
         if (solar_power_2.has_value()) {
             _stats->setSolarPower2(*solar_power_2);
+        }
+
+        auto bypass_mode = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BYPASS_MODE);
+        if (bypass_mode.has_value() && *bypass_mode <= 2) {
+            _stats->_bypass_mode = static_cast<BypassMode>(*bypass_mode);
+        }
+
+        auto bypass_state = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BYPASS_STATE);
+        if (bypass_state.has_value()) {
+            _stats->_bypass_state = static_cast<bool>(*bypass_state);
         }
 
         _stats->_lastUpdate = ms;
@@ -740,7 +758,6 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
     _stats->setDischargeCurrentLimit(static_cast<float>(_stats->_inverse_max) / _stats->getVoltage(), ms);
 
     _stats->_auto_recover = static_cast<bool>(v[ZENDURE_LOG_OFFSET_AUTO_RECOVER].as<uint8_t>());
-    _stats->_bypass_mode = static_cast<BypassMode>(v[ZENDURE_LOG_OFFSET_BYPASS_MODE].as<uint8_t>());
     _stats->_soc_min = v[ZENDURE_LOG_OFFSET_MIN_SOC].as<float>();
 
     _stats->_output_limit = static_cast<uint16_t>(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT].as<uint32_t>() / 100);

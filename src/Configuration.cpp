@@ -154,6 +154,7 @@ void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig cons
     target["sunset_offset"] = source.SunsetOffset;
     target["charge_through_enable"] = source.ChargeThroughEnable;
     target["charge_through_interval"] = source.ChargeThroughInterval;
+    target["buzzer_enable"] = source.BuzzerEnable;
 }
 
 void ConfigurationClass::serializeBatteryMqttConfig(BatteryMqttConfig const& source, JsonObject& target)
@@ -560,13 +561,14 @@ void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& sourc
     target.MaxOutput = source["max_output"] | BATTERY_ZENDURE_MAX_OUTPUT;
     target.AutoShutdown = source["auto_shutdown"] | BATTERY_ZENDURE_AUTO_SHUTDOWN;
     target.OutputLimit = source["output_limit"] | BATTERY_ZENDURE_OUTPUT_LIMIT;
-    target.OutputControl = source["output_control"] | BatteryZendureConfig::ZendureBatteryOutputControl::ControlNone;
+    target.OutputControl = source["output_control"] | BatteryZendureConfig::ZendureBatteryOutputControl::ControlFixed;
     target.OutputLimitDay = source["output_limit_day"] | BATTERY_ZENDURE_OUTPUT_LIMIT_DAY;
     target.OutputLimitNight = source["output_limit_night"] | BATTERY_ZENDURE_OUTPUT_LIMIT_NIGHT;
     target.SunriseOffset = source["sunrise_offset"] | BATTERY_ZENDURE_SUNRISE_OFFSET;
     target.SunsetOffset = source["sunset_offset"] | BATTERY_ZENDURE_SUNSET_OFFSET;
     target.ChargeThroughEnable = source["charge_through_enable"] | BATTERY_ZENDURE_CHARGE_THROUGH_ENABLE;
     target.ChargeThroughInterval = source["charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
+    target.BuzzerEnable = source["buzzer_enable"] |BATTERY_ZENDURE_BUZZER_ENABLE;
 }
 
 void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, BatteryMqttConfig& target)

@@ -125,7 +125,7 @@
         "10001": "Password must between 8 and {max} characters long!",
         "10002": "Authentication successful!",
         "11001": "@:apiresponse.2001",
-        "11002": "@:apiresponse:5004",
+        "11002": "@:apiresponse.5004",
         "12001": "Profile name must between 1 and {max} characters long!"
     },
     "home": {
@@ -619,7 +619,7 @@
         "MqttOutputCurrentTopic": "Output Current Topic",
         "MqttOutputCurrentUnit": "@:base.Unit",
         "MqttOutputVoltageConfiguration": "Output Voltage Settings",
-        "MqttOutputVoltagetUsageHint": "The output voltage is used as a fallback voltage for the DPL when the battery voltage is not known, and is needed when 'Calculate Solar Charger output power' is enabled. Details can be found in the documentation concerning Solar-Passthrough.",
+        "MqttOutputVoltageUsageHint": "The output voltage is used as a fallback voltage for the DPL when the battery voltage is not known, and is needed when 'Calculate Solar Charger output power' is enabled. Details can be found in the documentation concerning Solar-Passthrough.",
         "MqttOutputVoltageTopic": "Output Voltage Topic",
         "MqttOutputVoltageUnit": "@:base.Unit"
     },
@@ -815,7 +815,18 @@
         "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
         "ZendureChargeThrough": "Charge Through Settings",
         "ZendureChargeThroughEnabled": "Charge Through",
-        "ZendureChargeThroughInterval": "Maximum time without full charge"
+        "ZendureChargeThroughInterval": "Maximum time without full charge",
+        "zendure": {
+            "deviceTypes": {
+                "Hub1200": "Hub 1200",
+                "Hub2000": "Hub 2000",
+                "AIO2400": "AIO 2400",
+                "Ace1500": "Ace 1500",
+                "Hyper2000A": "Hyper 2000 (older revisions)",
+                "Hyper2000B": "Hyper 2000 (newer revisions)"
+            },
+            "buzzerEnable": "Audible signals"
+        }
     },
     "inverteradmin": {
         "InverterSettings": "Inverter Settings",
@@ -1186,9 +1197,9 @@
         "bypassMode": "Bypass mode",
         "bypassState": "Bypass switch",
         "heatState": "Battery heating",
-        "autoRecover": "Automatic recover",
+        "autoRecover": "Automatic reset of bypass mode",
         "autoShutdown": "Automatic shutdown",
-        "buzzer": "Integrated buzzer",
+        "buzzer": "Audible signals",
         "batteries": "Number of batteries",
         "charging": "Charging",
         "discharging": "Discharging",
@@ -1206,6 +1217,6 @@
         "remainInTime": "Remaining charge time",
         "unavail": "N/A",
         "useableCapacity": "Useable capacity",
-        "chargethrough": "Charge through"
+        "chargethrough": "Charge through cycle"
     }
 }

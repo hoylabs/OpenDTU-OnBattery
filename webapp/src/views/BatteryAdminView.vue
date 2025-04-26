@@ -291,7 +291,7 @@
                                 v-model="batteryConfigList.zendure.device_type"
                             >
                                 <option v-for="u in zendureDeviceTypeList" :key="u.key" :value="u.key">
-                                    {{ u.value }}
+                                    {{ $t('batteryadmin.zendure.deviceTypes.' + u.value) }}
                                 </option>
                             </select>
                         </div>
@@ -368,6 +368,12 @@
                         v-model="batteryConfigList.zendure.auto_shutdown"
                         type="checkbox"
                         :tooltip="$t('batteryadmin.ZendureAutoShutdownDescription')"
+                    />
+
+                    <InputElement
+                        :label="$t('batteryadmin.zendure.buzzerEnable')"
+                        v-model="batteryConfigList.zendure.buzzer_enable"
+                        type="checkbox"
                     />
                 </CardElement>
 
@@ -516,11 +522,12 @@ export default defineComponent({
                 { key: 0, value: 'A' },
             ],
             zendureDeviceTypeList: [
-                { key: 0, value: 'Hub 1200' },
-                { key: 1, value: 'Hub 2000' },
-                { key: 2, value: 'AIO 2400' },
-                { key: 3, value: 'Ace 2000' },
-                { key: 4, value: 'Hyper 2000' },
+                { key: 0, value: 'Hub1200' },
+                { key: 1, value: 'Hub2000' },
+                { key: 2, value: 'AIO2400' },
+                { key: 3, value: 'Ace1500' },
+                { key: 4, value: 'Hyper2000A' },
+                { key: 5, value: 'Hyper2000B' },
             ],
             zendureBypassModeList: [
                 { key: 0, value: 'Automatic' },

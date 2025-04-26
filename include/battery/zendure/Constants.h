@@ -3,12 +3,15 @@
 
 namespace Batteries::Zendure {
 
-// DeviceIDs for compatible Solarflow devices
+// DeviceIDs for compatible Solarflow devices found here:
+// - https://github.com/nograx/ioBroker.zendure-solarflow/blob/main/src/helpers/createSolarFlowLocalStates.ts
+// - https://github.com/reinhard-brandstaedter/solarflow-bt-manager/blob/master/README.md
 #define ZENDURE_HUB1200     "73bkTV"
 #define ZENDURE_HUB2000     "A8yh63"
-#define ZENDURE_AIO2400     "yWF7hV)"
+#define ZENDURE_AIO2400     "yWF7hV"
 #define ZENDURE_ACE1500     "8bM93H"
-#define ZENDURE_HYPER2000   "ja72U0ha)"
+#define ZENDURE_HYPER2000_A "ja72U0ha"
+#define ZENDURE_HYPER2000_B "gDa3tb"
 
 #define ZENDURE_MAX_PACKS                           4U
 #define ZENDURE_REMAINING_TIME_OVERFLOW             59940U
