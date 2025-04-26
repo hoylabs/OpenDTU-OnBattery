@@ -355,8 +355,8 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
     auto diffCurrent = std::abs(_pMaxVolt.second - _pMinVolt.second);   // can be negative
     if ((diffVolt >= minDiffVoltage) && (diffCurrent >= minDiffCurrent)) {
         float resistor = diffVolt / diffCurrent;
-        auto reference = getInternalResistance();
-        if (reference.has_value() && ((resistor > reference.value() * 2.0f) || (resistor < reference.value() / 2.0f))) {
+        auto reference = _resistanceFromCalcAVG.getAverage();
+        if (isInternalResistanceCalculated() && ((resistor > reference * 2.0f) || (resistor < reference / 2.0f))) {
             _rState = RState::TOO_BAD; // safety feature: we try to keep out bad values from the average
         } else {
             _resistanceFromCalcAVG.addNumber(resistor);
