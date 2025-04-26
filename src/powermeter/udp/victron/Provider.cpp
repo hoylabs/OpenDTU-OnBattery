@@ -75,25 +75,25 @@ void Provider::sendModbusRequest()
     }
 }
 
-static float readInt16(uint8_t** buffer, uint8_t factor)
+static float readInt16(uint8_t const** buffer, uint8_t factor)
 {
-    uint8_t* p = *buffer;
+    uint8_t const* p = *buffer;
     int16_t value = (p[0] << 8) | p[1];
     *buffer += 2;
     return static_cast<float>(value) / factor;
 }
 
-static float readInt32(uint8_t** buffer, uint8_t factor)
+static float readInt32(uint8_t const** buffer, uint8_t factor)
 {
-    uint8_t* p = *buffer;
+    uint8_t const* p = *buffer;
     int32_t value = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
     *buffer += 4;
     return static_cast<float>(value) / factor;
 }
 
-static float readUint32(uint8_t** buffer, uint8_t factor)
+static float readUint32(uint8_t const** buffer, uint8_t factor)
 {
-    uint8_t* p = *buffer;
+    uint8_t const* p = *buffer;
     uint32_t value = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
     *buffer += 4;
     return static_cast<float>(value) / factor;
