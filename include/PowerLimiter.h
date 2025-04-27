@@ -41,7 +41,7 @@ public:
     uint8_t getInverterUpdateTimeouts() const;
     uint8_t getPowerLimiterState();
     int32_t getInverterOutput() { return _lastExpectedInverterOutput; }
-    bool getFullSolarPassThroughEnabled() const { return _fullSolarPassThroughEnabled; }
+    bool isFullSolarPassthroughActive() const { return _fullSolarPassThroughActive; }
 
     enum class Mode : unsigned {
         Normal = 0,
@@ -76,7 +76,7 @@ private:
     bool _batteryDischargeEnabled = false;
     bool _nighttimeDischarging = false;
     std::pair<bool, uint32_t> _nextInverterRestart = { false, 0 };
-    bool _fullSolarPassThroughEnabled = false;
+    bool _fullSolarPassThroughActive = false;
     bool _verboseLogging = true;
 
     frozen::string const& getStatusText(Status status);
@@ -105,7 +105,6 @@ private:
     bool isBelowStopThreshold();
     void calcNextInverterRestart();
     bool isSolarPassThroughEnabled();
-    bool isFullSolarPassthroughActive();
 };
 
 extern PowerLimiterClass PowerLimiter;
