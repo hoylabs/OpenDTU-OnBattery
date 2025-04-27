@@ -271,7 +271,27 @@ void PowerLimiterClass::loop()
         return _batteryDischargeEnabled;
     };
 
+    auto getFullSolarPassthrough = [this,&config]() -> bool {
+        // we only do full solar PT if general solar PT is enabled
+        if (!isSolarPassThroughEnabled()) { return false; }
+
+        if (testThreshold(config.PowerLimiter.FullSolarPassThroughSoc,
+                        config.PowerLimiter.FullSolarPassThroughStartVoltage,
+                        [](float a, float b) -> bool { return a >= b; })) {
+            return true;
+        }
+
+        if (testThreshold(config.PowerLimiter.FullSolarPassThroughSoc,
+                        config.PowerLimiter.FullSolarPassThroughStopVoltage,
+                        [](float a, float b) -> bool { return a < b; })) {
+            return false;
+        }
+
+        return _fullSolarPassThroughActive;
+    };
+
     _batteryDischargeEnabled = getBatteryPower();
+    _fullSolarPassThroughActive = getFullSolarPassthrough();
 
     // re-calculate load-corrected voltage once (and only once) per DPL loop
     _oLoadCorrectedVoltage = std::nullopt;
@@ -925,28 +945,6 @@ bool PowerLimiterClass::isSolarPassThroughEnabled()
     if (!config.SolarCharger.Enabled) { return false; }
 
     return config.PowerLimiter.SolarPassThroughEnabled;
-}
-
-bool PowerLimiterClass::isFullSolarPassthroughActive()
-{
-    auto const& config = Configuration.get();
-
-    // We only do full solar PT if general solar PT is enabled
-    if (!isSolarPassThroughEnabled()) { return false; }
-
-    if (testThreshold(config.PowerLimiter.FullSolarPassThroughSoc,
-                      config.PowerLimiter.FullSolarPassThroughStartVoltage,
-                      [](float a, float b) -> bool { return a >= b; })) {
-        _fullSolarPassThroughEnabled = true;
-    }
-
-    if (testThreshold(config.PowerLimiter.FullSolarPassThroughSoc,
-                      config.PowerLimiter.FullSolarPassThroughStopVoltage,
-                      [](float a, float b) -> bool { return a < b; })) {
-        _fullSolarPassThroughEnabled = false;
-    }
-
-    return _fullSolarPassThroughEnabled;
 }
 
 bool PowerLimiterClass::usesBatteryPoweredInverter()
