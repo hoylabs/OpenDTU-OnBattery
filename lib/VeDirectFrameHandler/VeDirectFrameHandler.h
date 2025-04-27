@@ -24,7 +24,7 @@ class VeDirectFrameHandler {
 public:
     virtual void loop();                         // main loop to read ve.direct data
     uint32_t getLastUpdate() const;              // timestamp of last successful frame read
-    bool isDataValid();                          // return true if data valid and not outdated
+    bool isDataValid() const { return _dataValid; }
     T const& getData() const { return _tmpFrame; }
     bool sendHexCommand(VeDirectHexCommand cmd, VeDirectHexRegister addr, uint32_t value = 0, uint8_t valsize = 0);
     bool isStateIdle() const { return (_state == State::IDLE); }

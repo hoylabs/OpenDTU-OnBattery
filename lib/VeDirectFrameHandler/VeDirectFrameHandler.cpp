@@ -106,7 +106,13 @@ void VeDirectFrameHandler<T>::reset()
 template<typename T>
 void VeDirectFrameHandler<T>::loop()
 {
-	while ( _vedirectSerial->available()) {
+	// if the data is older than 10 seconds, it is no longer valid (millis() rollover safe)
+	if (_dataValid && ((millis() - _lastUpdate) > (10 * 1000))) {
+		_dataValid = false;     // data is now outdated
+		_startUpPassed = false; // reset the start-up condition
+	}
+
+	while (_vedirectSerial->available()) {
 		rxData(_vedirectSerial->read());
 		_lastByteMillis = millis();
 	}
@@ -354,20 +360,6 @@ typename VeDirectFrameHandler<T>::State VeDirectFrameHandler<T>::hexRxEvent(uint
 	}
 
 	return ret;
-}
-
-
-// Returns true if the dataset is valid and not older than 10 seconds
-template<typename T>
-bool VeDirectFrameHandler<T>::isDataValid()
-{
-    // if the data is older than 10 seconds, it is no longer valid (millis() rollover safe)
-    if (_dataValid && (millis() - _lastUpdate > (10 * 1000))) {
-        _dataValid = false;     // data is outdated
-        _startUpPassed = false; // reset the start-up condition
-    }
-
-	return _dataValid;
 }
 
 // Returns the millis() timestamp of the last successfully received dataset
