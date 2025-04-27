@@ -25,18 +25,20 @@ namespace Batteries::Zendure {
 
 /* Payload of log messages is not fully decrypted, yet
  * It seems like different products and FW versions vari at least
- * in number of elements. It's currently unkown, if existing entry
+ * in number of elements. It's currently unknown, if existing entry
  * may be updated between FW versions
  *
  * Following things are known so far:
  *
- * +---------+------------+--------------------+
- * | Product | FW-Version | Number of Elements |
- * +---------+------------+--------------------+
- * | HUB1200 | v2.0.48    | 107                |
- * +---------+------------+--------------------+
- * | HUB2000 | v3.0.21    | 113                |
- * +---------+------------+--------------------+
+ * +---------+------------+--------------------+------------------------+
+ * | Product | FW-Version | Number of Elements | Hint                   |
+ * +---------+------------+--------------------+------------------------+
+ * | HUB1200 | v2.0.48    | 107                |                        |
+ * +---------+------------+--------------------+------------------------+
+ * | HUB2000 | v3.0.21    | 113                |                        |
+ * +---------+------------+--------------------+------------------------+
+ * | AIO2400 | v1.0.22    | 87                 | PACK_UNKNOWN_5 missing |
+ * +---------+------------+--------------------+------------------------+
  */
 #define ZENDURE_LOG_OFFSET_SOC                      0U                  // [%]
 #define ZENDURE_LOG_OFFSET_PACKNUM                  1U                  // [1]
@@ -45,82 +47,82 @@ namespace Batteries::Zendure {
 #define ZENDURE_LOG_OFFSET_PACK_CURRENT(pack)       (10U+(pack)-1U)     // [dA]
 #define ZENDURE_LOG_OFFSET_PACK_CELL_MIN(pack)      (14U+(pack)-1U)     // [cV]
 #define ZENDURE_LOG_OFFSET_PACK_CELL_MAX(pack)      (18U+(pack)-1U)     // [cV]
-#define ZENDURE_LOG_OFFSET_PACK_UNKOWN_1(pack)      (22U+(pack)-1U)     // ? => always (0 | 0 | 0 | 0)
-#define ZENDURE_LOG_OFFSET_PACK_UNKOWN_2(pack)      (26U+(pack)-1U)     // ? => always (0 | 0 | 0 | 0)
-#define ZENDURE_LOG_OFFSET_PACK_UNKOWN_3(pack)      (30U+(pack)-1U)     // ? => always (8449 | 257 | 0 | 0)
+#define ZENDURE_LOG_OFFSET_PACK_UNKNOWN_1(pack)     (22U+(pack)-1U)     // ? => always (0 | 0 | 0 | 0)
+#define ZENDURE_LOG_OFFSET_PACK_UNKNOWN_2(pack)     (26U+(pack)-1U)     // ? => always (0 | 0 | 0 | 0)
+#define ZENDURE_LOG_OFFSET_PACK_UNKNOWN_3(pack)     (30U+(pack)-1U)     // ? => always (8449 | 257 | 0 | 0)
 #define ZENDURE_LOG_OFFSET_PACK_TEMPERATURE(pack)   (34U+(pack)-1U)     // [°C]
-#define ZENDURE_LOG_OFFSET_PACK_UNKOWN_5(pack)      (38U+(pack)-1U)     // ? => always (1340 | 99 | 0 | 0)
+#define ZENDURE_LOG_OFFSET_PACK_UNKNOWN_5(pack)     (38U+(pack)-1U)     // ? => always (1340 | 99 | 0 | 0)
 #define ZENDURE_LOG_OFFSET_VOLTAGE                  42U                 // [dV]
 #define ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_2       43U                 // [W]
 #define ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1       44U                 // [W]
 #define ZENDURE_LOG_OFFSET_OUTPUT_POWER             45U                 // [W]
-#define ZENDURE_LOG_OFFSET_UNKOWN_05                46U                 // ? => 1, 413
+#define ZENDURE_LOG_OFFSET_UNKNOWN_05               46U                 // ? => 1, 413
 #define ZENDURE_LOG_OFFSET_DISCHARGE_POWER          47U                 // [W]
 #define ZENDURE_LOG_OFFSET_CHARGE_POWER             48U                 // [W]
 #define ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT       49U                 // [cA]
-#define ZENDURE_LOG_OFFSET_UNKOWN_08                50U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_09                51U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_10                52U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_11                53U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_12                54U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_08               50U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_09               51U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_10               52U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_11               53U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_12               54U                 // ? => always 0
 #define ZENDURE_LOG_OFFSET_BYPASS_MODE              55U                 // [0=Auto | 1=AlwaysOff | 2=AlwaysOn]
-#define ZENDURE_LOG_OFFSET_UNKOWN_14                56U                 // ? => always 3
-#define ZENDURE_LOG_OFFSET_UNKOWN_15                57U                 // ? Some kind of bitmask => e.g. 813969441
-#define ZENDURE_LOG_OFFSET_UNKOWN_16                58U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_17                59U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_18                60U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_19                61U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_20                62U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_21                63U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_22                64U                 // ? => always 1
-#define ZENDURE_LOG_OFFSET_UNKOWN_23                65U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_24                66U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_25                67U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_26                68U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_27                69U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_28                70U                 // ? => always 1
-#define ZENDURE_LOG_OFFSET_UNKOWN_29                71U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_30                72U                 // ? some counter => 258, 263, 25
-#define ZENDURE_LOG_OFFSET_UNKOWN_31                73U                 // ? some counter => 309, 293, 23
-#define ZENDURE_LOG_OFFSET_UNKOWN_32                74U                 // ? => always 1
-#define ZENDURE_LOG_OFFSET_UNKOWN_33                75U                 // ? => always 1
-#define ZENDURE_LOG_OFFSET_UNKOWN_34                76U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_35                77U                 // ? => always 0 or 1
-#define ZENDURE_LOG_OFFSET_UNKOWN_36                78U                 // ? => always 0 or 1
-#define ZENDURE_LOG_OFFSET_UNKOWN_37                79U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_38                80U                 // ? => always 1 or 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_14               56U                 // ? => always 3
+#define ZENDURE_LOG_OFFSET_UNKNOWN_15               57U                 // ? Some kind of bitmask => e.g. 813969441
+#define ZENDURE_LOG_OFFSET_UNKNOWN_16               58U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_17               59U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_18               60U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_19               61U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_20               62U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_21               63U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_22               64U                 // ? => always 1
+#define ZENDURE_LOG_OFFSET_UNKNOWN_23               65U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_24               66U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_25               67U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_26               68U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_27               69U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_28               70U                 // ? => always 1
+#define ZENDURE_LOG_OFFSET_UNKNOWN_29               71U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_30               72U                 // ? some counter => 258, 263, 25
+#define ZENDURE_LOG_OFFSET_UNKNOWN_31               73U                 // ? some counter => 309, 293, 23
+#define ZENDURE_LOG_OFFSET_UNKNOWN_32               74U                 // ? => always 1
+#define ZENDURE_LOG_OFFSET_UNKNOWN_33               75U                 // ? => always 1
+#define ZENDURE_LOG_OFFSET_UNKNOWN_34               76U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_35               77U                 // ? => always 0 or 1
+#define ZENDURE_LOG_OFFSET_UNKNOWN_36               78U                 // ? => always 0 or 1
+#define ZENDURE_LOG_OFFSET_UNKNOWN_37               79U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_38               80U                 // ? => always 1 or 0
 #define ZENDURE_LOG_OFFSET_AUTO_RECOVER             81U                 // [bool]
-#define ZENDURE_LOG_OFFSET_UNKOWN_40                82U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_41                83U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_42                84U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_40               82U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_41               83U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_42               84U                 // ? => always 0
 #define ZENDURE_LOG_OFFSET_MIN_SOC                  85U                 // [%]
-#define ZENDURE_LOG_OFFSET_UNKOWN_44                86U                 // State 0 == Idle | 1 == Discharge
-#define ZENDURE_LOG_OFFSET_UNKOWN_45                87U                 // ? => always 512
-#define ZENDURE_LOG_OFFSET_UNKOWN_46                88U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_47                89U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_48                90U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_49                91U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_50                92U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_51                93U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_52                94U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_53                95U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_54                96U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_55                97U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_56                98U                 // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_57                99U                 // ? => always 20.000
-#define ZENDURE_LOG_OFFSET_UNKOWN_58                100U                // ? => always 100
-#define ZENDURE_LOG_OFFSET_UNKOWN_59                101U                // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_60                102U                // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_61                103U                // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_62                104U                // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_63                105U                // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_64                106U                // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_65                107U                // ? => always 255 (?)
-#define ZENDURE_LOG_OFFSET_UNKOWN_66                108U                // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_67                109U                // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_68                110U                // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_69                111U                // ? => always 0
-#define ZENDURE_LOG_OFFSET_UNKOWN_70                112U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_44               86U                 // State 0 == Idle | 1 == Discharge
+#define ZENDURE_LOG_OFFSET_UNKNOWN_45               87U                 // ? => always 512
+#define ZENDURE_LOG_OFFSET_UNKNOWN_46               88U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_47               89U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_48               90U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_49               91U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_50               92U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_51               93U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_52               94U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_53               95U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_54               96U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_55               97U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_56               98U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_57               99U                 // ? => always 20.000
+#define ZENDURE_LOG_OFFSET_UNKNOWN_58               100U                // ? => always 100
+#define ZENDURE_LOG_OFFSET_UNKNOWN_59               101U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_60               102U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_61               103U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_62               104U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_63               105U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_64               106U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_65               107U                // ? => always 255 (?)
+#define ZENDURE_LOG_OFFSET_UNKNOWN_66               108U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_67               109U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_68               110U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_69               111U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKNOWN_70               112U                // ? => always 0
 
 
 
@@ -183,9 +185,9 @@ namespace Batteries::Zendure {
 #define ZENDURE_REPORT_PACK_POWER                   "power"
 #define ZENDURE_REPORT_PACK_SOC                     "socLevel"
 #define ZENDURE_REPORT_PACK_CELL_MAX_TEMPERATURE    "maxTemp"
-#define ZENDURE_REPORT_PACK_CELL_MIN_VOLATAGE       "minVol"
-#define ZENDURE_REPORT_PACK_CELL_MAX_VOLATAGE       "maxVol"
-#define ZENDURE_REPORT_PACK_TOTAL_VOLATAGE          "totalVol"
+#define ZENDURE_REPORT_PACK_CELL_MIN_VOLTAGE        "minVol"
+#define ZENDURE_REPORT_PACK_CELL_MAX_VOLTAGE        "maxVol"
+#define ZENDURE_REPORT_PACK_TOTAL_VOLTAGE           "totalVol"
 #define ZENDURE_REPORT_PACK_FW_VERSION              "softVersion"
 #define ZENDURE_REPORT_PACK_HEALTH                  "soh"
 

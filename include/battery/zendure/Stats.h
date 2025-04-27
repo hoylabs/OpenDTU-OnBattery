@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include <MqttSettings.h>
 #include <battery/Stats.h>
 #include <map>
 #include <Configuration.h>
@@ -97,6 +98,25 @@ protected:
 private:
     void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
 
+    template<typename T>
+    inline static void publish(const String &topic, const T &payload, [[maybe_unused]] const size_t precision = 0) {
+        if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
+            MqttSettings.publish(topic, String(payload, precision));
+            return;
+        }
+
+        MqttSettings.publish(topic, String(payload));
+    }
+
+    template<typename T>
+    inline static void publish(const String &topic, const std::optional<T> &payload, const size_t precision = 0) {
+        if (!payload.has_value()) {
+            return;
+        }
+
+        publish(topic, *payload, precision);
+    }
+
     void setHwVersion(String&& version) {
         if (!version.isEmpty()) {
             _hwversion = _device + " (" + std::move(version) + ")";
@@ -157,7 +177,36 @@ private:
         _output_power = power;
     }
 
-    String _device = String("Unkown");
+    inline void setOutputLimit(const uint16_t power) {
+        _output_limit = power;
+    }
+
+    inline void setSocMin(const float soc) {
+        if (soc >= 60 || soc < 0) {
+            return;
+        }
+        _soc_min = soc;
+    }
+
+    inline void setSocMax(const float soc) {
+        if (soc < 40 || soc > 100) {
+            return;
+        }
+        _soc_max = soc;
+    }
+
+    inline void setAutoRecover(const uint8_t value) {
+        _auto_recover = static_cast<bool>(value);
+    }
+
+    inline void setVoltage(float voltage, uint32_t timestamp) {
+        if (voltage > 0) {
+            setDischargeCurrentLimit(static_cast<float>(_inverse_max) / voltage, timestamp);
+        }
+        Batteries::Stats::setVoltage(voltage, timestamp);
+    }
+
+    String _device = String("Unknown");
 
     std::map<size_t, std::shared_ptr<PackStats>> _packData = std::map<size_t, std::shared_ptr<PackStats> >();
 
@@ -174,7 +223,7 @@ private:
     uint16_t _input_limit = 0;
     uint16_t _output_limit = 0;
 
-    float _efficiency = 0.0;
+    std::optional<float> _efficiency = std::nullopt;
     uint16_t _capacity = 0;
     uint16_t _capacity_avail = 0;
 
@@ -245,21 +294,25 @@ class PackStats {
 
     protected:
         explicit PackStats(String serial, String name, uint16_t capacity, uint8_t cellCount = 15) :
-            _serial(serial), _name(name), _capacity(capacity), _cellCount(cellCount) {}
+            _serial(serial), _name(name), _capacity(capacity), _cellCount(cellCount), _capacity_avail(capacity) {}
         void setSerial(String serial) { _serial = serial; }
         void setHwVersion(String&& version) { _hwversion = std::move(version); }
         void setFwVersion(String&& version) { _fwversion = std::move(version); }
 
         void setSoH(float soh){
+            if (soh < 0) {
+                return;
+            }
             _state_of_health = soh;
             _capacity_avail = _capacity * soh / 100.0;
         }
 
     private:
         String _serial = String();
-        String _name = String("UNKOWN");
+        String _name = String("UNKNOWN");
         uint16_t _capacity = 0;
         uint8_t _cellCount = 15;
+        uint16_t _capacity_avail = 0;
 
         String _fwversion = String();
         String _hwversion = String();
@@ -270,8 +323,7 @@ class PackStats {
         uint16_t _cell_voltage_avg = 0;
         int16_t _cell_temperature_max = 0;
 
-        float _state_of_health = 1;
-        uint16_t _capacity_avail = 0;
+        std::optional<float> _state_of_health = std::nullopt;
 
         float _voltage_total = 0.0;
         float _current = 0.0;
