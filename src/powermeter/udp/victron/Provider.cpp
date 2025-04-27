@@ -69,27 +69,31 @@ void Provider::sendModbusRequest()
     VictronUdp.endPacket();
 
     _lastRequest = currentMillis;
+
+    if (_verboseLogging) {
+        MessageOutput.printf("[PowerMeters::Udp::Victron] sent modbus request\r\n");
+    }
 }
 
-static float readInt16(uint8_t** buffer, uint8_t factor)
+static float readInt16(uint8_t const** buffer, uint8_t factor)
 {
-    uint8_t* p = *buffer;
+    uint8_t const* p = *buffer;
     int16_t value = (p[0] << 8) | p[1];
     *buffer += 2;
     return static_cast<float>(value) / factor;
 }
 
-static float readInt32(uint8_t** buffer, uint8_t factor)
+static float readInt32(uint8_t const** buffer, uint8_t factor)
 {
-    uint8_t* p = *buffer;
+    uint8_t const* p = *buffer;
     int32_t value = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
     *buffer += 4;
     return static_cast<float>(value) / factor;
 }
 
-static float readUint32(uint8_t** buffer, uint8_t factor)
+static float readUint32(uint8_t const** buffer, uint8_t factor)
 {
-    uint8_t* p = *buffer;
+    uint8_t const* p = *buffer;
     uint32_t value = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
     *buffer += 4;
     return static_cast<float>(value) / factor;
@@ -98,12 +102,12 @@ static float readUint32(uint8_t** buffer, uint8_t factor)
 void Provider::parseModbusResponse()
 {
     int packetSize = VictronUdp.parsePacket();
-    if (!packetSize) { return; }
+    if (0 == packetSize) { return; }
 
-    uint8_t buffer[256];
-    VictronUdp.read(buffer, sizeof(buffer));
+    std::vector<uint8_t> buffer(packetSize);
+    VictronUdp.read(buffer.data(), packetSize);
 
-    uint8_t* p = buffer;
+    uint8_t const* p = buffer.data();
 
     if (_verboseLogging) {
         MessageOutput.printf("[PowerMeters::Udp::Victron] received %d bytes:", packetSize);
@@ -118,24 +122,40 @@ void Provider::parseModbusResponse()
         MessageOutput.print("\r\n");
     }
 
-    uint16_t transactionId = (p[0] << 8) | p[1];
-    p += 2;
+    uint16_t length = 0;
+    uint16_t protocolId = 0;
 
-    if (transactionId != sTransactionId) {
-        MessageOutput.printf("[PowerMeters::Udp::Victron] invalid transaction ID: %04X\r\n", transactionId);
-        return;
+    auto dataRemains = [&buffer, &p](size_t amount) -> bool {
+        return p - buffer.data() <= buffer.size() - amount;
+    };
+
+    // even if length is 0, we expect at least 6 bytes (the header)
+    while (dataRemains(6)) {
+        uint16_t currentTransactionId = (p[0] << 8) | p[1];
+        p += 2;
+
+        protocolId = (p[0] << 8) | p[1];
+        p += 2;
+
+        length = (p[0] << 8) | p[1];
+        p += 2;
+
+        if (!dataRemains(length)) {
+            MessageOutput.printf("[PowerMeters::Udp::Victron] unexpected end of packet\r\n");
+            return;
+        }
+
+        if (currentTransactionId == sTransactionId) { break; }
+
+        MessageOutput.printf("[PowerMeters::Udp::Victron] skipping message "
+            "with unexpected transaction ID: %04X\r\n", currentTransactionId);
+        p += length;
     }
-
-    uint16_t protocolId = (p[0] << 8) | p[1];
-    p += 2;
 
     if (protocolId != 0x0000) {
         MessageOutput.printf("[PowerMeters::Udp::Victron] invalid protocol ID: %04X\r\n", protocolId);
         return;
     }
-
-    uint16_t length = (p[0] << 8) | p[1];
-    p += 2;
 
     uint16_t expectedLength = (sRegisterCount * 2) + 3;
     if (length != expectedLength) {
