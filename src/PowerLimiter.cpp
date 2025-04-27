@@ -47,7 +47,7 @@ void PowerLimiterClass::init(Scheduler& scheduler)
     _loopTask.enable();
 }
 
-frozen::string const& PowerLimiterClass::getStatusText(PowerLimiterClass::Status status)
+frozen::string const& PowerLimiterClass::getStatusText(PowerLimiterClass::Status status) const
 {
     static const frozen::string missing = "programmer error: missing status text";
 
@@ -290,11 +290,20 @@ void PowerLimiterClass::loop()
         return _fullSolarPassThroughActive;
     };
 
+    auto getLoadCorrectedVoltage = [this,&config]() -> float {
+        // TODO(schlimmchen): use the battery's data if available,
+        // i.e., the current drawn from the battery as reported by the battery.
+        float acPower = getBatteryInvertersOutputAcWatts();
+        float dcVoltage = getBatteryVoltage();
+
+        if (dcVoltage <= 0.0) { return 0.0; }
+
+        return dcVoltage + (acPower * config.PowerLimiter.VoltageLoadCorrectionFactor);
+    };
+
     _batteryDischargeEnabled = getBatteryPower();
     _fullSolarPassThroughActive = getFullSolarPassthrough();
-
-    // re-calculate load-corrected voltage once (and only once) per DPL loop
-    _oLoadCorrectedVoltage = std::nullopt;
+    _loadCorrectedVoltage = getLoadCorrectedVoltage();
 
     if (_verboseLogging && (usesBatteryPoweredInverter() || usesSmartBufferPoweredInverter())) {
         MessageOutput.printf("[DPL] up %lu s, it is %s, %snext inverter restart at %d s (set to %d)\r\n",
@@ -315,7 +324,7 @@ void PowerLimiterClass::loop()
 
         auto dcVoltage = getBatteryVoltage(true/*log voltages only once per DPL loop*/);
         MessageOutput.printf("[DPL] battery voltage %.2f V, load-corrected voltage %.2f V @ %.0f W, factor %.5f 1/A\r\n",
-                dcVoltage, getLoadCorrectedVoltage(),
+                dcVoltage, _loadCorrectedVoltage,
                 getBatteryInvertersOutputAcWatts(),
                 config.PowerLimiter.VoltageLoadCorrectionFactor);
 
@@ -377,7 +386,8 @@ void PowerLimiterClass::loop()
     _calculationBackoffMs = _calculationBackoffMsDefault;
 }
 
-std::pair<float, char const*> PowerLimiterClass::getInverterDcVoltage() {
+std::pair<float, char const*> PowerLimiterClass::getInverterDcVoltage() const
+{
     auto const& config = Configuration.get();
 
     auto iter = _inverters.cbegin();
@@ -408,7 +418,7 @@ std::pair<float, char const*> PowerLimiterClass::getInverterDcVoltage() {
  * at the charge controller's output, if it's available. only as a fallback
  * the voltage reported by the inverter is used.
  */
-float PowerLimiterClass::getBatteryVoltage(bool log) {
+float PowerLimiterClass::getBatteryVoltage(bool log) const {
     auto const& config = Configuration.get();
 
     float res = 0;
@@ -445,7 +455,7 @@ float PowerLimiterClass::getBatteryVoltage(bool log) {
  * the given power on its DC side, i.e., adjust the power for the inverter's
  * efficiency.
  */
-uint16_t PowerLimiterClass::dcPowerBusToInverterAc(uint16_t dcPower)
+uint16_t PowerLimiterClass::dcPowerBusToInverterAc(uint16_t dcPower) const
 {
     // account for losses between power bus and inverter (cables, junctions...)
     auto const& config = Configuration.get();
@@ -496,7 +506,7 @@ uint8_t PowerLimiterClass::getInverterUpdateTimeouts() const
     return res;
 }
 
-uint8_t PowerLimiterClass::getPowerLimiterState()
+uint8_t PowerLimiterClass::getPowerLimiterState() const
 {
     bool reachable = false;
     bool producing = false;
@@ -516,7 +526,7 @@ uint8_t PowerLimiterClass::getPowerLimiterState()
     return _batteryDischargeEnabled ? PL_UI_STATE_USE_SOLAR_AND_BATTERY : PL_UI_STATE_USE_SOLAR_ONLY;
 }
 
-uint16_t PowerLimiterClass::calcTargetOutput()
+uint16_t PowerLimiterClass::calcTargetOutput() const
 {
     auto const& config = Configuration.get();
     auto targetConsumption = config.PowerLimiter.TargetPowerConsumption;
@@ -685,7 +695,7 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
 // calculates how much power the battery-powered inverters shall draw from the
 // power bus, which we call the part of the circuitry that is supplied by the
 // solar charge controller(s), possibly an AC charger, as well as the battery.
-uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested)
+uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested) const
 {
     // We check if the PSU is on and disable battery-powered inverters in this
     // case. The PSU should reduce power or shut down first before the
@@ -765,7 +775,7 @@ bool PowerLimiterClass::updateInverters()
     return busy;
 }
 
-uint16_t PowerLimiterClass::getSolarPassthroughPower()
+uint16_t PowerLimiterClass::getSolarPassthroughPower() const
 {
     if (!isSolarPassThroughEnabled() || isBelowStopThreshold()) {
         return 0;
@@ -778,7 +788,7 @@ uint16_t PowerLimiterClass::getSolarPassthroughPower()
     return std::max<float>(0, oSolarChargerOutput.value_or(0));
 }
 
-float PowerLimiterClass::getBatteryInvertersOutputAcWatts()
+float PowerLimiterClass::getBatteryInvertersOutputAcWatts() const
 {
     float res = 0;
 
@@ -793,7 +803,7 @@ float PowerLimiterClass::getBatteryInvertersOutputAcWatts()
     return res;
 }
 
-std::optional<uint16_t> PowerLimiterClass::getBatteryDischargeLimit()
+std::optional<uint16_t> PowerLimiterClass::getBatteryDischargeLimit() const
 {
     if (!_batteryDischargeEnabled) { return 0; }
 
@@ -814,28 +824,8 @@ std::optional<uint16_t> PowerLimiterClass::getBatteryDischargeLimit()
     return inverter.first * currentLimit;
 }
 
-float PowerLimiterClass::getLoadCorrectedVoltage()
-{
-    if (_oLoadCorrectedVoltage) { return *_oLoadCorrectedVoltage; }
-
-    auto const& config = Configuration.get();
-
-    // TODO(schlimmchen): use the battery's data if available,
-    // i.e., the current drawn from the battery as reported by the battery.
-    float acPower = getBatteryInvertersOutputAcWatts();
-    float dcVoltage = getBatteryVoltage();
-
-    if (dcVoltage <= 0.0) {
-        return 0.0;
-    }
-
-    _oLoadCorrectedVoltage = dcVoltage + (acPower * config.PowerLimiter.VoltageLoadCorrectionFactor);
-
-    return *_oLoadCorrectedVoltage;
-}
-
 bool PowerLimiterClass::testThreshold(float socThreshold, float voltThreshold,
-        std::function<bool(float, float)> compare)
+        std::function<bool(float, float)> compare) const
 {
     auto const& config = Configuration.get();
 
@@ -852,10 +842,10 @@ bool PowerLimiterClass::testThreshold(float socThreshold, float voltThreshold,
     // use voltage threshold as fallback
     if (voltThreshold <= 0.0) { return false; }
 
-    return compare(getLoadCorrectedVoltage(), voltThreshold);
+    return compare(_loadCorrectedVoltage, voltThreshold);
 }
 
-bool PowerLimiterClass::isStartThresholdReached()
+bool PowerLimiterClass::isStartThresholdReached() const
 {
     auto const& config = Configuration.get();
 
@@ -866,7 +856,7 @@ bool PowerLimiterClass::isStartThresholdReached()
     );
 }
 
-bool PowerLimiterClass::isStopThresholdReached()
+bool PowerLimiterClass::isStopThresholdReached() const
 {
     auto const& config = Configuration.get();
 
@@ -877,7 +867,7 @@ bool PowerLimiterClass::isStopThresholdReached()
     );
 }
 
-bool PowerLimiterClass::isBelowStopThreshold()
+bool PowerLimiterClass::isBelowStopThreshold() const
 {
     auto const& config = Configuration.get();
 
@@ -934,7 +924,7 @@ void PowerLimiterClass::calcNextInverterRestart()
     _nextInverterRestart = { true, restartMillis };
 }
 
-bool PowerLimiterClass::isSolarPassThroughEnabled()
+bool PowerLimiterClass::isSolarPassThroughEnabled() const
 {
     auto const& config = Configuration.get();
 
@@ -947,7 +937,7 @@ bool PowerLimiterClass::isSolarPassThroughEnabled()
     return config.PowerLimiter.SolarPassThroughEnabled;
 }
 
-bool PowerLimiterClass::usesBatteryPoweredInverter()
+bool PowerLimiterClass::usesBatteryPoweredInverter() const
 {
     for (auto const& upInv : _inverters) {
         if (upInv->isBatteryPowered()) { return true; }
@@ -956,7 +946,7 @@ bool PowerLimiterClass::usesBatteryPoweredInverter()
     return false;
 }
 
-bool PowerLimiterClass::usesSmartBufferPoweredInverter()
+bool PowerLimiterClass::usesSmartBufferPoweredInverter() const
 {
     for (auto const& upInv : _inverters) {
         if (upInv->isSmartBufferPowered()) { return true; }
@@ -965,7 +955,7 @@ bool PowerLimiterClass::usesSmartBufferPoweredInverter()
     return false;
 }
 
-bool PowerLimiterClass::isGovernedBatteryPoweredInverterProducing()
+bool PowerLimiterClass::isGovernedBatteryPoweredInverterProducing() const
 {
     for (auto const& upInv : _inverters) {
         if (upInv->isBatteryPowered() && upInv->isProducing()) { return true; }
