@@ -58,8 +58,8 @@ VeDirectFrameHandler<T>::VeDirectFrameHandler() :
 	_value(""),
 	_debugIn(0),
 	_lastByteMillis(0),
-    _dataValid(false),
-    _startUpPassed(false)
+	_dataValid(false),
+	_startUpPassed(false)
 {
 }
 
@@ -76,8 +76,8 @@ void VeDirectFrameHandler<T>::init(char const* who, gpio_num_t rx, gpio_num_t tx
 	_msgOut = msgOut;
 	_verboseLogging = verboseLogging;
 	_debugIn = 0;
-    _startUpPassed = false; // to obtain a complete dataset after a new start or restart
-    _dataValid = false;     // data is not valid on start or restart
+	_startUpPassed = false; // to obtain a complete dataset after a new start or restart
+	_dataValid = false;     // data is not valid on start or restart
 	snprintf(_logId, sizeof(_logId), "[VE.Direct %s %d/%d]", who, rx, tx);
 	if (_verboseLogging) { _msgOut->printf("%s init complete\r\n", _logId); }
 }
@@ -241,23 +241,25 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 		if (_verboseLogging) { dumpDebugBuffer(); }
 		if (_checksum == 0) {
 
-            _frameContainsFieldV = false;
+			_frameContainsFieldV = false;
 			for (auto const& event : _textData) {
 				processTextData(event.first, event.second);
 			}
 
-            // A dataset can be fragmented across multiple frames,
-            // so we give just frames containing the field-label "V" a timestamp to avoid
-            // multiple timestamps on related data. We also take care to have the dataset complete
-            // after a start or restart or fault before we set the data as valid.
-            // Note: At startup, it may take up to 2 seconds for the first timestamp to be available
-            if (_frameContainsFieldV) {
-                if (_startUpPassed) {
-                    _lastUpdate = millis();
-                    _dataValid = true;
-                }
-                _startUpPassed = true;
-            }
+			// A dataset can be fragmented across multiple frames,
+			// so we give just frames containing the field-label "V" a timestamp to avoid
+			// multiple timestamps on related data. We also take care to have the dataset complete
+			// after a start or restart or fault before we set the data as valid.
+			// Note: At startup, it may take up to 2 seconds for the first timestamp to be available
+			if (_frameContainsFieldV)
+			{
+				if (_startUpPassed)
+				{
+					_lastUpdate = millis();
+					_dataValid = true;
+				}
+				_startUpPassed = true;
+			}
 			frameValidEvent();
 		}
 		else {
@@ -309,7 +311,7 @@ void VeDirectFrameHandler<T>::processTextData(std::string const& name, std::stri
 
 	if (name == "V") {
 		_tmpFrame.batteryVoltage_V_mV = atol(value.c_str());
-        _frameContainsFieldV = true; // frame contains the field-label "V"
+		_frameContainsFieldV = true; // frame contains the field-label "V"
 		return;
 	}
 
