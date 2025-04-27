@@ -88,6 +88,8 @@ private:
     String _payloadSettings = String();
     String _payloadFullUpdate = String();
 
+    bool _full_log_supported = false;
+
     void onMqttMessageReport(espMqttClientTypes::MessageProperties const& properties,
             char const* topic, uint8_t const* payload, size_t len);
 
