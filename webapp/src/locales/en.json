@@ -12,6 +12,7 @@
         "SolarChargerSettings": "Solar Charger",
         "PowerMeterSettings": "Power Meter",
         "BatterySettings": "Battery",
+        "BatteryGuardSettings": "Battery Guard",
         "AcChargerSettings": "AC Charger",
         "ConfigManagement": "Config Management",
         "FirmwareUpgrade": "Firmware Upgrade",
@@ -21,6 +22,7 @@
         "Network": "Network",
         "NTP": "NTP",
         "MQTT": "MQTT",
+        "BatteryGuard": "Battery Guard",
         "Console": "Console",
         "About": "About",
         "Logout": "Logout",
@@ -1066,6 +1068,9 @@
         "capacity": "Total capacity",
         "availableCapacity": "Available capacity",
         "temperature": "Temperature",
+        "resistorConfigured": "Resistance (configured)",
+        "resistorCalculated": "Resistance (calculated)",
+        "openCircuitVoltage": "Open circuit voltage",
         "bmsTemp": "BMS temperature",
         "chargeVoltage": "Requested charge voltage",
         "chargeCurrentLimitation": "Charge current limit",
@@ -1199,5 +1204,19 @@
         "unavail": "N/A",
         "useableCapacity": "Useable capacity",
         "chargethrough": "Charge through cycle"
+    },
+    "batteryguardadmin": {
+        "BatteryGuardSettings": "Battery Guard Settings",
+        "ConfigAlertMessage": "One or more prerequisites for operating the Battery Guard are not met.",
+        "ConfigHints": "Configuration Hints",
+        "ConfigHintsIntro": "The following hints should be considered when configuring the Battery Guard:",
+        "ConfigHintRequirement": "Required",
+        "ConfigHintOptional": "Optional",
+        "ConfigHintBatteryRequired": "Battery Guard can only be used with a configured battery communication interface.",
+        "BatteryGuardConfiguration": "Battery Guard Configuration",
+        "EnableBatteryGuard": "Enable Battery Guard",
+        "VerboseLogging": "Enable verbose logging",
+        "InternalResistance": "Internal Resistance",
+        "InternalResistanceHint": "The system tries to calculate the value from load changes. Until a calculated value is available, the value configured here will be used. The current value is shown in the battery data."
     }
 }

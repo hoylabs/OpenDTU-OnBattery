@@ -18,6 +18,7 @@
 #include <limits>
 #include <frozen/map.h>
 #include "SunPosition.h"
+#include "BatteryGuard.h"
 
 static auto sBatteryPoweredFilter = [](PowerLimiterInverter const& inv) {
     return inv.isBatteryPowered();
@@ -797,6 +798,13 @@ std::optional<uint16_t> PowerLimiterClass::getBatteryDischargeLimit()
 float PowerLimiterClass::getLoadCorrectedVoltage()
 {
     if (_oLoadCorrectedVoltage) { return *_oLoadCorrectedVoltage; }
+
+    // use "open circuit voltage" from the Battery Guard if available
+    auto oOpenCV = BatteryGuard.getOpenCircuitVoltage();
+    if (oOpenCV.has_value()) {
+        _oLoadCorrectedVoltage = *oOpenCV;
+        return *_oLoadCorrectedVoltage;
+    }
 
     auto const& config = Configuration.get();
 
