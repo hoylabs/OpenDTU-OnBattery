@@ -182,13 +182,15 @@ private:
     }
 
     inline void setSocMin(const float soc) {
-        if (soc >= 60 || soc < 0) {
+        // Limit value to 0...60% as Zendure seems to do so, too
+        if (soc < 0 || soc > 60) {
             return;
         }
         _soc_min = soc;
     }
 
     inline void setSocMax(const float soc) {
+        // Limit value to 40...100% as Zendure seems to do so, too
         if (soc < 40 || soc > 100) {
             return;
         }
