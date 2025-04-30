@@ -626,14 +626,16 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
         return;
     }
 
+
     for (auto packDataJson : *packData) {
         auto serial = Utils::getJsonElement<String>(packDataJson, ZENDURE_REPORT_PACK_SERIAL);
         auto state = Utils::getJsonElement<uint8_t>(packDataJson, ZENDURE_REPORT_PACK_STATE);
         auto version = Utils::getJsonElement<uint32_t>(packDataJson, ZENDURE_REPORT_PACK_FW_VERSION);
         auto soh = Utils::getJsonElement<uint16_t>(packDataJson, ZENDURE_REPORT_PACK_HEALTH);
+        auto voltage = Utils::getJsonElement<uint16_t>(packDataJson, ZENDURE_REPORT_PACK_TOTAL_VOLTAGE);
 
         // do not waste processing time if nothing to do
-        if (!serial.has_value() || !(state.has_value() || version.has_value() || soh.has_value())) {
+        if (!serial.has_value() || !(state.has_value() || version.has_value() || soh.has_value() || voltage.has_value())) {
             continue;
         }
 
@@ -653,6 +655,13 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
 
             if (soh.has_value()) {
                 pack->setSoH(static_cast<float>(*soh) / 10.0);
+            }
+
+            // Fallback to voltage reported by the FIRST pack if we are unable to use values from loggin messages.
+            // This is only precise, if there is exactly ONE pack - when there are more packs, using only the first
+            // is not sufficient and voltage will be completely unavailable to prevent erroneous reporting.
+            if (voltage.has_value() && !_full_log_supported && entry.first == 1 && _stats->_num_batteries == 1) {
+                _stats->setVoltage(static_cast<float>(*voltage) / 100.0, ms);
             }
 
             pack->_lastUpdate = ms;
