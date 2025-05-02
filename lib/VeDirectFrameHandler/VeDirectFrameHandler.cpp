@@ -411,7 +411,7 @@ void VeDirectFrameHandler<T>::setErrorCounter(veStruct::Error const type)
         _errorCounter.at(static_cast<size_t>(type))++;
 
         // in case of maximum error count of sum, reset all error counters
-        if (_errorCounter.at(static_cast<size_t>(veStruct::Error::SUM)) > 50000) { _errorCounter.fill(0); }
+        if (_errorCounter.at(static_cast<size_t>(veStruct::Error::SUM)) >= 50000) { _errorCounter.fill(0); }
     }
 }
 
