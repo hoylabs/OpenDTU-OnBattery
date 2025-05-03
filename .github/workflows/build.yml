@@ -209,10 +209,11 @@ jobs:
           echo "OPEN_DTU_CORE_RELEASE=$(git for-each-ref --sort=creatordate --format '%(refname) %(creatordate)' refs/tags | grep 'refs/tags/v' | tail -1 | sed 's#.*/##' | sed 's/ .*//')" >> $GITHUB_ENV
 
       - name: Create openDTU-core-release-Badge
+        if: vars.BADGE_GIST_ID != ''
         uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483 # version 1.7.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
-          gistID: 856dda48c1cadac6ea495213340c612b
+          gistID: ${{ vars.BADGE_GIST_ID }}
           filename: openDTUcoreRelease.json
           label: based on upstream OpenDTU
           message: ${{ env.OPEN_DTU_CORE_RELEASE }}
