@@ -92,6 +92,12 @@ private:
      * queue, which is fine as we know the source frame was valid.
      */
     std::deque<std::pair<std::string, std::string>> _textData;
+
+    void setErrorCounter(veStruct::Error const type);
+    void printErrorCounters(void) const;
+
+    std::array<uint16_t, static_cast<size_t>(veStruct::Error::LAST)> _errorCounter;
+    uint32_t _lastErrorPrint;                  // timestamp of the last error logging print
 };
 
 template class VeDirectFrameHandler<veMpptStruct>;
