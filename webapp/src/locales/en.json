@@ -1225,6 +1225,7 @@
         "midpointVoltage": "Midpoint Voltage",
         "midpointDeviation": "Midpoint Deviation",
         "lastFullCharge": "Last full Charge",
+        "lastEmptyCharge": "Last empty",
         "solarInputPower1": "MPPT1 power",
         "solarInputPower2": "MPPT2 power",
         "totalInputPower": "Total input power",
@@ -1260,10 +1261,20 @@
         "remainInTime": "Remaining charge time",
         "unavail": "N/A",
         "useableCapacity": "Useable capacity",
-        "chargethrough": "Charge through cycle",
         "controlMode": "@:batteryadmin.zendure.controlMode",
         "full-access": "@:batteryadmin.zendure.controlModes.Full",
         "write-once": "Write Once",
-        "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly"
+        "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly",
+        "zendure": {
+            "chargeThroughState": "Charge through state",
+            "chargeThroughStates": {
+                "disabled": "@:battery.disabled",
+                "idle": "@:battery.idle",
+                "soft": "Soft",
+                "hard": "Hard",
+                "keep": "Hold",
+                "invalid": "@:battery.invalid"
+            }
+        }
     }
 }
