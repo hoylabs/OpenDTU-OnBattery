@@ -108,9 +108,9 @@ bool Provider::init(bool verboseLogging)
     log("Subscribed to '%s' for timesync requests", _topicTimesync.c_str());
 
     _rateFullUpdateMs   = config.Battery.Zendure.PollingInterval * 1000;
-    _nextFullUpdate     = 0;
+    _nextFullUpdate     = millis() + _rateFullUpdateMs / 2;
     _rateTimesyncMs     = ZENDURE_SECONDS_TIMESYNC * 1000;
-    _nextTimesync       = 0;
+    _nextTimesync       = _nextFullUpdate;
     _rateSunCalcMs      = ZENDURE_SECONDS_SUNPOSITION * 1000;
     _nextSunCalc        = millis() + _rateSunCalcMs / 2;
 
@@ -133,14 +133,21 @@ bool Provider::init(bool verboseLogging)
     array.add("getInfo");
     serializeJson(root, _payloadFullUpdate);
 
-    // initial setup
+    // disable charge through cycle if disable by config
     if (!config.Battery.Zendure.ChargeThroughEnable) {
         setChargeThrough(false);
     }
-    setTargetSoCs(config.Battery.Zendure.MinSoC, config.Battery.Zendure.MaxSoC);
 
+    // check if we are allowed to write stuff
+    if (config.Battery.Zendure.ControlMode == BatteryZendureConfig::ControlMode::ControlModeReadOnly) {
+        MessageOutput.printf("ZendureBattery: Running in READ-ONLY mode\r\n");
 
-    MessageOutput.printf("ZendureBattery: INIT DONE!\r\n");
+        // forget about write topic and payload to prevent it will ever be written
+        _payloadSettings.clear();
+        _topicWrite.clear();
+    }
+
+    MessageOutput.printf("ZendureBattery: INIT DONE\r\n");
     return true;
 }
 
@@ -247,9 +254,23 @@ void Provider::loop()
         setInverterMax(config.Battery.Zendure.MaxOutput);
 
         // republish settings - just to be sure
-        if (!_topicWrite.isEmpty() && !_payloadSettings.isEmpty()) {
-            MqttSettings.publishGeneric(_topicWrite, _payloadSettings, false, 0);
-        }
+        writeSettings();
+    }
+}
+
+void Provider::writeSettings() {
+    if (_topicWrite.isEmpty() || _payloadSettings.isEmpty()) {
+        return;
+    }
+
+    MqttSettings.publishGeneric(_topicWrite, _payloadSettings, false, 0);
+
+    auto const& config = Configuration.get();
+
+    // if running in OnlyOnce mode, forget about write topic and payload to prevent it will ever be written again
+    if (config.Battery.Zendure.ControlMode == BatteryZendureConfig::ControlMode::ControlModeOnce) {
+        _payloadSettings.clear();
+        _topicWrite.clear();
     }
 }
 

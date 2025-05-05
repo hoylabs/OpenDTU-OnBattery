@@ -316,85 +316,114 @@
                         :postfix="$t('batteryadmin.Seconds')"
                     />
 
-                    <InputElement
-                        :label="$t('batteryadmin.ZendureMaxOutput')"
-                        v-model="batteryConfigList.zendure.max_output"
-                        type="number"
-                        min="100"
-                        max="1200"
-                        step="100"
-                        :postfix="$t('batteryadmin.Watt')"
-                    />
-
-                    <InputElement
-                        :label="$t('batteryadmin.ZendureMinSoc')"
-                        v-model="batteryConfigList.zendure.soc_min"
-                        type="number"
-                        min="0"
-                        max="60"
-                        step="1"
-                        :postfix="$t('batteryadmin.Percent')"
-                    />
-
-                    <InputElement
-                        :label="$t('batteryadmin.ZendureMaxSoc')"
-                        v-model="batteryConfigList.zendure.soc_max"
-                        type="number"
-                        min="40"
-                        max="100"
-                        step="1"
-                        :postfix="$t('batteryadmin.Percent')"
-                    />
-
                     <div class="row mb-3">
-                        <label for="zendure_bypass_mode" class="col-sm-2 col-form-label">
-                            {{ $t('batteryadmin.ZendureBypassMode') }}
+                        <label for="zendure_control_mode" class="col-sm-2 col-form-label">
+                            {{ $t('batteryadmin.zendure.controlMode') }}
                         </label>
                         <div class="col-sm-10">
                             <select
-                                id="zendure_bypass_mode"
+                                id="zendure_control_mode"
                                 class="form-select"
-                                v-model="batteryConfigList.zendure.bypass_mode"
+                                v-model="batteryConfigList.zendure.control_mode"
+                                @change="
+                                    batteryConfigList.zendure.output_control = 0;
+                                    batteryConfigList.zendure.charge_through_enable = false;
+                                "
                             >
-                                <option v-for="u in zendureBypassModeList" :key="u.key" :value="u.key">
-                                    {{ $t(`batteryadmin.ZendureBypassMode` + u.value) }}
+                                <option v-for="u in zendureControlModeList" :key="u.key" :value="u.key">
+                                    {{ $t('batteryadmin.zendure.controlModes.' + u.value) }}
                                 </option>
                             </select>
                         </div>
                     </div>
 
-                    <InputElement
-                        :label="$t('batteryadmin.ZendureAutoShutdown')"
-                        v-model="batteryConfigList.zendure.auto_shutdown"
-                        type="checkbox"
-                        :tooltip="$t('batteryadmin.ZendureAutoShutdownDescription')"
-                    />
-
-                    <InputElement
-                        :label="$t('batteryadmin.zendure.buzzerEnable')"
-                        v-model="batteryConfigList.zendure.buzzer_enable"
-                        type="checkbox"
-                    />
-                </CardElement>
-
-                <CardElement :text="$t('batteryadmin.ZendureChargeThrough')" textVariant="text-bg-primary" addSpace>
-                    <InputElement
-                        :label="$t('batteryadmin.ZendureChargeThroughEnabled')"
-                        v-model="batteryConfigList.zendure.charge_through_enable"
-                        type="checkbox"
-                    />
-                    <template v-if="batteryConfigList.zendure.charge_through_enable">
+                    <template
+                        v-if="
+                            batteryConfigList.zendure.control_mode == 0 || batteryConfigList.zendure.control_mode == 1
+                        "
+                    >
                         <InputElement
-                            :label="$t('batteryadmin.ZendureChargeThroughInterval')"
-                            v-model="batteryConfigList.zendure.charge_through_interval"
+                            :label="$t('batteryadmin.ZendureMaxOutput')"
+                            v-model="batteryConfigList.zendure.max_output"
+                            type="number"
+                            min="100"
+                            max="1200"
+                            step="100"
+                            :postfix="$t('batteryadmin.Watt')"
+                        />
+
+                        <InputElement
+                            :label="$t('batteryadmin.ZendureMinSoc')"
+                            v-model="batteryConfigList.zendure.soc_min"
                             type="number"
                             min="0"
-                            max="8766"
+                            max="60"
                             step="1"
-                            :postfix="$t('batteryadmin.Hours')"
+                            :postfix="$t('batteryadmin.Percent')"
+                        />
+
+                        <InputElement
+                            :label="$t('batteryadmin.ZendureMaxSoc')"
+                            v-model="batteryConfigList.zendure.soc_max"
+                            type="number"
+                            min="40"
+                            max="100"
+                            step="1"
+                            :postfix="$t('batteryadmin.Percent')"
+                        />
+
+                        <div class="row mb-3">
+                            <label for="zendure_bypass_mode" class="col-sm-2 col-form-label">
+                                {{ $t('batteryadmin.ZendureBypassMode') }}
+                            </label>
+                            <div class="col-sm-10">
+                                <select
+                                    id="zendure_bypass_mode"
+                                    class="form-select"
+                                    v-model="batteryConfigList.zendure.bypass_mode"
+                                >
+                                    <option v-for="u in zendureBypassModeList" :key="u.key" :value="u.key">
+                                        {{ $t(`batteryadmin.ZendureBypassMode` + u.value) }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <InputElement
+                            :label="$t('batteryadmin.ZendureAutoShutdown')"
+                            v-model="batteryConfigList.zendure.auto_shutdown"
+                            type="checkbox"
+                            :tooltip="$t('batteryadmin.ZendureAutoShutdownDescription')"
+                        />
+
+                        <InputElement
+                            :label="$t('batteryadmin.zendure.buzzerEnable')"
+                            v-model="batteryConfigList.zendure.buzzer_enable"
+                            type="checkbox"
                         />
                     </template>
                 </CardElement>
+
+                <template v-if="batteryConfigList.zendure.control_mode == 0">
+                    <CardElement :text="$t('batteryadmin.ZendureChargeThrough')" textVariant="text-bg-primary" addSpace>
+                        <InputElement
+                            :label="$t('batteryadmin.ZendureChargeThroughEnabled')"
+                            v-model="batteryConfigList.zendure.charge_through_enable"
+                            type="checkbox"
+                        />
+                        <template v-if="batteryConfigList.zendure.charge_through_enable">
+                            <InputElement
+                                :label="$t('batteryadmin.ZendureChargeThroughInterval')"
+                                v-model="batteryConfigList.zendure.charge_through_interval"
+                                type="number"
+                                min="0"
+                                max="8766"
+                                step="1"
+                                :postfix="$t('batteryadmin.Hours')"
+                            />
+                        </template>
+                    </CardElement>
+                </template>
 
                 <CardElement :text="$t('batteryadmin.ZendureOutputControl')" textVariant="text-bg-primary" addSpace>
                     <div class="row mb-3">
@@ -407,8 +436,21 @@
                                 class="form-select"
                                 v-model="batteryConfigList.zendure.output_control"
                             >
-                                <option v-for="u in zendureOutputControlList" :key="u.key" :value="u.key">
-                                    {{ $t(`batteryadmin.ZendureOutputMode` + u.value) }}
+                                <option :key="0" :value="0">
+                                    {{ $t('batteryadmin.ZendureOutputMode' + zendureOutputControlList[0].value) }}
+                                </option>
+                                <option
+                                    :key="1"
+                                    :value="1"
+                                    v-if="
+                                        batteryConfigList.zendure.control_mode == 0 ||
+                                        batteryConfigList.zendure.control_mode == 1
+                                    "
+                                >
+                                    {{ $t('batteryadmin.ZendureOutputMode' + zendureOutputControlList[1].value) }}
+                                </option>
+                                <option :key="2" :value="2" v-if="batteryConfigList.zendure.control_mode == 0">
+                                    {{ $t('batteryadmin.ZendureOutputMode' + zendureOutputControlList[2].value) }}
                                 </option>
                             </select>
                         </div>
@@ -538,6 +580,11 @@ export default defineComponent({
                 { key: 0, value: 'External' },
                 { key: 1, value: 'Fixed' },
                 { key: 2, value: 'Schedule' },
+            ],
+            zendureControlModeList: [
+                { key: 0, value: 'Full' },
+                { key: 1, value: 'Once' },
+                { key: 2, value: 'ReadOnly' },
             ],
         };
     },
