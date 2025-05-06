@@ -825,7 +825,13 @@
                 "Hyper2000A": "Hyper 2000 (older revisions)",
                 "Hyper2000B": "Hyper 2000 (newer revisions)"
             },
-            "buzzerEnable": "Audible signals"
+            "buzzerEnable": "Audible signals",
+            "controlMode": "Access mode",
+            "controlModes": {
+                "Full": "Full control",
+                "Once": "Write settings only once",
+                "ReadOnly": "Read-Only"
+            }
         }
     },
     "inverteradmin": {
@@ -1217,6 +1223,10 @@
         "remainInTime": "Remaining charge time",
         "unavail": "N/A",
         "useableCapacity": "Useable capacity",
-        "chargethrough": "Charge through cycle"
+        "chargethrough": "Charge through cycle",
+        "controlMode": "@:batteryadmin.zendure.controlMode",
+        "full-access": "@:batteryadmin.zendure.controlModes.Full",
+        "write-once": "Write Once",
+        "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly"
     }
 }

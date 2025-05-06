@@ -198,6 +198,8 @@ struct BATTERY_ZENDURE_CONFIG_T {
     bool ChargeThroughEnable;
     uint16_t ChargeThroughInterval;
     bool BuzzerEnable;
+    enum ControlMode { ControlModeFull = 0, ControlModeOnce = 1, ControlModeReadOnly = 2 };
+    ControlMode ControlMode;
 };
 using BatteryZendureConfig = struct BATTERY_ZENDURE_CONFIG_T;
 

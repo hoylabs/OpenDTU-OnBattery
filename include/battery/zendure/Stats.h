@@ -3,6 +3,7 @@
 
 #include <battery/Stats.h>
 #include <map>
+#include <Configuration.h>
 
 namespace Batteries::Zendure {
 
@@ -25,8 +26,21 @@ class PackStats;
 class Stats : public ::Batteries::Stats {
     friend class Provider;
 
-    template <typename T>
-    static T stateToString(State state) {
+    static const char* controlModeToString(uint8_t controlMode) {
+        switch (controlMode) {
+            case BatteryZendureConfig::ControlMode::ControlModeFull:
+                return "full-access";
+            case BatteryZendureConfig::ControlMode::ControlModeOnce:
+                return "write-once";
+            case BatteryZendureConfig::ControlMode::ControlModeReadOnly:
+                return "read-only";
+            default:
+                break;
+        }
+        return "invalid";
+    }
+
+    static const char* stateToString(State state) {
         switch (state) {
             case State::Idle:
                 return "idle";
@@ -35,11 +49,12 @@ class Stats : public ::Batteries::Stats {
             case State::Discharging:
                 return "discharging";
             default:
-                return "invalid";
+                break;
         }
+        return "invalid";
     }
-    template <typename T>
-    static T bypassModeToString(BypassMode state) {
+
+    static const char* bypassModeToString(BypassMode state) {
         switch (state) {
             case BypassMode::Automatic:
                 return "automatic";
@@ -48,12 +63,15 @@ class Stats : public ::Batteries::Stats {
             case BypassMode::AlwaysOn:
                 return "alwayson";
             default:
-                return "invalid";
+                break;
         }
+        return "invalid";
     }
+
     inline static bool isDischarging(State state) {
         return state == State::Discharging;
     }
+
     inline static bool isCharging(State state) {
         return state == State::Charging;
     }

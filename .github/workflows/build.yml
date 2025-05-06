@@ -209,10 +209,11 @@ jobs:
           echo "OPEN_DTU_CORE_RELEASE=$(git for-each-ref --sort=creatordate --format '%(refname) %(creatordate)' refs/tags | grep 'refs/tags/v' | tail -1 | sed 's#.*/##' | sed 's/ .*//')" >> $GITHUB_ENV
 
       - name: Create openDTU-core-release-Badge
+        if: vars.BADGE_GIST_ID != ''
         uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483 # version 1.7.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
-          gistID: 856dda48c1cadac6ea495213340c612b
+          gistID: ${{ vars.BADGE_GIST_ID }}
           filename: openDTUcoreRelease.json
           label: based on upstream OpenDTU
           message: ${{ env.OPEN_DTU_CORE_RELEASE }}
@@ -232,11 +233,26 @@ jobs:
         with:
           path: artifacts/
 
-      - name: Move all files to the same location
+      - name: Move artifacts to the expected location
         run: |
-          ls -R
-          cd artifacts
-          for i in */; do cp ${i}opendtu-onbattery-*.bin ./; done
+          ls -lR artifacts/
+          mkdir -p release-artifacts
+          for i in artifacts/*/; do
+            for file in ${i}opendtu-onbattery-*.bin; do
+              # only process if the file actually exists
+              # (is not just a pattern that failed expansion)
+              if [ -f "$file" ]; then
+                filename=$(basename "${file}")
+                tag_name=${GITHUB_REF#refs/tags/}
+                # remove prefix "opendtu-onbattery-" from the filename
+                new_filename="${filename#opendtu-onbattery-}"
+                # insert the Git tag name after the common prefix
+                new_filename="opendtu-onbattery-${tag_name}-${new_filename}"
+                cp -v "${file}" "release-artifacts/${new_filename}"
+              fi
+            done
+          done
+          ls -lR release-artifacts/
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -244,6 +260,6 @@ jobs:
           body: ${{steps.github_release.outputs.changelog}}
           draft: False
           files: |
-            artifacts/*.zip, artifacts/*.bin
+            release-artifacts/*.bin
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

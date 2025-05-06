@@ -40,7 +40,7 @@ public:
     uint16_t getCurrentOutputAcWatts() const;
 
     // this differs from current output power if new limit was assigned
-    uint16_t getExpectedOutputAcWatts() const;
+    virtual uint16_t getExpectedOutputAcWatts() const;
 
     // the maximum reduction of power output the inverter
     // can achieve with or withouth going into standby.
