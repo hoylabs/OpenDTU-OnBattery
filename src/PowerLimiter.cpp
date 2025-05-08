@@ -242,9 +242,36 @@ void PowerLimiterClass::loop()
 
         auto isDayPeriod = SunPosition.isDayPeriod();
 
-        if (_nighttimeDischarging && isDayPeriod) {
-            _nighttimeDischarging = false;
-            return isStartThresholdReached();
+        // Unify _nighttimeDischarging & _daytimeDischargingLimited:
+        //
+        // if it's day
+        //   if _nighttimeDischarging, turn that off & return isStartThresholdReached()
+        //   if !_daytimeDischargingLimited, turn that on, maybe log and return isStartThresholdReached(),
+        // else
+        //   turn daytimeDischargingLimited off
+        if (isDayPeriod) { 
+            if (_nighttimeDischarging) {
+                _nighttimeDischarging = false;
+                if (_verboseLogging) {
+                    MessageOutput.printf("[DPL] it is now daytime, %sstopping nightly discharge because %s\r\n",
+                        isStartThresholdReached()?"not ":"",
+                        isStartThresholdReached()?"battery is charged enough":"charge is prioritized");
+                }
+                return isStartThresholdReached();
+            }
+            if (config.PowerLimiter.BatteryPrioritizeCharge) {
+                if (!_daytimeDischargingLimited) {
+                    _daytimeDischargingLimited = true;
+                    if (_verboseLogging) {
+                        MessageOutput.printf("[DPL] it is now daytime, %sstopping any discharge because %s\r\n",
+                            isStartThresholdReached()?"not ":"",
+                            isStartThresholdReached()?"battery is charged enough":"charge is prioritized");
+                    }
+                    return isStartThresholdReached();
+                }
+            }
+        } else {
+            _daytimeDischargingLimited = false;
         }
 
         if (isStopThresholdReached()) { return false; }
@@ -343,10 +370,13 @@ void PowerLimiterClass::loop()
                     config.PowerLimiter.FullSolarPassThroughStopVoltage);
         }
 
-        MessageOutput.printf("[DPL] start %sreached, stop %sreached, solar-passthrough %sabled, use at night %sabled and %s\r\n",
+        MessageOutput.printf("[DPL] start %sreached, stop %sreached, solar-passthrough %sabled, " \
+            "prioritize battery charge %sabled and %s, use at night %sabled and %s\r\n",
                 (isStartThresholdReached()?"":"NOT "),
                 (isStopThresholdReached()?"":"NOT "),
                 (isSolarPassThroughEnabled()?"en":"dis"),
+                (config.PowerLimiter.BatteryPrioritizeCharge?"en":"dis"),
+                (_daytimeDischargingLimited?"active":"dormant"),
                 (config.PowerLimiter.BatteryAlwaysUseAtNight?"en":"dis"),
                 (_nighttimeDischarging?"active":"dormant"));
 
