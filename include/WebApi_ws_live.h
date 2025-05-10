@@ -32,7 +32,7 @@ private:
 
     uint32_t _lastPublishOnBatteryFull = 0;
     uint32_t _lastPublishSolarCharger = 0;
-    uint32_t _lastPublishHuawei = 0;
+    uint32_t _lastPublishGridCharger = 0;
     uint32_t _lastPublishBattery = 0;
     uint32_t _lastPublishPowerMeter = 0;
 

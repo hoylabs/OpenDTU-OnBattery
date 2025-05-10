@@ -7,7 +7,7 @@
 #include <SpiManager.h>
 #include <gridcharger/huawei/HardwareInterface.h>
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
 
 class MCP2515 : public HardwareInterface {
 public:
@@ -30,4 +30,4 @@ private:
     gpio_num_t _huaweiIrq; // IRQ pin
 };
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei
