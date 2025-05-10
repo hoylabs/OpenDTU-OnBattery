@@ -163,6 +163,7 @@
                     :label="$t('acchargeradmin.enableVoltageLimit')"
                     :tooltip="$t('acchargeradmin.enableVoltageLimitHint')"
                     v-model="acChargerConfigList.enable_voltage_limit"
+                    v-if="acChargerConfigList.auto_power_enabled"
                     postfix="V"
                     type="number"
                     wide
@@ -175,6 +176,7 @@
                 <InputElement
                     :label="$t('acchargeradmin.lowerPowerLimit')"
                     v-model="acChargerConfigList.lower_power_limit"
+                    v-if="acChargerConfigList.auto_power_enabled"
                     postfix="W"
                     type="number"
                     wide
@@ -199,6 +201,7 @@
                     :label="$t('acchargeradmin.targetPowerConsumption')"
                     :tooltip="$t('acchargeradmin.targetPowerConsumptionHint')"
                     v-model="acChargerConfigList.target_power_consumption"
+                    v-if="acChargerConfigList.auto_power_enabled"
                     postfix="W"
                     type="number"
                     wide
