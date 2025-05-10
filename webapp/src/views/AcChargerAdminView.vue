@@ -92,7 +92,7 @@
                 :text="$t('acchargeradmin.HuaweiSettings')"
                 textVariant="text-bg-primary"
                 add-space
-                v-if="acChargerConfigList.enabled"
+                v-if="acChargerConfigList.enabled && acChargerConfigList.provider === 0"
             >
                 <InputElement
                     :label="$t('acchargeradmin.OfflineVoltage')"
