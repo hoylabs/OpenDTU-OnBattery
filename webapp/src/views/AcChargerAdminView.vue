@@ -210,7 +210,9 @@
                 textVariant="text-bg-primary"
                 add-space
                 v-if="
-                    acChargerConfigList.auto_power_enabled && acChargerConfigList.auto_power_batterysoc_limits_enabled
+                    acChargerConfigList.enabled &&
+                    acChargerConfigList.auto_power_enabled &&
+                    acChargerConfigList.auto_power_batterysoc_limits_enabled
                 "
             >
                 <InputElement
