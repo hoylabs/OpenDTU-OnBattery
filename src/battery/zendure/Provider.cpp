@@ -26,14 +26,16 @@ bool Provider::init(bool verboseLogging)
             case 0:
                 deviceType = ZENDURE_HUB1200;
                 deviceName = String("SolarFlow HUB 1200");
+                _full_log_supported = true;
                 break;
             case 1:
                 deviceType = ZENDURE_HUB2000;
                 deviceName = String("SolarFlow HUB 2000");
+                _full_log_supported = true;
                 break;
             case 2:
                 deviceType = ZENDURE_AIO2400;
-                deviceName = String("SolarFlow AIO 2400");
+                deviceName = String("AIO 2400");
                 break;
             case 3:
                 deviceType = ZENDURE_ACE1500;
@@ -58,7 +60,7 @@ bool Provider::init(bool verboseLogging)
         }
 
         // setup static device info
-        MessageOutput.printf("ZendureBattery: Device name '%s'\r\n", deviceName.c_str());
+        MessageOutput.printf("ZendureBattery: Device name '%s' - LOG messages are %s supported\r\n", deviceName.c_str(), _full_log_supported ? "fully" : "partly");
         _stats->setDevice(std::move(deviceName));
         _stats->setManufacturer("Zendure");
     }
@@ -506,23 +508,22 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
 
         auto soc_max = Utils::getJsonElement<float>(*props, ZENDURE_REPORT_MAX_SOC);
         if (soc_max.has_value()) {
-            *soc_max /= 10;
-            if (*soc_max >= 40 && *soc_max <= 100) {
-                _stats->_soc_max = *soc_max;
-            }
+            _stats->setSocMax(*soc_max / 10);
         }
 
         auto soc_min = Utils::getJsonElement<float>(*props, ZENDURE_REPORT_MIN_SOC);
         if (soc_min.has_value()) {
-            *soc_min /= 10;
-            if (*soc_min >= 0 && *soc_min <= 60) {
-                _stats->_soc_min = *soc_min;
-            }
+            _stats->setSocMin(*soc_min / 10);
         }
 
         auto input_limit = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_INPUT_LIMIT);
         if (input_limit.has_value()) {
             _stats->_input_limit = *input_limit;
+        }
+
+        auto output_limit = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_OUTPUT_LIMIT);
+        if (output_limit.has_value()) {
+            _stats->setOutputLimit(*output_limit);
         }
 
         auto inverse_max = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_INVERSE_MAX_POWER);
@@ -543,6 +544,11 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
         auto auto_shutdown = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_AUTO_SHUTDOWN);
         if (auto_shutdown.has_value()) {
             _stats->_auto_shutdown = static_cast<bool>(*auto_shutdown);
+        }
+
+        auto auto_recover = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_AUTO_RECOVER);
+        if (auto_recover.has_value()) {
+            _stats->setAutoRecover(*auto_recover);
         }
 
         auto buzzer = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BUZZER_SWITCH);
@@ -620,14 +626,16 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
         return;
     }
 
+
     for (auto packDataJson : *packData) {
         auto serial = Utils::getJsonElement<String>(packDataJson, ZENDURE_REPORT_PACK_SERIAL);
         auto state = Utils::getJsonElement<uint8_t>(packDataJson, ZENDURE_REPORT_PACK_STATE);
         auto version = Utils::getJsonElement<uint32_t>(packDataJson, ZENDURE_REPORT_PACK_FW_VERSION);
         auto soh = Utils::getJsonElement<uint16_t>(packDataJson, ZENDURE_REPORT_PACK_HEALTH);
+        auto voltage = Utils::getJsonElement<uint16_t>(packDataJson, ZENDURE_REPORT_PACK_TOTAL_VOLTAGE);
 
         // do not waste processing time if nothing to do
-        if (!serial.has_value() || !(state.has_value() || version.has_value() || soh.has_value())) {
+        if (!serial.has_value() || !(state.has_value() || version.has_value() || soh.has_value() || voltage.has_value())) {
             continue;
         }
 
@@ -647,6 +655,11 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
 
             if (soh.has_value()) {
                 pack->setSoH(static_cast<float>(*soh) / 10.0);
+            }
+
+            // fallback to voltage reported by first pack if we are unable to use values from logging
+            if (voltage.has_value() && !_full_log_supported && entry.first == 1) {
+                _stats->setVoltage(static_cast<float>(*voltage) / 100.0, ms);
             }
 
             pack->_lastUpdate = ms;
@@ -774,23 +787,24 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
     _stats->_capacity = capacity;
     _stats->_capacity_avail = capacity_avail;
 
-    _stats->setVoltage(v[ZENDURE_LOG_OFFSET_VOLTAGE].as<float>() / 10.0, ms);
     _stats->setCurrent(static_cast<float>(current) / 10.0, 1, ms);
-    _stats->setDischargeCurrentLimit(static_cast<float>(_stats->_inverse_max) / _stats->getVoltage(), ms);
 
-    _stats->_auto_recover = static_cast<bool>(v[ZENDURE_LOG_OFFSET_AUTO_RECOVER].as<uint8_t>());
-    _stats->_soc_min = v[ZENDURE_LOG_OFFSET_MIN_SOC].as<float>();
+    // some devices have different log structure - only process for devices explicitly enabled!
+    if (_full_log_supported) {
+        _stats->setVoltage(v[ZENDURE_LOG_OFFSET_VOLTAGE].as<float>() / 10.0, ms);
 
-    _stats->_output_limit = static_cast<uint16_t>(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT].as<uint32_t>() / 100);
-    //_stats->_input_power = v[ZENDURE_LOG_OFFSET_INPUT_POWER].as<uint16_t>();
-    _stats->setOutputPower(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER].as<uint16_t>());
-    _stats->setChargePower(v[ZENDURE_LOG_OFFSET_CHARGE_POWER].as<uint16_t>());
-    _stats->setDischargePower(v[ZENDURE_LOG_OFFSET_DISCHARGE_POWER].as<uint16_t>());
-    _stats->setSolarPower1(v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1].as<uint16_t>());
-    _stats->setSolarPower2(v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_2].as<uint16_t>());
+        _stats->setAutoRecover(v[ZENDURE_LOG_OFFSET_AUTO_RECOVER].as<uint8_t>());
+        _stats->setSocMin(v[ZENDURE_LOG_OFFSET_MIN_SOC].as<float>());
+
+        _stats->setOutputLimit(static_cast<uint16_t>(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT].as<uint32_t>() / 100));
+        _stats->setOutputPower(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER].as<uint16_t>());
+        _stats->setChargePower(v[ZENDURE_LOG_OFFSET_CHARGE_POWER].as<uint16_t>());
+        _stats->setDischargePower(v[ZENDURE_LOG_OFFSET_DISCHARGE_POWER].as<uint16_t>());
+        _stats->setSolarPower1(v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1].as<uint16_t>());
+        _stats->setSolarPower2(v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_2].as<uint16_t>());
+    }
 
     _stats->_lastUpdate = ms;
-
     calculateEfficiency();
 }
 
@@ -818,11 +832,19 @@ void Provider::calculateEfficiency()
     in += static_cast<float>(_stats->_discharge_power);
     out += static_cast<float>(_stats->_charge_power);
 
-    efficiency = in ? out / in : 0.0;
-
-    if (efficiency <= 1 && efficiency >= 0) {
-        _stats->_efficiency = efficiency * 100;
+    if (in <= 0.0) {
+        _stats->_efficiency.reset();
+        return;
     }
+
+    efficiency = out / in;
+
+    if (efficiency > 1.0 || efficiency < 0.0) {
+        _stats->_efficiency.reset();
+        return;
+    }
+
+    _stats->_efficiency = efficiency * 100;
 }
 
 void Provider::setSoC(const float soc, const uint32_t timestamp /* = 0 */, const uint8_t precision /* = 2 */)

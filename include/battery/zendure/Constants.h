@@ -30,13 +30,15 @@ namespace Batteries::Zendure {
  *
  * Following things are known so far:
  *
- * +---------+------------+--------------------+
- * | Product | FW-Version | Number of Elements |
- * +---------+------------+--------------------+
- * | HUB1200 | v2.0.48    | 107                |
- * +---------+------------+--------------------+
- * | HUB2000 | v3.0.21    | 113                |
- * +---------+------------+--------------------+
+ * +---------+------------+--------------------+-----------------------+
+ * | Product | FW-Version | Number of Elements | Hint                  |
+ * +---------+------------+--------------------+-----------------------+
+ * | HUB1200 | v2.0.48    | 107                |                       |
+ * +---------+------------+--------------------+-----------------------+
+ * | HUB2000 | v3.0.21    | 113                |                       |
+ * +---------+------------+--------------------+-----------------------+
+ * | AIO2400 | v1.0.22    | 87                 | PACK_UNKOWN_5 missing |
+ * +---------+------------+--------------------+-----------------------+
  */
 #define ZENDURE_LOG_OFFSET_SOC                      0U                  // [%]
 #define ZENDURE_LOG_OFFSET_PACKNUM                  1U                  // [1]
@@ -183,9 +185,9 @@ namespace Batteries::Zendure {
 #define ZENDURE_REPORT_PACK_POWER                   "power"
 #define ZENDURE_REPORT_PACK_SOC                     "socLevel"
 #define ZENDURE_REPORT_PACK_CELL_MAX_TEMPERATURE    "maxTemp"
-#define ZENDURE_REPORT_PACK_CELL_MIN_VOLATAGE       "minVol"
-#define ZENDURE_REPORT_PACK_CELL_MAX_VOLATAGE       "maxVol"
-#define ZENDURE_REPORT_PACK_TOTAL_VOLATAGE          "totalVol"
+#define ZENDURE_REPORT_PACK_CELL_MIN_VOLTAGE        "minVol"
+#define ZENDURE_REPORT_PACK_CELL_MAX_VOLTAGE        "maxVol"
+#define ZENDURE_REPORT_PACK_TOTAL_VOLTAGE           "totalVol"
 #define ZENDURE_REPORT_PACK_FW_VERSION              "softVersion"
 #define ZENDURE_REPORT_PACK_HEALTH                  "soh"
 
