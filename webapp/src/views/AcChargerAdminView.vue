@@ -141,7 +141,10 @@
                 :text="$t('acchargeradmin.Limits')"
                 textVariant="text-bg-primary"
                 add-space
-                v-if="acChargerConfigList.auto_power_enabled || acChargerConfigList.emergency_charge_enabled"
+                v-if="
+                    acChargerConfigList.enabled &&
+                    (acChargerConfigList.auto_power_enabled || acChargerConfigList.emergency_charge_enabled)
+                "
             >
                 <InputElement
                     :label="$t('acchargeradmin.VoltageLimit')"
