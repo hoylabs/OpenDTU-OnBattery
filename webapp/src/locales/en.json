@@ -533,6 +533,8 @@
         "WifiConfiguration": "WiFi Configuration",
         "WifiSsid": "WiFi SSID",
         "WifiPassword": "WiFi Password",
+        "WifiBssid": "WiFi BSSID",
+        "WifiBssidHint": "Set the BSSID of the WiFi Access Point to connect to. Leave empty to allow connecting to any Access Point.",
         "Hostname": "Hostname",
         "HostnameHint": "<b>Hint:</b> The text <span class=\"font-monospace\">%06X</span> will be replaced with the last 6 digits of the ESP ChipID in hex format.",
         "EnableDhcp": "Enable DHCP",

@@ -75,6 +75,7 @@ void WebApiNetworkClass::onNetworkAdminGet(AsyncWebServerRequest* request)
     root["dns2"] = IPAddress(config.WiFi.Dns2).toString();
     root["ssid"] = config.WiFi.Ssid;
     root["password"] = config.WiFi.Password;
+    root["bssid"] = Configuration.serializeBssid(config.WiFi.Bssid);
     root["aptimeout"] = config.WiFi.ApTimeout;
     root["mdnsenabled"] = config.Mdns.Enabled;
     root["syslogenabled"] = config.Syslog.Enabled;
@@ -100,6 +101,7 @@ void WebApiNetworkClass::onNetworkAdminPost(AsyncWebServerRequest* request)
 
     if (!(root["ssid"].is<String>()
             && root["password"].is<String>()
+            && root["bssid"].is<String>()
             && root["hostname"].is<String>()
             && root["dhcp"].is<bool>()
             && root["ipaddress"].is<String>()
@@ -217,6 +219,7 @@ void WebApiNetworkClass::onNetworkAdminPost(AsyncWebServerRequest* request)
         config.WiFi.Dns2[3] = dns2[3];
         strlcpy(config.WiFi.Ssid, root["ssid"].as<String>().c_str(), sizeof(config.WiFi.Ssid));
         strlcpy(config.WiFi.Password, root["password"].as<String>().c_str(), sizeof(config.WiFi.Password));
+        Configuration.deserializeBssid(root["bssid"].as<String>(), config.WiFi.Bssid);
         strlcpy(config.WiFi.Hostname, root["hostname"].as<String>().c_str(), sizeof(config.WiFi.Hostname));
         if (root["dhcp"].as<bool>()) {
             config.WiFi.Dhcp = true;
