@@ -15,6 +15,7 @@
 #define WIFI_MAX_SSID_STRLEN 32
 #define WIFI_MAX_PASSWORD_STRLEN 64
 #define WIFI_MAX_HOSTNAME_STRLEN 31
+#define WIFI_BSSID_OCTETS 6
 
 #define SYSLOG_MAX_HOSTNAME_STRLEN 128
 
@@ -301,6 +302,7 @@ struct CONFIG_T {
     struct {
         char Ssid[WIFI_MAX_SSID_STRLEN + 1];
         char Password[WIFI_MAX_PASSWORD_STRLEN + 1];
+        uint8_t Bssid[WIFI_BSSID_OCTETS];
         uint8_t Ip[4];
         uint8_t Netmask[4];
         uint8_t Gateway[4];
@@ -449,6 +451,8 @@ public:
     INVERTER_CONFIG_T* getFreeInverterSlot();
     INVERTER_CONFIG_T* getInverterConfig(const uint64_t serial);
     void deleteInverterById(const uint8_t id);
+    static String serializeBssid(uint8_t const* bssid);
+    static void deserializeBssid(String const& bssidStr, uint8_t* bssid);
 
     static void serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target);
     static void serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target);

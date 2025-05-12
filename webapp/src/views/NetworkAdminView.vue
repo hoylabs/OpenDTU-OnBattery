@@ -21,6 +21,15 @@
                 />
 
                 <InputElement
+                    :label="$t('networkadmin.WifiBssid')"
+                    :tooltip="$t('networkadmin.WifiBssidHint')"
+                    v-model="networkConfigList.bssid"
+                    type="text"
+                    minlength="12"
+                    maxlength="17"
+                />
+
+                <InputElement
                     :label="$t('networkadmin.Hostname')"
                     v-model="networkConfigList.hostname"
                     type="text"

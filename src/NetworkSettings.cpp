@@ -285,12 +285,44 @@ void NetworkSettingsClass::applyConfig()
     if (!strcmp(Configuration.get().WiFi.Ssid, "")) {
         return;
     }
+
+    uint8_t const* configuredBssid = NULL; // auto
+    if (std::any_of(std::begin(Configuration.get().WiFi.Bssid),
+                    std::end(Configuration.get().WiFi.Bssid),
+                    [](uint8_t b) { return b != 0; })) {
+        configuredBssid = Configuration.get().WiFi.Bssid;
+    }
+
+    auto bssidChanged = [configuredBssid]() -> bool {
+        uint8_t* currentBssid = WiFi.BSSID();
+        if (configuredBssid == NULL && currentBssid == NULL) {
+            return false;
+        }
+
+        if (configuredBssid == NULL || currentBssid == NULL) {
+            return true;
+        }
+
+        for (int i = 0; i < WIFI_BSSID_OCTETS; i++) {
+            if (configuredBssid[i] != currentBssid[i]) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     MessageOutput.print("Configuring WiFi STA using ");
-    if (strcmp(WiFi.SSID().c_str(), Configuration.get().WiFi.Ssid) || strcmp(WiFi.psk().c_str(), Configuration.get().WiFi.Password)) {
+    if (strcmp(WiFi.SSID().c_str(), Configuration.get().WiFi.Ssid) ||
+            strcmp(WiFi.psk().c_str(), Configuration.get().WiFi.Password) ||
+            bssidChanged()) {
         MessageOutput.print("new credentials... ");
+
         WiFi.begin(
             Configuration.get().WiFi.Ssid,
-            Configuration.get().WiFi.Password);
+            Configuration.get().WiFi.Password,
+            0, // channel (0 = auto)
+            configuredBssid);
     } else {
         MessageOutput.print("existing credentials... ");
         WiFi.begin();

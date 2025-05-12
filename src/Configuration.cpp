@@ -262,6 +262,7 @@ bool ConfigurationClass::write()
     JsonObject wifi = doc["wifi"].to<JsonObject>();
     wifi["ssid"] = config.WiFi.Ssid;
     wifi["password"] = config.WiFi.Password;
+    wifi["bssid"] = serializeBssid(config.WiFi.Bssid);
     wifi["ip"] = IPAddress(config.WiFi.Ip).toString();
     wifi["netmask"] = IPAddress(config.WiFi.Netmask).toString();
     wifi["gateway"] = IPAddress(config.WiFi.Gateway).toString();
@@ -673,6 +674,7 @@ bool ConfigurationClass::read()
     JsonObject wifi = doc["wifi"];
     strlcpy(config.WiFi.Ssid, wifi["ssid"] | WIFI_SSID, sizeof(config.WiFi.Ssid));
     strlcpy(config.WiFi.Password, wifi["password"] | WIFI_PASSWORD, sizeof(config.WiFi.Password));
+    deserializeBssid(wifi["bssid"] | WIFI_BSSID, config.WiFi.Bssid);
     strlcpy(config.WiFi.Hostname, wifi["hostname"] | APP_HOSTNAME, sizeof(config.WiFi.Hostname));
 
     IPAddress wifi_ip;
@@ -1172,6 +1174,41 @@ void ConfigurationClass::deleteInverterById(const uint8_t id)
         config.Inverter[id].channel[c].MaxChannelPower = 0;
         config.Inverter[id].channel[c].YieldTotalOffset = 0.0f;
         strlcpy(config.Inverter[id].channel[c].Name, "", sizeof(config.Inverter[id].channel[c].Name));
+    }
+}
+
+String ConfigurationClass::serializeBssid(uint8_t const* bssid)
+{
+    if (std::all_of(bssid, bssid + WIFI_BSSID_OCTETS, [](uint8_t b) { return b == 0; })) {
+        return "";
+    }
+
+    // 2 chars per byte + one separator between bytes + null terminator
+    char bssidStr[WIFI_BSSID_OCTETS * 2 + WIFI_BSSID_OCTETS - 1 + 1];
+    snprintf(bssidStr, sizeof(bssidStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+        bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5]);
+    return bssidStr;
+}
+
+void ConfigurationClass::deserializeBssid(String const& bssidStr, uint8_t* bssid)
+{
+    memset(bssid, 0, WIFI_BSSID_OCTETS);
+
+    String cleanBssidStr = bssidStr;
+    cleanBssidStr.replace(":", "");
+    cleanBssidStr.replace("-", "");
+
+    if (cleanBssidStr.length() != 12) { return; }
+
+    for (int i = 0; i < WIFI_BSSID_OCTETS; i++) {
+        char byteStr[3] = {cleanBssidStr[i*2], cleanBssidStr[i*2+1], 0};
+        char* endPtr;
+        bssid[i] = strtol(byteStr, &endPtr, 16);
+        if (endPtr != byteStr + 2) {
+            // invalid hex value in BSSID string
+            memset(bssid, 0, WIFI_BSSID_OCTETS);
+            return;
+        }
     }
 }
 

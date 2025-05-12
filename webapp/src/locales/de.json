@@ -531,6 +531,8 @@
         "WifiConfiguration": "WLAN-Konfiguration",
         "WifiSsid": "WLAN-SSID",
         "WifiPassword": "WLAN-Passwort",
+        "WifiBssid": "WLAN-BSSID",
+        "WifiBssidHint": "Setze die BSSID des WLAN-Access Points, um mit einem bestimmten Access Point zu verbinden. Leer lassen um jeden Access Point zu erlauben.",
         "Hostname": "Hostname",
         "HostnameHint": "<b>Hinweis:</b> Der Text <span class=\"font-monospace\">%06X</span> wird durch die letzten 6 Ziffern der ESP-ChipID im Hex-Format ersetzt.",
         "EnableDhcp": "DHCP aktivieren",
