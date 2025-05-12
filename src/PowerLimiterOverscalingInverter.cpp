@@ -12,9 +12,9 @@ float PowerLimiterOverscalingInverter::calculateRequiredOutputThreshold(uint16_t
     // above 15% we can apply our simple 97% percent rule
     float threshold = 0.97;
 
-    // if the limit is 15% or below, we use a lower threshold
+    // if the limit is 16% or below, we use a lower threshold
     // of 80% to compensate for the lower efficiency at low power.
-    if (limitWatts <= getInverterMaxPowerWatts() * 0.15) {
+    if (limitWatts <= getInverterMaxPowerWatts() * 0.16) {
         threshold = 0.8;
     }
 
