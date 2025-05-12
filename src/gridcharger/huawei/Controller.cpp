@@ -40,10 +40,10 @@ void Controller::enableOutput()
     if (_oOutputEnabled.value_or(false)) { return; }
 
     _setProduction(true);
+    _oOutputEnabled = true;
+
     if (_huaweiPower <= GPIO_NUM_NC) { return; }
     digitalWrite(_huaweiPower, 0);
-
-    _oOutputEnabled = true;
 }
 
 void Controller::disableOutput()
@@ -51,10 +51,10 @@ void Controller::disableOutput()
     if (!_oOutputEnabled.value_or(true)) { return; }
 
     _setProduction(false);
+    _oOutputEnabled = false;
+    
     if (_huaweiPower <= GPIO_NUM_NC) { return; }
     digitalWrite(_huaweiPower, 1);
-
-    _oOutputEnabled = false;
 }
 
 void Controller::updateSettings()
