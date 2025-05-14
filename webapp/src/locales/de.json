@@ -1066,7 +1066,7 @@
         "FanFullSpeed": "Volle Drehzahl",
         "FanAuto": "Automatisch"
     },
-    "acchargeradmin": {
+    "gridchargeradmin": {
         "ChargerSettings": "AC Ladegerät Einstellungen",
         "Configuration": "AC Ladegerät Konfiguration",
         "EnableGridCharger": "Aktiviere Schnittstelle",
