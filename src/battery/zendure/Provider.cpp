@@ -1,6 +1,7 @@
 #include <functional>
 #include <Configuration.h>
 #include <battery/zendure/Provider.h>
+#include <battery/SmartBufferStats.h>
 #include <MqttSettings.h>
 #include <SunPosition.h>
 #include <Utils.h>
@@ -578,16 +579,6 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
             _stats->setChargePower(*charge_power);
         }
 
-        auto solar_power_1 = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_SOLAR_POWER_MPPT_1);
-        if (solar_power_1.has_value()) {
-            _stats->setSolarPower1(*solar_power_1);
-        }
-
-        auto solar_power_2 = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_SOLAR_POWER_MPPT_2);
-        if (solar_power_2.has_value()) {
-            _stats->setSolarPower2(*solar_power_2);
-        }
-
         auto bypass_mode = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BYPASS_MODE);
         if (bypass_mode.has_value() && *bypass_mode <= 2) {
             _stats->_bypass_mode = static_cast<BypassMode>(*bypass_mode);
@@ -597,6 +588,9 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
         if (bypass_state.has_value()) {
             _stats->_bypass_state = static_cast<bool>(*bypass_state);
         }
+
+        _stats->setSolarPower(SmartBufferStats::MPPT::Number_1, Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_SOLAR_POWER_MPPT_1), ms);
+        _stats->setSolarPower(SmartBufferStats::MPPT::Number_2, Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_SOLAR_POWER_MPPT_2), ms);
 
         _stats->_lastUpdate = ms;
     }
@@ -810,8 +804,8 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
         _stats->setDischargeCurrentLimit(_stats->_output_voltage ? static_cast<float>(_stats->_inverse_max) / _stats->_output_voltage : 0, ms);
 
         _stats->setOutputVoltage(v[ZENDURE_LOG_OFFSET_OUTPUT_VOLTAGE].as<float>() / 10.0);
-        _stats->setSolarVoltage1(v[ZENDURE_LOG_OFFSET_SOLAR_VOLTAGE_MPPT_1].as<float>() / 10.0);
-        _stats->setSolarVoltage2(v[ZENDURE_LOG_OFFSET_SOLAR_VOLTAGE_MPPT_2].as<float>() / 10.0);
+        _stats->setSolarVoltage(SmartBufferStats::MPPT::Number_1, v[ZENDURE_LOG_OFFSET_SOLAR_VOLTAGE_MPPT_1].as<float>() / 10.0);
+        _stats->setSolarVoltage(SmartBufferStats::MPPT::Number_2, v[ZENDURE_LOG_OFFSET_SOLAR_VOLTAGE_MPPT_2].as<float>() / 10.0);
 
         _stats->setAutoRecover(v[ZENDURE_LOG_OFFSET_AUTO_RECOVER].as<uint8_t>());
         _stats->setSocMin(v[ZENDURE_LOG_OFFSET_MIN_SOC].as<float>());
@@ -820,8 +814,8 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
         _stats->setOutputPower(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER].as<uint16_t>());
         _stats->setChargePower(v[ZENDURE_LOG_OFFSET_CHARGE_POWER].as<uint16_t>());
         _stats->setDischargePower(v[ZENDURE_LOG_OFFSET_DISCHARGE_POWER].as<uint16_t>());
-        _stats->setSolarPower1(v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1].as<uint16_t>());
-        _stats->setSolarPower2(v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_2].as<uint16_t>());
+        _stats->setSolarPower(SmartBufferStats::MPPT::Number_1, v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1].as<uint16_t>());
+        _stats->setSolarPower(SmartBufferStats::MPPT::Number_2, v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_2].as<uint16_t>());
     }
 
     _stats->_lastUpdate = ms;
@@ -845,7 +839,7 @@ String Provider::parseVersion(uint32_t version)
 
 void Provider::calculateEfficiency()
 {
-    float in = static_cast<float>(_stats->_input_power);
+    float in = static_cast<float>(_stats->getSolarPowerOverall().value_or(0));
     float out = static_cast<float>(_stats->_output_power);
     float efficiency = 0.0;
 
