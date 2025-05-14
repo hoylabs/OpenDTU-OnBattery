@@ -7,7 +7,7 @@
         "MQTTSettings": "MQTT",
         "InverterSettings": "Inverter",
         "SecuritySettings": "Security",
-	"LoggingSettings": "Logging",
+        "LoggingSettings": "Logging",
         "DTUSettings": "DTU",
         "DeviceManager": "Device-Manager",
         "SolarChargerSettings": "Solar Charger",
