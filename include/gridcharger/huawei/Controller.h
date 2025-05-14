@@ -57,6 +57,40 @@ private:
     void disableOutput();
     gpio_num_t _huaweiPower;
 
+    template<DataPointLabel L>
+    void addValueInSection(JsonVariant& root,
+        std::string const& section, std::string const& name) const
+    {
+        auto oVal = _dataPoints.get<L>();
+        if (!oVal) { return; }
+
+        auto jsonValue = root["values"][section][name];
+        jsonValue["v"] = *oVal;
+        jsonValue["u"] = DataPointLabelTraits<L>::unit;
+        jsonValue["d"] = 2;
+    }
+
+    template<DataPointLabel L>
+    void addStringInSection(JsonVariant& root,
+        std::string const& section, std::string const& name) const
+    {
+        auto oVal = _dataPoints.get<L>();
+        if (!oVal) { return; }
+
+        auto jsonValue = root["values"][section][name];
+        jsonValue["value"] = *oVal;
+        jsonValue["translate"] = false;
+    }
+
+    void addStringInSection(JsonVariant& root,
+        std::string const& section, std::string const& name,
+        std::string const& value) const
+    {
+        auto jsonValue = root["values"][section][name];
+        jsonValue["value"] = value;
+        jsonValue["translate"] = true;
+    }
+
     Task _loopTask;
     std::unique_ptr<HardwareInterface> _upHardwareInterface;
 
