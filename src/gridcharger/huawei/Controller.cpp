@@ -52,7 +52,7 @@ void Controller::disableOutput()
 
     _setProduction(false);
     _oOutputEnabled = false;
-    
+
     if (_huaweiPower <= GPIO_NUM_NC) { return; }
     digitalWrite(_huaweiPower, 1);
 }
@@ -394,39 +394,16 @@ void Controller::setMode(uint8_t mode) {
 
 void Controller::getJsonData(JsonVariant& root) const
 {
-    root["data_age"] = millis() - _dataPoints.getLastUpdate();
+    root["dataAge"] = millis() - _dataPoints.getLastUpdate();
 
     using Label = GridChargers::Huawei::DataPointLabel;
 
     auto oReachable = _dataPoints.get<Label::Reachable>();
     root["reachable"] = oReachable.value_or(false);
 
-#define VAL(l, n) \
-    { \
-        auto oDataPoint = _dataPoints.getDataPointFor<Label::l>(); \
-        if (oDataPoint) { \
-            root[n]["v"] = *_dataPoints.get<Label::l>(); \
-            root[n]["u"] = oDataPoint->getUnitText(); \
-        } \
-    }
-
-    VAL(InputVoltage, "input_voltage");
-    VAL(InputCurrent, "input_current");
-    VAL(InputPower, "input_power");
-    VAL(OutputVoltage, "output_voltage");
-    VAL(OutputCurrent, "output_current");
-    VAL(OutputCurrentMax, "max_output_current");
-    VAL(OutputPower, "output_power");
-    VAL(InputTemperature, "input_temp");
-    VAL(OutputTemperature, "output_temp");
-    VAL(InputFrequency, "input_frequency");
-    VAL(Efficiency, "efficiency");
-    VAL(InputCurrentLimit, "input_current_limit");
-    VAL(OnlineVoltage, "online_voltage");
-    VAL(OnlineCurrent, "online_current");
-    VAL(OfflineVoltage, "offline_voltage");
-    VAL(OfflineCurrent, "offline_current");
-#undef VAL
+    auto oOutputPower = _dataPoints.get<Label::OutputPower>();
+    auto oOutputCurrent = _dataPoints.get<Label::OutputCurrent>();
+    root["producing"] = oOutputPower.value_or(0) > 10 && oOutputCurrent.value_or(0) > 0.1;
 
 #define VAL(l, n) \
     { \
@@ -434,18 +411,50 @@ void Controller::getJsonData(JsonVariant& root) const
         if (oVal) { root[n] = *oVal; } \
     }
 
-    VAL(Row,                 "row");
-    VAL(Slot,                "slot");
-    VAL(ProductionEnabled,   "production_enabled");
-    VAL(FanOnlineFullSpeed,  "fan_online_full_speed");
-    VAL(FanOfflineFullSpeed, "fan_offline_full_speed");
-    VAL(BoardType,           "board_type");
     VAL(Serial,              "serial");
-    VAL(Manufactured,        "manufactured");
-    VAL(VendorName,          "vendor_name");
-    VAL(ProductName,         "product_name");
-    VAL(ProductDescription,  "product_description");
+    VAL(VendorName,          "vendorName");
+    VAL(ProductName,         "productName");
 #undef VAL
+
+    addStringInSection<Label::BoardType>(root, "device", "boardType");
+    addStringInSection<Label::Manufactured>(root, "device", "manufactured");
+    addStringInSection<Label::ProductDescription>(root, "device", "productDescription");
+    addStringInSection<Label::Row>(root, "device", "row");
+    addStringInSection<Label::Slot>(root, "device", "slot");
+
+    addValueInSection<Label::InputVoltage>(root, "input", "voltage");
+    addValueInSection<Label::InputCurrent>(root, "input", "current");
+    addValueInSection<Label::InputPower>(root, "input", "power");
+    addValueInSection<Label::InputTemperature>(root, "input", "temp");
+    addValueInSection<Label::InputFrequency>(root, "input", "frequency");
+    addValueInSection<Label::Efficiency>(root, "input", "efficiency");
+
+    addValueInSection<Label::OutputVoltage>(root, "output", "voltage");
+    addValueInSection<Label::OutputCurrent>(root, "output", "current");
+    addValueInSection<Label::OutputPower>(root, "output", "power");
+    addValueInSection<Label::OutputTemperature>(root, "output", "temp");
+    addValueInSection<Label::OutputCurrentMax>(root, "output", "maxCurrent");
+
+    addValueInSection<Label::OnlineVoltage>(root, "acknowledgements", "onlineVoltage");
+    addValueInSection<Label::OfflineVoltage>(root, "acknowledgements", "offlineVoltage");
+    addValueInSection<Label::OnlineCurrent>(root, "acknowledgements", "onlineCurrent");
+    addValueInSection<Label::OfflineCurrent>(root, "acknowledgements", "offlineCurrent");
+    addValueInSection<Label::InputCurrentLimit>(root, "acknowledgements", "inputCurrentLimit");
+
+    auto oProductionEnabled = _dataPoints.get<Label::ProductionEnabled>();
+    if (oProductionEnabled) {
+        addStringInSection(root, "acknowledgements", "productionEnabled", *oProductionEnabled?"yes":"no");
+    }
+
+    auto oFanOnlineFullSpeed = _dataPoints.get<Label::FanOnlineFullSpeed>();
+    if (oFanOnlineFullSpeed) {
+        addStringInSection(root, "acknowledgements", "fanOnlineFullSpeed", *oFanOnlineFullSpeed?"FanFullSpeed":"FanAuto");
+    }
+
+    auto oFanOfflineFullSpeed = _dataPoints.get<Label::FanOfflineFullSpeed>();
+    if (oFanOfflineFullSpeed) {
+        addStringInSection(root, "acknowledgements", "fanOfflineFullSpeed", *oFanOfflineFullSpeed?"FanFullSpeed":"FanAuto");
+    }
 }
 
 } // namespace GridChargers::Huawei
