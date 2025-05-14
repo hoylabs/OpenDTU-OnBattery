@@ -1,34 +1,34 @@
 <template>
-    <BasePage :title="$t('acchargeradmin.ChargerSettings')" :isLoading="dataLoading">
+    <BasePage :title="$t('gridchargeradmin.ChargerSettings')" :isLoading="dataLoading">
         <BootstrapAlert v-model="showAlert" dismissible :variant="alertType">
             {{ alertMessage }}
         </BootstrapAlert>
 
         <form @submit="saveChargerConfig">
-            <CardElement :text="$t('acchargeradmin.Configuration')" textVariant="text-bg-primary">
+            <CardElement :text="$t('gridchargeradmin.Configuration')" textVariant="text-bg-primary">
                 <InputElement
-                    :label="$t('acchargeradmin.EnableGridCharger')"
-                    v-model="acChargerConfigList.enabled"
+                    :label="$t('gridchargeradmin.EnableGridCharger')"
+                    v-model="gridChargerConfigList.enabled"
                     type="checkbox"
                     wide
                 />
 
-                <template v-if="acChargerConfigList.enabled">
+                <template v-if="gridChargerConfigList.enabled">
                     <InputElement
-                        :label="$t('acchargeradmin.VerboseLogging')"
-                        v-model="acChargerConfigList.verbose_logging"
+                        :label="$t('gridchargeradmin.VerboseLogging')"
+                        v-model="gridChargerConfigList.verbose_logging"
                         type="checkbox"
                         wide
                     />
 
                     <div class="row mb-3">
                         <label class="col-sm-4 col-form-label">
-                            {{ $t('acchargeradmin.Provider') }}
+                            {{ $t('gridchargeradmin.Provider') }}
                         </label>
                         <div class="col-sm-8">
-                            <select class="form-select" v-model="acChargerConfigList.provider">
+                            <select class="form-select" v-model="gridChargerConfigList.provider">
                                 <option v-for="provider in providerTypeList" :key="provider.key" :value="provider.key">
-                                    {{ $t(`acchargeradmin.Provider` + provider.value) }}
+                                    {{ $t(`gridchargeradmin.Provider` + provider.value) }}
                                 </option>
                             </select>
                         </div>
@@ -36,23 +36,23 @@
 
                     <div class="row mb-3">
                         <label class="col-sm-4 col-form-label">
-                            {{ $t('acchargeradmin.HardwareInterface') }}
+                            {{ $t('gridchargeradmin.HardwareInterface') }}
                         </label>
                         <div class="col-sm-8">
-                            <select class="form-select" v-model="acChargerConfigList.can.hardware_interface">
+                            <select class="form-select" v-model="gridChargerConfigList.can.hardware_interface">
                                 <option v-for="type in hardwareInterfaceList" :key="type.key" :value="type.key">
-                                    {{ $t('acchargeradmin.HardwareInterface' + type.value) }}
+                                    {{ $t('gridchargeradmin.HardwareInterface' + type.value) }}
                                 </option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="row mb-3" v-if="acChargerConfigList.can.hardware_interface === 0">
+                    <div class="row mb-3" v-if="gridChargerConfigList.can.hardware_interface === 0">
                         <label class="col-sm-4 col-form-label">
-                            {{ $t('acchargeradmin.CanControllerFrequency') }}
+                            {{ $t('gridchargeradmin.CanControllerFrequency') }}
                         </label>
                         <div class="col-sm-8">
-                            <select class="form-select" v-model="acChargerConfigList.can.controller_frequency">
+                            <select class="form-select" v-model="gridChargerConfigList.can.controller_frequency">
                                 <option
                                     v-for="frequency in frequencyTypeList"
                                     :key="frequency.key"
@@ -65,38 +65,38 @@
                     </div>
 
                     <InputElement
-                        :label="$t('acchargeradmin.EnableAutoPower')"
-                        v-model="acChargerConfigList.auto_power_enabled"
+                        :label="$t('gridchargeradmin.EnableAutoPower')"
+                        v-model="gridChargerConfigList.auto_power_enabled"
                         type="checkbox"
                         wide
                     />
 
                     <InputElement
-                        v-if="acChargerConfigList.auto_power_enabled"
-                        :label="$t('acchargeradmin.EnableBatterySoCLimits')"
-                        v-model="acChargerConfigList.auto_power_batterysoc_limits_enabled"
+                        v-if="gridChargerConfigList.auto_power_enabled"
+                        :label="$t('gridchargeradmin.EnableBatterySoCLimits')"
+                        v-model="gridChargerConfigList.auto_power_batterysoc_limits_enabled"
                         type="checkbox"
                         wide
                     />
 
                     <InputElement
-                        :label="$t('acchargeradmin.EnableEmergencyCharge')"
-                        :tooltip="$t('acchargeradmin.EnableEmergencyChargeHint')"
-                        v-model="acChargerConfigList.emergency_charge_enabled"
+                        :label="$t('gridchargeradmin.EnableEmergencyCharge')"
+                        :tooltip="$t('gridchargeradmin.EnableEmergencyChargeHint')"
+                        v-model="gridChargerConfigList.emergency_charge_enabled"
                         type="checkbox"
                         wide
                     />
                 </template>
             </CardElement>
             <CardElement
-                :text="$t('acchargeradmin.HuaweiSettings')"
+                :text="$t('gridchargeradmin.HuaweiSettings')"
                 textVariant="text-bg-primary"
                 add-space
-                v-if="acChargerConfigList.enabled && acChargerConfigList.provider === 0"
+                v-if="gridChargerConfigList.enabled && gridChargerConfigList.provider === 0"
             >
                 <InputElement
-                    :label="$t('acchargeradmin.OfflineVoltage')"
-                    v-model="acChargerConfigList.huawei.offline_voltage"
+                    :label="$t('gridchargeradmin.OfflineVoltage')"
+                    v-model="gridChargerConfigList.huawei.offline_voltage"
                     postfix="V"
                     type="number"
                     wide
@@ -104,8 +104,8 @@
                 />
 
                 <InputElement
-                    :label="$t('acchargeradmin.OfflineCurrent')"
-                    v-model="acChargerConfigList.huawei.offline_current"
+                    :label="$t('gridchargeradmin.OfflineCurrent')"
+                    v-model="gridChargerConfigList.huawei.offline_current"
                     postfix="A"
                     type="number"
                     wide
@@ -113,43 +113,43 @@
                 />
 
                 <InputElement
-                    :label="$t('acchargeradmin.InputCurrentLimit')"
-                    v-model="acChargerConfigList.huawei.input_current_limit"
+                    :label="$t('gridchargeradmin.InputCurrentLimit')"
+                    v-model="gridChargerConfigList.huawei.input_current_limit"
                     postfix="A"
                     type="number"
                     wide
                     step="0.1"
-                    :tooltip="$t('acchargeradmin.InputCurrentLimitHint')"
+                    :tooltip="$t('gridchargeradmin.InputCurrentLimitHint')"
                 />
 
                 <InputElement
-                    :label="$t('acchargeradmin.FanOnlineFullSpeed')"
-                    v-model="acChargerConfigList.huawei.fan_online_full_speed"
+                    :label="$t('gridchargeradmin.FanOnlineFullSpeed')"
+                    v-model="gridChargerConfigList.huawei.fan_online_full_speed"
                     type="checkbox"
                     wide
                 />
 
                 <InputElement
-                    :label="$t('acchargeradmin.FanOfflineFullSpeed')"
-                    v-model="acChargerConfigList.huawei.fan_offline_full_speed"
+                    :label="$t('gridchargeradmin.FanOfflineFullSpeed')"
+                    v-model="gridChargerConfigList.huawei.fan_offline_full_speed"
                     type="checkbox"
                     wide
                 />
             </CardElement>
 
             <CardElement
-                :text="$t('acchargeradmin.Limits')"
+                :text="$t('gridchargeradmin.Limits')"
                 textVariant="text-bg-primary"
                 add-space
                 v-if="
-                    acChargerConfigList.enabled &&
-                    (acChargerConfigList.auto_power_enabled || acChargerConfigList.emergency_charge_enabled)
+                    gridChargerConfigList.enabled &&
+                    (gridChargerConfigList.auto_power_enabled || gridChargerConfigList.emergency_charge_enabled)
                 "
             >
                 <InputElement
-                    :label="$t('acchargeradmin.VoltageLimit')"
-                    :tooltip="$t('acchargeradmin.stopVoltageLimitHint')"
-                    v-model="acChargerConfigList.voltage_limit"
+                    :label="$t('gridchargeradmin.VoltageLimit')"
+                    :tooltip="$t('gridchargeradmin.stopVoltageLimitHint')"
+                    v-model="gridChargerConfigList.voltage_limit"
                     postfix="V"
                     type="number"
                     wide
@@ -160,10 +160,10 @@
                 />
 
                 <InputElement
-                    :label="$t('acchargeradmin.enableVoltageLimit')"
-                    :tooltip="$t('acchargeradmin.enableVoltageLimitHint')"
-                    v-model="acChargerConfigList.enable_voltage_limit"
-                    v-if="acChargerConfigList.auto_power_enabled"
+                    :label="$t('gridchargeradmin.enableVoltageLimit')"
+                    :tooltip="$t('gridchargeradmin.enableVoltageLimitHint')"
+                    v-model="gridChargerConfigList.enable_voltage_limit"
+                    v-if="gridChargerConfigList.auto_power_enabled"
                     postfix="V"
                     type="number"
                     wide
@@ -174,9 +174,9 @@
                 />
 
                 <InputElement
-                    :label="$t('acchargeradmin.lowerPowerLimit')"
-                    v-model="acChargerConfigList.lower_power_limit"
-                    v-if="acChargerConfigList.auto_power_enabled"
+                    :label="$t('gridchargeradmin.lowerPowerLimit')"
+                    v-model="gridChargerConfigList.lower_power_limit"
+                    v-if="gridChargerConfigList.auto_power_enabled"
                     postfix="W"
                     type="number"
                     wide
@@ -186,9 +186,9 @@
                 />
 
                 <InputElement
-                    :label="$t('acchargeradmin.upperPowerLimit')"
-                    :tooltip="$t('acchargeradmin.upperPowerLimitHint')"
-                    v-model="acChargerConfigList.upper_power_limit"
+                    :label="$t('gridchargeradmin.upperPowerLimit')"
+                    :tooltip="$t('gridchargeradmin.upperPowerLimitHint')"
+                    v-model="gridChargerConfigList.upper_power_limit"
                     postfix="W"
                     type="number"
                     wide
@@ -198,10 +198,10 @@
                 />
 
                 <InputElement
-                    :label="$t('acchargeradmin.targetPowerConsumption')"
-                    :tooltip="$t('acchargeradmin.targetPowerConsumptionHint')"
-                    v-model="acChargerConfigList.target_power_consumption"
-                    v-if="acChargerConfigList.auto_power_enabled"
+                    :label="$t('gridchargeradmin.targetPowerConsumption')"
+                    :tooltip="$t('gridchargeradmin.targetPowerConsumptionHint')"
+                    v-model="gridChargerConfigList.target_power_consumption"
+                    v-if="gridChargerConfigList.auto_power_enabled"
                     postfix="W"
                     type="number"
                     wide
@@ -209,19 +209,19 @@
                 />
             </CardElement>
             <CardElement
-                :text="$t('acchargeradmin.BatterySoCLimits')"
+                :text="$t('gridchargeradmin.BatterySoCLimits')"
                 textVariant="text-bg-primary"
                 add-space
                 v-if="
-                    acChargerConfigList.enabled &&
-                    acChargerConfigList.auto_power_enabled &&
-                    acChargerConfigList.auto_power_batterysoc_limits_enabled
+                    gridChargerConfigList.enabled &&
+                    gridChargerConfigList.auto_power_enabled &&
+                    gridChargerConfigList.auto_power_batterysoc_limits_enabled
                 "
             >
                 <InputElement
-                    :label="$t('acchargeradmin.StopBatterySoCThreshold')"
-                    :tooltip="$t('acchargeradmin.StopBatterySoCThresholdHint')"
-                    v-model="acChargerConfigList.stop_batterysoc_threshold"
+                    :label="$t('gridchargeradmin.StopBatterySoCThreshold')"
+                    :tooltip="$t('gridchargeradmin.StopBatterySoCThresholdHint')"
+                    v-model="gridChargerConfigList.stop_batterysoc_threshold"
                     postfix="%"
                     type="number"
                     wide
@@ -257,7 +257,7 @@ export default defineComponent({
     data() {
         return {
             dataLoading: true,
-            acChargerConfigList: {} as GridChargerConfig,
+            gridChargerConfigList: {} as GridChargerConfig,
             alertMessage: '',
             alertType: 'info',
             showAlert: false,
@@ -281,7 +281,7 @@ export default defineComponent({
             fetch('/api/gridcharger/config', { headers: authHeader() })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
-                    this.acChargerConfigList = data;
+                    this.gridChargerConfigList = data;
                     this.dataLoading = false;
                 });
         },
@@ -289,7 +289,7 @@ export default defineComponent({
             e.preventDefault();
 
             const formData = new FormData();
-            formData.append('data', JSON.stringify(this.acChargerConfigList));
+            formData.append('data', JSON.stringify(this.gridChargerConfigList));
 
             fetch('/api/gridcharger/config', {
                 method: 'POST',

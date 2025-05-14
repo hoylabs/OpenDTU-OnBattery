@@ -1069,7 +1069,7 @@
         "FanFullSpeed": "Full Speed",
         "FanAuto": "Auto"
     },
-    "acchargeradmin": {
+    "gridchargeradmin": {
         "ChargerSettings": "AC Charger Settings",
         "Configuration": "AC Charger Configuration",
         "EnableGridCharger": "Enable Interface",

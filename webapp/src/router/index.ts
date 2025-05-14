@@ -1,6 +1,6 @@
 import AboutView from '@/views/AboutView.vue';
 import BatteryAdminView from '@/views/BatteryAdminView.vue';
-import AcChargerAdminView from '@/views/AcChargerAdminView.vue';
+import GridChargerAdminView from '@/views/GridChargerAdminView.vue';
 import ConfigAdminView from '@/views/ConfigAdminView.vue';
 import ConsoleInfoView from '@/views/ConsoleInfoView.vue';
 import DeviceAdminView from '@/views/DeviceAdminView.vue';
@@ -115,7 +115,7 @@ const router = createRouter({
         {
             path: '/settings/chargerac',
             name: 'Charger Settings',
-            component: AcChargerAdminView,
+            component: GridChargerAdminView,
         },
         {
             path: '/settings/mqtt',
