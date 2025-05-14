@@ -1028,7 +1028,7 @@
         "log_debug": "(D) Debug",
         "log_verbose": "(V) Verbose"
     },
-    "huawei": {
+    "gridcharger": {
         "SerialNumber": "Serial Number",
         "Device": "Device Info",
         "BoardType": "Board Type",

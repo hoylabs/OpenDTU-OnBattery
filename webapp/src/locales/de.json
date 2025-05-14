@@ -1025,7 +1025,7 @@
         "log_debug": "(D) Debug",
         "log_verbose": "(V) Ausführlich"
     },
-    "huawei": {
+    "gridcharger": {
         "SerialNumber": "Seriennummer",
         "Device": "Geräteinformation",
         "BoardType": "Platinentyp",
