@@ -222,7 +222,7 @@ export default defineComponent({
             providerTypeList: [
                 { key: 0, value: 'VeDirect' },
                 { key: 1, value: 'Mqtt' },
-                { key: 2, value: 'SmartBufferBattery' },
+                { key: 2, value: 'Integrated' },
             ],
             wattageUnitTypeList: [
                 { key: 0, value: 'kW' },

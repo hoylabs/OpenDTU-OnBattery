@@ -5,10 +5,10 @@
 #include <memory>
 #include <TaskSchedulerDeclarations.h>
 #include <solarcharger/Provider.h>
-#include <solarcharger/smartbufferbatteries/Stats.h>
+#include <solarcharger/integrated/Stats.h>
 #include <espMqttClient.h>
 
-namespace SolarChargers::SmartBufferBatteries {
+namespace SolarChargers::Integrated {
 
 class Provider : public ::SolarChargers::Provider {
 public:
@@ -19,7 +19,7 @@ public:
     void deinit() final { return; };
     void loop() final { return; };
     std::shared_ptr<::SolarChargers::Stats> getStats() const final { return _stats; }
-    std::shared_ptr<Stats> getStats() { return _stats; }
+    //std::shared_ptr<Stats> getStats() { return _stats; }
 
 private:
     Provider(Provider const& other) = delete;
@@ -30,4 +30,4 @@ private:
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
 };
 
-} // namespace SolarChargers::SmartBufferBatteries
+} // namespace SolarChargers::Integrated
