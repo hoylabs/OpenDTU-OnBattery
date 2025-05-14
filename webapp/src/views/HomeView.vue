@@ -351,7 +351,7 @@
         </div>
         <SolarChargerView v-if="liveData.solarcharger.enabled" />
         <BatteryView v-if="liveData.battery.enabled" />
-        <HuaweiView v-if="liveData.gridcharger.enabled" />
+        <GridChargerView v-if="liveData.gridcharger.enabled" />
     </BasePage>
 
     <ModalDialog modalId="eventView" :title="$t('home.EventLog')" :loading="eventLogLoading">
@@ -519,7 +519,7 @@ import InverterChannelInfo from '@/components/InverterChannelInfo.vue';
 import InverterTotalInfo from '@/components/InverterTotalInfo.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 import SolarChargerView from '@/components/SolarChargerView.vue';
-import HuaweiView from '@/components/HuaweiView.vue';
+import GridChargerView from '@/components/GridChargerView.vue';
 import BatteryView from '@/components/BatteryView.vue';
 import type { DevInfoStatus } from '@/types/DevInfoStatus';
 import type { EventlogItems } from '@/types/EventlogStatus';
@@ -567,7 +567,7 @@ export default defineComponent({
         BIconToggleOff,
         BIconToggleOn,
         SolarChargerView,
-        HuaweiView,
+        GridChargerView,
         BatteryView,
     },
     data() {
