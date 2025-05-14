@@ -5,7 +5,7 @@
 #include <solarcharger/DummyStats.h>
 #include <solarcharger/victron/Provider.h>
 #include <solarcharger/mqtt/Provider.h>
-#include <solarcharger/smartbufferbatteries/Provider.h>
+#include <solarcharger/integrated/Provider.h>
 #include <LogHelper.h>
 
 static const char* TAG = "solarCharger";
@@ -44,8 +44,8 @@ void Controller::updateSettings()
         case SolarChargerProviderType::MQTT:
             _upProvider = std::make_unique<::SolarChargers::Mqtt::Provider>();
             break;
-        case SolarChargerProviderType::SmartBufferBattery:
-            _upProvider = std::make_unique<::SolarChargers::SmartBufferBatteries::Provider>();
+        case SolarChargerProviderType::Integrated:
+            _upProvider = std::make_unique<::SolarChargers::Integrated::Provider>();
             break;
         default:
             DTU_LOGE("Unknown provider: %d", config.SolarCharger.Provider);
@@ -69,17 +69,17 @@ std::shared_ptr<Stats const> Controller::getStats() const
     return _upProvider->getStats();
 }
 
-std::shared_ptr<SmartBufferBatteries::Stats> Controller::getSmartBufferBatteryStats()
+std::shared_ptr<Integrated::Stats> Controller::getIntegratedStats()
 {
     auto const& config = Configuration.get();
 
     std::lock_guard<std::mutex> lock(_mutex);
 
-    if (!_upProvider || config.SolarCharger.Provider != SolarChargerProviderType::SmartBufferBattery) {
+    if (!_upProvider || config.SolarCharger.Provider != SolarChargerProviderType::Integrated) {
         return nullptr;
     }
 
-    return std::reinterpret_pointer_cast<SmartBufferBatteries::Stats>(_upProvider->getStats());
+    return std::reinterpret_pointer_cast<Integrated::Stats>(_upProvider->getStats());
 }
 
 void Controller::loop()

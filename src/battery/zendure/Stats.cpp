@@ -13,7 +13,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
     // values go into the "Status" card of the web application
     std::string section("status");
-    addLiveViewInSection(root, section, "totalInputPower", _input_power, "W", 0);
+    addLiveViewInSection(root, section, "totalInputPower", getInputPower(), "W", 0, false);
     addLiveViewInSection(root, section, "chargePower", _charge_power, "W", 0);
     addLiveViewInSection(root, section, "dischargePower", _discharge_power, "W", 0);
     addLiveViewInSection(root, section, "totalOutputPower", _output_power, "W", 0);
@@ -103,10 +103,8 @@ void Stats::mqttPublish() const
         publish("battery/" + id + "/capacity", value->_capacity);
     }
 
-    publish("battery/solarPowerMppt1", _solar_power_1);
-    publish("battery/solarPowerMppt2", _solar_power_2);
     publish("battery/outputPower", _output_power);
-    publish("battery/inputPower", _input_power);
+    publish("battery/inputPower", getInputPower());
     publish("battery/bypass", static_cast<uint8_t>(_bypass_state));
     publish("battery/lastFullCharge", _last_full_charge_hours);
 
