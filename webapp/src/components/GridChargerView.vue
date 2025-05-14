@@ -18,41 +18,41 @@
                                 <div style="padding-right: 2em">
                                     <template
                                         v-if="
-                                            huaweiData.vendor_name !== undefined &&
-                                            huaweiData.product_name !== undefined
+                                            data.vendor_name !== undefined &&
+                                            data.product_name !== undefined
                                         "
                                     >
-                                        {{ huaweiData.vendor_name }} {{ huaweiData.product_name }}
+                                        {{ data.vendor_name }} {{ data.product_name }}
                                     </template>
-                                    <template v-else>Huawei PSU</template>
+                                    <template v-else>Grid Charger</template>
                                 </div>
-                                <div v-if="huaweiData.serial" style="padding-right: 2em">
-                                    {{ $t('huawei.SerialNumber') }}: {{ huaweiData.serial }}
+                                <div v-if="data.serial" style="padding-right: 2em">
+                                    {{ $t('gridcharger.SerialNumber') }}: {{ data.serial }}
                                 </div>
-                                <DataAgeDisplay :data-age-ms="huaweiData.data_age" />
+                                <DataAgeDisplay :data-age-ms="data.data_age" />
                             </div>
                         </div>
                         <div class="btn-toolbar p-2" role="toolbar">
                             <div class="btn-group me-2" role="group">
                                 <button
-                                    :disabled="!huaweiData.reachable"
+                                    :disabled="!data.reachable"
                                     type="button"
                                     class="btn btn-sm btn-danger"
                                     @click="onShowLimitSettings()"
                                     v-tooltip
-                                    :title="$t('huawei.LimitSettings')"
+                                    :title="$t('gridcharger.LimitSettings')"
                                 >
                                     <BIconSpeedometer style="font-size: 24px" />
                                 </button>
                             </div>
                             <div class="btn-group me-2" role="group">
                                 <button
-                                    :disabled="!huaweiData.reachable"
+                                    :disabled="!data.reachable"
                                     type="button"
                                     class="btn btn-sm btn-danger"
                                     @click="onShowPowerModal()"
                                     v-tooltip
-                                    :title="$t('huawei.TurnOnOff')"
+                                    :title="$t('gridcharger.TurnOnOff')"
                                 >
                                     <BIconPower style="font-size: 24px" />
                                 </button>
@@ -64,45 +64,45 @@
                         <div class="row flex-row flex-wrap align-items-start g-3">
                             <div class="col order-0">
                                 <div class="card card-table border-info">
-                                    <div class="card-header text-bg-info">{{ $t('huawei.Device') }}</div>
+                                    <div class="card-header text-bg-info">{{ $t('gridcharger.Device') }}</div>
                                     <div class="card-body">
                                         <table class="table table-striped table-hover">
                                             <thead>
                                                 <tr>
-                                                    <th scope="col">{{ $t('huawei.Property') }}</th>
+                                                    <th scope="col">{{ $t('gridcharger.Property') }}</th>
                                                     <th scope="col">
-                                                        {{ $t('huawei.Value') }}
+                                                        {{ $t('gridcharger.Value') }}
                                                     </th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr v-if="huaweiData.board_type">
-                                                    <th scope="row">{{ $t('huawei.BoardType') }}</th>
+                                                <tr v-if="data.board_type">
+                                                    <th scope="row">{{ $t('gridcharger.BoardType') }}</th>
                                                     <td>
-                                                        {{ huaweiData.board_type }}
+                                                        {{ data.board_type }}
                                                     </td>
                                                 </tr>
-                                                <tr v-if="huaweiData.manufactured">
-                                                    <th scope="row">{{ $t('huawei.Manufactured') }}</th>
+                                                <tr v-if="data.manufactured">
+                                                    <th scope="row">{{ $t('gridcharger.Manufactured') }}</th>
                                                     <td>
-                                                        {{ huaweiData.manufactured }}
+                                                        {{ data.manufactured }}
                                                     </td>
                                                 </tr>
-                                                <tr v-if="huaweiData.product_description">
-                                                    <th scope="row">{{ $t('huawei.ProductDescription') }}</th>
+                                                <tr v-if="data.product_description">
+                                                    <th scope="row">{{ $t('gridcharger.ProductDescription') }}</th>
                                                     <td>
-                                                        {{ huaweiData.product_description }}
+                                                        {{ data.product_description }}
                                                     </td>
                                                 </tr>
                                                 <tr
-                                                    v-if="huaweiData.row !== undefined && huaweiData.slot !== undefined"
+                                                    v-if="data.row !== undefined && data.slot !== undefined"
                                                 >
-                                                    <th scope="row">{{ $t('huawei.SlotLabel') }}</th>
+                                                    <th scope="row">{{ $t('gridcharger.SlotLabel') }}</th>
                                                     <td>
                                                         {{
-                                                            $t('huawei.SlotText', {
-                                                                row: huaweiData.row,
-                                                                slot: huaweiData.slot,
+                                                            $t('gridcharger.SlotText', {
+                                                                row: data.row,
+                                                                slot: data.slot,
                                                             })
                                                         }}
                                                     </td>
@@ -114,60 +114,60 @@
                             </div>
                             <div class="col order-0">
                                 <div class="card card-table">
-                                    <div class="card-header">{{ $t('huawei.Input') }}</div>
+                                    <div class="card-header">{{ $t('gridcharger.Input') }}</div>
                                     <div class="card-body">
                                         <table class="table table-striped table-hover">
                                             <thead>
                                                 <tr>
-                                                    <th scope="col">{{ $t('huawei.Property') }}</th>
+                                                    <th scope="col">{{ $t('gridcharger.Property') }}</th>
                                                     <th class="value" scope="col">
-                                                        {{ $t('huawei.Value') }}
+                                                        {{ $t('gridcharger.Value') }}
                                                     </th>
-                                                    <th scope="col">{{ $t('huawei.Unit') }}</th>
+                                                    <th scope="col">{{ $t('gridcharger.Unit') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr v-if="huaweiData.input_voltage !== undefined">
-                                                    <th scope="row">{{ $t('huawei.voltage') }}</th>
+                                                <tr v-if="data.input_voltage !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.voltage') }}</th>
                                                     <td class="value">
-                                                        {{ formatNumber(huaweiData.input_voltage.v) }}
+                                                        {{ formatNumber(data.input_voltage.v) }}
                                                     </td>
-                                                    <td>{{ huaweiData.input_voltage.u }}</td>
+                                                    <td>{{ data.input_voltage.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.input_current !== undefined">
-                                                    <th scope="row">{{ $t('huawei.current') }}</th>
+                                                <tr v-if="data.input_current !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.current') }}</th>
                                                     <td class="value">
-                                                        {{ formatNumber(huaweiData.input_current.v) }}
+                                                        {{ formatNumber(data.input_current.v) }}
                                                     </td>
-                                                    <td>{{ huaweiData.input_current.u }}</td>
+                                                    <td>{{ data.input_current.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.input_power !== undefined">
-                                                    <th scope="row">{{ $t('huawei.power') }}</th>
+                                                <tr v-if="data.input_power !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.power') }}</th>
                                                     <td class="value">
-                                                        {{ formatNumber(huaweiData.input_power.v) }}
+                                                        {{ formatNumber(data.input_power.v) }}
                                                     </td>
-                                                    <td>{{ huaweiData.input_power.u }}</td>
+                                                    <td>{{ data.input_power.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.input_temp !== undefined">
-                                                    <th scope="row">{{ $t('huawei.temp') }}</th>
+                                                <tr v-if="data.input_temp !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.temp') }}</th>
                                                     <td class="value">
-                                                        {{ Math.round(huaweiData.input_temp.v) }}
+                                                        {{ Math.round(data.input_temp.v) }}
                                                     </td>
-                                                    <td>{{ huaweiData.input_temp.u }}</td>
+                                                    <td>{{ data.input_temp.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.input_frequency !== undefined">
-                                                    <th scope="row">{{ $t('huawei.frequency') }}</th>
+                                                <tr v-if="data.input_frequency !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.frequency') }}</th>
                                                     <td class="value">
-                                                        {{ formatNumber(huaweiData.input_frequency.v) }}
+                                                        {{ formatNumber(data.input_frequency.v) }}
                                                     </td>
-                                                    <td>{{ huaweiData.input_frequency.u }}</td>
+                                                    <td>{{ data.input_frequency.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.efficiency !== undefined">
-                                                    <th scope="row">{{ $t('huawei.efficiency') }}</th>
+                                                <tr v-if="data.efficiency !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.efficiency') }}</th>
                                                     <td class="value">
-                                                        {{ huaweiData.efficiency.v.toFixed(1) }}
+                                                        {{ data.efficiency.v.toFixed(1) }}
                                                     </td>
-                                                    <td>{{ huaweiData.efficiency.u }}</td>
+                                                    <td>{{ data.efficiency.u }}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -176,53 +176,53 @@
                             </div>
                             <div class="col order-1">
                                 <div class="card card-table">
-                                    <div class="card-header">{{ $t('huawei.Output') }}</div>
+                                    <div class="card-header">{{ $t('gridcharger.Output') }}</div>
                                     <div class="card-body">
                                         <table class="table table-striped table-hover">
                                             <thead>
                                                 <tr>
-                                                    <th scope="col">{{ $t('huawei.Property') }}</th>
+                                                    <th scope="col">{{ $t('gridcharger.Property') }}</th>
                                                     <th class="value" scope="col">
-                                                        {{ $t('huawei.Value') }}
+                                                        {{ $t('gridcharger.Value') }}
                                                     </th>
-                                                    <th scope="col">{{ $t('huawei.Unit') }}</th>
+                                                    <th scope="col">{{ $t('gridcharger.Unit') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr v-if="huaweiData.output_voltage !== undefined">
-                                                    <th scope="row">{{ $t('huawei.voltage') }}</th>
+                                                <tr v-if="data.output_voltage !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.voltage') }}</th>
                                                     <td class="value">
-                                                        {{ huaweiData.output_voltage.v.toFixed(1) }}
+                                                        {{ data.output_voltage.v.toFixed(1) }}
                                                     </td>
-                                                    <td>{{ huaweiData.output_voltage.u }}</td>
+                                                    <td>{{ data.output_voltage.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.output_current !== undefined">
-                                                    <th scope="row">{{ $t('huawei.current') }}</th>
+                                                <tr v-if="data.output_current !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.current') }}</th>
                                                     <td class="value">
-                                                        {{ huaweiData.output_current.v.toFixed(2) }}
+                                                        {{ data.output_current.v.toFixed(2) }}
                                                     </td>
-                                                    <td>{{ huaweiData.output_current.u }}</td>
+                                                    <td>{{ data.output_current.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.max_output_current !== undefined">
-                                                    <th scope="row">{{ $t('huawei.max_current') }}</th>
+                                                <tr v-if="data.max_output_current !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.max_current') }}</th>
                                                     <td class="value">
-                                                        {{ huaweiData.max_output_current.v.toFixed(1) }}
+                                                        {{ data.max_output_current.v.toFixed(1) }}
                                                     </td>
-                                                    <td>{{ huaweiData.max_output_current.u }}</td>
+                                                    <td>{{ data.max_output_current.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.output_power !== undefined">
-                                                    <th scope="row">{{ $t('huawei.power') }}</th>
+                                                <tr v-if="data.output_power !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.power') }}</th>
                                                     <td class="value">
-                                                        {{ huaweiData.output_power.v.toFixed(1) }}
+                                                        {{ data.output_power.v.toFixed(1) }}
                                                     </td>
-                                                    <td>{{ huaweiData.output_power.u }}</td>
+                                                    <td>{{ data.output_power.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.output_temp !== undefined">
-                                                    <th scope="row">{{ $t('huawei.temp') }}</th>
+                                                <tr v-if="data.output_temp !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.temp') }}</th>
                                                     <td class="value">
-                                                        {{ Math.round(huaweiData.output_temp.v) }}
+                                                        {{ Math.round(data.output_temp.v) }}
                                                     </td>
-                                                    <td>{{ huaweiData.output_temp.u }}</td>
+                                                    <td>{{ data.output_temp.u }}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -231,73 +231,73 @@
                             </div>
                             <div class="col order-2">
                                 <div class="card card-table">
-                                    <div class="card-header">{{ $t('huawei.Acknowledgements') }}</div>
+                                    <div class="card-header">{{ $t('gridcharger.Acknowledgements') }}</div>
                                     <div class="card-body">
                                         <table class="table table-striped table-hover">
                                             <thead>
                                                 <tr>
-                                                    <th scope="col">{{ $t('huawei.Property') }}</th>
-                                                    <th class="value" scope="col">{{ $t('huawei.Value') }}</th>
-                                                    <th scope="col">{{ $t('huawei.Unit') }}</th>
+                                                    <th scope="col">{{ $t('gridcharger.Property') }}</th>
+                                                    <th class="value" scope="col">{{ $t('gridcharger.Value') }}</th>
+                                                    <th scope="col">{{ $t('gridcharger.Unit') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr v-if="huaweiData.online_voltage !== undefined">
-                                                    <th scope="row">{{ $t('huawei.OnlineVoltage') }}</th>
-                                                    <td class="value">{{ huaweiData.online_voltage.v.toFixed(2) }}</td>
-                                                    <td>{{ huaweiData.online_voltage.u }}</td>
+                                                <tr v-if="data.online_voltage !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.OnlineVoltage') }}</th>
+                                                    <td class="value">{{ data.online_voltage.v.toFixed(2) }}</td>
+                                                    <td>{{ data.online_voltage.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.offline_voltage !== undefined">
-                                                    <th scope="row">{{ $t('huawei.OfflineVoltage') }}</th>
-                                                    <td class="value">{{ huaweiData.offline_voltage.v.toFixed(2) }}</td>
-                                                    <td>{{ huaweiData.offline_voltage.u }}</td>
+                                                <tr v-if="data.offline_voltage !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.OfflineVoltage') }}</th>
+                                                    <td class="value">{{ data.offline_voltage.v.toFixed(2) }}</td>
+                                                    <td>{{ data.offline_voltage.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.online_current !== undefined">
-                                                    <th scope="row">{{ $t('huawei.OnlineCurrent') }}</th>
-                                                    <td class="value">{{ huaweiData.online_current.v.toFixed(2) }}</td>
-                                                    <td>{{ huaweiData.online_current.u }}</td>
+                                                <tr v-if="data.online_current !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.OnlineCurrent') }}</th>
+                                                    <td class="value">{{ data.online_current.v.toFixed(2) }}</td>
+                                                    <td>{{ data.online_current.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.offline_current !== undefined">
-                                                    <th scope="row">{{ $t('huawei.OfflineCurrent') }}</th>
-                                                    <td class="value">{{ huaweiData.offline_current.v.toFixed(2) }}</td>
-                                                    <td>{{ huaweiData.offline_current.u }}</td>
+                                                <tr v-if="data.offline_current !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.OfflineCurrent') }}</th>
+                                                    <td class="value">{{ data.offline_current.v.toFixed(2) }}</td>
+                                                    <td>{{ data.offline_current.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.input_current_limit !== undefined">
-                                                    <th scope="row">{{ $t('huawei.InputCurrentLimit') }}</th>
+                                                <tr v-if="data.input_current_limit !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.InputCurrentLimit') }}</th>
                                                     <td class="value">
-                                                        {{ huaweiData.input_current_limit.v.toFixed(2) }}
+                                                        {{ data.input_current_limit.v.toFixed(2) }}
                                                     </td>
-                                                    <td>{{ huaweiData.input_current_limit.u }}</td>
+                                                    <td>{{ data.input_current_limit.u }}</td>
                                                 </tr>
-                                                <tr v-if="huaweiData.production_enabled !== undefined">
-                                                    <th scope="row">{{ $t('huawei.ProductionEnabled') }}</th>
+                                                <tr v-if="data.production_enabled !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.ProductionEnabled') }}</th>
                                                     <td class="value">
                                                         {{
-                                                            huaweiData.production_enabled
+                                                            data.production_enabled
                                                                 ? $t('base.Yes')
                                                                 : $t('base.No')
                                                         }}
                                                     </td>
                                                     <td></td>
                                                 </tr>
-                                                <tr v-if="huaweiData.fan_online_full_speed !== undefined">
-                                                    <th scope="row">{{ $t('huawei.FanOnlineFullSpeed') }}</th>
+                                                <tr v-if="data.fan_online_full_speed !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.FanOnlineFullSpeed') }}</th>
                                                     <td class="value">
                                                         {{
-                                                            huaweiData.fan_online_full_speed
-                                                                ? $t('huawei.FanFullSpeed')
-                                                                : $t('huawei.FanAuto')
+                                                            data.fan_online_full_speed
+                                                                ? $t('gridcharger.FanFullSpeed')
+                                                                : $t('gridcharger.FanAuto')
                                                         }}
                                                     </td>
                                                     <td></td>
                                                 </tr>
-                                                <tr v-if="huaweiData.fan_offline_full_speed !== undefined">
-                                                    <th scope="row">{{ $t('huawei.FanOfflineFullSpeed') }}</th>
+                                                <tr v-if="data.fan_offline_full_speed !== undefined">
+                                                    <th scope="row">{{ $t('gridcharger.FanOfflineFullSpeed') }}</th>
                                                     <td class="value">
                                                         {{
-                                                            huaweiData.fan_offline_full_speed
-                                                                ? $t('huawei.FanFullSpeed')
-                                                                : $t('huawei.FanAuto')
+                                                            data.fan_offline_full_speed
+                                                                ? $t('gridcharger.FanFullSpeed')
+                                                                : $t('gridcharger.FanAuto')
                                                         }}
                                                     </td>
                                                     <td></td>
@@ -313,13 +313,13 @@
             </div>
         </div>
 
-        <ModalDialog modalId="huaweiLimitSettingView" :title="$t('huawei.LimitSettings')" :loading="dataLoading">
+        <ModalDialog modalId="huaweiLimitSettingView" :title="$t('gridcharger.LimitSettings')" :loading="dataLoading">
             <BootstrapAlert v-model="showAlertLimit" :variant="alertTypeLimit">
                 {{ alertMessageLimit }}
             </BootstrapAlert>
 
             <InputElement
-                :label="$t('huawei.SetVoltageLimit')"
+                :label="$t('gridcharger.SetVoltageLimit')"
                 type="number"
                 step="0.01"
                 v-model="targetLimitList.voltage"
@@ -327,7 +327,7 @@
             />
 
             <InputElement
-                :label="$t('huawei.SetCurrentLimit')"
+                :label="$t('gridcharger.SetCurrentLimit')"
                 type="number"
                 step="0.1"
                 v-model="targetLimitList.current"
@@ -335,18 +335,18 @@
             />
             <template #footer>
                 <button type="button" class="btn btn-danger" @click="onSubmitLimit">
-                    {{ $t('huawei.SetLimits') }}
+                    {{ $t('gridcharger.SetLimits') }}
                 </button>
             </template>
         </ModalDialog>
 
-        <ModalDialog modalId="huaweiPowerView" :title="$t('huawei.PowerControl')" :loading="dataLoading">
+        <ModalDialog modalId="huaweiPowerView" :title="$t('gridcharger.PowerControl')" :loading="dataLoading">
             <div class="d-grid gap-2 col-6 mx-auto">
                 <button type="button" class="btn btn-success" @click="onSetPower(true)">
-                    <BIconToggleOn class="fs-4" />&nbsp;{{ $t('huawei.TurnOn') }}
+                    <BIconToggleOn class="fs-4" />&nbsp;{{ $t('gridcharger.TurnOn') }}
                 </button>
                 <button type="button" class="btn btn-danger" @click="onSetPower(false)">
-                    <BIconToggleOff class="fs-4" />&nbsp;{{ $t('huawei.TurnOff') }}
+                    <BIconToggleOff class="fs-4" />&nbsp;{{ $t('gridcharger.TurnOff') }}
                 </button>
             </div>
         </ModalDialog>
@@ -355,7 +355,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import type { Huawei } from '@/types/HuaweiDataStatus';
+import type { GridCharger } from '@/types/GridChargerDataStatus';
 import type { HuaweiLimitConfig } from '@/types/HuaweiLimitConfig';
 import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
 
@@ -383,7 +383,7 @@ export default defineComponent({
             heartInterval: 0,
             dataAgeInterval: 0,
             dataLoading: true,
-            huaweiData: {} as Huawei,
+            data: {} as GridCharger,
             isFirstFetchAfterConnect: true,
             targetLimitList: {} as HuaweiLimitConfig,
             huaweiLimitSettingView: {} as bootstrap.Modal,
@@ -409,7 +409,7 @@ export default defineComponent({
             fetch('/api/gridchargerlivedata/status', { headers: authHeader() })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
-                    this.huaweiData = data;
+                    this.data = data;
                     this.dataLoading = false;
                 });
         },
@@ -424,7 +424,7 @@ export default defineComponent({
 
             this.socket.onmessage = (event) => {
                 console.log(event);
-                this.huaweiData = JSON.parse(event.data);
+                this.data = JSON.parse(event.data);
                 this.dataLoading = false;
                 this.heartCheck(); // Reset heartbeat detection
             };
@@ -441,8 +441,8 @@ export default defineComponent({
         },
         initDataAgeing() {
             this.dataAgeInterval = setInterval(() => {
-                if (this.huaweiData) {
-                    this.huaweiData.data_age += 1000;
+                if (this.data) {
+                    this.data.data_age += 1000;
                 }
             }, 1000);
         },
@@ -522,14 +522,14 @@ export default defineComponent({
                 });
         },
         getStatusClass() {
-            if (this.huaweiData.reachable !== true) {
+            if (this.data.reachable !== true) {
                 return 'text-bg-danger';
             }
 
             if (
-                this.huaweiData.reachable === true &&
-                this.huaweiData.output_power?.v < 10 &&
-                this.huaweiData.output_current?.v < 0.1
+                this.data.reachable === true &&
+                this.data.output_power?.v < 10 &&
+                this.data.output_current?.v < 0.1
             ) {
                 return 'text-bg-warning';
             }
