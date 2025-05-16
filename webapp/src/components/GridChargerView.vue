@@ -207,6 +207,9 @@ export default defineComponent({
     },
     unmounted() {
         this.closeSocket();
+        clearInterval(this.dataAgeInterval);
+        this.gridChargerLimitSettingView.dispose();
+        this.gridChargerPowerView.dispose();
     },
     methods: {
         isStringValue,
@@ -257,7 +260,7 @@ export default defineComponent({
         // Send heartbeat packets regularly * 59s Send a heartbeat
         heartCheck() {
             if (this.heartInterval) {
-                clearTimeout(this.heartInterval);
+                clearInterval(this.heartInterval);
             }
             this.heartInterval = setInterval(() => {
                 if (this.socket.readyState === 1) {
@@ -272,12 +275,9 @@ export default defineComponent({
         closeSocket() {
             this.socket.close();
             if (this.heartInterval) {
-                clearTimeout(this.heartInterval);
+                clearInterval(this.heartInterval);
             }
             this.isFirstFetchAfterConnect = true;
-        },
-        formatNumber(num: number) {
-            return new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
         },
         onShowLimitSettings() {
             this.gridChargerLimitSettingView = new bootstrap.Modal('#gridChargerLimitSettingView');
