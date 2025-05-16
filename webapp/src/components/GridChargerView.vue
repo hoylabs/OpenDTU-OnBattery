@@ -162,7 +162,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import type { GridCharger } from '@/types/GridChargerDataStatus';
-import type { HuaweiLimitConfig } from '@/types/HuaweiLimitConfig';
+import type { GridChargerLimitConfig } from '@/types/GridChargerLimitConfig';
 import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
 import { isStringValue } from '@/types/StringValue';
 
@@ -192,7 +192,7 @@ export default defineComponent({
             dataLoading: true,
             data: {} as GridCharger,
             isFirstFetchAfterConnect: true,
-            targetLimitList: {} as HuaweiLimitConfig,
+            targetLimitList: {} as GridChargerLimitConfig,
             gridChargerLimitSettingView: {} as bootstrap.Modal,
             gridChargerPowerView: {} as bootstrap.Modal,
             alertMessageLimit: '',
