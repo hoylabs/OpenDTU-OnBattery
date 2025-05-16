@@ -979,7 +979,7 @@ void ConfigurationClass::migrateOnBattery()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "r", false);
     if (!f) {
-        MessageOutput.println("Failed to open file, cancel OpenDTU-OnBattery migration");
+        ESP_LOGE(TAG, "Failed to open file, cancel OpenDTU-OnBattery migration");
         return;
     }
 
@@ -990,8 +990,8 @@ void ConfigurationClass::migrateOnBattery()
     // Deserialize the JSON document
     const DeserializationError error = deserializeJson(doc, f);
     if (error) {
-        MessageOutput.printf("Failed to read file, cancel OpenDTU-OnBattery "
-                "migration: %s\r\n", error.c_str());
+        ESP_LOGE(TAG, "Failed to read file, cancel OpenDTU-OnBattery "
+                "migration: %s", error.c_str());
         return;
     }
 
