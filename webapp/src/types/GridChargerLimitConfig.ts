@@ -1,4 +1,4 @@
-export interface HuaweiLimitConfig {
+export interface GridChargerLimitConfig {
     voltage: number;
     current: number;
 }
