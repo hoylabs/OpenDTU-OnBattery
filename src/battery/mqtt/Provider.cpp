@@ -2,8 +2,11 @@
 #include <Configuration.h>
 #include <battery/mqtt/Provider.h>
 #include <MqttSettings.h>
-#include <MessageOutput.h>
 #include <Utils.h>
+#include <LogHelper.h>
+
+static const char* TAG = "battery";
+static const char* SUBTAG = "MQTT";
 
 namespace Batteries::Mqtt {
 
@@ -23,10 +26,7 @@ bool Provider::init(bool verboseLogging)
                     config.Battery.Mqtt.SocJsonPath)
                 );
 
-        if (_verboseLogging) {
-            MessageOutput.printf("MqttBattery: Subscribed to '%s' for SoC readings\r\n",
-                _socTopic.c_str());
-        }
+        DTU_LOGD("Subscribed to '%s' for SoC readings", _socTopic.c_str());
     }
 
     _voltageTopic = config.Battery.Mqtt.VoltageTopic;
@@ -38,10 +38,7 @@ bool Provider::init(bool verboseLogging)
                     config.Battery.Mqtt.VoltageJsonPath)
                 );
 
-        if (_verboseLogging) {
-            MessageOutput.printf("MqttBattery: Subscribed to '%s' for voltage readings\r\n",
-                _voltageTopic.c_str());
-        }
+        DTU_LOGD("Subscribed to '%s' for voltage readings", _voltageTopic.c_str());
     }
 
     _currentTopic = config.Battery.Mqtt.CurrentTopic;
@@ -53,10 +50,7 @@ bool Provider::init(bool verboseLogging)
                     config.Battery.Mqtt.CurrentJsonPath)
                 );
 
-        if (_verboseLogging) {
-            MessageOutput.printf("MqttBattery: Subscribed to '%s' for current readings\r\n",
-                _currentTopic.c_str());
-        }
+        DTU_LOGD("Subscribed to '%s' for current readings", _currentTopic.c_str());
     }
 
     if (config.Battery.EnableDischargeCurrentLimit && config.Battery.UseBatteryReportedDischargeCurrentLimit) {
@@ -70,10 +64,8 @@ bool Provider::init(bool verboseLogging)
                         config.Battery.Mqtt.DischargeCurrentLimitJsonPath)
                     );
 
-            if (_verboseLogging) {
-                MessageOutput.printf("MqttBattery: Subscribed to '%s' for discharge current limit readings\r\n",
-                    _dischargeCurrentLimitTopic.c_str());
-            }
+            DTU_LOGD("Subscribed to '%s' for discharge current limit readings",
+                _dischargeCurrentLimitTopic.c_str());
         }
     }
 
@@ -110,8 +102,7 @@ void Provider::onMqttMessageSoC(espMqttClientTypes::MessageProperties const& pro
     if (!soc.has_value()) { return; }
 
     if (*soc < 0 || *soc > 100) {
-        MessageOutput.printf("MqttBattery: Implausible SoC '%.2f' in topic '%s'\r\n",
-                *soc, topic);
+        DTU_LOGW("Implausible SoC '%.2f' in topic '%s'", *soc, topic);
         return;
     }
 
@@ -119,10 +110,7 @@ void Provider::onMqttMessageSoC(espMqttClientTypes::MessageProperties const& pro
 
     _stats->setSoC(*soc, _socPrecision, millis());
 
-    if (_verboseLogging) {
-        MessageOutput.printf("MqttBattery: Updated SoC to %.*f from '%s'\r\n",
-                _socPrecision, *soc, topic);
-    }
+    DTU_LOGD("Updated SoC to %.*f from '%s'", _socPrecision, *soc, topic);
 }
 
 void Provider::onMqttMessageVoltage(espMqttClientTypes::MessageProperties const& properties,
@@ -156,17 +144,13 @@ void Provider::onMqttMessageVoltage(espMqttClientTypes::MessageProperties const&
     // only handle up to 65V of input voltage at best, it is safe to assume that
     // an even higher voltage is implausible.
     if (*voltage < 0 || *voltage > 65) {
-        MessageOutput.printf("MqttBattery: Implausible voltage '%.2f' in topic '%s'\r\n",
-                *voltage, topic);
+        DTU_LOGW("Implausible voltage '%.2f' in topic '%s'", *voltage, topic);
         return;
     }
 
     _stats->setVoltage(*voltage, millis());
 
-    if (_verboseLogging) {
-        MessageOutput.printf("MqttBattery: Updated voltage to %.2f from '%s'\r\n",
-                *voltage, topic);
-    }
+    DTU_LOGD("Updated voltage to %.2f from '%s'", *voltage, topic);
 }
 
 void Provider::onMqttMessageCurrent(espMqttClientTypes::MessageProperties const& properties,
@@ -194,10 +178,7 @@ void Provider::onMqttMessageCurrent(espMqttClientTypes::MessageProperties const&
 
     _stats->setCurrent(*amperage, _currentPrecision, millis());
 
-    if (_verboseLogging) {
-        MessageOutput.printf("MqttBattery: Updated current to %.*f from '%s'\r\n",
-                _currentPrecision, *amperage, topic);
-    }
+    DTU_LOGD("Updated current to %.*f from '%s'", _currentPrecision, *amperage, topic);
 }
 
 void Provider::onMqttMessageDischargeCurrentLimit(espMqttClientTypes::MessageProperties const& properties,
@@ -222,17 +203,13 @@ void Provider::onMqttMessageDischargeCurrentLimit(espMqttClientTypes::MessagePro
     }
 
     if (*amperage < 0) {
-        MessageOutput.printf("MqttBattery: Implausible discharge current limit '%.2f' in topic '%s'\r\n",
-                *amperage, topic);
+        DTU_LOGW("Implausible discharge current limit '%.2f' in topic '%s'", *amperage, topic);
         return;
     }
 
     _stats->setDischargeCurrentLimit(*amperage, millis());
 
-    if (_verboseLogging) {
-        MessageOutput.printf("MqttBattery: Updated discharge current limit to %.2f from '%s'\r\n",
-                *amperage, topic);
-    }
+    DTU_LOGD("Updated discharge current limit to %.2f from '%s'", *amperage, topic);
 }
 
 uint8_t Provider::calculatePrecision(float value) {

@@ -7,7 +7,6 @@
 #include <battery/zendure/HassIntegration.h>
 #include <battery/zendure/Constants.h>
 #include <espMqttClient.h>
-#include <MessageOutput.h>
 
 namespace Batteries::Zendure {
 
@@ -52,16 +51,6 @@ private:
     bool alive() const { return _stats->getAgeSeconds() < ZENDURE_ALIVE_SECONDS; }
 
     void publishPersistentSettings(const char* subtopic, const String& payload);
-
-    template <typename... Args>
-    void log(char const* format, Args&&... args) const {
-        if (_verboseLogging) {
-            MessageOutput.printf("ZendureBattery: ");
-            MessageOutput.printf(format, std::forward<Args>(args)...);
-            MessageOutput.println();
-        }
-        return;
-    };
 
     uint32_t _rateFullUpdateMs = 0;
     uint64_t _nextFullUpdate = 0;

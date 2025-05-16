@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <battery/pylontech/Provider.h>
-#include <MessageOutput.h>
 #include <PinMapping.h>
 #include <driver/twai.h>
 #include <ctime>
+#include <LogHelper.h>
 
+static const char* TAG = "battery";
+static const char* SUBTAG = "Pylontech";
 namespace Batteries::Pylontech {
 
 Provider::Provider()
@@ -25,11 +27,10 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->setDischargeCurrentLimit(this->scaleValue(this->readSignedInt16(rx_message.data + 4), 0.1), millis());
             _stats->_dischargeVoltageLimitation = this->scaleValue(this->readUnsignedInt16(rx_message.data + 6), 0.1);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pylontech] chargeVoltage: %f chargeCurrentLimitation: %f dischargeCurrentLimitation: %f dischargeVoltageLimitation: %f\r\n",
-                        _stats->_chargeVoltage, _stats->_chargeCurrentLimitation, _stats->getDischargeCurrentLimit(),
-                        _stats->_dischargeVoltageLimitation);
-            }
+            DTU_LOGD("chargeVoltage: %f chargeCurrentLimitation: %f "
+                    "dischargeCurrentLimitation: %f dischargeVoltageLimitation: %f",
+                    _stats->_chargeVoltage, _stats->_chargeCurrentLimitation,
+                    _stats->getDischargeCurrentLimit(), _stats->_dischargeVoltageLimitation);
             break;
         }
 
@@ -37,10 +38,7 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->setSoC(static_cast<uint8_t>(this->readUnsignedInt16(rx_message.data)), 0/*precision*/, millis());
             _stats->_stateOfHealth = this->readUnsignedInt16(rx_message.data + 2);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pylontech] soc: %f soh: %d\r\n",
-                        _stats->getSoC(), _stats->_stateOfHealth);
-            }
+            DTU_LOGD("soc: %f soh: %d", _stats->getSoC(), _stats->_stateOfHealth);
             break;
         }
 
@@ -49,10 +47,8 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->setCurrent(this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1), 1/*precision*/, millis());
             _stats->_temperature = this->scaleValue(this->readSignedInt16(rx_message.data + 4), 0.1);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pylontech] voltage: %f current: %f temperature: %f\r\n",
-                        _stats->getVoltage(), _stats->getChargeCurrent(), _stats->_temperature);
-            }
+            DTU_LOGD("voltage: %f current: %f temperature: %f",
+                    _stats->getVoltage(), _stats->getChargeCurrent(), _stats->_temperature);
             break;
         }
 
@@ -68,16 +64,14 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_alarmBmsInternal= this->getBit(alarmBits, 3);
             _stats->_alarmOverCurrentCharge = this->getBit(alarmBits, 0);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pylontech] Alarms: %d %d %d %d %d %d %d\r\n",
-                        _stats->_alarmOverCurrentDischarge,
-                        _stats->_alarmUnderTemperature,
-                        _stats->_alarmOverTemperature,
-                        _stats->_alarmUnderVoltage,
-                        _stats->_alarmOverVoltage,
-                        _stats->_alarmBmsInternal,
-                        _stats->_alarmOverCurrentCharge);
-            }
+            DTU_LOGD("Alarms: %d %d %d %d %d %d %d",
+                    _stats->_alarmOverCurrentDischarge,
+                    _stats->_alarmUnderTemperature,
+                    _stats->_alarmOverTemperature,
+                    _stats->_alarmUnderVoltage,
+                    _stats->_alarmOverVoltage,
+                    _stats->_alarmBmsInternal,
+                    _stats->_alarmOverCurrentCharge);
 
             uint16_t warningBits = rx_message.data[2];
             _stats->_warningHighCurrentDischarge = this->getBit(warningBits, 7);
@@ -90,22 +84,17 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_warningBmsInternal= this->getBit(warningBits, 3);
             _stats->_warningHighCurrentCharge = this->getBit(warningBits, 0);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pylontech] Warnings: %d %d %d %d %d %d %d\r\n",
-                        _stats->_warningHighCurrentDischarge,
-                        _stats->_warningLowTemperature,
-                        _stats->_warningHighTemperature,
-                        _stats->_warningLowVoltage,
-                        _stats->_warningHighVoltage,
-                        _stats->_warningBmsInternal,
-                        _stats->_warningHighCurrentCharge);
-            }
+            DTU_LOGD("Warnings: %d %d %d %d %d %d %d",
+                    _stats->_warningHighCurrentDischarge,
+                    _stats->_warningLowTemperature,
+                    _stats->_warningHighTemperature,
+                    _stats->_warningLowVoltage,
+                    _stats->_warningHighVoltage,
+                    _stats->_warningBmsInternal,
+                    _stats->_warningHighCurrentCharge);
 
             _stats->_moduleCount = rx_message.data[4];
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pylontech] Modules: %d\r\n",
-                        _stats->_moduleCount);
-            }
+            DTU_LOGD("Modules: %d", _stats->_moduleCount);
 
             break;
         }
@@ -116,9 +105,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             if (manufacturer.isEmpty()) { break; }
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pylontech] Manufacturer: %s\r\n", manufacturer.c_str());
-            }
+            DTU_LOGD("Manufacturer: %s", manufacturer.c_str());
 
             _stats->setManufacturer(manufacturer);
             break;
@@ -130,12 +117,10 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_dischargeEnabled = this->getBit(chargeStatusBits, 6);
             _stats->_chargeImmediately = this->getBit(chargeStatusBits, 5);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pylontech] chargeStatusBits: %d %d %d\r\n",
+            DTU_LOGD("chargeStatusBits: %d %d %d",
                     _stats->_chargeEnabled,
                     _stats->_dischargeEnabled,
                     _stats->_chargeImmediately);
-            }
 
             break;
         }
