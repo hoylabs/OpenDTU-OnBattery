@@ -16,6 +16,10 @@ HexHandler.cpp
  */
 #include <Arduino.h>
 #include "VeDirectFrameHandler.h"
+#include <LogHelper.h>
+
+static const char* TAG = "veDirect";
+#define SUBTAG _logId
 
 /*
  * calcHexFrameCheckSum()
@@ -122,8 +126,9 @@ bool VeDirectFrameHandler<T>::disassembleHexData(VeDirectHexData &data) {
         }
     }
 
-    if (!state)
-        _msgOut->printf("%s failed to disassemble the hex message: %s\r\n", _logId, buffer);
+    if (!state) {
+        DTU_LOGE("failed to disassemble the hex message: %s", buffer);
+    }
 
     return (state);
 }
@@ -212,15 +217,13 @@ bool VeDirectFrameHandler<T>::sendHexCommand(VeDirectHexCommand cmd, VeDirectHex
         String send = txData + "\n";                // hex command end byte
         _vedirectSerial->write(send.c_str(), send.length());
 
-        if (_verboseLogging) {
-            auto blen = _vedirectSerial->availableForWrite();
-            _msgOut->printf("%s Sending Hex Command: %s, Free FIFO-Buffer: %u\r\n",
-                _logId, txData.c_str(), blen);
-        }
+        auto blen = _vedirectSerial->availableForWrite();
+        DTU_LOGD("Sending Hex Command: %s, Free FIFO-Buffer: %u", txData.c_str(), blen);
     }
 
-    if (!ret)
-        _msgOut->printf("%s send hex command fault: %s\r\n", _logId, txData.c_str());
+    if (!ret) {
+        DTU_LOGE("send hex command fault: %s", txData.c_str());
+    }
 
     return (ret);
 }

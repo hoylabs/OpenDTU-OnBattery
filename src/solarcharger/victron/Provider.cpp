@@ -57,7 +57,7 @@ bool Provider::initController(gpio_num_t rx, gpio_num_t tx, bool logging,
     _serialPortOwners.push_back(owner);
 
     auto upController = std::make_unique<VeDirectMpptController>();
-    upController->init(rx, tx, &MessageOutput, logging, *oHwSerialPort);
+    upController->init(rx, tx, *oHwSerialPort);
     _controllers.push_back(std::move(upController));
     return true;
 }
