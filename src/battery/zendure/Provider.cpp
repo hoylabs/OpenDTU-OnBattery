@@ -3,8 +3,11 @@
 #include <battery/zendure/Provider.h>
 #include <MqttSettings.h>
 #include <SunPosition.h>
-#include <MessageOutput.h>
 #include <Utils.h>
+#include <LogHelper.h>
+
+static const char* TAG = "battery";
+static const char* SUBTAG = "Zendure";
 
 namespace Batteries::Zendure {
 
@@ -19,7 +22,7 @@ bool Provider::init(bool verboseLogging)
     auto const& config = Configuration.get();
     String deviceType = String();
 
-    log("Settings %d", config.Battery.Zendure.DeviceType);
+    DTU_LOGD("Settings %d", config.Battery.Zendure.DeviceType);
     {
         String deviceName = String();
         switch (config.Battery.Zendure.DeviceType) {
@@ -50,17 +53,18 @@ bool Provider::init(bool verboseLogging)
                 deviceName = String("SolarFlow Hyper 2000");
                 break;
             default:
-                log("Invalid device type!");
+                DTU_LOGE("Invalid device type!");
                 return false;
         }
 
         if (strlen(config.Battery.Zendure.DeviceId) != 8) {
-            MessageOutput.printf("ZendureBattery: Invalid device id '%s'!\r\n", config.Battery.Zendure.DeviceId);
+            DTU_LOGE("Invalid device id '%s'!", config.Battery.Zendure.DeviceId);
             return false;
         }
 
         // setup static device info
-        MessageOutput.printf("ZendureBattery: Device name '%s' - LOG messages are %s supported\r\n", deviceName.c_str(), _full_log_supported ? "fully" : "partly");
+        DTU_LOGI("Device name '%s' - LOG messages are %s supported\r\n",
+                deviceName.c_str(), (_full_log_supported ? "fully" : "partly"));
         _stats->setDevice(std::move(deviceName));
         _stats->setManufacturer("Zendure");
     }
@@ -80,7 +84,7 @@ bool Provider::init(bool verboseLogging)
                 this, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4)
             );
-    log("Subscribed to '%s' for persistent settings", topic.c_str());
+    DTU_LOGD("Subscribed to '%s' for persistent settings", topic.c_str());
 
     // subscribe for log messages
     _topicLog = _baseTopic + "log";
@@ -89,7 +93,7 @@ bool Provider::init(bool verboseLogging)
                 this, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4)
             );
-    log("Subscribed to '%s' for status readings", _topicLog.c_str());
+    DTU_LOGD("Subscribed to '%s' for status readings", _topicLog.c_str());
 
     // subscribe for report messages
     _topicReport = _baseTopic + "properties/report";
@@ -98,7 +102,7 @@ bool Provider::init(bool verboseLogging)
                 this, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4)
             );
-    log("Subscribed to '%s' for status readings", _topicReport.c_str());
+    DTU_LOGD("Subscribed to '%s' for status readings", _topicReport.c_str());
 
     // subscribe for timesync messages
     _topicTimesync = _baseTopic + "time-sync";
@@ -107,7 +111,7 @@ bool Provider::init(bool verboseLogging)
                 this, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4)
             );
-    log("Subscribed to '%s' for timesync requests", _topicTimesync.c_str());
+    DTU_LOGD("Subscribed to '%s' for timesync requests", _topicTimesync.c_str());
 
     _rateFullUpdateMs   = config.Battery.Zendure.PollingInterval * 1000;
     _nextFullUpdate     = millis() + _rateFullUpdateMs / 2;
@@ -142,14 +146,14 @@ bool Provider::init(bool verboseLogging)
 
     // check if we are allowed to write stuff
     if (config.Battery.Zendure.ControlMode == BatteryZendureConfig::ControlMode::ControlModeReadOnly) {
-        MessageOutput.printf("ZendureBattery: Running in READ-ONLY mode\r\n");
+        DTU_LOGI("Running in READ-ONLY mode");
 
         // forget about write topic and payload to prevent it will ever be written
         _payloadSettings.clear();
         _topicWrite.clear();
     }
 
-    MessageOutput.printf("ZendureBattery: INIT DONE\r\n");
+    DTU_LOGI("INIT DONE");
     return true;
 }
 
@@ -283,7 +287,7 @@ void Provider::calculateFullChargeAge()
         auto last_full = *(_stats->_last_full_timestamp);
         uint32_t age = now > last_full  ? (now - last_full) / 3600U : 0U;
 
-        log("Now: %ld, LastFull: %ld, Diff: %d", now, last_full, age);
+        DTU_LOGD("Now: %ld, LastFull: %" PRIu64 ", Diff: %" PRIu32, now, last_full, age);
 
         // store for webview
         _stats->_last_full_charge_hours = age;
@@ -311,7 +315,8 @@ void Provider::setTargetSoCs(const float soc_min, const float soc_max)
 
     if (_stats->_soc_min != soc_min || _stats->_soc_max != soc_max) {
         publishProperties(_topicWrite, ZENDURE_REPORT_MIN_SOC, String(soc_min * 10, 0), ZENDURE_REPORT_MAX_SOC, String(soc_max * 10, 0));
-        log("Setting target minSoC from %.1f %% to %.1f %% and target maxSoC from %.1f %% to %.1f %%", _stats->_soc_min, soc_min, _stats->_soc_max, soc_max);
+        DTU_LOGD("Setting target minSoC from %.1f %% to %.1f %% and target maxSoC from %.1f %% to %.1f %%",
+                _stats->_soc_min, soc_min, _stats->_soc_max, soc_max);
     }
 }
 
@@ -349,7 +354,7 @@ uint16_t Provider::setOutputLimit(uint16_t limit) const
     if (_stats->_output_limit != limit) {
         limit = calcOutputLimit(limit);
         publishProperty(_topicWrite, ZENDURE_REPORT_OUTPUT_LIMIT, String(limit));
-        log("Adjusting outputlimit from %d W to %d W", _stats->_output_limit, limit);
+        DTU_LOGD("Adjusting outputlimit from %d W to %d W", _stats->_output_limit, limit);
     }
 
     return limit;
@@ -364,7 +369,7 @@ uint16_t Provider::setInverterMax(uint16_t limit) const
     if (_stats->_inverse_max != limit) {
         limit = calcOutputLimit(limit);
         publishProperty(_topicWrite, ZENDURE_REPORT_INVERSE_MAX_POWER, String(limit));
-        log("Adjusting inverter max output from %d W to %d W", _stats->_inverse_max, limit);
+        DTU_LOGD("Adjusting inverter max output from %d W to %d W", _stats->_inverse_max, limit);
     }
 
     return limit;
@@ -374,7 +379,7 @@ void Provider::shutdown() const
 {
     if (!_topicWrite.isEmpty()) {
         publishProperty(_topicWrite, ZENDURE_REPORT_MASTER_SWITCH, "1");
-        log("Shutting down HUB");
+        DTU_LOGD("Shutting down HUB");
     }
 }
 
@@ -413,7 +418,7 @@ void Provider::timesync()
     time_t now;
     if (!_baseTopic.isEmpty() && Utils::getEpoch(&now)) {
         MqttSettings.publishGeneric("iot" + _baseTopic + "time-sync/reply", "{\"zoneOffset\": \"+00:00\", \"messageId\": " + String(++_messageCounter) + ", \"timestamp\": " + String(now) + "}", false, 0);
-        log("Timesync Reply");
+        DTU_LOGD("Timesync Reply");
     }
 }
 
@@ -421,7 +426,7 @@ bool Provider::setChargeThrough(const bool value, const bool publish /* = true *
 {
     if (!_stats->_charge_through_state.has_value() || value != _stats->_charge_through_state) {
         _stats->_charge_through_state = value;
-        log("%s charge-through mode!", value ? "Enabling" : "Disabling");
+        DTU_LOGD("%s charge-through mode!", value ? "Enabling" : "Disabling");
         if (publish) {
             publishPersistentSettings(ZENDURE_PERSISTENT_SETTINGS_CHARGE_THROUGH, value ? "1" : "0");
         }
@@ -440,7 +445,7 @@ void Provider::onMqttMessagePersistentSettings(espMqttClientTypes::MessageProper
     String p(reinterpret_cast<const char*>(payload), len);
     auto integer = static_cast<uint64_t>(p.toInt());
 
-    log("Received Persistent Settings %s = %s [aka %" PRId64 "]", topic, p.substring(0, 32).c_str(), integer);
+    DTU_LOGD("Received Persistent Settings %s = %s [aka %" PRId64 "]", topic, p.substring(0, 32).c_str(), integer);
 
     if (t.endsWith(ZENDURE_PERSISTENT_SETTINGS_LAST_FULL) && integer) {
         _stats->_last_full_timestamp = integer;
@@ -475,11 +480,13 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
 
     const DeserializationError error = deserializeJson(json, src);
     if (error) {
-        return log("cannot parse payload '%s' as JSON", logValue.c_str());
+        DTU_LOGE("cannot parse payload '%s' as JSON", logValue.c_str());
+        return;
     }
 
     if (json.overflowed()) {
-        return log("payload too large to process as JSON");
+        DTU_LOGE("payload too large to process as JSON");
+        return;
     }
 
     auto obj = json.as<JsonObjectConst>();
@@ -488,10 +495,12 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
     // messageId has to be set to "123"
     // deviceId has to be set to the configured deviceId
     if (!json["messageId"].as<String>().equals("123")) {
-        return log("Invalid or missing 'messageId' in '%s'", logValue.c_str());
+        DTU_LOGE("Invalid or missing 'messageId' in '%s'", logValue.c_str());
+        return;
     }
     if (!json["deviceId"].as<String>().equals(_deviceId)) {
-        return log("Invalid or missing 'deviceId' in '%s'", logValue.c_str());
+        DTU_LOGE("Invalid or missing 'deviceId' in '%s'", logValue.c_str());
+        return;
     }
 
     auto props = Utils::getJsonElement<JsonObjectConst>(obj, ZENDURE_REPORT_PROPERTIES, 1);
@@ -605,18 +614,18 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
         for (size_t i = 0 ; i < _stats->_num_batteries ; i++) {
             auto serial = Utils::getJsonElement<String>((*packData)[i], ZENDURE_REPORT_PACK_SERIAL);
             if (!serial.has_value()) {
-                log("Missing serial of battery pack in '%s'", logValue.c_str());
+                DTU_LOGW("Missing serial of battery pack in '%s'", logValue.c_str());
                 continue;
             }
             if (_stats->addPackData(i+1, *serial) == nullptr) {
-                log("Invalid or unknown serial '%s' in '%s'", (*serial).c_str(), logValue.c_str());
+                DTU_LOGW("Invalid or unknown serial '%s' in '%s'", (*serial).c_str(), logValue.c_str());
             }
         }
     }
 
     // check if our array has got inconsistant
     if (_stats->_packData.size() > _stats->_num_batteries) {
-        log("Detected inconsitency of pack data - resetting internal data buffer!");
+        DTU_LOGD("Detected inconsitency of pack data - resetting internal data buffer!");
         _stats->_packData.clear();
         return;
     }
@@ -677,7 +686,7 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
 {
     auto ms = millis();
 
-    log("Logging Frame received!");
+    DTU_LOGD("Logging Frame received!");
 
     std::string const src = std::string(reinterpret_cast<const char*>(payload), len);
     std::string logValue = src.substr(0, 64);
@@ -687,11 +696,13 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
 
     const DeserializationError error = deserializeJson(json, src);
     if (error) {
-        return log("cannot parse payload '%s' as JSON", logValue.c_str());
+        DTU_LOGE("cannot parse payload '%s' as JSON", logValue.c_str());
+        return;
     }
 
     if (json.overflowed()) {
-        return log("payload too large to process as JSON");
+        DTU_LOGE("payload too large to process as JSON");
+        return;
     }
 
     auto obj = json.as<JsonObjectConst>();
@@ -700,22 +711,26 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
     // deviceId has to be set to the configured deviceId
     // logType has to be set to "2"
     if (!json["deviceId"].as<String>().equals(_deviceId)) {
-        return log("Invalid or missing 'deviceId' in '%s'", logValue.c_str());
+        DTU_LOGE("Invalid or missing 'deviceId' in '%s'", logValue.c_str());
+        return;
     }
     if (!json["logType"].as<String>().equals("2")) {
-        return log("Invalid or missing 'v' in '%s'", logValue.c_str());
+        DTU_LOGE("Invalid or missing 'v' in '%s'", logValue.c_str());
+        return;
     }
 
     auto data = Utils::getJsonElement<JsonObjectConst>(obj, ZENDURE_LOG_ROOT, 2);
     if (!data.has_value()) {
-        return log("Unable to find 'log' in '%s'", logValue.c_str());
+        DTU_LOGE("Unable to find 'log' in '%s'", logValue.c_str());
+        return;
     }
 
     _stats->setSerial(Utils::getJsonElement<String>(*data, ZENDURE_LOG_SERIAL));
 
     auto params = Utils::getJsonElement<JsonArrayConst>(*data, ZENDURE_LOG_PARAMS, 1);
     if (!params.has_value()) {
-        return log("Unable to find 'params' in '%s'", logValue.c_str());
+        DTU_LOGE("Unable to find 'params' in '%s'", logValue.c_str());
+        return;
     }
 
     auto v = *params;
@@ -872,7 +887,9 @@ void Provider::publishPersistentSettings(const char* subtopic, const String& pay
 {
     if (!_topicPersistentSettings.isEmpty())
     {
-        log("Writing Persistent Settings %s = %s\r\n", String(_topicPersistentSettings + subtopic).c_str(), payload.substring(0, 32).c_str());
+        DTU_LOGD("Writing Persistent Settings %s = %s\r\n",
+                String(_topicPersistentSettings + subtopic).c_str(),
+                payload.substring(0, 32).c_str());
         MqttSettings.publishGeneric(_topicPersistentSettings + subtopic, payload, true);
     }
 }

@@ -2,25 +2,17 @@
 
 #include <Arduino.h>
 #include <vector>
-#include <MessageOutput.h>
 
 namespace Batteries::JkBms {
 
 class DummySerial {
     public:
         DummySerial() = default;
-        void begin(uint32_t, uint32_t, int8_t, int8_t) {
-            MessageOutput.println("JK BMS Dummy Serial: begin()");
-        }
-        void end() { MessageOutput.println("JK BMS Dummy Serial: end()"); }
+        void begin(uint32_t, uint32_t, int8_t, int8_t);
+        void end();
         void flush() { }
         bool availableForWrite() const { return true; }
-        size_t write(const uint8_t *buffer, size_t size) {
-            MessageOutput.printf("JK BMS Dummy Serial: write(%d Bytes)\r\n", size);
-            _byte_idx = 0;
-            _msg_idx = (_msg_idx + 1) % _data.size();
-            return size;
-        }
+        size_t write(const uint8_t *buffer, size_t size);
         bool available() const {
             return _byte_idx < _data[_msg_idx].size();
         }
