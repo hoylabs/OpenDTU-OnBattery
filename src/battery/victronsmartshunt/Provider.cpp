@@ -31,7 +31,7 @@ bool Provider::init(bool verboseLogging)
     auto oHwSerialPort = SerialPortManager.allocatePort(_serialPortOwner);
     if (!oHwSerialPort) { return false; }
 
-    VeDirectShunt.init(pin.battery_rx, pin.battery_tx, &MessageOutput, verboseLogging, *oHwSerialPort);
+    VeDirectShunt.init(pin.battery_rx, pin.battery_tx, *oHwSerialPort);
     return true;
 }
 

@@ -46,8 +46,7 @@ class VeDirectMpptController : public VeDirectFrameHandler<veMpptStruct> {
 public:
     VeDirectMpptController() = default;
 
-    void init(gpio_num_t rx, gpio_num_t tx, Print* msgOut,
-        bool verboseLogging, uint8_t hwSerialPort);
+    void init(gpio_num_t rx, gpio_num_t tx, uint8_t hwSerialPort);
 
     using data_t = veMpptStruct;
 
