@@ -28,12 +28,12 @@ void HassIntegration::publishSensors() const
     publishSensor("Total Input Power", NULL, "inputPower", "power", "measurement", "W");
     publishBinarySensor("Bypass State", NULL, "bypass", "1", "0");
 
-    publishSensor("Control Mode", NULL, "controlMode", "settings");
-    publishSensor("Output Power Limit", NULL, "settings/outputLimitPower", "power", "settings", "W");
-    publishSensor("Input Power Limit", NULL, "settings/inputLimitPower", "power", "settings", "W");
-    publishSensor("Minimum State of Charge", NULL, "settings/stateOfChargeMin", NULL, "settings", "%");
-    publishSensor("Maximum State of Charge", NULL, "settings/stateOfChargeMax", NULL, "settings", "%");
-    publishSensor("Bypass Mode", NULL, "settings/bypassMode", "settings");
+    publishSensor("Control Mode", NULL, "controlMode");
+    publishSensor("Output Power Limit", NULL, "settings/outputLimitPower", "power", NULL, "W");
+    publishSensor("Input Power Limit", NULL, "settings/inputLimitPower", "power", NULL, "W");
+    publishSensor("Minimum State of Charge", NULL, "settings/stateOfChargeMin", NULL, NULL, "%");
+    publishSensor("Maximum State of Charge", NULL, "settings/stateOfChargeMax", NULL, NULL, "%");
+    publishSensor("Bypass Mode", NULL, "settings/bypassMode");
 
     for (size_t i = 1 ; i <= ZENDURE_MAX_PACKS ; i++) {
         const auto id = String(i);
