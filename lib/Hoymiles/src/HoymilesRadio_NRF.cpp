@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022 Thomas Basler and others
+ * Copyright (C) 2022-2025 Thomas Basler and others
  */
 #include "HoymilesRadio_NRF.h"
 #include "Hoymiles.h"
+#include "Utils.h"
 #include "commands/RequestFrameCommand.h"
 #include <Every.h>
 #include <FunctionalInterrupt.h>
+#include <esp_log.h>
+
+#undef TAG
+static const char* TAG = "hoymiles";
 
 void HoymilesRadio_NRF::init(SPIClass* initialisedSpiBus, const uint8_t pinCE, const uint8_t pinIRQ)
 {
@@ -24,10 +29,10 @@ void HoymilesRadio_NRF::init(SPIClass* initialisedSpiBus, const uint8_t pinCE, c
     _radio->setRetries(0, 0);
     _radio->maskIRQ(true, true, false); // enable only receiving interrupts
     if (!_radio->isChipConnected()) {
-        Hoymiles.getMessageOutput()->println("NRF: Connection error!!");
+        ESP_LOGE(TAG, "NRF: Connection error!!");
         return;
     }
-    Hoymiles.getMessageOutput()->println("NRF: Connection successful");
+    ESP_LOGI(TAG, "NRF: Connection successful");
 
     attachInterrupt(digitalPinToInterrupt(pinIRQ), std::bind(&HoymilesRadio_NRF::handleIntr, this), FALLING);
 
@@ -48,10 +53,10 @@ void HoymilesRadio_NRF::loop()
     }
 
     if (_packetReceived) {
-        Hoymiles.getVerboseMessageOutput()->println("Interrupt received");
+        ESP_LOGV(TAG, "Interrupt received");
         while (_radio->available()) {
             if (_rxBuffer.size() > FRAGMENT_BUFFER_SIZE) {
-                Hoymiles.getMessageOutput()->println("NRF: Buffer full");
+                ESP_LOGE(TAG, "NRF: Buffer full");
                 _radio->flush_rx();
                 continue;
             }
@@ -75,17 +80,16 @@ void HoymilesRadio_NRF::loop()
 
                 if (nullptr != inv) {
                     // Save packet in inverter rx buffer
-                    Hoymiles.getVerboseMessageOutput()->printf("RX Channel: %" PRIu8 " --> ", f.channel);
-                    dumpBuf(f.fragment, f.len, false);
-                    Hoymiles.getVerboseMessageOutput()->printf("| %" PRId8 " dBm\r\n", f.rssi);
+                    ESP_LOGD(TAG, "RX Channel: %" PRIu8 " --> %s | %" PRId8 " dBm",
+                        f.channel, Utils::dumpArray(f.fragment, f.len).c_str(), f.rssi);
 
                     inv->addRxFragment(f.fragment, f.len, f.rssi);
                 } else {
-                    Hoymiles.getMessageOutput()->println("Inverter Not found!");
+                    ESP_LOGE(TAG, "Inverter Not found!");
                 }
 
             } else {
-                Hoymiles.getMessageOutput()->println("Frame kaputt");
+                ESP_LOGW(TAG, "Frame kaputt");
             }
 
             // Remove paket from buffer even it was corrupted
@@ -182,9 +186,8 @@ void HoymilesRadio_NRF::sendEsbPacket(CommandAbstract& cmd)
     openWritingPipe(s);
     _radio->setRetries(3, 15);
 
-    Hoymiles.getVerboseMessageOutput()->printf("TX %s Channel: %" PRIu8 " --> ",
-        cmd.getCommandName().c_str(), _radio->getChannel());
-    cmd.dumpDataPayload(Hoymiles.getVerboseMessageOutput());
+    ESP_LOGD(TAG, "TX %s Channel: %" PRIu8 " --> %s",
+        cmd.getCommandName().c_str(), _radio->getChannel(), cmd.dumpDataPayload().c_str());
     _radio->write(cmd.getDataPayload(), cmd.getDataSize());
 
     _radio->setRetries(0, 0);

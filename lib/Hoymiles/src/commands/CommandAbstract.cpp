@@ -27,6 +27,7 @@ Source Address: 80 12 23 04
      Target Addr   Source Addr      CRC8
 */
 #include "CommandAbstract.h"
+#include "../Utils.h"
 #include "../inverters/InverterAbstract.h"
 #include "crc.h"
 #include <string.h>
@@ -50,13 +51,10 @@ const uint8_t* CommandAbstract::getDataPayload()
     return _payload;
 }
 
-void CommandAbstract::dumpDataPayload(Print* stream)
+String CommandAbstract::dumpDataPayload()
 {
     const uint8_t* payload = getDataPayload();
-    for (uint8_t i = 0; i < getDataSize(); i++) {
-        stream->printf("%02X ", payload[i]);
-    }
-    stream->println("");
+    return Utils::dumpArray(payload, getDataSize());
 }
 
 uint8_t CommandAbstract::getDataSize() const

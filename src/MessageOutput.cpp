@@ -5,8 +5,12 @@
 #include <HardwareSerial.h>
 #include "MessageOutput.h"
 #include "SyslogLogger.h"
+#include <HardwareSerial.h>
 
 MessageOutputClass MessageOutput;
+
+#undef TAG
+#define TAG "MessageOutput"
 
 MessageOutputClass::MessageOutputClass()
     : _loopTask(TASK_IMMEDIATE, TASK_FOREVER, std::bind(&MessageOutputClass::loop, this))
@@ -17,6 +21,7 @@ void MessageOutputClass::init(Scheduler& scheduler)
 {
     scheduler.addTask(_loopTask);
     _loopTask.enable();
+    esp_log_set_vprintf(log_vprintf);
 }
 
 void MessageOutputClass::register_ws_output(AsyncWebSocket* output)
@@ -26,12 +31,21 @@ void MessageOutputClass::register_ws_output(AsyncWebSocket* output)
     _ws = output;
 }
 
+int MessageOutputClass::log_vprintf(const char* fmt, va_list arguments)
+{
+    char log_buffer[WS_CHUNK_SIZE_BYTES];
+    vsnprintf(log_buffer, sizeof(log_buffer), fmt, arguments);
+    return MessageOutput.print(log_buffer);
+}
+
 void MessageOutputClass::serialWrite(MessageOutputClass::message_t const& m)
 {
     // operator bool() of HWCDC returns false if the device is not attached to
     // a USB host. in general it makes sense to skip writing entirely if the
     // default serial port is not ready.
-    if (!Serial) { return; }
+    if (!Serial) {
+        return;
+    }
 
     size_t written = 0;
     while (written < m.size()) {
@@ -60,7 +74,7 @@ size_t MessageOutputClass::write(uint8_t c)
     return 1;
 }
 
-size_t MessageOutputClass::write(const uint8_t *buffer, size_t size)
+size_t MessageOutputClass::write(const uint8_t* buffer, size_t size)
 {
     std::lock_guard<std::mutex> lock(_msgLock);
 
@@ -83,30 +97,37 @@ size_t MessageOutputClass::write(const uint8_t *buffer, size_t size)
         }
     }
 
-    if (message.empty()) { _task_messages.erase(iter); }
+    if (message.empty()) {
+        _task_messages.erase(iter);
+    }
 
     return size;
 }
 
 void MessageOutputClass::send_ws_chunk(message_t&& line)
 {
-    if (!_ws) { return; }
+    if (!_ws) {
+        return;
+    }
 
     if (nullptr == _ws_chunk) {
         _ws_chunk = std::make_shared<message_t>(std::move(line));
         _ws_chunk->reserve(WS_CHUNK_SIZE_BYTES + 128); // add room for one more line
-    }
-    else {
+    } else {
         _ws_chunk->insert(_ws_chunk->end(), line.begin(), line.end());
     }
 
     bool small = _ws_chunk->size() < WS_CHUNK_SIZE_BYTES;
     bool recent = (millis() - _last_ws_chunk_sent) < WS_CHUNK_INTERVAL_MS;
-    if (small && recent) { return; }
+    if (small && recent) {
+        return;
+    }
 
     bool added_warning = false;
     for (auto& client : _ws->getClients()) {
-        if (client.queueIsFull()) { continue; }
+        if (client.queueIsFull()) {
+            continue;
+        }
 
         client.text(_ws_chunk);
 
@@ -115,7 +136,7 @@ void MessageOutputClass::send_ws_chunk(message_t&& line)
         // won't be copying chunks around to avoid this. we do however,
         // avoid adding the warning multiple times.
         if (client.queueIsFull() && !added_warning) {
-            static char const warningStr[] = "\r\nWARNING: websocket client's queue is full, expect log lines missing\r\n";
+            static char const warningStr[] = "\nWARNING: websocket client's queue is full, expect log lines missing\n";
             _ws_chunk->insert(_ws_chunk->end(), warningStr, warningStr + sizeof(warningStr) - 1);
             added_warning = true;
         }

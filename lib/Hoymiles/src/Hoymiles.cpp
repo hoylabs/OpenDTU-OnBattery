@@ -17,6 +17,10 @@
 #include "inverters/HM_2CH.h"
 #include "inverters/HM_4CH.h"
 #include <Arduino.h>
+#include <esp_log.h>
+
+#undef TAG
+static const char* TAG = "hoymiles";
 
 HoymilesClass Hoymiles;
 
@@ -63,8 +67,7 @@ void HoymilesClass::loop()
         }
 
         if (iv->getEnablePolling() || iv->getEnableCommands()) {
-            _messageOutput->print("Fetch inverter: ");
-            _messageOutput->println(iv->serial(), HEX);
+            ESP_LOGI(TAG, "Fetch inverter: %s", iv->serialString().c_str());
 
             if (!iv->isReachable()) {
                 iv->sendChangeChannelRequest();
@@ -81,7 +84,7 @@ void HoymilesClass::loop()
                 // Fetch limit
                 if (((millis() - iv->SystemConfigPara()->getLastUpdateRequest() > HOY_SYSTEM_CONFIG_PARA_POLL_INTERVAL)
                         && (millis() - iv->SystemConfigPara()->getLastUpdateCommand() > HOY_SYSTEM_CONFIG_PARA_POLL_MIN_DURATION))) {
-                    _messageOutput->println("Request SystemConfigPara");
+                    ESP_LOGI(TAG, "Request SystemConfigPara");
                     iv->sendSystemConfigParaRequest();
                 }
 
@@ -97,13 +100,13 @@ void HoymilesClass::loop()
                         && iv->DevInfo()->getLastUpdateSimple() > 0;
 
                     if (invalidDevInfo) {
-                        _messageOutput->println("DevInfo: No Valid Data");
+                        ESP_LOGW(TAG, "DevInfo: No Valid Data");
                     }
 
                     if ((iv->DevInfo()->getLastUpdateAll() == 0)
                         || (iv->DevInfo()->getLastUpdateSimple() == 0)
                         || invalidDevInfo) {
-                        _messageOutput->println("Request device info");
+                        ESP_LOGI(TAG, "Request device info");
                         iv->sendDevInfoRequest();
                     }
                 }
@@ -111,17 +114,17 @@ void HoymilesClass::loop()
 
             // Set limit if required
             if (iv->SystemConfigPara()->getLastLimitCommandSuccess() == CMD_NOK) {
-                _messageOutput->println("Resend ActivePowerControl");
+                ESP_LOGI(TAG, "Resend ActivePowerControl");
                 iv->resendActivePowerControlRequest();
             }
 
             // Set power status if required
             if (iv->PowerCommand()->getLastPowerCommandSuccess() == CMD_NOK) {
-                _messageOutput->println("Resend PowerCommand");
+                ESP_LOGI(TAG, "Resend PowerCommand");
                 iv->resendPowerControlRequest();
             }
 
-            _messageOutput->printf("Queue size - NRF: %" PRIu32 " CMT: %" PRIu32 "\r\n", _radioNrf->getQueueSize(), _radioCmt->getQueueSize());
+            ESP_LOGI(TAG, "Queue size - NRF: %" PRIu32 " CMT: %" PRIu32 "", _radioNrf->getQueueSize(), _radioCmt->getQueueSize());
             _lastPoll = millis();
         }
 
@@ -266,34 +269,4 @@ uint32_t HoymilesClass::PollInterval() const
 void HoymilesClass::setPollInterval(const uint32_t interval)
 {
     _pollInterval = interval;
-}
-
-void HoymilesClass::setVerboseLogging(bool verboseLogging)
-{
-    _verboseLogging = verboseLogging;
-}
-
-void HoymilesClass::setMessageOutput(Print* output)
-{
-    _messageOutput = output;
-}
-
-Print* HoymilesClass::getMessageOutput()
-{
-    return _messageOutput;
-}
-
-class Silent : public Print {
-    public:
-        size_t write(uint8_t c) final { return 0; }
-};
-
-Silent Dummy;
-
-Print* HoymilesClass::getVerboseMessageOutput()
-{
-    if (_verboseLogging) {
-        return _messageOutput;
-    }
-    return &Dummy;
 }

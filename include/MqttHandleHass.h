@@ -4,6 +4,7 @@
 #include <ArduinoJson.h>
 #include <Hoymiles.h>
 #include <TaskSchedulerDeclarations.h>
+#include <TimeoutHelper.h>
 
 // mqtt discovery device classes
 enum DeviceClassType {
@@ -98,6 +99,7 @@ private:
     static void createDeviceInfo(JsonDocument& doc, const String& name, const String& identifiers, const String& configuration_url, const String& manufacturer, const String& model, const String& sw_version, const String& via_device = "");
 
     Task _loopTask;
+    TimeoutHelper _publishConfigTimeout;
 
     bool _wasConnected = false;
     bool _updateForced = false;

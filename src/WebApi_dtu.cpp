@@ -28,7 +28,6 @@ void WebApiDtuClass::applyDataTaskCb()
 {
     // Execute stuff in main thread to avoid busy SPI bus
     auto const& config = Configuration.get();
-    Hoymiles.setVerboseLogging(config.Dtu.VerboseLogging);
     Hoymiles.getRadioNrf()->setPALevel((rf24_pa_dbm_e)config.Dtu.Nrf.PaLevel);
     Hoymiles.getRadioCmt()->setPALevel(config.Dtu.Cmt.PaLevel);
     Hoymiles.getRadioNrf()->setDtuSerial(config.Dtu.Serial);
