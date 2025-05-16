@@ -706,6 +706,8 @@
         "ConductionLossesInfo": "Bei der Übertragung von Energie vom Solarladeregler oder der Batterie zum Inverter sind Leitungsverluste zu erwarten. Diese Verluste werden berücksichtigt, um besser geeignete Wechselrichterlimits zu errechnen.",
         "BatteryDischargeAtNight": "Batterie nachts sogar teilweise geladen nutzen",
         "BatteryDischargeAtNightHint": "Ermöglicht das Entladen der Batterie in der Nacht, auch wenn der Start-Schwellwert nicht erreicht wurde. Das Entladen stoppt bei Sonnenaufgang, oder sobald der Stop-Schwellwert erreicht wurde.",
+        "BatteryPrioritizeCharge": "Bei Sonnenaufgang ggf. Entladezyklus beenden",
+        "BatteryPrioritizeChargeHint": "Sollte der Start-Schwellwert bei Sonnenaufgang unterschritten sein, wird ein Entladezyklus beendet. Das Entladen wird wieder aufgenommen, solabd der Start-Schwellwert erreicht wurde.",
         "SolarPassthroughInfo": "Solar-Passthrough ermöglicht den unmittelbaren Verbrauch der verfügbaren Solarleistung. Dazu wird die aktuell vom Laderegler gemeldete Solarleistung als Sollwert für die Wechselrichtergesamtleistung angenommen, selbst wenn sich die Batterie in einem Ladezyklus befindet. Somit wird eine unnötige verlustbehaftete Speicherung der Energie umgangen.",
         "DcPowerBusSettings": "Einstellungen DC-Stromschiene",
         "SelectInverter": "Inverter auswählen...",

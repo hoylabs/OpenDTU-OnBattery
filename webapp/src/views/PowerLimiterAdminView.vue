@@ -234,6 +234,14 @@
                         type="checkbox"
                         wide
                     />
+ 
+                    <InputElement
+                        :label="$t('powerlimiteradmin.BatteryPrioritizeCharge')"
+                        :tooltip="$t('powerlimiteradmin.BatteryPrioritizeChargeHint')"
+                        v-model="powerLimiterConfigList.battery_prioritize_charge"
+                        type="checkbox"
+                        wide
+                    />
 
                     <div class="row mb-3">
                         <label for="inverter_serial_for_dc_voltage" class="col-sm-4 col-form-label">

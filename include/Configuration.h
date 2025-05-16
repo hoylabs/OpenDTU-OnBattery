@@ -162,6 +162,7 @@ struct POWERLIMITER_CONFIG_T {
     bool SolarPassThroughEnabled;
     uint8_t ConductionLosses;
     bool BatteryAlwaysUseAtNight;
+    bool BatteryPrioritizeCharge;
     int16_t TargetPowerConsumption;
     uint16_t TargetPowerConsumptionHysteresis;
     uint16_t BaseLoadLimit;
