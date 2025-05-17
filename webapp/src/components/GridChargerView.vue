@@ -302,7 +302,7 @@ export default defineComponent({
             })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((response) => {
-                    if (response.type == 'success') {
+                    if (response.type === 'success') {
                         this.gridChargerLimitSettingView.hide();
                         this.showAlertLimit = false;
                     } else {
@@ -324,7 +324,7 @@ export default defineComponent({
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((response) => {
                     console.log(response);
-                    if (response.type == 'success') {
+                    if (response.type === 'success') {
                         this.gridChargerPowerView.hide();
                     }
                 });
