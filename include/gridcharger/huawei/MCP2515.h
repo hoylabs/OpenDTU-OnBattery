@@ -2,6 +2,8 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
+#include <queue>
 #include <SPI.h>
 #include <mcp_can.h>
 #include <SpiManager.h>
@@ -28,6 +30,13 @@ private:
     std::unique_ptr<SPIClass> _upSPI;
     std::unique_ptr<MCP_CAN> _upCAN;
     gpio_num_t _huaweiIrq; // IRQ pin
+
+    std::atomic<bool> _queueingTaskDone = false;
+    std::atomic<bool> _stopQueueing = false;
+
+    static void queueMessages(void* context);
+    std::mutex _rxQueueMutex;
+    std::queue<HardwareInterface::can_message_t> _rxQueue;
 };
 
 } // namespace GridChargers::Huawei

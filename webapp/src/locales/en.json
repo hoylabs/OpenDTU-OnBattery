@@ -328,6 +328,7 @@
         "Task_mqttclient": "MQTT Client",
         "Task_huaweihwifc": "Grid Charger",
         "Task_huaweitwai": "Grid Charger TWAI",
+        "Task_huaweimcp2515": "Grid Charger MCP2515",
         "Task_pmsdm": "PowerMeter (SDM)",
         "Task_pmhttpjson": "PowerMeter (HTTP+JSON)",
         "Task_pmsml": "PowerMeter (Serial SML)",

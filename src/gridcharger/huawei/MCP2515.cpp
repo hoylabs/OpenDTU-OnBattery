@@ -28,7 +28,14 @@ std::optional<uint8_t> MCP2515::_oSpiBus = std::nullopt;
 MCP2515::~MCP2515()
 {
     detachInterrupt(digitalPinToInterrupt(_huaweiIrq));
-    sIsrTaskHandle = nullptr;
+
+    if (sIsrTaskHandle != nullptr) {
+        _queueingTaskDone = false;
+        _stopQueueing = true;
+
+        while (!_queueingTaskDone) { delay(10); }
+    }
+
     stopLoop();
     _upCAN.reset(nullptr);
     if (_upSPI) { _upSPI->end(); } // nullptr if init failed or never called
@@ -99,7 +106,14 @@ bool MCP2515::init()
         return false;
     }
 
-    sIsrTaskHandle = getTaskHandle();
+    uint32_t constexpr stackSize = 1536;
+    if (pdPASS != xTaskCreate(MCP2515::queueMessages,
+            "HuaweiMCP2515", stackSize, this, 20/*prio*/, &sIsrTaskHandle)) {
+        MessageOutput.printf("[Huawei::MCP2515] failed to create queueing task\r\n");
+        stopLoop();
+        return false;
+    }
+
     _huaweiIrq = pin.huawei_irq;
     pinMode(_huaweiIrq, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(_huaweiIrq), mcp2515Isr, FALLING);
@@ -107,30 +121,66 @@ bool MCP2515::init()
     return true;
 }
 
-bool MCP2515::getMessage(HardwareInterface::can_message_t& msg)
+void MCP2515::queueMessages(void* context)
 {
-    if (!_upCAN) { return false; }
+    auto& instance = *static_cast<MCP2515*>(context);
 
     INT32U rxId;
     unsigned char len = 0;
     unsigned char rxBuf[8];
+    bool hasMessage = false;
 
-    while (!digitalRead(_huaweiIrq)) {
-        _upCAN->readMsgBuf(&rxId, &len, rxBuf); // Read data: len = data length, buf = data byte(s)
+    while (!instance._stopQueueing) {
+        if (!instance._upCAN) { break; } // programmer error, should never happen
 
-        // Determine if ID is standard (11 bits) or extended (29 bits)
-        if ((rxId & 0x80000000) != 0x80000000) { continue; }
+        static auto constexpr resetNotificationValue = pdTRUE;
+        static auto constexpr notificationTimeout = pdMS_TO_TICKS(500);
 
-        if (len != 8) { continue; }
+        ulTaskNotifyTake(resetNotificationValue, notificationTimeout);
 
-        msg.canId = rxId & 0x1FFFFFFF; // mask piggy-backed MCP2515 bits
-        msg.valueId = rxBuf[0] << 24 | rxBuf[1] << 16 | rxBuf[2] << 8 | rxBuf[3];
-        msg.value = rxBuf[4] << 24 | rxBuf[5] << 16 | rxBuf[6] << 8 | rxBuf[7];
+        hasMessage = false;
 
-        return true;
+        while (!digitalRead(instance._huaweiIrq)) {
+            instance._upCAN->readMsgBuf(&rxId, &len, rxBuf); // Read data: len = data length, buf = data byte(s)
+
+            // Determine if ID is standard (11 bits) or extended (29 bits)
+            if ((rxId & 0x80000000) != 0x80000000) { continue; }
+
+            if (len != 8) { continue; }
+
+            HardwareInterface::can_message_t msg;
+            msg.canId = rxId & 0x1FFFFFFF; // mask piggy-backed MCP2515 bits
+            msg.valueId = rxBuf[0] << 24 | rxBuf[1] << 16 | rxBuf[2] << 8 | rxBuf[3];
+            msg.value = rxBuf[4] << 24 | rxBuf[5] << 16 | rxBuf[6] << 8 | rxBuf[7];
+
+            hasMessage = true;
+
+            std::lock_guard<std::mutex> lock(instance._rxQueueMutex);
+            instance._rxQueue.push(msg);
+        }
+
+        if (hasMessage) {
+            // wake up hardware interface task to actually process the message
+            xTaskNotifyGive(instance.getTaskHandle());
+        }
     }
 
-    return false;
+    instance._queueingTaskDone = true;
+    sIsrTaskHandle = nullptr;
+
+    vTaskDelete(nullptr);
+}
+
+bool MCP2515::getMessage(HardwareInterface::can_message_t& msg)
+{
+    std::lock_guard<std::mutex> lock(_rxQueueMutex);
+
+    if (_rxQueue.empty()) { return false; }
+
+    msg = _rxQueue.front();
+    _rxQueue.pop();
+
+    return true;
 }
 
 bool MCP2515::sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data)
