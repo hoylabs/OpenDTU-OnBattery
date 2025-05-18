@@ -328,10 +328,13 @@ void Controller::setParameter(float val, HardwareInterface::Setting setting)
         setting != HardwareInterface::Setting::OfflineVoltage &&
         setting != HardwareInterface::Setting::OfflineCurrent) { return; }
 
-    _setParameter(val, setting);
+    // set pollFeedback to true only if we're setting a value because of a
+    // request from the UI or MQTT. otherwise, we'll wait for the next
+    // interval to get the new value.
+    _setParameter(val, setting, true/*pollFeedback*/);
 }
 
-void Controller::_setParameter(float val, HardwareInterface::Setting setting)
+void Controller::_setParameter(float val, HardwareInterface::Setting setting, bool pollFeedback)
 {
     // NOTE: the mutex is locked by any method calling this private method
 
@@ -353,7 +356,7 @@ void Controller::_setParameter(float val, HardwareInterface::Setting setting)
         _outputCurrentOnSinceMillis = millis();
     }
 
-    _upHardwareInterface->setParameter(setting, val);
+    _upHardwareInterface->setParameter(setting, val, pollFeedback);
 }
 
 void Controller::setMode(uint8_t mode) {
