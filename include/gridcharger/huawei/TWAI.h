@@ -2,6 +2,8 @@
 #pragma once
 
 #include <atomic>
+#include <mutex>
+#include <queue>
 #include <gridcharger/huawei/HardwareInterface.h>
 
 namespace GridChargers::Huawei {
@@ -22,6 +24,8 @@ private:
     std::atomic<bool> _stopPolling = false;
 
     static void pollAlerts(void* context);
+    std::mutex _rxQueueMutex;
+    std::queue<HardwareInterface::can_message_t> _rxQueue;
 };
 
 } // namespace GridChargers::Huawei
