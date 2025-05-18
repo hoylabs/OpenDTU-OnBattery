@@ -47,7 +47,7 @@ public:
 
 private:
     void loop();
-    void _setParameter(float val, HardwareInterface::Setting setting);
+    void _setParameter(float val, HardwareInterface::Setting setting, bool pollFeedback = false);
     void _setProduction(bool enable);
 
     // these control the pin named "power", which in turn is supposed to control

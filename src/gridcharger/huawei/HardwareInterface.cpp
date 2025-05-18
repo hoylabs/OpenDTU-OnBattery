@@ -559,7 +559,7 @@ void HardwareInterface::enqueueParameter(HardwareInterface::Setting setting, flo
     });
 }
 
-void HardwareInterface::setParameter(HardwareInterface::Setting setting, float val)
+void HardwareInterface::setParameter(HardwareInterface::Setting setting, float val, bool pollFeedback)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -567,7 +567,9 @@ void HardwareInterface::setParameter(HardwareInterface::Setting setting, float v
 
     enqueueParameter(setting, val);
 
-    _lastRequestMillis = millis() - DataRequestIntervalMillis; // request early param feedback
+    if (pollFeedback) { // request early param feedback
+        _lastRequestMillis = millis() - DataRequestIntervalMillis;
+    }
 
     xTaskNotifyGive(_taskHandle);
 }

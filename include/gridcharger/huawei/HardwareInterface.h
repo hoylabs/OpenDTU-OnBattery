@@ -31,7 +31,7 @@ public:
         FanOnlineFullSpeed = 0x0134,
         FanOfflineFullSpeed = 0x0135
     };
-    void setParameter(Setting setting, float val);
+    void setParameter(Setting setting, float val, bool pollFeedback = false);
 
     std::unique_ptr<DataPointContainer> getCurrentData();
 
