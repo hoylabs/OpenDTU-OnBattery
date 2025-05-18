@@ -83,8 +83,9 @@ void setup()
         Configuration.migrate();
     }
     if (Configuration.get().Cfg.VersionOnBattery != CONFIG_VERSION_ONBATTERY) {
+        ESP_LOGI(TAG, "Migrating OpenDTU-OnBattery-specific config from %d to %d",
+            Configuration.get().Cfg.VersionOnBattery, CONFIG_VERSION_ONBATTERY);
         Configuration.migrateOnBattery();
-        MessageOutput.print("migrated OpenDTU-OnBattery-specific config... ");
     }
 
     // Set configured log levels
