@@ -51,6 +51,28 @@ void HardwareInterface::stopLoop()
     _taskHandle = nullptr;
 }
 
+void HardwareInterface::enqueueReceivedMessage(can_message_t const& msg)
+{
+    {
+        std::lock_guard<std::mutex> lock(_receiveQueueMutex);
+        _receiveQueue.push(msg);
+    }
+
+    xTaskNotifyGive(_taskHandle);
+}
+
+bool HardwareInterface::getMessage(HardwareInterface::can_message_t& msg)
+{
+    std::lock_guard<std::mutex> lock(_receiveQueueMutex);
+
+    if (_receiveQueue.empty()) { return false; }
+
+    msg = _receiveQueue.front();
+    _receiveQueue.pop();
+
+    return true;
+}
+
 bool HardwareInterface::readBoardProperties(can_message_t const& msg)
 {
     auto const& config = Configuration.get();

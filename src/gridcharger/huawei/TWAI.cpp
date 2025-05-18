@@ -117,29 +117,13 @@ void TWAI::pollAlerts(void* context)
             msg.valueId = rxMessage.data[0] << 24 | rxMessage.data[1] << 16 | rxMessage.data[2] << 8 | rxMessage.data[3];
             msg.value = rxMessage.data[4] << 24 | rxMessage.data[5] << 16 | rxMessage.data[6] << 8 | rxMessage.data[7];
 
-            std::lock_guard<std::mutex> lock(instance._rxQueueMutex);
-            instance._rxQueue.push(msg);
+            instance.enqueueReceivedMessage(msg);
         }
-
-        // wake up hardware interface task to actually process the message
-        xTaskNotifyGive(instance.getTaskHandle());
     }
 
     instance._pollingTaskDone = true;
 
     vTaskDelete(nullptr);
-}
-
-bool TWAI::getMessage(HardwareInterface::can_message_t& msg)
-{
-    std::lock_guard<std::mutex> lock(_rxQueueMutex);
-
-    if (_rxQueue.empty()) { return false; }
-
-    msg = _rxQueue.front();
-    _rxQueue.pop();
-
-    return true;
 }
 
 bool TWAI::sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data)

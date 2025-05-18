@@ -48,7 +48,7 @@ protected:
     bool startLoop();
     void stopLoop();
 
-    TaskHandle_t getTaskHandle() const { return _taskHandle; }
+    void enqueueReceivedMessage(can_message_t const& msg);
 
 private:
     static void staticLoopHelper(void* context);
@@ -56,7 +56,10 @@ private:
     void loop();
     void processQueue();
 
-    virtual bool getMessage(can_message_t& msg) = 0;
+    bool getMessage(can_message_t& msg);
+
+    std::mutex _receiveQueueMutex;
+    std::queue<can_message_t> _receiveQueue;
 
     virtual bool sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data) = 0;
 

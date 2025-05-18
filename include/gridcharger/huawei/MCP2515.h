@@ -2,8 +2,6 @@
 #pragma once
 
 #include <memory>
-#include <mutex>
-#include <queue>
 #include <SPI.h>
 #include <mcp_can.h>
 #include <SpiManager.h>
@@ -16,8 +14,6 @@ public:
     ~MCP2515();
 
     bool init() final;
-
-    bool getMessage(HardwareInterface::can_message_t& msg) final;
 
     bool sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data) final;
 
@@ -35,8 +31,6 @@ private:
     std::atomic<bool> _stopQueueing = false;
 
     static void queueMessages(void* context);
-    std::mutex _rxQueueMutex;
-    std::queue<HardwareInterface::can_message_t> _rxQueue;
 };
 
 } // namespace GridChargers::Huawei
