@@ -94,6 +94,7 @@ void Controller::updateSettings()
         disableOutput();
     }
 
+    _mode = HUAWEI_MODE_AUTO_EXT;
     if (config.GridCharger.AutoPowerEnabled) {
         _mode = HUAWEI_MODE_AUTO_INT;
     }
