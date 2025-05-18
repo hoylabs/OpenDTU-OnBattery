@@ -328,6 +328,7 @@
         "Task_mqttclient": "MQTT Client",
         "Task_huaweihwifc": "Netzladegerät",
         "Task_huaweitwai": "Netzladegerät TWAI",
+        "Task_huaweimcp2515": "Netzladegerät MCP2515",
         "Task_pmsdm": "Stromzähler (SDM)",
         "Task_pmhttpjson": "Stromzähler (HTTP+JSON)",
         "Task_pmsml": "Stromzähler (Serial SML)",
