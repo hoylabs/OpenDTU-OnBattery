@@ -98,12 +98,31 @@ void TWAI::pollAlerts(void* context)
     uint32_t alerts;
 
     while (!instance._stopPolling) {
+        // blocks until an alert was received or the timeout expired.
         if (twai_read_alerts(&alerts, pdMS_TO_TICKS(500)) != ESP_OK) { continue; }
 
-        if (alerts & TWAI_ALERT_RX_DATA) {
-            // wake up hardware interface task to actually receive the message
-            xTaskNotifyGive(instance.getTaskHandle());
+        if ((alerts & TWAI_ALERT_RX_DATA) == 0) { continue; }
+
+        while (true) {
+            twai_message_t rxMessage;
+
+            if (twai_receive(&rxMessage, pdMS_TO_TICKS(1)) != ESP_OK) { break; }
+
+            if (rxMessage.extd != 1) { continue; } // we only process extended format messages
+
+            if (rxMessage.data_length_code != 8) { continue; }
+
+            HardwareInterface::can_message_t msg;
+            msg.canId = rxMessage.identifier;
+            msg.valueId = rxMessage.data[0] << 24 | rxMessage.data[1] << 16 | rxMessage.data[2] << 8 | rxMessage.data[3];
+            msg.value = rxMessage.data[4] << 24 | rxMessage.data[5] << 16 | rxMessage.data[6] << 8 | rxMessage.data[7];
+
+            std::lock_guard<std::mutex> lock(instance._rxQueueMutex);
+            instance._rxQueue.push(msg);
         }
+
+        // wake up hardware interface task to actually process the message
+        xTaskNotifyGive(instance.getTaskHandle());
     }
 
     instance._pollingTaskDone = true;
@@ -113,26 +132,14 @@ void TWAI::pollAlerts(void* context)
 
 bool TWAI::getMessage(HardwareInterface::can_message_t& msg)
 {
-    while (true) {
-        twai_message_t rxMessage;
+    std::lock_guard<std::mutex> lock(_rxQueueMutex);
 
-        // it's okay if we cannot receive a message now, as the hardware
-        // interface task wakes up for reasons other than a message being
-        // received, but always checks if a message is available.
-        if (twai_receive(&rxMessage, pdMS_TO_TICKS(1)) != ESP_OK) { return false; }
+    if (_rxQueue.empty()) { return false; }
 
-        if (rxMessage.extd != 1) { continue; } // we only process extended format messages
+    msg = _rxQueue.front();
+    _rxQueue.pop();
 
-        if (rxMessage.data_length_code != 8) { continue; }
-
-        msg.canId = rxMessage.identifier;
-        msg.valueId = rxMessage.data[0] << 24 | rxMessage.data[1] << 16 | rxMessage.data[2] << 8 | rxMessage.data[3];
-        msg.value = rxMessage.data[4] << 24 | rxMessage.data[5] << 16 | rxMessage.data[6] << 8 | rxMessage.data[7];
-
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 bool TWAI::sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data)
