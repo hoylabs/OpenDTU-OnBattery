@@ -258,7 +258,7 @@ bool SerialCommand::isValid() const {
     if(!SerialMessage::isValid()) {return false;}
 
     Status const actualStatus = getStatus();
-    if (actualStatus != Status::Read || actualStatus != Status::Write) {
+    if (actualStatus != Status::Read && actualStatus != Status::Write) {
         MessageOutput.printf("JbdBms::SerialMessage: invalid status 0x%02x, expected 0x%02x or 0x%02x\r\n",
             static_cast<uint32_t>(actualStatus),
             static_cast<uint32_t>(Status::Read),
