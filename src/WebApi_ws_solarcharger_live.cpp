@@ -5,12 +5,14 @@
 #include "WebApi_ws_solarcharger_live.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
-#include "MessageOutput.h"
 #include "Utils.h"
 #include "WebApi.h"
 #include "defaults.h"
 #include "PowerLimiter.h"
 #include <solarcharger/Controller.h>
+
+#undef TAG
+static const char* TAG = "webapi";
 
 WebApiWsSolarChargerLiveClass::WebApiWsSolarChargerLiveClass()
     : _ws("/solarchargerlivedata")
@@ -98,9 +100,9 @@ void WebApiWsSolarChargerLiveClass::sendDataTaskCb()
                 _ws.textAll(buffer);;
             }
         } catch (std::bad_alloc& bad_alloc) {
-            MessageOutput.printf("Calling /api/solarchargerlivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
+            ESP_LOGE(TAG, "Calling /api/solarchargerlivedata/status has temporarily run out of resources. Reason: \"%s\".", bad_alloc.what());
         } catch (const std::exception& exc) {
-            MessageOutput.printf("Unknown exception in /api/solarchargerlivedata/status. Reason: \"%s\".\r\n", exc.what());
+            ESP_LOGE(TAG, "Unknown exception in /api/solarchargerlivedata/status. Reason: \"%s\".", exc.what());
         }
     }
 
@@ -118,15 +120,9 @@ void WebApiWsSolarChargerLiveClass::generateCommonJsonResponse(JsonVariant& root
 void WebApiWsSolarChargerLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
 {
     if (type == WS_EVT_CONNECT) {
-        char str[64];
-        snprintf(str, sizeof(str), "Websocket: [%s][%u] connect", server->url(), client->id());
-        Serial.println(str);
-        MessageOutput.println(str);
+        ESP_LOGD(TAG, "Websocket: [%s][%" PRIu32 "] connect", server->url(), client->id());
     } else if (type == WS_EVT_DISCONNECT) {
-        char str[64];
-        snprintf(str, sizeof(str), "Websocket: [%s][%u] disconnect", server->url(), client->id());
-        Serial.println(str);
-        MessageOutput.println(str);
+        ESP_LOGD(TAG, "Websocket: [%s][%" PRIu32 "] disconnect", server->url(), client->id());
     }
 }
 
@@ -144,10 +140,10 @@ void WebApiWsSolarChargerLiveClass::onLivedataStatus(AsyncWebServerRequest* requ
 
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
     } catch (std::bad_alloc& bad_alloc) {
-        MessageOutput.printf("Calling /api/solarchargerlivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
+        ESP_LOGE(TAG, "Calling /api/solarchargerlivedata/status has temporarily run out of resources. Reason: \"%s\".", bad_alloc.what());
         WebApi.sendTooManyRequests(request);
     } catch (const std::exception& exc) {
-        MessageOutput.printf("Unknown exception in /api/solarchargerlivedata/status. Reason: \"%s\".\r\n", exc.what());
+        ESP_LOGE(TAG, "Unknown exception in /api/solarchargerlivedata/status. Reason: \"%s\".", exc.what());
         WebApi.sendTooManyRequests(request);
     }
 }

@@ -5,7 +5,6 @@
 #include "WebApi_gridcharger.h"
 #include <gridcharger/huawei/Controller.h>
 #include "Configuration.h"
-#include "MessageOutput.h"
 #include "PinMapping.h"
 #include "WebApi.h"
 #include "WebApi_errors.h"

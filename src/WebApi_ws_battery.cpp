@@ -7,10 +7,12 @@
 #include "Configuration.h"
 #include <battery/Controller.h>
 #include <battery/Stats.h>
-#include "MessageOutput.h"
 #include "WebApi.h"
 #include "defaults.h"
 #include "Utils.h"
+
+#undef TAG
+static const char* TAG = "webapi";
 
 WebApiWsBatteryLiveClass::WebApiWsBatteryLiveClass()
     : _ws("/batterylivedata")
@@ -105,9 +107,9 @@ void WebApiWsBatteryLiveClass::sendDataTaskCb()
             _ws.textAll(buffer);
         }
     } catch (std::bad_alloc& bad_alloc) {
-        MessageOutput.printf("Calling /api/batterylivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
+        ESP_LOGE(TAG, "Calling /api/batterylivedata/status has temporarily run out of resources. Reason: \"%s\".", bad_alloc.what());
     } catch (const std::exception& exc) {
-            MessageOutput.printf("Unknown exception in /api/batterylivedata/status. Reason: \"%s\".\r\n", exc.what());
+        ESP_LOGE(TAG, "Unknown exception in /api/batterylivedata/status. Reason: \"%s\".", exc.what());
     }
 }
 
@@ -119,9 +121,9 @@ void WebApiWsBatteryLiveClass::generateCommonJsonResponse(JsonVariant& root)
 void WebApiWsBatteryLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
 {
     if (type == WS_EVT_CONNECT) {
-        MessageOutput.printf("Websocket: [%s][%u] connect\r\n", server->url(), client->id());
+        ESP_LOGD(TAG, "Websocket: [%s][%u] connect", server->url(), client->id());
     } else if (type == WS_EVT_DISCONNECT) {
-        MessageOutput.printf("Websocket: [%s][%u] disconnect\r\n", server->url(), client->id());
+        ESP_LOGD(TAG, "Websocket: [%s][%u] disconnect", server->url(), client->id());
     }
 }
 
@@ -138,10 +140,10 @@ void WebApiWsBatteryLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
 
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
     } catch (std::bad_alloc& bad_alloc) {
-        MessageOutput.printf("Calling /api/batterylivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
+        ESP_LOGE(TAG, "Calling /api/batterylivedata/status has temporarily run out of resources. Reason: \"%s\".", bad_alloc.what());
         WebApi.sendTooManyRequests(request);
     } catch (const std::exception& exc) {
-        MessageOutput.printf("Unknown exception in /api/batterylivedata/status. Reason: \"%s\".\r\n", exc.what());
+        ESP_LOGE(TAG, "Unknown exception in /api/batterylivedata/status. Reason: \"%s\".", exc.what());
         WebApi.sendTooManyRequests(request);
     }
 }
