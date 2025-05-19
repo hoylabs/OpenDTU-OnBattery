@@ -7,6 +7,7 @@
         "MQTTSettings": "MQTT",
         "InverterSettings": "Wechselrichter",
         "SecuritySettings": "Sicherheit",
+        "LoggingSettings": "Protokollierung",
         "DTUSettings": "DTU",
         "DeviceManager": "Hardware",
         "SolarChargerSettings": "Solarladeregler",
@@ -112,6 +113,8 @@
         "8004": "DNS-Server-IP 1 ist ungültig!",
         "8005": "DNS-Server-IP 2 ist ungültig!",
         "8006": "Admin AccessPoint Zeitlimit ist ungültig!",
+        "8007": "Syslog-Server muss zwischen 1 und {max} Zeichen lang sein!",
+        "8008": "Port muss eine Zahl zwischen 1 und 65535 sein!",
         "9001": "Zeitserver muss zwischen 1 und {max} Zeichen lang sein!",
         "9002": "Zeitzone muss zwischen 1 und {max} Zeichen lang sein!",
         "9003": "Zeitzonenbeschreibung muss zwischen 1 und {max} Zeichen lang sein!",
@@ -264,6 +267,7 @@
         "SdkVersion": "SDK-Version",
         "ConfigVersion": "Konfigurationsversion",
         "FirmwareVersion": "Firmwareversion / Git Hash",
+        "FirmwareBranch": "Firmware Branch",
         "PioEnv": "PIO Umgebung",
         "FirmwareVersionHint": "Klicke hier, um Informationen über die installierte Version anzuzeigen",
         "FirmwareUpdate": "Firmware-Aktualisierung",
@@ -426,7 +430,11 @@
         "VirtualDebugConsole": "Virtuelle Debug-Konsole",
         "EnableAutoScroll": "Automatisches Scrollen aktivieren",
         "ClearConsole": "Konsole leeren",
-        "CopyToClipboard": "In die Zwischenablage kopieren"
+        "CopyToClipboard": "In die Zwischenablage kopieren",
+        "Download": "Herunterladen",
+        "RegularExpression": "Regulärer Ausdruck",
+        "Lines": "{lines} Zeilen",
+        "LogLevel": "Protokollierungsstufe ({cnt})"
     },
     "inverterchannelinfo": {
         "String": "String {num}",
@@ -996,6 +1004,20 @@
         "format_herf_valid": "E-Star HERF Format (wird konvertiert gespeichert): {serial}",
         "format_herf_invalid": "E-Star HERF Format: Ungültige Prüfsumme",
         "format_unknown": "Unbekanntes Format"
+    },
+    "loggingadmin": {
+        "LoggingSettings": "Protokollierungseinstellungen",
+        "LogLevel": "Protokollierungsstufe",
+        "DefaultLevel": "Standard-Protokollierungsstufe",
+        "Module": "Modul",
+        "CoreHint": "Achtung: Ein zu detaillierte Protokollierungsstufe des CORE-Moduls kann die Performanz signifikant beeinträchtigen und zu unvorhersehbarem Verhalten führen. Die Log-Level-Einstellung sollte nur bei gezielter Fehlersuche temporär angepasst werden. Die Standardeinstellung 'Fehler' ist für den normalen Betrieb ausreichend.",
+        "log_inherit": "Von Standard erben",
+        "log_none": "Keine",
+        "log_error": "(E) Fehler",
+        "log_warn": "(W) Warnung",
+        "log_info": "(I) Info",
+        "log_debug": "(D) Debug",
+        "log_verbose": "(V) Ausführlich"
     },
     "huawei": {
         "Input": "Eingang",
