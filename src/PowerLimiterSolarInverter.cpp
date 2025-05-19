@@ -1,4 +1,3 @@
-#include "MessageOutput.h"
 #include "PowerLimiterSolarInverter.h"
 
 PowerLimiterSolarInverter::PowerLimiterSolarInverter(bool verboseLogging, PowerLimiterInverterConfig const& config)
