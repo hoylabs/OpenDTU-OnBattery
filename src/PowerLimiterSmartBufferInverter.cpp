@@ -1,4 +1,3 @@
-#include "MessageOutput.h"
 #include "PowerLimiterSmartBufferInverter.h"
 
 PowerLimiterSmartBufferInverter::PowerLimiterSmartBufferInverter(bool verboseLogging, PowerLimiterInverterConfig const& config)

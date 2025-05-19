@@ -7,7 +7,6 @@
 #include "Configuration.h"
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
-#include "MessageOutput.h"
 #include "Utils.h"
 #include "PowerLimiter.h"
 #include "__compiled_constants.h"

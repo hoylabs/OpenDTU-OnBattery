@@ -2,12 +2,15 @@
 /*
  * Copyright (C) 2022 Thomas Basler, Malte Schmidt and others
  */
-#include "MessageOutput.h"
 #include "MqttSettings.h"
 #include "MqttHandlePowerLimiter.h"
 #include "PowerLimiter.h"
 #include <ctime>
 #include <string>
+#include <LogHelper.h>
+
+static const char* TAG = "dynamicPowerLimiter";
+static const char* SUBTAG = "MQTT";
 
 MqttHandlePowerLimiterClass MqttHandlePowerLimiter;
 
@@ -121,8 +124,7 @@ void MqttHandlePowerLimiterClass::onMqttCmd(MqttPowerLimiterCommand command, con
         payload_val = std::stof(strValue);
     }
     catch (std::invalid_argument const& e) {
-        MessageOutput.printf("PowerLimiter MQTT handler: cannot parse payload of topic '%s' as float: %s\r\n",
-                topic, strValue.c_str());
+        DTU_LOGE("cannot parse payload of topic '%s' as float: %s", topic, strValue.c_str());
         return;
     }
     const int intValue = static_cast<int>(payload_val);
@@ -132,19 +134,19 @@ void MqttHandlePowerLimiterClass::onMqttCmd(MqttPowerLimiterCommand command, con
         using Mode = PowerLimiterClass::Mode;
         Mode mode = static_cast<Mode>(intValue);
         if (mode == Mode::UnconditionalFullSolarPassthrough) {
-            MessageOutput.println("Power limiter unconditional full solar PT");
+            DTU_LOGI("Power limiter unconditional full solar PT");
             _mqttCallbacks.push_back(std::bind(&PowerLimiterClass::setMode,
                         &PowerLimiter, Mode::UnconditionalFullSolarPassthrough));
         } else if (mode == Mode::Disabled) {
-            MessageOutput.println("Power limiter disabled (override)");
+            DTU_LOGI("Power limiter disabled (override)");
             _mqttCallbacks.push_back(std::bind(&PowerLimiterClass::setMode,
                         &PowerLimiter, Mode::Disabled));
         } else if (mode == Mode::Normal) {
-            MessageOutput.println("Power limiter normal operation");
+            DTU_LOGI("Power limiter normal operation");
             _mqttCallbacks.push_back(std::bind(&PowerLimiterClass::setMode,
                         &PowerLimiter, Mode::Normal));
         } else {
-            MessageOutput.printf("PowerLimiter - unknown mode %d\r\n", intValue);
+            DTU_LOGE("PowerLimiter - unknown mode %d", intValue);
         }
         return;
     }
@@ -158,47 +160,47 @@ void MqttHandlePowerLimiterClass::onMqttCmd(MqttPowerLimiterCommand command, con
             break;
         case MqttPowerLimiterCommand::BatterySoCStartThreshold:
             if (config.PowerLimiter.BatterySocStartThreshold == intValue) { return; }
-            MessageOutput.printf("Setting battery SoC start threshold to: %d %%\r\n", intValue);
+            DTU_LOGI("Setting battery SoC start threshold to: %d %%", intValue);
             config.PowerLimiter.BatterySocStartThreshold = intValue;
             break;
         case MqttPowerLimiterCommand::BatterySoCStopThreshold:
             if (config.PowerLimiter.BatterySocStopThreshold == intValue) { return; }
-            MessageOutput.printf("Setting battery SoC stop threshold to: %d %%\r\n", intValue);
+            DTU_LOGI("Setting battery SoC stop threshold to: %d %%", intValue);
             config.PowerLimiter.BatterySocStopThreshold = intValue;
             break;
         case MqttPowerLimiterCommand::FullSolarPassthroughSoC:
             if (config.PowerLimiter.FullSolarPassThroughSoc == intValue) { return; }
-            MessageOutput.printf("Setting full solar passthrough SoC to: %d %%\r\n", intValue);
+            DTU_LOGI("Setting full solar passthrough SoC to: %d %%", intValue);
             config.PowerLimiter.FullSolarPassThroughSoc = intValue;
             break;
         case MqttPowerLimiterCommand::VoltageStartThreshold:
             if (config.PowerLimiter.VoltageStartThreshold == payload_val) { return; }
-            MessageOutput.printf("Setting voltage start threshold to: %.2f V\r\n", payload_val);
+            DTU_LOGI("Setting voltage start threshold to: %.2f V", payload_val);
             config.PowerLimiter.VoltageStartThreshold = payload_val;
             break;
         case MqttPowerLimiterCommand::VoltageStopThreshold:
             if (config.PowerLimiter.VoltageStopThreshold == payload_val) { return; }
-            MessageOutput.printf("Setting voltage stop threshold to: %.2f V\r\n", payload_val);
+            DTU_LOGI("Setting voltage stop threshold to: %.2f V", payload_val);
             config.PowerLimiter.VoltageStopThreshold = payload_val;
             break;
         case MqttPowerLimiterCommand::FullSolarPassThroughStartVoltage:
             if (config.PowerLimiter.FullSolarPassThroughStartVoltage == payload_val) { return; }
-            MessageOutput.printf("Setting full solar passthrough start voltage to: %.2f V\r\n", payload_val);
+            DTU_LOGI("Setting full solar passthrough start voltage to: %.2f V", payload_val);
             config.PowerLimiter.FullSolarPassThroughStartVoltage = payload_val;
             break;
         case MqttPowerLimiterCommand::FullSolarPassThroughStopVoltage:
             if (config.PowerLimiter.FullSolarPassThroughStopVoltage == payload_val) { return; }
-            MessageOutput.printf("Setting full solar passthrough stop voltage to: %.2f V\r\n", payload_val);
+            DTU_LOGI("Setting full solar passthrough stop voltage to: %.2f V", payload_val);
             config.PowerLimiter.FullSolarPassThroughStopVoltage = payload_val;
             break;
         case MqttPowerLimiterCommand::UpperPowerLimit:
             if (config.PowerLimiter.TotalUpperPowerLimit == intValue) { return; }
-            MessageOutput.printf("Setting total upper power limit to: %d W\r\n", intValue);
+            DTU_LOGI("Setting total upper power limit to: %d W", intValue);
             config.PowerLimiter.TotalUpperPowerLimit = intValue;
             break;
         case MqttPowerLimiterCommand::TargetPowerConsumption:
             if (config.PowerLimiter.TargetPowerConsumption == intValue) { return; }
-            MessageOutput.printf("Setting target power consumption to: %d W\r\n", intValue);
+            DTU_LOGI("Setting target power consumption to: %d W", intValue);
             config.PowerLimiter.TargetPowerConsumption = intValue;
             break;
     }

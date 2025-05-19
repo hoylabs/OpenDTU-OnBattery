@@ -1,10 +1,14 @@
 #include "RestartHelper.h"
-#include "MessageOutput.h"
 #include "PowerLimiterInverter.h"
 #include "PowerLimiterBatteryInverter.h"
 #include "PowerLimiterSolarInverter.h"
 #include "PowerLimiterSmartBufferInverter.h"
 #include "SunPosition.h"
+#include <esp_log.h>
+#include <LogHelper.h>
+
+static const char* TAG = "dynamicPowerLimiter";
+#define SUBTAG _logPrefix
 
 std::unique_ptr<PowerLimiterInverter> PowerLimiterInverter::create(
         bool verboseLogging, PowerLimiterInverterConfig const& config)
@@ -39,7 +43,7 @@ PowerLimiterInverter::PowerLimiterInverter(bool verboseLogging, PowerLimiterInve
             static_cast<uint32_t>((config.Serial >> 32) & 0xFFFFFFFF),
             static_cast<uint32_t>(config.Serial & 0xFFFFFFFF));
 
-    snprintf(_logPrefix, sizeof(_logPrefix), "[DPL inverter %s]:", _serialStr);
+    snprintf(_logPrefix, sizeof(_logPrefix), "Inverter %s", _serialStr);
 }
 
 PowerLimiterInverter::Eligibility PowerLimiterInverter::getEligibility() const
@@ -92,8 +96,7 @@ bool PowerLimiterInverter::update()
             // inverters whose current limit is not fetched for some reason (see
             // #1427) are "woken up".
             if (!_oTargetPowerLimitWatts.has_value()) {
-                MessageOutput.printf("%s bootstrapping by setting "
-                        "lower power limit\r\n", _logPrefix);
+                DTU_LOGD("bootstrapping by setting lower power limit");
                 _oTargetPowerLimitWatts = _config.LowerPowerLimit;
             }
             break;
@@ -122,14 +125,12 @@ bool PowerLimiterInverter::update()
         // DPL did calculate a new limit, which in turn does not happen while the
         // inverter is unreachable, no matter how long (a whole night) that might be.
         if (_updateTimeouts >= 20) {
-            MessageOutput.printf("%s restarting system since inverter is "
-                    "unresponsive\r\n", _logPrefix);
+            DTU_LOGE("restarting system since inverter is unresponsive");
             RestartHelper.triggerRestart();
         }
         else if (_updateTimeouts >= 10) {
-            MessageOutput.printf("%s issuing restart command after "
-                    "update timed out or failed %d times\r\n",
-                    _logPrefix, _updateTimeouts);
+            DTU_LOGW("issuing restart command after update timed out or failed %d times",
+                    _updateTimeouts);
             _spInverter->sendRestartControlRequest();
         }
 
@@ -137,9 +138,8 @@ bool PowerLimiterInverter::update()
     };
 
     if ((millis() - *_oUpdateStartMillis) > 30 * 1000) {
-        MessageOutput.printf("%s timeout (%d in succession), "
-                "state transition pending: %s, limit pending: %s\r\n",
-                _logPrefix, _updateTimeouts,
+        DTU_LOGW("timeout (%d in succession), state transition pending: %s, limit pending: %s",
+                _updateTimeouts,
                 (_oTargetPowerState.has_value()?"yes":"no"),
                 (_oTargetPowerLimitWatts.has_value()?"yes":"no"));
 
@@ -168,8 +168,7 @@ bool PowerLimiterInverter::update()
         if ((lastStatisticsMillis - lastPowerCommandMillis) > halfOfAllMillis) { return true; }
 
         if (isProducing() != *_oTargetPowerState) {
-            MessageOutput.printf("%s %s inverter...\r\n", _logPrefix,
-                    ((*_oTargetPowerState)?"Starting":"Stopping"));
+            DTU_LOGI("%s inverter...", ((*_oTargetPowerState)?"Starting":"Stopping"));
             _spInverter->sendPowerControlRequest(*_oTargetPowerState);
             return true;
         }
@@ -202,10 +201,9 @@ bool PowerLimiterInverter::update()
         // update cycle, we should assume *our* requested limit was set.
         uint32_t lastLimitCommandMillis = _spInverter->SystemConfigPara()->getLastUpdateCommand();
         if ((lastLimitCommandMillis - *_oUpdateStartMillis) < halfOfAllMillis) {
-            MessageOutput.printf("%s limit update %s, actual limit is %.1f %% (%.0f W "
+            DTU_LOGD("limit update %s, actual limit is %.1f %% (%.0f W "
                     "respectively), effective %d ms after update started, "
-                    "requested were %.1f %%\r\n",
-                    _logPrefix,
+                    "requested were %.1f %%",
                     (CMD_OK == lastLimitCommandState)?"succeeded":"FAILED",
                     currentRelativeLimit,
                     (currentRelativeLimit * getInverterMaxPowerWatts() / 100),
@@ -214,10 +212,10 @@ bool PowerLimiterInverter::update()
 
             auto deviation = std::abs(newRelativeLimit - currentRelativeLimit);
             if (CMD_OK == lastLimitCommandState && deviation > 2.0) {
-                MessageOutput.printf("%s NOTE: expected limit of %.1f %% "
-                        "and actual limit of %.1f %% mismatch by more than 2 %%, "
-                        "is the DPL in exclusive control over the inverter?\r\n",
-                        _logPrefix, newRelativeLimit, currentRelativeLimit);
+                DTU_LOGW("expected limit of %.1f %% and actual limit of "
+                        "%.1f %% mismatch by more than 2 %%, is the DPL in exclusive "
+                        "control over the inverter?",
+                        newRelativeLimit, currentRelativeLimit);
             }
 
             _oTargetPowerLimitWatts = std::nullopt;
@@ -232,8 +230,7 @@ bool PowerLimiterInverter::update()
             return false;
         }
 
-        MessageOutput.printf("%s sending limit of %.1f %% (%.0f W "
-                "respectively), max output is %d W\r\n", _logPrefix,
+        DTU_LOGI("sending limit of %.1f %% (%.0f W respectively), max output is %d W",
                 newRelativeLimit, (newRelativeLimit * getInverterMaxPowerWatts() / 100),
                 getInverterMaxPowerWatts());
 
@@ -347,7 +344,7 @@ uint16_t PowerLimiterInverter::getCurrentLimitWatts() const
 
 void PowerLimiterInverter::debug() const
 {
-    if (!_verboseLogging) { return; }
+    if (esp_log_level_get(TAG) < ESP_LOG_VERBOSE) { return; }
 
     String eligibility("disqualified");
     switch (getEligibility()) {
@@ -371,22 +368,24 @@ void PowerLimiterInverter::debug() const
             break;
     }
 
-    MessageOutput.printf(
-        "%s\r\n"
-        "    %s-powered, %s %d W, output %s power meter reading\r\n"
-        "    lower/current/upper limit: %d/%d/%d W, output capability: %d W\r\n"
-        "    sending commands %s, %s, %s\r\n"
-        "    max reduction production/standby: %d/%d W, max increase: %d W\r\n"
-        "    target limit/output/state: %i W (%s)/%d W/%s, %d update timeouts\r\n",
-        _logPrefix,
+    DTU_LOGV("State Details");
+    DTU_LOGV("    %s-powered, %s %d W, output %s power meter reading",
         (isSmartBufferPowered()?"smart-buffer":(isSolarPowered()?"solar":"battery")),
         (isProducing()?"producing":"standing by at"), getCurrentOutputAcWatts(),
-        (isBehindPowerMeter()?"included in":"excluded from"),
+        (isBehindPowerMeter()?"included in":"excluded from")
+    );
+    DTU_LOGV("    lower/current/upper limit: %d/%d/%d W, output capability: %d W",
         _config.LowerPowerLimit, getCurrentLimitWatts(), _config.UpperPowerLimit,
-        getInverterMaxPowerWatts(),
+        getInverterMaxPowerWatts()
+    );
+    DTU_LOGV("    sending commands %s, %s, %s",
         (isSendingCommandsEnabled()?"enabled":"disabled"),
-        (isReachable()?"reachable":"offline"), eligibility.c_str(),
-        getMaxReductionWatts(false), getMaxReductionWatts(true), getMaxIncreaseWatts(),
+        (isReachable()?"reachable":"offline"), eligibility.c_str()
+    );
+    DTU_LOGV("    max reduction production/standby: %d/%d W, max increase: %d W",
+        getMaxReductionWatts(false), getMaxReductionWatts(true), getMaxIncreaseWatts()
+    );
+    DTU_LOGV("    target limit/output/state: %i W (%s)/%d W/%s, %d update timeouts",
         (_oTargetPowerLimitWatts.has_value()?*_oTargetPowerLimitWatts:-1),
         (_oTargetPowerLimitWatts.has_value()?"update":"unchanged"),
         getExpectedOutputAcWatts(),
@@ -394,7 +393,8 @@ void PowerLimiterInverter::debug() const
         getUpdateTimeouts()
     );
 
-    MessageOutput.printf("    MPPTs AC power/DC voltage:");
+    char mpptDebug[160] = {0}; // AI says this is sufficient for up to 6 MPPTs
+    size_t offset = snprintf(mpptDebug, sizeof(mpptDebug), "    MPPTs AC power/DC voltage:");
 
     auto pStats = _spInverter->Statistics();
     float inverterEfficiencyFactor = pStats->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF) / 100;
@@ -410,11 +410,11 @@ void PowerLimiterInverter::debug() const
             mpptVoltageDC = std::max(mpptVoltageDC, pStats->getChannelFieldValue(TYPE_DC, c, FLD_UDC));
         }
 
-        MessageOutput.printf(" %c: %.0f W/%.1f V",
-                mpptName(m), mpptPowerAC, mpptVoltageDC);
+        offset += snprintf(mpptDebug + offset, sizeof(mpptDebug) - offset,
+                " %c: %.0f W/%.1f V", mpptName(m), mpptPowerAC, mpptVoltageDC);
     }
 
-    MessageOutput.printf("\r\n");
+    DTU_LOGV("%s", mpptDebug);
 }
 
 char PowerLimiterInverter::mpptName(MpptNum_t mppt)

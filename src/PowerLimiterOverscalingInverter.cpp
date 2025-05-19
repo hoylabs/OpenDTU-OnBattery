@@ -1,5 +1,8 @@
-#include "MessageOutput.h"
 #include "PowerLimiterOverscalingInverter.h"
+#include <LogHelper.h>
+
+static const char* TAG = "dynamicPowerLimiter";
+#define SUBTAG _logPrefix
 
 PowerLimiterOverscalingInverter::PowerLimiterOverscalingInverter(bool verboseLogging, PowerLimiterInverterConfig const& config)
     : PowerLimiterInverter(verboseLogging, config) { }
@@ -92,12 +95,7 @@ uint16_t PowerLimiterOverscalingInverter::scaleLimit(uint16_t newExpectedOutputW
     float newRequiredOutputThreshold = calculateRequiredOutputThreshold(newExpectedOutputWatts);
     float newExpectedMpptPowerAc = (newExpectedOutputWatts / dcTotalMppts) * newRequiredOutputThreshold;
 
-    if (_verboseLogging) {
-        MessageOutput.printf(
-            "%s\r\n"
-            "    expected AC power per MPPT %.0f W\r\n",
-            _logPrefix, currentExpectedMpptPowerAc);
-    }
+    DTU_LOGD("expected AC power per MPPT %.0f W", currentExpectedMpptPowerAc);
 
     size_t currentlyShadedMpptCount = 0;
     float currentlyShadedChannelACPowerSum = 0.0;
@@ -161,10 +159,8 @@ uint16_t PowerLimiterOverscalingInverter::scaleLimit(uint16_t newExpectedOutputW
 
     if (overScaledLimit <= newExpectedOutputWatts) { return newExpectedOutputWatts; }
 
-    if (_verboseLogging) {
-        MessageOutput.printf("    %d/%d mppts are not-producing/shaded, scaling %d W\r\n",
-                currentlyShadedMpptCount, dcTotalMppts, overScaledLimit);
-    }
+    DTU_LOGD("%d/%d mppts are not-producing/shaded, scaling %d W",
+            currentlyShadedMpptCount, dcTotalMppts, overScaledLimit);
 
     return overScaledLimit;
 }
