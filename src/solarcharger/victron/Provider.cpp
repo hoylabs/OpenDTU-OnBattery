@@ -2,8 +2,11 @@
 #include <solarcharger/victron/Provider.h>
 #include "Configuration.h"
 #include "PinMapping.h"
-#include "MessageOutput.h"
 #include "SerialPortManager.h"
+#include <LogHelper.h>
+
+static const char* TAG = "solarCharger";
+static const char* SUBTAG = "VE.Direct";
 
 namespace SolarChargers::Victron {
 
@@ -41,11 +44,10 @@ void Provider::deinit()
 bool Provider::initController(gpio_num_t rx, gpio_num_t tx, bool logging,
         uint8_t instance)
 {
-    MessageOutput.printf("[VictronMppt Instance %d] rx = %d, tx = %d\r\n",
-            instance, rx, tx);
+    DTU_LOGI("Instance %d: rx = %d, tx = %d", instance, rx, tx);
 
     if (rx <= GPIO_NUM_NC) {
-        MessageOutput.printf("[VictronMppt Instance %d] invalid pin config\r\n", instance);
+        DTU_LOGE("Instance %d: invalid pin config", instance);
         return false;
     }
 

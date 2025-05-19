@@ -2,8 +2,11 @@
 #include <solarcharger/mqtt/Provider.h>
 #include <Configuration.h>
 #include <MqttSettings.h>
-#include <MessageOutput.h>
 #include <Utils.h>
+#include <LogHelper.h>
+
+static const char* TAG = "solarCharger";
+static const char* SUBTAG = "MQTT";
 
 namespace SolarChargers::Mqtt {
 
@@ -22,9 +25,9 @@ bool Provider::init(bool verboseLogging)
     }
 
     if (!configValid) {
-        MessageOutput.printf("[SolarChargers::Mqtt]: Init failed. "
+        DTU_LOGE("Init failed. "
                "switch 'calculate output power' %s, power topic %s, "
-               "current topic %s, voltage topic %s\r\n",
+               "current topic %s, voltage topic %s",
                config.CalculateOutputPower ? "enabled" : "disabled",
                _outputPowerTopic.isEmpty() ? "empty" : "available",
                _outputCurrentTopic.isEmpty() ? "empty" : "available",
@@ -44,10 +47,7 @@ bool Provider::init(bool verboseLogging)
                     config.PowerJsonPath)
                 );
 
-        if (_verboseLogging) {
-            MessageOutput.printf("[SolarChargers::Mqtt]: Subscribed to '%s' for ouput_power readings\r\n",
-                _outputPowerTopic.c_str());
-        }
+        DTU_LOGI("Subscribed to '%s' for ouput_power readings", _outputPowerTopic.c_str());
     }
 
     if (!_outputCurrentTopic.isEmpty()) {
@@ -60,10 +60,7 @@ bool Provider::init(bool verboseLogging)
                     config.CurrentJsonPath)
                 );
 
-        if (_verboseLogging) {
-            MessageOutput.printf("[SolarChargers::Mqtt]: Subscribed to '%s' for output_current readings\r\n",
-                _outputCurrentTopic.c_str());
-        }
+        DTU_LOGI("Subscribed to '%s' for output_current readings", _outputCurrentTopic.c_str());
     }
 
     if (!_outputVoltageTopic.isEmpty()) {
@@ -76,10 +73,7 @@ bool Provider::init(bool verboseLogging)
                     config.VoltageJsonPath)
                 );
 
-        if (_verboseLogging) {
-            MessageOutput.printf("[SolarChargers::Mqtt]: Subscribed to '%s' for ouput_voltage readings\r\n",
-                _outputVoltageTopic.c_str());
-        }
+        DTU_LOGI("Subscribed to '%s' for ouput_voltage readings", _outputVoltageTopic.c_str());
     }
 
     return true;
@@ -117,17 +111,13 @@ void Provider::onMqttMessageOutputPower(espMqttClientTypes::MessageProperties co
     }
 
     if (*outputPower < 0) {
-        MessageOutput.printf("[SolarChargers::Mqtt]: Implausible output_power '%.1f' in topic '%s'\r\n",
-                *outputPower, topic);
+        DTU_LOGW("Implausible output_power '%.1f' in topic '%s'", *outputPower, topic);
         return;
     }
 
     _stats->setOutputPowerWatts(*outputPower);
 
-    if (_verboseLogging) {
-        MessageOutput.printf("[SolarChargers::Mqtt]: Updated output_power to %.1f from '%s'\r\n",
-                *outputPower, topic);
-    }
+    DTU_LOGD("Updated output_power to %.1f from '%s'", *outputPower, topic);
 }
 
 void Provider::onMqttMessageOutputVoltage(espMqttClientTypes::MessageProperties const& properties,
@@ -160,17 +150,13 @@ void Provider::onMqttMessageOutputVoltage(espMqttClientTypes::MessageProperties 
     // only handle up to 65V of input voltage at best, it is safe to assume that
     // an even higher voltage is implausible.
     if (*outputVoltage < 0 || *outputVoltage > 65) {
-        MessageOutput.printf("[SolarChargers::Mqtt]: Implausible output_voltage '%.2f' in topic '%s'\r\n",
-                *outputVoltage, topic);
+        DTU_LOGW("Implausible output_voltage '%.2f' in topic '%s'", *outputVoltage, topic);
         return;
     }
 
     _stats->setOutputVoltage(*outputVoltage);
 
-    if (_verboseLogging) {
-        MessageOutput.printf("[SolarChargers::Mqtt]: Updated output_voltage to %.2f from '%s'\r\n",
-                *outputVoltage, topic);
-    }
+    DTU_LOGD("Updated output_voltage to %.2f from '%s'", *outputVoltage, topic);
 }
 
 void Provider::onMqttMessageOutputCurrent(espMqttClientTypes::MessageProperties const& properties,
@@ -196,15 +182,11 @@ void Provider::onMqttMessageOutputCurrent(espMqttClientTypes::MessageProperties 
     _stats->setOutputCurrent(*outputCurrent);
 
     if (*outputCurrent < 0) {
-        MessageOutput.printf("[SolarChargers::Mqtt]: Implausible output_current '%.2f' in topic '%s'\r\n",
-                *outputCurrent, topic);
+        DTU_LOGW("Implausible output_current '%.2f' in topic '%s'", *outputCurrent, topic);
         return;
     }
 
-    if (_verboseLogging) {
-        MessageOutput.printf("[SolarChargers::Mqtt]: Updated output_current to %.2f from '%s'\r\n",
-                *outputCurrent, topic);
-    }
+    DTU_LOGD("Updated output_current to %.2f from '%s'", *outputCurrent, topic);
 }
 
 } // namespace SolarChargers::Mqtt
