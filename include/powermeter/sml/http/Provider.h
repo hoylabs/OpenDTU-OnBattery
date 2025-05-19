@@ -16,7 +16,7 @@ namespace PowerMeters::Sml::Http {
 class Provider : public ::PowerMeters::Sml::Provider {
 public:
     explicit Provider(PowerMeterHttpSmlConfig const& cfg)
-        : ::PowerMeters::Sml::Provider("PowerMeterHttpSml")
+        : ::PowerMeters::Sml::Provider("HTTP")
         , _cfg(cfg) { }
 
     ~Provider();
