@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <Configuration.h>
-#include <MessageOutput.h>
 #include <MqttSettings.h>
 #include <solarcharger/Controller.h>
 #include <solarcharger/DummyStats.h>
 #include <solarcharger/victron/Provider.h>
 #include <solarcharger/mqtt/Provider.h>
+#include <LogHelper.h>
+
+static const char* TAG = "solarCharger";
+static const char* SUBTAG = "Controller";
 
 SolarChargers::Controller SolarCharger;
 
@@ -43,7 +46,7 @@ void Controller::updateSettings()
             _upProvider = std::make_unique<::SolarChargers::Mqtt::Provider>();
             break;
         default:
-            MessageOutput.printf("[SolarCharger] Unknown provider: %d\r\n", config.SolarCharger.Provider);
+            DTU_LOGE("Unknown provider: %d", config.SolarCharger.Provider);
             return;
     }
 
