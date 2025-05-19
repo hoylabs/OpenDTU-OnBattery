@@ -5,7 +5,10 @@
 #include <powermeter/udp/smahm/Provider.h>
 #include <Arduino.h>
 #include <WiFiUdp.h>
-#include <MessageOutput.h>
+#include <LogHelper.h>
+
+static const char* TAG = "powerMeter";
+static const char* SUBTAG = "UDP/SMAHM";
 
 namespace PowerMeters::Udp::SmaHM {
 
@@ -20,8 +23,7 @@ void Provider::Soutput(int kanal, int index, int art, int tarif,
 {
     if (!_verboseLogging) { return; }
 
-    MessageOutput.printf("[PowerMeters::Udp::SmaHM] %s = %.1f (timestamp %u)\r\n",
-            name, value, timestamp);
+    DTU_LOGD("%s = %.1f (timestamp %u)", name, value, timestamp);
 }
 
 bool Provider::init()
@@ -148,8 +150,7 @@ uint8_t* Provider::decodeGroup(uint8_t* offset, uint16_t grouplen)
             continue;
         }
 
-        MessageOutput.printf("[PowerMeters::Udp::SmaHM] Skipped unknown measurement: %d %d %d %d\r\n",
-                kanal, index, art, tarif);
+        DTU_LOGI("Skipped unknown measurement: %d %d %d %d", kanal, index, art, tarif);
         offset += art;
     }
 
@@ -169,7 +170,7 @@ void Provider::loop()
     uint8_t buffer[1024];
     int rSize = SMAUdp.read(buffer, 1024);
     if (buffer[0] != 'S' || buffer[1] != 'M' || buffer[2] != 'A') {
-        MessageOutput.println("[PowerMeters::Udp::SmaHM] Not an SMA packet?");
+        DTU_LOGE("Not an SMA packet?");
         return;
     }
 
@@ -200,8 +201,7 @@ void Provider::loop()
             continue;
         }
 
-        MessageOutput.printf("[PowerMeters::Udp::SmaHM] Unhandled group 0x%04x with length %d\r\n",
-                grouptag, grouplen);
+        DTU_LOGW("Unhandled group 0x%04x with length %d", grouptag, grouplen);
         offset += grouplen;
     } while (grouplen > 0 && offset + 4 < buffer + rSize);
 }

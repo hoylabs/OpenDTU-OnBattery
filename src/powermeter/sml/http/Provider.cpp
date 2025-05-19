@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <powermeter/sml/http/Provider.h>
-#include <MessageOutput.h>
 #include <WiFiClientSecure.h>
 #include <base64.h>
 #include <ESPmDNS.h>
+#include <LogHelper.h>
+
+static const char* TAG = "powerMeter";
+static const char* SUBTAG = "HTTP/SML";
 
 namespace PowerMeters::Sml::Http {
 
@@ -29,8 +32,7 @@ bool Provider::init()
 
     if (_upHttpGetter->init()) { return true; }
 
-    MessageOutput.printf("[PowerMeters::Sml::Http] Initializing HTTP getter failed:\r\n");
-    MessageOutput.printf("[PowerMeters::Sml::Http] %s\r\n", _upHttpGetter->getErrorText());
+    DTU_LOGE("Initializing HTTP getter failed: %s", _upHttpGetter->getErrorText());
 
     _upHttpGetter = nullptr;
 
@@ -79,7 +81,7 @@ void Provider::pollingLoop()
         lock.lock();
 
         if (!res.isEmpty()) {
-            MessageOutput.printf("[PowerMeters::Sml::Http] %s\r\n", res.c_str());
+            DTU_LOGE("%s", res.c_str());
             continue;
         }
     }
