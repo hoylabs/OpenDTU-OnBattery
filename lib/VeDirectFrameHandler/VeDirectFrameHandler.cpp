@@ -139,7 +139,7 @@ static bool isValidChar(uint8_t inbyte)
 template<typename T>
 void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 {
-	if (esp_log_level_get(TAG) >= ESP_LOG_VERBOSE) {
+	if (DTU_LOG_IS_VERBOSE) {
 		_debugBuffer[_debugIn] = inbyte;
 		_debugIn = (_debugIn + 1) % _debugBuffer.size();
 		if (0 == _debugIn) {
