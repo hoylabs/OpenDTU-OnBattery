@@ -48,6 +48,14 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->setCurrent((this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1)-400.0), 1/*precision*/, millis());
             _stats->setSoC(static_cast<uint8_t>(this->readUnsignedInt8(rx_message.data + 4)), 0/*precision*/, millis());
             // _stats->_temperature = this->scaleValue(this->readSignedInt16(rx_message.data + 4), 0.1);
+            String manufacturer = "JKBMS ID: 0";
+            if (manufacturer.isEmpty()) { break; }
+
+            if (_verboseLogging) {
+                MessageOutput.printf("[JkBmsCan] Manufacturer: %s\r\n", manufacturer.c_str());
+            }
+
+            _stats->setManufacturer(manufacturer);
             break;
         }
         case 0x05F4: {
@@ -56,6 +64,10 @@ void Provider::onMessage(twai_message_t rx_message)
                 MessageOutput.printf("[JkBmsCan] voltage: %f current: %f temperature: %f\r\n",
                         _stats->getVoltage(), _stats->getChargeCurrent(), _stats->_temperature);
             }
+            break;
+        }
+
+        case 0x18F128F4: {
             break;
         }
         case 0x356: {
@@ -124,19 +136,7 @@ void Provider::onMessage(twai_message_t rx_message)
             break;
         }
 
-        case 0x35E: {
-            String manufacturer(reinterpret_cast<char*>(rx_message.data),
-                    rx_message.data_length_code);
 
-            if (manufacturer.isEmpty()) { break; }
-
-            if (_verboseLogging) {
-                MessageOutput.printf("[JkBmsCan] Manufacturer: %s\r\n", manufacturer.c_str());
-            }
-
-            _stats->setManufacturer(manufacturer);
-            break;
-        }
 
         case 0x35C: {
             uint16_t chargeStatusBits = rx_message.data[0];

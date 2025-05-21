@@ -596,6 +596,7 @@
         "ProviderJbdBmsSerial": "Jiabaida (JBD) BMS using serial connection",
         "ProviderMqtt": "Battery data from MQTT broker",
         "ProviderVictron": "Victron SmartShunt using VE.Direct interface",
+        "ProviderJkBmsCan": "Jikong (JK) BMS using CAN-Bus",
         "MqttSocConfiguration": "SoC Settings",
         "MqttVoltageConfiguration": "Voltage Settings",
         "MqttJsonPath": "Optional: JSON Path",
