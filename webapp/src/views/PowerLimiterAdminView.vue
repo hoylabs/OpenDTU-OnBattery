@@ -235,6 +235,14 @@
                         wide
                     />
 
+                    <InputElement
+                        :label="$t('powerlimiteradmin.UseMpptState')"
+                        :tooltip="$t('powerlimiteradmin.UseMpptStateHint')"
+                        v-model="powerLimiterConfigList.full_solar_passthrough_use_mppt_state"
+                        type="checkbox"
+                        wide
+                    />
+
                     <div class="row mb-3">
                         <label for="inverter_serial_for_dc_voltage" class="col-sm-4 col-form-label">
                             {{ $t('powerlimiteradmin.InverterForDcVoltage') }}
