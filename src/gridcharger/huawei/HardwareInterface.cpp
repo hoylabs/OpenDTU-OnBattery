@@ -2,8 +2,12 @@
 
 #include <Arduino.h>
 #include <Configuration.h>
-#include <MessageOutput.h>
 #include <gridcharger/huawei/HardwareInterface.h>
+#include <LogHelper.h>
+#include <sstream>
+
+static const char* TAG = "gridCharger";
+static const char* SUBTAG = "HwIfc";
 
 namespace GridChargers::Huawei {
 
@@ -75,8 +79,6 @@ bool HardwareInterface::getMessage(HardwareInterface::can_message_t& msg)
 
 bool HardwareInterface::readBoardProperties(can_message_t const& msg)
 {
-    auto const& config = Configuration.get();
-
     // we process multiple messages with ID 0x1081D27F and a
     // single one with ID 0x181D27E, which concludes the answer.
     uint32_t constexpr lastId = 0x1081D27E;
@@ -94,8 +96,7 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
     if (StringState::Reading != _boardPropertiesState) { return true; }
 
     if (++_boardPropertiesCounter != counter) {
-        MessageOutput.printf("[Huawei::HwIfc] missed message %d while reading "
-                "board properties\r\n", _boardPropertiesCounter);
+        DTU_LOGW("missed message %d while reading board properties", _boardPropertiesCounter);
         _boardPropertiesState = StringState::MissedMessage;
         return true;
     }
@@ -103,8 +104,6 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
     auto appendAscii = [this](uint32_t val) -> void {
         val &= 0xFF;
         if ((val < 0x20 || val > 0x7E) && val != 0x0A) { return; }
-        // enforce CRLF line endings (as we do on all log lines)
-        if (val == 0x0A) { _boardProperties.push_back('\r'); }
         _boardProperties.push_back(static_cast<char>(val));
     };
 
@@ -119,9 +118,15 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
 
     _boardPropertiesState = StringState::Complete;
 
-    if (config.GridCharger.VerboseLogging) {
-        MessageOutput.printf("[Huawei::HwIfc] board properties:\r\n%s\r\n",
-                _boardProperties.c_str());
+    if (DTU_LOG_IS_VERBOSE) {
+        ESP_LOGV(TAG, "board properties:");
+        std::istringstream stream(_boardProperties);
+        std::string line;
+        while (std::getline(stream, line)) {
+            if (!line.empty()) {
+                ESP_LOGV(TAG, "%s", line.c_str());
+            }
+        }
     }
 
     auto getProperty = [this](std::string key) -> std::string {
@@ -163,8 +168,6 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
 
 bool HardwareInterface::readDeviceConfig(can_message_t const& msg)
 {
-    auto const& config = Configuration.get();
-
     // we will receive five messages with CAN ID 0x1081507F,
     // and one (the last one) with ID 0x1081507E.
     if ((msg.canId | 0x1) != 0x1081507F) { return false; }
@@ -176,10 +179,7 @@ bool HardwareInterface::readDeviceConfig(can_message_t const& msg)
         // (not quite for a R4830 it seems, but the derived multiplier is spot on)
         uint8_t maxAmps = (msg.value >> 16) & 0xFF;
         _maxCurrentMultiplier = 2048 / static_cast<float>(maxAmps);
-        if (config.GridCharger.VerboseLogging) {
-            MessageOutput.printf("[Huawei::HwIfc] max current multiplier is %.2f\r\n",
-                    _maxCurrentMultiplier);
-        }
+        DTU_LOGD("max current multiplier is %.2f", _maxCurrentMultiplier);
     }
     else if (counter == 6) {
         _upData->add<DataPointLabel::Row>(static_cast<uint8_t>((msg.valueId >> 8) & 0xFF));
@@ -206,8 +206,6 @@ void HardwareInterface::requestDeviceConfig()
 
 bool HardwareInterface::readRectifierState(can_message_t const& msg)
 {
-    auto const& config = Configuration.get();
-
     // we will receive a bunch of messages with CAN ID 0x1081407F,
     // and one (the last one) with ID 0x1081407E.
     if ((msg.canId | 0x1) != 0x1081407F) { return false; }
@@ -217,10 +215,7 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
     // sometimes the last bit of the value ID of a message with CAN ID
     // 0x1081407E is set. TODO(schlimmchen): why?
     if (msg.canId == 0x1081407E && (valueId & 0x01) > 0) {
-        if (config.GridCharger.VerboseLogging) {
-            MessageOutput.printf("[Huawei::HwIfc] last bit in value ID %08x is "
-                    "set, resetting\r\n", valueId);
-        }
+        DTU_LOGI("last bit in value ID %08x is set, resetting", valueId);
         valueId &= ~(0x01);
     }
 
@@ -228,20 +223,14 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
     // set on a R4830G1. this unit supports DC input as well, but these bits
     // do not change when powered the unit using DC. TODO(schlimmchen): why?
     if (msg.canId == 0x1081407F && (valueId & 0x03) > 0) {
-        if (config.GridCharger.VerboseLogging) {
-            MessageOutput.printf("[Huawei::HwIfc] last two bits in value ID "
-                    "%08x are set, resetting\r\n", valueId);
-        }
+        DTU_LOGI("last two bits in value ID %08x are set, resetting", valueId);
         valueId &= ~(0x03);
     }
 
     // during start-up and when shortening or opening the slot detect pins,
     // the value ID starts with 0x31 rather than 0x01. TODO(schlimmchen): why?
     if ((valueId >> 24) == 0x31) {
-        if (config.GridCharger.VerboseLogging) {
-            MessageOutput.print("[Huawei::HwIfc] processing value for value ID "
-                    "starting with 0x31\r\n");
-        }
+        DTU_LOGI("processing value for value ID starting with 0x31");
         valueId &= 0x0FFFFFFF;
     }
 
@@ -253,8 +242,7 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
 
     if (label == DataPointLabel::OutputCurrentMax) {
         if (_maxCurrentMultiplier == 0) {
-            MessageOutput.print("[Huawei::HwIfc] cannot process output current max "
-                    "value while respective multiplier unknown\r\n");
+            DTU_LOGW("cannot process output current max value while respective multiplier unknown");
             return false;
         }
         divisor = _maxCurrentMultiplier;
@@ -299,9 +287,8 @@ bool HardwareInterface::readRectifierState(can_message_t const& msg)
         default:
             uint8_t rawLabel = static_cast<uint8_t>(label);
             // 0x0E/0x0A seems to be a static label/value pair, so we don't print it
-            if (config.GridCharger.VerboseLogging && (rawLabel != 0x0E || msg.value != 0x0A)) {
-                MessageOutput.printf("[Huawei::HwIfc] raw value for 0x%02x is "
-                        "0x%08x (%d), scaled by 1024: %.2f, scaled by %.2f: %.2f\r\n",
+            if (rawLabel != 0x0E || msg.value != 0x0A) {
+                DTU_LOGV("raw value for 0x%02x is 0x%08x (%d), scaled by 1024: %.2f, scaled by %.2f: %.2f",
                         rawLabel, msg.value, msg.value,
                         static_cast<float>(msg.value)/1024,
                         _maxCurrentMultiplier,
@@ -326,8 +313,7 @@ bool HardwareInterface::readAcks(can_message_t const& msg)
 
     if (setting == Setting::OnlineCurrent || setting == Setting::OfflineCurrent) {
         if (_maxCurrentMultiplier == 0) {
-            MessageOutput.printf("[Huawei::HwIfc] cannot process %s current "
-                    "setting while respective multiplier unknown\r\n",
+            DTU_LOGW("cannot process %s current setting while respective multiplier unknown",
                     setting == Setting::OnlineCurrent ? "online" : "offline");
             return false;
         }
@@ -382,28 +368,29 @@ void HardwareInterface::sendSettings()
 
 void HardwareInterface::logMessage(char const* msg, uint32_t canId, uint32_t valueId, uint32_t value)
 {
-    auto const& config = Configuration.get();
-    if (!config.GridCharger.VerboseLogging) { return; }
+    if (!DTU_LOG_IS_VERBOSE) { return; }
 
-    MessageOutput.printf("[Huawei::HwIfc] %9s: address "
-            "%08x ID %08x value %08x | ",
+    char buffer[70];
+    size_t offset = 0;
+    offset = snprintf(buffer, sizeof(buffer), "%9s: address %08x ID %08x value %08x | ",
             msg, canId, valueId, value);
 
-    auto printAscii = [](uint32_t value) {
+    auto printAscii = [&offset, &buffer](uint32_t value) {
         for (int i = 24; i >= 0; i -= 8) {
             uint8_t byte = (value >> i) & 0xFF;
             if (byte >= 0x20 && byte <= 0x7E) {
-                MessageOutput.printf("%c", byte);
+                offset += snprintf(buffer + offset, sizeof(buffer) - offset, "%c", byte);
             } else {
-                MessageOutput.printf(".");
+                offset += snprintf(buffer + offset, sizeof(buffer) - offset, ".");
             }
         }
     };
 
     printAscii(valueId);
-    MessageOutput.printf(" ");
+    offset += snprintf(buffer + offset, sizeof(buffer) - offset, " ");
     printAscii(value);
-    MessageOutput.printf("\r\n");
+
+    DTU_LOGV("%s", buffer);
 }
 
 void HardwareInterface::loop()
@@ -445,7 +432,7 @@ void HardwareInterface::loop()
     }
 
     if ((millis() - *_lastDeviceConfigMillis) > DeviceConfigTimeoutMillis) {
-        MessageOutput.print("[Huawei::HwIfc] PSU is unreachable (no CAN communication)\r\n");
+        DTU_LOGW("PSU is unreachable (no CAN communication)");
         _maxCurrentMultiplier = 0;
         _lastDeviceConfigMillis = std::nullopt;
         _lastSettingsUpdateMillis = std::nullopt;
@@ -529,8 +516,8 @@ void HardwareInterface::processQueue()
 
         if (cmd.tries > 0) { --cmd.tries; }
 
-        MessageOutput.printf("[Huawei::HwIfc] Sending to 0x%08x failed, "
-                "command 0x%04x, flags 0x%04x, value 0x%08x, %d tries remaining\r\n",
+        DTU_LOGE("Sending to 0x%08x failed (no CAN ACK), command 0x%04x, "
+                "flags 0x%04x, value 0x%08x, %d tries remaining",
                 addr, cmd.command, cmd.flags, cmd.value, cmd.tries);
 
         if (cmd.tries == 0) { _sendQueue.pop(); }
@@ -549,8 +536,7 @@ void HardwareInterface::enqueueParameter(HardwareInterface::Setting setting, flo
         case Setting::OfflineCurrent:
         case Setting::OnlineCurrent:
             if (_maxCurrentMultiplier == 0) {
-                MessageOutput.print("[Huawei::HwIfc] max current multiplier unknown, "
-                        "cannot send current setting\r\n");
+                DTU_LOGW("max current multiplier unknown, cannot send current setting");
                 return;
             }
             val *= _maxCurrentMultiplier;
@@ -605,11 +591,10 @@ std::unique_ptr<DataPointContainer> HardwareInterface::getCurrentData()
         upData = std::move(_upData);
     }
 
-    auto const& config = Configuration.get();
-    if (upData && config.GridCharger.VerboseLogging) {
+    if (upData && DTU_LOG_IS_DEBUG) {
         auto iter = upData->cbegin();
         while (iter != upData->cend()) {
-            MessageOutput.printf("[Huawei::HwIfc] [%.3f] %s: %s%s\r\n",
+            DTU_LOGD("[%.3f] %s: %s%s",
                 static_cast<float>(iter->second.getTimestamp())/1000,
                 iter->second.getLabelText().c_str(),
                 iter->second.getValueText().c_str(),

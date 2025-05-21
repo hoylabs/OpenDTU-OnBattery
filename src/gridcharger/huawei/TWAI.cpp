@@ -3,10 +3,12 @@
  * Copyright (C) 2023 Malte Schmidt and others
  */
 #include <gridcharger/huawei/TWAI.h>
-#include "MessageOutput.h"
 #include "PinMapping.h"
-#include "Configuration.h"
 #include <driver/twai.h>
+#include <LogHelper.h>
+
+static const char* TAG = "gridCharger";
+static const char* SUBTAG = "TWAI";
 
 namespace GridChargers::Huawei {
 
@@ -24,26 +26,25 @@ TWAI::~TWAI()
     stopLoop();
 
     if (twai_stop() != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] failed to stop driver\r\n");
+        DTU_LOGW("failed to stop driver");
         return;
     }
 
     if (twai_driver_uninstall() != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] failed to uninstall driver\r\n");
+        DTU_LOGW("failed to uninstall driver");
     }
 
-    MessageOutput.print("[Huawei::TWAI] driver stopped and uninstalled\r\n");
+    DTU_LOGI("driver stopped and uninstalled");
 }
 
 bool TWAI::init()
 {
     const PinMapping_t& pin = PinMapping.get();
 
-    MessageOutput.printf("[Huawei::TWAI] rx = %d, tx = %d\r\n",
-            pin.huawei_rx, pin.huawei_tx);
+    DTU_LOGI("rx = %d, tx = %d", pin.huawei_rx, pin.huawei_tx);
 
     if (pin.huawei_rx <= GPIO_NUM_NC || pin.huawei_tx <= GPIO_NUM_NC) {
-        MessageOutput.print("[Huawei::TWAI] invalid pin config\r\n");
+        DTU_LOGE("invalid pin config");
         return false;
     }
 
@@ -62,24 +63,24 @@ bool TWAI::init()
     twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
     if (twai_driver_install(&g_config, &t_config, &f_config) != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] Failed to install driver\r\n");
+        DTU_LOGE("Failed to install driver");
         return false;
     }
 
     if (twai_start() != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] Failed to start driver\r\n");
+        DTU_LOGE("Failed to start driver");
         return false;
     }
 
     if (!startLoop()) {
-        MessageOutput.printf("[Huawei::TWAI] failed to start loop task\r\n");
+        DTU_LOGE("failed to start loop task");
         return false;
     }
 
     // enable alert on message received
     uint32_t alertsToEnable = TWAI_ALERT_RX_DATA;
     if (twai_reconfigure_alerts(alertsToEnable, NULL) != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] Failed to configure alerts\r\n");
+        DTU_LOGE("Failed to configure alerts");
         return false;
     }
 
@@ -87,7 +88,7 @@ bool TWAI::init()
     return pdPASS == xTaskCreate(TWAI::pollAlerts,
             "HuaweiTwai", stackSize, this, 20/*prio*/, &_pollingTaskHandle);
 
-    MessageOutput.print("[Huawei::TWAI] driver ready\r\n");
+    DTU_LOGI("driver ready");
 
     return true;
 }

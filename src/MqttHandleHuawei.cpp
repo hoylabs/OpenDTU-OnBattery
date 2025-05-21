@@ -3,10 +3,13 @@
  * Copyright (C) 2022 Thomas Basler and others
  */
 #include "MqttHandleHuawei.h"
-#include "MessageOutput.h"
 #include "MqttSettings.h"
 #include <gridcharger/huawei/Controller.h>
 #include <ctime>
+#include <LogHelper.h>
+
+static const char* TAG = "gridCharger";
+static const char* SUBTAG = "MQTT";
 
 MqttHandleHuaweiClass MqttHandleHuawei;
 
@@ -158,7 +161,7 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic enumTopic,
         payload_val = std::stof(strValue);
     }
     catch (std::invalid_argument const& e) {
-        MessageOutput.printf("Huawei MQTT handler: cannot parse payload of topic '%s' as float: %s\r\n",
+        DTU_LOGE("Huawei MQTT handler: cannot parse payload of topic '%s' as float: %s",
                 topic, strValue.c_str());
         return;
     }
@@ -170,11 +173,11 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic enumTopic,
     auto validateAndSetParameter = [this, payload_val](float min, float max,
             Setting setting, const char* paramName, const char* unit) -> bool {
         if (payload_val < min || payload_val > max) {
-            MessageOutput.printf("Invalid %s %.2f %s (valid range: %.2f-%.2f %s)\r\n",
+            DTU_LOGE("Invalid %s %.2f %s (valid range: %.2f-%.2f %s)",
                 paramName, payload_val, unit, min, max, unit);
             return false;
         }
-        MessageOutput.printf("Limit %s: %.2f %s\r\n", paramName, payload_val, unit);
+        DTU_LOGI("Limit %s: %.2f %s", paramName, payload_val, unit);
         _mqttCallbacks.push_back(std::bind(&Controller::setParameter, &HuaweiCan, payload_val, setting));
         return true;
     };
@@ -203,27 +206,27 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic enumTopic,
         case Topic::Mode:
             switch (static_cast<int>(payload_val)) {
                 case 3:
-                    MessageOutput.println("[Huawei MQTT::] Received MQTT msg. New mode: Full internal control");
+                    DTU_LOGI("Received MQTT msg. New mode: Full internal control");
                     _mqttCallbacks.push_back(std::bind(&Controller::setMode, &HuaweiCan, HUAWEI_MODE_AUTO_INT));
                     break;
 
                 case 2:
-                    MessageOutput.println("[Huawei MQTT::] Received MQTT msg. New mode: Internal on/off control, external power limit");
+                    DTU_LOGI("Received MQTT msg. New mode: Internal on/off control, external power limit");
                     _mqttCallbacks.push_back(std::bind(&Controller::setMode, &HuaweiCan, HUAWEI_MODE_AUTO_EXT));
                     break;
 
                 case 1:
-                    MessageOutput.println("[Huawei MQTT::] Received MQTT msg. New mode: Turned ON");
+                    DTU_LOGI("Received MQTT msg. New mode: Turned ON");
                     _mqttCallbacks.push_back(std::bind(&Controller::setMode, &HuaweiCan, HUAWEI_MODE_ON));
                     break;
 
                 case 0:
-                    MessageOutput.println("[Huawei MQTT::] Received MQTT msg. New mode: Turned OFF");
+                    DTU_LOGI("Received MQTT msg. New mode: Turned OFF");
                     _mqttCallbacks.push_back(std::bind(&Controller::setMode, &HuaweiCan, HUAWEI_MODE_OFF));
                     break;
 
                 default:
-                    MessageOutput.printf("[Huawei MQTT::] Invalid mode %.0f\r\n", payload_val);
+                    DTU_LOGE("Invalid mode %.0f", payload_val);
                     break;
             }
             break;
@@ -231,7 +234,7 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic enumTopic,
         case Topic::Production:
         {
             bool enable = payload_val > 0;
-            MessageOutput.printf("[Huawei MQTT] Production to be %sabled\r\n", (enable?"en":"dis"));
+            DTU_LOGI("Production to be %sabled", (enable?"en":"dis"));
             _mqttCallbacks.push_back(std::bind(&Controller::setProduction, &HuaweiCan, enable));
             break;
         }
@@ -246,8 +249,7 @@ void MqttHandleHuaweiClass::onMqttMessage(Topic enumTopic,
         {
             bool online = (Topic::FanOnlineFullSpeed == enumTopic);
             bool fullSpeed = payload_val > 0;
-            MessageOutput.printf("[Huawei MQTT] %sline fan %s speed\r\n",
-                    (online?"On":"Off"), (fullSpeed?"full":"auto"));
+            DTU_LOGI("%sline fan %s speed", (online?"On":"Off"), (fullSpeed?"full":"auto"));
             _mqttCallbacks.push_back(std::bind(&Controller::setFan, &HuaweiCan, online, fullSpeed));
             break;
         }
