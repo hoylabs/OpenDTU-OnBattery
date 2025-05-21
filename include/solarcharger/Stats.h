@@ -30,6 +30,10 @@ public:
     enum class StateOfOperation : uint8_t { Off = 0, Bulk = 1, Absorption = 2, Float = 3, Various = 255 };
     virtual std::optional<Stats::StateOfOperation> getStateOfOperation() const;
 
+     // state of operation of the MPPT Tacker
+    enum class StateOfTracker : uint8_t { Off = 0,  Active = 1, VoltageCurrentLimit = 2, Various = 255 };
+    virtual std::optional<Stats::StateOfTracker> getStateOfTracker() const;
+
     // float voltage from the first available charge controller in V
     virtual std::optional<float> getFloatVoltage() const;
 

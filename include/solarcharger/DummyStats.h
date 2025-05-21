@@ -14,6 +14,7 @@ public:
     std::optional<float> getYieldTotal() const final { return std::nullopt; }
     std::optional<float> getYieldDay() const final { return std::nullopt; }
     std::optional<StateOfOperation> getStateOfOperation() const final { return std::nullopt; }
+    std::optional<StateOfTracker> getStateOfTracker() const final { return std::nullopt; }
     std::optional<float> getFloatVoltage() const final { return std::nullopt; }
     std::optional<float> getAbsorptionVoltage() const final { return std::nullopt; }
     void getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const final {}
