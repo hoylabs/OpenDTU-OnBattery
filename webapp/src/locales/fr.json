@@ -781,6 +781,8 @@
         "InverterIsBehindPowerMeterHint": "Enable this option if the power meter reading is reduced by the inverter's output when it produces power. This is typically true.",
         "UseOverscaling": "Compensate shaded or unused inputs",
         "UseOverscalingHint": "Allow to overscale the inverter limit to compensate for unused inputs or shading of one or multiple inputs.",
+        "UseMpptState": "Utiliser l’état MPPT pour contrôler la limitation dynamique de puissance",
+        "UseMpptStateHint": "Lorsque le MPPT signale un état ‘Voltage or Current Limited’, la limite de puissance est automatiquement réglée sur la valeur maximale configurée. Actuellement, seuls les MPPT Victron avec communication active sont pris en charge.",
         "VoltageThresholds": "Battery Voltage Thresholds",
         "VoltageLoadCorrectionInfo": "<b>Hint:</b> When the battery is discharged, its voltage drops. The voltage drop scales with the discharge current. In order to not stop inverters too early (stop threshold), this load correction factor can be specified to calculate the battery voltage if it was idle. Corrected voltage = DC Voltage + (Current power * correction factor).",
         "InverterRestartHour": "Automatic Inverter Restart Time"
