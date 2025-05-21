@@ -51,6 +51,7 @@ export interface PowerLimiterConfig {
     full_solar_passthrough_soc: number;
     full_solar_passthrough_start_voltage: number;
     full_solar_passthrough_stop_voltage: number;
+    full_solar_passthrough_use_mppt_state: boolean;
     inverter_serial_for_dc_voltage: string;
     inverter_channel_id_for_dc_voltage: number;
     restart_hour: number;
