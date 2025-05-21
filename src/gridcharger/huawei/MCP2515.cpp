@@ -3,9 +3,12 @@
  * Copyright (C) 2023 Malte Schmidt and others
  */
 #include <gridcharger/huawei/MCP2515.h>
-#include "MessageOutput.h"
 #include "PinMapping.h"
 #include "Configuration.h"
+#include <LogHelper.h>
+
+static const char* TAG = "gridCharger";
+static const char* SUBTAG = "MCP2515";
 
 namespace GridChargers::Huawei {
 
@@ -46,13 +49,13 @@ bool MCP2515::init()
 {
     const PinMapping_t& pin = PinMapping.get();
 
-    MessageOutput.printf("[Huawei::MCP2515] clk = %d, miso = %d, mosi = %d, cs = %d, irq = %d\r\n",
+    DTU_LOGI("clk = %d, miso = %d, mosi = %d, cs = %d, irq = %d",
             pin.huawei_clk, pin.huawei_miso, pin.huawei_mosi, pin.huawei_cs, pin.huawei_irq);
 
     if (pin.huawei_clk <= GPIO_NUM_NC || pin.huawei_miso <= GPIO_NUM_NC ||
         pin.huawei_mosi <= GPIO_NUM_NC || pin.huawei_cs <= GPIO_NUM_NC ||
         pin.huawei_irq <= GPIO_NUM_NC) {
-        MessageOutput.printf("[Huawei::MCP2515] invalid pin config\r\n");
+        DTU_LOGE("invalid pin config");
         return false;
     }
 
@@ -61,7 +64,7 @@ bool MCP2515::init()
     }
 
     if (!_oSpiBus) {
-        MessageOutput.printf("[Huawei::MCP2515] no SPI host available\r\n");
+        DTU_LOGE("no SPI host available");
         return false;
     }
 
@@ -75,12 +78,12 @@ bool MCP2515::init()
     auto frequency = Configuration.get().GridCharger.Can.Controller_Frequency;
     if (16000000UL == frequency) { mcp_frequency = MCP_16MHZ; }
     else if (8000000UL != frequency) {
-        MessageOutput.printf("[Huawei::MCP2515] unknown frequency %d Hz, using 8 MHz\r\n", mcp_frequency);
+        DTU_LOGW("unknown frequency %d Hz, using 8 MHz", mcp_frequency);
     }
 
     _upCAN = std::make_unique<MCP_CAN>(_upSPI.get(), pin.huawei_cs);
     if (_upCAN->begin(MCP_STDEXT, CAN_125KBPS, mcp_frequency) != CAN_OK) {
-        MessageOutput.printf("[Huawei::MCP2515] mcp_can begin() failed\r\n");
+        DTU_LOGE("mcp_can begin() failed");
         return false;
     }
 
@@ -94,14 +97,14 @@ bool MCP2515::init()
     _upCAN->setMode(MCP_NORMAL);
 
     if (!startLoop()) {
-        MessageOutput.printf("[Huawei::MCP2515] failed to start loop task\r\n");
+        DTU_LOGE("failed to start loop task");
         return false;
     }
 
     if (sIsrTaskHandle != nullptr) {
         // make the ISR aware of multiple instances if multiple instances of
         // this driver should be able to co-exist. only one is supported now.
-        MessageOutput.printf("[Huawei::MCP2515] ISR task handle already in use\r\n");
+        DTU_LOGE("ISR task handle already in use");
         stopLoop();
         return false;
     }
@@ -109,7 +112,7 @@ bool MCP2515::init()
     uint32_t constexpr stackSize = 1536;
     if (pdPASS != xTaskCreate(MCP2515::queueMessages,
             "HuaweiMCP2515", stackSize, this, 20/*prio*/, &sIsrTaskHandle)) {
-        MessageOutput.printf("[Huawei::MCP2515] failed to create queueing task\r\n");
+        DTU_LOGE("failed to create queueing task");
         stopLoop();
         return false;
     }

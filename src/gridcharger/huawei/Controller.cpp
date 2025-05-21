@@ -6,10 +6,13 @@
 #include <gridcharger/huawei/Controller.h>
 #include <gridcharger/huawei/MCP2515.h>
 #include <gridcharger/huawei/TWAI.h>
-#include "MessageOutput.h"
 #include <powermeter/Controller.h>
 #include "PowerLimiter.h"
 #include "Configuration.h"
+#include <LogHelper.h>
+
+static const char* TAG = "gridCharger";
+static const char* SUBTAG = "Controller";
 
 #include <functional>
 #include <algorithm>
@@ -25,7 +28,7 @@ namespace GridChargers::Huawei {
 
 void Controller::init(Scheduler& scheduler)
 {
-    MessageOutput.print("Initialize Huawei AC charger interface...\r\n");
+    DTU_LOGI("Initialize Huawei AC charger interface...");
 
     scheduler.addTask(_loopTask);
     _loopTask.setCallback(std::bind(&Controller::loop, this));
@@ -75,14 +78,13 @@ void Controller::updateSettings()
             _upHardwareInterface = std::make_unique<TWAI>();
             break;
         default:
-            MessageOutput.printf("[Huawei::Controller] Unknown hardware "
-                    "interface setting %d\r\n", config.GridCharger.Can.HardwareInterface);
+            DTU_LOGE("Unknown hardware interface setting %d", config.GridCharger.Can.HardwareInterface);
             return;
             break;
     }
 
     if (!_upHardwareInterface->init()) {
-        MessageOutput.print("[Huawei::Controller] Error initializing hardware interface\r\n");
+        DTU_LOGE("Error initializing hardware interface");
         _upHardwareInterface.reset(nullptr);
         return;
     };
@@ -99,7 +101,7 @@ void Controller::updateSettings()
         _mode = HUAWEI_MODE_AUTO_INT;
     }
 
-    MessageOutput.print("[Huawei::Controller] Hardware Interface initialized successfully\r\n");
+    DTU_LOGI("Hardware Interface initialized successfully");
 }
 
 void Controller::loop()
@@ -109,8 +111,6 @@ void Controller::loop()
     if (!_upHardwareInterface) { return; }
 
     auto const& config = Configuration.get();
-
-    bool verboseLogging = config.GridCharger.VerboseLogging;
 
     auto upNewData = _upHardwareInterface->getCurrentData();
     if (upNewData) {
@@ -139,8 +139,7 @@ void Controller::loop()
 
         // Set voltage limit in periodic intervals if we're in auto mode or if emergency battery charge is requested.
         if ( _nextAutoModePeriodicIntMillis < millis()) {
-            MessageOutput.printf("[Huawei::Controller] Periodically setting "
-                "voltage limit: %f \r\n", config.GridCharger.AutoPowerVoltageLimit);
+            DTU_LOGI("Periodically setting voltage limit: %f", config.GridCharger.AutoPowerVoltageLimit);
             _setParameter(config.GridCharger.AutoPowerVoltageLimit, Setting::OnlineVoltage);
             _nextAutoModePeriodicIntMillis = millis() + 60000;
         }
@@ -155,8 +154,7 @@ void Controller::loop()
             // TODO(schlimmchen): if this situation actually occurs, this message
             // will be printed with high frequency for a prolonged time. how can
             // we deal with that?
-            MessageOutput.print("[Huawei::Controller] Cannot perform emergency "
-                    "charging with unknown PSU output voltage value\r\n");
+            DTU_LOGW("Cannot perform emergency charging with unknown PSU output voltage value");
             return;
         }
 
@@ -164,8 +162,7 @@ void Controller::loop()
 
         // Set output current
         float outputCurrent = efficiency * (config.GridCharger.AutoPowerUpperPowerLimit / *oOutputVoltage);
-        MessageOutput.printf("[Huawei::Controller] Emergency Charge Output "
-            "current %.02f \r\n", outputCurrent);
+        DTU_LOGI("Emergency Charge Output current %.02f", outputCurrent);
         _setParameter(outputCurrent, Setting::OnlineCurrent);
         return;
     }
@@ -192,8 +189,7 @@ void Controller::loop()
         }
 
         if (!oOutputVoltage || !oOutputPower || !oOutputCurrent) {
-            MessageOutput.print("[Huawei::Controller] Cannot perform auto power "
-                    "control while critical PSU values are still unknown\r\n");
+            DTU_LOGW("Cannot perform auto power control while critical PSU values are still unknown");
             _autoModeBlockedTillMillis = millis() + 1000;
             return;
         }
@@ -207,7 +203,7 @@ void Controller::loop()
             _setParameter(0.0, Setting::OnlineCurrent);
             // Don't run auto mode for a second now. Otherwise we may send too much over the CAN bus
             _autoModeBlockedTillMillis = millis() + 1000;
-            MessageOutput.printf("[Huawei::Controller] Inverter is active, disable PSU\r\n");
+            DTU_LOGI("Inverter is active, disable PSU");
             return;
         }
 
@@ -224,10 +220,7 @@ void Controller::loop()
             // Powerlimit is the requested output power + permissable Grid consumption factoring in the efficiency factor
             newPowerLimit += *oOutputPower + config.GridCharger.AutoPowerTargetPowerConsumption / efficiency;
 
-            if (verboseLogging) {
-                MessageOutput.printf("[Huawei::Controller] newPowerLimit: %.0f, "
-                    "output_power: %.01f\r\n", newPowerLimit, *oOutputPower);
-            }
+            DTU_LOGD("newPowerLimit: %.0f, output_power: %.01f", newPowerLimit, *oOutputPower);
 
             // Check whether the battery SoC limit setting is enabled
             if (config.Battery.Enabled && config.GridCharger.AutoPowerBatterySoCLimitsEnabled) {
@@ -235,11 +228,8 @@ void Controller::loop()
                 // Sets power limit to 0 if the BMS reported SoC reaches or exceeds the user configured value
                 if (_batterySoC >= config.GridCharger.AutoPowerStopBatterySoCThreshold) {
                     newPowerLimit = 0;
-                    if (verboseLogging) {
-                        MessageOutput.printf("[Huawei::Controller] Current battery SoC %i reached "
-                                "stop threshold %i, set newPowerLimit to %f \r\n", _batterySoC,
-                                config.GridCharger.AutoPowerStopBatterySoCThreshold, newPowerLimit);
-                    }
+                    DTU_LOGD("Current battery SoC %i reached stop threshold %i, set newPowerLimit to %f",
+                            _batterySoC, config.GridCharger.AutoPowerStopBatterySoCThreshold, newPowerLimit);
                 }
             }
 
@@ -249,9 +239,7 @@ void Controller::loop()
                 // and if the PSU should be turned off. Also we use a simple counter mechanism here to be able
                 // to ramp up from zero output power when starting up
                 if (*oOutputPower < config.GridCharger.AutoPowerLowerPowerLimit) {
-                    MessageOutput.print("[Huawei::Controller] Power and "
-                        "voltage limit reached. Disabling automatic power "
-                        "control.\r\n");
+                    DTU_LOGI("Power and voltage limit reached. Disabling automatic power control.");
                     _autoPowerEnabledCounter--;
                     if (_autoPowerEnabledCounter == 0) {
                         _autoPowerEnabled = false;
@@ -275,13 +263,10 @@ void Controller::loop()
                 float outputCurrent = std::min(calculatedCurrent, permissableCurrent);
                 outputCurrent= outputCurrent > 0 ? outputCurrent : 0;
 
-                if (verboseLogging) {
-                    MessageOutput.printf("[Huawei::Controller] Setting output "
-                        "current to %.2fA. This is the lower value of "
-                        "calculated %.2fA and BMS permissable %.2fA "
-                        "currents\r\n", outputCurrent, calculatedCurrent,
-                        permissableCurrent);
-                }
+                DTU_LOGD("Setting output current to %.2fA. This is the lower value of "
+                        "calculated %.2fA and BMS permissable %.2fA currents",
+                        outputCurrent, calculatedCurrent, permissableCurrent);
+
                 _autoPowerEnabled = true;
                 _setParameter(outputCurrent, Setting::OnlineCurrent);
 
@@ -342,8 +327,7 @@ void Controller::_setParameter(float val, HardwareInterface::Setting setting, bo
     if (!_upHardwareInterface) { return; }
 
     if (val < 0) {
-        MessageOutput.printf("[Huawei::Controller] Error: Tried to set "
-                "voltage/current to negative value %.2f\r\n", val);
+        DTU_LOGE("Tried to set voltage/current to negative value %.2f", val);
         return;
     }
 
@@ -377,9 +361,8 @@ void Controller::setMode(uint8_t mode) {
     auto const& config = Configuration.get();
 
     if (mode == HUAWEI_MODE_AUTO_INT && !config.GridCharger.AutoPowerEnabled ) {
-        MessageOutput.println("[Huawei::Controller] WARNING: Trying to set "
-            "mode to internal automatic power control without being enabled "
-            "in the UI. Ignoring command.");
+        DTU_LOGW("Trying to set mode to internal automatic power control "
+                "without being enabled in the UI. Ignoring command.");
         return;
     }
 
