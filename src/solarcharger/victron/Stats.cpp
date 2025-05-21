@@ -210,6 +210,7 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
 
         JsonObject instance = instances[entry.second.serialNr_SER].to<JsonObject>();
         instance["data_age_ms"] = age;
+        instance["max_age_ms"] = 10 * 1000;
         instance["hide_serial"] = false;
         populateJsonWithInstanceStats(instance, entry.second);
     }

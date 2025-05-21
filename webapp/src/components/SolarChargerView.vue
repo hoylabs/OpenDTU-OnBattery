@@ -12,8 +12,8 @@
                     <div
                         class="card-header d-flex justify-content-between align-items-center"
                         :class="{
-                            'text-bg-danger': item.data_age_ms >= 10000,
-                            'text-bg-success': item.data_age_ms < 10000,
+                            'text-bg-danger': item.data_age_ms >= item.max_age_ms,
+                            'text-bg-success': item.data_age_ms < item.max_age_ms,
                         }"
                     >
                         <div class="p-1 flex-grow-1">

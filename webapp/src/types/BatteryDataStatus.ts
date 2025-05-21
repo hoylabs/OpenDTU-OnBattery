@@ -9,6 +9,7 @@ export interface Battery {
     fwversion: string;
     hwversion: string;
     data_age: number;
+    max_age: number;
     values: BatteryData[];
     showIssues: boolean;
     issues: number[];

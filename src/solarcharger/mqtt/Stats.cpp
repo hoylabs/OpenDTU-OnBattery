@@ -61,6 +61,7 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
 
     const JsonObject instance = root["solarcharger"]["instances"]["MQTT"].to<JsonObject>();
     instance["data_age_ms"] = age;
+    instance["max_age_ms"] = 10 * 1000;
     instance["hide_serial"] = true;
     instance["product_id"] = "MQTT"; // will be translated by the web app
 

@@ -43,6 +43,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
         root["hwversion"] = _hwversion;
     }
     root["data_age"] = getAgeSeconds();
+    root["max_age"] = 20;
 
     if (isSoCValid()) {
         addLiveViewValue(root, "SoC", _soc, "%", _socPrecision);

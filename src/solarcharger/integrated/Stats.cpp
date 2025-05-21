@@ -49,6 +49,7 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
 
         const JsonObject instance = root["solarcharger"]["instances"][device->getSerial()].to<JsonObject>();
         instance["data_age_ms"] = devage;
+        instance["max_age_ms"] = 90 * 1000;
         instance["hide_serial"] = false;
         instance["product_id"] = device->getName();
 
