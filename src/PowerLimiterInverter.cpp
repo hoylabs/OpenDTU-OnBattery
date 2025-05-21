@@ -344,7 +344,7 @@ uint16_t PowerLimiterInverter::getCurrentLimitWatts() const
 
 void PowerLimiterInverter::debug() const
 {
-    if (esp_log_level_get(TAG) < ESP_LOG_VERBOSE) { return; }
+    if (!DTU_LOG_IS_VERBOSE) { return; }
 
     String eligibility("disqualified");
     switch (getEligibility()) {
