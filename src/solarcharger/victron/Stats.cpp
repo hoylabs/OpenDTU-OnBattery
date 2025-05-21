@@ -190,7 +190,7 @@ bool Stats::isStale(data_map_t::value_type const& data) const
     // age unknown
     if (!_lastUpdate[data.first]) { return true; }
 
-    return millis() - _lastUpdate[data.first] > 10 * 1000;
+    return millis() - _lastUpdate[data.first] > getMaxAgeMilliSeconds();
 }
 
 void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const uint32_t lastPublish) const
@@ -208,9 +208,8 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
         auto hasUpdate = age != 0 && age < millis() - lastPublish;
         if (!fullUpdate && !hasUpdate) { continue; }
 
-        JsonObject instance = instances[entry.second.serialNr_SER].to<JsonObject>();
-        instance["data_age_ms"] = age;
-        instance["hide_serial"] = false;
+        auto instance = instances[entry.second.serialNr_SER].to<JsonObject>();
+        populateJsonWithBasicStats(instance, age);
         populateJsonWithInstanceStats(instance, entry.second);
     }
 }
