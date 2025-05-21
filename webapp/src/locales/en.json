@@ -228,12 +228,14 @@
         "section_mppt1": "Solar Input 1",
         "section_mppt2": "Solar Input 2",
         "mppt1": {
-            "Power": "Power",
-            "Voltage": "Voltage"
+            "Power": "@:solarchargerhome.input.PPV",
+            "Voltage": "@:solarchargerhome.input.VPV",
+            "Current": "@:solarchargerhome.input.IPV"
         },
         "mppt2": {
             "Power": "@:solarchargerhome.mppt1.Power",
-            "Voltage": "@:solarchargerhome.mppt1.Voltage"
+            "Voltage": "@:solarchargerhome.mppt1.Voltage",
+            "Current": "@:solarchargerhome.mppt1.Current"
         }
     },
     "eventlog": {
@@ -623,7 +625,7 @@
         "Provider": "Data Provider",
         "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
         "ProviderMqtt": "Solar Charger data from MQTT broker",
-        "ProviderIntegrated": "MPPT data from Smart Buffer Batteries",
+        "ProviderIntegrated": "MPPT data from supported battery integrations (currently only zendure)",
         "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change",
         "CalculateOutputPower": "Calculate Solar Charger output power",
         "CalculateOutputPowerDescription": "If enabled, the output power of the Solar Charger will be calculated based on the current and voltage values. If disabled, the output power will be taken from the Solar Charger directly.",

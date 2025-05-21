@@ -75,11 +75,21 @@ std::shared_ptr<Integrated::Stats> Controller::getIntegratedStats()
 
     std::lock_guard<std::mutex> lock(_mutex);
 
+    auto const delay = 20 * 1000U;
+    auto const ms = millis();
+    if (ms < delay) {
+        DTU_LOGV("getIntegratedStats(): Startup Delay running %ld/%" PRId32 " ms", ms, delay);
+        return nullptr;
+    }
+
     if (!_upProvider || config.SolarCharger.Provider != SolarChargerProviderType::Integrated) {
         return nullptr;
     }
 
-    return std::reinterpret_pointer_cast<Integrated::Stats>(_upProvider->getStats());
+    auto stats = std::reinterpret_pointer_cast<Integrated::Stats>(_upProvider->getStats());
+
+    DTU_LOGV("getIntegratedStats(): returning 0x%p", static_cast<void*>(&*stats));
+    return stats;
 }
 
 void Controller::loop()

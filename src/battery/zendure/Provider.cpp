@@ -62,7 +62,7 @@ bool Provider::init()
         }
 
         // setup static device info
-        DTU_LOGI("Device name '%s' - LOG messages are %s supported\r\n",
+        DTU_LOGI("Device name '%s' - LOG messages are %s supported",
                 deviceName.c_str(), (_full_log_supported ? "fully" : "partly"));
         _stats->setDevice(std::move(deviceName));
         _stats->setManufacturer("Zendure");
@@ -123,7 +123,7 @@ bool Provider::init()
     JsonDocument root;
     JsonVariant prop = root[ZENDURE_REPORT_PROPERTIES].to<JsonObject>();
     prop[ZENDURE_REPORT_PV_BRAND] = 1; // means Hoymiles
-    prop[ZENDURE_REPORT_PV_AUTO_MODEL] = 0; // we did static setup
+    //prop[ZENDURE_REPORT_PV_AUTO_MODEL] = 0; // we did static setup
     prop[ZENDURE_REPORT_AUTO_RECOVER] = static_cast<uint8_t>(config.Battery.Zendure.BypassMode == static_cast<uint8_t>(BypassMode::Automatic));
     prop[ZENDURE_REPORT_AUTO_SHUTDOWN] = static_cast<uint8_t>(config.Battery.Zendure.AutoShutdown);
     prop[ZENDURE_REPORT_BUZZER_SWITCH] = static_cast<uint8_t>(config.Battery.Zendure.BuzzerEnable);
@@ -884,7 +884,7 @@ void Provider::publishPersistentSettings(const char* subtopic, const String& pay
 {
     if (!_topicPersistentSettings.isEmpty())
     {
-        DTU_LOGD("Writing Persistent Settings %s = %s\r\n",
+        DTU_LOGD("Writing Persistent Settings %s = %s",
                 String(_topicPersistentSettings + subtopic).c_str(),
                 payload.substring(0, 32).c_str());
         MqttSettings.publishGeneric(_topicPersistentSettings + subtopic, payload, true);

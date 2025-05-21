@@ -67,14 +67,6 @@ public:
         return true;
     }
 
-    // bool equals(const String& manufacture, const String& device, const String& serial, const size_t numMppts) {
-    //     if (_manufacture != manufacture) { return false; }
-    //     if (_device != device) { return false; }
-    //     if (_serial != serial) { return false; }
-    //     if (_numMppts != numMppts) { return false; }
-
-    //     return true;
-    // }
     inline String getName() {
         return _manufacture + " " + _device;
     }
