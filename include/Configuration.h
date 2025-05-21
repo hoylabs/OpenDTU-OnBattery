@@ -174,6 +174,7 @@ struct POWERLIMITER_CONFIG_T {
     uint16_t FullSolarPassThroughSoc;
     float FullSolarPassThroughStartVoltage;
     float FullSolarPassThroughStopVoltage;
+    bool FullSolarPassThroughUseMpptState;
     uint64_t InverterSerialForDcVoltage;
     uint8_t InverterChannelIdForDcVoltage;
     uint8_t RestartHour;
