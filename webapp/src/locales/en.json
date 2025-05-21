@@ -761,6 +761,7 @@
         "ProviderVictron": "Victron SmartShunt using VE.Direct interface",
         "ProviderPytesCan": "Pytes using CAN bus",
         "ProviderZendureMqtt": "Zendure using local MQTT broker",
+        "ProviderJkBmsCan": "Jikong (JK) BMS using CAN-Bus",
         "MqttConfiguration": "MQTT Settings",
         "MqttSocConfiguration": "SoC Settings",
         "MqttVoltageConfiguration": "Voltage Settings",
