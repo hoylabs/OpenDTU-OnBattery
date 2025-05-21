@@ -19,7 +19,6 @@ public:
     void deinit() final { return; };
     void loop() final { return; };
     std::shared_ptr<::SolarChargers::Stats> getStats() const final { return _stats; }
-    //std::shared_ptr<Stats> getStats() { return _stats; }
 
 private:
     Provider(Provider const& other) = delete;

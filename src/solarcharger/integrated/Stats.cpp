@@ -2,6 +2,11 @@
 #include <CRC.h>
 #include <MqttSettings.h>
 #include <solarcharger/integrated/Stats.h>
+#include <LogHelper.h>
+
+static const char* TAG = "solarCharger";
+static const char* SUBTAG = "Integrated";
+
 
 namespace SolarChargers::Integrated {
 
@@ -45,6 +50,8 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
     if (!fullUpdate && !hasUpdate) { return; }
 
     for (const auto& [hash, device] : _devices) {
+        DTU_LOGV("getLiveViewData(): device=0x%X", hash);
+
         auto devage = millis() - device->getLastUpdate();
 
         const JsonObject instance = root["solarcharger"]["instances"][device->getSerial()].to<JsonObject>();
@@ -54,6 +61,8 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
         instance["product_id"] = device->getName();
 
         for (const auto& [index, mppt] : device->_mppts) {
+            DTU_LOGV("LIVE -> device=0x%X -> mppt=%d", hash, static_cast<size_t>(index));
+
             auto name = String("mppt" + String(static_cast<size_t>(index)));
             const JsonObject output = instance["values"][name.c_str()].to<JsonObject>();
 
@@ -70,8 +79,21 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
                 output["Voltage"]["u"] = "V";
                 output["Voltage"]["d"] = 1;
             }
+
+            if (voltage.has_value() && power.has_value()) {
+                if (*voltage == 0) {
+                    output["Current"] = "N/A";
+                } else {
+                    output["Current"]["v"] = *power / *voltage;
+                    output["Current"]["u"] = "A";
+                    output["Current"]["d"] = 1;
+                }
+
+            }
         }
     }
+
+    DTU_LOGV("LIVE EXIT");
 }
 
 DeviceData::DeviceData(const String& manufacture, const String& device, const String& serial, const size_t numMppts /* = 0 */)
@@ -80,6 +102,8 @@ DeviceData::DeviceData(const String& manufacture, const String& device, const St
     , _serial(serial)
     , _numMppts(numMppts)
 {
+    DTU_LOGV("DeviceData(): assert(%d <= 4)", numMppts);
+
     // we currently support up to 4 MPPTs
     assert(numMppts <= 4);
 
@@ -106,12 +130,15 @@ std::optional<std::pair<uint32_t, std::shared_ptr<DeviceData>>> Stats::addDevice
     const uint32_t hash = crc.calc();
 
     auto new_device = std::make_shared<DeviceData>(*manufacture, *device, *serial, numMppts);
+    DTU_LOGV("addDevice(): hash=0x%X, new_device=0x%p", hash, static_cast<void*>(&*new_device));
 
     // check if the device already exits
     try
     {
         auto old_device = _devices.at(hash);
+        DTU_LOGV("addDevice(): old_device=0x%p", static_cast<void*>(&*old_device));
         if (*old_device == *new_device) {
+            DTU_LOGV("addDevice(): returning (0x%X, 0x%p)", hash, static_cast<void*>(&*old_device));
             return std::make_pair(hash, old_device);
         }
 
@@ -119,6 +146,8 @@ std::optional<std::pair<uint32_t, std::shared_ptr<DeviceData>>> Stats::addDevice
         _devices.erase(hash);
     }
     catch(const std::out_of_range& ex) {;}
+
+    DTU_LOGV("addDevice(): returning (0x%X, 0x%p)", hash, static_cast<void*>(&*new_device));
 
     // if no device found for our "hash", add a new one
     _devices[hash] = new_device;
@@ -130,7 +159,7 @@ void Stats::mqttPublish() const {
 
     for (const auto& [hash, device] : _devices) {
         for (const auto& [index, mppt] : device->_mppts) {
-            String prefix = "solarchargers/" + device->getSerial() + "/" + static_cast<uint8_t>(index) + "/";
+            String prefix = "solarchargers/" + device->getSerial() + "/mppt" + static_cast<uint8_t>(index) + "/";
 
             auto power = mppt->getPower();
             if (power.has_value()) {
@@ -140,6 +169,10 @@ void Stats::mqttPublish() const {
             auto voltage = mppt->getVoltage();
             if (voltage.has_value()) {
                 MqttSettings.publish(prefix + "voltage", String(*voltage, 1));
+            }
+
+            if (voltage.value_or(0) != 0 && power.has_value()) {
+                MqttSettings.publish(prefix + "current", String(*power / *voltage, 1));
             }
         }
     }
