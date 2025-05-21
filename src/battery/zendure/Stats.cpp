@@ -11,9 +11,12 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
     auto const& config = Configuration.get();
 
+    // set maximum age for aging within UI
+    root["max_age"] = 90;
+
     // values go into the "Status" card of the web application
     std::string section("status");
-    addLiveViewInSection(root, section, "totalInputPower", getInputPower(), "W", 0, false);
+    addLiveViewInSection(root, section, "totalInputPower", getInputPower().value_or(0), "W", 0);
     addLiveViewInSection(root, section, "chargePower", _charge_power, "W", 0);
     addLiveViewInSection(root, section, "dischargePower", _discharge_power, "W", 0);
     addLiveViewInSection(root, section, "totalOutputPower", _output_power, "W", 0);
