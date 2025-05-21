@@ -209,6 +209,7 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
     target["full_solar_passthrough_soc"] = source.FullSolarPassThroughSoc;
     target["full_solar_passthrough_start_voltage"] = roundedFloat(source.FullSolarPassThroughStartVoltage);
     target["full_solar_passthrough_stop_voltage"] = roundedFloat(source.FullSolarPassThroughStopVoltage);
+    target["full_solar_passthrough_use_mppt_state"] = source.FullSolarPassThroughUseMpptState;
     target["inverter_serial_for_dc_voltage"] = serialStr(source.InverterSerialForDcVoltage);
     target["inverter_channel_id_for_dc_voltage"] = source.InverterChannelIdForDcVoltage;
     target["inverter_restart_hour"] = source.RestartHour;
@@ -614,6 +615,7 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
     target.FullSolarPassThroughSoc = source["full_solar_passthrough_soc"] | POWERLIMITER_FULL_SOLAR_PASSTHROUGH_SOC;
     target.FullSolarPassThroughStartVoltage = source["full_solar_passthrough_start_voltage"] | POWERLIMITER_FULL_SOLAR_PASSTHROUGH_START_VOLTAGE;
     target.FullSolarPassThroughStopVoltage = source["full_solar_passthrough_stop_voltage"] | POWERLIMITER_FULL_SOLAR_PASSTHROUGH_STOP_VOLTAGE;
+    target.FullSolarPassThroughUseMpptState = source["full_solar_passthrough_use_mppt_state"] | POWERLIMITER_FULL_SOLAR_PASSTHROUGH_USE_MPPT_STATE;
     target.InverterSerialForDcVoltage = serialBin(source["inverter_serial_for_dc_voltage"] | String("0"));
     target.InverterChannelIdForDcVoltage = source["inverter_channel_id_for_dc_voltage"] | POWERLIMITER_INVERTER_CHANNEL_ID;
     target.RestartHour = source["inverter_restart_hour"] | POWERLIMITER_RESTART_HOUR;
