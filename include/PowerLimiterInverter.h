@@ -8,7 +8,7 @@
 
 class PowerLimiterInverter {
 public:
-    static std::unique_ptr<PowerLimiterInverter> create(bool verboseLogging, PowerLimiterInverterConfig const& config);
+    static std::unique_ptr<PowerLimiterInverter> create(PowerLimiterInverterConfig const& config);
 
     // send command(s) to inverter to reach desired target state (limit and
     // production). return true if an update is pending, i.e., if the target
@@ -95,7 +95,7 @@ public:
     bool isEligible() const;
 
 protected:
-    PowerLimiterInverter(bool verboseLogging, PowerLimiterInverterConfig const& config);
+    explicit PowerLimiterInverter(PowerLimiterInverterConfig const& config);
 
     uint16_t getCurrentLimitWatts() const;
 
@@ -111,7 +111,6 @@ protected:
     // Hoymiles lib inverter instance
     std::shared_ptr<InverterAbstract> _spInverter = nullptr;
 
-    bool _verboseLogging;
     char _logPrefix[32];
 
 private:

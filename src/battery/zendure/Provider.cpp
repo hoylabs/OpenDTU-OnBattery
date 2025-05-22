@@ -15,10 +15,8 @@ Provider::Provider()
     : _stats(std::make_shared<Stats>())
     , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
-    _verboseLogging = verboseLogging;
-
     auto const& config = Configuration.get();
     String deviceType = String();
 

@@ -1,7 +1,7 @@
 #include "PowerLimiterBatteryInverter.h"
 
-PowerLimiterBatteryInverter::PowerLimiterBatteryInverter(bool verboseLogging, PowerLimiterInverterConfig const& config)
-    : PowerLimiterInverter(verboseLogging, config) { }
+PowerLimiterBatteryInverter::PowerLimiterBatteryInverter(PowerLimiterInverterConfig const& config)
+    : PowerLimiterInverter(config) { }
 
 uint16_t PowerLimiterBatteryInverter::getMaxReductionWatts(bool allowStandby) const
 {

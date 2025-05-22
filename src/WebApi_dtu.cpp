@@ -54,7 +54,6 @@ void WebApiDtuClass::onDtuAdminGet(AsyncWebServerRequest* request)
         static_cast<uint32_t>(config.Dtu.Serial & 0xFFFFFFFF));
     root["serial"] = buffer;
     root["pollinterval"] = config.Dtu.PollInterval;
-    root["verbose_logging"] = config.Dtu.VerboseLogging;
     root["nrf_enabled"] = Hoymiles.getRadioNrf()->isInitialized();
     root["nrf_palevel"] = config.Dtu.Nrf.PaLevel;
     root["cmt_enabled"] = Hoymiles.getRadioCmt()->isInitialized();
@@ -93,7 +92,6 @@ void WebApiDtuClass::onDtuAdminPost(AsyncWebServerRequest* request)
 
     if (!(root["serial"].is<String>()
             && root["pollinterval"].is<uint32_t>()
-            && root["verbose_logging"].is<bool>()
             && root["nrf_palevel"].is<uint8_t>()
             && root["cmt_palevel"].is<int8_t>()
             && root["cmt_frequency"].is<uint32_t>()
@@ -160,7 +158,6 @@ void WebApiDtuClass::onDtuAdminPost(AsyncWebServerRequest* request)
         auto& config = guard.getConfig();
         config.Dtu.Serial = serial;
         config.Dtu.PollInterval = root["pollinterval"].as<uint32_t>();
-        config.Dtu.VerboseLogging = root["verbose_logging"].as<bool>();
         config.Dtu.Nrf.PaLevel = root["nrf_palevel"].as<uint8_t>();
         config.Dtu.Cmt.PaLevel = root["cmt_palevel"].as<int8_t>();
         config.Dtu.Cmt.Frequency = root["cmt_frequency"].as<uint32_t>();

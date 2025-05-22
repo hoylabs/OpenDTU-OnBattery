@@ -78,7 +78,6 @@ private:
     std::pair<bool, uint32_t> _nextInverterRestart = { false, 0 };
     bool _fullSolarPassThroughActive = false;
     float _loadCorrectedVoltage = 0.0f;
-    bool _verboseLogging = true;
 
     frozen::string const& getStatusText(Status status) const;
     void announceStatus(Status status);

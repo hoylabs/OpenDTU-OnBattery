@@ -40,7 +40,6 @@ export interface BatterySerialConfig {
 
 export interface BatteryConfig {
     enabled: boolean;
-    verbose_logging: boolean;
     provider: number;
     serial: BatterySerialConfig;
     mqtt: BatteryMqttConfig;

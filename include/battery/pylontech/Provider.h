@@ -12,7 +12,7 @@ namespace Batteries::Pylontech {
 class Provider : public ::Batteries::CanReceiver {
 public:
     Provider();
-    bool init(bool verboseLogging) final;
+    bool init() final;
     void onMessage(twai_message_t rx_message) final;
 
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }

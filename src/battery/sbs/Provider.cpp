@@ -14,10 +14,10 @@ Provider::Provider()
     : _stats(std::make_shared<Stats>())
     , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
     _stats->_chargeVoltage =58.4;
-    return ::Batteries::CanReceiver::init(verboseLogging, "SBS");
+    return ::Batteries::CanReceiver::init("SBS");
 }
 
 void Provider::onMessage(twai_message_t rx_message)

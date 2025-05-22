@@ -14,13 +14,6 @@
                 />
 
                 <template v-if="gridChargerConfigList.enabled">
-                    <InputElement
-                        :label="$t('gridchargeradmin.VerboseLogging')"
-                        v-model="gridChargerConfigList.verbose_logging"
-                        type="checkbox"
-                        wide
-                    />
-
                     <div class="row mb-3">
                         <label class="col-sm-4 col-form-label">
                             {{ $t('gridchargeradmin.Provider') }}

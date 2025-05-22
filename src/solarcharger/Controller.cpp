@@ -36,8 +36,6 @@ void Controller::updateSettings()
     auto const& config = Configuration.get();
     if (!config.SolarCharger.Enabled) { return; }
 
-    bool verboseLogging = config.SolarCharger.VerboseLogging;
-
     switch (config.SolarCharger.Provider) {
         case SolarChargerProviderType::VEDIRECT:
             _upProvider = std::make_unique<::SolarChargers::Victron::Provider>();
@@ -50,7 +48,7 @@ void Controller::updateSettings()
             return;
     }
 
-    if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
+    if (!_upProvider->init()) { _upProvider = nullptr; }
 
     _forcePublishSensors = true;
 }

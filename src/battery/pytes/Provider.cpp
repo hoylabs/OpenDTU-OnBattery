@@ -27,9 +27,9 @@ static uint32_t popCount(uint32_t val) {
     return cnt;
 }
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
-    return ::Batteries::CanReceiver::init(verboseLogging, "Pytes");
+    return ::Batteries::CanReceiver::init("Pytes");
 }
 
 void Provider::onMessage(twai_message_t rx_message)

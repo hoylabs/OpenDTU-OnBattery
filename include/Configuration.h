@@ -158,7 +158,6 @@ using PowerLimiterInverterConfig = struct POWERLIMITER_INVERTER_CONFIG_T;
 
 struct POWERLIMITER_CONFIG_T {
     bool Enabled;
-    bool VerboseLogging;
     bool SolarPassThroughEnabled;
     uint8_t ConductionLosses;
     bool BatteryAlwaysUseAtNight;
@@ -231,7 +230,6 @@ using BatterySerialConfig = struct BATTERY_SERIAL_CONFIG_T;
 
 struct BATTERY_CONFIG_T {
     bool Enabled;
-    bool VerboseLogging;
     uint8_t Provider;
     BatteryMqttConfig Mqtt;
     BatteryZendureConfig Zendure;
@@ -264,7 +262,6 @@ using GridChargerHuaweiConfig = struct GRID_CHARGER_HUAWEI_CONFIG_T;
 
 struct GRID_CHARGER_CONFIG_T {
     bool Enabled;
-    bool VerboseLogging;
     bool AutoPowerEnabled;
     bool AutoPowerBatterySoCLimitsEnabled;
     bool EmergencyChargeEnabled;
@@ -304,7 +301,6 @@ using SolarChargerMqttConfig = struct SOLARCHARGER_MQTT_CONFIG_T;
 
 struct SOLAR_CHARGER_CONFIG_T {
     bool Enabled;
-    bool VerboseLogging;
     bool PublishUpdatesOnly;
     SolarChargerProviderType Provider;
     SolarChargerMqttConfig Mqtt;
@@ -353,7 +349,6 @@ struct CONFIG_T {
     struct {
         bool Enabled;
         char Hostname[MQTT_MAX_HOSTNAME_STRLEN + 1];
-        bool VerboseLogging;
         uint32_t Port;
         char ClientId[MQTT_MAX_CLIENTID_STRLEN + 1];
         char Username[MQTT_MAX_USERNAME_STRLEN + 1];
@@ -398,7 +393,6 @@ struct CONFIG_T {
             uint32_t Frequency;
             uint8_t CountryMode;
         } Cmt;
-        bool VerboseLogging;
     } Dtu;
 
     struct {
@@ -426,7 +420,6 @@ struct CONFIG_T {
 
     struct PowerMeterConfig {
         bool Enabled;
-        bool VerboseLogging;
         uint32_t Source;
         PowerMeterMqttConfig Mqtt;
         PowerMeterSerialSdmConfig SerialSdm;

@@ -13,7 +13,7 @@ namespace Batteries::Zendure {
 class Provider : public ::Batteries::Provider {
 public:
     Provider();
-    bool init(bool verboseLogging) final;
+    bool init() final;
     void deinit() final;
     void loop() final;
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
@@ -32,7 +32,6 @@ private:
     void setTargetSoCs(const float soc_min, const float soc_max);
     void writeSettings();
 
-    bool _verboseLogging = false;
     uint32_t _lastUpdate = 0;
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
     std::shared_ptr<HassIntegration> _hassIntegration;

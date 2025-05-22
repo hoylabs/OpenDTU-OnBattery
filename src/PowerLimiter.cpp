@@ -95,8 +95,6 @@ void PowerLimiterClass::reloadConfig()
 {
     auto const& config = Configuration.get();
 
-    _verboseLogging = config.PowerLimiter.VerboseLogging;
-
     if (!config.PowerLimiter.Enabled || Mode::Disabled == _mode) {
         _retirees.insert(
             _retirees.end(),
@@ -135,7 +133,7 @@ void PowerLimiterClass::reloadConfig()
 
         if (!invConfig.IsGoverned) { continue; }
 
-        auto upInv = PowerLimiterInverter::create(_verboseLogging, invConfig);
+        auto upInv = PowerLimiterInverter::create(invConfig);
         if (upInv) { _inverters.push_back(std::move(upInv)); }
     }
 
@@ -365,9 +363,7 @@ void PowerLimiterClass::loop()
     auto powerBusUsage = calcPowerBusUsage(remainingAfterSmartBuffer);
     auto coveredByBattery = updateInverterLimits(powerBusUsage, sBatteryPoweredFilter, sBatteryPoweredExpression);
 
-    if (_verboseLogging) {
-        for (auto const &upInv : _inverters) { upInv->debug(); }
-    }
+    for (auto const &upInv : _inverters) { upInv->debug(); }
 
     _lastExpectedInverterOutput = coveredBySolar + coveredBySmartBuffer + coveredByBattery;
 
@@ -532,11 +528,9 @@ uint16_t PowerLimiterClass::calcTargetOutput() const
     auto meterValid = PowerMeter.isDataValid();
     auto meterValue = PowerMeter.getPowerTotal();
 
-    if (_verboseLogging) {
-        DTU_LOGD("targeting %d W, base load is %u W, power meter reads %.1f W (%s)",
-                targetConsumption, baseLoad, meterValue,
-                (meterValid?"valid":"stale"));
-    }
+    DTU_LOGD("targeting %d W, base load is %u W, power meter reads %.1f W (%s)",
+            targetConsumption, baseLoad, meterValue,
+            (meterValid?"valid":"stale"));
 
     if (!meterValid) { return baseLoad; }
 
@@ -621,12 +615,10 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
     uint16_t hysteresis = config.PowerLimiter.TargetPowerConsumptionHysteresis;
 
     bool plural = matchingInverters.size() != 1;
-    if (_verboseLogging) {
-        DTU_LOGD("requesting %d W from %d %s inverter%s currently "
-                "producing %d W (diff %i W, hysteresis %d W)",
-                powerRequested, matchingInverters.size(), filterExpression.c_str(),
-                (plural?"s":""), producing, diff, hysteresis);
-    }
+    DTU_LOGD("requesting %d W from %d %s inverter%s currently "
+            "producing %d W (diff %i W, hysteresis %d W)",
+            powerRequested, matchingInverters.size(), filterExpression.c_str(),
+            (plural?"s":""), producing, diff, hysteresis);
 
     // if 0 W are requested, we ignore the hysteresis to allow
     // battery-powered inverters to go into standby and avoid that the battery

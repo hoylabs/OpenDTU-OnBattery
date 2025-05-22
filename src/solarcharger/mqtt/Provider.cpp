@@ -10,9 +10,8 @@ static const char* SUBTAG = "MQTT";
 
 namespace SolarChargers::Mqtt {
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
-    _verboseLogging = verboseLogging;
     auto const& config = Configuration.get().SolarCharger.Mqtt;
 
     _outputPowerTopic = config.PowerTopic;

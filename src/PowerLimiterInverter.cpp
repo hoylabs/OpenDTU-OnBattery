@@ -10,20 +10,19 @@
 static const char* TAG = "dynamicPowerLimiter";
 #define SUBTAG _logPrefix
 
-std::unique_ptr<PowerLimiterInverter> PowerLimiterInverter::create(
-        bool verboseLogging, PowerLimiterInverterConfig const& config)
+std::unique_ptr<PowerLimiterInverter> PowerLimiterInverter::create(PowerLimiterInverterConfig const& config)
 {
     std::unique_ptr<PowerLimiterInverter> upInverter;
 
     switch (config.PowerSource) {
         case PowerLimiterInverterConfig::InverterPowerSource::Battery:
-            upInverter = std::make_unique<PowerLimiterBatteryInverter>(verboseLogging, config);
+            upInverter = std::make_unique<PowerLimiterBatteryInverter>(config);
             break;
         case PowerLimiterInverterConfig::InverterPowerSource::Solar:
-            upInverter = std::make_unique<PowerLimiterSolarInverter>(verboseLogging, config);
+            upInverter = std::make_unique<PowerLimiterSolarInverter>(config);
             break;
         case PowerLimiterInverterConfig::InverterPowerSource::SmartBuffer:
-            upInverter = std::make_unique<PowerLimiterSmartBufferInverter>(verboseLogging, config);
+            upInverter = std::make_unique<PowerLimiterSmartBufferInverter>(config);
             break;
     }
 
@@ -32,9 +31,8 @@ std::unique_ptr<PowerLimiterInverter> PowerLimiterInverter::create(
     return std::move(upInverter);
 }
 
-PowerLimiterInverter::PowerLimiterInverter(bool verboseLogging, PowerLimiterInverterConfig const& config)
+PowerLimiterInverter::PowerLimiterInverter(PowerLimiterInverterConfig const& config)
     : _config(config)
-    , _verboseLogging(verboseLogging)
 {
     _spInverter = Hoymiles.getInverterBySerial(config.Serial);
     if (!_spInverter) { return; }

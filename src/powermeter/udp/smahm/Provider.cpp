@@ -21,8 +21,6 @@ constexpr uint32_t interval = 1000;
 void Provider::Soutput(int kanal, int index, int art, int tarif,
         char const* name, float value, uint32_t timestamp)
 {
-    if (!_verboseLogging) { return; }
-
     DTU_LOGD("%s = %.1f (timestamp %u)", name, value, timestamp);
 }
 

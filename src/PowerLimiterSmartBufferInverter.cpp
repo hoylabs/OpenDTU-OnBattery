@@ -1,7 +1,7 @@
 #include "PowerLimiterSmartBufferInverter.h"
 
-PowerLimiterSmartBufferInverter::PowerLimiterSmartBufferInverter(bool verboseLogging, PowerLimiterInverterConfig const& config)
-    : PowerLimiterOverscalingInverter(verboseLogging, config) { }
+PowerLimiterSmartBufferInverter::PowerLimiterSmartBufferInverter(PowerLimiterInverterConfig const& config)
+    : PowerLimiterOverscalingInverter(config) { }
 
 uint16_t PowerLimiterSmartBufferInverter::getMaxReductionWatts(bool allowStandby) const
 {
