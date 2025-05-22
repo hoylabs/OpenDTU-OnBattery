@@ -10,9 +10,8 @@ static const char* SUBTAG = "MQTT";
 
 namespace Batteries::Mqtt {
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
-    _verboseLogging = verboseLogging;
     _stats->setManufacturer("MQTT");
 
     auto const& config = Configuration.get();

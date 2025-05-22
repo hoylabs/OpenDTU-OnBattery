@@ -55,13 +55,6 @@
 
                 <template v-if="isEnabled">
                     <InputElement
-                        :label="$t('powerlimiteradmin.VerboseLogging')"
-                        v-model="powerLimiterConfigList.verbose_logging"
-                        type="checkbox"
-                        wide
-                    />
-
-                    <InputElement
                         v-if="hasPowerMeter"
                         :label="$t('powerlimiteradmin.TargetPowerConsumption')"
                         :tooltip="$t('powerlimiteradmin.TargetPowerConsumptionHint')"

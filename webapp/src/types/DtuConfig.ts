@@ -9,7 +9,6 @@ export interface CountryDef {
 export interface DtuConfig {
     serial: string;
     pollinterval: number;
-    verbose_logging: boolean;
     nrf_enabled: boolean;
     nrf_palevel: number;
     cmt_enabled: boolean;

@@ -1,7 +1,7 @@
 #include "PowerLimiterSolarInverter.h"
 
-PowerLimiterSolarInverter::PowerLimiterSolarInverter(bool verboseLogging, PowerLimiterInverterConfig const& config)
-    : PowerLimiterOverscalingInverter(verboseLogging, config) { }
+PowerLimiterSolarInverter::PowerLimiterSolarInverter(PowerLimiterInverterConfig const& config)
+    : PowerLimiterOverscalingInverter(config) { }
 
 uint16_t PowerLimiterSolarInverter::getExpectedOutputAcWatts() const
 {

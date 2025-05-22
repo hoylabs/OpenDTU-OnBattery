@@ -4,8 +4,8 @@
 static const char* TAG = "dynamicPowerLimiter";
 #define SUBTAG _logPrefix
 
-PowerLimiterOverscalingInverter::PowerLimiterOverscalingInverter(bool verboseLogging, PowerLimiterInverterConfig const& config)
-    : PowerLimiterInverter(verboseLogging, config) { }
+PowerLimiterOverscalingInverter::PowerLimiterOverscalingInverter(PowerLimiterInverterConfig const& config)
+    : PowerLimiterInverter(config) { }
 
 float PowerLimiterOverscalingInverter::calculateRequiredOutputThreshold(uint16_t limitWatts) const
 {

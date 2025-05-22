@@ -19,10 +19,8 @@ Provider::Provider()
     : _stats(std::make_shared<Stats>())
     , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
-    _verboseLogging = verboseLogging;
-
     std::string ifcType = "transceiver";
     if (Interface::Transceiver != getInterface()) { ifcType = "TTL-UART"; }
     DTU_LOGI("Initialize %s interface...", ifcType.c_str());
@@ -253,7 +251,7 @@ void Provider::processDataPoints(DataPointContainer const& dataPoints)
 {
     _stats->updateFrom(dataPoints);
 
-    if (!_verboseLogging) { return; }
+    if (!DTU_LOG_IS_DEBUG) { return; }
 
     auto iter = dataPoints.cbegin();
     while ( iter != dataPoints.cend() ) {

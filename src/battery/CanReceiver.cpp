@@ -9,9 +9,8 @@ static const char* TAG = "battery";
 
 namespace Batteries {
 
-bool CanReceiver::init(bool verboseLogging, char const* providerName)
+bool CanReceiver::init(char const* providerName)
 {
-    _verboseLogging = verboseLogging;
     _providerName = providerName;
 
     DTU_LOGI("Initialize interface...");

@@ -11,7 +11,7 @@ namespace Batteries::VictronSmartShunt {
 class Provider : public ::Batteries::Provider {
 public:
     Provider();
-    bool init(bool verboseLogging) final;
+    bool init() final;
     void deinit() final;
     void loop() final;
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }

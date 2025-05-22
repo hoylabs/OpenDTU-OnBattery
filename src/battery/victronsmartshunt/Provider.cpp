@@ -18,7 +18,7 @@ void Provider::deinit()
     SerialPortManager.freePort(_serialPortOwner);
 }
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
     DTU_LOGI("Initialize interface...");
 

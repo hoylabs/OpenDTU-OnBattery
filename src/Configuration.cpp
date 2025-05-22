@@ -57,7 +57,6 @@ void ConfigurationClass::serializeHttpRequestConfig(HttpRequestConfig const& sou
 void ConfigurationClass::serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target)
 {
     target["enabled"] = source.Enabled;
-    target["verbose_logging"] = source.VerboseLogging;
     target["provider"] = source.Provider;
     target["publish_updates_only"] = source.PublishUpdatesOnly;
 }
@@ -130,7 +129,6 @@ void ConfigurationClass::serializePowerMeterUdpVictronConfig(PowerMeterUdpVictro
 void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, JsonObject& target)
 {
     target["enabled"] = config.Battery.Enabled;
-    target["verbose_logging"] = config.Battery.VerboseLogging;
     target["provider"] = config.Battery.Provider;
     target["enable_discharge_current_limit"] = config.Battery.EnableDischargeCurrentLimit;
     target["discharge_current_limit"] = config.Battery.DischargeCurrentLimit;
@@ -193,7 +191,6 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
     };
 
     target["enabled"] = source.Enabled;
-    target["verbose_logging"] = source.VerboseLogging;
     target["solar_passthrough_enabled"] = source.SolarPassThroughEnabled;
     target["conduction_losses"] = source.ConductionLosses;
     target["battery_always_use_at_night"] = source.BatteryAlwaysUseAtNight;
@@ -233,7 +230,6 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
 void ConfigurationClass::serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target)
 {
     target["enabled"] = source.Enabled;
-    target["verbose_logging"] = source.VerboseLogging;
     target["provider"] = source.Provider;
     target["auto_power_enabled"] = source.AutoPowerEnabled;
     target["auto_power_batterysoc_limits_enabled"] = source.AutoPowerBatterySoCLimitsEnabled;
@@ -306,7 +302,6 @@ bool ConfigurationClass::write()
 
     JsonObject mqtt = doc["mqtt"].to<JsonObject>();
     mqtt["enabled"] = config.Mqtt.Enabled;
-    mqtt["verbose_logging"] = config.Mqtt.VerboseLogging;
     mqtt["hostname"] = config.Mqtt.Hostname;
     mqtt["port"] = config.Mqtt.Port;
     mqtt["clientid"] = config.Mqtt.ClientId;
@@ -340,7 +335,6 @@ bool ConfigurationClass::write()
     JsonObject dtu = doc["dtu"].to<JsonObject>();
     dtu["serial"] = config.Dtu.Serial;
     dtu["poll_interval"] = config.Dtu.PollInterval;
-    dtu["verbose_logging"] = config.Dtu.VerboseLogging;
     dtu["nrf_pa_level"] = config.Dtu.Nrf.PaLevel;
     dtu["cmt_pa_level"] = config.Dtu.Cmt.PaLevel;
     dtu["cmt_frequency"] = config.Dtu.Cmt.Frequency;
@@ -410,7 +404,6 @@ bool ConfigurationClass::write()
 
     JsonObject powermeter = doc["powermeter"].to<JsonObject>();
     powermeter["enabled"] = config.PowerMeter.Enabled;
-    powermeter["verbose_logging"] = config.PowerMeter.VerboseLogging;
     powermeter["source"] = config.PowerMeter.Source;
 
     JsonObject powermeter_mqtt = powermeter["mqtt"].to<JsonObject>();
@@ -480,7 +473,6 @@ void ConfigurationClass::deserializeHttpRequestConfig(JsonObject const& source_h
 void ConfigurationClass::deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target)
 {
     target.Enabled = source["enabled"] | SOLAR_CHARGER_ENABLED;
-    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
     target.Provider = source["provider"] | SolarChargerProviderType::VEDIRECT;
     target.PublishUpdatesOnly = source["publish_updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
 }
@@ -559,7 +551,6 @@ void ConfigurationClass::deserializePowerMeterUdpVictronConfig(JsonObject const&
 void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target)
 {
     target.Enabled = source["enabled"] | BATTERY_ENABLED;
-    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
     target.Provider = source["provider"] | BATTERY_PROVIDER;
     target.EnableDischargeCurrentLimit = source["enable_discharge_current_limit"] | BATTERY_ENABLE_DISCHARGE_CURRENT_LIMIT;
     target.DischargeCurrentLimit = source["discharge_current_limit"] | BATTERY_DISCHARGE_CURRENT_LIMIT;
@@ -618,7 +609,6 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
     };
 
     target.Enabled = source["enabled"] | POWERLIMITER_ENABLED;
-    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
     target.SolarPassThroughEnabled = source["solar_passthrough_enabled"] | POWERLIMITER_SOLAR_PASSTHROUGH_ENABLED;
     target.ConductionLosses = source["conduction_losses"] | POWERLIMITER_CONDUCTION_LOSSES;
     target.BatteryAlwaysUseAtNight = source["battery_always_use_at_night"] | POWERLIMITER_BATTERY_ALWAYS_USE_AT_NIGHT;
@@ -657,7 +647,6 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
 void ConfigurationClass::deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target)
 {
     target.Enabled = source["enabled"] | GRIDCHARGER_ENABLED;
-    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
     target.Provider = source["provider"] | GridChargerProviderType::HUAWEI;
     target.AutoPowerEnabled = source["auto_power_enabled"] | false;
     target.AutoPowerBatterySoCLimitsEnabled = source["auto_power_batterysoc_limits_enabled"] | false;
@@ -777,7 +766,6 @@ bool ConfigurationClass::read()
 
     JsonObject mqtt = doc["mqtt"];
     config.Mqtt.Enabled = mqtt["enabled"] | MQTT_ENABLED;
-    config.Mqtt.VerboseLogging = mqtt["verbose_logging"] | VERBOSE_LOGGING;
     strlcpy(config.Mqtt.Hostname, mqtt["hostname"] | MQTT_HOST, sizeof(config.Mqtt.Hostname));
     config.Mqtt.Port = mqtt["port"] | MQTT_PORT;
     strlcpy(config.Mqtt.ClientId, mqtt["clientid"] | NetworkSettings.getApName().c_str(), sizeof(config.Mqtt.ClientId));
@@ -811,7 +799,6 @@ bool ConfigurationClass::read()
     JsonObject dtu = doc["dtu"];
     config.Dtu.Serial = dtu["serial"] | DTU_SERIAL;
     config.Dtu.PollInterval = dtu["poll_interval"] | DTU_POLL_INTERVAL;
-    config.Dtu.VerboseLogging = dtu["verbose_logging"] | VERBOSE_LOGGING;
     config.Dtu.Nrf.PaLevel = dtu["nrf_pa_level"] | DTU_NRF_PA_LEVEL;
     config.Dtu.Cmt.PaLevel = dtu["cmt_pa_level"] | DTU_CMT_PA_LEVEL;
     config.Dtu.Cmt.Frequency = dtu["cmt_frequency"] | DTU_CMT_FREQUENCY;
@@ -879,7 +866,6 @@ bool ConfigurationClass::read()
 
     JsonObject powermeter = doc["powermeter"];
     config.PowerMeter.Enabled = powermeter["enabled"] | POWERMETER_ENABLED;
-    config.PowerMeter.VerboseLogging = powermeter["verbose_logging"] | VERBOSE_LOGGING;
     config.PowerMeter.Source =  powermeter["source"] | POWERMETER_SOURCE;
 
     deserializePowerMeterMqttConfig(powermeter["mqtt"], config.PowerMeter.Mqtt);
@@ -1129,7 +1115,6 @@ void ConfigurationClass::migrateOnBattery()
     if (config.Cfg.VersionOnBattery < 4) {
         JsonObject vedirect = doc["vedirect"];
         config.SolarCharger.Enabled = vedirect["enabled"] | SOLAR_CHARGER_ENABLED;
-        config.SolarCharger.VerboseLogging = vedirect["verbose_logging"] | VERBOSE_LOGGING;
         config.SolarCharger.PublishUpdatesOnly = vedirect["updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
     }
 
@@ -1180,7 +1165,6 @@ void ConfigurationClass::migrateOnBattery()
     if (config.Cfg.VersionOnBattery < 8) {
         JsonObject huawei = doc["huawei"];
         config.GridCharger.Enabled = huawei["enabled"] | GRIDCHARGER_ENABLED;
-        config.GridCharger.VerboseLogging = huawei["verbose_logging"] | VERBOSE_LOGGING;
         config.GridCharger.AutoPowerEnabled = huawei["auto_power_enabled"] | GRIDCHARGER_AUTO_POWER_ENABLED;
         config.GridCharger.AutoPowerBatterySoCLimitsEnabled = huawei["auto_power_batterysoc_limits_enabled"] | GRIDCHARGER_AUTO_POWER_BATTERYSOC_LIMITS_ENABLED;
         config.GridCharger.EmergencyChargeEnabled = huawei["emergency_charge_enabled"] | GRIDCHARGER_EMERGENCY_CHARGE_ENABLED;

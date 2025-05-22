@@ -14,13 +14,6 @@
                 />
 
                 <template v-if="batteryConfigList.enabled">
-                    <InputElement
-                        :label="$t('batteryadmin.VerboseLogging')"
-                        v-model="batteryConfigList.verbose_logging"
-                        type="checkbox"
-                        wide
-                    />
-
                     <div class="row mb-3">
                         <label class="col-sm-4 col-form-label">
                             {{ $t('batteryadmin.Provider') }}

@@ -28,7 +28,6 @@
         "Login": "Connexion"
     },
     "base": {
-        "VerboseLogging": "Journalisation Détaillée",
         "Seconds": "Secondes",
         "Loading": "Chargement...",
         "Reload": "Reload",
@@ -458,7 +457,6 @@
         "Serial": "Numéro de série",
         "SerialHint": "L'onduleur et le DTU ont tous deux un numéro de série. Le numéro de série du DTU est généré de manière aléatoire lors du premier démarrage et ne doit normalement pas être modifié.",
         "PollInterval": "Intervalle de sondage",
-        "VerboseLogging": "@:base.VerboseLogging",
         "Seconds": "Secondes",
         "NrfPaLevel": "NRF24 Niveau de puissance d'émission",
         "CmtPaLevel": "CMT2300A Niveau de puissance d'émission",
@@ -538,7 +536,6 @@
         "MqttSettings": "Paramètres MQTT",
         "MqttConfiguration": "Configuration du système MQTT",
         "EnableMqtt": "Activer le MQTT",
-        "VerboseLogging": "@:base.VerboseLogging",
         "EnableHass": "Activer la découverte automatique du MQTT de Home Assistant",
         "MqttBrokerParameter": "Paramètre du Broker MQTT",
         "Hostname": "Nom d'hôte",
@@ -584,14 +581,12 @@
         "EnableSolarCharger": "Enable Interface",
         "Provider": "Data Provider",
         "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
-        "VerboseLogging": "@:base.VerboseLogging",
         "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change"
     },
     "batteryadmin": {
         "BatterySettings": "Battery Settings",
         "BatteryConfiguration": "General Interface Settings",
         "EnableBattery": "Enable Interface",
-        "VerboseLogging": "@:base.VerboseLogging",
         "Provider": "Data Provider",
         "ProviderPylontechCan": "Pylontech using CAN bus",
         "ProviderSBSCan": "SBS Unipower using CAN bus",
@@ -743,7 +738,6 @@
         "General": "General",
         "Enable": "Enable",
         "GovernInverter": "Govern Inverter \"{name}\"",
-        "VerboseLogging": "@:base.VerboseLogging",
         "EnableSolarPassthrough": "Enable Solar-Passthrough",
         "ConductionLosses": "Conduction Losses",
         "ConductionLossesInfo": "Conduction losses are to be expected when transferring energy from the solar charge controller or from the battery to the inverter. These losses are taken into account to calculate better suited inverter limits.",

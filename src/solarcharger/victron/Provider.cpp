@@ -10,20 +10,20 @@ static const char* SUBTAG = "VE.Direct";
 
 namespace SolarChargers::Victron {
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
     const PinMapping_t& pin = PinMapping.get();
     auto controllerCount = 0;
 
-    if (initController(pin.victron_rx, pin.victron_tx, verboseLogging, 1)) {
+    if (initController(pin.victron_rx, pin.victron_tx, 1)) {
         controllerCount++;
     }
 
-    if (initController(pin.victron_rx2, pin.victron_tx2, verboseLogging, 2)) {
+    if (initController(pin.victron_rx2, pin.victron_tx2, 2)) {
         controllerCount++;
     }
 
-    if (initController(pin.victron_rx3, pin.victron_tx3, verboseLogging, 3)) {
+    if (initController(pin.victron_rx3, pin.victron_tx3, 3)) {
         controllerCount++;
     }
 
@@ -41,8 +41,7 @@ void Provider::deinit()
     _serialPortOwners.clear();
 }
 
-bool Provider::initController(gpio_num_t rx, gpio_num_t tx, bool logging,
-        uint8_t instance)
+bool Provider::initController(gpio_num_t rx, gpio_num_t tx, uint8_t instance)
 {
     DTU_LOGI("Instance %d: rx = %d, tx = %d", instance, rx, tx);
 

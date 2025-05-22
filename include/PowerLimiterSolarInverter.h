@@ -5,7 +5,7 @@
 
 class PowerLimiterSolarInverter : public PowerLimiterOverscalingInverter {
 public:
-    PowerLimiterSolarInverter(bool verboseLogging, PowerLimiterInverterConfig const& config);
+    explicit PowerLimiterSolarInverter(PowerLimiterInverterConfig const& config);
 
     uint16_t getExpectedOutputAcWatts() const final;
     uint16_t getMaxReductionWatts(bool allowStandby) const final;

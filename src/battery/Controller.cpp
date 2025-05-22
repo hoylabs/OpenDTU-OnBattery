@@ -52,8 +52,6 @@ void Controller::updateSettings()
     auto const& config = Configuration.get();
     if (!config.Battery.Enabled) { return; }
 
-    bool verboseLogging = config.Battery.VerboseLogging;
-
     switch (config.Battery.Provider) {
         case 0:
             _upProvider = std::make_unique<Pylontech::Provider>();
@@ -84,7 +82,7 @@ void Controller::updateSettings()
             return;
     }
 
-    if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
+    if (!_upProvider->init()) { _upProvider = nullptr; }
 }
 
 void Controller::loop()
