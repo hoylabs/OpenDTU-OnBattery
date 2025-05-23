@@ -9,7 +9,7 @@ namespace Batteries {
 
 class CanReceiver : public Provider {
 public:
-    bool init(bool verboseLogging, char const* providerName);
+    bool init(char const* providerName);
     void deinit() final;
     void loop() final;
 
@@ -23,8 +23,6 @@ protected:
     int32_t readSignedInt24(uint8_t *data);
     float scaleValue(int32_t value, float factor);
     bool getBit(uint8_t value, uint8_t bit);
-
-    bool _verboseLogging = true;
 
 private:
     char const* _providerName = "Battery CAN";

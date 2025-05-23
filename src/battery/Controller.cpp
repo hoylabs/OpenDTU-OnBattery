@@ -9,7 +9,10 @@
 #include <battery/victronsmartshunt/Provider.h>
 #include <battery/zendure/Provider.h>
 #include <Configuration.h>
-#include <MessageOutput.h>
+#include <LogHelper.h>
+
+static const char* TAG = "battery";
+static const char* SUBTAG = "Controller";
 
 Batteries::Controller Battery;
 
@@ -49,8 +52,6 @@ void Controller::updateSettings()
     auto const& config = Configuration.get();
     if (!config.Battery.Enabled) { return; }
 
-    bool verboseLogging = config.Battery.VerboseLogging;
-
     switch (config.Battery.Provider) {
         case 0:
             _upProvider = std::make_unique<Pylontech::Provider>();
@@ -77,11 +78,11 @@ void Controller::updateSettings()
             _upProvider = std::make_unique<Zendure::Provider>();
             break;
         default:
-            MessageOutput.printf("[Battery] Unknown provider: %d\r\n", config.Battery.Provider);
+            DTU_LOGE("Unknown provider: %d", config.Battery.Provider);
             return;
     }
 
-    if (!_upProvider->init(verboseLogging)) { _upProvider = nullptr; }
+    if (!_upProvider->init()) { _upProvider = nullptr; }
 }
 
 void Controller::loop()

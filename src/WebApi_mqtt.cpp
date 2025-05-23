@@ -39,7 +39,6 @@ void WebApiMqttClass::onMqttStatus(AsyncWebServerRequest* request)
     const CONFIG_T& config = Configuration.get();
 
     root["mqtt_enabled"] = config.Mqtt.Enabled;
-    root["mqtt_verbose_logging"] = config.Mqtt.VerboseLogging;
     root["mqtt_hostname"] = config.Mqtt.Hostname;
     root["mqtt_port"] = config.Mqtt.Port;
     root["mqtt_clientid"] = MqttSettings.getClientId();
@@ -74,7 +73,6 @@ void WebApiMqttClass::onMqttAdminGet(AsyncWebServerRequest* request)
     const CONFIG_T& config = Configuration.get();
 
     root["mqtt_enabled"] = config.Mqtt.Enabled;
-    root["mqtt_verbose_logging"] = config.Mqtt.VerboseLogging;
     root["mqtt_hostname"] = config.Mqtt.Hostname;
     root["mqtt_port"] = config.Mqtt.Port;
     root["mqtt_clientid"] = config.Mqtt.ClientId;
@@ -117,7 +115,6 @@ void WebApiMqttClass::onMqttAdminPost(AsyncWebServerRequest* request)
     auto& retMsg = response->getRoot();
 
     if (!(root["mqtt_enabled"].is<bool>()
-            && root["mqtt_verbose_logging"].is<bool>()
             && root["mqtt_hostname"].is<String>()
             && root["mqtt_port"].is<uint>()
             && root["mqtt_clientid"].is<String>()
@@ -286,7 +283,6 @@ void WebApiMqttClass::onMqttAdminPost(AsyncWebServerRequest* request)
         auto& config = guard.getConfig();
 
         config.Mqtt.Enabled = root["mqtt_enabled"].as<bool>();
-        config.Mqtt.VerboseLogging = root["mqtt_verbose_logging"].as<bool>();
         config.Mqtt.Retain = root["mqtt_retain"].as<bool>();
         config.Mqtt.Tls.Enabled = root["mqtt_tls"].as<bool>();
         strlcpy(config.Mqtt.Tls.RootCaCert, root["mqtt_root_ca_cert"].as<String>().c_str(), sizeof(config.Mqtt.Tls.RootCaCert));

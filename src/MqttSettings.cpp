@@ -4,7 +4,11 @@
  */
 #include "MqttSettings.h"
 #include "Configuration.h"
-#include "MessageOutput.h"
+#include <frozen/map.h>
+#include <frozen/string.h>
+
+#undef TAG
+static const char* TAG = "mqtt";
 
 MqttSettingsClass::MqttSettingsClass()
 {
@@ -14,11 +18,11 @@ void MqttSettingsClass::NetworkEvent(network_event event)
 {
     switch (event) {
     case network_event::NETWORK_GOT_IP:
-        MessageOutput.println("Network connected");
+        ESP_LOGD(TAG, "Network connected");
         performConnect();
         break;
     case network_event::NETWORK_DISCONNECTED:
-        MessageOutput.println("Network lost connection");
+        ESP_LOGD(TAG, "Network lost connection");
         _mqttReconnectTimer.detach(); // ensure we don't reconnect to MQTT while reconnecting to Wi-Fi
         break;
     default:
@@ -28,7 +32,7 @@ void MqttSettingsClass::NetworkEvent(network_event event)
 
 void MqttSettingsClass::onMqttConnect(const bool sessionPresent)
 {
-    MessageOutput.println("Connected to MQTT.");
+    ESP_LOGI(TAG, "Connected to MQTT.");
     const CONFIG_T& config = Configuration.get();
     publish(config.Mqtt.Lwt.Topic, config.Mqtt.Lwt.Value_Online);
 
@@ -60,41 +64,30 @@ void MqttSettingsClass::unsubscribe(const String& topic)
 
 void MqttSettingsClass::onMqttDisconnect(espMqttClientTypes::DisconnectReason reason)
 {
-    MessageOutput.println("Disconnected from MQTT.");
+    static constexpr frozen::map<espMqttClientTypes::DisconnectReason, frozen::string, 8> reasons = {
+        { espMqttClientTypes::DisconnectReason::USER_OK, "USER_OK" },
+        { espMqttClientTypes::DisconnectReason::MQTT_UNACCEPTABLE_PROTOCOL_VERSION, "MQTT_UNACCEPTABLE_PROTOCOL_VERSION" },
+        { espMqttClientTypes::DisconnectReason::MQTT_IDENTIFIER_REJECTED, "MQTT_IDENTIFIER_REJECTED" },
+        { espMqttClientTypes::DisconnectReason::MQTT_SERVER_UNAVAILABLE, "MQTT_SERVER_UNAVAILABLE" },
+        { espMqttClientTypes::DisconnectReason::MQTT_MALFORMED_CREDENTIALS, "MQTT_MALFORMED_CREDENTIALS" },
+        { espMqttClientTypes::DisconnectReason::MQTT_NOT_AUTHORIZED, "MQTT_NOT_AUTHORIZED" },
+        { espMqttClientTypes::DisconnectReason::TLS_BAD_FINGERPRINT, "TLS_BAD_FINGERPRINT" },
+        { espMqttClientTypes::DisconnectReason::TCP_DISCONNECTED, "TCP_DISCONNECTED" },
+    };
 
-    MessageOutput.print("Disconnect reason:");
-    switch (reason) {
-    case espMqttClientTypes::DisconnectReason::TCP_DISCONNECTED:
-        MessageOutput.println("TCP_DISCONNECTED");
-        break;
-    case espMqttClientTypes::DisconnectReason::MQTT_UNACCEPTABLE_PROTOCOL_VERSION:
-        MessageOutput.println("MQTT_UNACCEPTABLE_PROTOCOL_VERSION");
-        break;
-    case espMqttClientTypes::DisconnectReason::MQTT_IDENTIFIER_REJECTED:
-        MessageOutput.println("MQTT_IDENTIFIER_REJECTED");
-        break;
-    case espMqttClientTypes::DisconnectReason::MQTT_SERVER_UNAVAILABLE:
-        MessageOutput.println("MQTT_SERVER_UNAVAILABLE");
-        break;
-    case espMqttClientTypes::DisconnectReason::MQTT_MALFORMED_CREDENTIALS:
-        MessageOutput.println("MQTT_MALFORMED_CREDENTIALS");
-        break;
-    case espMqttClientTypes::DisconnectReason::MQTT_NOT_AUTHORIZED:
-        MessageOutput.println("MQTT_NOT_AUTHORIZED");
-        break;
-    default:
-        MessageOutput.println("Unknown");
-    }
+    auto it = reasons.find(reason);
+    const char* reasonStr = (it != reasons.end()) ? it->second.data() : "Unknown";
+
+    ESP_LOGW(TAG, "Disconnected from MQTT. Reason: %s", reasonStr);
+
     _mqttReconnectTimer.once(
         2, +[](MqttSettingsClass* instance) { instance->performConnect(); }, this);
 }
 
 void MqttSettingsClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, const size_t len, const size_t index, const size_t total)
 {
-    if (_verboseLogging) {
-        MessageOutput.printf("Received MQTT message on topic '%s' "
-            "(Bytes %zu-%zu/%zu)\r\n", topic, index + 1, (index + len), total);
-    }
+    ESP_LOGD(TAG, "Received MQTT message on topic '%s' (Bytes %zu-%zu/%zu)",
+        topic, index + 1, (index + len), total);
 
     // shortcut for most MQTT messages, which are not fragmented
     if (index == 0 && len == total) {
@@ -111,11 +104,11 @@ void MqttSettingsClass::onMqttMessage(const espMqttClientTypes::MessagePropertie
 
     fragment.insert(fragment.end(), payload, payload + len);
 
-    if (fragment.size() < total) { return; } // wait for last fragment
+    if (fragment.size() < total) {
+        return;
+    } // wait for last fragment
 
-    if (_verboseLogging) {
-        MessageOutput.printf("Fragmented MQTT message reassembled for topic '%s'\r\n", topic);
-    }
+    ESP_LOGD(TAG, "Fragmented MQTT message reassembled for topic '%s'", topic);
 
     _mqttSubscribeParser.handle_message(properties, topic, fragment.data(), total);
 
@@ -137,9 +130,8 @@ void MqttSettingsClass::performConnect()
             return;
         }
 
-        MessageOutput.println("Connecting to MQTT...");
+        ESP_LOGI(TAG, "Connecting to MQTT...");
         const CONFIG_T& config = Configuration.get();
-        _verboseLogging = config.Mqtt.VerboseLogging;
         const String willTopic = getPrefix() + config.Mqtt.Lwt.Topic;
         String clientId = getClientId();
         if (config.Mqtt.Tls.Enabled) {

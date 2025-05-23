@@ -1,0 +1,17 @@
+{
+    "name": "LogHelper",
+    "version": "1.0.0",
+    "description": "Helper functions for logging in ESP32 projects",
+    "keywords": "logging, esp32, debug",
+    "authors": [
+        {
+            "name": "Bernhard Kirchen"
+        }
+    ],
+    "license": "GPL-2.0-or-later",
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "build": {
+        "srcDir": "src"
+    }
+}

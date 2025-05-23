@@ -16,7 +16,7 @@ public:
     Provider() = default;
     ~Provider() = default;
 
-    bool init(bool verboseLogging) final;
+    bool init() final;
     void deinit() final;
     void loop() final { return; } // this class is event-driven
     void setChargeLimit(float limit, float act_charge_current) final { return; }     // actually the charge-limit isn't used for MQTT. Is there any use-case for that?
@@ -28,7 +28,6 @@ private:
     Provider& operator=(Provider const& other) = delete;
     Provider& operator=(Provider&& other) = delete;
 
-    bool _verboseLogging = false;
     String _outputPowerTopic;
     String _outputVoltageTopic;
     String _outputCurrentTopic;

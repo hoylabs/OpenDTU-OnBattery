@@ -1,9 +1,5 @@
 import type { ValueObject } from '@/types/LiveDataStatus';
-
-export interface StringValue {
-    value: string;
-    translate: boolean;
-}
+import type { StringValue } from '@/types/StringValue';
 
 type BatteryData = (ValueObject | StringValue)[];
 

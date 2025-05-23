@@ -20,16 +20,6 @@
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ $t('mqttinfo.VerboseLogging') }}</th>
-                            <td>
-                                <StatusBadge
-                                    :status="mqttDataList.mqtt_verbose_logging"
-                                    true_text="mqttinfo.Enabled"
-                                    false_text="mqttinfo.Disabled"
-                                />
-                            </td>
-                        </tr>
-                        <tr>
                             <th>{{ $t('mqttinfo.Server') }}</th>
                             <td>{{ mqttDataList.mqtt_hostname }}</td>
                         </tr>

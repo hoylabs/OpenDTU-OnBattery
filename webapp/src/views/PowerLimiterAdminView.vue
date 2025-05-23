@@ -55,13 +55,6 @@
 
                 <template v-if="isEnabled">
                     <InputElement
-                        :label="$t('powerlimiteradmin.VerboseLogging')"
-                        v-model="powerLimiterConfigList.verbose_logging"
-                        type="checkbox"
-                        wide
-                    />
-
-                    <InputElement
                         v-if="hasPowerMeter"
                         :label="$t('powerlimiteradmin.TargetPowerConsumption')"
                         :tooltip="$t('powerlimiteradmin.TargetPowerConsumptionHint')"
@@ -552,6 +545,8 @@ export default defineComponent({
                 hints.push({ severity: 'requirement', subject: 'NoInverter' });
                 this.configAlert = true;
             } else {
+                let showCommDayHint = false;
+                let showCommNightHint = false;
                 for (const inv of this.powerLimiterMetaData.inverters) {
                     if (
                         !this.powerLimiterConfigList.inverters.some(
@@ -560,16 +555,40 @@ export default defineComponent({
                     ) {
                         continue;
                     }
-                    const commEnabled =
-                        inv.poll_enable && inv.command_enable && inv.poll_enable_night && inv.command_enable_night;
+
                     const governed = this.governedInverters.some(
                         (cfgInv: PowerLimiterInverterConfig) => cfgInv.serial === inv.serial
                     );
 
-                    if (governed && !commEnabled) {
-                        hints.push({ severity: 'requirement', subject: 'InverterCommunication' });
-                        break;
+                    if (!governed) {
+                        continue;
                     }
+
+                    const commDayEnabled = inv.poll_enable && inv.command_enable;
+                    const commNightEnabled = inv.poll_enable_night && inv.command_enable_night;
+                    const solarPowered = this.governedInverters.some(
+                        (cfgInv: PowerLimiterInverterConfig) =>
+                            cfgInv.serial === inv.serial && cfgInv.power_source === 1
+                    );
+
+                    if (!commDayEnabled) {
+                        showCommDayHint = true;
+                    }
+                    if (!solarPowered && !commNightEnabled) {
+                        showCommNightHint = true;
+                    }
+                }
+                if (showCommDayHint) {
+                    hints.push({
+                        severity: 'requirement',
+                        subject: 'InverterCommunicationDay',
+                    });
+                }
+                if (showCommNightHint) {
+                    hints.push({
+                        severity: 'requirement',
+                        subject: 'InverterCommunicationNight',
+                    });
                 }
             }
 

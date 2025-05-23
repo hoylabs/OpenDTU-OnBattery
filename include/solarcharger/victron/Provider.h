@@ -15,7 +15,7 @@ public:
     Provider() = default;
     ~Provider() = default;
 
-    bool init(bool verboseLogging) final;
+    bool init() final;
     void deinit() final;
     void loop() final;
     void setChargeLimit( float limit, float act_charge_current) final;
@@ -35,7 +35,7 @@ private:
     float _chargeLimit { 0.0f };
     float _chargeCurrent { 0.0f };
 
-    bool initController(gpio_num_t rx, gpio_num_t tx, bool logging, uint8_t instance);
+    bool initController(gpio_num_t rx, gpio_num_t tx, uint8_t instance);
 };
 
 } // namespace SolarChargers::Victron

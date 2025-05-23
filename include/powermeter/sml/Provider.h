@@ -16,13 +16,15 @@ namespace PowerMeters::Sml {
 class Provider : public ::PowerMeters::Provider {
 protected:
     explicit Provider(char const* user)
-        : _user(user) { }
+    {
+        snprintf(_user, sizeof(_user), "%s/SML", user);
+    }
 
     void reset();
     void processSmlByte(uint8_t byte);
 
 private:
-    std::string _user;
+    char _user[16];
 
     DataPointContainer _dataInFlight;
 

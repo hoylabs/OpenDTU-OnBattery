@@ -289,7 +289,9 @@ frozen::string const& veMpptStruct::getErrAsString() const
 }
 
 /*
- * This function returns the off reason (OR) as readable text.
+ * This function returns the first off reason (OR) as readable text.
+ * Further off reasons are not handled as readable text.
+ * For further information, please refer to the logging. Search for "Text Data 'OR' = "
  */
 frozen::string const& veMpptStruct::getOrAsString() const
 {
@@ -306,7 +308,12 @@ frozen::string const& veMpptStruct::getOrAsString() const
 		{ 0x00000100, "Analysing input voltage" }
 	};
 
-	return getAsString(values, offReason_OR);
+    for (uint32_t bitCheck = 0x00000001; bitCheck <= values.rbegin()->first; bitCheck = bitCheck<<1 ) {
+        if ((offReason_OR & bitCheck) != 0) {
+            return getAsString(values, bitCheck);
+        }
+    }
+	return getAsString(values, offReason_OR); // in case of 0x00000000 or not found
 }
 
 frozen::string const& VeDirectHexData::getResponseAsString() const

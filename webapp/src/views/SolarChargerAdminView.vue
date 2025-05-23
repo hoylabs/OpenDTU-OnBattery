@@ -14,13 +14,6 @@
                 />
 
                 <template v-if="solarChargerConfigList.enabled">
-                    <InputElement
-                        :label="$t('solarchargeradmin.VerboseLogging')"
-                        v-model="solarChargerConfigList.verbose_logging"
-                        type="checkbox"
-                        wide
-                    />
-
                     <div class="row mb-3">
                         <label class="col-sm-4 col-form-label">
                             {{ $t('solarchargeradmin.Provider') }}
@@ -156,7 +149,7 @@
                 >
                     <InputElement
                         :label="$t('solarchargeradmin.MqttOutputVoltageTopic')"
-                        :tooltip="$t('solarchargeradmin.MqttOutputVoltagetUsageHint')"
+                        :tooltip="$t('solarchargeradmin.MqttOutputVoltageUsageHint')"
                         v-model="solarChargerConfigList.mqtt.voltage_topic"
                         type="text"
                         maxlength="256"

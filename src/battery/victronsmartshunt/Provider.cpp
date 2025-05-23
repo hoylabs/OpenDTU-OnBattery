@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <battery/victronsmartshunt/Provider.h>
 #include <PinMapping.h>
-#include <MessageOutput.h>
 #include <SerialPortManager.h>
+#include <LogHelper.h>
+
+static const char* TAG = "battery";
+static const char* SUBTAG = "SmartShunt";
 
 namespace Batteries::VictronSmartShunt {
 
@@ -15,23 +18,22 @@ void Provider::deinit()
     SerialPortManager.freePort(_serialPortOwner);
 }
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
-    MessageOutput.println("[VictronSmartShunt] Initialize interface...");
+    DTU_LOGI("Initialize interface...");
 
     const PinMapping_t& pin = PinMapping.get();
-    MessageOutput.printf("[VictronSmartShunt] Interface rx = %d, tx = %d\r\n",
-            pin.battery_rx, pin.battery_tx);
+    DTU_LOGD("Interface rx = %d, tx = %d", pin.battery_rx, pin.battery_tx);
 
     if (pin.battery_rx <= GPIO_NUM_NC) {
-        MessageOutput.println("[VictronSmartShunt] Invalid pin config");
+        DTU_LOGE("Invalid pin config");
         return false;
     }
 
     auto oHwSerialPort = SerialPortManager.allocatePort(_serialPortOwner);
     if (!oHwSerialPort) { return false; }
 
-    VeDirectShunt.init(pin.battery_rx, pin.battery_tx, &MessageOutput, verboseLogging, *oHwSerialPort);
+    VeDirectShunt.init(pin.battery_rx, pin.battery_tx, *oHwSerialPort);
     return true;
 }
 

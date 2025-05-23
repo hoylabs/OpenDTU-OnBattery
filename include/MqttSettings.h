@@ -42,7 +42,6 @@ private:
     std::map<String, std::vector<uint8_t>> _fragments;
     MqttSubscribeParser _mqttSubscribeParser;
     std::mutex _clientLock;
-    bool _verboseLogging = true;
 };
 
 extern MqttSettingsClass MqttSettings;

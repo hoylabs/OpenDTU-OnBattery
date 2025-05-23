@@ -42,7 +42,6 @@ export interface PowerMeterUdpVictronConfig {
 
 export interface PowerMeterConfig {
     enabled: boolean;
-    verbose_logging: boolean;
     source: number;
     interval: number;
     mqtt: PowerMeterMqttConfig;

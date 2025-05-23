@@ -3,11 +3,9 @@
 
 VeDirectShuntController VeDirectShunt;
 
-void VeDirectShuntController::init(gpio_num_t rx, gpio_num_t tx, Print* msgOut,
-		bool verboseLogging, uint8_t hwSerialPort)
+void VeDirectShuntController::init(gpio_num_t rx, gpio_num_t tx, uint8_t hwSerialPort)
 {
-	VeDirectFrameHandler::init("SmartShunt", rx, tx, msgOut,
-			verboseLogging, hwSerialPort);
+	VeDirectFrameHandler::init("SmartShunt", rx, tx, hwSerialPort);
 }
 
 bool VeDirectShuntController::processTextDataDerived(std::string const& name, std::string const& value)

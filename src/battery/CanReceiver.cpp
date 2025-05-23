@@ -1,26 +1,25 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <battery/CanReceiver.h>
-#include <MessageOutput.h>
 #include <PinMapping.h>
 #include <driver/twai.h>
+#include <LogHelper.h>
+
+static const char* TAG = "battery";
+#define SUBTAG _providerName
 
 namespace Batteries {
 
-bool CanReceiver::init(bool verboseLogging, char const* providerName)
+bool CanReceiver::init(char const* providerName)
 {
-    _verboseLogging = verboseLogging;
     _providerName = providerName;
 
-    MessageOutput.printf("[%s] Initialize interface...\r\n",
-            _providerName);
+    DTU_LOGI("Initialize interface...");
 
     const PinMapping_t& pin = PinMapping.get();
-    MessageOutput.printf("[%s] Interface rx = %d, tx = %d\r\n",
-            _providerName, pin.battery_rx, pin.battery_tx);
+    DTU_LOGD("Interface rx = %d, tx = %d", pin.battery_rx, pin.battery_tx);
 
     if (pin.battery_rx <= GPIO_NUM_NC || pin.battery_tx <= GPIO_NUM_NC) {
-        MessageOutput.printf("[%s] Invalid pin config\r\n",
-                _providerName);
+        DTU_LOGE("Invalid pin config");
         return false;
     }
 
@@ -43,22 +42,18 @@ bool CanReceiver::init(bool verboseLogging, char const* providerName)
     esp_err_t twaiLastResult = twai_driver_install(&g_config, &t_config, &f_config);
     switch (twaiLastResult) {
         case ESP_OK:
-            MessageOutput.printf("[%s] Twai driver installed\r\n",
-                    _providerName);
+            DTU_LOGI("TWAI driver installed");
             break;
         case ESP_ERR_INVALID_ARG:
-            MessageOutput.printf("[%s] Twai driver install - invalid arg\r\n",
-                    _providerName);
+            DTU_LOGE("TWAI driver install - invalid arg");
             return false;
             break;
         case ESP_ERR_NO_MEM:
-            MessageOutput.printf("[%s] Twai driver install - no memory\r\n",
-                    _providerName);
+            DTU_LOGE("TWAI driver install - no memory");
             return false;
             break;
         case ESP_ERR_INVALID_STATE:
-            MessageOutput.printf("[%s] Twai driver install - invalid state\r\n",
-                    _providerName);
+            DTU_LOGE("TWAI driver install - invalid state");
             return false;
             break;
     }
@@ -67,12 +62,10 @@ bool CanReceiver::init(bool verboseLogging, char const* providerName)
     twaiLastResult = twai_start();
     switch (twaiLastResult) {
         case ESP_OK:
-            MessageOutput.printf("[%s] Twai driver started\r\n",
-                    _providerName);
+            DTU_LOGI("TWAI driver started");
             break;
         case ESP_ERR_INVALID_STATE:
-            MessageOutput.printf("[%s] Twai driver start - invalid state\r\n",
-                    _providerName);
+            DTU_LOGE("TWAI driver start - invalid state");
             return false;
             break;
     }
@@ -86,12 +79,10 @@ void CanReceiver::deinit()
     esp_err_t twaiLastResult = twai_stop();
     switch (twaiLastResult) {
         case ESP_OK:
-            MessageOutput.printf("[%s] Twai driver stopped\r\n",
-                    _providerName);
+            DTU_LOGI("TWAI driver stopped");
             break;
         case ESP_ERR_INVALID_STATE:
-            MessageOutput.printf("[%s] Twai driver stop - invalid state\r\n",
-                    _providerName);
+            DTU_LOGE("TWAI driver stop - invalid state");
             break;
     }
 
@@ -99,12 +90,10 @@ void CanReceiver::deinit()
     twaiLastResult = twai_driver_uninstall();
     switch (twaiLastResult) {
         case ESP_OK:
-            MessageOutput.printf("[%s] Twai driver uninstalled\r\n",
-                    _providerName);
+            DTU_LOGI("TWAI driver uninstalled");
             break;
         case ESP_ERR_INVALID_STATE:
-            MessageOutput.printf("[%s] Twai driver uninstall - invalid state\r\n",
-                    _providerName);
+            DTU_LOGE("TWAI driver uninstall - invalid state");
             break;
     }
 }
@@ -117,12 +106,10 @@ void CanReceiver::loop()
     if (twaiLastResult != ESP_OK) {
         switch (twaiLastResult) {
             case ESP_ERR_INVALID_ARG:
-                MessageOutput.printf("[%s] Twai driver get status - invalid arg\r\n",
-                        _providerName);
+                DTU_LOGE("TWAI driver get status - invalid arg");
                 break;
             case ESP_ERR_INVALID_STATE:
-                MessageOutput.printf("[%s] Twai driver get status - invalid state\r\n",
-                        _providerName);
+                DTU_LOGE("TWAI driver get status - invalid state");
                 break;
         }
         return;
@@ -134,21 +121,13 @@ void CanReceiver::loop()
     // Wait for message to be received, function is blocking
     twai_message_t rx_message;
     if (twai_receive(&rx_message, pdMS_TO_TICKS(100)) != ESP_OK) {
-        MessageOutput.printf("[%s] Failed to receive message",
-                _providerName);
+        DTU_LOGE("Failed to receive message");
         return;
     }
 
-    if (_verboseLogging) {
-        MessageOutput.printf("[%s] Received CAN message: 0x%04X -",
-                _providerName, rx_message.identifier);
-
-        for (int i = 0; i < rx_message.data_length_code; i++) {
-            MessageOutput.printf(" %02X", rx_message.data[i]);
-        }
-
-        MessageOutput.printf("\r\n");
-    }
+    DTU_LOGD("Received CAN message: 0x%04X (%d bytes)",
+            rx_message.identifier, rx_message.data_length_code);
+    LogHelper::dumpBytes(TAG, _providerName, rx_message.data, rx_message.data_length_code);
 
     onMessage(rx_message);
 }

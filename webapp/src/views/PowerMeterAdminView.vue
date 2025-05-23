@@ -14,13 +14,6 @@
                 />
 
                 <template v-if="powerMeterConfigList.enabled">
-                    <InputElement
-                        :label="$t('powermeteradmin.VerboseLogging')"
-                        v-model="powerMeterConfigList.verbose_logging"
-                        type="checkbox"
-                        wide
-                    />
-
                     <div class="row mb-3">
                         <label for="inputPowerMeterSource" class="col-sm-4 col-form-label">{{
                             $t('powermeteradmin.PowerMeterSource')

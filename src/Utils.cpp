@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022 - 2024 Thomas Basler and others
+ * Copyright (C) 2022-2025 Thomas Basler and others
  */
 
 #include "Utils.h"
-#include "MessageOutput.h"
 #include "PinMapping.h"
 #include <LittleFS.h>
 #include <MD5Builder.h>
+
+#undef TAG
+static const char* TAG = "utils";
 
 uint32_t Utils::getChipId()
 {
@@ -61,7 +63,7 @@ int Utils::getTimezoneOffset()
 bool Utils::checkJsonAlloc(const JsonDocument& doc, const char* function, const uint16_t line)
 {
     if (doc.overflowed()) {
-        MessageOutput.printf("Alloc failed: %s, %" PRIu16 "\r\n", function, line);
+        ESP_LOGE(TAG, "Alloc failed: %s, %" PRIu16 "", function, line);
         return false;
     }
 
@@ -242,17 +244,11 @@ std::optional<T> Utils::getNumericValueFromMqttPayload(char const* client,
     std::string logValue = src.substr(0, 32);
     if (src.length() > logValue.length()) { logValue += "..."; }
 
-    auto log = [client,topic](char const* format, auto&&... args) -> std::optional<T> {
-        MessageOutput.printf("[%s] Topic '%s': ", client, topic);
-        MessageOutput.printf(format, args...);
-        MessageOutput.println();
-        return std::nullopt;
-    };
-
     if (strlen(jsonPath) == 0) {
         auto res = getFromString<T>(src.c_str());
         if (!res.has_value()) {
-            return log("cannot parse payload '%s' as float", logValue.c_str());
+            ESP_LOGE(TAG, "[%s] Topic '%s': cannot parse payload '%s' as float", client, topic, logValue.c_str());
+            return std::nullopt;
         }
         return res;
     }
@@ -261,16 +257,19 @@ std::optional<T> Utils::getNumericValueFromMqttPayload(char const* client,
 
     const DeserializationError error = deserializeJson(json, src);
     if (error) {
-        return log("cannot parse payload '%s' as JSON", logValue.c_str());
+        ESP_LOGE(TAG, "[%s] Topic '%s': cannot parse payload '%s' as JSON", client, topic, logValue.c_str());
+        return std::nullopt;
     }
 
     if (json.overflowed()) {
-        return log("payload too large to process as JSON");
+        ESP_LOGE(TAG, "[%s] Topic '%s': payload too large to process as JSON", client, topic);
+        return std::nullopt;
     }
 
     auto pathResolutionResult = getJsonValueByPath<T>(json, jsonPath);
     if (!pathResolutionResult.second.isEmpty()) {
-        return log("%s", pathResolutionResult.second.c_str());
+        ESP_LOGE(TAG, "[%s] Topic '%s': %s", client, topic, pathResolutionResult.second.c_str());
+        return std::nullopt;
     }
 
     return pathResolutionResult.first;

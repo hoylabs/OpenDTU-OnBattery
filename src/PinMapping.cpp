@@ -3,12 +3,14 @@
  * Copyright (C) 2022 - 2025 Thomas Basler and others
  */
 #include "PinMapping.h"
-#include "MessageOutput.h"
 #include "Utils.h"
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <SpiManager.h>
 #include <string.h>
+
+#undef TAG
+static const char* TAG = "pinmapping";
 
 #ifndef DISPLAY_TYPE
 #define DISPLAY_TYPE 0U
@@ -348,7 +350,7 @@ bool PinMappingClass::init(const String& deviceMapping)
     // Deserialize the JSON document
     DeserializationError error = deserializeJson(doc, f);
     if (error) {
-        MessageOutput.println("Failed to read file, using default configuration");
+        ESP_LOGW(TAG, "Failed to read file, using default configuration");
     }
 
     for (uint8_t i = 0; i < doc.size(); i++) {

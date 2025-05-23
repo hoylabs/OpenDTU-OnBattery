@@ -188,7 +188,6 @@ void WebApiNetworkClass::onNetworkAdminPost(AsyncWebServerRequest* request)
             WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
             return;
         }
-
     }
 
     {
@@ -225,7 +224,6 @@ void WebApiNetworkClass::onNetworkAdminPost(AsyncWebServerRequest* request)
         }
         config.WiFi.ApTimeout = root["aptimeout"].as<uint>();
         config.Mdns.Enabled = root["mdnsenabled"].as<bool>();
-
         config.Syslog.Enabled = root["syslogenabled"].as<bool>();
         strlcpy(config.Syslog.Hostname, root["sysloghostname"].as<String>().c_str(), sizeof(config.Syslog.Hostname));
         config.Syslog.Port = root["syslogport"].as<uint>();

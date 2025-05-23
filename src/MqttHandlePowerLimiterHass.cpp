@@ -7,7 +7,6 @@
 #include "Configuration.h"
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
-#include "MessageOutput.h"
 #include "Utils.h"
 #include "PowerLimiter.h"
 #include "__compiled_constants.h"
@@ -64,6 +63,8 @@ void MqttHandlePowerLimiterHassClass::publishConfig()
     }
 
     publishSelect("DPL Mode", "mdi:gauge", "config", "mode", "mode");
+    publishNumber("Total Upper Power Limit", "mdi:speedometer", "config", "upper_power_limit", "upper_power_limit", "W", 0, 32767, 1);
+    publishNumber("Target Power Consumption", "mdi:target", "config", "target_power_consumption", "target_power_consumption", "W", -32768, 32767, 1);
 
     if (!PowerLimiter.usesBatteryPoweredInverter()) {
         return;

@@ -14,7 +14,7 @@
             :solarChargerData="liveData.solarcharger"
             :totalBattData="liveData.battery"
             :powerMeterData="liveData.power_meter"
-            :huaweiData="liveData.huawei"
+            :gridChargerData="liveData.gridcharger"
         />
         <div class="row gy-3 mt-0">
             <div class="col-sm-3 col-md-2" :style="[inverterData.length == 1 ? { display: 'none' } : {}]">
@@ -351,7 +351,7 @@
         </div>
         <SolarChargerView v-if="liveData.solarcharger.enabled" />
         <BatteryView v-if="liveData.battery.enabled" />
-        <HuaweiView v-if="liveData.huawei.enabled" />
+        <GridChargerView v-if="liveData.gridcharger.enabled" />
     </BasePage>
 
     <ModalDialog modalId="eventView" :title="$t('home.EventLog')" :loading="eventLogLoading">
@@ -519,7 +519,7 @@ import InverterChannelInfo from '@/components/InverterChannelInfo.vue';
 import InverterTotalInfo from '@/components/InverterTotalInfo.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 import SolarChargerView from '@/components/SolarChargerView.vue';
-import HuaweiView from '@/components/HuaweiView.vue';
+import GridChargerView from '@/components/GridChargerView.vue';
 import BatteryView from '@/components/BatteryView.vue';
 import type { DevInfoStatus } from '@/types/DevInfoStatus';
 import type { EventlogItems } from '@/types/EventlogStatus';
@@ -567,7 +567,7 @@ export default defineComponent({
         BIconToggleOff,
         BIconToggleOn,
         SolarChargerView,
-        HuaweiView,
+        GridChargerView,
         BatteryView,
     },
     data() {
@@ -718,8 +718,8 @@ export default defineComponent({
                     if (typeof newData.solarcharger !== 'undefined') {
                         Object.assign(this.liveData.solarcharger, newData.solarcharger);
                     }
-                    if (typeof newData.huawei !== 'undefined') {
-                        Object.assign(this.liveData.huawei, newData.huawei);
+                    if (typeof newData.gridcharger !== 'undefined') {
+                        Object.assign(this.liveData.gridcharger, newData.gridcharger);
                     }
                     if (typeof newData.battery !== 'undefined') {
                         Object.assign(this.liveData.battery, newData.battery);
@@ -984,7 +984,7 @@ export default defineComponent({
 });
 </script>
 
-<style>
+<style scoped>
 .btn-group {
     border-radius: var(--bs-border-radius);
     margin-top: 0.25rem;

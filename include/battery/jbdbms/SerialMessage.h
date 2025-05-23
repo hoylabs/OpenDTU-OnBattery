@@ -28,7 +28,6 @@ class SerialMessage {
         uint8_t getDataLength() const { return _raw[3]; }
         uint16_t getChecksum() const { return get<uint16_t>(_raw.cend()-3); }
         uint8_t getEndMarker() const { return *(_raw.cend()-1); }
-        void printMessage();
 
         bool isValid() const;
 

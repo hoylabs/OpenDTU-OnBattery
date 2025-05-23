@@ -1,0 +1,84 @@
+name: Comment on pull request
+# This workflow is based on the following source:
+# https://github.com/live-codes/pr-comment-from-artifact/blob/main/action.yml
+on:
+  workflow_run:
+    workflows: ["OpenDTU-OnBattery Build"] # the workflow that created the artifact
+    types:
+      - completed
+
+jobs:
+  upload:
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+    - name: "Download artifact"
+      uses: actions/github-script@v7
+      with:
+        script: |
+          var artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id,
+          });
+          var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+            return artifact.name == "pr";
+          })[0];
+          var download = await github.rest.actions.downloadArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: matchArtifact.id,
+              archive_format: 'zip',
+          });
+          var fs = require('fs');
+          fs.writeFileSync('${{github.workspace}}/pr.zip', Buffer.from(download.data));
+
+    - name: "Extract artifact"
+      run: |
+        mkdir -p pr
+        unzip pr.zip -d pr
+      shell: bash
+
+    - name: "Comment on PR"
+      id: comment
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require("fs");
+          const removeExtension = (path) => path.split(".").slice(0, -1).join(".");
+
+          const fileName = fs.readdirSync("./pr")?.[0];
+          if (!fileName) {
+            core.setFailed("No artifact found");
+            return;
+          }
+          const issue_number = removeExtension(fileName);
+          const body = fs.readFileSync(`./pr/${fileName}`, "utf8");
+          const {owner, repo} = context.repo;
+
+          async function upsertComment(owner, repo, issue_number, purpose, body) {
+              const {data: comments} = await github.rest.issues.listComments(
+                {owner, repo, issue_number});
+              const marker = `<!-- bot: ${purpose} -->`;
+              body = marker + "\n" + body;
+              const existing = comments.filter((c) => c.body.includes(marker));
+              if (existing.length > 0) {
+                const last = existing[existing.length - 1];
+                core.info(`Updating comment ${last.id}`);
+                await github.rest.issues.updateComment({
+                  owner, repo,
+                  body,
+                  comment_id: last.id,
+                });
+              } else {
+                core.info(`Creating a comment in PR #${issue_number}`);
+                await github.rest.issues.createComment({issue_number, body, owner, repo});
+              }
+            }
+
+          await upsertComment(owner, repo, issue_number, "build-artifacts", body);

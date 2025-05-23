@@ -2,7 +2,10 @@
 #include <sstream>
 #include <iomanip>
 #include <battery/jbdbms/SerialMessage.h>
-#include <MessageOutput.h>
+#include <LogHelper.h>
+
+static const char* TAG = "battery";
+static const char* SUBTAG = "JBD BMS";
 
 namespace Batteries::JbdBms {
 
@@ -192,22 +195,11 @@ void SerialMessage::updateChecksum()
     set(_raw.end()-3, calcChecksum());
 }
 
-void SerialMessage::printMessage() {
-
-    double ts = static_cast<double>(millis())/1000;
-    MessageOutput.printf("[%11.3f] JBD BMS: raw message (%d Bytes):",
-        ts, _raw.size());
-    for (size_t ctr = 0; ctr < _raw.size(); ++ctr) {
-        MessageOutput.printf(" %02x", _raw[ctr]);
-    }
-    MessageOutput.println();
-}
-
 bool SerialMessage::isValid() const {
 
     uint8_t const actualStartMarker = getStartMarker();
     if (actualStartMarker != startMarker) {
-        MessageOutput.printf("JbdBms::SerialMessage: invalid start marker 0x%02x, expected 0x%02x\r\n",
+        DTU_LOGE("invalid start marker 0x%02x, expected 0x%02x",
             actualStartMarker, startMarker);
         return false;
     }
@@ -215,14 +207,14 @@ bool SerialMessage::isValid() const {
     uint16_t const dataLength = getDataLength();
     uint16_t const dataLengthExpected = _raw.size() - 7;
     if (dataLength != _raw.size() - 7) {
-        MessageOutput.printf("JbdBms::SerialMessage: unexpected data length 0x%04x, expected 0x%04x\r\n",
+        DTU_LOGE("unexpected data length 0x%04x, expected 0x%04x",
             dataLength, dataLengthExpected);
         return false;
     }
 
     uint8_t const actualEndMarker = getEndMarker();
     if (actualEndMarker != endMarker) {
-        MessageOutput.printf("JbdBms::SerialMessage: invalid end marker 0x%02x, expected 0x%02x\r\n",
+        DTU_LOGE("invalid end marker 0x%02x, expected 0x%02x",
             actualEndMarker, endMarker);
         return false;
     }
@@ -230,7 +222,7 @@ bool SerialMessage::isValid() const {
     uint16_t const actualChecksum = getChecksum();
     uint16_t const expectedChecksum = calcChecksum();
     if (actualChecksum != expectedChecksum) {
-        MessageOutput.printf("JbdBms::SerialMessage: invalid checksum 0x%04x, expected 0x%04x\r\n",
+        DTU_LOGW("invalid checksum 0x%04x, expected 0x%04x",
             actualChecksum, expectedChecksum);
         return false;
     }
@@ -244,7 +236,7 @@ bool SerialResponse::isValid() const {
 
     Status const actualStatus = getStatus();
     if (actualStatus != Status::Ok) {
-        MessageOutput.printf("JbdBms::SerialMessage: invalid status 0x%02x, expected 0x%02x\r\n",
+        DTU_LOGE("invalid status 0x%02x, expected 0x%02x",
             static_cast<uint32_t>(actualStatus),
             static_cast<uint32_t>(Status::Ok));
         return false;
@@ -258,8 +250,8 @@ bool SerialCommand::isValid() const {
     if(!SerialMessage::isValid()) {return false;}
 
     Status const actualStatus = getStatus();
-    if (actualStatus != Status::Read || actualStatus != Status::Write) {
-        MessageOutput.printf("JbdBms::SerialMessage: invalid status 0x%02x, expected 0x%02x or 0x%02x\r\n",
+    if (actualStatus != Status::Read && actualStatus != Status::Write) {
+        DTU_LOGE("invalid status 0x%02x, expected 0x%02x or 0x%02x",
             static_cast<uint32_t>(actualStatus),
             static_cast<uint32_t>(Status::Read),
             static_cast<uint32_t>(Status::Write));

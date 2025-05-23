@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022-2024 Thomas Basler and others
+ * Copyright (C) 2022-2025 Thomas Basler and others
  */
 #include "Configuration.h"
 #include "Datastore.h"
@@ -8,6 +8,7 @@
 #include "I18n.h"
 #include "InverterSettings.h"
 #include "Led_Single.h"
+#include "Logging.h"
 #include "MessageOutput.h"
 #include "SerialPortManager.h"
 #include <battery/Controller.h>
@@ -37,6 +38,9 @@
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
 
+#undef TAG
+static const char* TAG = "main";
+
 void setup()
 {
     // Move all dynamic allocations >512byte to psram (if available)
@@ -50,76 +54,73 @@ void setup()
         yield();
 #endif
     MessageOutput.init(scheduler);
-    MessageOutput.println();
-    MessageOutput.println("Starting OpenDTU");
+
+    // For now, the log levels are just hard coded
+    esp_log_level_set("*", ESP_LOG_VERBOSE);
+    esp_log_level_set("CORE", ESP_LOG_ERROR);
+
+    ESP_LOGI(TAG, "Starting OpenDTU");
 
     // Initialize file system
-    MessageOutput.print("Initialize FS... ");
+    ESP_LOGI(TAG, "Mounting FS...");
     if (!LittleFS.begin(false)) { // Do not format if mount failed
-        MessageOutput.print("failed... trying to format...");
-        if (!LittleFS.begin(true)) {
-            MessageOutput.print("success");
-        } else {
-            MessageOutput.print("failed");
-        }
-    } else {
-        MessageOutput.println("done");
+        ESP_LOGW(TAG, "Failed mounting FS... Trying to format...");
+        const bool success = LittleFS.begin(true);
+        ESP_LOG_LEVEL_LOCAL((success ? ESP_LOG_INFO : ESP_LOG_ERROR), TAG, "FS reformat %s", success ? "successful" : "failed");
     }
 
     // Read configuration values
+    ESP_LOGI(TAG, "Reading configuration...");
     Configuration.init(scheduler);
-    MessageOutput.print("Reading configuration... ");
     if (!Configuration.read()) {
-        if (Configuration.write()) {
-            MessageOutput.print("written... ");
-        } else {
-            MessageOutput.print("failed... ");
-        }
+        bool success = Configuration.write();
+        ESP_LOG_LEVEL_LOCAL((success ? ESP_LOG_INFO : ESP_LOG_WARN), TAG, "Failed to read configuration. New default configuration written %s",
+            success ? "successful" : "failed");
     }
     if (Configuration.get().Cfg.Version != CONFIG_VERSION) {
-        MessageOutput.print("migrated... ");
+        ESP_LOGI(TAG, "Performing configuration migration from %" PRIX32 " to %" PRIX32 "",
+            Configuration.get().Cfg.Version, CONFIG_VERSION);
         Configuration.migrate();
     }
     if (Configuration.get().Cfg.VersionOnBattery != CONFIG_VERSION_ONBATTERY) {
+        ESP_LOGI(TAG, "Migrating OpenDTU-OnBattery-specific config from %d to %d",
+            Configuration.get().Cfg.VersionOnBattery, CONFIG_VERSION_ONBATTERY);
         Configuration.migrateOnBattery();
-        MessageOutput.print("migrated OpenDTU-OnBattery-specific config... ");
     }
-    MessageOutput.println("done");
+
+    // Set configured log levels
+    Logging.applyLogLevels();
+    esp_log_level_set(TAG, ESP_LOG_VERBOSE);
 
     // Read languate pack
-    MessageOutput.print("Reading language pack... ");
+    ESP_LOGI(TAG, "Reading language pack...");
     I18n.init(scheduler);
-    MessageOutput.println("done");
 
     // Load PinMapping
-    MessageOutput.print("Reading PinMapping... ");
+    ESP_LOGI(TAG, "Reading PinMapping...");
     if (PinMapping.init(Configuration.get().Dev_PinMapping)) {
-        MessageOutput.print("found valid mapping ");
+        ESP_LOGI(TAG, "Found valid mapping");
     } else {
-        MessageOutput.print("using default config ");
+        ESP_LOGW(TAG, "Didn't found valid mapping. Using default.");
     }
-    MessageOutput.println("done");
 
     SerialPortManager.init();
 
     // Initialize Network
-    MessageOutput.print("Initialize Network... ");
+    ESP_LOGI(TAG, "Initializing Network...");
     NetworkSettings.init(scheduler);
-    MessageOutput.println("done");
     NetworkSettings.applyConfig();
 
     // Initialize NTP
-    MessageOutput.print("Initialize NTP... ");
+    ESP_LOGI(TAG, "Initializing NTP...");
     NtpSettings.init();
-    MessageOutput.println("done");
 
     // Initialize SunPosition
-    MessageOutput.print("Initialize SunPosition... ");
+    ESP_LOGI(TAG, "Initializing SunPosition...");
     SunPosition.init(scheduler);
-    MessageOutput.println("done");
 
     // Initialize MqTT
-    MessageOutput.print("Initialize MqTT... ");
+    ESP_LOGI(TAG, "Initializing MQTT...");
     MqttSettings.init();
     MqttHandleDtu.init(scheduler);
     MqttHandleInverter.init(scheduler);
@@ -128,22 +129,18 @@ void setup()
     MqttHandleHuawei.init(scheduler);
     MqttHandlePowerLimiter.init(scheduler);
     MqttHandlePowerLimiterHass.init(scheduler);
-    MessageOutput.println("done");
 
     // Initialize WebApi
-    MessageOutput.print("Initialize WebApi... ");
+    ESP_LOGI(TAG, "Initializing WebApi...");
     WebApi.init(scheduler);
-    MessageOutput.println("done");
 
     // Initialize Display
-    MessageOutput.print("Initialize Display... ");
+    ESP_LOGI(TAG, "Initializing Display...");
     Display.init(scheduler);
-    MessageOutput.println("done");
 
     // Initialize Single LEDs
-    MessageOutput.print("Initialize LEDs... ");
+    ESP_LOGI(TAG, "Initializing LEDs...");
     LedSingle.init(scheduler);
-    MessageOutput.println("done");
 
     InverterSettings.init(scheduler);
 
@@ -156,6 +153,8 @@ void setup()
     PowerLimiter.init(scheduler);
     HuaweiCan.init(scheduler);
     Battery.init(scheduler);
+
+    ESP_LOGI(TAG, "Startup complete");
 }
 
 void loop()

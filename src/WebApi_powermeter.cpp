@@ -39,7 +39,6 @@ void WebApiPowerMeterClass::onStatus(AsyncWebServerRequest* request)
     auto const& config = Configuration.get();
 
     root["enabled"] = config.PowerMeter.Enabled;
-    root["verbose_logging"] = config.PowerMeter.VerboseLogging;
     root["source"] = config.PowerMeter.Source;
 
     auto mqtt = root["mqtt"].to<JsonObject>();
@@ -175,7 +174,6 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
         auto guard = Configuration.getWriteGuard();
         auto& config = guard.getConfig();
         config.PowerMeter.Enabled = root["enabled"].as<bool>();
-        config.PowerMeter.VerboseLogging = root["verbose_logging"].as<bool>();
         config.PowerMeter.Source = root["source"].as<uint8_t>();
 
         Configuration.deserializePowerMeterMqttConfig(root["mqtt"].as<JsonObject>(),

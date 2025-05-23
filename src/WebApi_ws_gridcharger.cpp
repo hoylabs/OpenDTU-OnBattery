@@ -2,21 +2,23 @@
 /*
  * Copyright (C) 2022-2024 Thomas Basler and others
  */
-#include "WebApi_ws_Huawei.h"
+#include "WebApi_ws_gridcharger.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
 #include <gridcharger/huawei/Controller.h>
-#include "MessageOutput.h"
 #include "Utils.h"
 #include "WebApi.h"
 #include "defaults.h"
 
-WebApiWsHuaweiLiveClass::WebApiWsHuaweiLiveClass()
-    : _ws("/huaweilivedata")
+#undef TAG
+static const char* TAG = "webapi";
+
+WebApiWsGridChargerLiveClass::WebApiWsGridChargerLiveClass()
+    : _ws("/gridchargerlivedata")
 {
 }
 
-void WebApiWsHuaweiLiveClass::init(AsyncWebServer& server, Scheduler& scheduler)
+void WebApiWsGridChargerLiveClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
     using std::placeholders::_1;
     using std::placeholders::_2;
@@ -26,19 +28,19 @@ void WebApiWsHuaweiLiveClass::init(AsyncWebServer& server, Scheduler& scheduler)
     using std::placeholders::_6;
 
     _server = &server;
-    _server->on("/api/huaweilivedata/status", HTTP_GET, std::bind(&WebApiWsHuaweiLiveClass::onLivedataStatus, this, _1));
+    _server->on("/api/gridchargerlivedata/status", HTTP_GET, std::bind(&WebApiWsGridChargerLiveClass::onLivedataStatus, this, _1));
 
     _server->addHandler(&_ws);
-    _ws.onEvent(std::bind(&WebApiWsHuaweiLiveClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
+    _ws.onEvent(std::bind(&WebApiWsGridChargerLiveClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
 
     scheduler.addTask(_wsCleanupTask);
-    _wsCleanupTask.setCallback(std::bind(&WebApiWsHuaweiLiveClass::wsCleanupTaskCb, this));
+    _wsCleanupTask.setCallback(std::bind(&WebApiWsGridChargerLiveClass::wsCleanupTaskCb, this));
     _wsCleanupTask.setIterations(TASK_FOREVER);
     _wsCleanupTask.setInterval(1 * TASK_SECOND);
     _wsCleanupTask.enable();
 
     scheduler.addTask(_sendDataTask);
-    _sendDataTask.setCallback(std::bind(&WebApiWsHuaweiLiveClass::sendDataTaskCb, this));
+    _sendDataTask.setCallback(std::bind(&WebApiWsGridChargerLiveClass::sendDataTaskCb, this));
     _sendDataTask.setIterations(TASK_FOREVER);
     _sendDataTask.setInterval(1 * TASK_SECOND);
     _sendDataTask.enable();
@@ -49,7 +51,7 @@ void WebApiWsHuaweiLiveClass::init(AsyncWebServer& server, Scheduler& scheduler)
     reload();
 }
 
-void WebApiWsHuaweiLiveClass::reload()
+void WebApiWsGridChargerLiveClass::reload()
 {
     _ws.removeMiddleware(&_simpleDigestAuth);
 
@@ -64,13 +66,13 @@ void WebApiWsHuaweiLiveClass::reload()
     _ws.enable(true);
 }
 
-void WebApiWsHuaweiLiveClass::wsCleanupTaskCb()
+void WebApiWsGridChargerLiveClass::wsCleanupTaskCb()
 {
     // see: https://github.com/me-no-dev/ESPAsyncWebServer#limiting-the-number-of-web-socket-clients
     _ws.cleanupClients();
 }
 
-void WebApiWsHuaweiLiveClass::sendDataTaskCb()
+void WebApiWsGridChargerLiveClass::sendDataTaskCb()
 {
     // do nothing if no WS client is connected
     if (_ws.count() == 0) {
@@ -91,33 +93,27 @@ void WebApiWsHuaweiLiveClass::sendDataTaskCb()
             _ws.textAll(buffer);
         }
     } catch (std::bad_alloc& bad_alloc) {
-        MessageOutput.printf("Calling /api/huaweilivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
+        ESP_LOGE(TAG, "Calling /api/gridchargerlivedata/status has temporarily run out of resources. Reason: \"%s\".", bad_alloc.what());
     } catch (const std::exception& exc) {
-            MessageOutput.printf("Unknown exception in /api/huaweilivedata/status. Reason: \"%s\".\r\n", exc.what());
+        ESP_LOGE(TAG, "Unknown exception in /api/gridchargerlivedata/status. Reason: \"%s\".", exc.what());
     }
 }
 
-void WebApiWsHuaweiLiveClass::generateCommonJsonResponse(JsonVariant& root)
+void WebApiWsGridChargerLiveClass::generateCommonJsonResponse(JsonVariant& root)
 {
     HuaweiCan.getJsonData(root);
 }
 
-void WebApiWsHuaweiLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
+void WebApiWsGridChargerLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
 {
     if (type == WS_EVT_CONNECT) {
-        char str[64];
-        snprintf(str, sizeof(str), "Websocket: [%s][%u] connect", server->url(), client->id());
-        Serial.println(str);
-        MessageOutput.println(str);
+        ESP_LOGD(TAG, "Websocket: [%s][%" PRIu32 "] connect", server->url(), client->id());
     } else if (type == WS_EVT_DISCONNECT) {
-        char str[64];
-        snprintf(str, sizeof(str), "Websocket: [%s][%u] disconnect", server->url(), client->id());
-        Serial.println(str);
-        MessageOutput.println(str);
+        ESP_LOGD(TAG, "Websocket: [%s][%" PRIu32 "] disconnect", server->url(), client->id());
     }
 }
 
-void WebApiWsHuaweiLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
+void WebApiWsGridChargerLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
 {
     if (!WebApi.checkCredentialsReadonly(request)) {
         return;
@@ -132,10 +128,10 @@ void WebApiWsHuaweiLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 
     } catch (std::bad_alloc& bad_alloc) {
-        MessageOutput.printf("Calling /api/huaweilivedata/status has temporarily run out of resources. Reason: \"%s\".\r\n", bad_alloc.what());
+        ESP_LOGE(TAG, "Calling /api/gridchargerlivedata/status has temporarily run out of resources. Reason: \"%s\".", bad_alloc.what());
         WebApi.sendTooManyRequests(request);
     } catch (const std::exception& exc) {
-        MessageOutput.printf("Unknown exception in /api/huaweilivedata/status. Reason: \"%s\".\r\n", exc.what());
+        ESP_LOGE(TAG, "Unknown exception in /api/gridchargerlivedata/status. Reason: \"%s\".", exc.what());
         WebApi.sendTooManyRequests(request);
     }
 }

@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <powermeter/sml/Provider.h>
-#include <MessageOutput.h>
+#include <LogHelper.h>
+
+static const char* TAG = "powerMeter";
+#define SUBTAG _user
 
 namespace PowerMeters::Sml {
 
@@ -20,10 +23,7 @@ void Provider::processSmlByte(uint8_t byte)
                 float helper = 0.0;
                 handler.decoder(helper);
 
-                if (_verboseLogging) {
-                    MessageOutput.printf("[%s] decoded %s to %.2f\r\n",
-                            _user.c_str(), handler.name, helper);
-                }
+                DTU_LOGD("decoded %s to %.2f", handler.name, helper);
 
                 switch (handler.target)
                 {
@@ -83,13 +83,11 @@ void Provider::processSmlByte(uint8_t byte)
         case SML_FINAL:
             _dataCurrent.updateFrom(_dataInFlight);
             reset();
-            MessageOutput.printf("[%s] TotalPower: %5.2f\r\n",
-                    _user.c_str(), getPowerTotal());
+            DTU_LOGD("TotalPower: %5.2f", getPowerTotal());
             break;
         case SML_CHECKSUM_ERROR:
             reset();
-            MessageOutput.printf("[%s] checksum verification failed\r\n",
-                    _user.c_str());
+            DTU_LOGE("checksum verification failed");
             break;
         default:
             break;

@@ -5,7 +5,7 @@
 
 class PowerLimiterOverscalingInverter : public PowerLimiterInverter {
 public:
-    PowerLimiterOverscalingInverter(bool verboseLogging, PowerLimiterInverterConfig const& config);
+    explicit PowerLimiterOverscalingInverter(PowerLimiterInverterConfig const& config);
 
     uint16_t applyIncrease(uint16_t increase) final;
 

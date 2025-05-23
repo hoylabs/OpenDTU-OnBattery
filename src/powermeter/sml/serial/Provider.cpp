@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <powermeter/sml/serial/Provider.h>
 #include <PinMapping.h>
-#include <MessageOutput.h>
+#include <LogHelper.h>
+
+static const char* TAG = "powerMeter";
+static const char* SUBTAG = "Serial/SML";
 
 namespace PowerMeters::Sml::Serial {
 
@@ -9,11 +12,10 @@ bool Provider::init()
 {
     const PinMapping_t& pin = PinMapping.get();
 
-    MessageOutput.printf("[PowerMeters::Sml::Serial] rx = %d\r\n", pin.powermeter_rx);
+    DTU_LOGI("rx = %d", pin.powermeter_rx);
 
     if (pin.powermeter_rx <= GPIO_NUM_NC) {
-        MessageOutput.println("[PowerMeters::Sml::Serial] invalid pin config "
-                "for serial SML power meter (RX pin must be defined)");
+        DTU_LOGE("invalid pin config for serial SML power meter (RX pin must be defined)");
         return false;
     }
 

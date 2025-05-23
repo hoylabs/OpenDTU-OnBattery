@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <powermeter/sdm/serial/Provider.h>
 #include <PinMapping.h>
-#include <MessageOutput.h>
+#include <LogHelper.h>
+
+static const char* TAG = "powerMeter";
+static const char* SUBTAG = "SDM";
 
 namespace PowerMeters::Sdm::Serial {
 
@@ -30,12 +33,11 @@ bool Provider::init()
 {
     const PinMapping_t& pin = PinMapping.get();
 
-    MessageOutput.printf("[PowerMeters::Sdm::Serial] rx = %d, tx = %d, dere = %d, rxen = %d, txen = %d \r\n",
+    DTU_LOGI("rx = %d, tx = %d, dere = %d, rxen = %d, txen = %d",
             pin.powermeter_rx, pin.powermeter_tx, pin.powermeter_dere, pin.powermeter_rxen, pin.powermeter_txen);
 
     if (pin.powermeter_rx <= GPIO_NUM_NC || pin.powermeter_tx <= GPIO_NUM_NC) {
-        MessageOutput.println("[PowerMeters::Sdm::Serial] invalid pin config for SDM "
-                "power meter (RX and TX pins must be defined)");
+        DTU_LOGE("invalid pin config for SDM power meter (RX and TX pins must be defined)");
         return false;
     }
 
@@ -97,33 +99,25 @@ bool Provider::readValue(std::unique_lock<std::mutex>& lock, uint16_t reg, float
 
     switch (err) {
         case SDM_ERR_NO_ERROR:
-            if (_verboseLogging) {
-                MessageOutput.printf("[PowerMeters::Sdm::Serial]: read register %d "
-                        "(0x%04x) successfully\r\n", reg, reg);
-            }
+            DTU_LOGD("read register %d (0x%04x) successfully", reg, reg);
 
             targetVar = val;
             return true;
             break;
         case SDM_ERR_CRC_ERROR:
-            MessageOutput.printf("[PowerMeters::Sdm::Serial]: CRC error "
-                    "while reading register %d (0x%04x)\r\n", reg, reg);
+            DTU_LOGE("CRC error while reading register %d (0x%04x)", reg, reg);
             break;
         case SDM_ERR_WRONG_BYTES:
-            MessageOutput.printf("[PowerMeters::Sdm::Serial]: unexpected data in "
-                    "message while reading register %d (0x%04x)\r\n", reg, reg);
+            DTU_LOGE("unexpected data in message while reading register %d (0x%04x)", reg, reg);
             break;
         case SDM_ERR_NOT_ENOUGHT_BYTES:
-            MessageOutput.printf("[PowerMeters::Sdm::Serial]: unexpected end of "
-                    "message while reading register %d (0x%04x)\r\n", reg, reg);
+            DTU_LOGE("unexpected end of message while reading register %d (0x%04x)", reg, reg);
             break;
         case SDM_ERR_TIMEOUT:
-            MessageOutput.printf("[PowerMeters::Sdm::Serial]: timeout occured "
-                    "while reading register %d (0x%04x)\r\n", reg, reg);
+            DTU_LOGE("timeout occured while reading register %d (0x%04x)", reg, reg);
             break;
         default:
-            MessageOutput.printf("[PowerMeters::Sdm::Serial]: unknown SDM error "
-                    "code after reading register %d (0x%04x)\r\n", reg, reg);
+            DTU_LOGE("unknown SDM error code after reading register %d (0x%04x)", reg, reg);
             break;
     }
 
@@ -199,7 +193,7 @@ void Provider::pollingLoop()
             }
         }
 
-        MessageOutput.printf("[PowerMeters::Sdm::Serial] TotalPower: %5.2f\r\n", getPowerTotal());
+        DTU_LOGD("TotalPower: %5.2f", getPowerTotal());
     }
 }
 

@@ -2,25 +2,28 @@
 #include <solarcharger/victron/Provider.h>
 #include "Configuration.h"
 #include "PinMapping.h"
-#include "MessageOutput.h"
 #include "SerialPortManager.h"
+#include <LogHelper.h>
+
+static const char* TAG = "solarCharger";
+static const char* SUBTAG = "VE.Direct";
 
 namespace SolarChargers::Victron {
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
     const PinMapping_t& pin = PinMapping.get();
     auto controllerCount = 0;
 
-    if (initController(pin.victron_rx, pin.victron_tx, verboseLogging, 1)) {
+    if (initController(pin.victron_rx, pin.victron_tx, 1)) {
         controllerCount++;
     }
 
-    if (initController(pin.victron_rx2, pin.victron_tx2, verboseLogging, 2)) {
+    if (initController(pin.victron_rx2, pin.victron_tx2, 2)) {
         controllerCount++;
     }
 
-    if (initController(pin.victron_rx3, pin.victron_tx3, verboseLogging, 3)) {
+    if (initController(pin.victron_rx3, pin.victron_tx3, 3)) {
         controllerCount++;
     }
 
@@ -38,14 +41,12 @@ void Provider::deinit()
     _serialPortOwners.clear();
 }
 
-bool Provider::initController(gpio_num_t rx, gpio_num_t tx, bool logging,
-        uint8_t instance)
+bool Provider::initController(gpio_num_t rx, gpio_num_t tx, uint8_t instance)
 {
-    MessageOutput.printf("[VictronMppt Instance %d] rx = %d, tx = %d\r\n",
-            instance, rx, tx);
+    DTU_LOGI("Instance %d: rx = %d, tx = %d", instance, rx, tx);
 
     if (rx <= GPIO_NUM_NC) {
-        MessageOutput.printf("[VictronMppt Instance %d] invalid pin config\r\n", instance);
+        DTU_LOGE("Instance %d: invalid pin config", instance);
         return false;
     }
 
@@ -57,7 +58,7 @@ bool Provider::initController(gpio_num_t rx, gpio_num_t tx, bool logging,
     _serialPortOwners.push_back(owner);
 
     auto upController = std::make_unique<VeDirectMpptController>();
-    upController->init(rx, tx, &MessageOutput, logging, *oHwSerialPort);
+    upController->init(rx, tx, *oHwSerialPort);
     _controllers.push_back(std::move(upController));
     return true;
 }

@@ -33,12 +33,7 @@ public:
     void mqttLoop() const;
 
 protected:
-    Provider() {
-        auto const& config = Configuration.get();
-        _verboseLogging = config.PowerMeter.VerboseLogging;
-    }
-
-    bool _verboseLogging;
+    Provider() = default;
 
     DataPointContainer _dataCurrent;
 

@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include <MqttSettings.h>
 #include <battery/Stats.h>
 #include <map>
+#include <Configuration.h>
 
 namespace Batteries::Zendure {
 
@@ -25,8 +27,21 @@ class PackStats;
 class Stats : public ::Batteries::Stats {
     friend class Provider;
 
-    template <typename T>
-    static T stateToString(State state) {
+    static const char* controlModeToString(uint8_t controlMode) {
+        switch (controlMode) {
+            case BatteryZendureConfig::ControlMode::ControlModeFull:
+                return "full-access";
+            case BatteryZendureConfig::ControlMode::ControlModeOnce:
+                return "write-once";
+            case BatteryZendureConfig::ControlMode::ControlModeReadOnly:
+                return "read-only";
+            default:
+                break;
+        }
+        return "invalid";
+    }
+
+    static const char* stateToString(State state) {
         switch (state) {
             case State::Idle:
                 return "idle";
@@ -35,11 +50,12 @@ class Stats : public ::Batteries::Stats {
             case State::Discharging:
                 return "discharging";
             default:
-                return "invalid";
+                break;
         }
+        return "invalid";
     }
-    template <typename T>
-    static T bypassModeToString(BypassMode state) {
+
+    static const char* bypassModeToString(BypassMode state) {
         switch (state) {
             case BypassMode::Automatic:
                 return "automatic";
@@ -48,12 +64,15 @@ class Stats : public ::Batteries::Stats {
             case BypassMode::AlwaysOn:
                 return "alwayson";
             default:
-                return "invalid";
+                break;
         }
+        return "invalid";
     }
+
     inline static bool isDischarging(State state) {
         return state == State::Discharging;
     }
+
     inline static bool isCharging(State state) {
         return state == State::Charging;
     }
@@ -78,6 +97,25 @@ protected:
 
 private:
     void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
+
+    template<typename T>
+    inline static void publish(const String &topic, const T &payload, [[maybe_unused]] const size_t precision = 0) {
+        if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
+            MqttSettings.publish(topic, String(payload, precision));
+            return;
+        }
+
+        MqttSettings.publish(topic, String(payload));
+    }
+
+    template<typename T>
+    inline static void publish(const String &topic, const std::optional<T> &payload, const size_t precision = 0) {
+        if (!payload.has_value()) {
+            return;
+        }
+
+        publish(topic, *payload, precision);
+    }
 
     void setHwVersion(String&& version) {
         if (!version.isEmpty()) {
@@ -139,7 +177,38 @@ private:
         _output_power = power;
     }
 
-    String _device = String("Unkown");
+    inline void setOutputLimit(const uint16_t power) {
+        _output_limit = power;
+    }
+
+    inline void setSocMin(const float soc) {
+        // Limit value to 0...60% as Zendure seems to do so, too
+        if (soc < 0 || soc > 60) {
+            return;
+        }
+        _soc_min = soc;
+    }
+
+    inline void setSocMax(const float soc) {
+        // Limit value to 40...100% as Zendure seems to do so, too
+        if (soc < 40 || soc > 100) {
+            return;
+        }
+        _soc_max = soc;
+    }
+
+    inline void setAutoRecover(const uint8_t value) {
+        _auto_recover = static_cast<bool>(value);
+    }
+
+    inline void setVoltage(float voltage, uint32_t timestamp) {
+        if (voltage > 0) {
+            setDischargeCurrentLimit(static_cast<float>(_inverse_max) / voltage, timestamp);
+        }
+        Batteries::Stats::setVoltage(voltage, timestamp);
+    }
+
+    String _device = String("Unknown");
 
     std::map<size_t, std::shared_ptr<PackStats>> _packData = std::map<size_t, std::shared_ptr<PackStats> >();
 
@@ -156,7 +225,7 @@ private:
     uint16_t _input_limit = 0;
     uint16_t _output_limit = 0;
 
-    float _efficiency = 0.0;
+    std::optional<float> _efficiency = std::nullopt;
     uint16_t _capacity = 0;
     uint16_t _capacity_avail = 0;
 
@@ -214,7 +283,10 @@ class PackStats {
                 if (serial.startsWith("CO4H")) {
                     return std::make_shared<PackStats>(PackStats(serial, "AB2000", 1920));
                 }
-                if (serial.startsWith("R04Y")) {
+                if (serial.startsWith("CO4F")) {
+                    return std::make_shared<PackStats>(PackStats(serial, "AB2000S", 1920));
+                }
+                if (serial.startsWith("ABB3")) {
                     return std::make_shared<PackStats>(PackStats(serial, "AIO2400", 2400));
                 }
                 return std::make_shared<PackStats>(PackStats(serial));
@@ -224,21 +296,25 @@ class PackStats {
 
     protected:
         explicit PackStats(String serial, String name, uint16_t capacity, uint8_t cellCount = 15) :
-            _serial(serial), _name(name), _capacity(capacity), _cellCount(cellCount) {}
+            _serial(serial), _name(name), _capacity(capacity), _cellCount(cellCount), _capacity_avail(capacity) {}
         void setSerial(String serial) { _serial = serial; }
         void setHwVersion(String&& version) { _hwversion = std::move(version); }
         void setFwVersion(String&& version) { _fwversion = std::move(version); }
 
         void setSoH(float soh){
+            if (soh < 0) {
+                return;
+            }
             _state_of_health = soh;
             _capacity_avail = _capacity * soh / 100.0;
         }
 
     private:
         String _serial = String();
-        String _name = String("UNKOWN");
+        String _name = String("UNKNOWN");
         uint16_t _capacity = 0;
         uint8_t _cellCount = 15;
+        uint16_t _capacity_avail = 0;
 
         String _fwversion = String();
         String _hwversion = String();
@@ -249,8 +325,7 @@ class PackStats {
         uint16_t _cell_voltage_avg = 0;
         int16_t _cell_temperature_max = 0;
 
-        float _state_of_health = 1;
-        uint16_t _capacity_avail = 0;
+        std::optional<float> _state_of_health = std::nullopt;
 
         float _voltage_total = 0.0;
         float _current = 0.0;

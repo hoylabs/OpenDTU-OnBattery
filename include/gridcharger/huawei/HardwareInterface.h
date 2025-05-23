@@ -6,10 +6,12 @@
 #include <mutex>
 #include <memory>
 #include <queue>
+#include <string>
+#include <tuple>
 #include <cstdint>
 #include <gridcharger/huawei/DataPoints.h>
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
 
 class HardwareInterface {
 public:
@@ -19,13 +21,17 @@ public:
 
     virtual bool init() = 0;
 
-    enum class Setting : uint8_t {
-        OnlineVoltage = 0,
-        OfflineVoltage = 1,
-        OnlineCurrent = 3,
-        OfflineCurrent = 4
+    enum class Setting : uint16_t {
+        OnlineVoltage = 0x0100,
+        OfflineVoltage = 0x0101,
+        OnlineCurrent = 0x0103,
+        OfflineCurrent = 0x0104,
+        InputCurrentLimit = 0x0109,
+        ProductionDisable = 0x0132,
+        FanOnlineFullSpeed = 0x0134,
+        FanOfflineFullSpeed = 0x0135
     };
-    void setParameter(Setting setting, float val);
+    void setParameter(Setting setting, float val, bool pollFeedback = false);
 
     std::unique_ptr<DataPointContainer> getCurrentData();
 
@@ -42,13 +48,18 @@ protected:
     bool startLoop();
     void stopLoop();
 
-    TaskHandle_t getTaskHandle() const { return _taskHandle; }
+    void enqueueReceivedMessage(can_message_t const& msg);
 
 private:
     static void staticLoopHelper(void* context);
+    void logMessage(char const* msg, uint32_t canId, uint32_t valueId, uint32_t value);
     void loop();
+    void processQueue();
 
-    virtual bool getMessage(can_message_t& msg) = 0;
+    bool getMessage(can_message_t& msg);
+
+    std::mutex _receiveQueueMutex;
+    std::queue<can_message_t> _receiveQueue;
 
     virtual bool sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data) = 0;
 
@@ -58,14 +69,50 @@ private:
     std::atomic<bool> _taskDone = false;
     bool _stopLoop = false;
 
-    std::unique_ptr<DataPointContainer> _upDataCurrent = nullptr;
-    std::unique_ptr<DataPointContainer> _upDataInFlight = nullptr;
+    std::unique_ptr<DataPointContainer> _upData = nullptr;
 
-    std::queue<std::pair<HardwareInterface::Setting, uint16_t>> _sendQueue;
+    struct COMMAND {
+        uint8_t tries;
+        uint8_t deviceAddress;
+        uint16_t registerAddress;
+        uint16_t command;
+        uint16_t flags;
+        uint32_t value;
+    };
+    using command_t = struct COMMAND;
+    std::queue<command_t> _sendQueue;
 
-    static unsigned constexpr _maxCurrentMultiplier = 20;
+    float _maxCurrentMultiplier = 0; // device-specific, must be fetched first
 
-    uint32_t _nextRequestMillis = 0; // When to send next data request to PSU
+    uint32_t _lastRequestMillis = 0;
+
+    bool readBoardProperties(can_message_t const& msg);
+
+    std::string _boardProperties = "";
+    uint16_t _boardPropertiesCounter = 0;
+    enum class StringState : uint8_t {
+        Unknown,
+        RequestFailed,
+        Reading,
+        MissedMessage,
+        Complete
+    };
+    StringState _boardPropertiesState = StringState::Unknown;
+    uint32_t _boardPropertiesRequestMillis = 0;
+
+    bool readDeviceConfig(can_message_t const& msg);
+    void requestDeviceConfig();
+    std::optional<uint32_t> _lastDeviceConfigMillis = std::nullopt;
+    static constexpr uint32_t DeviceConfigTimeoutMillis = DataRequestIntervalMillis * 4;
+
+    bool readRectifierState(can_message_t const& msg);
+
+    bool readAcks(can_message_t const& msg);
+
+    std::optional<uint32_t> _lastSettingsUpdateMillis = std::nullopt;
+    void sendSettings();
+
+    void enqueueParameter(Setting setting, float val);
 };
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei

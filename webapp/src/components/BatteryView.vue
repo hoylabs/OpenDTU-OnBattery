@@ -154,8 +154,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import type { Battery, StringValue } from '@/types/BatteryDataStatus';
-import type { ValueObject } from '@/types/LiveDataStatus';
+import type { Battery } from '@/types/BatteryDataStatus';
+import { isStringValue } from '@/types/StringValue';
 import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
 import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
 
@@ -187,9 +187,7 @@ export default defineComponent({
         this.closeSocket();
     },
     methods: {
-        isStringValue(value: ValueObject | StringValue): value is StringValue {
-            return value && typeof value === 'object' && 'translate' in value;
-        },
+        isStringValue,
         getInitialData() {
             console.log('Get initalData for Battery');
             this.dataLoading = true;

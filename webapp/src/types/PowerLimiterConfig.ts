@@ -34,7 +34,6 @@ export interface PowerLimiterInverterConfig {
 
 export interface PowerLimiterConfig {
     enabled: boolean;
-    verbose_logging: boolean;
     solar_passthrough_enabled: boolean;
     conduction_losses: number;
     battery_always_use_at_night: boolean;
