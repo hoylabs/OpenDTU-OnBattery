@@ -4,6 +4,7 @@
 #include "defaults.h"
 #include "WebApi.h"
 #include <AsyncJson.h>
+#include <battery/Controller.h>
 
 void WebApiBatteryGuardClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -29,40 +30,46 @@ void WebApiBatteryGuardClass::onStatus(AsyncWebServerRequest* request)
 
     // Basic configuration status
     root["enabled"] = config.BatteryGuard.Enabled;
-    root["battery_data_sufficient"] = BatteryGuard.isResolutionOK();
+
+    auto const& limits = root["limits"];
+    limits["max_voltage_resolution"] = BatteryGuard.MAXIMUM_VOLTAGE_RESOLUTION * 1000.0f; // mV
+    limits["max_current_resolution"] = BatteryGuard.MAXIMUM_CURRENT_RESOLUTION * 1000.0f; // mA
+    limits["max_measurement_time_period"] = BatteryGuard.MAXIMUM_MEASUREMENT_TIME_PERIOD; // In milliseconds
+    limits["max_v_i_time_stamp_delay"] = BatteryGuard.MAXIMUM_V_I_TIME_STAMP_DELAY; // In milliseconds
+    limits["min_resistance_calculation_count"] = BatteryGuard.MINIMUM_RESISTANCE_CALC;
+
+    auto const& values = root["values"];
 
     // Open circuit voltage
-    auto openCircuitVoltage = BatteryGuard.getOpenCircuitVoltage();
-    if (openCircuitVoltage.has_value()) {
-        root["open_circuit_voltage"] = openCircuitVoltage.value();
+    auto oOpenCircuitVoltage = BatteryGuard.getOpenCircuitVoltage();
+    values["open_circuit_voltage_calculated"] = oOpenCircuitVoltage.has_value();
+    if (oOpenCircuitVoltage) {
+        values["open_circuit_voltage"] = *oOpenCircuitVoltage;
     } else {
-        root["open_circuit_voltage"] = 0;
+        values["open_circuit_voltage"] = 0;
     }
+
+    values["uncompensated_voltage"] = Battery.getStats()->getVoltage();
 
     // Internal resistance (configured and calculated)
-    auto internalResistance = BatteryGuard.getInternalResistance();
-    if (internalResistance.has_value()) {
-        if (BatteryGuard.isInternalResistanceCalculated()) {
-            root["resistance_calculated"] = internalResistance.value() * 1000.0f; // Convert from Ohm to mOhm
-            root["resistance_configured"] = config.BatteryGuard.InternalResistance; // Already in mOhm
-        } else {
-            root["resistance_calculated"] = 0;
-            root["resistance_configured"] = internalResistance.value() * 1000.0f; // Convert from Ohm to mOhm
-        }
-    } else {
-        root["resistance_calculated"] = 0;
-        root["resistance_configured"] = 0;
+    auto oInternalResistance = BatteryGuard.getInternalResistance();
+    values["internal_resistance_calculated"] = oInternalResistance.has_value() && BatteryGuard.isInternalResistanceCalculated();
+
+    if (oInternalResistance && BatteryGuard.isInternalResistanceCalculated()) {
+        values["resistance_calculated"] = *oInternalResistance * 1000.0f; // mOhm
     }
 
+    values["resistance_configured"] = config.BatteryGuard.InternalResistance; // mOhm
+
     // Get resistance calculation details
-    root["resistance_calculation_count"] = BatteryGuard.getResistanceCalculationCount();
-    root["resistance_calculation_state"] = BatteryGuard.getResistanceCalculationState();
+    values["resistance_calculation_count"] = BatteryGuard.getResistanceCalculationCount();
+    values["resistance_calculation_state"] = BatteryGuard.getResistanceCalculationState();
 
     // Resolution and timing information
-    root["voltage_resolution"] = BatteryGuard.getVoltageResolution() * 1000.0f; // Convert to mV
-    root["current_resolution"] = BatteryGuard.getCurrentResolution() * 1000.0f; // Convert to mA
-    root["measurement_time_period"] = BatteryGuard.getMeasurementPeriod(); // In milliseconds
-    root["v_i_time_stamp_delay"] = BatteryGuard.getVIStampDelay(); // In milliseconds
+    values["voltage_resolution"] = BatteryGuard.getVoltageResolution() * 1000.0f; // mV
+    values["current_resolution"] = BatteryGuard.getCurrentResolution() * 1000.0f; // mA
+    values["measurement_time_period"] = BatteryGuard.getMeasurementPeriod(); // In milliseconds
+    values["v_i_time_stamp_delay"] = BatteryGuard.getVIStampDelay(); // In milliseconds
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }

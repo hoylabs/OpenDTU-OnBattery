@@ -30,6 +30,12 @@ class BatteryGuardClass {
         float getVIStampDelay() const { return _analyzedUIDelay.getAverage(); }
         bool isResolutionOK(void) const;
 
+        static constexpr float MAXIMUM_VOLTAGE_RESOLUTION = 0.020f; // 20mV
+        static constexpr float MAXIMUM_CURRENT_RESOLUTION = 0.200f; // 200mA
+        static constexpr float MAXIMUM_MEASUREMENT_TIME_PERIOD = 4000; // 4 seconds
+        static constexpr float MAXIMUM_V_I_TIME_STAMP_DELAY = 1000; // 1 seconds
+        static constexpr size_t MINIMUM_RESISTANCE_CALC = 5;   // minimum number of calculations to use the calculated resistance
+
     private:
         void loop(void);
         void slowLoop(void);
