@@ -176,7 +176,7 @@ const router = createRouter({
         },
         {
             path: '/settings/batteryguard',
-            name: 'BatteryGuardSettings',
+            name: 'Battery Guard Settings',
             component: BatteryGuardAdminView,
             meta: {
                 requiresAuth: true,
