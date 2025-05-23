@@ -1278,7 +1278,6 @@
         "ConfigHintBatteryRequired": "Battery Guard kann nur mit konfigurierter Batteriekommunikationsschnittstelle genutzt werden.",
         "BatteryGuardConfiguration": "Battery Guard Konfiguration",
         "EnableBatteryGuard": "Battery Guard aktivieren",
-        "VerboseLogging": "Ausführliches Logging aktivieren",
         "InternalResistance": "Interner Widerstand",
         "InternalResistanceHint": "Das System versucht den Wert aus Laständerungen zu berechnen. Bis ein berechneter Wert zur Verfügung steht wird der hier konfigurierte Wert verwendet. Der aktuelle Wert wird bei den Batteriedaten angezeigt."
     }

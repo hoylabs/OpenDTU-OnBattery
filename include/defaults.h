@@ -194,5 +194,4 @@
 
 // BatteryGuard defaults
 #define BATTERYGUARD_ENABLED false
-#define BATTERYGUARD_VERBOSE_LOGGING false
 #define BATTERYGUARD_INTERNAL_RESISTANCE 0.0f

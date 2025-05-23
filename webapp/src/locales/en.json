@@ -1281,7 +1281,6 @@
         "ConfigHintBatteryRequired": "Battery Guard can only be used with a configured battery communication interface.",
         "BatteryGuardConfiguration": "Battery Guard Configuration",
         "EnableBatteryGuard": "Enable Battery Guard",
-        "VerboseLogging": "Enable verbose logging",
         "InternalResistance": "Internal Resistance",
         "InternalResistanceHint": "The system tries to calculate the value from load changes. Until a calculated value is available, the value configured here will be used. The current value is shown in the battery data."
     }

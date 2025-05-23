@@ -309,7 +309,6 @@ using SolarChargerConfig = struct SOLAR_CHARGER_CONFIG_T;
 
 struct BATTERY_GUARD_CONFIG_T {
     bool Enabled;
-    bool VerboseLogging;
     float InternalResistance;
 };
 using BatteryGuardConfig = struct BATTERY_GUARD_CONFIG_T;

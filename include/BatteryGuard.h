@@ -36,7 +36,6 @@ class BatteryGuardClass {
 
         Task _slowLoopTask;                                 // Task (print the report)
         Task _fastLoopTask;                                 // Task (get the battery values)
-        bool _verboseLogging = false;                       // Logging On/Off
         bool _useBatteryGuard = false;                      // "Battery guard" On/Off
 
 
@@ -45,7 +44,7 @@ class BatteryGuardClass {
         Data _u1Data {0.0f, 0, false };                     // buffer the last voltage data [voltage, millis(), true/false]
 
         // used to calculate the "Open circuit voltage"
-        enum class Text : uint8_t { Q_NODATA, Q_EXCELLENT, Q_GOOD, Q_BAD, T_HEAD };
+        enum class Text : uint8_t { Q_NODATA, Q_EXCELLENT, Q_GOOD, Q_BAD };
 
         void calculateOpenCircuitVoltage(float const nowVoltage, float const nowCurrent);
         bool isDataValid() const { return (millis() - _battMillis) < 30*1000; }

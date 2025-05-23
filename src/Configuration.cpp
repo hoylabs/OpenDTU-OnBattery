@@ -260,7 +260,6 @@ void ConfigurationClass::serializeGridChargerHuaweiConfig(GridChargerHuaweiConfi
 void ConfigurationClass::serializeBatteryGuardConfig(BatteryGuardConfig const& source, JsonObject& target)
 {
     target["enabled"] = source.Enabled;
-    target["verbose_logging"] = source.VerboseLogging;
     target["internal_resistance"] = source.InternalResistance;
 }
 
@@ -687,7 +686,6 @@ void ConfigurationClass::deserializeGridChargerHuaweiConfig(JsonObject const& so
 void ConfigurationClass::deserializeBatteryGuardConfig(JsonObject const& source, BatteryGuardConfig& target)
 {
     target.Enabled = source["enabled"] | BATTERYGUARD_ENABLED;
-    target.VerboseLogging = source["verbose_logging"] | BATTERYGUARD_VERBOSE_LOGGING;
     target.InternalResistance = source["internal_resistance"] | BATTERYGUARD_INTERNAL_RESISTANCE;
 }
 
