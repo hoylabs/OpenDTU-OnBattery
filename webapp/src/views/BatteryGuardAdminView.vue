@@ -40,13 +40,6 @@
 
                 <template v-if="batteryGuardConfig.enabled">
                     <InputElement
-                        :label="$t('batteryguardadmin.VerboseLogging')"
-                        v-model="batteryGuardConfig.verbose_logging"
-                        type="checkbox"
-                        wide
-                    />
-
-                    <InputElement
                         :label="$t('batteryguardadmin.InternalResistance')"
                         v-model="batteryGuardConfig.internal_resistance"
                         type="number"

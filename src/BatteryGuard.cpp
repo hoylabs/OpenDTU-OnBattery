@@ -46,16 +46,16 @@
 #include <frozen/map.h>
 #include <battery/Controller.h>
 #include <solarcharger/Controller.h>
-#include "Configuration.h"
-#include "MessageOutput.h"
-#include "BatteryGuard.h"
+#include <Configuration.h>
+#include <BatteryGuard.h>
+#include <LogHelper.h>
 
+static const char* TAG = "batteryGuard";
+static const char* SUBTAG = "Controller";
 
 #define MINIMUM_RESISTANCE_CALC 5   // minimum number of calculations to use the calculated resistance
 
-
 BatteryGuardClass BatteryGuard;
-
 
 /*
  * Initialize the battery guard
@@ -90,7 +90,6 @@ void BatteryGuardClass::updateSettings(void) {
 
     // Check if BatteryGuard is enabled and battery provider is configured
     _useBatteryGuard = config.BatteryGuard.Enabled && config.Battery.Enabled;
-    _verboseLogging = config.BatteryGuard.VerboseLogging;
     _resistanceFromConfig = config.BatteryGuard.InternalResistance / 1000.0f; // mOhm -> Ohm
 }
 
@@ -165,24 +164,20 @@ void BatteryGuardClass::slowLoop(void) {
     const auto& config = Configuration.get();
     if (!_useBatteryGuard
         || !config.Battery.Enabled
-        || !_verboseLogging) {
+        || !DTU_LOG_IS_VERBOSE) {
         // not active or no battery or no verbose logging, we abort
         return;
     }
 
-    MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
-    MessageOutput.printf("%s ------------- Battery Guard Report (every minute) -------------\r\n",
-        getText(Text::T_HEAD).data());
-    MessageOutput.printf("%s Battery Guard: %s\r\n",
-        getText(Text::T_HEAD).data(), (_useBatteryGuard) ? "Enabled" : "Disabled");
-    MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
+    DTU_LOGV("");
+    DTU_LOGV("------------- Battery Guard Report (every minute) -------------");
+    DTU_LOGV("");
 
     // "Open circuit voltage"
     printOpenCircuitVoltageReport();
 
-    MessageOutput.printf("%s ---------------------------------------------------------------\r\n",
-        getText(Text::T_HEAD).data());
-    MessageOutput.printf("%s\r\n", getText(Text::T_HEAD).data());
+    DTU_LOGV("-----------------------------------------------------------");
+    DTU_LOGV("");
 }
 
 
@@ -278,11 +273,7 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
 
     // lambda function to avoid nested if-else statements and code doubleing
     auto cleanExit = [&](RState state) -> void {
-
-        if (_verboseLogging) {
-            MessageOutput.printf("%s Resistance calculation state: %s\r\n",
-                getText(Text::T_HEAD).data(), getResistanceStateText(state).data());
-        }
+        DTU_LOGI("%s Resistance calculation state: %s", getResistanceStateText(state).data());
         if (state > _rStateMax) { _rStateMax = state; }
     };
 
@@ -375,37 +366,31 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
  */
 void BatteryGuardClass::printOpenCircuitVoltageReport(void)
 {
-    MessageOutput.printf("%s 1) Open circuit voltage: %s / Battery data %s\r\n",
-        getText(Text::T_HEAD).data(), (_useBatteryGuard) ? "Enabled" : "Disabled",
-        (isResolutionOK()) ? "sufficient" : "not sufficient");
-
-    MessageOutput.printf("%s Open circuit voltage: %0.3fV (Actual battery voltage: %0.3fV)\r\n",
-        getText(Text::T_HEAD).data(), _openCircuitVoltageAVG.getAverage(), _battVoltage);
+    DTU_LOGV("1) Open circuit voltage calculation. Battery data %s", (isResolutionOK()) ? "sufficient" : "not sufficient");
+    DTU_LOGV("Open circuit voltage: %0.3fV (Actual battery voltage: %0.3fV)", _openCircuitVoltageAVG.getAverage(), _battVoltage);
 
     auto oResistance = getInternalResistance();
     if (!oResistance.has_value()) {
-        MessageOutput.printf("%s Resistance neither calculated (5 times) nor configured\r\n", getText(Text::T_HEAD).data());
+        DTU_LOGV("Resistance neither calculated (5 times) nor configured");
     } else {
         auto resCalc = (_resistanceFromCalcAVG.getCounts() > 4) ? _resistanceFromCalcAVG.getAverage() * 1000.0f : 0.0f;
-        MessageOutput.printf("%s Resistance in use: %0.1fmOhm (Calc.: %0.1fmOhm, Config.: %0.1fmOhm)\r\n",
-            getText(Text::T_HEAD).data(), oResistance.value() * 1000.0f, resCalc, _resistanceFromConfig * 1000.0f);
+        DTU_LOGV("Resistance in use: %0.1fmOhm (Calc.: %0.1fmOhm, Config.: %0.1fmOhm)",
+            oResistance.value() * 1000.0f, resCalc, _resistanceFromConfig * 1000.0f);
     }
 
-    MessageOutput.printf("%s Resistance calc.: %0.1fmOhm (Min: %0.1f, Max: %0.1f, Amount: %i)\r\n",
-        getText(Text::T_HEAD).data(), _resistanceFromCalcAVG.getAverage()*1000.0f, _resistanceFromCalcAVG.getMin()*1000.0f,
+    DTU_LOGV("Resistance calc.: %0.1fmOhm (Min: %0.1f, Max: %0.1f, Amount: %i)",
+        _resistanceFromCalcAVG.getAverage()*1000.0f, _resistanceFromCalcAVG.getMin()*1000.0f,
         _resistanceFromCalcAVG.getMax()*1000.0f, _resistanceFromCalcAVG.getCounts());
 
-    MessageOutput.printf("%s Resistance calculation state: %s\r\n",
-        getText(Text::T_HEAD).data(), getResistanceStateText(_rStateMax).data());
+    DTU_LOGV("Resistance calculation state: %s", getResistanceStateText(_rStateMax).data());
 
-    MessageOutput.printf("%s Voltage resolution: %0.0fmV, Current resolution: %0.0fmA\r\n",
-        getText(Text::T_HEAD).data(), _analyzedResolutionV * 1000.0f, _analyzedResolutionI * 1000.0f);
+    DTU_LOGV("Voltage resolution: %0.0fmV, Current resolution: %0.0fmA",
+        _analyzedResolutionV * 1000.0f, _analyzedResolutionI * 1000.0f);
 
-    MessageOutput.printf("%s Measurement period: %0.0fms, V-I time stamp delay: %0.0fms\r\n",
-        getText(Text::T_HEAD).data(), _analyzedPeriod.getAverage(), _analyzedUIDelay.getAverage());
+    DTU_LOGV("Measurement period: %0.0fms, V-I time stamp delay: %0.0fms",
+        _analyzedPeriod.getAverage(), _analyzedUIDelay.getAverage());
 
-    MessageOutput.printf("%s Open circuit voltage not available counter: %i\r\n",
-        getText(Text::T_HEAD).data(),  _notAvailableCounter);
+    DTU_LOGV("Open circuit voltage not available counter: %i", _notAvailableCounter);
 }
 
 
@@ -420,8 +405,7 @@ frozen::string const& BatteryGuardClass::getText(BatteryGuardClass::Text tNr) co
         { Text::Q_NODATA, "Insufficient data" },
         { Text::Q_EXCELLENT, "Excellent" },
         { Text::Q_GOOD, "Good" },
-        { Text::Q_BAD, "Bad" },
-        { Text::T_HEAD, "[BGA]"}
+        { Text::Q_BAD, "Bad" }
     };
 
     auto iter = texts.find(tNr);

@@ -1,6 +1,5 @@
 export interface BatteryGuardConfig {
     enabled: boolean;
-    verbose_logging: boolean;
     internal_resistance: number;
 }
 
