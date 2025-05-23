@@ -53,8 +53,6 @@
 static const char* TAG = "batteryGuard";
 static const char* SUBTAG = "Controller";
 
-#define MINIMUM_RESISTANCE_CALC 5   // minimum number of calculations to use the calculated resistance
-
 BatteryGuardClass BatteryGuard;
 
 /*
@@ -259,8 +257,10 @@ std::optional<float> BatteryGuardClass::getOpenCircuitVoltage(void) {
  * Requirement: Voltage <= 20mV, Current <= 200mA, Period <= 4s, Time delay <= 1s
  */
 bool BatteryGuardClass::isResolutionOK(void) const {
-    return (_analyzedResolutionV <= 0.020f) && (_analyzedResolutionI <= 0.200f)
-        && (_analyzedPeriod.getAverage() <= 4000) && (std::abs(_analyzedUIDelay.getAverage()) <= 1000);
+    return (_analyzedResolutionV <= MAXIMUM_VOLTAGE_RESOLUTION)
+        && (_analyzedResolutionI <= MAXIMUM_CURRENT_RESOLUTION)
+        && (_analyzedPeriod.getAverage() <= MAXIMUM_MEASUREMENT_TIME_PERIOD)
+        && (std::abs(_analyzedUIDelay.getAverage()) <= MAXIMUM_V_I_TIME_STAMP_DELAY);
 }
 
 
