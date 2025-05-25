@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <sstream>
 #include <MqttSettings.h>
 #include <battery/jkbmscan/Stats.h>
+#include <MessageOutput.h>
+#include <Configuration.h>
 
 namespace Batteries::JkBmsCan {
 
 void Stats::getLiveViewData(JsonVariant& root) const
 {
     ::Batteries::Stats::getLiveViewData(root);
+    auto const& config = Configuration.get();
+    uint8_t i;
 
     // values go into the "Status" card of the web application
     addLiveViewValue(root, "chargeVoltage", _chargeVoltage, "V", 1);
@@ -15,10 +20,42 @@ void Stats::getLiveViewData(JsonVariant& root) const
     addLiveViewValue(root, "stateOfHealth", _stateOfHealth, "%", 0);
     addLiveViewValue(root, "temperature", _temperature, "°C", 1);
     addLiveViewValue(root, "modules", _moduleCount, "", 0);
+    std::string cellno;
+    for (i=0; i<config.Battery.JkBmsCan.number_of_cells; i++)
+    {
+        if (i<10)
+        {
+            cellno="";
+            cellno.append("Cell_0").append(std::to_string(i)).append("_Voltage");
+
+        }
+        else
+        {
+            cellno="";
+            cellno.append("Cell_").append(std::to_string(i)).append("_Voltage");
+        }
+        addLiveViewValue(root, cellno, _cellVoltage[i], "mV", 0);
+    }
+
+    addLiveViewValue(root, "Number_Of_Cells", (float) config.Battery.JkBmsCan.number_of_cells, "Cells", 0);
+    addLiveViewValue(root, "Max_Cell_Voltage", _MaxCellVoltage, "mV", 0);
+    addLiveViewValue(root, "Max_Cell_Voltage_Number", _MaxCellVoltageNumber, "Cell", 0);
+    addLiveViewValue(root, "Min_Cell_Voltage", _MinCellVoltage, "mV", 0);
+    addLiveViewValue(root, "Min_Cell_Voltage_Number", _MinCellVoltageNumber, "Cell", 0);
+
+    addLiveViewValue(root, "Capacity_Remaining", _capacityRemaining, "Ah", 0);
+    addLiveViewValue(root, "Full_Charge_Cap", _fullChargeCapacity, "Ah", 0);
+    addLiveViewValue(root, "Cycle_Capacity", _cycleCapacity, "Ah", 0);
+    addLiveViewValue(root, "Cycle_Count", _cycleCount, " ", 0);
+
+
+
 
     addLiveViewTextValue(root, "chargeEnabled", (_chargeEnabled?"yes":"no"));
     addLiveViewTextValue(root, "dischargeEnabled", (_dischargeEnabled?"yes":"no"));
-    addLiveViewTextValue(root, "chargeImmediately", (_chargeImmediately?"yes":"no"));
+    addLiveViewTextValue(root, "balanceEnabled", (_balanceEnabled?"yes":"no"));
+    addLiveViewTextValue(root, "heaterEnabled", (_heaterEnabled?"yes":"no"));
+    addLiveViewTextValue(root, "chargeRequest", (_chargeRequest?"yes":"no"));
 
     // alarms and warnings go into the "Issues" card of the web application
     addLiveViewWarning(root, "highCurrentDischarge", _warningHighCurrentDischarge);
@@ -45,7 +82,9 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
 void Stats::mqttPublish() const
 {
+    int i;
     ::Batteries::Stats::mqttPublish();
+    auto const& config = Configuration.get();
 
     MqttSettings.publish("battery/settings/chargeVoltage", String(_chargeVoltage));
     MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimitation));
@@ -68,8 +107,42 @@ void Stats::mqttPublish() const
     MqttSettings.publish("battery/warning/bmsInternal", String(_warningBmsInternal));
     MqttSettings.publish("battery/charging/chargeEnabled", String(_chargeEnabled));
     MqttSettings.publish("battery/charging/dischargeEnabled", String(_dischargeEnabled));
-    MqttSettings.publish("battery/charging/chargeImmediately", String(_chargeImmediately));
-    MqttSettings.publish("battery/modulesTotal", String(_moduleCount));
+    MqttSettings.publish("battery/charging/chargeRequest", String(_chargeRequest));
+    MqttSettings.publish("battery/modulesTotal", String(config.Battery.JkBmsCan.number_of_cells));
+    String cellno;
+    //char str[4];
+    String str;
+    for (i=0; i<config.Battery.JkBmsCan.number_of_cells; i++)
+    {
+        str = String(i); //itoa(i, str, 10);
+        if (i>99)
+        {
+            i=99;
+        }
+        if (i<10)
+        {
+            cellno="battery/Cell0"+str+"Voltage";
+            //cellno.concat("battery/Cell0");
+            //cellno.concat(str);
+            //cellno.concat("Voltage");
+        }
+        else
+        {
+            cellno="battery/Cell0"+str+"Voltage";
+            //cellno.concat("battery/Cell");
+            //cellno.concat(str);
+            //cellno.concat("Voltage");
+        }
+        MqttSettings.publish(cellno, String(_cellVoltage[i]));
+        if (1) {
+                MessageOutput.printf("[JkBmsCan] %s: %f \r\n",
+                        cellno.c_str(), _cellVoltage[i]);
+        }
+       
+    }
+   
+
+
 }
 
 } // namespace Batteries::JkBmsCan

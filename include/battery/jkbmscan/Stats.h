@@ -11,7 +11,7 @@ friend class Provider;
 public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
-    bool getImmediateChargingRequest() const { return _chargeImmediately; } ;
+    // bool getImmediateChargingRequest() const { return _chargeImmediately; } ;
     float getChargeCurrentLimitation() const { return _chargeCurrentLimitation; } ;
 
 private:
@@ -20,8 +20,23 @@ private:
     float _chargeVoltage;
     float _chargeCurrentLimitation;
     float _dischargeVoltageLimitation;
-    uint16_t _stateOfHealth;
+    uint8_t _stateOfHealth;
     float _temperature;
+
+    float _cellVoltage[25];
+    float _MaxCellVoltage;
+    uint8_t _MaxCellVoltageNumber;
+    float _MinCellVoltage;
+    uint8_t _MinCellVoltageNumber;
+
+    float _capacityRemaining;
+    float _fullChargeCapacity;
+    float _cycleCapacity;
+    uint16_t _cycleCount;
+
+    uint32_t _bmsRunTime;
+    uint16_t _heaterCurrent;
+
 
     bool _alarmOverCurrentDischarge;
     bool _alarmOverCurrentCharge;
@@ -41,7 +56,13 @@ private:
 
     bool _chargeEnabled;
     bool _dischargeEnabled;
-    bool _chargeImmediately;
+    bool _balanceEnabled;
+    bool _heaterEnabled;
+    bool _accEnabled;
+    bool _chargerPluged;
+
+    bool _chargeRequest;
+    bool _chargeAndHeat;
 
     uint8_t _moduleCount;
 };

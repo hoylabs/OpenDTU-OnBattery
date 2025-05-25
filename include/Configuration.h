@@ -228,12 +228,18 @@ struct BATTERY_SERIAL_CONFIG_T {
 };
 using BatterySerialConfig = struct BATTERY_SERIAL_CONFIG_T;
 
+struct BATTERY_JKBMSCAN_CONFIG_T {
+    uint8_t number_of_cells;
+};
+using BatteryJkBmsCanConfig = struct BATTERY_JKBMSCAN_CONFIG_T;
+
 struct BATTERY_CONFIG_T {
     bool Enabled;
     uint8_t Provider;
     BatteryMqttConfig Mqtt;
     BatteryZendureConfig Zendure;
     BatterySerialConfig Serial;
+    BatteryJkBmsCanConfig JkBmsCan;
     bool EnableDischargeCurrentLimit;
     float DischargeCurrentLimit;
     float DischargeCurrentLimitBelowSoc;
@@ -485,6 +491,7 @@ public:
     static void serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target);
     static void serializeBatteryMqttConfig(BatteryMqttConfig const& source, JsonObject& target);
     static void serializeBatterySerialConfig(BatterySerialConfig const& source, JsonObject& target);
+    static void serializeBatteryJkBmsCanConfig(BatteryJkBmsCanConfig const& source, JsonObject& target);
     static void serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target);
     static void serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target);
     static void serializeGridChargerCanConfig(GridChargerCanConfig const& source, JsonObject& target);
@@ -502,6 +509,7 @@ public:
     static void deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target);
     static void deserializeBatteryMqttConfig(JsonObject const& source, BatteryMqttConfig& target);
     static void deserializeBatterySerialConfig(JsonObject const& source, BatterySerialConfig& target);
+    static void deserializeBatteryJkBmsCanConfig(JsonObject const& source, BatteryJkBmsCanConfig& target);
     static void deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target);
     static void deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target);
     static void deserializeGridChargerCanConfig(JsonObject const& source, GridChargerCanConfig& target);

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <battery/jkbmscan/HassIntegration.h>
+#include <Configuration.h>
 
 namespace Batteries::JkBmsCan {
 
@@ -10,6 +11,8 @@ HassIntegration::HassIntegration(std::shared_ptr<Stats> spStats)
 void HassIntegration::publishSensors() const
 {
     ::Batteries::HassIntegration::publishSensors();
+    uint8_t i;
+    auto const& config = Configuration.get();
 
     publishSensor("Temperature", NULL, "temperature", "temperature", "measurement", "°C");
     publishSensor("State of Health (SOH)", "mdi:heart-plus", "stateOfHealth", NULL, "measurement", "%");
@@ -43,6 +46,38 @@ void HassIntegration::publishSensors() const
     publishBinarySensor("Charge enabled", "mdi:battery-arrow-up", "charging/chargeEnabled", "1", "0");
     publishBinarySensor("Discharge enabled", "mdi:battery-arrow-down", "charging/dischargeEnabled", "1", "0");
     publishBinarySensor("Charge immediately", "mdi:alert", "charging/chargeImmediately", "1", "0");
+
+    String cellno;
+    //char str[4];
+    String str;
+    for (i=0; i<config.Battery.JkBmsCan.number_of_cells; i++)
+    {
+        str = String(i); //itoa(i, str, 10);
+        if (i>99)
+        {
+            i=99;
+        }
+        if (i<10)
+        {
+            cellno="battery/Cell0"+str+"Voltage";
+            //cellno.concat("battery/Cell0");
+            //cellno.concat(str);
+            //cellno.concat("Voltage");
+        }
+        else
+        {
+            cellno="battery/Cell0"+str+"Voltage";
+            //cellno.concat("battery/Cell");
+            //cellno.concat(str);
+            //cellno.concat("Voltage");
+        }
+        publishSensor(cellno.c_str(), NULL, cellno.c_str(), "voltage", "measurement", "mV");
+    }
+
+    
+
+
+
 }
 
 } // namespace Batteries::JkBmsCan

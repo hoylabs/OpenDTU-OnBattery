@@ -776,6 +776,8 @@
         "SerialInterfaceTypeUart": "TTL-UART an der MCU",
         "SerialInterfaceTypeTransceiver": "RS-485 Transceiver an der MCU",
         "JbdBmsConfiguration": "JBD BMS Einstellungen",
+        "JkBmsPackConfiguration": "JK BMS Pack Konfiguration",
+        "NumberOfCells": "Anzahl der Zellen im Pack",
         "PollingInterval": "Abfrageintervall",
         "Seconds": "@:base.Seconds",
         "DischargeCurrentLimitConfiguration": "Einstellungen Entladestromlimit",

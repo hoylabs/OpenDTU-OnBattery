@@ -69,6 +69,23 @@
                 />
             </CardElement>
 
+            <CardElement
+                v-if="batteryConfigList.enabled && batteryConfigList.provider == 8"
+                :text="$t('batteryadmin.JkBmsPackConfiguration')"
+                textVariant="text-bg-primary"
+                addSpace
+            >
+                <InputElement
+                    :label="$t('batteryadmin.NumberOfCells')"
+                    v-model="batteryConfigList.jkbmscan.number_of_cells"
+                    type="number"
+                    min="1"
+                    step="1"
+                    :postfix="'Cells'"
+                    wide
+                />
+            </CardElement>
+
             <template v-if="batteryConfigList.enabled && batteryConfigList.provider == 2">
                 <CardElement :text="$t('batteryadmin.MqttSocConfiguration')" textVariant="text-bg-primary" addSpace>
                     <InputElement
@@ -547,7 +564,7 @@ export default defineComponent({
                 { key: 5, value: 'SBSCan' },
                 { key: 6, value: 'JbdBmsSerial' },
                 { key: 7, value: 'ZendureMqtt' },
-                { key: 8, value: 'JkBmsCan'},
+                { key: 8, value: 'JkBmsCan' },
             ],
             serialBmsInterfaceTypeList: [
                 { key: 0, value: 'Uart' },

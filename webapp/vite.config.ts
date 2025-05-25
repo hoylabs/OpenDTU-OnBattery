@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import vueDevTools from 'vite-plugin-vue-devtools'
 
 import viteCompression from 'vite-plugin-compression';
 import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js'
@@ -24,6 +25,8 @@ export default defineConfig(({ command }) => { return {
     vue(),
     viteCompression({ deleteOriginFile: true, threshold: 0 }),
     cssInjectedByJsPlugin(),
+    //plugin for dev tools
+    vueDevTools(),
     VueI18nPlugin({
         /* options */
         include: path.resolve(path.dirname(fileURLToPath(import.meta.url)), './src/locales/**.json'),

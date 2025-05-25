@@ -180,6 +180,11 @@ void ConfigurationClass::serializeBatterySerialConfig(BatterySerialConfig const&
     target["polling_interval"] = source.PollingInterval;
 }
 
+void ConfigurationClass::serializeBatteryJkBmsCanConfig(BatteryJkBmsCanConfig const& source, JsonObject& target)
+{
+    target["number_of_cells"] = source.number_of_cells;
+}
+
 void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target)
 {
     char serialBuffer[sizeof(uint64_t) * 8 + 1];
@@ -435,6 +440,9 @@ bool ConfigurationClass::write()
 
     JsonObject battery_serial = battery["serial"].to<JsonObject>();
     serializeBatterySerialConfig(config.Battery.Serial, battery_serial);
+    
+    JsonObject battery_jkbmscan = battery["jkbmscan"].to<JsonObject>();
+    serializeBatteryJkBmsCanConfig(config.Battery.JkBmsCan, battery_jkbmscan);
 
     JsonObject gridcharger = doc["gridcharger"].to<JsonObject>();
     serializeGridChargerConfig(config.GridCharger, gridcharger);
@@ -600,6 +608,11 @@ void ConfigurationClass::deserializeBatterySerialConfig(JsonObject const& source
 {
     target.Interface = source["interface"] | BATTERY_SERIAL_INTERFACE;
     target.PollingInterval = source["polling_interval"] | BATTERY_SERIAL_POLLING_INTERVAL;
+}
+
+void ConfigurationClass::deserializeBatteryJkBmsCanConfig(JsonObject const& source, BatteryJkBmsCanConfig& target)
+{
+    target.number_of_cells = source["number_of_cells"] | BATTERY_NUMBER_OF_CELLS;
 }
 
 void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target)
@@ -882,6 +895,7 @@ bool ConfigurationClass::read()
     deserializeBatteryZendureConfig(battery["zendure"], config.Battery.Zendure);
     deserializeBatteryMqttConfig(battery["mqtt"], config.Battery.Mqtt);
     deserializeBatterySerialConfig(battery["serial"], config.Battery.Serial);
+    deserializeBatteryJkBmsCanConfig(battery["jkbmscan"], config.Battery.JkBmsCan);
 
     JsonObject gridcharger = doc["gridcharger"];
     deserializeGridChargerConfig(gridcharger, config.GridCharger);
