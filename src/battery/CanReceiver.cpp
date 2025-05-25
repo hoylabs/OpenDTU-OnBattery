@@ -151,6 +151,11 @@ uint16_t CanReceiver::readUnsignedInt16(uint8_t *data)
     return (data[1] << 8) | data[0];
 }
 
+uint16_t CanReceiver::readBigEndianUnsignedInt16(uint8_t *data)
+{
+    return (data[0] << 8) | data[1];
+}
+
 int16_t CanReceiver::readSignedInt16(uint8_t *data)
 {
     return this->readUnsignedInt16(data);

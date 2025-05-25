@@ -182,8 +182,8 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x1806E5F4: {
-            _stats->_chargeVoltage = this->scaleValue(this->readUnsignedInt16(rx_message.data), 0.1);
-            _stats->_chargeCurrentLimitation = this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1);
+            _stats->_chargeVoltage = this->scaleValue(this->readBigEndianUnsignedInt16(rx_message.data), 0.1);
+            _stats->_chargeCurrentLimitation = this->scaleValue(this->readBigEndianUnsignedInt16(rx_message.data + 2), 0.1);
             _stats->_chargeRequest = this->readUnsignedInt8(rx_message.data + 4);
             _stats->_chargeAndHeat = this->readUnsignedInt8(rx_message.data + 5);
 
