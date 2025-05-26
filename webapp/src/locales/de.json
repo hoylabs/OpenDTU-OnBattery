@@ -809,6 +809,7 @@
         "ChargeCurrentLimitBelowVoltageInfo": "Das max Ladestromlimit wird nur unter dieser Spannungs-Schwelle angewendet (wenn 'Batterie SoC ignorieren' in den DPL-Einstellungen aktiviert ist oder SoC nicht verfügbar ist).",
         "UseBatteryReportedChargeCurrentLimit": "Von der Batterie übermitteltes Limit verwenden",
         "BatteryReportedChargeCurrentLimitInfo": "<b>Hinweis:</b> Das restriktivere der beiden Limits – das konfigurierte Maximum und das von der Batterie gemeldete Ladestromlimit – wird angewendet. Das von der Batterie gemeldete Limit wird nur berücksichtigt, wenn in der letzten Minute ein Update eingegangen ist; andernfalls gilt ausschließlich das konfigurierte Maximum.",
+        "MqttChargeCurrentLimitTopic": "Topic für Ladestromlimit",
         "ZendureConfiguration": "Einstellungen",
         "ZendureMinSoc": "Minimaler Ladezustand",
         "ZendureMaxSoc": "Maximaler Ladezustand",

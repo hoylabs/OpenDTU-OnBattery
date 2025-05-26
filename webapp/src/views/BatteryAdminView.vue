@@ -329,6 +329,7 @@
                         v-if="
                             batteryConfigList.enabled &&
                             (batteryConfigList.provider == 0 ||
+                                batteryConfigList.provider == 2 ||
                                 batteryConfigList.provider == 4 ||
                                 batteryConfigList.provider == 5)
                         "
@@ -357,6 +358,43 @@
                                 role="alert"
                                 v-html="$t('batteryadmin.BatteryReportedChargeCurrentLimitInfo')"
                             ></div>
+
+                            <template v-if="batteryConfigList.provider == 2">
+                                <InputElement
+                                    :label="$t('batteryadmin.MqttChargeCurrentLimitTopic')"
+                                    v-model="batteryConfigList.mqtt.charge_current_limit_topic"
+                                    wide
+                                    type="text"
+                                    maxlength="256"
+                                />
+
+                                <InputElement
+                                    :label="$t('batteryadmin.MqttJsonPath')"
+                                    v-model="batteryConfigList.mqtt.charge_current_limit_json_path"
+                                    wide
+                                    type="text"
+                                    maxlength="256"
+                                    :tooltip="$t('batteryadmin.MqttJsonPathDescription')"
+                                />
+
+                                <div class="row mb-3">
+                                    <label for="charge_current_limit_unit" class="col-sm-4 col-form-label">
+                                        {{ $t('batteryadmin.MqttAmperageUnit') }}
+                                    </label>
+
+                                    <div class="col-sm-8">
+                                        <select
+                                            id="charge_current_limit_unit"
+                                            class="form-select"
+                                            v-model="batteryConfigList.mqtt.charge_current_limit_unit"
+                                        >
+                                            <option v-for="u in amperageUnitTypeList" :key="u.key" :value="u.key">
+                                                {{ u.value }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </template>
                         </template>
                     </template>
                 </template>

@@ -233,6 +233,9 @@ struct BATTERY_MQTT_CONFIG_T {
     char DischargeCurrentLimitTopic[MQTT_MAX_TOPIC_STRLEN + 1];
     char DischargeCurrentLimitJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryAmperageUnit DischargeCurrentLimitUnit;
+    char ChargeCurrentLimitTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char ChargeCurrentLimitJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    BatteryAmperageUnit ChargeCurrentLimitUnit;
 };
 using BatteryMqttConfig = struct BATTERY_MQTT_CONFIG_T;
 

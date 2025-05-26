@@ -810,6 +810,7 @@
         "ChargeCurrentLimitBelowVoltageInfo": "The max charge current limit is only applied below this voltage (used if 'Ignore Battery SoC' is enabled in the DPL settings or when SoC is unavailable).",
         "UseBatteryReportedChargeCurrentLimit": "Use Battery-Reported limit",
         "BatteryReportedChargeCurrentLimitInfo": "<b>Hint:</b> The more restrictive of the configured max limit and the battery-reported limit will be applied. The battery-reported limit is only considered if an update was received in the last minute; if it is stale, only the configured max limit applies.",
+        "MqttChargeCurrentLimitTopic": "Charge Current Limit Value Topic",
         "ZendureConfiguration": "Configuration",
         "ZendureMinSoc": "Minimum SoC",
         "ZendureMaxSoc": "Maximum SoC",

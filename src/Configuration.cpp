@@ -192,6 +192,9 @@ void ConfigurationClass::serializeBatteryMqttConfig(BatteryMqttConfig const& sou
     target["discharge_current_limit_topic"] = source.DischargeCurrentLimitTopic;
     target["discharge_current_limit_json_path"] = source.DischargeCurrentLimitJsonPath;
     target["discharge_current_limit_unit"] = source.DischargeCurrentLimitUnit;
+    target["charge_current_limit_topic"] = source.ChargeCurrentLimitTopic;
+    target["charge_current_limit_json_path"] = source.ChargeCurrentLimitJsonPath;
+    target["charge_current_limit_unit"] = source.ChargeCurrentLimitUnit;
 }
 
 void ConfigurationClass::serializeBatterySerialConfig(BatterySerialConfig const& source, JsonObject& target)
@@ -637,6 +640,9 @@ void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, 
     strlcpy(target.DischargeCurrentLimitTopic, source["discharge_current_limit_topic"] | "", sizeof(target.DischargeCurrentLimitTopic));
     strlcpy(target.DischargeCurrentLimitJsonPath, source["discharge_current_limit_json_path"] | "", sizeof(target.DischargeCurrentLimitJsonPath));
     target.DischargeCurrentLimitUnit = source["discharge_current_limit_unit"] | BatteryAmperageUnit::Amps;
+    strlcpy(target.ChargeCurrentLimitTopic, source["charge_current_limit_topic"] | "", sizeof(target.ChargeCurrentLimitTopic));
+    strlcpy(target.ChargeCurrentLimitJsonPath, source["charge_current_limit_json_path"] | "", sizeof(target.ChargeCurrentLimitJsonPath));
+    target.ChargeCurrentLimitUnit = source["charge_current_limit_unit"] | BatteryAmperageUnit::Amps;
 }
 
 void ConfigurationClass::deserializeBatterySerialConfig(JsonObject const& source, BatterySerialConfig& target)

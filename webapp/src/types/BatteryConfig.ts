@@ -38,6 +38,9 @@ export interface BatteryMqttConfig {
     discharge_current_limit_topic: string;
     discharge_current_limit_json_path: string;
     discharge_current_limit_unit: number;
+    charge_current_limit_topic: string;
+    charge_current_limit_json_path: string;
+    charge_current_limit_unit: number;
 }
 
 export interface BatterySerialConfig {
