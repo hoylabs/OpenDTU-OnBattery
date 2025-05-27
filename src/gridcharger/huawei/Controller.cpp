@@ -378,6 +378,7 @@ void Controller::setMode(uint8_t mode) {
 void Controller::getJsonData(JsonVariant& root) const
 {
     root["dataAge"] = millis() - _dataPoints.getLastUpdate();
+    root["showSettings"] = true;
 
     using Label = GridChargers::Huawei::DataPointLabel;
 
