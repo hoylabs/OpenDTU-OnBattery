@@ -1281,7 +1281,28 @@
         "ConfigHintBatteryRequired": "Battery Guard can only be used with a configured battery communication interface.",
         "BatteryGuardConfiguration": "Battery Guard Configuration",
         "EnableBatteryGuard": "Enable Battery Guard",
-        "InternalResistance": "Internal Resistance",
-        "InternalResistanceHint": "The system tries to calculate the value from load changes. Until a calculated value is available, the value configured here will be used. The current value is shown in the battery data."
+        "InternalResistance": "DC-Pulse Resistance",
+        "InternalResistanceHint": "The system tries to calculate the value from load changes. Until a calculated value is available, the value configured here will be used. The calculated value is shown in Info/BatteryGuard."
+    },
+    "batteryguardinfo": {
+        "BatteryGuardInformation": "Battery Guard Information",
+        "General": "General",
+        "Status": "Status",
+        "BatteryVoltage": "Battery voltage",
+        "OpenCircuitVoltage": "Calculated open circuit voltage",
+        "UncompensatedVoltage": "Uncompensated voltage",
+        "BatteryDCPulseResistance": "DC-Puls resistance",
+        "ResistanceConfigured": "Configured resistance",
+        "ResistanceCalculated": "Calculated resistance",
+        "MeasurementData": "Resistance calculation details",
+        "Property": "Property",
+        "Limit": "Limit",
+        "Value": "Value",
+        "VoltageResolution": "Voltage resolution",
+        "CurrentResolution": "Current resolution",
+        "MeasurementTimePeriod": "Measurement period",
+        "VIStampDelay": "Voltage-Current delay",
+        "ResistanceCalculationCount": "Resistance calculation count",
+        "ResistanceCalculationState": "Maximum resistance calculation state"
     }
 }

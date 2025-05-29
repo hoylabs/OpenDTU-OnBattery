@@ -1277,8 +1277,29 @@
         "ConfigHintOptional": "Optional",
         "ConfigHintBatteryRequired": "Battery Guard kann nur mit konfigurierter Batteriekommunikationsschnittstelle genutzt werden.",
         "BatteryGuardConfiguration": "Battery Guard Konfiguration",
-        "EnableBatteryGuard": "Battery Guard aktivieren",
-        "InternalResistance": "Interner Widerstand",
-        "InternalResistanceHint": "Das System versucht den Wert aus Laständerungen zu berechnen. Bis ein berechneter Wert zur Verfügung steht wird der hier konfigurierte Wert verwendet. Der aktuelle Wert wird bei den Batteriedaten angezeigt."
+        "EnableBatteryGuard": "Aktiviere Battery Guard",
+        "InternalResistance": "DC-Pulse Widerstand",
+        "InternalResistanceHint": "Das System versucht den Wert aus Laständerungen zu berechnen. Bis ein berechneter Wert zur Verfügung steht wird der hier konfigurierte Wert verwendet. Der berechnete Wert wird unter Info/BatteryGuard angezeigt."
+    },
+    "batteryguardinfo": {
+        "BatteryGuardInformation": "Battery Guard Informationen",
+        "General": "Allgemein",
+        "Status": "Status",
+        "BatteryVoltage": "Batterie Ausgangsspannung",
+        "OpenCircuitVoltage": "Berechnete Leerlaufspannung",
+        "UncompensatedVoltage": "Unkompensierte Spannung",
+        "BatteryDCPulseResistance": "DC-Puls Widerstand",
+        "ResistanceConfigured": "Konfigurierter Widerstand",
+        "ResistanceCalculated": "Berechneter Widerstand",
+        "MeasurementData": "Detailinformationen zur Widerstandsberechnung",
+        "Property": "Eigenschaft",
+        "Limit": "Grenzwert",
+        "Value": "Wert",
+        "VoltageResolution": "Spannungsauflösung",
+        "CurrentResolution": "Stromauflösung",
+        "MeasurementTimePeriod": "Messperiode",
+        "VIStampDelay": "Zeitversatz Spannung-Strom",
+        "ResistanceCalculationCount": "Anzahl der Widerstandsberechnungen",
+        "ResistanceCalculationState": "Maximale Stufe der Widerstandsberechnung"
     }
 }
