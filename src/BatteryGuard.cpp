@@ -15,12 +15,12 @@
  * Basic principe of the feature: "Battery internal resistance"
  * In general, we try to use steady state values to calculate the battery internal resistance.
  * We always search for 2 consecutive values and build an average for voltage and current.
- * First, we surge for a start value.
- * Second, for a sufficient current change (trigger).
- * Third, for min and max values in a time frame of 15 seconds
- * After the time we calculate the resistance from the min and max difference.
+ * First, we search for a start value.
+ * Second, we search for a sufficient current change (trigger).
+ * Third, we search for min and max values in a time frame of 15 seconds
+ * After the time, we calculate the resistance from the min and max difference.
  * Note: We need high load changes to get sufficient calculation results. About 100W on 24VDC or 180W on 48VDC.
- * The resistance on LifePO4 batteries is not a fixed value, he depends from temperature, charge and time
+ * The resistance on LifePO4 batteries is not a fixed value, it depends from temperature, charge and time
  * after a load change.
  *
  * Basic principe of the function: "Low voltage limiter"
@@ -72,10 +72,10 @@ void BatteryGuardClass::init(Scheduler& scheduler) {
     _slowLoopTask.setInterval(60*1000);
     _slowLoopTask.enable();
 
-    _analyzedResolutionV = 1.0f;
+    _analyzedResolutionV = 0.10f;
     _analyzedResolutionI = 1.0f;
     _analyzedPeriod.reset(10000);
-    _analyzedUIDelay.reset(0);
+    _analyzedUIDelay.reset(5000);
     updateSettings();
 }
 
@@ -273,7 +273,7 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
 
     // lambda function to avoid nested if-else statements and code doubleing
     auto cleanExit = [&](RState state) -> void {
-        DTU_LOGI("%s Resistance calculation state: %s", getResistanceStateText(state).data());
+        DTU_LOGI("Resistance calculation state: %s", getResistanceStateText(state).data());
         if (state > _rStateMax) { _rStateMax = state; }
     };
 
