@@ -48,7 +48,9 @@
                                     </template>
                                     <template v-else>
                                         <td class="value">
-                                            <span class="badge text-bg-danger"> Calculation not possible </span>
+                                            <span class="badge text-bg-danger"
+                                                >{{ $t('batteryguardinfo.CalculationNotPossible') }}
+                                            </span>
                                         </td>
                                         <td></td>
                                     </template>
@@ -108,7 +110,9 @@
                                     </template>
                                     <template v-else>
                                         <td class="value">
-                                            <span class="badge text-bg-danger"> Calculation not possible </span>
+                                            <span class="badge text-bg-danger"
+                                                >{{ $t('batteryguardinfo.CalculationNotPossible') }}
+                                            </span>
                                         </td>
                                         <td></td>
                                     </template>
