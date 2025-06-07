@@ -64,7 +64,7 @@ void Provider::loop()
     _stopPolling = false;
     lock.unlock();
 
-    uint32_t constexpr stackSize = 3072;
+    uint32_t constexpr stackSize = 4096;
     xTaskCreate(Provider::pollingLoopHelper, "PM:HTTP+JSON",
             stackSize, this, 1/*prio*/, &_taskHandle);
 }
