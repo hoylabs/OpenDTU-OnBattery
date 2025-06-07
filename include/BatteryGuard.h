@@ -55,7 +55,6 @@ class BatteryGuardClass {
         void calculateOpenCircuitVoltage(float const nowVoltage, float const nowCurrent);
         bool isDataValid() const { return (millis() - _battMillis) < 30*1000; }
         void printOpenCircuitVoltageReport(void);
-        frozen::string const& getText(Text tNr) const;
 
         float _battVoltage = 0.0f;                          // actual battery voltage [V]
         float _battCurrent = 0.0f;                          // actual battery current [A]
@@ -77,6 +76,7 @@ class BatteryGuardClass {
 
         RState _rState = RState::IDLE;                      // holds the actual calculation state
         RState _rStateMax = RState::IDLE;                   // holds the maximum calculation state
+        RState _rStateLast = RState::IDLE;                  // holds the last calculation state
         float _resistanceFromConfig = 0.0f;                 // configured battery resistance [Ohm]
         WeightedAVG<float> _resistanceFromCalcAVG {10};     // calculated battery resistance [Ohm]
         bool _firstOfTwoAvailable = false;                  // true after to got the first of two values

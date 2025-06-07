@@ -273,7 +273,9 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
 
     // lambda function to avoid nested if-else statements and code doubleing
     auto cleanExit = [&](RState state) -> void {
-        DTU_LOGI("Resistance calculation state: %s", getResistanceStateText(state).data());
+        if (_rStateLast == state) { return; } // no change, we abort without logging
+        _rStateLast = state;
+        DTU_LOGV("Resistance calculation state: %s", getResistanceStateText(state).data());
         if (state > _rStateMax) { _rStateMax = state; }
     };
 
@@ -391,27 +393,6 @@ void BatteryGuardClass::printOpenCircuitVoltageReport(void)
         _analyzedPeriod.getAverage(), _analyzedUIDelay.getAverage());
 
     DTU_LOGV("Open circuit voltage not available counter: %i", _notAvailableCounter);
-}
-
-
-/*
- * Returns a string according to current text number
- */
-frozen::string const& BatteryGuardClass::getText(BatteryGuardClass::Text tNr) const
-{
-    static const frozen::string missing = "programmer error: missing status text";
-
-    static const frozen::map<Text, frozen::string, 5> texts = {
-        { Text::Q_NODATA, "Insufficient data" },
-        { Text::Q_EXCELLENT, "Excellent" },
-        { Text::Q_GOOD, "Good" },
-        { Text::Q_BAD, "Bad" }
-    };
-
-    auto iter = texts.find(tNr);
-    if (iter == texts.end()) { return missing; }
-
-    return iter->second;
 }
 
 
