@@ -47,7 +47,7 @@ void Provider::loop()
     _stopPolling = false;
     lock.unlock();
 
-    uint32_t constexpr stackSize = 3072;
+    uint32_t constexpr stackSize = 6144;
     xTaskCreate(Provider::pollingLoopHelper, "PM:HTTP+SML",
             stackSize, this, 1/*prio*/, &_taskHandle);
 }
