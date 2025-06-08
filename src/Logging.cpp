@@ -12,12 +12,18 @@ static const char* TAG = "logging";
 
 LoggingClass::LoggingClass()
 {
-    _configurableModules.reserve(5);
+    _configurableModules.reserve(11);
     _configurableModules.push_back("CORE");
     _configurableModules.push_back("hoymiles");
     _configurableModules.push_back("mqtt");
     _configurableModules.push_back("network");
     _configurableModules.push_back("webapi");
+    _configurableModules.push_back("battery");
+    _configurableModules.push_back("dynamicPowerLimiter");
+    _configurableModules.push_back("gridCharger");
+    _configurableModules.push_back("powerMeter");
+    _configurableModules.push_back("solarCharger");
+    _configurableModules.push_back("veDirect");
 }
 
 const std::vector<String>& LoggingClass::getConfigurableModules() const
