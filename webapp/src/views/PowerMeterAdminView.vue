@@ -1,6 +1,11 @@
 <template>
     <BasePage :title="$t('powermeteradmin.PowerMeterSettings')" :isLoading="dataLoading">
-        <BootstrapAlert v-model="showAlert" dismissible :variant="alertType" ref="alert">
+        <BootstrapAlert
+            v-model="showAlert"
+            dismissible
+            :variant="alertType"
+            :auto-dismiss="alertType != 'success' ? 0 : 5000"
+        >
             {{ alertMessage }}
         </BootstrapAlert>
 
