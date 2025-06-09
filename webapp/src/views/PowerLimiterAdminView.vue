@@ -1,6 +1,11 @@
 <template>
     <BasePage :title="$t('powerlimiteradmin.PowerLimiterSettings')" :isLoading="dataLoading">
-        <BootstrapAlert v-model="showAlert" dismissible :variant="alertType">
+        <BootstrapAlert
+            v-model="showAlert"
+            dismissible
+            :variant="alertType"
+            :auto-dismiss="alertType != 'success' ? 0 : 5000"
+        >
             {{ alertMessage }}
         </BootstrapAlert>
 
