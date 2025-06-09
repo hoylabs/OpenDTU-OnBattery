@@ -125,12 +125,16 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
 
     if (DTU_LOG_IS_VERBOSE) {
         ESP_LOGV(TAG, "board properties:");
-        std::istringstream stream(_boardProperties);
-        std::string line;
-        while (std::getline(stream, line)) {
-            if (!line.empty()) {
-                ESP_LOGV(TAG, "%s", line.c_str());
+        size_t pos = 0;
+        size_t next;
+        while ((next = _boardProperties.find('\n', pos)) != std::string::npos) {
+            if (next > pos) {
+                ESP_LOGV(TAG, "%.*s", static_cast<int>(next - pos), _boardProperties.c_str() + pos);
             }
+            pos = next + 1;
+        }
+        if (pos < _boardProperties.length()) {
+            ESP_LOGV(TAG, "%.*s", static_cast<int>(_boardProperties.length() - pos), _boardProperties.c_str() + pos);
         }
     }
 
