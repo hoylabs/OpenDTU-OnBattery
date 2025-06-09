@@ -84,7 +84,7 @@ bool TWAI::init()
         return false;
     }
 
-    uint32_t constexpr stackSize = 1536;
+    uint32_t constexpr stackSize = 2048;
     return pdPASS == xTaskCreate(TWAI::pollAlerts,
             "HuaweiTwai", stackSize, this, 20/*prio*/, &_pollingTaskHandle);
 

@@ -109,7 +109,7 @@ bool MCP2515::init()
         return false;
     }
 
-    uint32_t constexpr stackSize = 1536;
+    uint32_t constexpr stackSize = 2048;
     if (pdPASS != xTaskCreate(MCP2515::queueMessages,
             "HuaweiMCP2515", stackSize, this, 20/*prio*/, &sIsrTaskHandle)) {
         DTU_LOGE("failed to create queueing task");
