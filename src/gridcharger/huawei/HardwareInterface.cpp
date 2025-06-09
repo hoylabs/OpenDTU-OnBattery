@@ -104,6 +104,11 @@ bool HardwareInterface::readBoardProperties(can_message_t const& msg)
     auto appendAscii = [this](uint32_t val) -> void {
         val &= 0xFF;
         if ((val < 0x20 || val > 0x7E) && val != 0x0A) { return; }
+        if (_boardProperties.size() > 1024) {
+            DTU_LOGE("board properties growing large, resetting to protect against DoS");
+            _boardProperties = "";
+            return;
+        }
         _boardProperties.push_back(static_cast<char>(val));
     };
 
