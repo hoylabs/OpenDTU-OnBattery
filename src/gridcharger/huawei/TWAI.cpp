@@ -85,8 +85,12 @@ bool TWAI::init()
     }
 
     uint32_t constexpr stackSize = 2048;
-    return pdPASS == xTaskCreate(TWAI::pollAlerts,
-            "HuaweiTwai", stackSize, this, 20/*prio*/, &_pollingTaskHandle);
+    if (pdPASS != xTaskCreate(TWAI::pollAlerts,
+            "HuaweiTwai", stackSize, this, 20/*prio*/, &_pollingTaskHandle)) {
+        DTU_LOGE("failed to create polling task");
+        stopLoop();
+        return false;
+    }
 
     DTU_LOGI("driver ready");
 
