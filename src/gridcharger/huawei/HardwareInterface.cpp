@@ -379,25 +379,36 @@ void HardwareInterface::logMessage(char const* msg, uint32_t canId, uint32_t val
 {
     if (!DTU_LOG_IS_VERBOSE) { return; }
 
-    char buffer[70];
-    size_t offset = 0;
-    offset = snprintf(buffer, sizeof(buffer), "%9s: address %08x ID %08x value %08x | ",
-            msg, canId, valueId, value);
+    char buffer[70] = {0};
+    int offset = 0;
+    auto save_snprintf = [&offset, &buffer](auto&&... args) -> bool {
+        int written = snprintf(buffer + offset, sizeof(buffer) - offset, std::forward<decltype(args)>(args)...);
+        if (written < 0 || written >= static_cast<int>(sizeof(buffer)) - offset) {
+            DTU_LOGE("snprintf issue: wrote %d bytes, offset is %d, buffer size is %d, buffered '%s'",
+                    written, offset, sizeof(buffer), buffer);
+            return false;
+        }
+        offset += written;
+        return true;
+    };
+    if (!save_snprintf("%9s: address %08x ID %08x value %08x | ",
+            msg, canId, valueId, value)) { return; }
 
-    auto printAscii = [&offset, &buffer](uint32_t value) {
+    auto printAscii = [&save_snprintf](uint32_t value) -> bool{
         for (int i = 24; i >= 0; i -= 8) {
             uint8_t byte = (value >> i) & 0xFF;
             if (byte >= 0x20 && byte <= 0x7E) {
-                offset += snprintf(buffer + offset, sizeof(buffer) - offset, "%c", byte);
+                if (!save_snprintf("%c", byte)) { return false; }
             } else {
-                offset += snprintf(buffer + offset, sizeof(buffer) - offset, ".");
+                if (!save_snprintf(".")) { return false; }
             }
         }
+        return true;
     };
 
-    printAscii(valueId);
-    offset += snprintf(buffer + offset, sizeof(buffer) - offset, " ");
-    printAscii(value);
+    if (!printAscii(valueId)) { return; }
+    if (!save_snprintf(" ")) { return; }
+    if (!printAscii(value)) { return; }
 
     DTU_LOGV("%s", buffer);
 }
