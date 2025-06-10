@@ -27,6 +27,10 @@ private:
     std::unique_ptr<MCP_CAN> _upCAN;
     gpio_num_t _huaweiIrq; // IRQ pin
 
+    // interlock access to the MCP2515 driver, as
+    // thread-safety is not guaranteed by the MCP2515 driver.
+    std::mutex _mutex;
+
     std::atomic<bool> _queueingTaskDone = false;
     std::atomic<bool> _stopQueueing = false;
 

@@ -133,15 +133,16 @@ void MCP2515::queueMessages(void* context)
     unsigned char rxBuf[8];
 
     while (!instance._stopQueueing) {
-        if (!instance._upCAN) { break; } // programmer error, should never happen
-
         static auto constexpr resetNotificationValue = pdTRUE;
         static auto constexpr notificationTimeout = pdMS_TO_TICKS(500);
 
         ulTaskNotifyTake(resetNotificationValue, notificationTimeout);
 
         while (!digitalRead(instance._huaweiIrq)) {
-            instance._upCAN->readMsgBuf(&rxId, &len, rxBuf); // Read data: len = data length, buf = data byte(s)
+            {
+                std::lock_guard<std::mutex> lock(instance._mutex);
+                instance._upCAN->readMsgBuf(&rxId, &len, rxBuf); // Read data: len = data length, buf = data byte(s)
+            }
 
             // Determine if ID is standard (11 bits) or extended (29 bits)
             if ((rxId & 0x80000000) != 0x80000000) { continue; }
@@ -165,6 +166,7 @@ void MCP2515::queueMessages(void* context)
 
 bool MCP2515::sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data)
 {
+    std::lock_guard<std::mutex> lock(_mutex);
     if (!_upCAN) { return false; }
 
     // MCP2515 CAN library requires a non-const pointer to the data
