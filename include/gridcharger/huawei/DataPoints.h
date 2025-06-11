@@ -3,9 +3,33 @@
 #include <cstdint>
 #include <DataPoints.h>
 
-namespace GridCharger::Huawei {
+namespace GridChargers::Huawei {
 
 enum class DataPointLabel : uint8_t {
+    // board properties message
+    BoardType,
+    Serial,
+    Manufactured,
+    VendorName,
+    ProductName,
+    ProductDescription,
+
+    // device config message (except for max current multiplier)
+    Reachable,
+    Row,
+    Slot,
+
+    // acknowledgement messages
+    OnlineVoltage,
+    OfflineVoltage,
+    OnlineCurrent,
+    OfflineCurrent,
+    ProductionEnabled,
+    FanOnlineFullSpeed,
+    FanOfflineFullSpeed,
+    InputCurrentLimit,
+
+    // rectifier state message
     InputPower = 0x70,
     InputFrequency = 0x71,
     InputCurrent = 0x72,
@@ -21,31 +45,48 @@ enum class DataPointLabel : uint8_t {
 
 template<DataPointLabel> struct DataPointLabelTraits;
 
-#define LABEL_TRAIT(n, u) template<> struct DataPointLabelTraits<DataPointLabel::n> { \
-    using type = float; \
+#define LABEL_TRAIT(n, t, u) template<> struct DataPointLabelTraits<DataPointLabel::n> { \
+    using type = t; \
     static constexpr char const name[] = #n; \
     static constexpr char const unit[] = u; \
 };
 
-LABEL_TRAIT(InputPower,         "W");
-LABEL_TRAIT(InputFrequency,     "Hz");
-LABEL_TRAIT(InputCurrent,       "A");
-LABEL_TRAIT(OutputPower,        "W");
-LABEL_TRAIT(Efficiency,         ""); // no unit as value is in decimals, e.g., 0.88 for 88%
-LABEL_TRAIT(OutputVoltage,      "V");
-LABEL_TRAIT(OutputCurrentMax,   "A");
-LABEL_TRAIT(InputVoltage,       "V");
-LABEL_TRAIT(OutputTemperature,  "°C");
-LABEL_TRAIT(InputTemperature,   "°C");
-LABEL_TRAIT(OutputCurrent,      "A");
+LABEL_TRAIT(BoardType,          std::string, "");
+LABEL_TRAIT(Serial,             std::string, "");
+LABEL_TRAIT(Manufactured,       std::string, "");
+LABEL_TRAIT(VendorName,         std::string, "");
+LABEL_TRAIT(ProductName,        std::string, "");
+LABEL_TRAIT(ProductDescription, std::string, "");
+LABEL_TRAIT(Reachable,          bool,        "");
+LABEL_TRAIT(Row,                uint8_t,     "");
+LABEL_TRAIT(Slot,               uint8_t,     "");
+LABEL_TRAIT(OnlineVoltage,      float,       "V");
+LABEL_TRAIT(OfflineVoltage,     float,       "V");
+LABEL_TRAIT(OnlineCurrent,      float,       "A");
+LABEL_TRAIT(OfflineCurrent,     float,       "A");
+LABEL_TRAIT(ProductionEnabled,  bool,        "");
+LABEL_TRAIT(FanOnlineFullSpeed, bool,        "");
+LABEL_TRAIT(FanOfflineFullSpeed,bool,        "");
+LABEL_TRAIT(InputCurrentLimit,  float,       "A");
+LABEL_TRAIT(InputPower,         float,       "W");
+LABEL_TRAIT(InputFrequency,     float,       "Hz");
+LABEL_TRAIT(InputCurrent,       float,       "A");
+LABEL_TRAIT(OutputPower,        float,       "W");
+LABEL_TRAIT(Efficiency,         float,       "%");
+LABEL_TRAIT(OutputVoltage,      float,       "V");
+LABEL_TRAIT(OutputCurrentMax,   float,       "A");
+LABEL_TRAIT(InputVoltage,       float,       "V");
+LABEL_TRAIT(OutputTemperature,  float,       "°C");
+LABEL_TRAIT(InputTemperature,   float,       "°C");
+LABEL_TRAIT(OutputCurrent,      float,       "A");
 #undef LABEL_TRAIT
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei
 
-template class DataPointContainer<DataPoint<float>,
-                                  GridCharger::Huawei::DataPointLabel,
-                                  GridCharger::Huawei::DataPointLabelTraits>;
+template class DataPointContainer<DataPoint<float, std::string, uint8_t, bool>,
+                                  GridChargers::Huawei::DataPointLabel,
+                                  GridChargers::Huawei::DataPointLabelTraits>;
 
-namespace GridCharger::Huawei {
-    using DataPointContainer = DataPointContainer<DataPoint<float>, DataPointLabel, DataPointLabelTraits>;
-} // namespace GridCharger::Huawei
+namespace GridChargers::Huawei {
+    using DataPointContainer = DataPointContainer<DataPoint<float, std::string, uint8_t, bool>, DataPointLabel, DataPointLabelTraits>;
+} // namespace GridChargers::Huawei

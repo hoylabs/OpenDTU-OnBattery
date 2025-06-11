@@ -35,20 +35,16 @@
 
 #include <Arduino.h>
 #include "VeDirectFrameHandler.h"
+#include <LogHelper.h>
 
 // The name of the record that contains the checksum.
 static constexpr char checksumTagName[] = "CHECKSUM";
 
-class Silent : public Print {
-	public:
-		size_t write(uint8_t c) final { return 0; }
-};
-
-static Silent MessageOutputDummy;
+static const char* TAG = "veDirect";
+#define SUBTAG _logId
 
 template<typename T>
 VeDirectFrameHandler<T>::VeDirectFrameHandler() :
-	_msgOut(&MessageOutputDummy),
 	_lastUpdate(0),
 	_state(State::IDLE),
 	_checksum(0),
@@ -57,13 +53,14 @@ VeDirectFrameHandler<T>::VeDirectFrameHandler() :
 	_name(""),
 	_value(""),
 	_debugIn(0),
-	_lastByteMillis(0)
+	_lastByteMillis(0),
+	_dataValid(false),
+	_startUpPassed(false)
 {
 }
 
 template<typename T>
-void VeDirectFrameHandler<T>::init(char const* who, gpio_num_t rx, gpio_num_t tx,
-		Print* msgOut, bool verboseLogging, uint8_t hwSerialPort)
+void VeDirectFrameHandler<T>::init(char const* who, gpio_num_t rx, gpio_num_t tx, uint8_t hwSerialPort)
 {
 	_vedirectSerial = std::make_unique<HardwareSerial>(hwSerialPort);
 	_vedirectSerial->setRxBufferSize(512); // increased from default (256) to 512 Byte to avoid overflow
@@ -71,23 +68,17 @@ void VeDirectFrameHandler<T>::init(char const* who, gpio_num_t rx, gpio_num_t tx
 	_vedirectSerial->begin(19200, SERIAL_8N1, rx, tx);
 	_vedirectSerial->flush();
 	_canSend = (tx != GPIO_NUM_NC);
-	_msgOut = msgOut;
-	_verboseLogging = verboseLogging;
 	_debugIn = 0;
-	snprintf(_logId, sizeof(_logId), "[VE.Direct %s %d/%d]", who, rx, tx);
-	if (_verboseLogging) { _msgOut->printf("%s init complete\r\n", _logId); }
+	_startUpPassed = false; // to obtain a complete dataset after a new start or restart
+	_dataValid = false;     // data is not valid on start or restart
+	snprintf(_logId, sizeof(_logId), "[%s %d/%d]", who, rx, tx);
+	DTU_LOGI("init complete");
 }
 
 template<typename T>
 void VeDirectFrameHandler<T>::dumpDebugBuffer() {
-	_msgOut->printf("%s serial input (%d Bytes):", _logId, _debugIn);
-	for (int i = 0; i < _debugIn; ++i) {
-		if (i % 16 == 0) {
-			_msgOut->printf("\r\n%s", _logId);
-		}
-		_msgOut->printf(" %02x", _debugBuffer[i]);
-	}
-	_msgOut->println("");
+	DTU_LOGD("received serial input (%d Bytes)", _debugIn);
+	LogHelper::dumpBytes(TAG, _logId, _debugBuffer.data(), _debugIn);
 	_debugIn = 0;
 }
 
@@ -102,7 +93,13 @@ void VeDirectFrameHandler<T>::reset()
 template<typename T>
 void VeDirectFrameHandler<T>::loop()
 {
-	while ( _vedirectSerial->available()) {
+	// if the data is older than 10 seconds, it is no longer valid (millis() rollover safe)
+	if (_dataValid && ((millis() - _lastUpdate) > (10 * 1000))) {
+		_dataValid = false;     // data is now outdated
+		_startUpPassed = false; // reset the start-up condition
+	}
+
+	while (_vedirectSerial->available()) {
 		rxData(_vedirectSerial->read());
 		_lastByteMillis = millis();
 	}
@@ -111,9 +108,8 @@ void VeDirectFrameHandler<T>::loop()
 	// if such a large gap is observed, reset the state machine so it tries
 	// to decode a new frame / hex messages once more data arrives.
 	if ((State::IDLE != _state) && ((millis() - _lastByteMillis) > 500)) {
-		_msgOut->printf("%s Resetting state machine (was %d) after timeout\r\n",
-				_logId, static_cast<unsigned>(_state));
-		if (_verboseLogging) { dumpDebugBuffer(); }
+		DTU_LOGW("Resetting state machine (was %d) after timeout", static_cast<unsigned>(_state));
+		dumpDebugBuffer();
 		reset();
 	}
 }
@@ -143,15 +139,15 @@ static bool isValidChar(uint8_t inbyte)
 template<typename T>
 void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 {
-	if (_verboseLogging) {
+	if (DTU_LOG_IS_VERBOSE) {
 		_debugBuffer[_debugIn] = inbyte;
 		_debugIn = (_debugIn + 1) % _debugBuffer.size();
 		if (0 == _debugIn) {
-			_msgOut->printf("%s ERROR: debug buffer overrun!\r\n", _logId);
+			DTU_LOGE("debug buffer overrun!");
 		}
 	}
 	if (_state != State::CHECKSUM && !isValidChar(inbyte)) {
-		_msgOut->printf("%s non-ASCII character 0x%02x, invalid frame\r\n", _logId, inbyte);
+		DTU_LOGW("non-ASCII character 0x%02x, invalid frame", inbyte);
 		reset();
 		return;
 	}
@@ -228,16 +224,32 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 		break;
 	case State::CHECKSUM:
 	{
-		if (_verboseLogging) { dumpDebugBuffer(); }
+		dumpDebugBuffer();
 		if (_checksum == 0) {
+
+			_frameContainsFieldV = false;
 			for (auto const& event : _textData) {
 				processTextData(event.first, event.second);
 			}
-			_lastUpdate = millis();
+
+			// A dataset can be fragmented across multiple frames,
+			// so we give just frames containing the field-label "V" a timestamp to avoid
+			// multiple timestamps on related data. We also take care to have the dataset complete
+			// after a start or restart or fault before we set the data as valid.
+			// Note: At startup, it may take up to 2 seconds for the first timestamp to be available
+			if (_frameContainsFieldV)
+			{
+				if (_startUpPassed)
+				{
+					_lastUpdate = millis();
+					_dataValid = true;
+				}
+				_startUpPassed = true;
+			}
 			frameValidEvent();
 		}
 		else {
-			_msgOut->printf("%s checksum 0x%02x != 0x00, invalid frame\r\n", _logId, _checksum);
+			DTU_LOGW("checksum 0x%02x != 0x00, invalid frame", _checksum);
 		}
 		reset();
 		break;
@@ -253,10 +265,7 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
  */
 template<typename T>
 void VeDirectFrameHandler<T>::processTextData(std::string const& name, std::string const& value) {
-	if (_verboseLogging) {
-		_msgOut->printf("%s Text Data '%s' = '%s'\r\n",
-				_logId, name.c_str(), value.c_str());
-	}
+	DTU_LOGD("Text Data '%s' = '%s'", name.c_str(), value.c_str());
 
 	if (processTextDataDerived(name, value)) { return; }
 
@@ -285,6 +294,7 @@ void VeDirectFrameHandler<T>::processTextData(std::string const& name, std::stri
 
 	if (name == "V") {
 		_tmpFrame.batteryVoltage_V_mV = atol(value.c_str());
+		_frameContainsFieldV = true; // frame contains the field-label "V"
 		return;
 	}
 
@@ -293,8 +303,7 @@ void VeDirectFrameHandler<T>::processTextData(std::string const& name, std::stri
 		return;
 	}
 
-	_msgOut->printf("%s Unknown text data '%s' (value '%s')\r\n",
-			_logId, name.c_str(), value.c_str());
+	DTU_LOGI("Unknown text data '%s' (value '%s')", name.c_str(), value.c_str());
 }
 
 /*
@@ -311,9 +320,9 @@ typename VeDirectFrameHandler<T>::State VeDirectFrameHandler<T>::hexRxEvent(uint
 		// now we can analyse the hex message
 		_hexBuffer[_hexSize] = '\0';
 		VeDirectHexData data;
-		if (disassembleHexData(data) && !hexDataHandler(data) && _verboseLogging) {
-			_msgOut->printf("%s Unhandled Hex %s Response, addr: 0x%04X (%s), "
-					"value: 0x%08X, flags: 0x%02X\r\n", _logId,
+		if (disassembleHexData(data) && !hexDataHandler(data)) {
+			DTU_LOGI("Unhandled Hex %s Response, addr: 0x%04X (%s), "
+					"value: 0x%08X, flags: 0x%02X",
 					data.getResponseAsString().data(),
 					static_cast<unsigned>(data.addr),
 					data.getRegisterAsString().data(),
@@ -328,7 +337,7 @@ typename VeDirectFrameHandler<T>::State VeDirectFrameHandler<T>::hexRxEvent(uint
 		_hexBuffer[_hexSize++]=inbyte;
 
 		if (_hexSize>=VE_MAX_HEX_LEN) { // oops -buffer overflow - something went wrong, we abort
-			_msgOut->printf("%s hexRx buffer overflow - aborting read\r\n", _logId);
+			DTU_LOGE("hexRx buffer overflow - aborting read");
 			_hexSize=0;
 			ret = State::IDLE;
 		}
@@ -337,15 +346,8 @@ typename VeDirectFrameHandler<T>::State VeDirectFrameHandler<T>::hexRxEvent(uint
 	return ret;
 }
 
-template<typename T>
-bool VeDirectFrameHandler<T>::isDataValid() const
-{
-	// VE.Direct text frame data is valid if we receive a device serialnumber and
-	// the data is not older as 10 seconds
-	// we accept a glitch where the data is valid for ten seconds when serialNr_SER != "" and (millis() - _lastUpdate) overflows
-	return strlen(_tmpFrame.serialNr_SER) > 0 && (millis() - _lastUpdate) < (10 * 1000);
-}
-
+// Returns the millis() timestamp of the last successfully received dataset
+// Note: Be aware of millis() rollover every 49 days
 template<typename T>
 uint32_t VeDirectFrameHandler<T>::getLastUpdate() const
 {

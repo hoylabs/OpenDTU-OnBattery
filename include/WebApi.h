@@ -13,6 +13,7 @@
 #include "WebApi_i18n.h"
 #include "WebApi_inverter.h"
 #include "WebApi_limit.h"
+#include "WebApi_logging.h"
 #include "WebApi_maintenance.h"
 #include "WebApi_mqtt.h"
 #include "WebApi_network.h"
@@ -29,8 +30,8 @@
 #include <AsyncJson.h>
 #include "WebApi_ws_solarcharger_live.h"
 #include "WebApi_solarcharger.h"
-#include "WebApi_ws_Huawei.h"
-#include "WebApi_Huawei.h"
+#include "WebApi_ws_gridcharger.h"
+#include "WebApi_gridcharger.h"
 #include "WebApi_ws_battery.h"
 #include <ESPAsyncWebServer.h>
 #include <TaskSchedulerDeclarations.h>
@@ -66,6 +67,7 @@ private:
     WebApiI18nClass _webApiI18n;
     WebApiInverterClass _webApiInverter;
     WebApiLimitClass _webApiLimit;
+    WebApiLoggingClass _webApiLogging;
     WebApiMaintenanceClass _webApiMaintenance;
     WebApiMqttClass _webApiMqtt;
     WebApiNetworkClass _webApiNetwork;
@@ -81,8 +83,8 @@ private:
     WebApiWsLiveClass _webApiWsLive;
     WebApiWsSolarChargerLiveClass _webApiWsSolarChargerLive;
     WebApiSolarChargerlass _webApiSolarCharger;
-    WebApiHuaweiClass _webApiHuaweiClass;
-    WebApiWsHuaweiLiveClass _webApiWsHuaweiLive;
+    WebApiGridChargerClass _webApiGridCharger;
+    WebApiWsGridChargerLiveClass _webApiWsGridChargerLive;
     WebApiWsBatteryLiveClass _webApiWsBatteryLive;
 };
 

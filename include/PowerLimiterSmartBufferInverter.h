@@ -5,7 +5,7 @@
 
 class PowerLimiterSmartBufferInverter : public PowerLimiterOverscalingInverter {
 public:
-    PowerLimiterSmartBufferInverter(bool verboseLogging, PowerLimiterInverterConfig const& config);
+    explicit PowerLimiterSmartBufferInverter(PowerLimiterInverterConfig const& config);
 
     uint16_t getMaxReductionWatts(bool allowStandby) const final;
     uint16_t getMaxIncreaseWatts() const final;

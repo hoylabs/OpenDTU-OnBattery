@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <battery/pytes/Provider.h>
-#include <MessageOutput.h>
 #include <PinMapping.h>
 #include <driver/twai.h>
 #include <ctime>
+#include <LogHelper.h>
+
+static const char* TAG = "battery";
+static const char* SUBTAG = "Pytes";
 
 namespace Batteries::Pytes {
 
@@ -24,9 +27,9 @@ static uint32_t popCount(uint32_t val) {
     return cnt;
 }
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
-    return ::Batteries::CanReceiver::init(verboseLogging, "Pytes");
+    return ::Batteries::CanReceiver::init("Pytes");
 }
 
 void Provider::onMessage(twai_message_t rx_message)
@@ -39,11 +42,10 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->setDischargeCurrentLimit(this->scaleValue(this->readUnsignedInt16(rx_message.data + 4), 0.1), millis());
             _stats->_dischargeVoltageLimit = this->scaleValue(this->readSignedInt16(rx_message.data + 6), 0.1);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] chargeVoltageLimit: %f chargeCurrentLimit: %f dischargeCurrentLimit: %f dischargeVoltageLimit: %f\r\n",
-                        _stats->_chargeVoltageLimit, _stats->_chargeCurrentLimit,
-                        _stats->getDischargeCurrentLimit(), _stats->_dischargeVoltageLimit);
-            }
+            DTU_LOGD("chargeVoltageLimit: %f chargeCurrentLimit: "
+                    "%f dischargeCurrentLimit: %f dischargeVoltageLimit: %f",
+                    _stats->_chargeVoltageLimit, _stats->_chargeCurrentLimit,
+                    _stats->getDischargeCurrentLimit(), _stats->_dischargeVoltageLimit);
             break;
         }
 
@@ -51,10 +53,7 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->setSoC(static_cast<uint8_t>(this->readUnsignedInt16(rx_message.data)), 0/*precision*/, millis());
             _stats->_stateOfHealth = this->readUnsignedInt16(rx_message.data + 2);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] soc: %f soh: %d\r\n",
-                        _stats->getSoC(), _stats->_stateOfHealth);
-            }
+            DTU_LOGD("soc: %f soh: %d", _stats->getSoC(), _stats->_stateOfHealth);
             break;
         }
 
@@ -64,10 +63,8 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->setCurrent(this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1), 1/*precision*/, millis());
             _stats->_temperature = this->scaleValue(this->readSignedInt16(rx_message.data + 4), 0.1);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] voltage: %f current: %f temperature: %f\r\n",
-                        _stats->getVoltage(), _stats->getChargeCurrent(), _stats->_temperature);
-            }
+            DTU_LOGD("voltage: %f current: %f temperature: %f",
+                    _stats->getVoltage(), _stats->getChargeCurrent(), _stats->_temperature);
             break;
         }
 
@@ -90,19 +87,17 @@ void Provider::onMessage(twai_message_t rx_message)
             alarmBits = rx_message.data[3];
             _stats->_alarmCellImbalance = this->getBit(alarmBits, 0);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] Alarms: %d %d %d %d %d %d %d %d %d %d\r\n",
-                        _stats->_alarmOverVoltage,
-                        _stats->_alarmUnderVoltage,
-                        _stats->_alarmOverTemperature,
-                        _stats->_alarmUnderTemperature,
-                        _stats->_alarmOverTemperatureCharge,
-                        _stats->_alarmUnderTemperatureCharge,
-                        _stats->_alarmOverCurrentDischarge,
-                        _stats->_alarmOverCurrentCharge,
-                        _stats->_alarmInternalFailure,
-                        _stats->_alarmCellImbalance);
-            }
+            DTU_LOGD("Alarms: %d %d %d %d %d %d %d %d %d %d",
+                    _stats->_alarmOverVoltage,
+                    _stats->_alarmUnderVoltage,
+                    _stats->_alarmOverTemperature,
+                    _stats->_alarmUnderTemperature,
+                    _stats->_alarmOverTemperatureCharge,
+                    _stats->_alarmUnderTemperatureCharge,
+                    _stats->_alarmOverCurrentDischarge,
+                    _stats->_alarmOverCurrentCharge,
+                    _stats->_alarmInternalFailure,
+                    _stats->_alarmCellImbalance);
 
             uint16_t warningBits = rx_message.data[4];
             _stats->_warningHighVoltage = this->getBit(warningBits, 2);
@@ -122,19 +117,17 @@ void Provider::onMessage(twai_message_t rx_message)
             warningBits = rx_message.data[7];
             _stats->_warningCellImbalance = this->getBit(warningBits, 0);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] Warnings: %d %d %d %d %d %d %d %d %d %d\r\n",
-                        _stats->_warningHighVoltage,
-                        _stats->_warningLowVoltage,
-                        _stats->_warningHighTemperature,
-                        _stats->_warningLowTemperature,
-                        _stats->_warningHighTemperatureCharge,
-                        _stats->_warningLowTemperatureCharge,
-                        _stats->_warningHighDischargeCurrent,
-                        _stats->_warningHighChargeCurrent,
-                        _stats->_warningInternalFailure,
-                        _stats->_warningCellImbalance);
-            }
+            DTU_LOGD("Warnings: %d %d %d %d %d %d %d %d %d %d",
+                    _stats->_warningHighVoltage,
+                    _stats->_warningLowVoltage,
+                    _stats->_warningHighTemperature,
+                    _stats->_warningLowTemperature,
+                    _stats->_warningHighTemperatureCharge,
+                    _stats->_warningLowTemperatureCharge,
+                    _stats->_warningHighDischargeCurrent,
+                    _stats->_warningHighChargeCurrent,
+                    _stats->_warningInternalFailure,
+                    _stats->_warningCellImbalance);
             break;
         }
 
@@ -145,9 +138,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             if (manufacturer.isEmpty()) { break; }
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] Manufacturer: %s\r\n", manufacturer.c_str());
-            }
+            DTU_LOGD("Manufacturer: %s", manufacturer.c_str());
 
             _stats->setManufacturer(manufacturer);
             break;
@@ -160,19 +151,14 @@ void Provider::onMessage(twai_message_t rx_message)
 
             _stats->_availableCapacity = this->readUnsignedInt16(rx_message.data + 4);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] fwversion: %s availableCapacity: %f Ah\r\n",
-                        _stats->_fwversion.c_str(), _stats->_availableCapacity);
-            }
+            DTU_LOGD("fwversion: %s availableCapacity: %f Ah",
+                    _stats->_fwversion.c_str(), _stats->_availableCapacity);
             break;
         }
 
         case 0x360: { // Victron protocol: Charging request
             _stats->_chargeImmediately = rx_message.data[0]; // 0xff requests charging.
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] chargeImmediately: %d\r\n",
-                        _stats->_chargeImmediately);
-            }
+            DTU_LOGD("chargeImmediately: %d", _stats->_chargeImmediately);
             break;
         }
 
@@ -182,11 +168,10 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_moduleCountBlockingDischarge = this->readUnsignedInt16(rx_message.data + 4);
             _stats->_moduleCountOffline = this->readUnsignedInt16(rx_message.data + 6);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] moduleCountOnline: %d moduleCountBlockingCharge: %d moduleCountBlockingDischarge: %d moduleCountOffline: %d\r\n",
-                        _stats->_moduleCountOnline, _stats->_moduleCountBlockingCharge,
-                        _stats->_moduleCountBlockingDischarge, _stats->_moduleCountOffline);
-            }
+            DTU_LOGD("moduleCountOnline: %d moduleCountBlockingCharge: %d "
+                    "moduleCountBlockingDischarge: %d moduleCountOffline: %d",
+                    _stats->_moduleCountOnline, _stats->_moduleCountBlockingCharge,
+                    _stats->_moduleCountBlockingDischarge, _stats->_moduleCountOffline);
             break;
         }
 
@@ -196,11 +181,10 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_cellMinTemperature = this->readUnsignedInt16(rx_message.data + 4) - 273;
             _stats->_cellMaxTemperature = this->readUnsignedInt16(rx_message.data + 6) - 273;
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] lowestCellMilliVolt: %d highestCellMilliVolt: %d minimumCellTemperature: %f maximumCellTemperature: %f\r\n",
-                        _stats->_cellMinMilliVolt, _stats->_cellMaxMilliVolt,
-                        _stats->_cellMinTemperature, _stats->_cellMaxTemperature);
-            }
+            DTU_LOGD("lowestCellMilliVolt: %d highestCellMilliVolt: %d "
+                    "minimumCellTemperature: %f maximumCellTemperature: %f",
+                    _stats->_cellMinMilliVolt, _stats->_cellMaxMilliVolt,
+                    _stats->_cellMinTemperature, _stats->_cellMaxTemperature);
             break;
         }
 
@@ -210,10 +194,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             if (cellMinVoltageName.isEmpty()) { break; }
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] cellMinVoltageName: %s\r\n",
-                        cellMinVoltageName.c_str());
-            }
+            DTU_LOGD("cellMinVoltageName: %s", cellMinVoltageName.c_str());
 
             _stats->_cellMinVoltageName = cellMinVoltageName;
             break;
@@ -225,10 +206,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             if (cellMaxVoltageName.isEmpty()) { break; }
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] cellMaxVoltageName: %s\r\n",
-                        cellMaxVoltageName.c_str());
-            }
+            DTU_LOGD("cellMaxVoltageName: %s", cellMaxVoltageName.c_str());
 
             _stats->_cellMaxVoltageName = cellMaxVoltageName;
             break;
@@ -240,10 +218,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             if (cellMinTemperatureName.isEmpty()) { break; }
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] cellMinTemperatureName: %s\r\n",
-                        cellMinTemperatureName.c_str());
-            }
+            DTU_LOGD("cellMinTemperatureName: %s", cellMinTemperatureName.c_str());
 
             _stats->_cellMinTemperatureName = cellMinTemperatureName;
             break;
@@ -255,10 +230,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             if (cellMaxTemperatureName.isEmpty()) { break; }
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] cellMaxTemperatureName: %s\r\n",
-                        cellMaxTemperatureName.c_str());
-            }
+            DTU_LOGD("cellMaxTemperatureName: %s", cellMaxTemperatureName.c_str());
 
             _stats->_cellMaxTemperatureName = cellMaxTemperatureName;
             break;
@@ -269,20 +241,15 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_chargedEnergy = this->scaleValue(this->readUnsignedInt32(rx_message.data), 0.1);
             _stats->_dischargedEnergy = this->scaleValue(this->readUnsignedInt32(rx_message.data + 4), 0.1);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] chargedEnergy: %f dischargedEnergy: %f\r\n",
-                        _stats->_chargedEnergy, _stats->_dischargedEnergy);
-            }
+            DTU_LOGD("chargedEnergy: %f dischargedEnergy: %f",
+                    _stats->_chargedEnergy, _stats->_dischargedEnergy);
             break;
         }
 
         case 0x379: { // BatterySize: Installed Ah
             _stats->_totalCapacity = this->readUnsignedInt16(rx_message.data);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] totalCapacity: %f Ah\r\n",
-                        _stats->_totalCapacity);
-            }
+            DTU_LOGD("totalCapacity: %f Ah", _stats->_totalCapacity);
             break;
         }
 
@@ -292,9 +259,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             if (snPart1.isEmpty() || !isgraph(snPart1.charAt(0))) { break; }
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] snPart1: %s\r\n", snPart1.c_str());
-            }
+            DTU_LOGD("snPart1: %s", snPart1.c_str());
 
             _stats->_serialPart1 = snPart1;
             _stats->updateSerial();
@@ -307,9 +272,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             if (snPart2.isEmpty() || !isgraph(snPart2.charAt(0))) { break; }
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] snPart2: %s\r\n", snPart2.c_str());
-            }
+            DTU_LOGD("snPart2: %s", snPart2.c_str());
 
             _stats->_serialPart2 = snPart2;
             _stats->updateSerial();
@@ -322,11 +285,10 @@ void Provider::onMessage(twai_message_t rx_message)
             pytesSetCellLabel(_stats->_cellMaxVoltageName, this->readUnsignedInt8(rx_message.data + 4));
             pytesSetCellLabel(_stats->_cellMinVoltageName, this->readUnsignedInt8(rx_message.data + 6));
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] lowestCellMilliVolt: %d highestCellMilliVolt: %d cellMinVoltageName: %s cellMaxVoltageName: %s\r\n",
-                        _stats->_cellMinMilliVolt, _stats->_cellMaxMilliVolt,
-                        _stats->_cellMinVoltageName.c_str(), _stats->_cellMaxVoltageName.c_str());
-            }
+            DTU_LOGD("lowestCellMilliVolt: %d highestCellMilliVolt: %d "
+                    "cellMinVoltageName: %s cellMaxVoltageName: %s",
+                    _stats->_cellMinMilliVolt, _stats->_cellMaxMilliVolt,
+                    _stats->_cellMinVoltageName.c_str(), _stats->_cellMaxVoltageName.c_str());
             break;
         }
 
@@ -336,11 +298,10 @@ void Provider::onMessage(twai_message_t rx_message)
             pytesSetCellLabel(_stats->_cellMaxTemperatureName, this->readUnsignedInt16(rx_message.data + 4));
             pytesSetCellLabel(_stats->_cellMinTemperatureName, this->readUnsignedInt16(rx_message.data + 6));
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] minimumCellTemperature: %f maximumCellTemperature: %f cellMinTemperatureName: %s cellMaxTemperatureName: %s\r\n",
-                        _stats->_cellMinTemperature, _stats->_cellMaxTemperature,
-                        _stats->_cellMinTemperatureName.c_str(), _stats->_cellMaxTemperatureName.c_str());
-            }
+            DTU_LOGD("minimumCellTemperature: %f maximumCellTemperature: %f "
+                    "cellMinTemperatureName: %s cellMaxTemperatureName: %s",
+                    _stats->_cellMinTemperature, _stats->_cellMaxTemperature,
+                    _stats->_cellMinTemperatureName.c_str(), _stats->_cellMaxTemperatureName.c_str());
             break;
         }
 
@@ -374,17 +335,15 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_alarmOverCurrentDischarge = overCurrentDischarge;
             _stats->_alarmOverCurrentCharge = overCurrentCharge;
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] Alarms: %d %d %d %d %d %d %d %d\r\n",
-                        _stats->_alarmOverVoltage,
-                        _stats->_alarmUnderVoltage,
-                        _stats->_alarmOverTemperature,
-                        _stats->_alarmUnderTemperature,
-                        _stats->_alarmOverTemperatureCharge,
-                        _stats->_alarmUnderTemperatureCharge,
-                        _stats->_alarmOverCurrentDischarge,
-                        _stats->_alarmOverCurrentCharge);
-            }
+            DTU_LOGD("Alarms: %d %d %d %d %d %d %d %d",
+                    _stats->_alarmOverVoltage,
+                    _stats->_alarmUnderVoltage,
+                    _stats->_alarmOverTemperature,
+                    _stats->_alarmUnderTemperature,
+                    _stats->_alarmOverTemperatureCharge,
+                    _stats->_alarmUnderTemperatureCharge,
+                    _stats->_alarmOverCurrentDischarge,
+                    _stats->_alarmOverCurrentCharge);
 
             _stats->_warningHighVoltage = highVoltage;
             _stats->_warningLowVoltage = lowVoltage;
@@ -396,17 +355,15 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_warningHighDischargeCurrent = highCurrentDischarge;
             _stats->_warningHighChargeCurrent = highCurrentCharge;
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] Warnings: %d %d %d %d %d %d %d %d\r\n",
-                        _stats->_warningHighVoltage,
-                        _stats->_warningLowVoltage,
-                        _stats->_warningHighTemperature,
-                        _stats->_warningLowTemperature,
-                        _stats->_warningHighTemperatureCharge,
-                        _stats->_warningLowTemperatureCharge,
-                        _stats->_warningHighDischargeCurrent,
-                        _stats->_warningHighChargeCurrent);
-            }
+            DTU_LOGD("Warnings: %d %d %d %d %d %d %d %d",
+                    _stats->_warningHighVoltage,
+                    _stats->_warningLowVoltage,
+                    _stats->_warningHighTemperature,
+                    _stats->_warningLowTemperature,
+                    _stats->_warningHighTemperatureCharge,
+                    _stats->_warningLowTemperatureCharge,
+                    _stats->_warningHighDischargeCurrent,
+                    _stats->_warningHighChargeCurrent);
             break;
         }
 
@@ -416,10 +373,7 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_stateOfHealth = this->readUnsignedInt16(rx_message.data + 2);
             _stats->_chargeCycles = this->readUnsignedInt16(rx_message.data + 6);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] soh: %d cycles: %d\r\n",
-                        _stats->_stateOfHealth, _stats->_chargeCycles);
-            }
+            DTU_LOGD("soh: %d cycles: %d", _stats->_stateOfHealth, _stats->_chargeCycles);
             break;
         }
 
@@ -427,10 +381,7 @@ void Provider::onMessage(twai_message_t rx_message)
             uint32_t alarmBits = this->readUnsignedInt32(rx_message.data);
             _stats->_alarmInternalFailure = this->getBit(alarmBits, 15);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] internalFailure: %d (bits: %08x)\r\n",
-                        _stats->_alarmInternalFailure, alarmBits);
-            }
+            DTU_LOGD("internalFailure: %d (bits: %08x)", _stats->_alarmInternalFailure, alarmBits);
             break;
         }
 
@@ -442,11 +393,10 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_moduleCountBlockingCharge = popCount(rx_message.data[5]);
             _stats->_moduleCountBlockingDischarge = popCount(rx_message.data[6]);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] chargeEnabled: %d dischargeEnabled: %d chargeImmediately: %d moduleCountBlockingDischarge: %d moduleCountBlockingCharge: %d\r\n",
+            DTU_LOGD("chargeEnabled: %d dischargeEnabled: %d chargeImmediately: %d "
+                    "moduleCountBlockingDischarge: %d moduleCountBlockingCharge: %d",
                     chargeEnabled, dischargeEnabled, _stats->_chargeImmediately,
                     _stats->_moduleCountBlockingCharge, _stats->_moduleCountBlockingDischarge);
-            }
             break;
         }
 
@@ -457,10 +407,8 @@ void Provider::onMessage(twai_message_t rx_message)
             float soc = 100.0 * _stats->_availableCapacity / _stats->_totalCapacity;
             _stats->setSoC(soc, 2/*precision*/, millis());
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] soc: %.2f totalCapacity: %.2f Ah availableCapacity: %.2f Ah \r\n",
-                        soc, _stats->_totalCapacity, _stats->_availableCapacity);
-            }
+            DTU_LOGD("soc: %.2f totalCapacity: %.2f Ah availableCapacity: %.2f Ah",
+                    soc, _stats->_totalCapacity, _stats->_availableCapacity);
             break;
         }
 
@@ -468,10 +416,8 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_moduleCountOnline = this->readUnsignedInt8(rx_message.data + 6);
             _stats->_moduleCountOffline = this->readUnsignedInt8(rx_message.data + 7);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] moduleCountOnline: %d moduleCountOffline: %d\r\n",
-                        _stats->_moduleCountOnline, _stats->_moduleCountOffline);
-            }
+            DTU_LOGD("moduleCountOnline: %d moduleCountOffline: %d",
+                    _stats->_moduleCountOnline, _stats->_moduleCountOffline);
             break;
         }
 
@@ -481,10 +427,7 @@ void Provider::onMessage(twai_message_t rx_message)
             // It is somewhat likely that this is a percentage value on
             // the scale of 0-32768, but that is just a theory.
             _stats->_balance = this->readUnsignedInt16(rx_message.data + 4);
-            if (_verboseLogging) {
-                MessageOutput.printf("[Pytes] balance: %d\r\n",
-                        _stats->_balance);
-            }
+            DTU_LOGD("balance: %d", _stats->_balance);
             break;
         }
 

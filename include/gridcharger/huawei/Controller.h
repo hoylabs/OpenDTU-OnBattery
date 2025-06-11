@@ -3,15 +3,13 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ArduinoJson.h>
 #include <TaskSchedulerDeclarations.h>
 #include <gridcharger/huawei/HardwareInterface.h>
 #include <gridcharger/huawei/DataPoints.h>
 
-namespace GridCharger::Huawei {
-
-#define HUAWEI_MINIMAL_OFFLINE_VOLTAGE 48
-#define HUAWEI_MINIMAL_ONLINE_VOLTAGE 42
+namespace GridChargers::Huawei {
 
 // Modes of operation
 #define HUAWEI_MODE_OFF 0
@@ -23,6 +21,8 @@ class Controller {
 public:
     void init(Scheduler& scheduler);
     void updateSettings();
+    void setFan(bool online, bool fullSpeed);
+    void setProduction(bool enable);
     void setParameter(float val, HardwareInterface::Setting setting);
     void setMode(uint8_t mode);
 
@@ -32,9 +32,23 @@ public:
     bool getAutoPowerStatus() const { return _autoPowerEnabled; };
     uint8_t getMode() const { return _mode; };
 
+    // determined through trial and error (voltage limits, R4850G2)
+    // and some educated guessing (current limits, no R4875 at hand)
+    static constexpr float MIN_ONLINE_VOLTAGE = 41.0f;
+    static constexpr float MAX_ONLINE_VOLTAGE = 58.6f;
+    static constexpr float MIN_ONLINE_CURRENT = 0.0f;
+    static constexpr float MAX_ONLINE_CURRENT = 84.0f;
+    static constexpr float MIN_OFFLINE_VOLTAGE = 48.0f;
+    static constexpr float MAX_OFFLINE_VOLTAGE = 58.4f;
+    static constexpr float MIN_OFFLINE_CURRENT = 0.0f;
+    static constexpr float MAX_OFFLINE_CURRENT = 84.0f;
+    static constexpr float MIN_INPUT_CURRENT_LIMIT = 0.0f;
+    static constexpr float MAX_INPUT_CURRENT_LIMIT = 40.0f;
+
 private:
     void loop();
-    void _setParameter(float val, HardwareInterface::Setting setting);
+    void _setParameter(float val, HardwareInterface::Setting setting, bool pollFeedback = false);
+    void _setProduction(bool enable);
 
     // these control the pin named "power", which in turn is supposed to control
     // a relay (or similar) to enable or disable the PSU using it's slot detect
@@ -43,10 +57,45 @@ private:
     void disableOutput();
     gpio_num_t _huaweiPower;
 
+    template<DataPointLabel L>
+    void addValueInSection(JsonVariant& root,
+        std::string const& section, std::string const& name) const
+    {
+        auto oVal = _dataPoints.get<L>();
+        if (!oVal) { return; }
+
+        auto jsonValue = root["values"][section][name];
+        jsonValue["v"] = *oVal;
+        jsonValue["u"] = DataPointLabelTraits<L>::unit;
+        jsonValue["d"] = 2;
+    }
+
+    template<DataPointLabel L>
+    void addStringInSection(JsonVariant& root,
+        std::string const& section, std::string const& name) const
+    {
+        auto oVal = _dataPoints.get<L>();
+        if (!oVal) { return; }
+
+        auto jsonValue = root["values"][section][name];
+        jsonValue["value"] = *oVal;
+        jsonValue["translate"] = false;
+    }
+
+    void addStringInSection(JsonVariant& root,
+        std::string const& section, std::string const& name,
+        std::string const& value) const
+    {
+        auto jsonValue = root["values"][section][name];
+        jsonValue["value"] = value;
+        jsonValue["translate"] = true;
+    }
+
     Task _loopTask;
     std::unique_ptr<HardwareInterface> _upHardwareInterface;
 
     std::mutex _mutex;
+    std::optional<bool> _oOutputEnabled;
     uint8_t _mode = HUAWEI_MODE_AUTO_EXT;
 
     DataPointContainer _dataPoints;
@@ -61,6 +110,6 @@ private:
     bool _batteryEmergencyCharging = false;
 };
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei
 
-extern GridCharger::Huawei::Controller HuaweiCan;
+extern GridChargers::Huawei::Controller HuaweiCan;

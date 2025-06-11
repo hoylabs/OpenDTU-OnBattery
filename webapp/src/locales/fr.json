@@ -7,6 +7,7 @@
         "MQTTSettings": "MQTT",
         "InverterSettings": "Onduleurs",
         "SecuritySettings": "Sécurité",
+        "LoggingSettings": "Journalisation",
         "DTUSettings": "DTU",
         "DeviceManager": "Périphériques",
         "SolarChargerSettings": "Solar Charger",
@@ -27,7 +28,6 @@
         "Login": "Connexion"
     },
     "base": {
-        "VerboseLogging": "Journalisation Détaillée",
         "Seconds": "Secondes",
         "Loading": "Chargement...",
         "Reload": "Reload",
@@ -109,6 +109,8 @@
         "8004": "L'adresse IP du serveur DNS primaire n'est pas valide !",
         "8005": "L'adresse IP du serveur DNS secondaire n'est pas valide !",
         "8006": "La valeur du délai d'attente du point d'accès administratif n'est pas valide !",
+        "8007": "Syslog Server must between 1 and {max} characters long!",
+        "8008": "Port must be a number between 1 and 65535!",
         "9001": "Le serveur NTP doit avoir une longueur comprise entre 1 et {max} caractères !",
         "9002": "Le fuseau horaire doit comporter entre 1 et {max} caractères !",
         "9003": "La description du fuseau horaire doit comporter entre 1 et {max} caractères !",
@@ -122,7 +124,7 @@
         "10001": "Le mot de passe doit comporter entre 8 et {max} caractères !",
         "10002": "Authentification réussie !",
         "11001": "@:apiresponse.2001",
-        "11002": "@:apiresponse:5004",
+        "11002": "@:apiresponse.5004",
         "12001": "Le profil doit comporter entre 1 et {max} caractères !"
     },
     "home": {
@@ -260,6 +262,7 @@
         "SdkVersion": "Version du SDK",
         "ConfigVersion": "Version de la configuration",
         "FirmwareVersion": "Version du firmware / Hash Git",
+        "FirmwareBranch": "Firmware Branch",
         "PioEnv": "PIO Environment",
         "FirmwareVersionHint": "Cliquez ici pour afficher des informations sur votre version actuelle",
         "FirmwareUpdate": "Mise à jour du firmware",
@@ -403,7 +406,11 @@
         "VirtualDebugConsole": "Console de débogage",
         "EnableAutoScroll": "Activer le défilement automatique",
         "ClearConsole": "Vider la console",
-        "CopyToClipboard": "Copier dans le presse-papiers"
+        "CopyToClipboard": "Copier dans le presse-papiers",
+        "Download": "Download",
+        "RegularExpression": "Regular Expression",
+        "Lines": "{lines} Lines",
+        "LogLevel": "Log Level ({cnt})"
     },
     "inverterchannelinfo": {
         "String": "Ligne {num}",
@@ -419,8 +426,7 @@
         "MpptTotalPower": "Puissance totale solaire",
         "BatteryCharge": "Battery Charge",
         "BatteryPower": "Battery Power",
-        "HomePower": "Grid Power",
-        "HuaweiPower": "Huawei AC Power"
+        "HomePower": "Grid Power"
     },
     "inverterchannelproperty": {
         "Power": "Puissance",
@@ -451,7 +457,6 @@
         "Serial": "Numéro de série",
         "SerialHint": "L'onduleur et le DTU ont tous deux un numéro de série. Le numéro de série du DTU est généré de manière aléatoire lors du premier démarrage et ne doit normalement pas être modifié.",
         "PollInterval": "Intervalle de sondage",
-        "VerboseLogging": "@:base.VerboseLogging",
         "Seconds": "Secondes",
         "NrfPaLevel": "NRF24 Niveau de puissance d'émission",
         "CmtPaLevel": "CMT2300A Niveau de puissance d'émission",
@@ -521,13 +526,16 @@
         "ApTimeoutHint": "Durée pendant laquelle le point d'accès reste ouvert. Une valeur de 0 signifie infini.",
         "Minutes": "minutes",
         "EnableMdns": "Activer mDNS",
-        "MdnsSettings": "mDNS Settings"
+        "MdnsSettings": "mDNS Settings",
+        "EnableSyslog": "Enable Syslog",
+        "SyslogSettings": "Syslog Settings",
+        "SyslogHostname": "Syslog Server",
+        "SyslogPort": "Port"
     },
     "mqttadmin": {
         "MqttSettings": "Paramètres MQTT",
         "MqttConfiguration": "Configuration du système MQTT",
         "EnableMqtt": "Activer le MQTT",
-        "VerboseLogging": "@:base.VerboseLogging",
         "EnableHass": "Activer la découverte automatique du MQTT de Home Assistant",
         "MqttBrokerParameter": "Paramètre du Broker MQTT",
         "Hostname": "Nom d'hôte",
@@ -573,14 +581,12 @@
         "EnableSolarCharger": "Enable Interface",
         "Provider": "Data Provider",
         "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
-        "VerboseLogging": "@:base.VerboseLogging",
         "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change"
     },
     "batteryadmin": {
         "BatterySettings": "Battery Settings",
         "BatteryConfiguration": "General Interface Settings",
         "EnableBattery": "Enable Interface",
-        "VerboseLogging": "@:base.VerboseLogging",
         "Provider": "Data Provider",
         "ProviderPylontechCan": "Pylontech using CAN bus",
         "ProviderSBSCan": "SBS Unipower using CAN bus",
@@ -641,7 +647,8 @@
         "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
         "ZendureChargeThrough": "Charge Through Settings",
         "ZendureChargeThroughEnabled": "Charge Through",
-        "ZendureChargeThroughInterval": "Maximum time without full charge"
+        "ZendureChargeThroughInterval": "Maximum time without full charge",
+        "ZendureBuzzerEnable": "Audible signals"
     },
     "inverteradmin": {
         "InverterSettings": "Paramètres des onduleurs",
@@ -731,7 +738,6 @@
         "General": "General",
         "Enable": "Enable",
         "GovernInverter": "Govern Inverter \"{name}\"",
-        "VerboseLogging": "@:base.VerboseLogging",
         "EnableSolarPassthrough": "Enable Solar-Passthrough",
         "ConductionLosses": "Conduction Losses",
         "ConductionLossesInfo": "Conduction losses are to be expected when transferring energy from the solar charge controller or from the battery to the inverter. These losses are taken into account to calculate better suited inverter limits.",
@@ -864,59 +870,30 @@
         "format_herf_invalid": "E-Star HERF format: Invalid checksum",
         "format_unknown": "Unknown format"
     },
-    "huawei": {
-        "Input": "Input",
-        "Output": "Output",
-        "Property": "Property",
-        "Value": "Value",
-        "Unit": "Unit",
-        "input_voltage": "Input voltage",
-        "input_current": "Input current",
-        "input_power": "Input power",
-        "input_temp": "Input temperature",
-        "efficiency": "Efficiency",
-        "output_voltage": "Output voltage",
-        "output_current": "Output current",
-        "max_output_current": "Maximum output current",
-        "output_power": "Output power",
-        "output_temp": "Output temperature",
-        "ShowSetLimit": "Show / Set Huawei Limit",
-        "LimitSettings": "Limit Settings",
-        "SetOffline": "Set limit, CAN bus not connected",
-        "SetOnline": "Set limit, CAN bus connected",
-        "LimitHint": "<b>Hint:</b> CAN bus not connected voltage limit is 48V-58.5V.",
-        "Close": "close",
-        "SetVoltageLimit": "Voltage limit",
-        "SetCurrentLimit": "Current limit",
-        "CurrentLimit": "Current limit"
-    },
-    "acchargeradmin": {
-        "ChargerSettings": "AC Charger Settings",
-        "Configuration": "AC Charger Configuration",
-        "EnableHuawei": "Enable Huawei R4850G2 on CAN Bus Interface",
-        "VerboseLogging": "@:base.VerboseLogging",
-        "HardwareInterface": "Interface Type",
-        "HardwareInterfaceMCP2515": "External CAN-Controller MCP2515 over SPI",
-        "HardwareInterfaceTWAI": "Internal CAN-Controller on CAN-Transceiver SN65HVD230 (VP230)",
-        "CanControllerFrequency": "CAN controller quarz frequency",
-        "EnableAutoPower": "Automatic power control",
-        "EnableBatterySoCLimits": "Use SoC data of a connected battery",
-        "Limits": "Limits",
-        "BatterySoCLimits": "Battery SoC Limits",
-        "VoltageLimit": "Charge Voltage limit",
-        "enableVoltageLimit": "Re-enable voltage limit",
-        "stopVoltageLimitHint": "Maximum charger voltage. Equals battery charge voltage limit. Used for automatic power control and when emergency charging",
-        "enableVoltageLimitHint": "Automatic power control is disabled if the output voltage is higher then this value and if the output power drops below the minimum output power limit (set below).\nAutomatic power control is re-enabled if the battery voltage drops below the value set in this field.",
-        "upperPowerLimitHint": "Maximum output power. Used for automatic power control and when emergency charging",
-        "lowerPowerLimit": "Minimum output power",
-        "upperPowerLimit": "Maximum output power",
-        "StopBatterySoCThreshold": "Stop charging at SoC",
-        "StopBatterySoCThresholdHint": "To prolong the battery's lifespan, charging can be stopped at a certain SoC level.\nHint: In order to keep the SoC reading accurate, some LiFePO cells must be charged to full capacity regularly.",
-        "Seconds": "@:base.Seconds",
-        "EnableEmergencyCharge": "Emergency charge",
-        "EnableEmergencyChargeHint": "Battery charged with maximum power if requested by Battery BMS",
-        "targetPowerConsumption": "Target power consumption",
-        "targetPowerConsumptionHint": "Postitive values use grid power to charge the battery. Negative values result in early shutdown"
+    "loggingadmin": {
+        "LoggingSettings": "Logging Settings",
+        "LogLevel": "Log Level",
+        "DefaultLevel": "Default log level",
+        "Module": "Module",
+        "Module_CORE": "Noyau ESP-IDF",
+        "Module_hoymiles": "RF Hoymiles",
+        "Module_mqtt": "Client MQTT",
+        "Module_network": "Réseau",
+        "Module_webapi": "API Web",
+        "Module_battery": "Batterie",
+        "Module_dynamicPowerLimiter": "Limiteur de puissance dynamique",
+        "Module_gridCharger": "Chargeur secteur",
+        "Module_powerMeter": "Compteur d'énergie",
+        "Module_solarCharger": "Chargeur solaire",
+        "Module_veDirect": "VE.Direct",
+        "CoreHint": "Warning: A too detailed log level of the ESP-IDF Core module can significantly impact performance and lead to unpredictable behavior. The log level setting should only be temporarily adjusted for targeted troubleshooting. The default setting 'Error' is sufficient for normal operation.",
+        "log_inherit": "Inherit from default",
+        "log_none": "None",
+        "log_error": "(E) Error",
+        "log_warn": "(W) Warning",
+        "log_info": "(I) Info",
+        "log_debug": "(D) Debug",
+        "log_verbose": "(V) Verbose"
     },
     "battery": {
         "battery": "Battery",
@@ -1034,9 +1011,9 @@
         "bypassMode": "Bypass mode",
         "bypassState": "Bypass switch",
         "heatState": "Battery heating",
-        "autoRecover": "Automatic recover",
+        "autoRecover": "Automatic reset of bypass mode",
         "autoShutdown": "Automatic shutdown",
-        "buzzer": "Integrated buzzer",
+        "buzzer": "Audible signals",
         "batteries": "Number of batteries",
         "charging": "Charging",
         "discharging": "Discharging",
@@ -1054,6 +1031,6 @@
         "remainInTime": "Remaining charge time",
         "unavail": "N/A",
         "useableCapacity": "Useable capacity",
-        "chargethrough": "Charge through"
+        "chargethrough": "Charge through cycle"
     }
 }

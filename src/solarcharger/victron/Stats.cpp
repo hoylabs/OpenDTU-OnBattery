@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <Configuration.h>
 #include <MqttSettings.h>
-#include <MessageOutput.h>
 #include <solarcharger/victron/Stats.h>
 #include <numeric>
 

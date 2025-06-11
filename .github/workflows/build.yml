@@ -132,6 +132,66 @@ jobs:
             !.pio/build/generic_esp32_4mb_no_ota/opendtu-onbattery-generic_esp32_4mb_no_ota.bin
             .pio/build/${{ matrix.environment }}/opendtu-onbattery-${{ matrix.environment }}.factory.bin
 
+  # This snippet is public-domain, taken from
+  # https://github.com/oprypin/nightly.link/blob/master/.github/workflows/pr-comment.yml
+  # and modified to store the comment as an artifact instead of posting it because
+  # the action does not have sufficient permissions to post a comment when triggered
+  # by a forked repository.
+  # source: https://github.com/live-codes/pr-comment-from-artifact/blob/main/action.yml
+  generate_pr_artifacts_comment:
+    name: Generate PR artifacts comment and store it as artifact
+    needs: build
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Generate PR artifacts comment
+        id: generate_pr_artifacts_comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner, repo} = context.repo;
+
+            const artifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              {
+                owner,
+                repo,
+                run_id: context.runId
+              }
+            );
+
+            if (!artifacts.length) {
+              return core.error(`No artifacts found`);
+            }
+
+            let body = `### Build Artifacts\n\nFirmware built from this pull request's code:\n`;
+            for (const art of artifacts) {
+              body += `\n* [${art.name}.zip](https://nightly.link/${owner}/${repo}/actions/artifacts/${art.id}.zip)`;
+            }
+
+            const build_run_url = `https://github.com/hoylabs/OpenDTU-OnBattery/actions/runs/${context.runId}`;
+
+            body += `\n\n### Notice\n`
+              + `* These artifacts are ZIP files containing the factory update binary as well as the OTA update binary.\n`
+              + `  Extract the binaries from the ZIP files first. Do not use the ZIP files themselves to perform an update.\n`
+              + `* These links point to artifacts of the latest [**successful** build run](${build_run_url}).\n`
+              + `* The linked artifacts were built from ${context.sha}.`;
+            core.setOutput("message", body);
+
+      - name: Save output and PR number
+        shell: bash
+        run: |
+          mkdir -p ./pr
+          echo "${{ steps.generate_pr_artifacts_comment.outputs.message }}" > ./pr/${{ github.event.number }}.md
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr
+          path: pr/
+          retention-days: 1
+          overwrite: true
+
   release:
     name: Create Release
     runs-on: ubuntu-24.04
@@ -149,10 +209,11 @@ jobs:
           echo "OPEN_DTU_CORE_RELEASE=$(git for-each-ref --sort=creatordate --format '%(refname) %(creatordate)' refs/tags | grep 'refs/tags/v' | tail -1 | sed 's#.*/##' | sed 's/ .*//')" >> $GITHUB_ENV
 
       - name: Create openDTU-core-release-Badge
+        if: vars.BADGE_GIST_ID != ''
         uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483 # version 1.7.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
-          gistID: 856dda48c1cadac6ea495213340c612b
+          gistID: ${{ vars.BADGE_GIST_ID }}
           filename: openDTUcoreRelease.json
           label: based on upstream OpenDTU
           message: ${{ env.OPEN_DTU_CORE_RELEASE }}
@@ -172,11 +233,26 @@ jobs:
         with:
           path: artifacts/
 
-      - name: Move all files to the same location
+      - name: Move artifacts to the expected location
         run: |
-          ls -R
-          cd artifacts
-          for i in */; do cp ${i}opendtu-onbattery-*.bin ./; done
+          ls -lR artifacts/
+          mkdir -p release-artifacts
+          for i in artifacts/*/; do
+            for file in ${i}opendtu-onbattery-*.bin; do
+              # only process if the file actually exists
+              # (is not just a pattern that failed expansion)
+              if [ -f "$file" ]; then
+                filename=$(basename "${file}")
+                tag_name=${GITHUB_REF#refs/tags/}
+                # remove prefix "opendtu-onbattery-" from the filename
+                new_filename="${filename#opendtu-onbattery-}"
+                # insert the Git tag name after the common prefix
+                new_filename="opendtu-onbattery-${tag_name}-${new_filename}"
+                cp -v "${file}" "release-artifacts/${new_filename}"
+              fi
+            done
+          done
+          ls -lR release-artifacts/
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -184,6 +260,6 @@ jobs:
           body: ${{steps.github_release.outputs.changelog}}
           draft: False
           files: |
-            artifacts/*.zip, artifacts/*.bin
+            release-artifacts/*.bin
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

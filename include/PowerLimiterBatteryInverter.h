@@ -5,7 +5,7 @@
 
 class PowerLimiterBatteryInverter : public PowerLimiterInverter {
 public:
-    PowerLimiterBatteryInverter(bool verboseLogging, PowerLimiterInverterConfig const& config);
+    explicit PowerLimiterBatteryInverter(PowerLimiterInverterConfig const& config);
 
     uint16_t getMaxReductionWatts(bool allowStandby) const final;
     uint16_t getMaxIncreaseWatts() const final;

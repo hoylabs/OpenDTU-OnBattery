@@ -5,7 +5,10 @@
 #include <powermeter/udp/victron/Provider.h>
 #include <Arduino.h>
 #include <WiFiUdp.h>
-#include <MessageOutput.h>
+#include <LogHelper.h>
+
+static const char* TAG = "powerMeter";
+static const char* SUBTAG = "ModbusUDP/Victron";
 
 namespace PowerMeters::Udp::Victron {
 
@@ -69,27 +72,29 @@ void Provider::sendModbusRequest()
     VictronUdp.endPacket();
 
     _lastRequest = currentMillis;
+
+    DTU_LOGD("sent modbus request");
 }
 
-static float readInt16(uint8_t** buffer, uint8_t factor)
+static float readInt16(uint8_t const** buffer, uint8_t factor)
 {
-    uint8_t* p = *buffer;
+    uint8_t const* p = *buffer;
     int16_t value = (p[0] << 8) | p[1];
     *buffer += 2;
     return static_cast<float>(value) / factor;
 }
 
-static float readInt32(uint8_t** buffer, uint8_t factor)
+static float readInt32(uint8_t const** buffer, uint8_t factor)
 {
-    uint8_t* p = *buffer;
+    uint8_t const* p = *buffer;
     int32_t value = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
     *buffer += 4;
     return static_cast<float>(value) / factor;
 }
 
-static float readUint32(uint8_t** buffer, uint8_t factor)
+static float readUint32(uint8_t const** buffer, uint8_t factor)
 {
-    uint8_t* p = *buffer;
+    uint8_t const* p = *buffer;
     uint32_t value = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
     *buffer += 4;
     return static_cast<float>(value) / factor;
@@ -98,49 +103,53 @@ static float readUint32(uint8_t** buffer, uint8_t factor)
 void Provider::parseModbusResponse()
 {
     int packetSize = VictronUdp.parsePacket();
-    if (!packetSize) { return; }
+    if (0 == packetSize) { return; }
 
-    uint8_t buffer[256];
-    VictronUdp.read(buffer, sizeof(buffer));
+    std::vector<uint8_t> buffer(packetSize);
+    VictronUdp.read(buffer.data(), packetSize);
 
-    uint8_t* p = buffer;
+    uint8_t const* p = buffer.data();
 
-    if (_verboseLogging) {
-        MessageOutput.printf("[PowerMeters::Udp::Victron] received %d bytes:", packetSize);
+    DTU_LOGD("received %d bytes", packetSize);
+    LogHelper::dumpBytes(TAG, SUBTAG, buffer.data(), packetSize);
 
-        for (int i = 0; i < packetSize; i++) {
-            if (i % 16 == 0) {
-                MessageOutput.print("\r\n");
-            }
-            MessageOutput.printf("%02X ", buffer[i]);
+    uint16_t length = 0;
+    uint16_t protocolId = 0;
+
+    auto dataRemains = [&buffer, &p](size_t amount) -> bool {
+        return p - buffer.data() <= buffer.size() - amount;
+    };
+
+    // even if length is 0, we expect at least 6 bytes (the header)
+    while (dataRemains(6)) {
+        uint16_t currentTransactionId = (p[0] << 8) | p[1];
+        p += 2;
+
+        protocolId = (p[0] << 8) | p[1];
+        p += 2;
+
+        length = (p[0] << 8) | p[1];
+        p += 2;
+
+        if (!dataRemains(length)) {
+            DTU_LOGE("unexpected end of packet");
+            return;
         }
 
-        MessageOutput.print("\r\n");
+        if (currentTransactionId == sTransactionId) { break; }
+
+        DTU_LOGI("skipping message with unexpected transaction ID: %04X", currentTransactionId);
+        p += length;
     }
-
-    uint16_t transactionId = (p[0] << 8) | p[1];
-    p += 2;
-
-    if (transactionId != sTransactionId) {
-        MessageOutput.printf("[PowerMeters::Udp::Victron] invalid transaction ID: %04X\r\n", transactionId);
-        return;
-    }
-
-    uint16_t protocolId = (p[0] << 8) | p[1];
-    p += 2;
 
     if (protocolId != 0x0000) {
-        MessageOutput.printf("[PowerMeters::Udp::Victron] invalid protocol ID: %04X\r\n", protocolId);
+        DTU_LOGE("invalid protocol ID: %04X", protocolId);
         return;
     }
-
-    uint16_t length = (p[0] << 8) | p[1];
-    p += 2;
 
     uint16_t expectedLength = (sRegisterCount * 2) + 3;
     if (length != expectedLength) {
-        MessageOutput.printf("[PowerMeters::Udp::Victron] unexpected length: %04X, "
-            "expected %04X\r\n", length, expectedLength);
+        DTU_LOGE("unexpected length: %04X, expected %04X", length, expectedLength);
         return;
     }
 
@@ -148,8 +157,7 @@ void Provider::parseModbusResponse()
     p += 1;
 
     if (unitId != sUnitId) {
-        MessageOutput.printf("[PowerMeters::Udp::Victron] unexpected unit ID: %02X, "
-            "expected %02X\r\n", unitId, sUnitId);
+        DTU_LOGE("unexpected unit ID: %02X, expected %02X", unitId, sUnitId);
         return;
     }
 
@@ -157,8 +165,7 @@ void Provider::parseModbusResponse()
     p += 1;
 
     if (functionCode != sFunctionCode) {
-        MessageOutput.printf("[PowerMeters::Udp::Victron] unexpected function code: %02X, "
-            "expected %02X\r\n", functionCode, sFunctionCode);
+        DTU_LOGE("unexpected function code: %02X, expected %02X", functionCode, sFunctionCode);
         return;
     }
 
@@ -167,8 +174,7 @@ void Provider::parseModbusResponse()
 
     uint8_t expectedByteCount = sRegisterCount * 2;
     if (byteCount != expectedByteCount) {
-        MessageOutput.printf("[PowerMeters::Udp::Victron] unexpected byte count: %02X, "
-            "expected %02X\r\n", byteCount, expectedByteCount);
+        DTU_LOGE("unexpected byte count: %02X, expected %02X", byteCount, expectedByteCount);
         return;
     }
 

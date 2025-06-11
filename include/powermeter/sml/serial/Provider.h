@@ -9,7 +9,7 @@ namespace PowerMeters::Sml::Serial {
 class Provider : public ::PowerMeters::Sml::Provider {
 public:
     Provider()
-        : ::PowerMeters::Sml::Provider("PowerMeterSerialSml") { }
+        : ::PowerMeters::Sml::Provider("Serial") { }
 
     ~Provider();
 

@@ -73,12 +73,21 @@ class DataPointContainer {
             return std::unique_lock<std::mutex>(_mutex);
         }
 
+        // add a data point to the container. if the data point already exists,
+        // its value will be replaced. if ignoreAge is true, the timestamp will not
+        // be set, which means that this data point is "timeless" and hence is
+        // ignored in the getLastUpdate() method.
         template<Label L>
-        void add(typename Traits<L>::type val) {
+        void add(typename Traits<L>::type val, bool ignoreAge = false) {
             // no locking here! iff thread safety is required, use the lock()
-            // method in a scoped block in which this method is called.
+            // method in a scoped block in which this method is called, as we
+            // expect that usually multiple data points are added at a time.
 
             _dataPoints.erase(L);
+
+            uint32_t timestamp = ignoreAge ? 0 : millis();
+            if (!ignoreAge && timestamp == 0) { timestamp = 1; }
+
             _dataPoints.emplace(
                     L,
                     DataPoint(
@@ -86,7 +95,7 @@ class DataPointContainer {
                         dataPointValueToStr(val),
                         Traits<L>::unit,
                         typename DataPoint::tValue(std::move(val)),
-                        millis()
+                        timestamp
                     )
             );
         }
@@ -145,6 +154,7 @@ class DataPointContainer {
             uint32_t now = millis();
             uint32_t diff = std::numeric_limits<uint32_t>::max()/2;
             for (auto iter = _dataPoints.cbegin(); iter != _dataPoints.cend(); ++iter) {
+                if (iter->second.getTimestamp() == 0) { continue; } // "timeless" data points are ignored
                 diff = std::min(diff, now - iter->second.getTimestamp());
             }
             return now - diff;

@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022-2024 Thomas Basler and others
+ * Copyright (C) 2022-2025 Thomas Basler and others
  */
 #include "WebApi.h"
 #include "Configuration.h"
-#include "MessageOutput.h"
 #include "defaults.h"
 #include <AsyncJson.h>
+
+#undef TAG
+static const char* TAG = "webapi";
 
 WebApiClass::WebApiClass()
     : _server(HTTP_PORT)
@@ -25,6 +27,7 @@ void WebApiClass::init(Scheduler& scheduler)
     _webApiI18n.init(_server, scheduler);
     _webApiInverter.init(_server, scheduler);
     _webApiLimit.init(_server, scheduler);
+    _webApiLogging.init(_server, scheduler);
     _webApiMaintenance.init(_server, scheduler);
     _webApiMqtt.init(_server, scheduler);
     _webApiNetwork.init(_server, scheduler);
@@ -41,8 +44,8 @@ void WebApiClass::init(Scheduler& scheduler)
     _webApiPowerLimiter.init(_server, scheduler);
     _webApiWsSolarChargerLive.init(_server, scheduler);
     _webApiSolarCharger.init(_server, scheduler);
-    _webApiWsHuaweiLive.init(_server, scheduler);
-    _webApiHuaweiClass.init(_server, scheduler);
+    _webApiWsGridChargerLive.init(_server, scheduler);
+    _webApiGridCharger.init(_server, scheduler);
     _webApiWsBatteryLive.init(_server, scheduler);
 
     _server.begin();
@@ -54,7 +57,7 @@ void WebApiClass::reload()
     _webApiWsLive.reload();
     _webApiWsBatteryLive.reload();
     _webApiWsSolarChargerLive.reload();
-    _webApiWsHuaweiLive.reload();
+    _webApiWsGridChargerLive.reload();
 }
 
 bool WebApiClass::checkCredentials(AsyncWebServerRequest* request)
@@ -149,7 +152,7 @@ bool WebApiClass::sendJsonResponse(AsyncWebServerRequest* request, AsyncJsonResp
         root["code"] = WebApiError::GenericInternalServerError;
         root["type"] = "danger";
         response->setCode(500);
-        MessageOutput.printf("WebResponse failed: %s, %" PRIu16 "\r\n", function, line);
+        ESP_LOGE(TAG, "WebResponse failed: %s, %" PRIu16 "", function, line);
         ret_val = false;
     }
 

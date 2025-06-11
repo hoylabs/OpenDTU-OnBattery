@@ -1,6 +1,11 @@
 <template>
     <BasePage :title="$t('powerlimiteradmin.PowerLimiterSettings')" :isLoading="dataLoading">
-        <BootstrapAlert v-model="showAlert" dismissible :variant="alertType">
+        <BootstrapAlert
+            v-model="showAlert"
+            dismissible
+            :variant="alertType"
+            :auto-dismiss="alertType != 'success' ? 0 : 5000"
+        >
             {{ alertMessage }}
         </BootstrapAlert>
 
@@ -54,13 +59,6 @@
                 </template>
 
                 <template v-if="isEnabled">
-                    <InputElement
-                        :label="$t('powerlimiteradmin.VerboseLogging')"
-                        v-model="powerLimiterConfigList.verbose_logging"
-                        type="checkbox"
-                        wide
-                    />
-
                     <InputElement
                         v-if="hasPowerMeter"
                         :label="$t('powerlimiteradmin.TargetPowerConsumption')"

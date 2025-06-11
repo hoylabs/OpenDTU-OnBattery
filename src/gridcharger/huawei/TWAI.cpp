@@ -3,12 +3,14 @@
  * Copyright (C) 2023 Malte Schmidt and others
  */
 #include <gridcharger/huawei/TWAI.h>
-#include "MessageOutput.h"
 #include "PinMapping.h"
-#include "Configuration.h"
 #include <driver/twai.h>
+#include <LogHelper.h>
 
-namespace GridCharger::Huawei {
+static const char* TAG = "gridCharger";
+static const char* SUBTAG = "TWAI";
+
+namespace GridChargers::Huawei {
 
 TWAI::~TWAI()
 {
@@ -24,26 +26,25 @@ TWAI::~TWAI()
     stopLoop();
 
     if (twai_stop() != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] failed to stop driver\r\n");
+        DTU_LOGW("failed to stop driver");
         return;
     }
 
     if (twai_driver_uninstall() != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] failed to uninstall driver\r\n");
+        DTU_LOGW("failed to uninstall driver");
     }
 
-    MessageOutput.print("[Huawei::TWAI] driver stopped and uninstalled\r\n");
+    DTU_LOGI("driver stopped and uninstalled");
 }
 
 bool TWAI::init()
 {
     const PinMapping_t& pin = PinMapping.get();
 
-    MessageOutput.printf("[Huawei::TWAI] rx = %d, tx = %d\r\n",
-            pin.huawei_rx, pin.huawei_tx);
+    DTU_LOGI("rx = %d, tx = %d", pin.huawei_rx, pin.huawei_tx);
 
     if (pin.huawei_rx <= GPIO_NUM_NC || pin.huawei_tx <= GPIO_NUM_NC) {
-        MessageOutput.print("[Huawei::TWAI] invalid pin config\r\n");
+        DTU_LOGE("invalid pin config");
         return false;
     }
 
@@ -62,32 +63,36 @@ bool TWAI::init()
     twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
     if (twai_driver_install(&g_config, &t_config, &f_config) != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] Failed to install driver\r\n");
+        DTU_LOGE("Failed to install driver");
         return false;
     }
 
     if (twai_start() != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] Failed to start driver\r\n");
+        DTU_LOGE("Failed to start driver");
         return false;
     }
 
     if (!startLoop()) {
-        MessageOutput.printf("[Huawei::TWAI] failed to start loop task\r\n");
+        DTU_LOGE("failed to start loop task");
         return false;
     }
 
     // enable alert on message received
     uint32_t alertsToEnable = TWAI_ALERT_RX_DATA;
     if (twai_reconfigure_alerts(alertsToEnable, NULL) != ESP_OK) {
-        MessageOutput.print("[Huawei::TWAI] Failed to configure alerts\r\n");
+        DTU_LOGE("Failed to configure alerts");
         return false;
     }
 
-    uint32_t constexpr stackSize = 1536;
-    return pdPASS == xTaskCreate(TWAI::pollAlerts,
-            "HuaweiTwai", stackSize, this, 20/*prio*/, &_pollingTaskHandle);
+    uint32_t constexpr stackSize = 2048;
+    if (pdPASS != xTaskCreate(TWAI::pollAlerts,
+            "HuaweiTwai", stackSize, this, 20/*prio*/, &_pollingTaskHandle)) {
+        DTU_LOGE("failed to create polling task");
+        stopLoop();
+        return false;
+    }
 
-    MessageOutput.print("[Huawei::TWAI] driver ready\r\n");
+    DTU_LOGI("driver ready");
 
     return true;
 }
@@ -98,41 +103,32 @@ void TWAI::pollAlerts(void* context)
     uint32_t alerts;
 
     while (!instance._stopPolling) {
+        // blocks until an alert was received or the timeout expired.
         if (twai_read_alerts(&alerts, pdMS_TO_TICKS(500)) != ESP_OK) { continue; }
 
-        if (alerts & TWAI_ALERT_RX_DATA) {
-            // wake up hardware interface task to actually receive the message
-            xTaskNotifyGive(instance.getTaskHandle());
+        if ((alerts & TWAI_ALERT_RX_DATA) == 0) { continue; }
+
+        while (true) {
+            twai_message_t rxMessage;
+
+            if (twai_receive(&rxMessage, pdMS_TO_TICKS(1)) != ESP_OK) { break; }
+
+            if (rxMessage.extd != 1) { continue; } // we only process extended format messages
+
+            if (rxMessage.data_length_code != 8) { continue; }
+
+            HardwareInterface::can_message_t msg;
+            msg.canId = rxMessage.identifier;
+            msg.valueId = rxMessage.data[0] << 24 | rxMessage.data[1] << 16 | rxMessage.data[2] << 8 | rxMessage.data[3];
+            msg.value = rxMessage.data[4] << 24 | rxMessage.data[5] << 16 | rxMessage.data[6] << 8 | rxMessage.data[7];
+
+            instance.enqueueReceivedMessage(msg);
         }
     }
 
     instance._pollingTaskDone = true;
 
     vTaskDelete(nullptr);
-}
-
-bool TWAI::getMessage(HardwareInterface::can_message_t& msg)
-{
-    while (true) {
-        twai_message_t rxMessage;
-
-        // it's okay if we cannot receive a message now, as the hardware
-        // interface task wakes up for reasons other than a message being
-        // received, but always checks if a message is available.
-        if (twai_receive(&rxMessage, pdMS_TO_TICKS(1)) != ESP_OK) { return false; }
-
-        if (rxMessage.extd != 1) { continue; } // we only process extended format messages
-
-        if (rxMessage.data_length_code != 8) { continue; }
-
-        msg.canId = rxMessage.identifier;
-        msg.valueId = rxMessage.data[0] << 24 | rxMessage.data[1] << 16 | rxMessage.data[2] << 8 | rxMessage.data[3];
-        msg.value = rxMessage.data[4] << 24 | rxMessage.data[5] << 16 | rxMessage.data[6] << 8 | rxMessage.data[7];
-
-        return true;
-    }
-
-    return false;
 }
 
 bool TWAI::sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data)
@@ -147,4 +143,4 @@ bool TWAI::sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data)
     return twai_transmit(&txMsg, pdMS_TO_TICKS(1000)) == ESP_OK;
 }
 
-} // namespace GridCharger::Huawei
+} // namespace GridChargers::Huawei

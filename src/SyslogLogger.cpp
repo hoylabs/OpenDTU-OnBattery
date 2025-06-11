@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022-2024 Thomas Basler and others
+ * Copyright (C) 2022-2025 Thomas Basler and others
  */
-#include <HardwareSerial.h>
-#include <ESPmDNS.h>
-#include "defaults.h"
 #include "SyslogLogger.h"
 #include "Configuration.h"
-#include "MessageOutput.h"
 #include "NetworkSettings.h"
+#include "defaults.h"
+#include <ESPmDNS.h>
+#include <HardwareSerial.h>
+
+#undef TAG
+static const char* TAG = "syslog";
 
 SyslogLogger::SyslogLogger()
     : _loopTask(TASK_IMMEDIATE, TASK_FOREVER, std::bind(&SyslogLogger::loop, this))
@@ -32,20 +34,20 @@ void SyslogLogger::updateSettings(const String&& hostname)
     disable();
 
     if (!config.Enabled) {
-        MessageOutput.println("[SyslogLogger] Syslog not enabled");
+        ESP_LOGI(TAG, "Syslog not enabled");
         return;
     }
 
     _port = config.Port;
     _syslog_hostname = config.Hostname;
     if (_syslog_hostname.isEmpty()) {
-        MessageOutput.println("[SyslogLogger] Hostname not configured");
+        ESP_LOGW(TAG, "Hostname not configured");
         return;
     }
 
-    MessageOutput.printf("[SyslogLogger] Logging to %s!\r\n", _syslog_hostname.c_str());
+    ESP_LOGI(TAG, "Logging to %s!", _syslog_hostname.c_str());
 
-    _header = "<14>1 - ";  // RFC5424: Facility USER, severity INFO, version 1, NIL timestamp.
+    _header = ">1 - "; // RFC5424: Facility USER, severity INFO, version 1, NIL timestamp.
     _header += hostname;
     _header += " OpenDTU ";
     _header += _proc_id;
@@ -56,30 +58,33 @@ void SyslogLogger::updateSettings(const String&& hostname)
     enable();
 }
 
-void SyslogLogger::write(const uint8_t *buffer, size_t size)
+void SyslogLogger::write(const uint8_t* buffer, size_t size)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     if (!_enabled || !isResolved()) {
         return;
     }
+
+    String header = "<";
+    header += String(calculatePrival(1, buffer[0]));
+
+    _udp.beginPacket(_address, _port);
+    _udp.print(header);
+    _udp.print(_header);
+
     for (int i = 0; i < size; i++) {
         uint8_t c = buffer[i];
-        bool overflow = false;
         if (c != '\r' && c != '\n') {
             // Replace control and non-ASCII characters with '?'.
-            overflow = !_udp.write(c >= 0x20 && c < 0x7f ? c : '?');
-        }
-        if (c == '\n' || overflow) {
-            _udp.endPacket();
-            _udp.beginPacket(_address, _port);
-            _udp.print(_header);
+            _udp.write(c >= 0x20 && c < 0x7f ? c : '?');
         }
     }
+    _udp.endPacket();
 }
 
 void SyslogLogger::disable()
 {
-    MessageOutput.println("[SyslogLogger] Disable");
+    ESP_LOGI(TAG, "Disable");
     std::lock_guard<std::mutex> lock(_mutex);
     if (_enabled) {
         _enabled = false;
@@ -92,7 +97,7 @@ void SyslogLogger::enable()
 {
     // Bind random source port.
     if (!_udp.begin(0)) {
-        MessageOutput.println("[SyslogLogger] No sockets available");
+        ESP_LOGE(TAG, "No sockets available");
         return;
     }
 
@@ -113,15 +118,26 @@ bool SyslogLogger::resolveAndStart()
         if (!_udp.beginPacket(_syslog_hostname.c_str(), _port)) {
             return false;
         }
-        _address = _udp.remoteIP();  // Store resolved address.
+        _address = _udp.remoteIP(); // Store resolved address.
     }
-    _udp.print(_header);
-    _udp.print("[SyslogLogger] Logging to ");
-    _udp.print(_syslog_hostname);
-    _udp.endPacket();
-    _udp.beginPacket(_address, _port);
-    _udp.print(_header);
     return true;
+}
+
+uint8_t SyslogLogger::calculatePrival(uint8_t facility, char errorCode)
+{
+    // ESP LOG ID's are two ahead of syslog ID's
+    // e.g. ESP_LOG_ERROR (1) = Syslog ERROR 3
+    if (errorCode == 'E') {
+        return facility * 8 + ESP_LOG_ERROR + 2;
+    } else if (errorCode == 'W') {
+        return facility * 8 + ESP_LOG_WARN + 2;
+    } else if (errorCode == 'D') {
+        return facility * 8 + ESP_LOG_DEBUG + 2;
+    } else if (errorCode == 'V') {
+        return facility * 8 + ESP_LOG_VERBOSE + 2;
+    }
+
+    return facility * 8 + ESP_LOG_INFO + 2;
 }
 
 void SyslogLogger::loop()

@@ -1,8 +1,22 @@
-#include "MessageOutput.h"
 #include "PowerLimiterSolarInverter.h"
 
-PowerLimiterSolarInverter::PowerLimiterSolarInverter(bool verboseLogging, PowerLimiterInverterConfig const& config)
-    : PowerLimiterOverscalingInverter(verboseLogging, config) { }
+PowerLimiterSolarInverter::PowerLimiterSolarInverter(PowerLimiterInverterConfig const& config)
+    : PowerLimiterOverscalingInverter(config) { }
+
+uint16_t PowerLimiterSolarInverter::getExpectedOutputAcWatts() const
+{
+    // We only return the expected output if the inverter is producing.
+    // This is to avoid that solar-powered inverters are counted in with
+    // higher power than they are actually able to produce during a increase,
+    // which can cause the DPL to request less power from the smart-buffer or
+    // battery-powered inverters or even switch them off. This is especially
+    // critical during sunset and sunrise, when solar-powered inverters
+    // become reachable/unreachable a couple of times but can actually not
+    // produce any power at all.
+    if (!isProducing()) { return 0; }
+
+    return PowerLimiterInverter::getExpectedOutputAcWatts();
+}
 
 uint16_t PowerLimiterSolarInverter::getMaxReductionWatts(bool) const
 {

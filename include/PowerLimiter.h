@@ -39,9 +39,9 @@ public:
     void init(Scheduler& scheduler);
     void triggerReloadingConfig() { _reloadConfigFlag = true; }
     uint8_t getInverterUpdateTimeouts() const;
-    uint8_t getPowerLimiterState();
-    int32_t getInverterOutput() { return _lastExpectedInverterOutput; }
-    bool getFullSolarPassThroughEnabled() const { return _fullSolarPassThroughEnabled; }
+    uint8_t getPowerLimiterState() const;
+    int32_t getInverterOutput() const { return _lastExpectedInverterOutput; }
+    bool isFullSolarPassthroughActive() const { return _fullSolarPassThroughActive; }
 
     enum class Mode : unsigned {
         Normal = 0,
@@ -51,11 +51,11 @@ public:
 
     void setMode(Mode m) { _mode = m; _reloadConfigFlag = true; }
     Mode getMode() const { return _mode; }
-    bool usesBatteryPoweredInverter();
-    bool usesSmartBufferPoweredInverter();
+    bool usesBatteryPoweredInverter() const;
+    bool usesSmartBufferPoweredInverter() const;
 
     // used to interlock Huawei R48xx grid charger against battery-powered inverters
-    bool isGovernedBatteryPoweredInverterProducing();
+    bool isGovernedBatteryPoweredInverterProducing() const;
 
 private:
     void loop();
@@ -76,36 +76,32 @@ private:
     bool _batteryDischargeEnabled = false;
     bool _nighttimeDischarging = false;
     std::pair<bool, uint32_t> _nextInverterRestart = { false, 0 };
-    bool _fullSolarPassThroughEnabled = false;
-    bool _verboseLogging = true;
+    bool _fullSolarPassThroughActive = false;
+    float _loadCorrectedVoltage = 0.0f;
 
-    frozen::string const& getStatusText(Status status);
+    frozen::string const& getStatusText(Status status) const;
     void announceStatus(Status status);
     void reloadConfig();
-    std::pair<float, char const*> getInverterDcVoltage();
-    float getBatteryVoltage(bool log = false);
-    uint16_t dcPowerBusToInverterAc(uint16_t dcPower);
+    std::pair<float, char const*> getInverterDcVoltage() const;
+    float getBatteryVoltage(bool log = false) const;
+    uint16_t dcPowerBusToInverterAc(uint16_t dcPower) const;
     void unconditionalFullSolarPassthrough();
-    uint16_t calcTargetOutput();
+    uint16_t calcTargetOutput() const;
     using inverter_filter_t = std::function<bool(PowerLimiterInverter const&)>;
     uint16_t updateInverterLimits(uint16_t powerRequested, inverter_filter_t filter, std::string const& filterExpression);
-    uint16_t calcPowerBusUsage(uint16_t powerRequested);
+    uint16_t calcPowerBusUsage(uint16_t powerRequested) const;
     bool updateInverters();
-    uint16_t getSolarPassthroughPower();
-    std::optional<uint16_t> getBatteryDischargeLimit();
-    float getBatteryInvertersOutputAcWatts();
-
-    std::optional<float> _oLoadCorrectedVoltage = std::nullopt;
-    float getLoadCorrectedVoltage();
+    uint16_t getSolarPassthroughPower() const;
+    std::optional<uint16_t> getBatteryDischargeLimit() const;
+    float getBatteryInvertersOutputAcWatts() const;
 
     bool testThreshold(float socThreshold, float voltThreshold,
-            std::function<bool(float, float)> compare);
-    bool isStartThresholdReached();
-    bool isStopThresholdReached();
-    bool isBelowStopThreshold();
+            std::function<bool(float, float)> compare) const;
+    bool isStartThresholdReached() const;
+    bool isStopThresholdReached() const;
+    bool isBelowStopThreshold() const;
     void calcNextInverterRestart();
-    bool isSolarPassThroughEnabled();
-    bool isFullSolarPassthroughActive();
+    bool isSolarPassThroughEnabled() const;
 };
 
 extern PowerLimiterClass PowerLimiter;

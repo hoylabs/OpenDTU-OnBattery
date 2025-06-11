@@ -16,7 +16,7 @@ class Provider : public ::Batteries::Provider {
 public:
     Provider();
 
-    bool init(bool verboseLogging) final;
+    bool init() final;
     void deinit() final;
     void loop() final;
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
@@ -74,7 +74,6 @@ private:
         _readState = state;
     }
 
-    bool _verboseLogging = true;
     gpio_num_t _rxEnablePin = GPIO_NUM_NC;
     gpio_num_t _txEnablePin = GPIO_NUM_NC;
     Status _lastStatus = Status::Initializing;

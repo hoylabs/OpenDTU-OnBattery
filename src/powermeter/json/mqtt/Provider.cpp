@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <powermeter/json/mqtt/Provider.h>
 #include <MqttSettings.h>
-#include <MessageOutput.h>
 #include <ArduinoJson.h>
 #include <Utils.h>
+#include <LogHelper.h>
+
+static const char* TAG = "powerMeter";
+static const char* SUBTAG = "MQTT";
 
 namespace PowerMeters::Json::Mqtt {
 
@@ -80,10 +83,8 @@ void Provider::onMessage(Provider::MsgProperties const& properties,
         }
     }
 
-    if (_verboseLogging) {
-        MessageOutput.printf("[PowerMeters::Json::Mqtt] Topic '%s': new value: %5.2f, "
-                "total: %5.2f\r\n", topic, newValue, getPowerTotal());
-    }
+    DTU_LOGD("Topic '%s': new value: %5.2f, total: %5.2f",
+            topic, newValue, getPowerTotal());
 }
 
 } // namespace PowerMeters::Json::Mqtt

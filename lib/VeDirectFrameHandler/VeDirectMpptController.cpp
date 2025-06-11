@@ -9,14 +9,16 @@
 
 #include <Arduino.h>
 #include "VeDirectMpptController.h"
+#include <LogHelper.h>
 
 //#define PROCESS_NETWORK_STATE
 
-void VeDirectMpptController::init(gpio_num_t rx, gpio_num_t tx, Print* msgOut,
-		bool verboseLogging, uint8_t hwSerialPort)
+static const char* TAG = "veDirect";
+#define SUBTAG _logId
+
+void VeDirectMpptController::init(gpio_num_t rx, gpio_num_t tx, uint8_t hwSerialPort)
 {
-	VeDirectFrameHandler::init("MPPT", rx, tx, msgOut,
-			verboseLogging, hwSerialPort);
+	VeDirectFrameHandler::init("MPPT", rx, tx, hwSerialPort);
 }
 
 bool VeDirectMpptController::processTextDataDerived(std::string const& name, std::string const& value)
@@ -174,39 +176,31 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			_tmpFrame.MpptTemperatureMilliCelsius =
 				{ millis(), static_cast<int32_t>(data.value) * 10 };
 
-			if (_verboseLogging) {
-				_msgOut->printf("%s Hex Data: MPPT Temperature (0x%04X): %.2f°C\r\n",
-						_logId, regLog,
-						_tmpFrame.MpptTemperatureMilliCelsius.second / 1000.0);
-			}
+			ESP_LOGD(TAG, "%s Hex Data: MPPT Temperature (0x%04X): %.2f°C",
+					_logId, regLog,
+					_tmpFrame.MpptTemperatureMilliCelsius.second / 1000.0);
 			return true;
 			break;
 
 		case VeDirectHexRegister::SmartBatterySenseTemperature:
 			if (data.value == 0xFFFF) {
-				if (_verboseLogging) {
-					_msgOut->printf("%s Hex Data: Smart Battery Sense Temperature is not available\r\n", _logId);
-				}
+				ESP_LOGD(TAG, "%s Hex Data: Smart Battery Sense Temperature is not available", _logId);
 				return true; // we know what to do with it, and we decided to ignore the value
 			}
 
 			_tmpFrame.SmartBatterySenseTemperatureMilliCelsius =
 				{ millis(), static_cast<int32_t>(data.value) * 10 - 273150 };
 
-			if (_verboseLogging) {
-				_msgOut->printf("%s Hex Data: Smart Battery Sense Temperature (0x%04X): %.2f°C\r\n",
-						_logId, regLog,
-						_tmpFrame.SmartBatterySenseTemperatureMilliCelsius.second / 1000.0);
-			}
+			ESP_LOGD(TAG, "%s Hex Data: Smart Battery Sense Temperature (0x%04X): %.2f°C",
+					_logId, regLog,
+					_tmpFrame.SmartBatterySenseTemperatureMilliCelsius.second / 1000.0);
 			return true;
 			break;
 
 		case VeDirectHexRegister::NetworkTotalDcInputPower:
 			if (data.value == 0xFFFFFFFF) {
-				if (_verboseLogging) {
-					_msgOut->printf("%s Hex Data: Network total DC power value "
-							"indicates non-networked controller\r\n", _logId);
-				}
+				ESP_LOGD(TAG, "%s Hex Data: Network total DC power value "
+						"indicates non-networked controller", _logId);
 				_tmpFrame.NetworkTotalDcInputPowerMilliWatts = { 0, 0 };
 				return true; // we know what to do with it, and we decided to ignore the value
 			}
@@ -214,22 +208,18 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			_tmpFrame.NetworkTotalDcInputPowerMilliWatts =
 				{ millis(), data.value * 10 };
 
-			if (_verboseLogging) {
-				_msgOut->printf("%s Hex Data: Network Total DC Power (0x%04X): %.2fW\r\n",
-						_logId, regLog,
-						_tmpFrame.NetworkTotalDcInputPowerMilliWatts.second / 1000.0);
-			}
+			ESP_LOGD(TAG, "%s Hex Data: Network Total DC Power (0x%04X): %.2fW",
+					_logId, regLog,
+					_tmpFrame.NetworkTotalDcInputPowerMilliWatts.second / 1000.0);
 			return true;
 			break;
 
 		case VeDirectHexRegister::BatteryAbsorptionVoltage:
 			_tmpFrame.BatteryAbsorptionMilliVolt =
 				{ millis(), static_cast<uint32_t>(data.value) * 10 };
-			if (_verboseLogging) {
-				_msgOut->printf("%s Hex Data: MPPT Absorption Voltage (0x%04X): %.2fV\r\n",
-						_logId, regLog,
-						_tmpFrame.BatteryAbsorptionMilliVolt.second / 1000.0);
-			}
+			ESP_LOGD(TAG, "%s Hex Data: MPPT Absorption Voltage (0x%04X): %.2fV",
+					_logId, regLog,
+					_tmpFrame.BatteryAbsorptionMilliVolt.second / 1000.0);
 			return true;
 			break;
 
@@ -237,11 +227,9 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			_tmpFrame.BatteryFloatMilliVolt =
 				{ millis(), static_cast<uint32_t>(data.value) * 10 };
 
-			if (_verboseLogging) {
-				_msgOut->printf("%s Hex Data: MPPT Float Voltage (0x%04X): %.2fV\r\n",
-						_logId, regLog,
-						_tmpFrame.BatteryFloatMilliVolt.second / 1000.0);
-			}
+			ESP_LOGD(TAG, "%s Hex Data: MPPT Float Voltage (0x%04X): %.2fV",
+					_logId, regLog,
+					_tmpFrame.BatteryFloatMilliVolt.second / 1000.0);
 			return true;
 			break;
 
@@ -250,10 +238,8 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			_tmpFrame.NetworkInfo =
 				{ millis(), static_cast<uint8_t>(data.value) };
 
-			if (_verboseLogging) {
-				_msgOut->printf("%s Hex Data: Network Info (0x%04X): 0x%X\r\n",
-						_logId, regLog, data.value);
-			}
+			ESP_LOGD(TAG, "%s Hex Data: Network Info (0x%04X): 0x%X",
+					_logId, regLog, data.value);
 			return true;
 			break;
 
@@ -261,10 +247,8 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			_tmpFrame.NetworkMode =
 				{ millis(), static_cast<uint8_t>(data.value) };
 
-			if (_verboseLogging) {
-				_msgOut->printf("%s Hex Data: Network Mode (0x%04X): 0x%X\r\n",
-						_logId, regLog, data.value);
-			}
+			ESP_LOGD(TAG, "%s Hex Data: Network Mode (0x%04X): 0x%X",
+					_logId, regLog, data.value);
 			return true;
 			break;
 
@@ -272,10 +256,8 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			_tmpFrame.NetworkStatus =
 				{ millis(), static_cast<uint8_t>(data.value) };
 
-			if (_verboseLogging) {
-				_msgOut->printf("%s Hex Data: Network Status (0x%04X): 0x%X\r\n",
-						_logId, regLog, data.value);
-			}
+			ESP_LOGD(TAG, "%s Hex Data: Network Status (0x%04X): 0x%X",
+					_logId, regLog, data.value);
 			return true;
 			break;
 #endif // PROCESS_NETWORK_STATE

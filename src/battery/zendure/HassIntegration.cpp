@@ -30,6 +30,7 @@ void HassIntegration::publishSensors() const
     publishSensor("Total Input Power", NULL, "inputPower", "power", "measurement", "W");
     publishBinarySensor("Bypass State", NULL, "bypass", "1", "0");
 
+    publishSensor("Control Mode", NULL, "controlMode", "settings");
     publishSensor("Output Power Limit", NULL, "settings/outputLimitPower", "power", "settings", "W");
     publishSensor("Input Power Limit", NULL, "settings/inputLimitPower", "power", "settings", "W");
     publishSensor("Minimum State of Charge", NULL, "settings/stateOfChargeMin", NULL, "settings", "%");

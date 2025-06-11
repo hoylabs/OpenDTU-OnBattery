@@ -3,12 +3,15 @@
  * Copyright (C) 2022-2025 Thomas Basler and others
  */
 #include "Configuration.h"
-#include "MessageOutput.h"
 #include "NetworkSettings.h"
 #include "Utils.h"
 #include "defaults.h"
 #include <LittleFS.h>
+#include <esp_log.h>
 #include <nvs_flash.h>
+
+#undef TAG
+static const char* TAG = "configuration";
 
 CONFIG_T config;
 
@@ -54,7 +57,6 @@ void ConfigurationClass::serializeHttpRequestConfig(HttpRequestConfig const& sou
 void ConfigurationClass::serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target)
 {
     target["enabled"] = source.Enabled;
-    target["verbose_logging"] = source.VerboseLogging;
     target["provider"] = source.Provider;
     target["publish_updates_only"] = source.PublishUpdatesOnly;
 }
@@ -127,7 +129,6 @@ void ConfigurationClass::serializePowerMeterUdpVictronConfig(PowerMeterUdpVictro
 void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, JsonObject& target)
 {
     target["enabled"] = config.Battery.Enabled;
-    target["verbose_logging"] = config.Battery.VerboseLogging;
     target["provider"] = config.Battery.Provider;
     target["enable_discharge_current_limit"] = config.Battery.EnableDischargeCurrentLimit;
     target["discharge_current_limit"] = config.Battery.DischargeCurrentLimit;
@@ -154,6 +155,8 @@ void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig cons
     target["sunset_offset"] = source.SunsetOffset;
     target["charge_through_enable"] = source.ChargeThroughEnable;
     target["charge_through_interval"] = source.ChargeThroughInterval;
+    target["buzzer_enable"] = source.BuzzerEnable;
+    target["control_mode"] = source.ControlMode;
 }
 
 void ConfigurationClass::serializeBatteryMqttConfig(BatteryMqttConfig const& source, JsonObject& target)
@@ -188,7 +191,6 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
     };
 
     target["enabled"] = source.Enabled;
-    target["verbose_logging"] = source.VerboseLogging;
     target["solar_passthrough_enabled"] = source.SolarPassThroughEnabled;
     target["conduction_losses"] = source.ConductionLosses;
     target["battery_always_use_at_night"] = source.BatteryAlwaysUseAtNight;
@@ -228,18 +230,31 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
 void ConfigurationClass::serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target)
 {
     target["enabled"] = source.Enabled;
-    target["verbose_logging"] = source.VerboseLogging;
+    target["provider"] = source.Provider;
+    target["auto_power_enabled"] = source.AutoPowerEnabled;
+    target["auto_power_batterysoc_limits_enabled"] = source.AutoPowerBatterySoCLimitsEnabled;
+    target["emergency_charge_enabled"] = source.EmergencyChargeEnabled;
+    target["voltage_limit"] = roundedFloat(source.AutoPowerVoltageLimit);
+    target["enable_voltage_limit"] = roundedFloat(source.AutoPowerEnableVoltageLimit);
+    target["lower_power_limit"] = source.AutoPowerLowerPowerLimit;
+    target["upper_power_limit"] = source.AutoPowerUpperPowerLimit;
+    target["stop_batterysoc_threshold"] = source.AutoPowerStopBatterySoCThreshold;
+    target["target_power_consumption"] = source.AutoPowerTargetPowerConsumption;
+}
+
+void ConfigurationClass::serializeGridChargerCanConfig(GridChargerCanConfig const& source, JsonObject& target)
+{
     target["hardware_interface"] = source.HardwareInterface;
-    target["can_controller_frequency"] = source.CAN_Controller_Frequency;
-    target["auto_power_enabled"] = source.Auto_Power_Enabled;
-    target["auto_power_batterysoc_limits_enabled"] = source.Auto_Power_BatterySoC_Limits_Enabled;
-    target["emergency_charge_enabled"] = source.Emergency_Charge_Enabled;
-    target["voltage_limit"] = roundedFloat(source.Auto_Power_Voltage_Limit);
-    target["enable_voltage_limit"] = roundedFloat(source.Auto_Power_Enable_Voltage_Limit);
-    target["lower_power_limit"] = source.Auto_Power_Lower_Power_Limit;
-    target["upper_power_limit"] = source.Auto_Power_Upper_Power_Limit;
-    target["stop_batterysoc_threshold"] = source.Auto_Power_Stop_BatterySoC_Threshold;
-    target["target_power_consumption"] = source.Auto_Power_Target_Power_Consumption;
+    target["controller_frequency"] = source.Controller_Frequency;
+}
+
+void ConfigurationClass::serializeGridChargerHuaweiConfig(GridChargerHuaweiConfig const& source, JsonObject& target)
+{
+    target["offline_voltage"] = roundedFloat(source.OfflineVoltage);
+    target["offline_current"] = roundedFloat(source.OfflineCurrent);
+    target["input_current_limit"] = roundedFloat(source.InputCurrentLimit);
+    target["fan_online_full_speed"] = source.FanOnlineFullSpeed;
+    target["fan_offline_full_speed"] = source.FanOfflineFullSpeed;
 }
 
 bool ConfigurationClass::write()
@@ -287,7 +302,6 @@ bool ConfigurationClass::write()
 
     JsonObject mqtt = doc["mqtt"].to<JsonObject>();
     mqtt["enabled"] = config.Mqtt.Enabled;
-    mqtt["verbose_logging"] = config.Mqtt.VerboseLogging;
     mqtt["hostname"] = config.Mqtt.Hostname;
     mqtt["port"] = config.Mqtt.Port;
     mqtt["clientid"] = config.Mqtt.ClientId;
@@ -321,7 +335,6 @@ bool ConfigurationClass::write()
     JsonObject dtu = doc["dtu"].to<JsonObject>();
     dtu["serial"] = config.Dtu.Serial;
     dtu["poll_interval"] = config.Dtu.PollInterval;
-    dtu["verbose_logging"] = config.Dtu.VerboseLogging;
     dtu["nrf_pa_level"] = config.Dtu.Nrf.PaLevel;
     dtu["cmt_pa_level"] = config.Dtu.Cmt.PaLevel;
     dtu["cmt_frequency"] = config.Dtu.Cmt.Frequency;
@@ -374,6 +387,15 @@ bool ConfigurationClass::write()
         }
     }
 
+    JsonObject logging = doc["logging"].to<JsonObject>();
+    logging["default"] = config.Logging.Default;
+    JsonArray modules = logging["modules"].to<JsonArray>();
+    for (uint8_t i = 0; i < LOG_MODULE_COUNT; i++) {
+        JsonObject module = modules.add<JsonObject>();
+        module["level"] = config.Logging.Modules[i].Level;
+        module["name"] = config.Logging.Modules[i].Name;
+    }
+
     JsonObject solarcharger = doc["solarcharger"].to<JsonObject>();
     serializeSolarChargerConfig(config.SolarCharger, solarcharger);
 
@@ -382,7 +404,6 @@ bool ConfigurationClass::write()
 
     JsonObject powermeter = doc["powermeter"].to<JsonObject>();
     powermeter["enabled"] = config.PowerMeter.Enabled;
-    powermeter["verbose_logging"] = config.PowerMeter.VerboseLogging;
     powermeter["source"] = config.PowerMeter.Source;
 
     JsonObject powermeter_mqtt = powermeter["mqtt"].to<JsonObject>();
@@ -415,8 +436,14 @@ bool ConfigurationClass::write()
     JsonObject battery_serial = battery["serial"].to<JsonObject>();
     serializeBatterySerialConfig(config.Battery.Serial, battery_serial);
 
-    JsonObject huawei = doc["huawei"].to<JsonObject>();
-    serializeGridChargerConfig(config.Huawei, huawei);
+    JsonObject gridcharger = doc["gridcharger"].to<JsonObject>();
+    serializeGridChargerConfig(config.GridCharger, gridcharger);
+
+    JsonObject gridcharger_can = gridcharger["can"].to<JsonObject>();
+    serializeGridChargerCanConfig(config.GridCharger.Can, gridcharger_can);
+
+    JsonObject gridcharger_huawei = gridcharger["huawei"].to<JsonObject>();
+    serializeGridChargerHuaweiConfig(config.GridCharger.Huawei, gridcharger_huawei);
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
@@ -424,7 +451,7 @@ bool ConfigurationClass::write()
 
     // Serialize JSON to file
     if (serializeJson(doc, f) == 0) {
-        MessageOutput.println("Failed to write file");
+        ESP_LOGE(TAG, "Failed to write file");
         return false;
     }
 
@@ -446,7 +473,6 @@ void ConfigurationClass::deserializeHttpRequestConfig(JsonObject const& source_h
 void ConfigurationClass::deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target)
 {
     target.Enabled = source["enabled"] | SOLAR_CHARGER_ENABLED;
-    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
     target.Provider = source["provider"] | SolarChargerProviderType::VEDIRECT;
     target.PublishUpdatesOnly = source["publish_updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
 }
@@ -525,7 +551,6 @@ void ConfigurationClass::deserializePowerMeterUdpVictronConfig(JsonObject const&
 void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target)
 {
     target.Enabled = source["enabled"] | BATTERY_ENABLED;
-    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
     target.Provider = source["provider"] | BATTERY_PROVIDER;
     target.EnableDischargeCurrentLimit = source["enable_discharge_current_limit"] | BATTERY_ENABLE_DISCHARGE_CURRENT_LIMIT;
     target.DischargeCurrentLimit = source["discharge_current_limit"] | BATTERY_DISCHARGE_CURRENT_LIMIT;
@@ -545,13 +570,15 @@ void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& sourc
     target.MaxOutput = source["max_output"] | BATTERY_ZENDURE_MAX_OUTPUT;
     target.AutoShutdown = source["auto_shutdown"] | BATTERY_ZENDURE_AUTO_SHUTDOWN;
     target.OutputLimit = source["output_limit"] | BATTERY_ZENDURE_OUTPUT_LIMIT;
-    target.OutputControl = source["output_control"] | BatteryZendureConfig::ZendureBatteryOutputControl::ControlNone;
+    target.OutputControl = source["output_control"] | BatteryZendureConfig::ZendureBatteryOutputControl::ControlFixed;
     target.OutputLimitDay = source["output_limit_day"] | BATTERY_ZENDURE_OUTPUT_LIMIT_DAY;
     target.OutputLimitNight = source["output_limit_night"] | BATTERY_ZENDURE_OUTPUT_LIMIT_NIGHT;
     target.SunriseOffset = source["sunrise_offset"] | BATTERY_ZENDURE_SUNRISE_OFFSET;
     target.SunsetOffset = source["sunset_offset"] | BATTERY_ZENDURE_SUNSET_OFFSET;
     target.ChargeThroughEnable = source["charge_through_enable"] | BATTERY_ZENDURE_CHARGE_THROUGH_ENABLE;
     target.ChargeThroughInterval = source["charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
+    target.BuzzerEnable = source["buzzer_enable"] |BATTERY_ZENDURE_BUZZER_ENABLE;
+    target.ControlMode = source["control_mode"] | BatteryZendureConfig::ControlMode::ControlModeFull;
 }
 
 void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, BatteryMqttConfig& target)
@@ -582,7 +609,6 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
     };
 
     target.Enabled = source["enabled"] | POWERLIMITER_ENABLED;
-    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
     target.SolarPassThroughEnabled = source["solar_passthrough_enabled"] | POWERLIMITER_SOLAR_PASSTHROUGH_ENABLED;
     target.ConductionLosses = source["conduction_losses"] | POWERLIMITER_CONDUCTION_LOSSES;
     target.BatteryAlwaysUseAtNight = source["battery_always_use_at_night"] | POWERLIMITER_BATTERY_ALWAYS_USE_AT_NIGHT;
@@ -620,19 +646,32 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
 
 void ConfigurationClass::deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target)
 {
-    target.Enabled = source["enabled"] | HUAWEI_ENABLED;
-    target.VerboseLogging = source["verbose_logging"] | VERBOSE_LOGGING;
+    target.Enabled = source["enabled"] | GRIDCHARGER_ENABLED;
+    target.Provider = source["provider"] | GridChargerProviderType::HUAWEI;
+    target.AutoPowerEnabled = source["auto_power_enabled"] | false;
+    target.AutoPowerBatterySoCLimitsEnabled = source["auto_power_batterysoc_limits_enabled"] | false;
+    target.EmergencyChargeEnabled = source["emergency_charge_enabled"] | false;
+    target.AutoPowerVoltageLimit = source["voltage_limit"] | GRIDCHARGER_AUTO_POWER_VOLTAGE_LIMIT;
+    target.AutoPowerEnableVoltageLimit =  source["enable_voltage_limit"] | GRIDCHARGER_AUTO_POWER_ENABLE_VOLTAGE_LIMIT;
+    target.AutoPowerLowerPowerLimit = source["lower_power_limit"] | GRIDCHARGER_AUTO_POWER_LOWER_POWER_LIMIT;
+    target.AutoPowerUpperPowerLimit = source["upper_power_limit"] | GRIDCHARGER_AUTO_POWER_UPPER_POWER_LIMIT;
+    target.AutoPowerStopBatterySoCThreshold = source["stop_batterysoc_threshold"] | GRIDCHARGER_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
+    target.AutoPowerTargetPowerConsumption = source["target_power_consumption"] | GRIDCHARGER_AUTO_POWER_TARGET_POWER_CONSUMPTION;
+}
+
+void ConfigurationClass::deserializeGridChargerCanConfig(JsonObject const& source, GridChargerCanConfig& target)
+{
     target.HardwareInterface = source["hardware_interface"] | GridChargerHardwareInterface::MCP2515;
-    target.CAN_Controller_Frequency = source["can_controller_frequency"] | HUAWEI_CAN_CONTROLLER_FREQUENCY;
-    target.Auto_Power_Enabled = source["auto_power_enabled"] | false;
-    target.Auto_Power_BatterySoC_Limits_Enabled = source["auto_power_batterysoc_limits_enabled"] | false;
-    target.Emergency_Charge_Enabled = source["emergency_charge_enabled"] | false;
-    target.Auto_Power_Voltage_Limit = source["voltage_limit"] | HUAWEI_AUTO_POWER_VOLTAGE_LIMIT;
-    target.Auto_Power_Enable_Voltage_Limit =  source["enable_voltage_limit"] | HUAWEI_AUTO_POWER_ENABLE_VOLTAGE_LIMIT;
-    target.Auto_Power_Lower_Power_Limit = source["lower_power_limit"] | HUAWEI_AUTO_POWER_LOWER_POWER_LIMIT;
-    target.Auto_Power_Upper_Power_Limit = source["upper_power_limit"] | HUAWEI_AUTO_POWER_UPPER_POWER_LIMIT;
-    target.Auto_Power_Stop_BatterySoC_Threshold = source["stop_batterysoc_threshold"] | HUAWEI_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
-    target.Auto_Power_Target_Power_Consumption = source["target_power_consumption"] | HUAWEI_AUTO_POWER_TARGET_POWER_CONSUMPTION;
+    target.Controller_Frequency = source["controller_frequency"] | GRIDCHARGER_CAN_CONTROLLER_FREQUENCY;
+}
+
+void ConfigurationClass::deserializeGridChargerHuaweiConfig(JsonObject const& source, GridChargerHuaweiConfig& target)
+{
+    target.OfflineVoltage = source["offline_voltage"] | GRIDCHARGER_HUAWEI_OFFLINE_VOLTAGE;
+    target.OfflineCurrent = source["offline_current"] | GRIDCHARGER_HUAWEI_OFFLINE_CURRENT;
+    target.InputCurrentLimit = source["input_current_limit"] | GRIDCHARGER_HUAWEI_INPUT_CURRENT_LIMIT;
+    target.FanOnlineFullSpeed = source["fan_online_full_speed"] | GRIDCHARGER_HUAWEI_FAN_ONLINE_FULL_SPEED;
+    target.FanOfflineFullSpeed = source["fan_offline_full_speed"] | GRIDCHARGER_HUAWEI_FAN_OFFLINE_FULL_SPEED;
 }
 
 bool ConfigurationClass::read()
@@ -654,7 +693,7 @@ bool ConfigurationClass::read()
     const DeserializationError error = deserializeJson(doc, f);
     if (error) {
         version_onbattery = CONFIG_VERSION_ONBATTERY;
-        MessageOutput.println("Failed to read file, using default configuration");
+        ESP_LOGW(TAG, "Failed to read file, using default configuration");
     }
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
@@ -727,7 +766,6 @@ bool ConfigurationClass::read()
 
     JsonObject mqtt = doc["mqtt"];
     config.Mqtt.Enabled = mqtt["enabled"] | MQTT_ENABLED;
-    config.Mqtt.VerboseLogging = mqtt["verbose_logging"] | VERBOSE_LOGGING;
     strlcpy(config.Mqtt.Hostname, mqtt["hostname"] | MQTT_HOST, sizeof(config.Mqtt.Hostname));
     config.Mqtt.Port = mqtt["port"] | MQTT_PORT;
     strlcpy(config.Mqtt.ClientId, mqtt["clientid"] | NetworkSettings.getApName().c_str(), sizeof(config.Mqtt.ClientId));
@@ -761,7 +799,6 @@ bool ConfigurationClass::read()
     JsonObject dtu = doc["dtu"];
     config.Dtu.Serial = dtu["serial"] | DTU_SERIAL;
     config.Dtu.PollInterval = dtu["poll_interval"] | DTU_POLL_INTERVAL;
-    config.Dtu.VerboseLogging = dtu["verbose_logging"] | VERBOSE_LOGGING;
     config.Dtu.Nrf.PaLevel = dtu["nrf_pa_level"] | DTU_NRF_PA_LEVEL;
     config.Dtu.Cmt.PaLevel = dtu["cmt_pa_level"] | DTU_CMT_PA_LEVEL;
     config.Dtu.Cmt.Frequency = dtu["cmt_frequency"] | DTU_CMT_FREQUENCY;
@@ -814,13 +851,21 @@ bool ConfigurationClass::read()
         }
     }
 
+    JsonObject logging = doc["logging"];
+    config.Logging.Default = logging["default"] | ESP_LOG_ERROR;
+    JsonArray modules = logging["modules"];
+    for (uint8_t i = 0; i < LOG_MODULE_COUNT; i++) {
+        JsonObject module = modules[i].as<JsonObject>();
+        strlcpy(config.Logging.Modules[i].Name, module["name"] | "", sizeof(config.Logging.Modules[i].Name));
+        config.Logging.Modules[i].Level = module["level"] | ESP_LOG_VERBOSE;
+    }
+
     JsonObject solarcharger = doc["solarcharger"];
     deserializeSolarChargerConfig(solarcharger, config.SolarCharger);
     deserializeSolarChargerMqttConfig(solarcharger["mqtt"], config.SolarCharger.Mqtt);
 
     JsonObject powermeter = doc["powermeter"];
     config.PowerMeter.Enabled = powermeter["enabled"] | POWERMETER_ENABLED;
-    config.PowerMeter.VerboseLogging = powermeter["verbose_logging"] | VERBOSE_LOGGING;
     config.PowerMeter.Source =  powermeter["source"] | POWERMETER_SOURCE;
 
     deserializePowerMeterMqttConfig(powermeter["mqtt"], config.PowerMeter.Mqtt);
@@ -838,22 +883,24 @@ bool ConfigurationClass::read()
     deserializeBatteryMqttConfig(battery["mqtt"], config.Battery.Mqtt);
     deserializeBatterySerialConfig(battery["serial"], config.Battery.Serial);
 
-    deserializeGridChargerConfig(doc["huawei"], config.Huawei);
+    JsonObject gridcharger = doc["gridcharger"];
+    deserializeGridChargerConfig(gridcharger, config.GridCharger);
+    deserializeGridChargerCanConfig(gridcharger["can"], config.GridCharger.Can);
+    deserializeGridChargerHuaweiConfig(gridcharger["huawei"], config.GridCharger.Huawei);
 
     f.close();
 
     // Check for default DTU serial
-    MessageOutput.print("Check for default DTU serial... ");
     if (config.Dtu.Serial == DTU_SERIAL) {
-        MessageOutput.print("generate serial based on ESP chip id: ");
         const uint64_t dtuId = Utils::generateDtuSerial();
-        MessageOutput.printf("%0" PRIx32 "%08" PRIx32 "... ",
-            static_cast<uint32_t>((dtuId >> 32) & 0xFFFFFFFF),
-            static_cast<uint32_t>(dtuId & 0xFFFFFFFF));
         config.Dtu.Serial = dtuId;
         write();
+        ESP_LOGI(TAG, "DTU serial check: Generated new serial based on ESP chip id: %0" PRIx32 "%08" PRIx32 "",
+            static_cast<uint32_t>((dtuId >> 32) & 0xFFFFFFFF),
+            static_cast<uint32_t>(dtuId & 0xFFFFFFFF));
+    } else {
+        ESP_LOGI(TAG, "DTU serial check: Using existing serial");
     }
-    MessageOutput.println("done");
 
     return true;
 }
@@ -862,7 +909,7 @@ void ConfigurationClass::migrate()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "r", false);
     if (!f) {
-        MessageOutput.println("Failed to open file, cancel migration");
+        ESP_LOGE(TAG, "Failed to open file, cancel migration");
         return;
     }
 
@@ -873,7 +920,7 @@ void ConfigurationClass::migrate()
     // Deserialize the JSON document
     const DeserializationError error = deserializeJson(doc, f);
     if (error) {
-        MessageOutput.printf("Failed to read file, cancel migration: %s\r\n", error.c_str());
+        ESP_LOGE(TAG, "Failed to read file, cancel migration: %s", error.c_str());
         return;
     }
 
@@ -938,6 +985,12 @@ void ConfigurationClass::migrate()
         }
     }
 
+    if (config.Cfg.Version < 0x00011e00) {
+        config.Logging.Default = ESP_LOG_VERBOSE;
+        strlcpy(config.Logging.Modules[0].Name, "CORE", sizeof(config.Logging.Modules[0].Name));
+        config.Logging.Modules[0].Level = ESP_LOG_ERROR;
+    }
+
     f.close();
 
     config.Cfg.Version = CONFIG_VERSION;
@@ -949,7 +1002,7 @@ void ConfigurationClass::migrateOnBattery()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "r", false);
     if (!f) {
-        MessageOutput.println("Failed to open file, cancel OpenDTU-OnBattery migration");
+        ESP_LOGE(TAG, "Failed to open file, cancel OpenDTU-OnBattery migration");
         return;
     }
 
@@ -960,8 +1013,8 @@ void ConfigurationClass::migrateOnBattery()
     // Deserialize the JSON document
     const DeserializationError error = deserializeJson(doc, f);
     if (error) {
-        MessageOutput.printf("Failed to read file, cancel OpenDTU-OnBattery "
-                "migration: %s\r\n", error.c_str());
+        ESP_LOGE(TAG, "Failed to read file, cancel OpenDTU-OnBattery "
+                "migration: %s", error.c_str());
         return;
     }
 
@@ -1062,7 +1115,6 @@ void ConfigurationClass::migrateOnBattery()
     if (config.Cfg.VersionOnBattery < 4) {
         JsonObject vedirect = doc["vedirect"];
         config.SolarCharger.Enabled = vedirect["enabled"] | SOLAR_CHARGER_ENABLED;
-        config.SolarCharger.VerboseLogging = vedirect["verbose_logging"] | SOLAR_CHARGER_VERBOSE_LOGGING;
         config.SolarCharger.PublishUpdatesOnly = vedirect["updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
     }
 
@@ -1108,6 +1160,27 @@ void ConfigurationClass::migrateOnBattery()
         strlcpy(config.Battery.Mqtt.DischargeCurrentLimitTopic, battery["mqtt_discharge_current_topic"] | "", sizeof(config.Battery.Mqtt.DischargeCurrentLimitTopic));
         strlcpy(config.Battery.Mqtt.DischargeCurrentLimitJsonPath, battery["mqtt_discharge_current_json_path"] | "", sizeof(config.Battery.Mqtt.DischargeCurrentLimitJsonPath));
         config.Battery.Mqtt.DischargeCurrentLimitUnit = battery["mqtt_amperage_unit"] | BatteryAmperageUnit::Amps;
+    }
+
+    if (config.Cfg.VersionOnBattery < 8) {
+        JsonObject huawei = doc["huawei"];
+        config.GridCharger.Enabled = huawei["enabled"] | GRIDCHARGER_ENABLED;
+        config.GridCharger.AutoPowerEnabled = huawei["auto_power_enabled"] | GRIDCHARGER_AUTO_POWER_ENABLED;
+        config.GridCharger.AutoPowerBatterySoCLimitsEnabled = huawei["auto_power_batterysoc_limits_enabled"] | GRIDCHARGER_AUTO_POWER_BATTERYSOC_LIMITS_ENABLED;
+        config.GridCharger.EmergencyChargeEnabled = huawei["emergency_charge_enabled"] | GRIDCHARGER_EMERGENCY_CHARGE_ENABLED;
+        config.GridCharger.AutoPowerVoltageLimit = huawei["voltage_limit"] | GRIDCHARGER_AUTO_POWER_VOLTAGE_LIMIT;
+        config.GridCharger.AutoPowerEnableVoltageLimit = huawei["enable_voltage_limit"] | GRIDCHARGER_AUTO_POWER_ENABLE_VOLTAGE_LIMIT;
+        config.GridCharger.AutoPowerLowerPowerLimit = huawei["lower_power_limit"] | GRIDCHARGER_AUTO_POWER_LOWER_POWER_LIMIT;
+        config.GridCharger.AutoPowerUpperPowerLimit = huawei["upper_power_limit"] | GRIDCHARGER_AUTO_POWER_UPPER_POWER_LIMIT;
+        config.GridCharger.AutoPowerStopBatterySoCThreshold = huawei["stop_batterysoc_threshold"] | GRIDCHARGER_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
+        config.GridCharger.AutoPowerTargetPowerConsumption = huawei["target_power_consumption"] | GRIDCHARGER_AUTO_POWER_TARGET_POWER_CONSUMPTION;
+        config.GridCharger.Can.Controller_Frequency = huawei["can_controller_frequency"] | GRIDCHARGER_CAN_CONTROLLER_FREQUENCY;
+        config.GridCharger.Can.HardwareInterface = huawei["hardware_interface"] | GridChargerHardwareInterface::MCP2515;
+        config.GridCharger.Huawei.OfflineVoltage = huawei["offline_voltage"] | GRIDCHARGER_HUAWEI_OFFLINE_VOLTAGE;
+        config.GridCharger.Huawei.OfflineCurrent = huawei["offline_current"] | GRIDCHARGER_HUAWEI_OFFLINE_CURRENT;
+        config.GridCharger.Huawei.InputCurrentLimit = huawei["input_current_limit"] | GRIDCHARGER_HUAWEI_INPUT_CURRENT_LIMIT;
+        config.GridCharger.Huawei.FanOnlineFullSpeed = huawei["fan_online_full_speed"] | GRIDCHARGER_HUAWEI_FAN_ONLINE_FULL_SPEED;
+        config.GridCharger.Huawei.FanOfflineFullSpeed = huawei["fan_offline_full_speed"] | GRIDCHARGER_HUAWEI_FAN_OFFLINE_FULL_SPEED;
     }
 
     f.close();
@@ -1169,6 +1242,17 @@ void ConfigurationClass::deleteInverterById(const uint8_t id)
         config.Inverter[id].channel[c].YieldTotalOffset = 0.0f;
         strlcpy(config.Inverter[id].channel[c].Name, "", sizeof(config.Inverter[id].channel[c].Name));
     }
+}
+
+int8_t ConfigurationClass::getIndexForLogModule(const String& moduleName) const
+{
+    for (uint8_t i = 0; i < LOG_MODULE_COUNT; i++) {
+        if (strcmp(config.Logging.Modules[i].Name, moduleName.c_str()) == 0) {
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 void ConfigurationClass::loop()

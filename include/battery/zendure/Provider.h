@@ -7,14 +7,13 @@
 #include <battery/zendure/HassIntegration.h>
 #include <battery/zendure/Constants.h>
 #include <espMqttClient.h>
-#include <MessageOutput.h>
 
 namespace Batteries::Zendure {
 
 class Provider : public ::Batteries::Provider {
 public:
     Provider();
-    bool init(bool verboseLogging) final;
+    bool init() final;
     void deinit() final;
     void loop() final;
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
@@ -31,8 +30,8 @@ private:
     static String parseVersion(uint32_t version);
     uint16_t calcOutputLimit(uint16_t limit) const;
     void setTargetSoCs(const float soc_min, const float soc_max);
+    void writeSettings();
 
-    bool _verboseLogging = false;
     uint32_t _lastUpdate = 0;
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
     std::shared_ptr<HassIntegration> _hassIntegration;
@@ -51,16 +50,6 @@ private:
     bool alive() const { return _stats->getAgeSeconds() < ZENDURE_ALIVE_SECONDS; }
 
     void publishPersistentSettings(const char* subtopic, const String& payload);
-
-    template <typename... Args>
-    void log(char const* format, Args&&... args) const {
-        if (_verboseLogging) {
-            MessageOutput.printf("ZendureBattery: ");
-            MessageOutput.printf(format, std::forward<Args>(args)...);
-            MessageOutput.println();
-        }
-        return;
-    };
 
     uint32_t _rateFullUpdateMs = 0;
     uint64_t _nextFullUpdate = 0;
@@ -86,6 +75,8 @@ private:
 
     String _payloadSettings = String();
     String _payloadFullUpdate = String();
+
+    bool _full_log_supported = false;
 
     void onMqttMessageReport(espMqttClientTypes::MessageProperties const& properties,
             char const* topic, uint8_t const* payload, size_t len);

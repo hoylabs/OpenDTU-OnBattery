@@ -2,11 +2,14 @@
 #include <Configuration.h>
 #include <HardwareSerial.h>
 #include <PinMapping.h>
-#include <MessageOutput.h>
 #include <battery/jkbms/DataPoints.h>
 #include <battery/jkbms/Provider.h>
 #include <SerialPortManager.h>
 #include <frozen/map.h>
+#include <LogHelper.h>
+
+static const char* TAG = "battery";
+static const char* SUBTAG = "JK BMS";
 
 namespace Batteries::JkBms {
 
@@ -14,20 +17,18 @@ Provider::Provider()
     : _stats(std::make_shared<Stats>())
     , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
-    _verboseLogging = verboseLogging;
-
     std::string ifcType = "transceiver";
     if (Interface::Transceiver != getInterface()) { ifcType = "TTL-UART"; }
-    MessageOutput.printf("[JK BMS] Initialize %s interface...\r\n", ifcType.c_str());
+    DTU_LOGI("Initialize %s interface...", ifcType.c_str());
 
     const PinMapping_t& pin = PinMapping.get();
-    MessageOutput.printf("[JK BMS] rx = %d, rxen = %d, tx = %d, txen = %d\r\n",
+    DTU_LOGD("rx = %d, rxen = %d, tx = %d, txen = %d",
             pin.battery_rx, pin.battery_rxen, pin.battery_tx, pin.battery_txen);
 
     if (pin.battery_rx <= GPIO_NUM_NC || pin.battery_tx <= GPIO_NUM_NC) {
-        MessageOutput.println("[JK BMS] Invalid RX/TX pin config");
+        DTU_LOGE("Invalid RX/TX pin config");
         return false;
     }
 
@@ -50,7 +51,7 @@ bool Provider::init(bool verboseLogging)
     _txEnablePin = pin.battery_txen;
 
     if (_rxEnablePin <= GPIO_NUM_NC || _txEnablePin <= GPIO_NUM_NC) {
-        MessageOutput.println("[JK BMS] Invalid transceiver pin config");
+        DTU_LOGE("Invalid transceiver pin config");
         return false;
     }
 
@@ -101,8 +102,7 @@ void Provider::announceStatus(Provider::Status status)
 {
     if (_lastStatus == status && millis() < _lastStatusPrinted + 10 * 1000) { return; }
 
-    MessageOutput.printf("[%11.3f] JK BMS: %s\r\n",
-        static_cast<double>(millis())/1000, getStatusText(status).data());
+    DTU_LOGI("%s", getStatusText(status).data());
 
     _lastStatus = status;
     _lastStatusPrinted = millis();
@@ -207,18 +207,8 @@ void Provider::frameComplete()
 {
     announceStatus(Status::FrameCompleted);
 
-    if (_verboseLogging) {
-        double ts = static_cast<double>(millis())/1000;
-        MessageOutput.printf("[%11.3f] JK BMS: raw data (%d Bytes):",
-            ts, _buffer.size());
-        for (size_t ctr = 0; ctr < _buffer.size(); ++ctr) {
-            if (ctr % 16 == 0) {
-                MessageOutput.printf("\r\n[%11.3f] JK BMS:", ts);
-            }
-            MessageOutput.printf(" %02x", _buffer[ctr]);
-        }
-        MessageOutput.println();
-    }
+    DTU_LOGD("received message with %d bytes", _buffer.size());
+    LogHelper::dumpBytes(TAG, SUBTAG, _buffer.data(), _buffer.size());
 
     auto pResponse = std::make_unique<SerialResponse>(std::move(_buffer), _protocolVersion);
     if (pResponse->isValid()) {
@@ -237,11 +227,11 @@ void Provider::processDataPoints(DataPointContainer const& dataPoints)
     auto oProtocolVersion = dataPoints.get<Label::ProtocolVersion>();
     if (oProtocolVersion.has_value()) { _protocolVersion = *oProtocolVersion; }
 
-    if (!_verboseLogging) { return; }
+    if (!DTU_LOG_IS_DEBUG) { return; }
 
     auto iter = dataPoints.cbegin();
     while ( iter != dataPoints.cend() ) {
-        MessageOutput.printf("[%11.3f] JK BMS: %s: %s%s\r\n",
+        DTU_LOGD("[%11.3f] %s: %s%s",
             static_cast<double>(iter->second.getTimestamp())/1000,
             iter->second.getLabelText().c_str(),
             iter->second.getValueText().c_str(),

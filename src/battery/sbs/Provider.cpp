@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <battery/sbs/Provider.h>
-#include <MessageOutput.h>
 #include <PinMapping.h>
 #include <driver/twai.h>
 #include <ctime>
+#include <LogHelper.h>
+
+static const char* TAG = "battery";
+static const char* SUBTAG = "SBS";
 
 namespace Batteries::SBS {
 
@@ -11,10 +14,10 @@ Provider::Provider()
     : _stats(std::make_shared<Stats>())
     , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
 
-bool Provider::init(bool verboseLogging)
+bool Provider::init()
 {
     _stats->_chargeVoltage =58.4;
-    return ::Batteries::CanReceiver::init(verboseLogging, "SBS");
+    return ::Batteries::CanReceiver::init("SBS");
 }
 
 void Provider::onMessage(twai_message_t rx_message)
@@ -25,9 +28,8 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->setCurrent(this->readSignedInt16(rx_message.data + 3) * 0.001, 2/*precision*/, millis());
             _stats->setSoC(static_cast<float>(this->readUnsignedInt16(rx_message.data + 6)), 1, millis());
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[SBS Unipower] 1552 SoC: %f Voltage: %f Current: %f\r\n", _stats->getSoC(), _stats->getVoltage(), _stats->getChargeCurrent());
-            }
+            DTU_LOGD("1552 SoC: %f Voltage: %f Current: %f",
+                    _stats->getSoC(), _stats->getVoltage(), _stats->getChargeCurrent());
             break;
         }
 
@@ -71,9 +73,8 @@ void Provider::onMessage(twai_message_t rx_message)
             }
             _stats->setManufacturer("SBS UniPower ");
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[SBS Unipower] 1584 chargeStatusBits: %d %d\r\n", _stats->_chargeEnabled, _stats->_dischargeEnabled);
-            }
+            DTU_LOGD("1584 chargeStatusBits: %d %d",
+                    _stats->_chargeEnabled, _stats->_dischargeEnabled);
             break;
         }
 
@@ -81,9 +82,8 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_chargeCurrentLimitation = (this->readSignedInt24(rx_message.data + 3) * 0.001);
             _stats->setDischargeCurrentLimit(this->readSignedInt24(rx_message.data) * 0.001, millis());
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[SBS Unipower] 1600 Currents  %f, %f \r\n", _stats->_chargeCurrentLimitation, _stats->getDischargeCurrentLimit());
-            }
+            DTU_LOGD("1600 Currents  %f, %f",
+                    _stats->_chargeCurrentLimitation, _stats->getDischargeCurrentLimit());
             break;
         }
 
@@ -91,9 +91,7 @@ void Provider::onMessage(twai_message_t rx_message)
             byte temp = rx_message.data[0];
             _stats->_temperature = (static_cast<float>(temp)-32) /1.8;
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[SBS Unipower] 1616 Temp %f \r\n",_stats->_temperature);
-            }
+            DTU_LOGD("1616 Temp %f", _stats->_temperature);
             break;
         }
 
@@ -105,9 +103,9 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_alarmOverVoltage= this->getBit(alarmBits, 2);
             _stats->_alarmBmsInternal= this->getBit(rx_message.data[1], 2);
 
-            if (_verboseLogging) {
-                MessageOutput.printf("[SBS Unipower] 1632 Alarms: %d %d %d %d \r\n ", _stats->_alarmUnderTemperature, _stats->_alarmOverTemperature, _stats->_alarmUnderVoltage,  _stats->_alarmOverVoltage);
-            }
+            DTU_LOGD("1632 Alarms: %d %d %d %d",
+                    _stats->_alarmUnderTemperature, _stats->_alarmOverTemperature,
+                    _stats->_alarmUnderVoltage, _stats->_alarmOverVoltage);
             break;
         }
 
@@ -116,9 +114,8 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_warningHighCurrentDischarge = this->getBit(warningBits, 1);
             _stats->_warningHighCurrentCharge = this->getBit(warningBits, 0);
 
-             if (_verboseLogging) {
-                MessageOutput.printf("[SBS Unipower] 1648 Warnings: %d %d \r\n", _stats->_warningHighCurrentDischarge, _stats->_warningHighCurrentCharge);
-            }
+            DTU_LOGD("1648 Warnings: %d %d",
+                    _stats->_warningHighCurrentDischarge, _stats->_warningHighCurrentCharge);
             break;
         }
 

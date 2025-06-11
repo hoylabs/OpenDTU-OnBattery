@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <Utils.h>
 #include <powermeter/json/http/Provider.h>
-#include <MessageOutput.h>
 #include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 #include <mbedtls/sha256.h>
 #include <base64.h>
 #include <ESPmDNS.h>
+#include <LogHelper.h>
+
+static const char* TAG = "powerMeter";
+static const char* SUBTAG = "HTTP/JSON";
 
 namespace PowerMeters::Json::Http {
 
@@ -45,8 +48,8 @@ bool Provider::init()
             continue;
         }
 
-        MessageOutput.printf("[PowerMeters::Json::Http] Initializing HTTP getter for value %d failed:\r\n", i + 1);
-        MessageOutput.printf("[PowerMeters::Json::Http] %s\r\n", _httpGetters[i]->getErrorText());
+        DTU_LOGE("Initializing HTTP getter for value %d failed: %s",
+                 i + 1, _httpGetters[i]->getErrorText());
         return false;
     }
 
@@ -61,7 +64,7 @@ void Provider::loop()
     _stopPolling = false;
     lock.unlock();
 
-    uint32_t constexpr stackSize = 3072;
+    uint32_t constexpr stackSize = 6144;
     xTaskCreate(Provider::pollingLoopHelper, "PM:HTTP+JSON",
             stackSize, this, 1/*prio*/, &_taskHandle);
 }
@@ -95,11 +98,11 @@ void Provider::pollingLoop()
         lock.lock();
 
         if (std::holds_alternative<String>(res)) {
-            MessageOutput.printf("[PowerMeters::Json::Http] %s\r\n", std::get<String>(res).c_str());
+            DTU_LOGE("%s", std::get<String>(res).c_str());
             continue;
         }
 
-        MessageOutput.printf("[PowerMeters::Json::Http] New total: %.2f\r\n", getPowerTotal());
+        DTU_LOGD("New total: %.2f", getPowerTotal());
     }
 }
 

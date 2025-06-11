@@ -6,9 +6,9 @@
 #include <TaskSchedulerDeclarations.h>
 #include <mutex>
 
-class WebApiWsHuaweiLiveClass {
+class WebApiWsGridChargerLiveClass {
 public:
-    WebApiWsHuaweiLiveClass();
+    WebApiWsGridChargerLiveClass();
     void init(AsyncWebServer& server, Scheduler& scheduler);
     void reload();
 
@@ -22,7 +22,7 @@ private:
     AsyncAuthenticationMiddleware _simpleDigestAuth;
 
     std::mutex _mutex;
-    
+
     Task _wsCleanupTask;
     void wsCleanupTaskCb();
 

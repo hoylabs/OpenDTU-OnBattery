@@ -1,6 +1,6 @@
 import AboutView from '@/views/AboutView.vue';
 import BatteryAdminView from '@/views/BatteryAdminView.vue';
-import AcChargerAdminView from '@/views/AcChargerAdminView.vue';
+import GridChargerAdminView from '@/views/GridChargerAdminView.vue';
 import ConfigAdminView from '@/views/ConfigAdminView.vue';
 import ConsoleInfoView from '@/views/ConsoleInfoView.vue';
 import DeviceAdminView from '@/views/DeviceAdminView.vue';
@@ -14,6 +14,7 @@ import PowerLimiterAdminView from '@/views/PowerLimiterAdminView.vue';
 import InverterAdminView from '@/views/InverterAdminView.vue';
 import LoginView from '@/views/LoginView.vue';
 import MaintenanceRebootView from '@/views/MaintenanceRebootView.vue';
+import LoggingAdminView from '@/views/LoggingAdminView.vue';
 import MqttAdminView from '@/views/MqttAdminView.vue';
 import MqttInfoView from '@/views/MqttInfoView.vue';
 import NetworkAdminView from '@/views/NetworkAdminView.vue';
@@ -114,7 +115,7 @@ const router = createRouter({
         {
             path: '/settings/chargerac',
             name: 'Charger Settings',
-            component: AcChargerAdminView,
+            component: GridChargerAdminView,
         },
         {
             path: '/settings/mqtt',
@@ -150,6 +151,11 @@ const router = createRouter({
             path: '/settings/security',
             name: 'Security',
             component: SecurityAdminView,
+        },
+        {
+            path: '/settings/logging',
+            name: 'Logging',
+            component: LoggingAdminView,
         },
         {
             path: '/maintenance/reboot',
