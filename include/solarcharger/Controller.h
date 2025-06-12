@@ -23,6 +23,7 @@ private:
     mutable std::mutex _mutex;
     std::unique_ptr<Provider> _upProvider = nullptr;
     bool _forcePublishSensors = false;
+    float _actChargeLimit = 0.0f;
 };
 
 } // namespace SolarChargers
