@@ -33,8 +33,8 @@ void Stats::getLiveViewData(JsonVariant& root) const
     if (_oManufacturer.has_value()) { manufacturer = *_oManufacturer; }
 
     root["manufacturer"] = manufacturer;
-    if (!_serial.isEmpty()) {
-        root["serial"] = _serial;
+    if (_serial.has_value()) {
+        root["serial"] = *_serial;
     }
     if (!_fwversion.isEmpty()) {
         root["fwversion"] = _fwversion;
@@ -43,6 +43,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
         root["hwversion"] = _hwversion;
     }
     root["data_age"] = getAgeSeconds();
+    root["max_age"] = 20;
 
     if (isSoCValid()) {
         addLiveViewValue(root, "SoC", _soc, "%", _socPrecision);

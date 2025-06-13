@@ -224,7 +224,19 @@
             "MaximumPowerToday": "Maximum power today",
             "MaximumPowerYesterday": "Maximum power yesterday"
         },
-        "PowerLimiterState": "Power limiter state [off (charging), solar passthrough, on battery]"
+        "PowerLimiterState": "Power limiter state [off (charging), solar passthrough, on battery]",
+        "section_mppt1": "Solar Input 1",
+        "section_mppt2": "Solar Input 2",
+        "mppt1": {
+            "Power": "@:solarchargerhome.input.PPV",
+            "Voltage": "@:solarchargerhome.input.VPV",
+            "Current": "@:solarchargerhome.input.IPV"
+        },
+        "mppt2": {
+            "Power": "@:solarchargerhome.mppt1.Power",
+            "Voltage": "@:solarchargerhome.mppt1.Voltage",
+            "Current": "@:solarchargerhome.mppt1.Current"
+        }
     },
     "eventlog": {
         "Start": "Start",
@@ -613,6 +625,7 @@
         "Provider": "Data Provider",
         "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
         "ProviderMqtt": "Solar Charger data from MQTT broker",
+        "ProviderIntegrated": "MPPT data from supported battery integrations (currently only zendure)",
         "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change",
         "CalculateOutputPower": "Calculate Solar Charger output power",
         "CalculateOutputPowerDescription": "If enabled, the output power of the Solar Charger will be calculated based on the current and voltage values. If disabled, the output power will be taken from the Solar Charger directly.",
@@ -1225,8 +1238,6 @@
         "midpointVoltage": "Midpoint Voltage",
         "midpointDeviation": "Midpoint Deviation",
         "lastFullCharge": "Last full Charge",
-        "solarInputPower1": "MPPT1 power",
-        "solarInputPower2": "MPPT2 power",
         "totalInputPower": "Total input power",
         "chargePower": "Charge power",
         "dischargePower": "Discharge power",
@@ -1254,7 +1265,6 @@
         "alwaysoff": "Always Off",
         "alwayson": "Always On",
         "efficiency": "Efficiency",
-        "panels": "Solar input",
         "settings": "Settings",
         "remainOutTime": "Remaining discharge time",
         "remainInTime": "Remaining charge time",
@@ -1264,6 +1274,7 @@
         "controlMode": "@:batteryadmin.zendure.controlMode",
         "full-access": "@:batteryadmin.zendure.controlModes.Full",
         "write-once": "Write Once",
-        "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly"
+        "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly",
+        "outputVoltage": "Output voltage"
     }
 }
