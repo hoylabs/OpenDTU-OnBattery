@@ -123,7 +123,8 @@ void VeDirectFrameHandler<T>::loop()
         float errorDays = esp_timer_get_time() / (24*60*60*1000*1000.0f); // 24h, use float to avoid int overflow
         if (errorDays > 1.0f) { _tmpFrame.transmissionErrors_Day /= errorDays; }
 
-        printErrorCounter();
+        // no need to print the errors if we do not have any
+        if (_errorCounter.at(static_cast<size_t>(veStruct::Error::SUM)) != 0) { printErrorCounter(); }
     }
 }
 
