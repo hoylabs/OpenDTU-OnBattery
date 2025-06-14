@@ -1303,6 +1303,7 @@
         "MeasurementTimePeriod": "Measurement period",
         "VIStampDelay": "Voltage-Current delay",
         "ResistanceCalculationCount": "Resistance calculation count",
-        "ResistanceCalculationState": "Maximum resistance calculation state"
+        "ResistanceCalculationState": "Maximum resistance calculation state",
+        "CalculationNotPossible": "Calculation not possible"
     }
 }

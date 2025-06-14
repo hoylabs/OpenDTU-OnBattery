@@ -1300,6 +1300,7 @@
         "MeasurementTimePeriod": "Messperiode",
         "VIStampDelay": "Zeitversatz Spannung-Strom",
         "ResistanceCalculationCount": "Anzahl der Widerstandsberechnungen",
-        "ResistanceCalculationState": "Maximale Stufe der Widerstandsberechnung"
+        "ResistanceCalculationState": "Maximale Stufe der Widerstandsberechnung",
+        "CalculationNotPossible": "Berechnung nicht möglich"
     }
 }
