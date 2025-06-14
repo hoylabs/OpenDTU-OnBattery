@@ -50,8 +50,8 @@
 #include <BatteryGuard.h>
 #include <LogHelper.h>
 
-static const char* TAG = "batteryGuard";
-static const char* SUBTAG = "Controller";
+static const char* TAG = "battery";
+static const char* SUBTAG = "Battery Guard";
 
 BatteryGuardClass BatteryGuard;
 
@@ -285,6 +285,10 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
     _lastDataInMillis = millis();
     if (!_minMaxAvailable) { _rState = RState::IDLE; }
 
+    // Check if we are in a SoC range that makes sense for the resistance calculation
+    auto const& actualSoC = Battery.getStats()->getSoC();
+    if ((actualSoC <= 15.0f) || actualSoC >= 90.0f) { return cleanExit(RState::SOC_RANGE); }
+
     // check for the trigger event (sufficient current change)
     auto const minDiffCurrent = 4.0f; // seems to be a good value for all battery providers
     if (!_triggerEvent && _minMaxAvailable && (std::abs(nowCurrent - _pMinVolt.second) > (minDiffCurrent/2.0f))) {
@@ -348,8 +352,8 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
     auto diffCurrent = std::abs(_pMaxVolt.second - _pMinVolt.second);   // can be negative
     if ((diffVolt >= minDiffVoltage) && (diffCurrent >= minDiffCurrent)) {
         float resistor = diffVolt / diffCurrent;
-        auto reference = _resistanceFromCalcAVG.getAverage();
-        if (isInternalResistanceCalculated() && ((resistor > reference * 2.0f) || (resistor < reference / 2.0f))) {
+        auto reference = (_resistanceFromConfig != 0.0f) ?_resistanceFromConfig : _resistanceFromCalcAVG.getAverage();
+        if ((reference != 0.0f) && ((resistor > reference * 2.0f) || (resistor < reference / 2.0f))) {
             _rState = RState::TOO_BAD; // safety feature: we try to keep out bad values from the average
         } else {
             _resistanceFromCalcAVG.addNumber(resistor);
@@ -403,9 +407,10 @@ frozen::string const& BatteryGuardClass::getResistanceStateText(BatteryGuardClas
 {
     static const frozen::string missing = "programmer error: missing status text";
 
-    static const frozen::map<RState, frozen::string, 10> texts = {
+    static const frozen::map<RState, frozen::string, 11> texts = {
         { RState::IDLE, "Idle" },
         { RState::RESOLUTION, "Battery data insufficient" },
+        { RState::SOC_RANGE, "SoC out of range 10%-90%" },
         { RState::TIME, "Measurement time to fast" },
         { RState::FIRST_PAIR, "Start data available" },
         { RState::TRIGGER, "Trigger event" },

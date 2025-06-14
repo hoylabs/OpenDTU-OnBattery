@@ -69,7 +69,7 @@ class BatteryGuardClass {
 
 
         // used to calculate the "Battery internal resistance"
-        enum class RState : uint8_t { IDLE, RESOLUTION, TIME, FIRST_PAIR, TRIGGER, SECOND_PAIR, SECOND_BREAK, DELTA_POWER, TOO_BAD, CALCULATED };
+        enum class RState : uint8_t { IDLE, RESOLUTION, SOC_RANGE, TIME, FIRST_PAIR, TRIGGER, SECOND_PAIR, SECOND_BREAK, DELTA_POWER, TOO_BAD, CALCULATED };
 
         void calculateInternalResistance(float const nowVoltage, float const nowCurrent);
         frozen::string const& getResistanceStateText(RState state) const;
