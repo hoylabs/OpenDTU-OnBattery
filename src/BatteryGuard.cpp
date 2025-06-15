@@ -285,9 +285,10 @@ void BatteryGuardClass::calculateInternalResistance(float const nowVoltage, floa
     _lastDataInMillis = millis();
     if (!_minMaxAvailable) { _rState = RState::IDLE; }
 
-    // Check if we are in a SoC range that makes sense for the resistance calculation
-    auto const& actualSoC = Battery.getStats()->getSoC();
-    if ((actualSoC <= 15.0f) || actualSoC >= 90.0f) { return cleanExit(RState::SOC_RANGE); }
+    // check if we get the SoC from the provider and if we are in a useable SoC range
+    auto const& soc = Battery.getStats();
+    if (!soc->isSoCValid() || (soc->getSoCAgeSeconds() > 30)) { return cleanExit(RState::SOC_NOT_VALID); }
+    if ((soc->getSoC() < 20.0f) || soc->getSoC() > 90.0f) { return cleanExit(RState::SOC_RANGE); }
 
     // check for the trigger event (sufficient current change)
     auto const minDiffCurrent = 4.0f; // seems to be a good value for all battery providers
@@ -407,10 +408,11 @@ frozen::string const& BatteryGuardClass::getResistanceStateText(BatteryGuardClas
 {
     static const frozen::string missing = "programmer error: missing status text";
 
-    static const frozen::map<RState, frozen::string, 11> texts = {
+    static const frozen::map<RState, frozen::string, 12> texts = {
         { RState::IDLE, "Idle" },
         { RState::RESOLUTION, "Battery data insufficient" },
-        { RState::SOC_RANGE, "SoC out of range 10%-90%" },
+        { RState::SOC_NOT_VALID, "SoC not available" },
+        { RState::SOC_RANGE, "SoC out of range 20%-90%" },
         { RState::TIME, "Measurement time to fast" },
         { RState::FIRST_PAIR, "Start data available" },
         { RState::TRIGGER, "Trigger event" },
