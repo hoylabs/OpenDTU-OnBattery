@@ -2,6 +2,7 @@
 #pragma once
 
 #include "WebApi_battery.h"
+#include "WebApi_battery_guard.h"
 #include "WebApi_device.h"
 #include "WebApi_devinfo.h"
 #include "WebApi_dtu.h"
@@ -57,6 +58,7 @@ private:
     AsyncWebServer _server;
 
     WebApiBatteryClass _webApiBattery;
+    WebApiBatteryGuardClass _webApiBatteryGuard;
     WebApiDeviceClass _webApiDevice;
     WebApiDevInfoClass _webApiDevInfo;
     WebApiDtuClass _webApiDtu;
