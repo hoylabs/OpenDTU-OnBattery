@@ -5,6 +5,7 @@
 #include <solarcharger/DummyStats.h>
 #include <solarcharger/victron/Provider.h>
 #include <solarcharger/mqtt/Provider.h>
+#include <solarcharger/integrated/Provider.h>
 #include <LogHelper.h>
 
 static const char* TAG = "solarCharger";
@@ -43,6 +44,9 @@ void Controller::updateSettings()
         case SolarChargerProviderType::MQTT:
             _upProvider = std::make_unique<::SolarChargers::Mqtt::Provider>();
             break;
+        case SolarChargerProviderType::Integrated:
+            _upProvider = std::make_unique<::SolarChargers::Integrated::Provider>();
+            break;
         default:
             DTU_LOGE("Unknown provider: %d", config.SolarCharger.Provider);
             return;
@@ -63,6 +67,29 @@ std::shared_ptr<Stats const> Controller::getStats() const
     }
 
     return _upProvider->getStats();
+}
+
+std::shared_ptr<Integrated::Stats> Controller::getIntegratedStats()
+{
+    auto const& config = Configuration.get();
+
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    auto const delay = 20 * 1000U;
+    auto const ms = millis();
+    if (ms < delay) {
+        DTU_LOGV("getIntegratedStats(): Startup Delay running %ld/%" PRId32 " ms", ms, delay);
+        return nullptr;
+    }
+
+    if (!_upProvider || config.SolarCharger.Provider != SolarChargerProviderType::Integrated) {
+        return nullptr;
+    }
+
+    auto stats = std::reinterpret_pointer_cast<Integrated::Stats>(_upProvider->getStats());
+
+    DTU_LOGV("getIntegratedStats(): returning 0x%p", static_cast<void*>(&*stats));
+    return stats;
 }
 
 void Controller::loop()

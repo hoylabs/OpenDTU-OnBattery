@@ -277,7 +277,7 @@ struct GRID_CHARGER_CONFIG_T {
 };
 using GridChargerConfig = struct GRID_CHARGER_CONFIG_T;
 
-enum SolarChargerProviderType { VEDIRECT = 0, MQTT = 1 };
+enum SolarChargerProviderType { VEDIRECT = 0, MQTT = 1, Integrated = 2 };
 
 struct SOLARCHARGER_MQTT_CONFIG_T {
     bool CalculateOutputPower;

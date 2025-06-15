@@ -224,7 +224,19 @@
             "MaximumPowerToday": "Maximale Leistung heute",
             "MaximumPowerYesterday": "Maximale Leistung gestern"
         },
-        "PowerLimiterState": "Power Limiter Status [aus (laden), nur die Sonne nutzen, Nutzung der Batterie]"
+        "PowerLimiterState": "Power Limiter Status [aus (laden), nur die Sonne nutzen, Nutzung der Batterie]",
+        "section_mppt1": "Solareingang 1",
+        "section_mppt2": "Solareingang 2",
+        "mppt1": {
+            "Power": "@:solarchargerhome.input.PPV",
+            "Voltage": "@:solarchargerhome.input.VPV",
+            "Current": "@:solarchargerhome.input.IPV"
+        },
+        "mppt2": {
+            "Power": "@:solarchargerhome.mppt1.Power",
+            "Voltage": "@:solarchargerhome.mppt1.Voltage",
+            "Current": "@:solarchargerhome.mppt1.Current"
+        }
     },
     "eventlog": {
         "Start": "Beginn",
@@ -613,6 +625,7 @@
         "Provider": "Datenanbieter",
         "ProviderVeDirect": "Victron MPPT(s) per VE.Direct Schnittstelle",
         "ProviderMqtt": "Solarladereglerwerte aus MQTT Broker",
+        "ProviderIntegrated": "MPPT Daten von unterstützten Batteriedatenanbietern (aktuell nur Zendure)",
         "MqttPublishUpdatesOnly": "Werte nur bei Änderung an MQTT broker senden",
         "CalculateOutputPower": "Solarladeregler-Ausgangsleistung berechnen",
         "CalculateOutputPowerDescription": "Wenn aktiviert, wird die Ausgangsleistung des Solarladeregler basierend auf den Strom- und Spannungswerten berechnet. Wenn deaktiviert, wird die Ausgangsleistung direkt vom Solarladeregler übernommen.",
@@ -1223,8 +1236,6 @@
         "midpointVoltage": "Mittelpunktspannung",
         "midpointDeviation": "Mittelpunktsabweichung",
         "lastFullCharge": "Letztes mal Vollgeladen",
-        "solarInputPower1": "Leistung MPPT1",
-        "solarInputPower2": "Leistung MPPT2",
         "totalInputPower": "Eingangsleistung",
         "chargePower": "Ladeleistung",
         "dischargePower": "Entladeleistung",
@@ -1252,7 +1263,6 @@
         "alwaysoff": "Dauerhaft Ausgeschaltet",
         "alwayson": "Dauerhaft Eingeschaltet",
         "efficiency": "Wirkungsgrad",
-        "panels": "Solar Eingänge",
         "settings": "Einstellungen",
         "remainOutTime": "Verbleibende Entladezeit",
         "remainInTime": "Verbleibende Ladezeit",
@@ -1262,6 +1272,7 @@
         "controlMode": "@:batteryadmin.zendure.controlMode",
         "full-access": "@:batteryadmin.zendure.controlModes.Full",
         "write-once": "Einmalig Schreiben",
-        "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly"
+        "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly",
+        "outputVoltage": "Ausgangsspannung"
     }
 }

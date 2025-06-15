@@ -15,6 +15,8 @@ public:
     std::optional<String> const& getManufacturer() const { return _oManufacturer; }
     virtual std::optional<String> getHassDeviceName() const { return _oManufacturer; }
 
+    std::optional<String> const& getSerial() const { return _serial; }
+
     // the last time *any* data was updated
     uint32_t getAgeSeconds() const { return (millis() - _lastUpdate) / 1000; }
     bool updateAvailable(uint32_t since) const;
@@ -160,7 +162,7 @@ protected:
 
     String _hwversion = "";
     String _fwversion = "";
-    String _serial = "";
+    std::optional<String> _serial = std::nullopt;
     uint32_t _lastUpdate = 0;
 
 private:
