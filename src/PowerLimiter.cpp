@@ -274,6 +274,8 @@ void PowerLimiterClass::loop()
         // we only do full solar PT if general solar PT is enabled
         if (!isSolarPassThroughEnabled()) { return false; }
 
+        if (isMpptPowerLimited()) {return true; }
+
         if (testThreshold(config.PowerLimiter.FullSolarPassThroughSoc,
                         config.PowerLimiter.FullSolarPassThroughStartVoltage,
                         [](float a, float b) -> bool { return a >= b; })) {
@@ -854,6 +856,17 @@ bool PowerLimiterClass::isBelowStopThreshold() const
             config.PowerLimiter.VoltageStopThreshold,
             [](float a, float b) -> bool { return a < b; }
     );
+}
+
+bool PowerLimiterClass::isMpptPowerLimited() const
+{
+    auto const& config = Configuration.get();
+
+    if (!config.PowerLimiter.FullSolarPassThroughUseMpptState) { return false; }
+
+    auto chargerStateTracker = SolarCharger.getStats()->getStateOfTracker();
+
+    return chargerStateTracker == SolarChargers::Stats::StateOfTracker::VoltageCurrentLimit;
 }
 
 void PowerLimiterClass::calcNextInverterRestart()

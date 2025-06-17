@@ -743,6 +743,8 @@
         "PowerSourceSmartBuffer": "Smart Buffer Battery (Marstek B2500, Anker Solix, Zendure, etc.)",
         "UseOverscaling": "Compensate shaded or unused inputs",
         "UseOverscalingHint": "Allow to overscale the inverter limit to compensate for unused inputs or shading of one or multiple inputs.",
+        "UseMpptState": "Use MPPT status to control the dynamic power limiter",
+        "UseMpptStateHint": "When the MPPT reports a 'Voltage or Current Limited' state, the power limit is automatically set to the configured maximum. Currently, only Victron MPPTs with active communication are supported.",
         "VoltageThresholds": "Battery Voltage Thresholds",
         "VoltageLoadCorrectionInfo": "<b>Hint:</b> When the battery is discharged, its voltage drops. The voltage drop scales with the discharge current. In order to not stop inverters too early (stop threshold), this load correction factor can be specified to calculate the battery voltage if it was idle. Corrected voltage = DC Voltage + (Current power * correction factor).",
         "InverterRestartHour": "Automatic Inverter Restart Time",

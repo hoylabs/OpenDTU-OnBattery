@@ -233,6 +233,15 @@
                         wide
                     />
 
+                    <InputElement
+                        v-if="solarChargerConfigList.enabled"
+                        :label="$t('powerlimiteradmin.UseMpptState')"
+                        :tooltip="$t('powerlimiteradmin.UseMpptStateHint')"
+                        v-model="powerLimiterConfigList.full_solar_passthrough_use_mppt_state"
+                        type="checkbox"
+                        wide
+                    />
+
                     <div class="row mb-3">
                         <label for="inverter_serial_for_dc_voltage" class="col-sm-4 col-form-label">
                             {{ $t('powerlimiteradmin.InverterForDcVoltage') }}
@@ -445,6 +454,7 @@ import type {
     PowerLimiterMetaData,
     PowerLimiterInverterInfo,
 } from '@/types/PowerLimiterConfig';
+import type { SolarChargerConfig } from '@/types/SolarChargerConfig';
 
 export default defineComponent({
     components: {
@@ -460,6 +470,7 @@ export default defineComponent({
             dataLoading: true,
             powerLimiterConfigList: {} as PowerLimiterConfig,
             powerLimiterMetaData: {} as PowerLimiterMetaData,
+            solarChargerConfigList: {} as SolarChargerConfig,
             alertMessage: '',
             alertType: 'info',
             showAlert: false,
@@ -700,6 +711,12 @@ export default defineComponent({
                 .then((data) => {
                     data.inverters = this.tidyUpInverterConfigs(data.inverters);
                     this.powerLimiterConfigList = data;
+                    this.dataLoading = false;
+                });
+            fetch('/api/solarcharger/config', { headers: authHeader() })
+                .then((response) => handleResponse(response, this.$emitter, this.$router))
+                .then((data) => {
+                    this.solarChargerConfigList = data;
                     this.dataLoading = false;
                 });
         },
