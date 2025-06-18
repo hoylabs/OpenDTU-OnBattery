@@ -199,7 +199,8 @@
             "RELAY": "Status Fehlerrelais",
             "ERR": "Fehlerbeschreibung",
             "HSDS": "Anzahl der Tage (0..364)",
-            "MpptTemperature": "Ladereglertemperatur"
+            "MpptTemperature": "Ladereglertemperatur",
+            "ChargeCurrentLimit": "Ladestromlimit"
         },
         "section_output": "Ausgang (Batterie)",
         "output": {
@@ -788,6 +789,17 @@
         "BatteryReportedDischargeCurrentLimitInfo": "<b>Hinweis:</b> Das niedrigste Limit wird angewendet, wobei das von der Batterie übermittelte Entladestromlimit nur verwendet wird, wenn in der letzten Minute ein Update eingegangen ist. Andernfalls dient das zuvor festgelegte Limit als Fallback.",
         "MqttDischargeCurrentLimitTopic": "Topic für Entladestromlimit",
         "MqttAmperageUnit": "@:base.Unit",
+        "ChargeCurrentLimitConfiguration": "Einstellungen Ladestromlimit",
+        "LimitChargeCurrent": "Ladestrom limitieren",
+        "MinChargeCurrentLimit": "min. Ladestrom",
+        "MinChargeCurrentLimitInfo": "Das höchste Limit wird angewendet, wobei das von der Batterie übermittelte Ladestromlimit nur verwendet wird, wenn in der letzten Minute ein Update eingegangen ist; andernfalls dient das zuvor festgelegte Limit als Fallback.",
+        "MaxChargeCurrentLimit": "max. Ladestrom",
+        "ChargeCurrentLimitBelowSoc": "Limitieren unter SoC",
+        "ChargeCurrentLimitBelowSocInfo": "Das max Ladestromlimit wird nur unter dieser SoC-Schwelle angewendet (wird nicht verwendet, falls 'Batterie SoC ignorieren' in den DPL-Einstellungen aktiviert ist).",
+        "ChargeCurrentLimitBelowVoltage": "Limitieren unter Spannung",
+        "ChargeCurrentLimitBelowVoltageInfo": "Das max Ladestromlimit wird nur unter dieser Spannungs-Schwelle angewendet (wenn 'Batterie SoC ignorieren' in den DPL-Einstellungen aktiviert ist oder SoC nicht verfügbar ist).",
+        "UseBatteryReportedChargeCurrentLimit": "Von der Batterie übermitteltes Limit verwenden",
+        "BatteryReportedChargeCurrentLimitInfo": "<b>Hinweis:</b> Das niedrigste Limit wird angewendet, wobei das von der Batterie übermittelte Ladestromlimit nur verwendet wird, wenn in der letzten Minute ein Update eingegangen ist; andernfalls dient das zuvor festgelegte Limit als Fallback.",
         "ZendureConfiguration": "Einstellungen",
         "ZendureDeviceType": "Produkt Typ",
         "ZendureDeviceId": "Produkt Identifikation",
