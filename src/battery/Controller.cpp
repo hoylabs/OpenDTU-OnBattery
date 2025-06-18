@@ -192,7 +192,7 @@ float Controller::getChargeCurrentLimit()
 
         bool voltageValid = spStats->getVoltageAgeSeconds() <= 60;
         if (voltageValid) {
-            auto threshold = config.Battery.DischargeCurrentLimitBelowVoltage;
+            auto threshold = config.Battery.ChargeCurrentLimitBelowVoltage;
             if (spStats->getVoltage() >= threshold) { return FLT_MAX; }
 
             return configuredMaxLimit;
