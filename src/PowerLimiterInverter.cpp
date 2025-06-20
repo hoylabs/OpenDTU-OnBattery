@@ -67,6 +67,10 @@ PowerLimiterInverter::Eligibility PowerLimiterInverter::getEligibility() const
     // to appear in the inverter's event log.
     if (getCurrentLimitWatts() == 0) { return Eligibility::CurrentLimitUnknown; }
 
+    // inverters not connected to the grid are not eligible, as they cannot
+    // produce power.
+    if (getGridVoltage() < 100.0) { return Eligibility::GridDisconnected; }
+
     return Eligibility::Eligible;
 }
 
@@ -328,6 +332,11 @@ void PowerLimiterInverter::restart()
     _spInverter->sendRestartControlRequest();
 }
 
+float PowerLimiterInverter::getGridVoltage() const
+{
+    return _spInverter->Statistics()->getChannelFieldValue(TYPE_AC, CH0, FLD_UAC);
+}
+
 float PowerLimiterInverter::getDcVoltage(uint8_t input)
 {
     return _spInverter->Statistics()->getChannelFieldValue(TYPE_DC,
@@ -360,6 +369,9 @@ void PowerLimiterInverter::debug() const
             break;
         case Eligibility::CurrentLimitUnknown:
             eligibility += " (current limit unknown)";
+            break;
+        case Eligibility::GridDisconnected:
+            eligibility += " (grid disconnected)";
             break;
         case Eligibility::Eligible:
             eligibility = "eligible";
