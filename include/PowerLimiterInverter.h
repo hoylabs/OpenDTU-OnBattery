@@ -66,6 +66,7 @@ public:
 
     void restart();
 
+    float getGridVoltage() const;
     float getDcVoltage(uint8_t input);
     bool isSendingCommandsEnabled() const { return _spInverter->getEnableCommands(); }
     bool isReachable() const { return _spInverter->isReachable(); }
@@ -86,6 +87,7 @@ public:
         SendingCommandsDisabled,
         MaxOutputUnknown,
         CurrentLimitUnknown,
+        GridDisconnected,
         Eligible,
         Nighttime
     };
