@@ -35,32 +35,6 @@ float PowerLimiterOverscalingInverter::calculateMpptPowerAC(MpptNum_t mppt) cons
     return mpptPowerAC;
 }
 
-uint16_t PowerLimiterOverscalingInverter::applyIncrease(uint16_t increase)
-{
-    if (!isEligible()) { return 0; }
-
-    if (increase == 0) { return 0; }
-
-    // do not wake inverter up if it would produce too much power
-    if (!isProducing() && _config.LowerPowerLimit > increase) { return 0; }
-
-    uint16_t baseline = getCurrentLimitWatts();
-
-    // when overscaling is in use we must not use the current limit
-    // because it might be scaled.
-    if (overscalingEnabled()) {
-        baseline = getCurrentOutputAcWatts();
-    }
-
-    // inverters in standby can have an arbitrary limit, yet
-    // the baseline is 0 in case we are about to wake it up from standby.
-    if (!isProducing()) { baseline = 0; }
-
-    auto actualIncrease = std::min(increase, getMaxIncreaseWatts());
-    setAcOutput(baseline + actualIncrease);
-    return actualIncrease;
-}
-
 uint16_t PowerLimiterOverscalingInverter::scaleLimit(uint16_t newExpectedOutputWatts)
 {
     // overscalling allows us to compensate for shaded panels by increasing the
