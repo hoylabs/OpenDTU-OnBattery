@@ -29,6 +29,7 @@ void Stats::updateFrom(VeDirectShuntController::data_t const& shuntData) {
     _alarmLowSOC = shuntData.alarmReason_AR & 4;
     _alarmLowTemperature = shuntData.alarmReason_AR & 32;
     _alarmHighTemperature = shuntData.alarmReason_AR & 64;
+    _transmissionErrors = shuntData.transmissionErrors_Day;
 }
 
 void Stats::getLiveViewData(JsonVariant& root) const {
@@ -43,6 +44,7 @@ void Stats::getLiveViewData(JsonVariant& root) const {
     addLiveViewValue(root, "midpointVoltage", _midpointVoltage, "V", 2);
     addLiveViewValue(root, "midpointDeviation", _midpointDeviation, "%", 1);
     addLiveViewValue(root, "lastFullCharge", _lastFullCharge, "min", 0);
+    addLiveViewValue(root, "transmitError", _transmissionErrors, "1/d", 1);
     if (_tempPresent) {
         addLiveViewValue(root, "temperature", _temperature, "°C", 0);
     }
