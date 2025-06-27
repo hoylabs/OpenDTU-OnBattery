@@ -97,6 +97,11 @@
                                 }}</router-link>
                             </li>
                             <li>
+                                <router-link @click="onClick" class="dropdown-item" to="/settings/batteryguard">
+                                    {{ $t('menu.BatteryGuardSettings') }}
+                                </router-link>
+                            </li>
+                            <li>
                                 <router-link @click="onClick" class="dropdown-item" to="/settings/chargerac">{{
                                     $t('menu.AcChargerSettings')
                                 }}</router-link>
@@ -156,6 +161,11 @@
                             <li>
                                 <router-link @click="onClick" class="dropdown-item" to="/info/mqtt">{{
                                     $t('menu.MQTT')
+                                }}</router-link>
+                            </li>
+                            <li>
+                                <router-link @click="onClick" class="dropdown-item" to="/info/batteryguard">{{
+                                    $t('menu.BatteryGuard')
                                 }}</router-link>
                             </li>
                             <li>

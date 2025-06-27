@@ -257,6 +257,12 @@ void ConfigurationClass::serializeGridChargerHuaweiConfig(GridChargerHuaweiConfi
     target["fan_offline_full_speed"] = source.FanOfflineFullSpeed;
 }
 
+void ConfigurationClass::serializeBatteryGuardConfig(BatteryGuardConfig const& source, JsonObject& target)
+{
+    target["enabled"] = source.Enabled;
+    target["internal_resistance"] = source.InternalResistance;
+}
+
 bool ConfigurationClass::write()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "w");
@@ -444,6 +450,9 @@ bool ConfigurationClass::write()
 
     JsonObject gridcharger_huawei = gridcharger["huawei"].to<JsonObject>();
     serializeGridChargerHuaweiConfig(config.GridCharger.Huawei, gridcharger_huawei);
+
+    JsonObject batteryGuard = doc["batteryguard"].to<JsonObject>();
+    serializeBatteryGuardConfig(config.BatteryGuard, batteryGuard);
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
@@ -674,6 +683,12 @@ void ConfigurationClass::deserializeGridChargerHuaweiConfig(JsonObject const& so
     target.FanOfflineFullSpeed = source["fan_offline_full_speed"] | GRIDCHARGER_HUAWEI_FAN_OFFLINE_FULL_SPEED;
 }
 
+void ConfigurationClass::deserializeBatteryGuardConfig(JsonObject const& source, BatteryGuardConfig& target)
+{
+    target.Enabled = source["enabled"] | BATTERYGUARD_ENABLED;
+    target.InternalResistance = source["internal_resistance"] | BATTERYGUARD_INTERNAL_RESISTANCE;
+}
+
 bool ConfigurationClass::read()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "r", false);
@@ -887,6 +902,8 @@ bool ConfigurationClass::read()
     deserializeGridChargerConfig(gridcharger, config.GridCharger);
     deserializeGridChargerCanConfig(gridcharger["can"], config.GridCharger.Can);
     deserializeGridChargerHuaweiConfig(gridcharger["huawei"], config.GridCharger.Huawei);
+
+    deserializeBatteryGuardConfig(doc["batteryguard"], config.BatteryGuard);
 
     f.close();
 
