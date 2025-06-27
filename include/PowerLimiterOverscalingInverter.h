@@ -7,8 +7,6 @@ class PowerLimiterOverscalingInverter : public PowerLimiterInverter {
 public:
     explicit PowerLimiterOverscalingInverter(PowerLimiterInverterConfig const& config);
 
-    uint16_t applyIncrease(uint16_t increase) final;
-
 protected:
     void setAcOutput(uint16_t expectedOutputWatts) final;
     bool overscalingEnabled() const;

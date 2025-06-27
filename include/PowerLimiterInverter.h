@@ -54,7 +54,7 @@ public:
     // on the expected AC power output. returns the change in the range
     // [0..reduction] that will become effective (once update() returns false).
     virtual uint16_t applyReduction(uint16_t reduction, bool allowStandby) = 0;
-    virtual uint16_t applyIncrease(uint16_t increase) = 0;
+    uint16_t applyIncrease(uint16_t increase);
 
     // stop producing AC power. returns the change in power output
     // that will become effective (once update() returns false).

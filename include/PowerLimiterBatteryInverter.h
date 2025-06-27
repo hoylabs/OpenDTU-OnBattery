@@ -10,7 +10,6 @@ public:
     uint16_t getMaxReductionWatts(bool allowStandby) const final;
     uint16_t getMaxIncreaseWatts() const final;
     uint16_t applyReduction(uint16_t reduction, bool allowStandby) final;
-    uint16_t applyIncrease(uint16_t increase) final;
     uint16_t standby() final;
 
 private:
