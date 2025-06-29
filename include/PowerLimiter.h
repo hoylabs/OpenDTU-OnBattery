@@ -100,6 +100,7 @@ private:
     bool isStartThresholdReached() const;
     bool isStopThresholdReached() const;
     bool isBelowStopThreshold() const;
+    bool isMpptPowerLimited() const;
     void calcNextInverterRestart();
     bool isSolarPassThroughEnabled() const;
 };

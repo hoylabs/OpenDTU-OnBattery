@@ -159,6 +159,22 @@ std::optional<Stats::StateOfOperation> Stats::getStateOfOperation() const
     return std::nullopt;
 }
 
+std::optional<Stats::StateOfTracker> Stats::getStateOfTracker() const
+{
+    for (auto const& entry : _data) {
+        if (isStale(entry)) { continue; }
+
+        // see victron protocol documentation for MPPT states
+        switch (entry.second.stateOfTracker_MPPT) {
+            case 0: return Stats::StateOfTracker::Off;
+            case 1: return Stats::StateOfTracker::VoltageCurrentLimit;
+            case 2: return Stats::StateOfTracker::Active;
+            default: return Stats::StateOfTracker::Various;
+        }
+    }
+    return std::nullopt;
+}
+
 std::optional<float> Stats::getFloatVoltage() const
 {
     for (auto const& entry : _data) {
