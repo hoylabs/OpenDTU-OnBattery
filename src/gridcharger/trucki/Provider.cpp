@@ -113,6 +113,40 @@ void Provider::generalPowerControlLoop()
 {
     auto& config = Configuration.get();
 
+    auto oMaxAcPower = _dataCurrent.get<DataPointLabel::MaxAcPower>();
+    auto oOutputPower = _dataCurrent.get<DataPointLabel::DcPower>();
+
+    // ***********************
+    // Emergency charge
+    // ***********************
+    auto stats = Battery.getStats();
+    if (!_batteryEmergencyCharging && config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
+        if (!oMaxAcPower) {
+            // TODO(andreasboehm): if this situation actually occurs, this message
+            // will be printed with high frequency for a prolonged time. how can
+            // we deal with that?
+            DTU_LOGW("Cannot perform emergency charging with unknown PSU max ac power value");
+            return;
+        }
+
+        _batteryEmergencyCharging = true;
+
+        DTU_LOGI("Emergency Charge AC Power %.02f", *oMaxAcPower);
+        setChargerPowerAc(*oMaxAcPower);
+        return;
+    }
+
+    if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
+        // Battery request has changed. Set current to 0, wait for PSU to respond and then clear state
+        // TODO(schlimmchen): this is repeated very often for up to (polling interval) seconds. maybe
+        // trigger sending request for data immediately? otherwise implement a backoff instead.
+        setChargerPowerAc(0);
+        if (oOutputPower < 1) {
+            _batteryEmergencyCharging = false;
+        }
+        return;
+    }
+
     // ***********************
     // Automatic power control
     // ***********************
@@ -130,13 +164,12 @@ void Provider::generalPowerControlLoop()
             return;
         }
 
-        auto oOutputPower = _dataCurrent.get<DataPointLabel::DcPower>();
         auto oOutputVoltage = _dataCurrent.get<DataPointLabel::DcVoltage>();
         auto oMinAcPower = _dataCurrent.get<DataPointLabel::MinAcPower>();
-        auto oMaxAcPower = _dataCurrent.get<DataPointLabel::MaxAcPower>();
+        auto oOutputCurrent = _dataCurrent.get<DataPointLabel::DcCurrent>();
 
         // TODO(andreasboehm): check age of datapoints before using them
-        if (!oOutputPower || !oOutputVoltage || !oMinAcPower || !oMaxAcPower) {
+        if (!oOutputPower || !oOutputVoltage || !oMinAcPower || !oMaxAcPower || !oOutputCurrent) {
             DTU_LOGW("Cannot perform auto power control while critical PSU values are still unknown");
             _autoModeBlockedTillMillis = millis() + 1000;
             return;
@@ -162,13 +195,37 @@ void Provider::generalPowerControlLoop()
 
             DTU_LOGD("powerTotal: %.0f, outputPower: %.01f, newPowerLimit: %.0f", powerTotal, *oOutputPower, newPowerLimit);
 
+            // Check whether the battery SoC limit setting is enabled
+            if (config.Battery.Enabled && config.GridCharger.AutoPowerBatterySoCLimitsEnabled) {
+                uint8_t _batterySoC = Battery.getStats()->getSoC();
+                // Sets power limit to 0 if the BMS reported SoC reaches or exceeds the user configured value
+                if (_batterySoC >= config.GridCharger.AutoPowerStopBatterySoCThreshold) {
+                    newPowerLimit = 0;
+                    DTU_LOGD("Current battery SoC %i reached stop threshold %i, set newPowerLimit to %f",
+                            _batterySoC, config.GridCharger.AutoPowerStopBatterySoCThreshold, newPowerLimit);
+                }
+            }
+
             if (newPowerLimit >= *oMinAcPower) {
                 // Limit power to maximum
                 if (newPowerLimit > *oMaxAcPower) {
                     newPowerLimit = *oMaxAcPower;
                 }
 
-                // TODO(andreasboehm): add support for BMS values and limits!
+                auto efficiency = _dataCurrent.get<DataPointLabel::Efficiency>().value_or(90) / 100.0f;
+                efficiency = efficiency > 0.5f ? efficiency : 0.9f;
+
+                // Calculate output current
+                float calculatedCurrent = efficiency * (newPowerLimit / *oOutputVoltage);
+
+                // Limit output current to value requested by BMS
+                float permissibleCurrent = stats->getChargeCurrentLimit() - (stats->getChargeCurrent() - *oOutputCurrent); // BMS current limit - current from other sources, e.g. Victron MPPT charger
+                float outputCurrent = std::min(calculatedCurrent, permissibleCurrent);
+                outputCurrent = outputCurrent > 0 ? outputCurrent : 0;
+
+                // calculate new power limit based on output current
+                newPowerLimit = (outputCurrent * *oOutputVoltage) / efficiency;
+
                 _autoPowerEnabled = true;
                 setChargerPowerAc(newPowerLimit);
 
@@ -223,9 +280,7 @@ void Provider::sendPowerControlRequest()
 {
     auto& config = Configuration.get();
 
-    if (!config.GridCharger.AutoPowerEnabled
-        // TODO(andreasboehm): && !config.GridCharger.EmergencyChargeEnabled
-        ) {
+    if (!config.GridCharger.AutoPowerEnabled && !_batteryEmergencyCharging) {
         return;
     }
 
@@ -233,8 +288,6 @@ void Provider::sendPowerControlRequest()
 
     uint16_t acPowerSetpoint = _requestedPowerAc * 10; // ac power in W*10
 
-    // TODO(andreasboehm): we should only take control of the T2xG when auto-power is enabled
-    // OR conditionally when emergency-charging is enabled and active
     TruckiUdp.beginPacket(config.GridCharger.Trucki.IpAddress, udpPort);
     TruckiUdp.print(String(acPowerSetpoint));
     TruckiUdp.endPacket();

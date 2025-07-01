@@ -81,23 +81,21 @@
                         wide
                     />
 
-                    <template v-if="gridChargerConfigList.provider === 0">
-                        <InputElement
-                            v-if="gridChargerConfigList.auto_power_enabled"
-                            :label="$t('gridchargeradmin.EnableBatterySoCLimits')"
-                            v-model="gridChargerConfigList.auto_power_batterysoc_limits_enabled"
-                            type="checkbox"
-                            wide
-                        />
+                    <InputElement
+                        v-if="gridChargerConfigList.auto_power_enabled"
+                        :label="$t('gridchargeradmin.EnableBatterySoCLimits')"
+                        v-model="gridChargerConfigList.auto_power_batterysoc_limits_enabled"
+                        type="checkbox"
+                        wide
+                    />
 
-                        <InputElement
-                            :label="$t('gridchargeradmin.EnableEmergencyCharge')"
-                            :tooltip="$t('gridchargeradmin.EnableEmergencyChargeHint')"
-                            v-model="gridChargerConfigList.emergency_charge_enabled"
-                            type="checkbox"
-                            wide
-                        />
-                    </template>
+                    <InputElement
+                        :label="$t('gridchargeradmin.EnableEmergencyCharge')"
+                        :tooltip="$t('gridchargeradmin.EnableEmergencyChargeHint')"
+                        v-model="gridChargerConfigList.emergency_charge_enabled"
+                        type="checkbox"
+                        wide
+                    />
                 </template>
             </CardElement>
 
@@ -231,8 +229,7 @@
                 v-if="
                     gridChargerConfigList.enabled &&
                     gridChargerConfigList.auto_power_enabled &&
-                    gridChargerConfigList.auto_power_batterysoc_limits_enabled &&
-                    gridChargerConfigList.provider === 0
+                    gridChargerConfigList.auto_power_batterysoc_limits_enabled
                 "
             >
                 <InputElement

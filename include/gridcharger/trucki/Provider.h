@@ -92,6 +92,7 @@ private:
     uint32_t _autoModeBlockedTillMillis = 0;      // Timestamp to block running auto mode for some time
 
     bool _autoPowerEnabled = false;
+    bool _batteryEmergencyCharging = false;
 };
 
 } // namespace GridChargers::Trucki
