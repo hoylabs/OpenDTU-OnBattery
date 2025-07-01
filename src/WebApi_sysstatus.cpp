@@ -54,9 +54,10 @@ void WebApiSysstatusClass::onSystemStatus(AsyncWebServerRequest* request)
     root["flashsize"] = ESP.getFlashChipSize();
 
     JsonArray taskDetails = root["task_details"].to<JsonArray>();
-    static std::array<char const*, 15> constexpr task_names = {
+    static std::array<char const*, 16> constexpr task_names = {
         "IDLE0", "IDLE1", "wifi", "tiT", "loopTask", "async_tcp", "mqttclient",
-        "HuaweiHwIfc", "HuaweiTwai", "HuaweiMCP2515", "TruckiPolling",
+        "HuaweiHwIfc", "HuaweiTwai", "HuaweiMCP2515",
+        "TruckiPolling", "TruckiControl",
         "PM:SDM", "PM:HTTP+JSON", "PM:SML", "PM:HTTP+SML",
     };
     for (char const* task_name : task_names) {

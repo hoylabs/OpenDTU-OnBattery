@@ -74,14 +74,14 @@
                         />
                     </template>
 
-                    <template v-if="gridChargerConfigList.provider === 0">
-                        <InputElement
-                            :label="$t('gridchargeradmin.EnableAutoPower')"
-                            v-model="gridChargerConfigList.auto_power_enabled"
-                            type="checkbox"
-                            wide
-                        />
+                    <InputElement
+                        :label="$t('gridchargeradmin.EnableAutoPower')"
+                        v-model="gridChargerConfigList.auto_power_enabled"
+                        type="checkbox"
+                        wide
+                    />
 
+                    <template v-if="gridChargerConfigList.provider === 0">
                         <InputElement
                             v-if="gridChargerConfigList.auto_power_enabled"
                             :label="$t('gridchargeradmin.EnableBatterySoCLimits')"
@@ -150,102 +150,103 @@
                 />
             </CardElement>
 
-            <template v-if="gridChargerConfigList.provider === 0">
-                <CardElement
-                    :text="$t('gridchargeradmin.Limits')"
-                    textVariant="text-bg-primary"
-                    add-space
-                    v-if="
-                        gridChargerConfigList.enabled &&
-                        (gridChargerConfigList.auto_power_enabled || gridChargerConfigList.emergency_charge_enabled)
-                    "
-                >
-                    <InputElement
-                        :label="$t('gridchargeradmin.VoltageLimit')"
-                        :tooltip="$t('gridchargeradmin.stopVoltageLimitHint')"
-                        v-model="gridChargerConfigList.voltage_limit"
-                        postfix="V"
-                        type="number"
-                        wide
-                        required
-                        step="0.01"
-                        min="42"
-                        max="58.5"
-                    />
+            <CardElement
+                :text="$t('gridchargeradmin.Limits')"
+                textVariant="text-bg-primary"
+                add-space
+                v-if="
+                    gridChargerConfigList.enabled &&
+                    (gridChargerConfigList.auto_power_enabled || gridChargerConfigList.emergency_charge_enabled)
+                "
+            >
+                <InputElement
+                    :label="$t('gridchargeradmin.VoltageLimit')"
+                    :tooltip="$t('gridchargeradmin.stopVoltageLimitHint')"
+                    v-if="gridChargerConfigList.provider === 0"
+                    v-model="gridChargerConfigList.voltage_limit"
+                    postfix="V"
+                    type="number"
+                    wide
+                    required
+                    step="0.01"
+                    min="42"
+                    max="58.5"
+                />
 
-                    <InputElement
-                        :label="$t('gridchargeradmin.enableVoltageLimit')"
-                        :tooltip="$t('gridchargeradmin.enableVoltageLimitHint')"
-                        v-model="gridChargerConfigList.enable_voltage_limit"
-                        v-if="gridChargerConfigList.auto_power_enabled"
-                        postfix="V"
-                        type="number"
-                        wide
-                        required
-                        step="0.01"
-                        min="42"
-                        max="58.5"
-                    />
+                <InputElement
+                    :label="$t('gridchargeradmin.enableVoltageLimit')"
+                    :tooltip="$t('gridchargeradmin.enableVoltageLimitHint')"
+                    v-model="gridChargerConfigList.enable_voltage_limit"
+                    v-if="gridChargerConfigList.auto_power_enabled"
+                    postfix="V"
+                    type="number"
+                    wide
+                    required
+                    step="0.01"
+                    min="42"
+                    max="58.5"
+                />
 
-                    <InputElement
-                        :label="$t('gridchargeradmin.lowerPowerLimit')"
-                        v-model="gridChargerConfigList.lower_power_limit"
-                        v-if="gridChargerConfigList.auto_power_enabled"
-                        postfix="W"
-                        type="number"
-                        wide
-                        required
-                        min="50"
-                        max="4000"
-                    />
+                <InputElement
+                    :label="$t('gridchargeradmin.lowerPowerLimit')"
+                    v-model="gridChargerConfigList.lower_power_limit"
+                    v-if="gridChargerConfigList.auto_power_enabled && gridChargerConfigList.provider === 0"
+                    postfix="W"
+                    type="number"
+                    wide
+                    required
+                    min="50"
+                    max="4000"
+                />
 
-                    <InputElement
-                        :label="$t('gridchargeradmin.upperPowerLimit')"
-                        :tooltip="$t('gridchargeradmin.upperPowerLimitHint')"
-                        v-model="gridChargerConfigList.upper_power_limit"
-                        postfix="W"
-                        type="number"
-                        wide
-                        required
-                        min="100"
-                        max="4000"
-                    />
+                <InputElement
+                    :label="$t('gridchargeradmin.upperPowerLimit')"
+                    :tooltip="$t('gridchargeradmin.upperPowerLimitHint')"
+                    v-model="gridChargerConfigList.upper_power_limit"
+                    v-if="gridChargerConfigList.provider === 0"
+                    postfix="W"
+                    type="number"
+                    wide
+                    required
+                    min="100"
+                    max="4000"
+                />
 
-                    <InputElement
-                        :label="$t('gridchargeradmin.targetPowerConsumption')"
-                        :tooltip="$t('gridchargeradmin.targetPowerConsumptionHint')"
-                        v-model="gridChargerConfigList.target_power_consumption"
-                        v-if="gridChargerConfigList.auto_power_enabled"
-                        postfix="W"
-                        type="number"
-                        wide
-                        required
-                    />
-                </CardElement>
+                <InputElement
+                    :label="$t('gridchargeradmin.targetPowerConsumption')"
+                    :tooltip="$t('gridchargeradmin.targetPowerConsumptionHint')"
+                    v-model="gridChargerConfigList.target_power_consumption"
+                    v-if="gridChargerConfigList.auto_power_enabled"
+                    postfix="W"
+                    type="number"
+                    wide
+                    required
+                />
+            </CardElement>
 
-                <CardElement
-                    :text="$t('gridchargeradmin.BatterySoCLimits')"
-                    textVariant="text-bg-primary"
-                    add-space
-                    v-if="
-                        gridChargerConfigList.enabled &&
-                        gridChargerConfigList.auto_power_enabled &&
-                        gridChargerConfigList.auto_power_batterysoc_limits_enabled
-                    "
-                >
-                    <InputElement
-                        :label="$t('gridchargeradmin.StopBatterySoCThreshold')"
-                        :tooltip="$t('gridchargeradmin.StopBatterySoCThresholdHint')"
-                        v-model="gridChargerConfigList.stop_batterysoc_threshold"
-                        postfix="%"
-                        type="number"
-                        wide
-                        required
-                        min="2"
-                        max="99"
-                    />
-                </CardElement>
-            </template>
+            <CardElement
+                :text="$t('gridchargeradmin.BatterySoCLimits')"
+                textVariant="text-bg-primary"
+                add-space
+                v-if="
+                    gridChargerConfigList.enabled &&
+                    gridChargerConfigList.auto_power_enabled &&
+                    gridChargerConfigList.auto_power_batterysoc_limits_enabled &&
+                    gridChargerConfigList.provider === 0
+                "
+            >
+                <InputElement
+                    :label="$t('gridchargeradmin.StopBatterySoCThreshold')"
+                    :tooltip="$t('gridchargeradmin.StopBatterySoCThresholdHint')"
+                    v-model="gridChargerConfigList.stop_batterysoc_threshold"
+                    postfix="%"
+                    type="number"
+                    wide
+                    required
+                    min="2"
+                    max="99"
+                />
+            </CardElement>
 
             <FormFooter @reload="getChargerConfig" />
         </form>

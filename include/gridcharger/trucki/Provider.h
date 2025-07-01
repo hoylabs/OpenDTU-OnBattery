@@ -49,6 +49,8 @@ private:
         _dataCurrent.add<L>(*value);
     }
 
+    void generalPowerControlLoop();
+
     static void pollingLoopHelper(void* context);
     void pollingLoop();
     void poll();
@@ -62,12 +64,34 @@ private:
 
     std::unique_ptr<HttpGetter> _httpGetter;
 
+    static constexpr int POLLING_INTERVAL_MS = 1000; // 1 second
+    static constexpr int HTTP_REQUEST_TIMEOUT_MS = 50; // 50ms
+
+    void setChargerPowerAc(float powerAc);
+    float _requestedPowerAc = 0;
+
+    static void powerControlLoopHelper(void* context);
+    void powerControlLoop();
+    void sendPowerControlRequest();
+    void parsePowerControlResponse();
+
+    TaskHandle_t _powerControlTaskHandle = nullptr;
+    std::atomic<bool> _powerControlTaskDone = false;
+    bool _stopPowerControl;
+    mutable std::mutex _powerControlMutex;
+    std::condition_variable _powerControlCv;
+    uint32_t _lastPowerControlRequestMillis = 0;
+
+    static constexpr int POWER_CONTROL_INTERVAL_MS = 500; // 500ms
+
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
 
     DataPointContainer _dataCurrent;
 
-    static constexpr int POLLING_INTERVAL_MS = 2000; // 2 seconds
-    static constexpr int HTTP_REQUEST_TIMEOUT_MS = 50; // 50ms
+    uint32_t _lastPowerMeterUpdateReceivedMillis; // Timestamp of last seen power meter value
+    uint32_t _autoModeBlockedTillMillis = 0;      // Timestamp to block running auto mode for some time
+
+    bool _autoPowerEnabled = false;
 };
 
 } // namespace GridChargers::Trucki
