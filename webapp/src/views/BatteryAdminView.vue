@@ -217,7 +217,8 @@
                             (batteryConfigList.provider == 0 ||
                                 batteryConfigList.provider == 2 ||
                                 batteryConfigList.provider == 4 ||
-                                batteryConfigList.provider == 5)
+                                batteryConfigList.provider == 5 ||
+                                batteryConfigList.provider == 8)
                         "
                     >
                         <InputElement
@@ -546,6 +547,7 @@ export default defineComponent({
                 { key: 5, value: 'SBSCan' },
                 { key: 6, value: 'JbdBmsSerial' },
                 { key: 7, value: 'ZendureMqtt' },
+                { key: 8, value: 'JkBmsCan'},
             ],
             serialBmsInterfaceTypeList: [
                 { key: 0, value: 'Uart' },
