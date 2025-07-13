@@ -50,7 +50,7 @@ void HassIntegration::publishSensors() const
     String cellno;
     //char str[4];
     String str;
-    for (i=0; i<config.Battery.JkBmsCan.number_of_cells; i++)
+    for (i=0; i<config.Battery.JkBmsCan.NumberOfCells; i++)
     {
         str = String(i); //itoa(i, str, 10);
         if (i>99)

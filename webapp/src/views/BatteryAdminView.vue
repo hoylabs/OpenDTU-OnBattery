@@ -84,6 +84,15 @@
                     :postfix="'Cells'"
                     wide
                 />
+                  <InputElement
+                    :label="$t('batteryadmin.JkBmsCanProtocolVersion')"
+                    v-model="batteryConfigList.jkbmscan.can_protocol_version"
+                    type="number"
+                    min="1"
+                    step="1"
+                    :postfix="'Version'"
+                    wide
+                />
             </CardElement>
 
             <template v-if="batteryConfigList.enabled && batteryConfigList.provider == 2">

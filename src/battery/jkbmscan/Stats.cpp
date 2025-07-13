@@ -21,7 +21,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
     addLiveViewValue(root, "temperature", _temperature, "°C", 1);
     addLiveViewValue(root, "modules", _moduleCount, "", 0);
     std::string cellno;
-    for (i=0; i<config.Battery.JkBmsCan.number_of_cells; i++)
+    for (i=0; i<config.Battery.JkBmsCan.NumberOfCells; i++)
     {
         if (i<10)
         {
@@ -37,7 +37,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
         addLiveViewValue(root, cellno, _cellVoltage[i], "mV", 0);
     }
 
-    addLiveViewValue(root, "Number_Of_Cells", (float) config.Battery.JkBmsCan.number_of_cells, "Cells", 0);
+    addLiveViewValue(root, "Number_Of_Cells", (float) config.Battery.JkBmsCan.NumberOfCells, "Cells", 0);
     addLiveViewValue(root, "Max_Cell_Voltage", _MaxCellVoltage, "mV", 0);
     addLiveViewValue(root, "Max_Cell_Voltage_Number", _MaxCellVoltageNumber, "Cell", 0);
     addLiveViewValue(root, "Min_Cell_Voltage", _MinCellVoltage, "mV", 0);
@@ -108,11 +108,11 @@ void Stats::mqttPublish() const
     MqttSettings.publish("battery/charging/chargeEnabled", String(_chargeEnabled));
     MqttSettings.publish("battery/charging/dischargeEnabled", String(_dischargeEnabled));
     MqttSettings.publish("battery/charging/chargeRequest", String(_chargeRequest));
-    MqttSettings.publish("battery/modulesTotal", String(config.Battery.JkBmsCan.number_of_cells));
+    MqttSettings.publish("battery/modulesTotal", String(config.Battery.JkBmsCan.NumberOfCells));
     String cellno;
     //char str[4];
     String str;
-    for (i=0; i<config.Battery.JkBmsCan.number_of_cells; i++)
+    for (i=0; i<config.Battery.JkBmsCan.NumberOfCells; i++)
     {
         str = String(i); //itoa(i, str, 10);
         if (i>99)
@@ -134,10 +134,6 @@ void Stats::mqttPublish() const
             //cellno.concat("Voltage");
         }
         MqttSettings.publish(cellno, String(_cellVoltage[i]));
-        if (1) {
-                MessageOutput.printf("[JkBmsCan] %s: %f \r\n",
-                        cellno.c_str(), _cellVoltage[i]);
-        }
        
     }
    
