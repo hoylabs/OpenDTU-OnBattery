@@ -24,6 +24,7 @@ private:
     float _temperature;
 
     float _cellVoltage[25];
+    float _packVoltage;
     float _MaxCellVoltage;
     uint8_t _MaxCellVoltageNumber;
     float _MinCellVoltage;
@@ -65,6 +66,7 @@ private:
     bool _chargeAndHeat;
 
     uint8_t _moduleCount;
+    uint8_t _JkBmsCanVersion;
 };
 
 } // namespace Batteries::JkBmsCan

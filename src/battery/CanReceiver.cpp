@@ -37,14 +37,12 @@ bool CanReceiver::init(char const* providerName)
     // Initialize configuration structures using macro initializers
     if(pin.battery_can_type==2)  {
         t_config = TWAI_TIMING_CONFIG_250KBITS();
-        MessageOutput.printf("[%s] Twai driver set to 250 KBITS\r\n",
-                _providerName);
+        DTU_LOGD("Twai driver set to 250 KBITS");
     }
     else
     {
        t_config = TWAI_TIMING_CONFIG_500KBITS();
-        MessageOutput.printf("[%s] Twai driver set to 500 KBITS\r\n",
-                _providerName);
+        DTU_LOGD("Twai driver set to 500 KBITS");
     }
     twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
