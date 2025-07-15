@@ -124,6 +124,61 @@
                 </template>
             </CardElement>
 
+            <CardElement
+                :text="$t('powerlimiteradmin.GridVoltageThrottling')"
+                textVariant="text-bg-primary"
+                add-space
+                v-if="isEnabled && hasPowerMeter"
+            >
+                <InputElement
+                    :label="$t('powerlimiteradmin.GridVoltageThrottlingEnabled')"
+                    :tooltip="$t('powerlimiteradmin.GridVoltageThrottlingHint')"
+                    v-model="powerLimiterConfigList.grid_voltage_throttling_enabled"
+                    type="checkbox"
+                    wide
+                />
+
+                <template v-if="powerLimiterConfigList.grid_voltage_throttling_enabled">
+                    <InputElement
+                        :label="$t('powerlimiteradmin.GridVoltageUpperThreshold')"
+                        :tooltip="$t('powerlimiteradmin.GridVoltageUpperThresholdHint')"
+                        v-model="powerLimiterConfigList.grid_voltage_upper_threshold"
+                        placeholder="253"
+                        min="220"
+                        max="270"
+                        postfix="V"
+                        type="number"
+                        step="0.1"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('powerlimiteradmin.GridVoltageLowerThreshold')"
+                        :tooltip="$t('powerlimiteradmin.GridVoltageLowerThresholdHint')"
+                        v-model="powerLimiterConfigList.grid_voltage_lower_threshold"
+                        placeholder="245"
+                        min="220"
+                        max="270"
+                        postfix="V"
+                        type="number"
+                        step="0.1"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('powerlimiteradmin.GridVoltageMaxThrottling')"
+                        :tooltip="$t('powerlimiteradmin.GridVoltageMaxThrottlingHint')"
+                        v-model="powerLimiterConfigList.grid_voltage_max_throttling"
+                        placeholder="50"
+                        min="0"
+                        max="100"
+                        postfix="%"
+                        type="number"
+                        wide
+                    />
+                </template>
+            </CardElement>
+
             <template v-if="isEnabled">
                 <template v-for="(inv, idx) in powerLimiterConfigList.inverters" :key="idx">
                     <CardElement

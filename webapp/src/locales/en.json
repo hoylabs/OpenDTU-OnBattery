@@ -746,7 +746,16 @@
         "VoltageThresholds": "Battery Voltage Thresholds",
         "VoltageLoadCorrectionInfo": "<b>Hint:</b> When the battery is discharged, its voltage drops. The voltage drop scales with the discharge current. In order to not stop inverters too early (stop threshold), this load correction factor can be specified to calculate the battery voltage if it was idle. Corrected voltage = DC Voltage + (Current power * correction factor).",
         "InverterRestartHour": "Automatic Inverter Restart Time",
-        "InverterRestartHint": "The inverter(s) will be automatically restarted daily at the desired time. This is necessary because the inverter may behave unexpectedly if not restarted and powered continuously for days/weeks/months. A restart is also required to reset the daily yield."
+        "InverterRestartHint": "The inverter(s) will be automatically restarted daily at the desired time. This is necessary because the inverter may behave unexpectedly if not restarted and powered continuously for days/weeks/months. A restart is also required to reset the daily yield.",
+        "GridVoltageThrottling": "Grid Voltage Throttling",
+        "GridVoltageThrottlingEnabled": "Enable Grid Voltage Throttling",
+        "GridVoltageThrottlingHint": "Dynamically reduce power output when grid voltage rises to prevent hard shutdowns at overvoltage protection limits.",
+        "GridVoltageUpperThreshold": "Upper Voltage Threshold",
+        "GridVoltageUpperThresholdHint": "When grid voltage reaches this level, maximum throttling is applied. Typical values: 253V for European grids.",
+        "GridVoltageLowerThreshold": "Lower Voltage Threshold", 
+        "GridVoltageLowerThresholdHint": "Below this voltage level, no throttling is applied. Between lower and upper thresholds, throttling is applied proportionally.",
+        "GridVoltageMaxThrottling": "Maximum Throttling",
+        "GridVoltageMaxThrottlingHint": "Maximum percentage of power reduction when upper voltage threshold is reached. Example: 50% means power is reduced to half."
     },
     "batteryadmin": {
         "BatterySettings": "Battery Settings",

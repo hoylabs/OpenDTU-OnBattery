@@ -54,5 +54,9 @@ export interface PowerLimiterConfig {
     inverter_channel_id_for_dc_voltage: number;
     restart_hour: number;
     total_upper_power_limit: number;
+    grid_voltage_throttling_enabled: boolean;
+    grid_voltage_upper_threshold: number;
+    grid_voltage_lower_threshold: number;
+    grid_voltage_max_throttling: number;
     inverters: PowerLimiterInverterConfig[];
 }
