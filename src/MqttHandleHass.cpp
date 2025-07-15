@@ -9,6 +9,8 @@
 #include "Utils.h"
 #include "__compiled_constants.h"
 #include "defaults.h"
+#include "Configuration.h"
+#include <powermeter/Controller.h>
 
 #define MAX_CONFIG_PUBLISH_RATIO 60000
 
@@ -81,6 +83,9 @@ void MqttHandleHassClass::publishConfig()
     publishDtuSensor("DC Power", "dc/power", "W", "", DEVICE_CLS_PWR, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
 
     publishDtuBinarySensor("Status", config.Mqtt.Lwt.Topic, config.Mqtt.Lwt.Value_Online, config.Mqtt.Lwt.Value_Offline, DEVICE_CLS_CONNECTIVITY, STATE_CLS_NONE, CATEGORY_DIAGNOSTIC);
+
+    // publish PowerMeter sensors
+    publishPowerMeterConfig();
 
     // Loop all inverters
     for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
@@ -431,4 +436,61 @@ void MqttHandleHassClass::publishInverterSensor(
     JsonDocument root;
     createInverterInfo(root, inv);
     publishSensor(root, "dtu_" + serial, serial, name, serial + "/" + state_topic, unit_of_measure, icon, device_class, state_class, category);
+}
+
+void MqttHandleHassClass::publishPowerMeterConfig()
+{
+    const CONFIG_T& config = Configuration.get();
+    
+    // Only publish if powermeter is enabled
+    if (!config.PowerMeter.Enabled) {
+        return;
+    }
+
+    const String powermeterDeviceId = "powermeter_" + getDtuUniqueId();
+
+    // Publish power sensors
+    publishPowerMeterSensor("Power Total", "powermeter/powertotal", "W", "mdi:flash", DEVICE_CLS_PWR, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
+    publishPowerMeterSensor("Power L1", "powermeter/power1", "W", "mdi:flash", DEVICE_CLS_PWR, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
+    publishPowerMeterSensor("Power L2", "powermeter/power2", "W", "mdi:flash", DEVICE_CLS_PWR, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
+    publishPowerMeterSensor("Power L3", "powermeter/power3", "W", "mdi:flash", DEVICE_CLS_PWR, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
+    
+    // Publish voltage sensors
+    publishPowerMeterSensor("Voltage L1", "powermeter/voltage1", "V", "mdi:sine-wave", DEVICE_CLS_VOLTAGE, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
+    publishPowerMeterSensor("Voltage L2", "powermeter/voltage2", "V", "mdi:sine-wave", DEVICE_CLS_VOLTAGE, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
+    publishPowerMeterSensor("Voltage L3", "powermeter/voltage3", "V", "mdi:sine-wave", DEVICE_CLS_VOLTAGE, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
+    
+    // Publish current sensors
+    publishPowerMeterSensor("Current L1", "powermeter/current1", "A", "mdi:current-ac", DEVICE_CLS_CURRENT, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
+    publishPowerMeterSensor("Current L2", "powermeter/current2", "A", "mdi:current-ac", DEVICE_CLS_CURRENT, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
+    publishPowerMeterSensor("Current L3", "powermeter/current3", "A", "mdi:current-ac", DEVICE_CLS_CURRENT, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
+    
+    // Publish energy sensors
+    publishPowerMeterSensor("Import", "powermeter/import", "kWh", "mdi:transmission-tower-import", DEVICE_CLS_ENERGY, STATE_CLS_TOTAL_INCREASING, CATEGORY_NONE);
+    publishPowerMeterSensor("Export", "powermeter/export", "kWh", "mdi:transmission-tower-export", DEVICE_CLS_ENERGY, STATE_CLS_TOTAL_INCREASING, CATEGORY_NONE);
+}
+
+void MqttHandleHassClass::publishPowerMeterSensor(
+    const String& name, const String& state_topic,
+    const String& unit_of_measure, const String& icon,
+    const DeviceClassType device_class, const StateClassType state_class, const CategoryType category)
+{
+    const String powermeterDeviceId = "powermeter_" + getDtuUniqueId();
+
+    JsonDocument root;
+    createPowerMeterInfo(root);
+    publishSensor(root, powermeterDeviceId, powermeterDeviceId, name, state_topic, unit_of_measure, icon, device_class, state_class, category);
+}
+
+void MqttHandleHassClass::createPowerMeterInfo(JsonDocument& root)
+{
+    createDeviceInfo(
+        root,
+        "PowerMeter",
+        "powermeter_" + getDtuUniqueId(),
+        getDtuUrl(),
+        "OpenDTU",
+        "PowerMeter",
+        __COMPILED_GIT_HASH__,
+        getDtuUniqueId());
 }

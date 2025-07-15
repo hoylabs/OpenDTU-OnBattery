@@ -93,6 +93,11 @@ private:
     static void publishInverterButton(std::shared_ptr<InverterAbstract> inv, const String& name, const String& state_topic, const String& payload, const String& icon, const DeviceClassType device_class, const StateClassType state_class, const CategoryType category);
     static void publishInverterNumber(std::shared_ptr<InverterAbstract> inv, const String& name, const String& state_topic, const String& command_topic, const int16_t min, const int16_t max, float step, const String& unit_of_measure, const String& icon, const StateClassType state_class, const CategoryType category);
 
+    // PowerMeter
+    static void publishPowerMeterConfig();
+    static void publishPowerMeterSensor(const String& name, const String& state_topic, const String& unit_of_measure, const String& icon, const DeviceClassType device_class, const StateClassType state_class, const CategoryType category);
+    static void createPowerMeterInfo(JsonDocument& doc);
+
     static void createInverterInfo(JsonDocument& doc, std::shared_ptr<InverterAbstract> inv);
     static void createDtuInfo(JsonDocument& doc);
 
