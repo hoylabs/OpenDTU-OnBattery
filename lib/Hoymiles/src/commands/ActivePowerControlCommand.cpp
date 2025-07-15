@@ -63,9 +63,22 @@ void ActivePowerControlCommand::setActivePowerLimit(const float limit, const Pow
     _payload[12] = (l >> 8) & 0xff;
     _payload[13] = (l) & 0xff;
 
+    // For HMS inverters with firmware >= 1.1.12, use updated type values for persistent commands
+    PowerLimitControlType actualType = type;
+    String typeName = _inv->typeName();
+    if (typeName.startsWith("HMS-") && _inv->DevInfo()->getFwBuildVersion() >= 10112U) {
+        if (type == PowerLimitControlType::AbsolutPersistent) {
+            // Use updated type value for absolute persistent limits on HMS firmware 1.1.12+
+            actualType = static_cast<PowerLimitControlType>(0x0102);
+        } else if (type == PowerLimitControlType::RelativPersistent) {
+            // Use updated type value for relative persistent limits on HMS firmware 1.1.12+
+            actualType = static_cast<PowerLimitControlType>(0x0103);
+        }
+    }
+
     // type
-    _payload[14] = (type >> 8) & 0xff;
-    _payload[15] = (type) & 0xff;
+    _payload[14] = (actualType >> 8) & 0xff;
+    _payload[15] = (actualType) & 0xff;
 
     udpateCRC(CRC_SIZE);
 }

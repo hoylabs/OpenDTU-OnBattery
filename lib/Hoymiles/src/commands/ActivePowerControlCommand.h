@@ -6,8 +6,8 @@
 typedef enum { // ToDo: to be verified by field tests
     AbsolutNonPersistent = 0x0000, // 0
     RelativNonPersistent = 0x0001, // 1
-    AbsolutPersistent = 0x0100, // 256
-    RelativPersistent = 0x0101 // 257
+    AbsolutPersistent = 0x0100, // 256 (0x0102 for HMS firmware >= 1.1.12)
+    RelativPersistent = 0x0101 // 257 (0x0103 for HMS firmware >= 1.1.12)
 } PowerLimitControlType;
 
 class ActivePowerControlCommand : public DevControlCommand {
