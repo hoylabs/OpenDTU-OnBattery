@@ -5,6 +5,7 @@
 #include "MqttSettings.h"
 #include "MqttHandlePowerLimiter.h"
 #include "PowerLimiter.h"
+#include <powermeter/Controller.h>
 #include <ctime>
 #include <string>
 #include <LogHelper.h>
@@ -91,6 +92,18 @@ void MqttHandlePowerLimiterClass::loop()
     MqttSettings.publish("powerlimiter/status/upper_power_limit", String(config.PowerLimiter.TotalUpperPowerLimit));
 
     MqttSettings.publish("powerlimiter/status/target_power_consumption", String(config.PowerLimiter.TargetPowerConsumption));
+
+    // Grid voltage throttling status
+    if (config.PowerLimiter.GridVoltageThrottlingEnabled && PowerMeter.isDataValid()) {
+        MqttSettings.publish("powerlimiter/status/grid_voltage_throttling_enabled", String(config.PowerLimiter.GridVoltageThrottlingEnabled));
+        MqttSettings.publish("powerlimiter/status/grid_voltage", String(PowerMeter.getGridVoltage()));
+        MqttSettings.publish("powerlimiter/status/grid_voltage_l1", String(PowerMeter.getGridVoltageL1()));
+        MqttSettings.publish("powerlimiter/status/grid_voltage_l2", String(PowerMeter.getGridVoltageL2()));
+        MqttSettings.publish("powerlimiter/status/grid_voltage_l3", String(PowerMeter.getGridVoltageL3()));
+        MqttSettings.publish("powerlimiter/status/threshold/grid_voltage/lower", String(config.PowerLimiter.GridVoltageLowerThreshold));
+        MqttSettings.publish("powerlimiter/status/threshold/grid_voltage/upper", String(config.PowerLimiter.GridVoltageUpperThreshold));
+        MqttSettings.publish("powerlimiter/status/threshold/grid_voltage/max_throttling", String(config.PowerLimiter.GridVoltageMaxThrottling));
+    }
 
     MqttSettings.publish("powerlimiter/status/inverter_update_timeouts", String(PowerLimiter.getInverterUpdateTimeouts()));
 
