@@ -83,7 +83,9 @@ void Provider::processSmlByte(uint8_t byte)
         case SML_FINAL:
             _dataCurrent.updateFrom(_dataInFlight);
             reset();
-            DTU_LOGD("TotalPower: %5.2f", getPowerTotal());
+            if (DTU_LOG_IS_DEBUG) {
+                DTU_LOGD("TotalPower: %5.2f", getPowerTotal());
+            }
             break;
         case SML_CHECKSUM_ERROR:
             reset();
