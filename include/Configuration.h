@@ -177,6 +177,10 @@ struct POWERLIMITER_CONFIG_T {
     uint8_t InverterChannelIdForDcVoltage;
     uint8_t RestartHour;
     uint16_t TotalUpperPowerLimit;
+    bool GridVoltageThrottlingEnabled;
+    float GridVoltageUpperThreshold;
+    float GridVoltageLowerThreshold;
+    uint8_t GridVoltageMaxThrottling;
     PowerLimiterInverterConfig Inverters[INV_MAX_COUNT];
 };
 using PowerLimiterConfig = struct POWERLIMITER_CONFIG_T;

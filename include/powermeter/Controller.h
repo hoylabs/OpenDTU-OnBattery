@@ -17,6 +17,12 @@ public:
     float getPowerTotal() const;
     uint32_t getLastUpdate() const;
     bool isDataValid() const;
+    
+    // Grid voltage access methods
+    float getGridVoltage() const;
+    float getGridVoltageL1() const;
+    float getGridVoltageL2() const;
+    float getGridVoltageL3() const;
 
 private:
     void loop();

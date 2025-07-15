@@ -8,6 +8,7 @@
 #include <powermeter/sml/serial/Provider.h>
 #include <powermeter/udp/smahm/Provider.h>
 #include <powermeter/udp/victron/Provider.h>
+#include <algorithm>
 
 PowerMeters::Controller PowerMeter;
 
@@ -86,6 +87,40 @@ bool Controller::isDataValid() const
     std::lock_guard<std::mutex> l(_mutex);
     if (!_upProvider) { return false; }
     return _upProvider->isDataValid();
+}
+
+float Controller::getGridVoltage() const
+{
+    std::lock_guard<std::mutex> l(_mutex);
+    if (!_upProvider) { return 0.0; }
+    
+    // Return the highest voltage of the three phases
+    float voltageL1 = _upProvider->getGridVoltageL1();
+    float voltageL2 = _upProvider->getGridVoltageL2();
+    float voltageL3 = _upProvider->getGridVoltageL3();
+    
+    return std::max({voltageL1, voltageL2, voltageL3});
+}
+
+float Controller::getGridVoltageL1() const
+{
+    std::lock_guard<std::mutex> l(_mutex);
+    if (!_upProvider) { return 0.0; }
+    return _upProvider->getGridVoltageL1();
+}
+
+float Controller::getGridVoltageL2() const
+{
+    std::lock_guard<std::mutex> l(_mutex);
+    if (!_upProvider) { return 0.0; }
+    return _upProvider->getGridVoltageL2();
+}
+
+float Controller::getGridVoltageL3() const
+{
+    std::lock_guard<std::mutex> l(_mutex);
+    if (!_upProvider) { return 0.0; }
+    return _upProvider->getGridVoltageL3();
 }
 
 void Controller::loop()

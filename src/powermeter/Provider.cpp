@@ -55,4 +55,22 @@ void Provider::mqttLoop() const
     _lastMqttPublish = millis();
 }
 
+float Provider::getGridVoltageL1() const
+{
+    auto oVoltage = _dataCurrent.get<DataPointLabel::VoltageL1>();
+    return oVoltage.value_or(0.0);
+}
+
+float Provider::getGridVoltageL2() const
+{
+    auto oVoltage = _dataCurrent.get<DataPointLabel::VoltageL2>();
+    return oVoltage.value_or(0.0);
+}
+
+float Provider::getGridVoltageL3() const
+{
+    auto oVoltage = _dataCurrent.get<DataPointLabel::VoltageL3>();
+    return oVoltage.value_or(0.0);
+}
+
 } // namespace PowerMeters

@@ -31,6 +31,11 @@ public:
     float getPowerTotal() const;
     uint32_t getLastUpdate() const { return _dataCurrent.getLastUpdate(); }
     void mqttLoop() const;
+    
+    // Grid voltage access methods
+    float getGridVoltageL1() const;
+    float getGridVoltageL2() const;
+    float getGridVoltageL3() const;
 
 protected:
     Provider() = default;

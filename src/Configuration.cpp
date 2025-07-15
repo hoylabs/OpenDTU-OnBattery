@@ -210,6 +210,10 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
     target["inverter_channel_id_for_dc_voltage"] = source.InverterChannelIdForDcVoltage;
     target["inverter_restart_hour"] = source.RestartHour;
     target["total_upper_power_limit"] = source.TotalUpperPowerLimit;
+    target["grid_voltage_throttling_enabled"] = source.GridVoltageThrottlingEnabled;
+    target["grid_voltage_upper_threshold"] = roundedFloat(source.GridVoltageUpperThreshold);
+    target["grid_voltage_lower_threshold"] = roundedFloat(source.GridVoltageLowerThreshold);
+    target["grid_voltage_max_throttling"] = source.GridVoltageMaxThrottling;
 
     JsonArray inverters = target["inverters"].to<JsonArray>();
     for (size_t i = 0; i < INV_MAX_COUNT; ++i) {
@@ -628,6 +632,10 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
     target.InverterChannelIdForDcVoltage = source["inverter_channel_id_for_dc_voltage"] | POWERLIMITER_INVERTER_CHANNEL_ID;
     target.RestartHour = source["inverter_restart_hour"] | POWERLIMITER_RESTART_HOUR;
     target.TotalUpperPowerLimit = source["total_upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+    target.GridVoltageThrottlingEnabled = source["grid_voltage_throttling_enabled"] | POWERLIMITER_GRID_VOLTAGE_THROTTLING_ENABLED;
+    target.GridVoltageUpperThreshold = source["grid_voltage_upper_threshold"] | POWERLIMITER_GRID_VOLTAGE_UPPER_THRESHOLD;
+    target.GridVoltageLowerThreshold = source["grid_voltage_lower_threshold"] | POWERLIMITER_GRID_VOLTAGE_LOWER_THRESHOLD;
+    target.GridVoltageMaxThrottling = source["grid_voltage_max_throttling"] | POWERLIMITER_GRID_VOLTAGE_MAX_THROTTLING;
 
     JsonArray inverters = source["inverters"].as<JsonArray>();
     for (size_t i = 0; i < INV_MAX_COUNT; ++i) {

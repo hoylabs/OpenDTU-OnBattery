@@ -584,7 +584,63 @@ uint16_t PowerLimiterClass::calcTargetOutput() const
     // produce any power at all.
     if (targetOutput < 0) { return 0; }
 
-    return static_cast<uint16_t>(targetOutput);
+    uint16_t baseTargetOutput = static_cast<uint16_t>(targetOutput);
+    
+    // Apply grid voltage throttling if enabled
+    if (config.PowerLimiter.GridVoltageThrottlingEnabled && meterValid) {
+        baseTargetOutput = applyGridVoltageThrottling(baseTargetOutput);
+    }
+    
+    return baseTargetOutput;
+}
+
+uint16_t PowerLimiterClass::applyGridVoltageThrottling(uint16_t baseTargetOutput) const
+{
+    auto const& config = Configuration.get();
+    
+    // Get the highest grid voltage from any phase
+    float gridVoltage = PowerMeter.getGridVoltage();
+    
+    // If no voltage data is available, don't throttle
+    if (gridVoltage <= 0.0) {
+        DTU_LOGD("grid voltage throttling: no voltage data available");
+        return baseTargetOutput;
+    }
+    
+    DTU_LOGD("grid voltage throttling: current voltage %.1f V, thresholds: %.1f V - %.1f V",
+             gridVoltage, config.PowerLimiter.GridVoltageLowerThreshold, 
+             config.PowerLimiter.GridVoltageUpperThreshold);
+    
+    // If voltage is below lower threshold, no throttling needed
+    if (gridVoltage <= config.PowerLimiter.GridVoltageLowerThreshold) {
+        return baseTargetOutput;
+    }
+    
+    // If voltage is above upper threshold, apply maximum throttling
+    if (gridVoltage >= config.PowerLimiter.GridVoltageUpperThreshold) {
+        float throttleFactor = (100.0f - config.PowerLimiter.GridVoltageMaxThrottling) / 100.0f;
+        uint16_t throttledOutput = static_cast<uint16_t>(baseTargetOutput * throttleFactor);
+        DTU_LOGD("grid voltage throttling: voltage %.1f V >= %.1f V, applying maximum throttling %u%%, "
+                 "reducing output from %u W to %u W",
+                 gridVoltage, config.PowerLimiter.GridVoltageUpperThreshold,
+                 config.PowerLimiter.GridVoltageMaxThrottling, baseTargetOutput, throttledOutput);
+        return throttledOutput;
+    }
+    
+    // Voltage is between thresholds, apply proportional throttling
+    float voltageRange = config.PowerLimiter.GridVoltageUpperThreshold - config.PowerLimiter.GridVoltageLowerThreshold;
+    float excessVoltage = gridVoltage - config.PowerLimiter.GridVoltageLowerThreshold;
+    float throttleRatio = excessVoltage / voltageRange; // 0.0 to 1.0
+    float currentThrottlePercent = throttleRatio * config.PowerLimiter.GridVoltageMaxThrottling;
+    float throttleFactor = (100.0f - currentThrottlePercent) / 100.0f;
+    
+    uint16_t throttledOutput = static_cast<uint16_t>(baseTargetOutput * throttleFactor);
+    
+    DTU_LOGD("grid voltage throttling: voltage %.1f V, proportional throttling %.1f%%, "
+             "reducing output from %u W to %u W",
+             gridVoltage, currentThrottlePercent, baseTargetOutput, throttledOutput);
+    
+    return throttledOutput;
 }
 
 /**

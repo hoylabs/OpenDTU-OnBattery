@@ -87,6 +87,7 @@ private:
     uint16_t dcPowerBusToInverterAc(uint16_t dcPower) const;
     void unconditionalFullSolarPassthrough();
     uint16_t calcTargetOutput() const;
+    uint16_t applyGridVoltageThrottling(uint16_t baseTargetOutput) const;
     using inverter_filter_t = std::function<bool(PowerLimiterInverter const&)>;
     uint16_t updateInverterLimits(uint16_t powerRequested, inverter_filter_t filter, std::string const& filterExpression);
     uint16_t calcPowerBusUsage(uint16_t powerRequested) const;
