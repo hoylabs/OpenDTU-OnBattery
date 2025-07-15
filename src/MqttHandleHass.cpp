@@ -441,7 +441,7 @@ void MqttHandleHassClass::publishInverterSensor(
 void MqttHandleHassClass::publishPowerMeterConfig()
 {
     const CONFIG_T& config = Configuration.get();
-    
+
     // Only publish if powermeter is enabled
     if (!config.PowerMeter.Enabled) {
         return;
@@ -454,17 +454,17 @@ void MqttHandleHassClass::publishPowerMeterConfig()
     publishPowerMeterSensor("Power L1", "powermeter/power1", "W", "mdi:flash", DEVICE_CLS_PWR, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
     publishPowerMeterSensor("Power L2", "powermeter/power2", "W", "mdi:flash", DEVICE_CLS_PWR, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
     publishPowerMeterSensor("Power L3", "powermeter/power3", "W", "mdi:flash", DEVICE_CLS_PWR, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
-    
+
     // Publish voltage sensors
     publishPowerMeterSensor("Voltage L1", "powermeter/voltage1", "V", "mdi:sine-wave", DEVICE_CLS_VOLTAGE, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
     publishPowerMeterSensor("Voltage L2", "powermeter/voltage2", "V", "mdi:sine-wave", DEVICE_CLS_VOLTAGE, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
     publishPowerMeterSensor("Voltage L3", "powermeter/voltage3", "V", "mdi:sine-wave", DEVICE_CLS_VOLTAGE, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
-    
+
     // Publish current sensors
     publishPowerMeterSensor("Current L1", "powermeter/current1", "A", "mdi:current-ac", DEVICE_CLS_CURRENT, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
     publishPowerMeterSensor("Current L2", "powermeter/current2", "A", "mdi:current-ac", DEVICE_CLS_CURRENT, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
     publishPowerMeterSensor("Current L3", "powermeter/current3", "A", "mdi:current-ac", DEVICE_CLS_CURRENT, STATE_CLS_MEASUREMENT, CATEGORY_NONE);
-    
+
     // Publish energy sensors
     publishPowerMeterSensor("Import", "powermeter/import", "kWh", "mdi:transmission-tower-import", DEVICE_CLS_ENERGY, STATE_CLS_TOTAL_INCREASING, CATEGORY_NONE);
     publishPowerMeterSensor("Export", "powermeter/export", "kWh", "mdi:transmission-tower-export", DEVICE_CLS_ENERGY, STATE_CLS_TOTAL_INCREASING, CATEGORY_NONE);
