@@ -102,7 +102,9 @@ void Provider::pollingLoop()
             continue;
         }
 
-        DTU_LOGD("New total: %.2f", getPowerTotal());
+        if (DTU_LOG_IS_DEBUG) {
+            DTU_LOGD("New total: %.2f", getPowerTotal());
+        }
     }
 }
 
