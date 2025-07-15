@@ -30,6 +30,7 @@ export interface PowerLimiterInverterConfig {
     use_overscaling_to_compensate_shading: boolean;
     lower_power_limit: number;
     upper_power_limit: number;
+    smart_buffer_avoid_standby: boolean;
 }
 
 export interface PowerLimiterConfig {

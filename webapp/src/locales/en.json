@@ -743,6 +743,8 @@
         "PowerSourceSmartBuffer": "Smart Buffer Battery (Marstek B2500, Anker Solix, Zendure, etc.)",
         "UseOverscaling": "Compensate shaded or unused inputs",
         "UseOverscalingHint": "Allow to overscale the inverter limit to compensate for unused inputs or shading of one or multiple inputs.",
+        "SmartBufferAvoidStandby": "Prevent standby mode during power spikes",
+        "SmartBufferAvoidStandbyHint": "When enabled, smart buffer inverters will not shut down completely during power spikes but only reduce to the minimum power limit (like solar inverters). This prevents 'remote maintenance' shutdowns when appliances like freezers turn on.",
         "VoltageThresholds": "Battery Voltage Thresholds",
         "VoltageLoadCorrectionInfo": "<b>Hint:</b> When the battery is discharged, its voltage drops. The voltage drop scales with the discharge current. In order to not stop inverters too early (stop threshold), this load correction factor can be specified to calculate the battery voltage if it was idle. Corrected voltage = DC Voltage + (Current power * correction factor).",
         "InverterRestartHour": "Automatic Inverter Restart Time",

@@ -92,6 +92,14 @@ uint16_t PowerLimiterSmartBufferInverter::applyReduction(uint16_t reduction, boo
 
 uint16_t PowerLimiterSmartBufferInverter::standby()
 {
+    if (_config.SmartBufferAvoidStandby) {
+        // Behave like solar inverters: don't go into standby, 
+        // just reduce to the configured lower power limit
+        setAcOutput(_config.LowerPowerLimit);
+        return getCurrentOutputAcWatts() - _config.LowerPowerLimit;
+    }
+    
+    // Default behavior: go into complete standby
     setTargetPowerState(false);
     setExpectedOutputAcWatts(0);
     return getCurrentOutputAcWatts();

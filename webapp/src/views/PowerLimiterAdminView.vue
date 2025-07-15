@@ -174,6 +174,15 @@
                         />
 
                         <InputElement
+                            v-if="powerLimiterConfigList.inverters[idx].power_source == 2"
+                            :label="$t('powerlimiteradmin.SmartBufferAvoidStandby')"
+                            :tooltip="$t('powerlimiteradmin.SmartBufferAvoidStandbyHint')"
+                            v-model="powerLimiterConfigList.inverters[idx].smart_buffer_avoid_standby"
+                            type="checkbox"
+                            wide
+                        />
+
+                        <InputElement
                             :label="$t('powerlimiteradmin.LowerPowerLimit')"
                             :tooltip="$t('powerlimiteradmin.LowerPowerLimitHint')"
                             v-model="powerLimiterConfigList.inverters[idx].lower_power_limit"
@@ -726,6 +735,7 @@ export default defineComponent({
                 newInv.upper_power_limit = Math.max(metaInv.max_power, 300);
                 newInv.power_source = 0; // battery
                 newInv.use_overscaling_to_compensate_shading = false;
+                newInv.smart_buffer_avoid_standby = false;
                 inverters.push(newInv);
             }
 

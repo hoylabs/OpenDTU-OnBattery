@@ -224,6 +224,7 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
         t["use_overscaling_to_compensate_shading"] = s.UseOverscaling;
         t["lower_power_limit"] = s.LowerPowerLimit;
         t["upper_power_limit"] = s.UpperPowerLimit;
+        t["smart_buffer_avoid_standby"] = s.SmartBufferAvoidStandby;
     }
 }
 
@@ -641,6 +642,7 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
         inv.UseOverscaling = s["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING;
         inv.LowerPowerLimit = s["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
         inv.UpperPowerLimit = s["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+        inv.SmartBufferAvoidStandby = s["smart_buffer_avoid_standby"] | POWERLIMITER_SMART_BUFFER_AVOID_STANDBY;
     }
 }
 
