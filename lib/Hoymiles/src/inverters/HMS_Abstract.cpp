@@ -24,4 +24,10 @@ bool HMS_Abstract::sendChangeChannelRequest()
     _radio->enqueCommand(cmdChannel);
 
     return true;
-};
+}
+
+bool HMS_Abstract::isHmsFirmware204() const
+{
+    // Firmware version 2.0.4 is encoded as 20004
+    return DevInfo()->getFwBuildVersion() == 20004U;
+}
