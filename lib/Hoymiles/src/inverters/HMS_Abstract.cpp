@@ -26,8 +26,17 @@ bool HMS_Abstract::sendChangeChannelRequest()
     return true;
 }
 
-bool HMS_Abstract::isHmsFirmware204() const
+bool HMS_Abstract::needsPostRestartBootstrap() const
 {
-    // Firmware version 2.0.4 is encoded as 20004
-    return DevInfo()->getFwBuildVersion() == 20004U;
+    // HMS firmware version 2.0.4 and above may have an issue where they
+    // report 100% limit after restart but the actual effective limit 
+    // is still the old value. This requires a bootstrap command.
+    // Version 2.0.4 is encoded as 20004
+    
+    // Ensure DevInfo is available before checking firmware version
+    if (!DevInfo()->containsValidData()) {
+        return false;
+    }
+    
+    return DevInfo()->getFwBuildVersion() >= 20004U;
 }

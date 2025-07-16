@@ -91,11 +91,11 @@ bool PowerLimiterInverter::update()
 
     switch (getEligibility()) {
         case Eligibility::Eligible:
-            // Special handling for HMS firmware 2.0.4: Send a temporary limit after restart
+            // Special handling for HMS firmware 2.0.4+: Send a temporary limit after restart
             // to force the inverter to report correct status, even if it appears eligible
-            if (isHmsFirmware204() && !_hms204BootstrapSent && getCurrentLimitWatts() > 0) {
-                DTU_LOGI("HMS 2.0.4 detected: sending post-restart bootstrap limit to ensure correct status");
-                _oTargetPowerLimitWatts = getCurrentLimitWatts();
+            if (needsPostRestartBootstrap() && !_hms204BootstrapSent) {
+                DTU_LOGI("HMS firmware 2.0.4+ detected: sending post-restart bootstrap limit to ensure correct status");
+                _oTargetPowerLimitWatts = _config.LowerPowerLimit;
                 _hms204BootstrapSent = true;
             }
             break;
@@ -109,8 +109,8 @@ bool PowerLimiterInverter::update()
                 DTU_LOGD("bootstrapping by setting lower power limit");
                 _oTargetPowerLimitWatts = _config.LowerPowerLimit;
             }
-            // Also mark HMS 2.0.4 bootstrap as sent when we do regular bootstrap
-            if (isHmsFirmware204()) {
+            // Also mark HMS 2.0.4+ bootstrap as sent when we do regular bootstrap
+            if (needsPostRestartBootstrap()) {
                 _hms204BootstrapSent = true;
             }
             break;
@@ -459,7 +459,7 @@ char PowerLimiterInverter::mpptName(MpptNum_t mppt)
     }
 }
 
-bool PowerLimiterInverter::isHmsFirmware204() const
+bool PowerLimiterInverter::needsPostRestartBootstrap() const
 {
     // Check if this is an HMS inverter
     auto hmsInverter = std::dynamic_pointer_cast<HMS_Abstract>(_spInverter);
@@ -467,6 +467,6 @@ bool PowerLimiterInverter::isHmsFirmware204() const
         return false;
     }
     
-    // Check if it has firmware 2.0.4
-    return hmsInverter->isHmsFirmware204();
+    // Check if it needs post-restart bootstrap
+    return hmsInverter->needsPostRestartBootstrap();
 }

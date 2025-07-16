@@ -121,8 +121,8 @@ private:
 
     virtual void setAcOutput(uint16_t expectedOutputWatts) = 0;
 
-    // check if this is an HMS inverter with firmware 2.0.4
-    bool isHmsFirmware204() const;
+    // check if this is an HMS inverter that needs post-restart bootstrap
+    bool needsPostRestartBootstrap() const;
 
     bool _retired = false; // true if to be abandoned by DPL
 
