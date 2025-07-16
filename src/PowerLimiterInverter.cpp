@@ -6,7 +6,6 @@
 #include "SunPosition.h"
 #include <esp_log.h>
 #include <LogHelper.h>
-#include <inverters/HMS_Abstract.h>
 
 static const char* TAG = "dynamicPowerLimiter";
 #define SUBTAG _logPrefix
@@ -91,13 +90,6 @@ bool PowerLimiterInverter::update()
 
     switch (getEligibility()) {
         case Eligibility::Eligible:
-            // Special handling for HMS firmware 2.0.4+: Send a temporary limit after restart
-            // to force the inverter to report correct status, even if it appears eligible
-            if (needsPostRestartBootstrap() && !_hms204BootstrapSent) {
-                DTU_LOGI("HMS firmware 2.0.4+ detected: sending post-restart bootstrap limit to ensure correct status");
-                _oTargetPowerLimitWatts = _config.LowerPowerLimit;
-                _hms204BootstrapSent = true;
-            }
             break;
 
         case Eligibility::CurrentLimitUnknown:
@@ -108,10 +100,6 @@ bool PowerLimiterInverter::update()
             if (!_oTargetPowerLimitWatts.has_value()) {
                 DTU_LOGD("bootstrapping by setting lower power limit");
                 _oTargetPowerLimitWatts = _config.LowerPowerLimit;
-            }
-            // Also mark HMS 2.0.4+ bootstrap as sent when we do regular bootstrap
-            if (needsPostRestartBootstrap()) {
-                _hms204BootstrapSent = true;
             }
             break;
 
@@ -457,16 +445,4 @@ char PowerLimiterInverter::mpptName(MpptNum_t mppt)
         default:
             return '?';
     }
-}
-
-bool PowerLimiterInverter::needsPostRestartBootstrap() const
-{
-    // Check if this is an HMS inverter
-    auto hmsInverter = std::dynamic_pointer_cast<HMS_Abstract>(_spInverter);
-    if (!hmsInverter) {
-        return false;
-    }
-    
-    // Check if it needs post-restart bootstrap
-    return hmsInverter->needsPostRestartBootstrap();
 }

@@ -8,5 +8,5 @@ public:
     explicit HMS_Abstract(HoymilesRadio* radio, const uint64_t serial);
 
     virtual bool sendChangeChannelRequest();
-    bool needsPostRestartBootstrap() const;
+    bool supportsPowerDistributionLogic() override;
 };

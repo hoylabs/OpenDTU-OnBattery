@@ -76,7 +76,10 @@ bool ActivePowerControlCommand::handleResponse(const fragment_t fragment[], cons
         return false;
     }
 
-    if ((getType() == PowerLimitControlType::RelativNonPersistent) || (getType() == PowerLimitControlType::RelativPersistent)) {
+    if ((getType() == PowerLimitControlType::RelativNonPersistent)
+        || (getType() == PowerLimitControlType::RelativPersistent)
+        || (getType() == PowerLimitControlType::RelativNonPersistentPDL)
+        || (getType() == PowerLimitControlType::RelativPersistentPDL)) {
         _inv->SystemConfigPara()->setLimitPercent(getLimit());
     } else {
         const uint16_t max_power = _inv->DevInfo()->getMaxPower();

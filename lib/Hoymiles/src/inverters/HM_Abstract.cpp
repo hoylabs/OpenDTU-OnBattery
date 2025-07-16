@@ -108,15 +108,40 @@ bool HM_Abstract::sendActivePowerControlRequest(float limit, const PowerLimitCon
         return false;
     }
 
-    if (type == PowerLimitControlType::RelativNonPersistent || type == PowerLimitControlType::RelativPersistent) {
+    if (type == PowerLimitControlType::RelativNonPersistent
+        || type == PowerLimitControlType::RelativPersistent
+        || type == PowerLimitControlType::RelativNonPersistentPDL
+        || type == PowerLimitControlType::RelativPersistentPDL
+        ) {
         limit = min<float>(100, limit);
     }
 
+    PowerLimitControlType adjustedType = type;
+
+    if (supportsPowerDistributionLogic()) {
+        switch (type) {
+            case PowerLimitControlType::RelativNonPersistent:
+                adjustedType = PowerLimitControlType::RelativNonPersistentPDL;
+                break;
+            case PowerLimitControlType::RelativPersistent:
+                adjustedType = PowerLimitControlType::RelativPersistentPDL;
+                break;
+            case PowerLimitControlType::AbsolutNonPersistent:
+                adjustedType = PowerLimitControlType::AbsolutNonPersistentPDL;
+                break;
+            case PowerLimitControlType::AbsolutPersistent:
+                adjustedType = PowerLimitControlType::AbsolutPersistentPDL;
+                break;
+            default:
+                break;
+        }
+    }
+
     _activePowerControlLimit = limit;
-    _activePowerControlType = type;
+    _activePowerControlType = adjustedType;
 
     auto cmd = _radio->prepareCommand<ActivePowerControlCommand>(this);
-    cmd->setActivePowerLimit(limit, type);
+    cmd->setActivePowerLimit(limit, adjustedType);
     SystemConfigPara()->setLastLimitCommandSuccess(CMD_PENDING);
     _radio->enqueCommand(cmd);
 

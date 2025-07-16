@@ -26,17 +26,10 @@ bool HMS_Abstract::sendChangeChannelRequest()
     return true;
 }
 
-bool HMS_Abstract::needsPostRestartBootstrap() const
+bool HMS_Abstract::supportsPowerDistributionLogic()
 {
-    // HMS firmware version 2.0.4 and above may have an issue where they
-    // report 100% limit after restart but the actual effective limit 
-    // is still the old value. This requires a bootstrap command.
-    // Version 2.0.4 is encoded as 20004
-    
-    // Ensure DevInfo is available before checking firmware version
-    if (!DevInfo()->containsValidData()) {
-        return false;
-    }
-    
-    return DevInfo()->getFwBuildVersion() >= 20004U;
+    // This feature was added in inverter firmware version 01.01.12 and
+    // will limit the AC output instead of limiting the DC inputs.
+    // Also supports firmware 2.0.4 (encoded as 20004U) and above
+    return DevInfo()->getFwBuildVersion() >= 10112U;
 }
