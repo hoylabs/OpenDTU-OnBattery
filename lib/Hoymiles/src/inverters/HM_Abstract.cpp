@@ -108,7 +108,7 @@ bool HM_Abstract::sendActivePowerControlRequest(float limit, const PowerLimitCon
         return false;
     }
 
-    if (type == PowerLimitControlType::RelativNonPersistent || type == PowerLimitControlType::RelativPersistent) {
+    if (type == PowerLimitControlType::RelativNonPersistent || type == PowerLimitControlType::RelativPersistent || type == PowerLimitControlType::RelativPersistentHMS) {
         limit = min<float>(100, limit);
     }
 
