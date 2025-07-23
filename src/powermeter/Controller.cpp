@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <powermeter/Controller.h>
+#include <powermeter/HassIntegration.h>
 #include <Configuration.h>
 #include <powermeter/json/http/Provider.h>
 #include <powermeter/json/mqtt/Provider.h>
@@ -98,6 +99,9 @@ void Controller::loop()
     // we don't need to republish data received from MQTT
     if (pmcfg.Source == static_cast<uint8_t>(Provider::Type::MQTT)) { return; }
     _upProvider->mqttLoop();
+
+    // Call the HASS integration
+    PowerMeterHassIntegration.hassLoop();
 }
 
 } // namespace PowerMeters
