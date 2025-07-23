@@ -9,4 +9,5 @@ public:
 
     virtual bool sendChangeChannelRequest();
     bool supportsPowerDistributionLogic() override;
+    bool sendActivePowerControlRequest(float limit, const PowerLimitControlType type) override;
 };

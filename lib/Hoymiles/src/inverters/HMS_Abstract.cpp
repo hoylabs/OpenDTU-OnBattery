@@ -33,3 +33,17 @@ bool HMS_Abstract::supportsPowerDistributionLogic()
     // Also supports firmware 2.0.4 (encoded as 20004U) and above
     return DevInfo()->getFwBuildVersion() >= 10112U;
 }
+
+bool HMS_Abstract::sendActivePowerControlRequest(float limit, const PowerLimitControlType type)
+{
+    // Use the base implementation to send the power control command
+    bool success = HM_Abstract::sendActivePowerControlRequest(limit, type);
+    
+    if (success && DevInfo()->containsValidData() && DevInfo()->getFwBuildVersion() >= 20004U) {
+        // HMS firmware 2.0.4+ may not update status automatically after power control commands.
+        // Send a system config request to refresh the inverter status and get current limits.
+        sendSystemConfigParaRequest();
+    }
+    
+    return success;
+}

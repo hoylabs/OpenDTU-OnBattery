@@ -10,7 +10,7 @@ public:
     bool sendAlarmLogRequest(const bool force = false);
     bool sendDevInfoRequest();
     bool sendSystemConfigParaRequest();
-    bool sendActivePowerControlRequest(float limit, const PowerLimitControlType type);
+    virtual bool sendActivePowerControlRequest(float limit, const PowerLimitControlType type) override;
     bool resendActivePowerControlRequest();
     bool sendPowerControlRequest(const bool turnOn);
     bool sendRestartControlRequest();
