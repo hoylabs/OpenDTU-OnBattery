@@ -55,4 +55,37 @@ void Provider::mqttLoop() const
     _lastMqttPublish = millis();
 }
 
+bool Provider::hasDataPoint(const char* topic) const
+{
+    // Map MQTT topics to data point labels to check availability
+    if (strcmp(topic, "power1") == 0) {
+        return _dataCurrent.get<DataPointLabel::PowerL1>().has_value();
+    } else if (strcmp(topic, "power2") == 0) {
+        return _dataCurrent.get<DataPointLabel::PowerL2>().has_value();
+    } else if (strcmp(topic, "power3") == 0) {
+        return _dataCurrent.get<DataPointLabel::PowerL3>().has_value();
+    } else if (strcmp(topic, "voltage1") == 0) {
+        return _dataCurrent.get<DataPointLabel::VoltageL1>().has_value();
+    } else if (strcmp(topic, "voltage2") == 0) {
+        return _dataCurrent.get<DataPointLabel::VoltageL2>().has_value();
+    } else if (strcmp(topic, "voltage3") == 0) {
+        return _dataCurrent.get<DataPointLabel::VoltageL3>().has_value();
+    } else if (strcmp(topic, "current1") == 0) {
+        return _dataCurrent.get<DataPointLabel::CurrentL1>().has_value();
+    } else if (strcmp(topic, "current2") == 0) {
+        return _dataCurrent.get<DataPointLabel::CurrentL2>().has_value();
+    } else if (strcmp(topic, "current3") == 0) {
+        return _dataCurrent.get<DataPointLabel::CurrentL3>().has_value();
+    } else if (strcmp(topic, "import") == 0) {
+        return _dataCurrent.get<DataPointLabel::Import>().has_value();
+    } else if (strcmp(topic, "export") == 0) {
+        return _dataCurrent.get<DataPointLabel::Export>().has_value();
+    } else if (strcmp(topic, "powertotal") == 0) {
+        // Power total is always available as it can be computed from individual phases
+        return true;
+    }
+    
+    return false;
+}
+
 } // namespace PowerMeters

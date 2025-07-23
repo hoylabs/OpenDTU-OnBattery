@@ -18,6 +18,9 @@ public:
     uint32_t getLastUpdate() const;
     bool isDataValid() const;
 
+    // Check if specific data points are available for HASS autodiscovery
+    bool hasDataPoint(const char* topic) const;
+
 private:
     void loop();
 

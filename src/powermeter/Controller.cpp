@@ -89,6 +89,13 @@ bool Controller::isDataValid() const
     return _upProvider->isDataValid();
 }
 
+bool Controller::hasDataPoint(const char* topic) const
+{
+    std::lock_guard<std::mutex> l(_mutex);
+    if (!_upProvider) { return false; }
+    return _upProvider->hasDataPoint(topic);
+}
+
 void Controller::loop()
 {
     std::lock_guard<std::mutex> lock(_mutex);

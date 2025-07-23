@@ -37,30 +37,46 @@ void HassIntegration::hassLoop()
 
 void HassIntegration::publishSensors()
 {
-    // Get access to the powermeter data container to check which sensors are available
-    // Note: We need to access the provider's data container, but Controller doesn't expose it
-    // For now, we'll check which data points actually have valid MQTT topics published
-    // This approach mirrors what the Provider::mqttLoop() does
-    
     // Always publish Power Total as it's computed from L1+L2+L3 if not directly available
     publishSensor("Power Total", "mdi:flash", "powertotal", "power", "measurement", "W");
     
     // Only publish individual phase sensors if the provider supports them
-    // We'll use a helper method to check if data should be published
-    publishSensor("Power L1", "mdi:flash", "power1", "power", "measurement", "W");
-    publishSensor("Power L2", "mdi:flash", "power2", "power", "measurement", "W");
-    publishSensor("Power L3", "mdi:flash", "power3", "power", "measurement", "W");
+    if (PowerMeter.hasDataPoint("power1")) {
+        publishSensor("Power L1", "mdi:flash", "power1", "power", "measurement", "W");
+    }
+    if (PowerMeter.hasDataPoint("power2")) {
+        publishSensor("Power L2", "mdi:flash", "power2", "power", "measurement", "W");
+    }
+    if (PowerMeter.hasDataPoint("power3")) {
+        publishSensor("Power L3", "mdi:flash", "power3", "power", "measurement", "W");
+    }
     
-    publishSensor("Voltage L1", "mdi:sine-wave", "voltage1", "voltage", "measurement", "V");
-    publishSensor("Voltage L2", "mdi:sine-wave", "voltage2", "voltage", "measurement", "V");
-    publishSensor("Voltage L3", "mdi:sine-wave", "voltage3", "voltage", "measurement", "V");
+    if (PowerMeter.hasDataPoint("voltage1")) {
+        publishSensor("Voltage L1", "mdi:sine-wave", "voltage1", "voltage", "measurement", "V");
+    }
+    if (PowerMeter.hasDataPoint("voltage2")) {
+        publishSensor("Voltage L2", "mdi:sine-wave", "voltage2", "voltage", "measurement", "V");
+    }
+    if (PowerMeter.hasDataPoint("voltage3")) {
+        publishSensor("Voltage L3", "mdi:sine-wave", "voltage3", "voltage", "measurement", "V");
+    }
     
-    publishSensor("Current L1", "mdi:current-ac", "current1", "current", "measurement", "A");
-    publishSensor("Current L2", "mdi:current-ac", "current2", "current", "measurement", "A");
-    publishSensor("Current L3", "mdi:current-ac", "current3", "current", "measurement", "A");
+    if (PowerMeter.hasDataPoint("current1")) {
+        publishSensor("Current L1", "mdi:current-ac", "current1", "current", "measurement", "A");
+    }
+    if (PowerMeter.hasDataPoint("current2")) {
+        publishSensor("Current L2", "mdi:current-ac", "current2", "current", "measurement", "A");
+    }
+    if (PowerMeter.hasDataPoint("current3")) {
+        publishSensor("Current L3", "mdi:current-ac", "current3", "current", "measurement", "A");
+    }
     
-    publishSensor("Import", "mdi:transmission-tower-import", "import", "energy", "total_increasing", "kWh");
-    publishSensor("Export", "mdi:transmission-tower-export", "export", "energy", "total_increasing", "kWh");
+    if (PowerMeter.hasDataPoint("import")) {
+        publishSensor("Import", "mdi:transmission-tower-import", "import", "energy", "total_increasing", "kWh");
+    }
+    if (PowerMeter.hasDataPoint("export")) {
+        publishSensor("Export", "mdi:transmission-tower-export", "export", "energy", "total_increasing", "kWh");
+    }
 }
 
 void HassIntegration::publishSensor(const char* caption, const char* icon,

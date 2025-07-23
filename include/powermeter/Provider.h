@@ -31,6 +31,7 @@ public:
     float getPowerTotal() const;
     uint32_t getLastUpdate() const { return _dataCurrent.getLastUpdate(); }
     void mqttLoop() const;
+    bool hasDataPoint(const char* topic) const;
 
 protected:
     Provider() = default;
