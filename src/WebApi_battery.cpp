@@ -24,12 +24,8 @@ void WebApiBatteryClass::init(AsyncWebServer& server, Scheduler& scheduler)
     _server->on("/api/battery/config", HTTP_POST, static_cast<ArRequestHandlerFunction>(std::bind(&WebApiBatteryClass::onAdminPost, this, _1)));
 }
 
-void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
+void WebApiBatteryClass::generateStatus(AsyncWebServerRequest* request, bool includeCredentials)
 {
-    if (!WebApi.checkCredentialsReadonly(request)) {
-        return;
-    }
-
     AsyncJsonResponse* response = new AsyncJsonResponse();
     auto root = response->getRoot().as<JsonObject>();
     auto const& config = Configuration.get();
@@ -37,7 +33,7 @@ void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
     ConfigurationClass::serializeBatteryConfig(config.Battery, root);
 
     auto zendure = root["zendure"].to<JsonObject>();
-    ConfigurationClass::serializeBatteryZendureConfig(config.Battery.Zendure, zendure);
+    ConfigurationClass::serializeBatteryZendureConfig(config.Battery.Zendure, zendure, includeCredentials);
 
     auto mqtt = root["mqtt"].to<JsonObject>();
     ConfigurationClass::serializeBatteryMqttConfig(config.Battery.Mqtt, mqtt);
@@ -48,13 +44,22 @@ void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
+void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
+{
+    if (!WebApi.checkCredentialsReadonly(request)) {
+        return;
+    }
+
+    this->generateStatus(request, false);
+}
+
 void WebApiBatteryClass::onAdminGet(AsyncWebServerRequest* request)
 {
     if (!WebApi.checkCredentials(request)) {
         return;
     }
 
-    onStatus(request);
+    this->generateStatus(request, true);
 }
 
 void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)

@@ -13,5 +13,7 @@ private:
     void onAdminGet(AsyncWebServerRequest* request);
     void onAdminPost(AsyncWebServerRequest* request);
 
+    void generateStatus(AsyncWebServerRequest* request, bool includeCredentials);
+
     AsyncWebServer* _server;
 };

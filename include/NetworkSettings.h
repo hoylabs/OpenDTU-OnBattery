@@ -29,10 +29,12 @@ typedef std::function<void(network_event event)> DtuNetworkEventCb;
 typedef struct DtuNetworkEventCbList {
     DtuNetworkEventCb cb;
     network_event event;
+    String name;
 
     DtuNetworkEventCbList()
         : cb(nullptr)
         , event(network_event::NETWORK_UNKNOWN)
+        , name("")
     {
     }
 } DtuNetworkEventCbList_t;
@@ -54,8 +56,9 @@ public:
     bool isConnected() const;
     network_mode NetworkMode() const;
 
-    bool onEvent(DtuNetworkEventCb cbEvent, const network_event event = network_event::NETWORK_EVENT_MAX);
+    bool onEvent(DtuNetworkEventCb cbEvent, const network_event event = network_event::NETWORK_EVENT_MAX, const String &name = String());
     void raiseEvent(const network_event event);
+    void deregisterEvent(const String &name);
 
 private:
     void loop();
