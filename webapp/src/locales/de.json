@@ -764,7 +764,7 @@
         "ProviderMqtt": "Batteriewerte aus MQTT Broker",
         "ProviderVictron": "Victron SmartShunt per VE.Direct Schnittstelle",
         "ProviderPytesCan": "Pytes per CAN-Bus",
-        "ProviderZendureMqtt": "Zendure per lokalem MQTT Broker",
+        "ProviderZendureMqtt": "Zendure",
         "MqttSocConfiguration": "Einstellungen SoC",
         "MqttVoltageConfiguration": "Einstellungen Spannung",
         "MqttCurrentConfiguration": "Einstellungen Strom",
@@ -793,9 +793,6 @@
         "MqttDischargeCurrentLimitTopic": "Topic für Entladestromlimit",
         "MqttAmperageUnit": "@:base.Unit",
         "ZendureConfiguration": "Einstellungen",
-        "ZendureDeviceType": "Produkt Typ",
-        "ZendureDeviceId": "Produkt Identifikation",
-        "ZendureDeviceIdDescription": "Die Produkt Identifikation muss manuell via Bluetooth ausgelesen werden",
         "ZendureMinSoc": "Minimaler Ladezustand",
         "ZendureMaxSoc": "Maximaler Ladezustand",
         "ZendureBypassMode": "Bypass Modus",
@@ -822,6 +819,7 @@
         "ZendureOutputLimitDay": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Day)",
         "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
         "zendure": {
+            "deviceType": "Product Typ",
             "deviceTypes": {
                 "Hub1200": "Hub 1200",
                 "Hub2000": "Hub 2000",
@@ -840,7 +838,25 @@
             "chargeThrough": "Vollladeeinstellungen",
             "chargeThroughEnabled": "Vollladen",
             "chargeThroughInterval": "Maximales Interval",
-            "chargeThroughReset": "Reset Schwellwert"
+            "chargeThroughReset": "Reset Schwellwert",
+            "connectionType": "Verbindungstyp",
+            "connectionTypes": {
+                "local": "Lokaler MQTT Broker",
+                "cloud": "Zendure Entwickler Schnittstelle",
+                "bluetooth": "Direkte Bluetooth Verbindung",
+                "invalid": "@:battery.invalid"
+            },
+            "deviceId": "Geräte Identifikation",
+            "deviceIdDescription": "Die Geräte ID muss manuell mit <a href=\"https://github.com/nograx/zendure-cloud-disconnector\" target=\"_blank\">Zendure Cloud Disconnector</a>, <a href=\"https://github.com/reinhard-brandstaedter/solarflow-bt-manager\" target=\"_blank\">Solarflow Bluetooth Manager</a> oder durch aufzeichnen des MQTT Verkehrs ermittelt werden.",
+            "deviceIdInfo": "<u>Authentifizierungseinstellungen für Zendure am lokalen MQTT Broker:</u> <ul style=\"list-style-type:none;\"><li>Nutzername: {user}</li><li>Password: {pass}</li></ul>",
+            "server": "Server",
+            "serverWarning": "Der Angegebene Server ist nicht als gültiger Zendure-Server bekannt - bitte überprüfe die Serveradresse.",
+            "serverInfo": "Stelle sicher, dass du die korrekte Serveradresse für deine Geräte-Region verwendest. Die Serveradresse kann in der Zendure App oder durch analysieren des MQTT-Verkehrs gefunden werden.<br/><br/><b>Hinweis:</b> Falls die Verbindung zum Zendure API fehlschlägt, überprüfe bitte, ob du die richtige Server-Region verwendest.",
+            "port": "Port",
+            "clientId": "Client Identifikation",
+            "appKey": "Applikations Schlüssel",
+            "apiDescription": "Weitere Informationen zur Zendure Entwickler Schnittstelle sind im <a href=\"https://github.com/Zendure/developer-device-data-report\" target=\"_blank\">Official Zendure Repository</a> zu finden",
+            "secret": "Geheimnis"
         }
     },
     "inverteradmin": {
@@ -1264,7 +1280,6 @@
         "inputLimit": "Limit Eingangsleistung",
         "minSoC": "Minimaler Ladezustand",
         "maxSoC": "Maximaler Ladezustand",
-        "state": "Aktueller Betriebsmodus",
         "bypassMode": "Bypass Modus",
         "bypassState": "Bypass Status",
         "heatState": "Batterieheizung",
@@ -1272,9 +1287,8 @@
         "autoShutdown": "Automatisches Herunterfahren",
         "buzzer": "Akustische Signale",
         "batteries": "Anzahl installierter Batterien",
-        "charging": "Laden",
-        "discharging": "Entladen",
         "idle": "Leerlauf",
+        "unkown": "Unbekannt",
         "invalid": "Ungültig",
         "enabled": "Aktiviert",
         "disabled": "Deaktiviert",
@@ -1301,6 +1315,14 @@
                 "hard": "Erzwungen",
                 "keep": "Halten",
                 "invalid": "@:battery.invalid"
+            },
+            "mainState": "Aktueller Betriebszustand",
+            "mainStates": {
+                "idle": "@:battery.idle",
+                "charging": "Laden",
+                "discharging": "Entladen",
+                "invalid": "@:battery.invalid",
+                "unkown": "@:battery.unkown"
             }
         }
     }

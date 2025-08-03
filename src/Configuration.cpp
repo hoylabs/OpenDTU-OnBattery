@@ -158,6 +158,12 @@ void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig cons
     target["buzzer_enable"] = source.BuzzerEnable;
     target["control_mode"] = source.ControlMode;
     target["charge_through_reset"] = source.ChargeThroughResetLevel;
+    target["connection_type"] = source.ConnectionType;
+    target["server"] = source.Server;
+    target["port"] = source.Port;
+    target["client_id"] = source.ClientId;
+    target["app_key"] = source.AppKey;
+    target["secret"] = source.Secret;
 }
 
 void ConfigurationClass::serializeBatteryMqttConfig(BatteryMqttConfig const& source, JsonObject& target)
@@ -590,6 +596,12 @@ void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& sourc
     target.ChargeThroughInterval = source["charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
     target.BuzzerEnable = source["buzzer_enable"] |BATTERY_ZENDURE_BUZZER_ENABLE;
     target.ControlMode = source["control_mode"] | BatteryZendureConfig::ControlMode::ControlModeFull;
+    target.ConnectionType = source["connection_type"] | BatteryZendureConfig::ConnectionType::LocalMqtt;
+    strlcpy(target.Server, source["server"] | BATTERY_ZENDURE_SERVER, sizeof(target.Server));
+    target.Port = source["port"] |BATTERY_ZENDURE_PORT;
+    strlcpy(target.ClientId, source["client_id"] | NetworkSettings.getApName().substring(0,ZENDURE_MAX_CLIENTID_STRLEN).c_str(), sizeof(target.ClientId));
+    strlcpy(target.AppKey, source["app_key"] | "", sizeof(target.AppKey));
+    strlcpy(target.Secret, source["secret"] | "", sizeof(target.Secret));
 }
 
 void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, BatteryMqttConfig& target)

@@ -51,7 +51,11 @@
 #define POWERMETER_MQTT_MAX_VALUES 3
 #define POWERMETER_HTTP_JSON_MAX_VALUES 3
 
-#define ZENDURE_MAX_SERIAL_STRLEN 8
+#define ZENDURE_MAX_SERIAL_STRLEN   8
+#define ZENDURE_MAX_SERVER_STRLEN   256
+#define ZENDURE_MAX_CLIENTID_STRLEN 23
+#define ZENDURE_MAX_SECRET_STRLEN   32
+#define ZENDURE_MAX_APPKEY_STRLEN   ZENDURE_MAX_SERIAL_STRLEN
 
 struct CHANNEL_CONFIG_T {
     uint16_t MaxChannelPower;
@@ -204,6 +208,13 @@ struct BATTERY_ZENDURE_CONFIG_T {
     enum ControlMode : uint8_t { ControlModeFull = 0, ControlModeOnce = 1, ControlModeReadOnly = 2 };
     ControlMode ControlMode;
     uint8_t ChargeThroughResetLevel;
+    enum ConnectionType { LocalMqtt = 0, ZendureMqtt = 1, Bluetooth = 2 };
+    ConnectionType ConnectionType;
+    char Server[ZENDURE_MAX_SERVER_STRLEN + 1];
+    uint16_t Port;
+    char ClientId[ZENDURE_MAX_CLIENTID_STRLEN + 1];
+    char AppKey[ZENDURE_MAX_APPKEY_STRLEN + 1];
+    char Secret[ZENDURE_MAX_SECRET_STRLEN + 1];
 };
 using BatteryZendureConfig = struct BATTERY_ZENDURE_CONFIG_T;
 
