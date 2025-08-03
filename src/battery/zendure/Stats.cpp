@@ -13,16 +13,16 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
     // values go into the "Status" card of the web application
     std::string section("status");
-    addLiveViewInSection(root, section, "totalInputPower", _input_power, "W", 0);
+    addLiveViewInSection(root, section, "totalInputPower", _input_power, "W", 0, false);
     addLiveViewInSection(root, section, "chargePower", _charge_power, "W", 0);
     addLiveViewInSection(root, section, "dischargePower", _discharge_power, "W", 0);
     addLiveViewInSection(root, section, "totalOutputPower", _output_power, "W", 0);
     addLiveViewInSection(root, section, "efficiency", _efficiency, "%", 3);
     addLiveViewInSection(root, section, "batteries", _num_batteries, "", 0);
-    addLiveViewInSection(root, section, "capacity", _capacity, "Wh", 0);
-    addLiveViewInSection(root, section, "availableCapacity", _capacity_avail, "Wh", 0);
-    addLiveViewInSection(root, section, "useableCapacity", getUseableCapacity(), "Wh", 0);
-    addLiveViewTextInSection(root, section, "state", std::string(stateToString(_state)));
+    addLiveViewInSection(root, section, "capacity", _capacity, "Wh", 0, false);
+    addLiveViewInSection(root, section, "availableCapacity", _capacity_avail, "Wh", 0, true);
+    addLiveViewInSection(root, section, "useableCapacity", getUseableCapacity(), "Wh", 0, false);
+    addLiveViewTextInSection(root, section, "zendure.mainState", "zendure.mainStates." + std::string(stateToString(_state)));
     addLiveViewBooleanInSection(root, section, "heatState", _heat_state);
     addLiveViewBooleanInSection(root, section, "bypassState", _bypass_state);
     addLiveViewTextInSection(root, section, "zendure.chargeThroughState", "zendure.chargeThroughStates." + std::string(chargeThroughStateToString(_charge_through_state)));
@@ -33,7 +33,9 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
     // values go into the "Settings" card of the web application
     section = "settings";
-    addLiveViewTextInSection(root, section, "controlMode", std::string(controlModeToString(config.Battery.Zendure.ControlMode)));
+    if (config.Battery.Zendure.ConnectionType != BatteryZendureConfig::ConnectionType::ZendureMqtt) {
+        addLiveViewTextInSection(root, section, "controlMode", std::string(controlModeToString(config.Battery.Zendure.ControlMode)));
+    }
     addLiveViewInSection(root, section, "maxInversePower", _inverse_max, "W", 0);
     addLiveViewInSection(root, section, "outputLimit", _output_limit, "W", 0);
     addLiveViewInSection(root, section, "inputLimit", _output_limit, "W", 0);
@@ -45,29 +47,35 @@ void Stats::getLiveViewData(JsonVariant& root) const
     addLiveViewBooleanInSection(root, section, "buzzer", _buzzer);
 
     // values go into the "Solar Panels" card of the web application
-    section = "panels";
-    addLiveViewInSection(root, section, "solarInputPower1", _solar_power_1, "W", 0);
-    addLiveViewInSection(root, section, "solarInputPower2", _solar_power_2, "W", 0);
+    if (config.Battery.Zendure.ConnectionType != BatteryZendureConfig::ConnectionType::ZendureMqtt && (_solar_power_1.has_value() || _solar_power_2.has_value())) {
+        section = "panels";
+        addLiveViewInSection(root, section, "solarInputPower1", _solar_power_1, "W", 0, false);
+        addLiveViewInSection(root, section, "solarInputPower2", _solar_power_2, "W", 0, false);
+    }
 
     // pack data goes to dedicated cards of the web application
     char buff[30];
     for (const auto& [index, value] : _packData) {
         snprintf(buff, sizeof(buff), "_%s [%s]", value->getName().c_str(), value->getSerial().c_str());
         section = std::string(buff);
-        addLiveViewTextInSection(root, section, "state", std::string(stateToString(value->_state)));
-        addLiveViewInSection(root, section, "cellMinVoltage", value->_cell_voltage_min, "mV", 0);
-        addLiveViewInSection(root, section, "cellAvgVoltage", value->_cell_voltage_avg, "mV", 0);
-        addLiveViewInSection(root, section, "cellMaxVoltage", value->_cell_voltage_max, "mV", 0);
-        addLiveViewInSection(root, section, "cellDiffVoltage", value->_cell_voltage_spread, "mV", 0);
-        addLiveViewInSection(root, section, "cellMaxTemperature", value->_cell_temperature_max, "°C", 1);
-        addLiveViewInSection(root, section, "voltage", value->_voltage_total, "V", 2);
-        addLiveViewInSection(root, section, "power", value->_power, "W", 0);
-        addLiveViewInSection(root, section, "current", value->_current, "A", 2);
-        addLiveViewInSection(root, section, "SoC", value->_soc_level, "%", 1);
+        if (value->_state.has_value()) {
+            addLiveViewTextInSection(root, section, "zendure.mainState", "zendure.mainStates." + std::string(stateToString(value->_state)));
+        }
+        addLiveViewInSection(root, section, "cellMinVoltage", value->_cell_voltage_min, "mV", 0, false);
+        addLiveViewInSection(root, section, "cellAvgVoltage", value->_cell_voltage_avg, "mV", 0, true);
+        addLiveViewInSection(root, section, "cellMaxVoltage", value->_cell_voltage_max, "mV", 0, false);
+        addLiveViewInSection(root, section, "cellDiffVoltage", value->_cell_voltage_spread, "mV", 0, false);
+        addLiveViewInSection(root, section, "cellMaxTemperature", value->_cell_temperature_max, "°C", 1, false);
+        addLiveViewInSection(root, section, "voltage", value->_voltage_total, "V", 2, true);
+        addLiveViewInSection(root, section, "power", value->_power, "W", 0, true);
+        addLiveViewInSection(root, section, "current", value->_current, "A", 2, true);
+        addLiveViewInSection(root, section, "SoC", value->_soc_level, "%", 1, false);
         addLiveViewInSection(root, section, "stateOfHealth", value->_state_of_health, "%", 1, true);
-        addLiveViewInSection(root, section, "capacity", value->_capacity, "Wh", 0);
-        addLiveViewInSection(root, section, "availableCapacity", value->_capacity_avail, "Wh", 0);
-        addLiveViewTextInSection(root, section, "FwVersion", std::string(value->_fwversion.c_str()), false);
+        addLiveViewInSection(root, section, "capacity", value->_capacity, "Wh", 0, false);
+        addLiveViewInSection(root, section, "availableCapacity", value->_capacity_avail, "Wh", 0, true);
+        if (!_fwversion.isEmpty()) {
+            addLiveViewTextInSection(root, section, "FwVersion", std::string(value->_fwversion.c_str()), false);
+        }
     }
 }
 
@@ -77,6 +85,13 @@ void Stats::mqttPublish() const
 
     auto const& config = Configuration.get();
 
+    auto boolToString = [](const std::optional<bool> value) -> std::optional<String> {
+        if (value.has_value()) {
+            return String(static_cast<uint8_t>(*value));
+        }
+        return std::nullopt;
+    };
+
     publish("battery/cellMinMilliVolt", _cellMinMilliVolt);
     publish("battery/cellAvgMilliVolt", _cellAvgMilliVolt);
     publish("battery/cellMaxMilliVolt", _cellMaxMilliVolt);
@@ -84,7 +99,7 @@ void Stats::mqttPublish() const
     publish("battery/cellMaxTemperature", _cellTemperature);
     publish("battery/chargePower", _charge_power);
     publish("battery/dischargePower", _discharge_power);
-    publish("battery/heating", String(static_cast<uint8_t>(_heat_state)));
+    publish("battery/heating", boolToString(_heat_state));
     publish("battery/state", String(stateToString(_state)));
     publish("battery/numPacks", _num_batteries);
     publish("battery/efficiency", _efficiency);
@@ -112,13 +127,16 @@ void Stats::mqttPublish() const
     publish("battery/solarPowerMppt2", _solar_power_2);
     publish("battery/outputPower", _output_power);
     publish("battery/inputPower", _input_power);
-    publish("battery/bypass", static_cast<uint8_t>(_bypass_state));
+    publish("battery/bypass", boolToString(_bypass_state));
     publish("battery/lastFullCharge", _last_full_hours);
     publish("battery/lastEmpty", _last_empty_hours);
 
     publish("battery/chargeThroughState", String(chargeThroughStateToString(_charge_through_state)));
 
-    publish("battery/settings/controlMode", String(controlModeToString(config.Battery.Zendure.ControlMode)));
+    if (config.Battery.Zendure.ConnectionType != BatteryZendureConfig::ConnectionType::ZendureMqtt) {
+        publish("battery/settings/controlMode", String(controlModeToString(config.Battery.Zendure.ControlMode)));
+    }
+
     publish("battery/settings/outputLimitPower", _output_limit);
     publish("battery/settings/inputLimitPower", _input_limit);
     publish("battery/settings/stateOfChargeMin", _soc_min, 1);
