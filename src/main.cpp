@@ -37,6 +37,7 @@
 #include <LittleFS.h>
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
+#include "SurplusPower.h"
 
 #undef TAG
 static const char* TAG = "main";
@@ -153,6 +154,7 @@ void setup()
     PowerLimiter.init(scheduler);
     HuaweiCan.init(scheduler);
     Battery.init(scheduler);
+    Surplus.init(scheduler);
 
     ESP_LOGI(TAG, "Startup complete");
 }
