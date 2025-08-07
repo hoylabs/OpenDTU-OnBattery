@@ -36,6 +36,14 @@ export interface PowerLimiterInverterConfig {
 export interface PowerLimiterConfig {
     enabled: boolean;
     solar_passthrough_enabled: boolean;
+    surplus_enabled: boolean;
+    surplus_tweak_enabled: boolean;
+    surplus_power_limit: number;
+    surplus_safety_minutes: number;
+    surplus_safety_factor: number;
+    surplus_slope_enabled: boolean;
+    surplus_slope_target_power: number;
+    surplus_slope_decrease_rate: number;
     conduction_losses: number;
     battery_always_use_at_night: boolean;
     target_power_consumption: number;

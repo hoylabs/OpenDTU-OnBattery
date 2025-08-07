@@ -735,7 +735,10 @@
         "StopThreshold": "Batterienutzung Stop-Schwellwert",
         "FullSolarPassthroughStartThreshold": "Full-Solar-Passthrough Start-Schwellwert",
         "FullSolarPassthroughStartThresholdHint": "Oberhalb dieses Schwellwertes wird die Leistung der Inverter der Ladereglerausgangsleistung gleichgesetzt (abzüglich Effizienzkorrekturen). Kann verwendet werden um überschüssige Solarleistung an das Netz zu liefern wenn die Batterie voll ist.",
+        "SurplusStartThreshold": "Solar-Surplus Start-Schwellwert",
+        "SurplusStartThresholdHint": "Oberhalb dieses Schwellwertes wird die Leistung der Inverter der Ladereglerausgangsleistung gleichgesetzt (abzüglich der Leistung für die Batterie). Kann verwendet werden um überschüssige Solarleistung an das Netz zu liefern.",
         "VoltageSolarPassthroughStopThreshold": "Full-Solar-Passthrough Stop-Schwellwert",
+        "SurplusStopThreshold": "Solar-Surplus Stop-Schwellwert",
         "VoltageLoadCorrectionFactor": "Lastkorrekturfaktor",
         "BatterySocInfo": "<b>Hinweis:</b> Die Batterie State of Charge (SoC) Schwellwerte werden bevorzugt herangezogen. Sie werden allerdings nur benutzt, wenn die Batterie-Kommunikationsschnittstelle innerhalb der letzten Minute gültige Werte verarbeitet hat. Andernfalls werden ersatzweise die Spannungs-Schwellwerte verwendet.",
         "InverterIsBehindPowerMeter": "Stromzählermessung beinhaltet Wechselrichter",
@@ -749,7 +752,9 @@
         "VoltageThresholds": "Batterie Spannungs-Schwellwerte ",
         "VoltageLoadCorrectionInfo": "<b>Hinweis:</b> Wenn Leistung von der Batterie abgegeben wird, bricht ihre Spannung etwas ein. Der Spannungseinbruch skaliert mit dem Entladestrom. Damit Wechselrichter nicht vorzeitig ausgeschaltet werden sobald der Stop-Schwellenwert unterschritten wurde, wird der hier angegebene Korrekturfaktor mit einberechnet, um die Spannung zu errechnen, die der Akku in Ruhe hätte. Korrigierte Spannung = DC Spannung + (Aktuelle Leistung (W) * Korrekturfaktor).",
         "InverterRestartHour": "Uhrzeit für automatischen Wechselrichterneustart",
-        "InverterRestartHint": "Der Wechselrichter wird täglich zur gewünschten Zeit automatisch neu gestartet. Dies ist notwendig, da sich die Wechselrichter möglicherweise unerwartet verhalten, wenn sie nicht neu gestartet oder längere Zeit (Tage/Wochen/Monate) am Stück in Betrieb sind, und um den täglichen Ertrag zurückzusetzen."
+        "InverterRestartHint": "Der Wechselrichter wird täglich zur gewünschten Zeit automatisch neu gestartet. Dies ist notwendig, da sich die Wechselrichter möglicherweise unerwartet verhalten, wenn sie nicht neu gestartet oder längere Zeit (Tage/Wochen/Monate) am Stück in Betrieb sind, und um den täglichen Ertrag zurückzusetzen.",
+        "EnableSurplus": "Aktiviere Solar-Surplus",
+        "SurplusInfo": "Solar-Surplus versucht, überschüssige Solarenergie so früh wie möglich zu nutzen. Dabei wird vermieden, dass Solarenergie verschwendet wird, die zum vollständigen Laden der Batterie bis zum Sonnenuntergang benötigt wird. Konfigurieren Sie die Batteriekapazität und die Start-/Stopp-Schwellenwerte. Full Solar-Passthrough wird durch aktivieren von Solar-Surplus automatisch deaktiviert."
     },
     "batteryadmin": {
         "BatterySettings": "Batterie Einstellungen",

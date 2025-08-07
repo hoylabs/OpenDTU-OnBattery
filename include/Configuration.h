@@ -178,6 +178,14 @@ struct POWERLIMITER_CONFIG_T {
     uint8_t InverterChannelIdForDcVoltage;
     uint8_t RestartHour;
     uint16_t TotalUpperPowerLimit;
+    bool SurplusEnabled;
+    bool SurplusTweakEnabled;
+    uint16_t SurplusPowerLimit;
+    int16_t SurplusSafetyMinutes;
+    int16_t SurplusSafetyFactor;
+    bool SurplusSlopeEnabled;
+    int16_t SurplusSlopeTarget;
+    int16_t SurplusSlopeDecreaseRate;
     PowerLimiterInverterConfig Inverters[INV_MAX_COUNT];
 };
 using PowerLimiterConfig = struct POWERLIMITER_CONFIG_T;
