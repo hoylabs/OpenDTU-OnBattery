@@ -50,4 +50,6 @@ export interface BatteryConfig {
     discharge_current_limit_below_soc: number;
     discharge_current_limit_below_voltage: number;
     use_battery_reported_discharge_current_limit: boolean;
+    nominal_voltage: number;
+    nominal_capacity: number;
 }

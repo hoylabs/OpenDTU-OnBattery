@@ -241,6 +241,8 @@ struct BATTERY_CONFIG_T {
     float DischargeCurrentLimitBelowSoc;
     float DischargeCurrentLimitBelowVoltage;
     bool UseBatteryReportedDischargeCurrentLimit;
+    float NominalVoltage;
+    uint16_t NominalCapacity;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
