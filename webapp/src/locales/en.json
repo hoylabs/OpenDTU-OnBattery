@@ -749,7 +749,9 @@
         "VoltageThresholds": "Battery Voltage Thresholds",
         "VoltageLoadCorrectionInfo": "<b>Hint:</b> When the battery is discharged, its voltage drops. The voltage drop scales with the discharge current. In order to not stop inverters too early (stop threshold), this load correction factor can be specified to calculate the battery voltage if it was idle. Corrected voltage = DC Voltage + (Current power * correction factor).",
         "InverterRestartHour": "Automatic Inverter Restart Time",
-        "InverterRestartHint": "The inverter(s) will be automatically restarted daily at the desired time. This is necessary because the inverter may behave unexpectedly if not restarted and powered continuously for days/weeks/months. A restart is also required to reset the daily yield."
+        "InverterRestartHint": "The inverter(s) will be automatically restarted daily at the desired time. This is necessary because the inverter may behave unexpectedly if not restarted and powered continuously for days/weeks/months. A restart is also required to reset the daily yield.",
+        "HasPriority": "Prioritize Inverter",
+        "HasPriorityHint": "Prioritize this inverter over other smart buffer powerd inverters. This may be useful if multiple smart buffer powered inverters with different solar power or battery capacity are used"
     },
     "batteryadmin": {
         "BatterySettings": "Battery Settings",

@@ -226,6 +226,7 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
         t["allow_standby"] = s.AllowStandby;
         t["lower_power_limit"] = s.LowerPowerLimit;
         t["upper_power_limit"] = s.UpperPowerLimit;
+        t["has_priority"] = s.HasPriority;
     }
 }
 
@@ -645,6 +646,7 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
         inv.AllowStandby = s["allow_standby"] | POWERLIMITER_ALLOW_STANDBY;
         inv.LowerPowerLimit = s["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
         inv.UpperPowerLimit = s["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+        inv.HasPriority = s["has_priority"] | POWERLIMITER_HAS_PRIORITY;
     }
 }
 
@@ -1101,6 +1103,9 @@ void ConfigurationClass::migrateOnBattery()
             inv.UseOverscaling = powerlimiter["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING;
             inv.LowerPowerLimit = powerlimiter["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
             inv.UpperPowerLimit = powerlimiter["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+
+            inv.HasPriority = powerlimiter["has_priority"] | POWERLIMITER_HAS_PRIORITY;
+
 
             config.PowerLimiter.TotalUpperPowerLimit = inv.UpperPowerLimit;
 

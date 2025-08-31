@@ -80,6 +80,8 @@ public:
     bool isSolarPowered() const { return _config.PowerSource == PowerLimiterInverterConfig::InverterPowerSource::Solar; }
     bool isSmartBufferPowered() const { return _config.PowerSource == PowerLimiterInverterConfig::InverterPowerSource::SmartBuffer; }
 
+    bool hasPriority() const { return _config.HasPriority; }
+
     void debug() const;
 
     enum class Eligibility : unsigned {

@@ -154,6 +154,8 @@ struct POWERLIMITER_INVERTER_CONFIG_T {
 
     enum InverterPowerSource { Battery = 0, Solar = 1, SmartBuffer = 2 };
     InverterPowerSource PowerSource;
+
+    bool HasPriority;
 };
 using PowerLimiterInverterConfig = struct POWERLIMITER_INVERTER_CONFIG_T;
 
