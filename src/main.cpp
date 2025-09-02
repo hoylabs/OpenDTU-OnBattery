@@ -36,6 +36,7 @@
 #include <LittleFS.h>
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
+#include "RuntimeData.h"
 
 #undef TAG
 static const char* TAG = "main";
@@ -146,6 +147,8 @@ void setup()
     RestartHelper.init(scheduler);
 
     // OpenDTU-OnBattery-specific initializations go below
+    RuntimeData.init(scheduler);
+    RuntimeData.read(); // make runtime data available as early as possible
     SolarCharger.init(scheduler);
     PowerMeter.init(scheduler);
     PowerLimiter.init(scheduler);

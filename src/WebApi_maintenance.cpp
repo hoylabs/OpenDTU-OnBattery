@@ -8,6 +8,7 @@
 #include "WebApi.h"
 #include "WebApi_errors.h"
 #include <AsyncJson.h>
+#include "RuntimeData.h"
 
 void WebApiMaintenanceClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -43,6 +44,7 @@ void WebApiMaintenanceClass::onRebootPost(AsyncWebServerRequest* request)
         retMsg["code"] = WebApiError::MaintenanceRebootTriggered;
 
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
+        RuntimeData.write(); // write the runtime data to LittleFS
         RestartHelper.triggerRestart();
     } else {
         retMsg["message"] = "Reboot cancled!";

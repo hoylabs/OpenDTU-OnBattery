@@ -10,6 +10,7 @@
 #include <AsyncJson.h>
 #include <Update.h>
 #include "esp_partition.h"
+#include "RuntimeData.h"
 
 void WebApiFirmwareClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -84,6 +85,7 @@ void WebApiFirmwareClass::onFirmwareUpdateUpload(AsyncWebServerRequest* request,
     }
 
     if (final) { // if the final flag is set then this is the last frame of data
+        RuntimeData.write(); // write the runtime data to LittleFS
         if (!Update.end(true)) { // true to set the size to the current progress
             Update.printError(Serial);
             return request->send(400, asyncsrv::T_text_plain, "Could not end OTA");
