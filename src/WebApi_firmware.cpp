@@ -66,6 +66,7 @@ void WebApiFirmwareClass::onFirmwareUpdateUpload(AsyncWebServerRequest* request,
         String lowerFilename = filename;
         lowerFilename.toLowerCase();
         if (!lowerFilename.endsWith(".bin") && !lowerFilename.endsWith(".bin.gz")) {
+            Update.abort();
             return request->send(400, "text/plain", "Invalid file type. Only .bin and .bin.gz files are allowed");
         }
 
