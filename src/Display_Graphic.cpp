@@ -328,17 +328,13 @@ void DisplayGraphicClass::loop()
     // timing for the power meter and battery is chosen such that every third of those
     // three-second slots is used to NOT overwrite the total inverter energy.
     bool timing = (_mExtra % 9) >= 3;
-    bool batteryAvailable = false;
-    auto batteryStats = Battery.getStats();
-    if (batteryStats && batteryStats->isSoCValid()) {
-        batteryAvailable = true;
-    }
+    bool batteryAvailable = Configuration.get().Battery.Enabled && Battery.getStats()->isSoCValid();
 
     // Prioritize power meter and battery alternation when both are available
     if (showText && Configuration.get().PowerMeter.Enabled && batteryAvailable && timing && !displayPowerSave) {
         // Alternate between power meter and battery every 3 seconds within the timing window
         bool showPowerMeter = ((_mExtra / 3) % 2) == 0;
-        
+
         setFont(2);
         auto lineHeight = _display->getAscent() - _display->getDescent();
         auto y = _lineOffsets[2] - _display->getAscent();
@@ -354,7 +350,7 @@ void DisplayGraphicClass::loop()
                 snprintf(_fmtText, sizeof(_fmtText), _i18n_meter_power_w.c_str(), acPower);
             }
         } else {
-            float soc = batteryStats->getSoC();
+            float soc = Battery.getStats()->getSoC();
             snprintf(_fmtText, sizeof(_fmtText), _i18n_battery_soc.c_str(), soc);
         }
 
@@ -387,7 +383,7 @@ void DisplayGraphicClass::loop()
         _display->drawBox(0, y, _display->getDisplayWidth(), lineHeight);
         _display->setDrawColor(1);
 
-        float soc = batteryStats->getSoC();
+        float soc = Battery.getStats()->getSoC();
         snprintf(_fmtText, sizeof(_fmtText), _i18n_battery_soc.c_str(), soc);
 
         printText(_fmtText, 2);
