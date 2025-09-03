@@ -142,7 +142,7 @@ export default defineComponent({
         isValidFirmwareFile(filename: string): boolean {
             const validExtensions = ['.bin', '.bin.gz'];
             const lowerFilename = filename.toLowerCase();
-            return validExtensions.some(ext => lowerFilename.endsWith(ext));
+            return validExtensions.some((ext) => lowerFilename.endsWith(ext));
         },
         uploadOTA(event: Event | null) {
             this.uploading = true;
@@ -153,13 +153,14 @@ export default defineComponent({
                     this.file = target.files[0];
                 }
             }
-            
+
             // Validate file type
             if (this.file && !this.isValidFirmwareFile(this.file.name)) {
                 this.OTAError = this.$t('firmwareupgrade.InvalidFileType', { validTypes: '.bin, .bin.gz' });
                 this.uploading = false;
                 return;
             }
+
             const request = new XMLHttpRequest();
             request.addEventListener('load', () => {
                 // request.response will hold the response from the server
