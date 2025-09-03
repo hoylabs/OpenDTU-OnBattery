@@ -200,20 +200,21 @@ void PowerLimiterClass::loop()
         return unconditionalFullSolarPassthrough();
     }
 
-    // if the power meter is being used, i.e., if its data is valid, we want to
-    // wait for a new reading after adjusting the inverter limit. otherwise, we
-    // proceed as we will use a fallback limit independent of the power meter.
-    // the power meter reading is expected to be at most 2 seconds old when it
-    // arrives. this can be the case for readings provided by networked meter
-    // readers, where a packet needs to travel through the network for some
-    // time after the actual measurement was done by the reader.
-    // 
-    // However, if full solar passthrough should be active based on battery
-    // thresholds, we should proceed regardless of power meter status, as
-    // full solar passthrough doesn't depend on grid power readings.
-    if (PowerMeter.isDataValid() && PowerMeter.getLastUpdate() <= (latestInverterStats + 2000) 
-        && !shouldActivateFullSolarPassthrough()) {
-        return announceStatus(Status::PowerMeterPending);
+    // if full solar passthrough should be active based on battery thresholds,
+    // we skip all power meter logic entirely and proceed directly to calculation
+    if (shouldActivateFullSolarPassthrough()) {
+        // proceed to calculation - full solar passthrough doesn't depend on power meter
+    } else {
+        // if the power meter is being used, i.e., if its data is valid, we want to
+        // wait for a new reading after adjusting the inverter limit. otherwise, we
+        // proceed as we will use a fallback limit independent of the power meter.
+        // the power meter reading is expected to be at most 2 seconds old when it
+        // arrives. this can be the case for readings provided by networked meter
+        // readers, where a packet needs to travel through the network for some
+        // time after the actual measurement was done by the reader.
+        if (PowerMeter.isDataValid() && PowerMeter.getLastUpdate() <= (latestInverterStats + 2000)) {
+            return announceStatus(Status::PowerMeterPending);
+        }
     }
 
     // since _lastCalculation and _calculationBackoffMs are initialized to
@@ -868,44 +869,12 @@ bool PowerLimiterClass::shouldActivateFullSolarPassthrough() const
     // we only do full solar PT if general solar PT is enabled
     if (!isSolarPassThroughEnabled()) { return false; }
 
-    // Helper function to test thresholds without depending on _loadCorrectedVoltage
-    auto testThresholdLocal = [this](float socThreshold, float voltThreshold,
-            std::function<bool(float, float)> compare) -> bool {
-        // prefer SoC provided through battery interface, unless disabled by user
-        auto stats = Battery.getStats();
-        if (!Configuration.get().PowerLimiter.IgnoreSoc
-                && Configuration.get().Battery.Enabled
-                && socThreshold > 0.0
-                && stats->isSoCValid()
-                && stats->getSoCAgeSeconds() < 60) {
-                  return compare(stats->getSoC(), socThreshold);
-        }
-
-        // use voltage threshold as fallback
-        if (voltThreshold <= 0.0) { return false; }
-
-        // Calculate load-corrected voltage inline
-        float acPower = getBatteryInvertersOutputAcWatts();
-        float dcVoltage = getBatteryVoltage();
-        if (dcVoltage <= 0.0) { return false; }
-        
-        float loadCorrectedVoltage = dcVoltage + (acPower * Configuration.get().PowerLimiter.VoltageLoadCorrectionFactor);
-        return compare(loadCorrectedVoltage, voltThreshold);
-    };
-
-    if (testThresholdLocal(config.PowerLimiter.FullSolarPassThroughSoc,
-                    config.PowerLimiter.FullSolarPassThroughStartVoltage,
-                    [](float a, float b) -> bool { return a >= b; })) {
-        return true;
-    }
-
-    if (testThresholdLocal(config.PowerLimiter.FullSolarPassThroughSoc,
-                    config.PowerLimiter.FullSolarPassThroughStopVoltage,
-                    [](float a, float b) -> bool { return a < b; })) {
-        return false;
-    }
-
-    return _fullSolarPassThroughActive;
+    // Check if we should start full solar passthrough based on thresholds
+    return testThreshold(
+            config.PowerLimiter.FullSolarPassThroughSoc,
+            config.PowerLimiter.FullSolarPassThroughStartVoltage,
+            [](float a, float b) -> bool { return a >= b; }
+    );
 }
 
 void PowerLimiterClass::calcNextInverterRestart()
