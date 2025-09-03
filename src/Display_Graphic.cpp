@@ -333,7 +333,7 @@ void DisplayGraphicClass::loop()
     bool batteryAvailable = Configuration.get().Battery.Enabled && Battery.getStats()->isSoCValid();
 
     if (showText && timing && !displayPowerSave && (powerMeterAvailable || batteryAvailable)) {
-        // erase the third line and print the battery SoC orpower meter value instead.
+        // erase the third line and print the battery SoC or power meter value instead.
         // we do it this way to touch as least upstream code as possible
         // to make maintenance easier.
         setFont(2);
