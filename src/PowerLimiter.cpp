@@ -707,10 +707,36 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested) const
     auto solarOutputDc = getSolarPassthroughPower();
     auto solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
     if (isFullSolarPassthroughActive() && solarOutputAc > powerRequested) {
-        DTU_LOGD("using %u/%u W DC/AC from DC power bus (full solar-passthrough)",
-                solarOutputDc, solarOutputAc);
+        uint16_t adjustedOutput = solarOutputAc;
 
-        return solarOutputAc;
+        // Check if battery is being drained and reduce inverter limits accordingly
+        // to account for other DC loads consuming power from the battery
+        auto stats = Battery.getStats();
+        if (stats->isCurrentValid() && stats->isVoltageValid()) {
+            float batteryCurrent = stats->getChargeCurrent(); // negative for discharge
+            float batteryVoltage = stats->getVoltage();
+            float currentBatteryPower = batteryCurrent * batteryVoltage; // negative for discharge
+
+            // If battery is discharging, reduce the power sent to inverters
+            if (currentBatteryPower < 0) {
+                uint16_t batteryDischargePower = static_cast<uint16_t>(-currentBatteryPower);
+                uint16_t batteryDischargeAc = dcPowerBusToInverterAc(batteryDischargePower);
+
+                if (batteryDischargeAc > solarOutputAc) {
+                    adjustedOutput = 0;
+                } else {
+                    adjustedOutput = solarOutputAc - batteryDischargeAc;
+                }
+
+                DTU_LOGD("adjusting solar passthrough from %u to %u W AC due to battery discharge (%u W DC, %u W AC)",
+                        solarOutputAc, adjustedOutput, batteryDischargePower, batteryDischargeAc);
+            }
+        }
+
+        DTU_LOGD("using %u/%u W DC/AC from DC power bus (full solar-passthrough)",
+                solarOutputDc, adjustedOutput);
+
+        return adjustedOutput;
     }
 
     auto oBatteryDischargeLimit = getBatteryDischargeLimit();
