@@ -25,7 +25,7 @@ public:
         String& meter_power_w, String& meter_power_kw,
         String& yield_today_wh, String& yield_today_kwh,
         String& yield_total_kwh, String& yield_total_mwh,
-        String& battery_soc);
+        String& battery_soc_0_fractions, String& battery_soc_1_fraction, String& battery_soc_2_fractions);
 
 private:
     void readLangPacks();

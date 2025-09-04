@@ -48,7 +48,7 @@ void I18nClass::readDisplayStrings(
     String& meter_power_w, String& meter_power_kw,
     String& yield_today_wh, String& yield_today_kwh,
     String& yield_total_kwh, String& yield_total_mwh,
-    String& battery_soc)
+    String& battery_soc_0_fractions, String& battery_soc_1_fraction, String& battery_soc_2_fractions)
 {
     auto filename = getFilenameByLocale(locale);
     if (filename == "") {
@@ -116,8 +116,16 @@ void I18nClass::readDisplayStrings(
         yield_total_mwh = displayData["yield_total_mwh"].as<String>();
     }
 
-    if (displayData["battery_soc"].as<String>() != "null") {
-        battery_soc = displayData["battery_soc"].as<String>();
+    if (displayData["battery_soc_0_fractions"].as<String>() != "null") {
+        battery_soc_0_fractions = displayData["battery_soc_0_fractions"].as<String>();
+    }
+
+    if (displayData["battery_soc_1_fraction"].as<String>() != "null") {
+        battery_soc_1_fraction = displayData["battery_soc_1_fraction"].as<String>();
+    }
+
+    if (displayData["battery_soc_2_fractions"].as<String>() != "null") {
+        battery_soc_2_fractions = displayData["battery_soc_2_fractions"].as<String>();
     }
 
     f.close();
