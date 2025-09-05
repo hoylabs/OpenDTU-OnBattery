@@ -56,6 +56,9 @@ void WebApiPowerMeterClass::onStatus(AsyncWebServerRequest* request)
     auto udpVictron = root["udp_victron"].to<JsonObject>();
     Configuration.serializePowerMeterUdpVictronConfig(config.PowerMeter.UdpVictron, udpVictron);
 
+    auto modbusTcp = root["modbus_tcp"].to<JsonObject>();
+    Configuration.serializePowerMeterModbusTcpConfig(config.PowerMeter.ModbusTcp, modbusTcp);
+
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
@@ -170,6 +173,87 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
         }
     }
 
+    if (static_cast<::PowerMeters::Provider::Type>(root["source"].as<uint8_t>()) == ::PowerMeters::Provider::Type::MODBUS_TCP) {
+        JsonObject modbusTcp = root["modbus_tcp"];
+        if (!modbusTcp["ip_address"].is<String>()
+                || modbusTcp["ip_address"].as<String>().length() == 0) {
+            retMsg["message"] = "IP address must not be empty!";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        if (!modbusTcp["port"].is<uint32_t>()
+                || modbusTcp["port"].as<uint32_t>() <= 0 || modbusTcp["port"].as<uint32_t>() > 65535) {
+            retMsg["message"] = "Port must be between 1 and 65535!";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        if (!modbusTcp["device_id"].is<uint32_t>()
+                || modbusTcp["device_id"].as<uint32_t>() < 1 || modbusTcp["device_id"].as<uint32_t>() > 247) {
+            retMsg["message"] = "Device ID must be between 1 and 247!";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        if (!modbusTcp["polling_interval"].is<uint32_t>()
+                || modbusTcp["polling_interval"].as<uint32_t>() <= 0) {
+            retMsg["message"] = "Polling interval must be greater than 0 seconds!";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        // Validate register configurations
+        auto validateRegisterConfig = [&](JsonObject registerObj, const String& name) -> bool {
+            if (registerObj.isNull()) return true; // Optional
+            
+            if (registerObj.containsKey("address")) {
+                uint32_t address = registerObj["address"].as<uint32_t>();
+                if (address > 9999) {
+                    retMsg["message"] = name + " register address must be between 0 and 9999!";
+                    return false;
+                }
+            }
+            
+            if (registerObj.containsKey("scaling_factor")) {
+                float scaling = registerObj["scaling_factor"].as<float>();
+                if (scaling <= 0.0f) {
+                    retMsg["message"] = name + " scaling factor must be greater than 0!";
+                    return false;
+                }
+            }
+            
+            if (registerObj.containsKey("data_type")) {
+                uint8_t dataType = registerObj["data_type"].as<uint8_t>();
+                if (dataType > 4) { // 0-4 are valid datatype values (INT16, UINT16, INT32, UINT32, FLOAT)
+                    retMsg["message"] = name + " data type must be between 0 and 4!";
+                    return false;
+                }
+            }
+            
+            return true;
+        };
+
+        const char* registerNames[] = {
+            "power_register", "power_l1_register", "power_l2_register", "power_l3_register",
+            "voltage_l1_register", "voltage_l2_register", "voltage_l3_register",
+            "current_l1_register", "current_l2_register", "current_l3_register",
+            "import_register", "export_register"
+        };
+
+        for (const char* regName : registerNames) {
+            if (!validateRegisterConfig(modbusTcp[regName], regName)) {
+                response->setLength();
+                request->send(response);
+                return;
+            }
+        }
+    }
+
     {
         auto guard = Configuration.getWriteGuard();
         auto& config = guard.getConfig();
@@ -190,6 +274,9 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
 
         Configuration.deserializePowerMeterUdpVictronConfig(root["udp_victron"].as<JsonObject>(),
                 config.PowerMeter.UdpVictron);
+
+        Configuration.deserializePowerMeterModbusTcpConfig(root["modbus_tcp"].as<JsonObject>(),
+                config.PowerMeter.ModbusTcp);
     }
 
     WebApi.writeConfig(retMsg);
