@@ -118,7 +118,7 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
         return true;
     };
 
-    if (static_cast<::PowerMeters::Provider::Type>(root["source"].as<uint8_t>()) == ::PowerMeters::Provider::Type::HTTP_JSON) {
+    if (root["enabled"].as<bool>() && static_cast<::PowerMeters::Provider::Type>(root["source"].as<uint8_t>()) == ::PowerMeters::Provider::Type::HTTP_JSON) {
         JsonObject httpJson = root["http_json"];
         JsonArray valueConfigs = httpJson["values"];
         for (uint8_t i = 0; i < valueConfigs.size(); i++) {
@@ -144,14 +144,14 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
         }
     }
 
-    if (static_cast<::PowerMeters::Provider::Type>(root["source"].as<uint8_t>()) == ::PowerMeters::Provider::Type::HTTP_SML) {
+    if (root["enabled"].as<bool>() && static_cast<::PowerMeters::Provider::Type>(root["source"].as<uint8_t>()) == ::PowerMeters::Provider::Type::HTTP_SML) {
         JsonObject httpSml = root["http_sml"];
         if (!checkHttpConfig(httpSml["http_request"].as<JsonObject>())) {
             return;
         }
     }
 
-    if (static_cast<::PowerMeters::Provider::Type>(root["source"].as<uint8_t>()) == ::PowerMeters::Provider::Type::UDP_VICTRON) {
+    if (root["enabled"].as<bool>() && static_cast<::PowerMeters::Provider::Type>(root["source"].as<uint8_t>()) == ::PowerMeters::Provider::Type::UDP_VICTRON) {
         JsonObject udpVictron = root["udp_victron"];
         if (!udpVictron["ip_address"].is<String>()
                 || udpVictron["ip_address"].as<String>().length() == 0) {
