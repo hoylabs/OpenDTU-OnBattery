@@ -6,6 +6,12 @@
 #include <MD5Builder.h>
 #include <__compiled_constants.h>
 
+// HTTP_HEAD might not be defined in older versions of ESPAsyncWebServer
+// Define it if not available (standard HTTP method enumeration)
+#ifndef HTTP_HEAD
+#define HTTP_HEAD ((WebRequestMethod)3)
+#endif
+
 extern const uint8_t file_index_html_start[] asm("_binary_webapp_dist_index_html_gz_start");
 extern const uint8_t file_favicon_ico_start[] asm("_binary_webapp_dist_favicon_ico_start");
 extern const uint8_t file_favicon_png_start[] asm("_binary_webapp_dist_favicon_png_start");
@@ -62,12 +68,22 @@ void WebApiWebappClass::responseBinaryDataWithETagCache(AsyncWebServerRequest* r
         eTagMatch = normalizedExpected.equals(normalizedClient);
     }
 
+    // Check if this is a HEAD request to avoid sending body
+    bool isHeadRequest = (request->method() == HTTP_HEAD);
+
     // begin response 200 or 304
     AsyncWebServerResponse* response;
     if (eTagMatch) {
         response = request->beginResponse(304);
     } else {
-        response = request->beginResponse(200, contentType, content, len);
+        // For HEAD requests, send headers only (no body)
+        if (isHeadRequest) {
+            response = request->beginResponse(200, contentType);
+            // Add Content-Length header for HEAD requests
+            response->addHeader("Content-Length", String(len));
+        } else {
+            response = request->beginResponse(200, contentType, content, len);
+        }
         if (contentEncoding.length() > 0) {
             response->addHeader("Content-Encoding", contentEncoding);
         }
@@ -86,9 +102,17 @@ void WebApiWebappClass::init(AsyncWebServer& server, Scheduler& scheduler)
     /*
        We don't validate the request header "Accept-Encoding" if gzip compression is supported!
        We just have the gzipped data available - so we ship them!
+       HEAD requests are now supported alongside GET requests for proper caching behavior.
     */
 
-    server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    // Helper lambda to register both GET and HEAD for the same handler
+    auto registerGetAndHead = [&](const char* uri, std::function<void(AsyncWebServerRequest*)> handler) {
+        server.on(uri, HTTP_GET, handler);
+        server.on(uri, HTTP_HEAD, handler);
+    };
+
+    // Root path - support both GET and HEAD
+    registerGetAndHead("/", [&](AsyncWebServerRequest* request) {
         responseBinaryDataWithETagCache(request, "text/html", "gzip", file_index_html_start, file_index_html_end - file_index_html_start);
     });
 
@@ -96,27 +120,33 @@ void WebApiWebappClass::init(AsyncWebServer& server, Scheduler& scheduler)
         responseBinaryDataWithETagCache(request, "text/html", "gzip", file_index_html_start, file_index_html_end - file_index_html_start);
     });
 
-    server.on("/index.html", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    // Index.html - support both GET and HEAD
+    registerGetAndHead("/index.html", [&](AsyncWebServerRequest* request) {
         responseBinaryDataWithETagCache(request, "text/html", "gzip", file_index_html_start, file_index_html_end - file_index_html_start);
     });
 
-    server.on("/favicon.ico", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    // Favicon - support both GET and HEAD
+    registerGetAndHead("/favicon.ico", [&](AsyncWebServerRequest* request) {
         responseBinaryDataWithETagCache(request, "image/x-icon", "", file_favicon_ico_start, file_favicon_ico_end - file_favicon_ico_start);
     });
 
-    server.on("/favicon.png", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    // Favicon PNG - support both GET and HEAD
+    registerGetAndHead("/favicon.png", [&](AsyncWebServerRequest* request) {
         responseBinaryDataWithETagCache(request, "image/png", "", file_favicon_png_start, file_favicon_png_end - file_favicon_png_start);
     });
 
-    server.on("/zones.json", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    // Zones JSON - support both GET and HEAD
+    registerGetAndHead("/zones.json", [&](AsyncWebServerRequest* request) {
         responseBinaryDataWithETagCache(request, "application/json", "gzip", file_zones_json_start, file_zones_json_end - file_zones_json_start);
     });
 
-    server.on("/site.webmanifest", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    // Web manifest - support both GET and HEAD
+    registerGetAndHead("/site.webmanifest", [&](AsyncWebServerRequest* request) {
         responseBinaryDataWithETagCache(request, "application/json", "", file_site_webmanifest_start, file_site_webmanifest_end - file_site_webmanifest_start);
     });
 
-    server.on("/js/app.js", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    // JavaScript app - support both GET and HEAD
+    registerGetAndHead("/js/app.js", [&](AsyncWebServerRequest* request) {
         responseBinaryDataWithETagCache(request, "text/javascript", "gzip", file_app_js_start, file_app_js_end - file_app_js_start);
     });
 }
