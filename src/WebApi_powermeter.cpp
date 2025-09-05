@@ -118,6 +118,7 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
         return true;
     };
 
+    // Only validate configuration when PowerMeter is enabled
     if (root["enabled"].as<bool>() && static_cast<::PowerMeters::Provider::Type>(root["source"].as<uint8_t>()) == ::PowerMeters::Provider::Type::HTTP_JSON) {
         JsonObject httpJson = root["http_json"];
         JsonArray valueConfigs = httpJson["values"];
