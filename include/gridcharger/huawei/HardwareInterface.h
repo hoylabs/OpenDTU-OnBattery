@@ -113,6 +113,13 @@ private:
     void sendSettings();
 
     void enqueueParameter(Setting setting, float val);
+
+    // Communication failure handling and backoff
+    uint32_t _communicationFailureCount = 0;
+    uint32_t _lastCommunicationFailureMillis = 0;
+    static constexpr uint32_t MaxBackoffDelayMillis = 30000; // 30 seconds max backoff
+    static constexpr uint32_t BaseBackoffDelayMillis = 1000;  // 1 second base backoff
+    uint32_t getBackoffDelayMillis() const;
 };
 
 } // namespace GridChargers::Huawei

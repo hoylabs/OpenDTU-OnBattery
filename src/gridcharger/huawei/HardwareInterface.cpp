@@ -196,6 +196,10 @@ bool HardwareInterface::readDeviceConfig(can_message_t const& msg)
         _upData->add<DataPointLabel::Reachable>(true, true/*ignore age*/);
 
         _lastDeviceConfigMillis = millis();
+        
+        // Reset communication failure tracking on successful communication
+        _communicationFailureCount = 0;
+        _lastCommunicationFailureMillis = 0;
     }
 
     return true;
@@ -441,6 +445,14 @@ void HardwareInterface::loop()
     // the max current multiplier. that is required to process the ACK for
     // the offline current setting, or even send that setting in particular.
     if (!_lastDeviceConfigMillis) {
+        // Check if we need to back off after previous communication failures
+        if (_lastCommunicationFailureMillis > 0) {
+            uint32_t backoffDelay = getBackoffDelayMillis();
+            if ((millis() - _lastCommunicationFailureMillis) < backoffDelay) {
+                return; // still in backoff period
+            }
+        }
+        
         // stand by while processing the device config request and not timed out
         if ((millis() - _lastRequestMillis) < 5000) { return; }
 
@@ -458,7 +470,14 @@ void HardwareInterface::loop()
         _lastSettingsUpdateMillis = std::nullopt;
         _boardPropertiesState = StringState::Unknown;
         _upData->add<DataPointLabel::Reachable>(false, true/*ignore age*/);
-        return; // restart by re-requesting device config in next iteration
+        
+        // Implement backoff mechanism to prevent immediate retry
+        _communicationFailureCount++;
+        _lastCommunicationFailureMillis = millis();
+        
+        DTU_LOGD("Communication failure #%d, backing off for %d ms", 
+                _communicationFailureCount, getBackoffDelayMillis());
+        return; // restart by re-requesting device config after backoff delay
     }
 
     if (!_lastSettingsUpdateMillis) {
@@ -510,7 +529,11 @@ void HardwareInterface::loop()
 void HardwareInterface::processQueue()
 {
     size_t queueSize = _sendQueue.size();
-    for (size_t i = 0; i < queueSize; ++i) {
+    
+    // Limit processing to prevent long blocking if many commands fail
+    size_t maxProcessCount = std::min(queueSize, static_cast<size_t>(5));
+    
+    for (size_t i = 0; i < maxProcessCount; ++i) {
         auto& cmd = _sendQueue.front();
 
         std::array<uint8_t, 8> data = {
@@ -540,7 +563,13 @@ void HardwareInterface::processQueue()
                 "flags 0x%04x, value 0x%08x, %d tries remaining",
                 addr, cmd.command, cmd.flags, cmd.value, cmd.tries);
 
-        if (cmd.tries == 0) { _sendQueue.pop(); }
+        if (cmd.tries == 0) { 
+            _sendQueue.pop(); 
+        } else {
+            // Don't continue processing more commands if this one failed
+            // This prevents cascading failures that could block the loop
+            break;
+        }
     }
 }
 
@@ -624,6 +653,28 @@ std::unique_ptr<DataPointContainer> HardwareInterface::getCurrentData()
     }
 
     return std::move(upData);
+}
+
+uint32_t HardwareInterface::getBackoffDelayMillis() const
+{
+    // Exponential backoff with jitter: base * 2^failures, capped at max
+    uint32_t backoffDelay = BaseBackoffDelayMillis;
+    
+    // Calculate exponential backoff, but prevent overflow
+    for (uint32_t i = 0; i < _communicationFailureCount && i < 10; ++i) {
+        if (backoffDelay <= MaxBackoffDelayMillis / 2) {
+            backoffDelay *= 2;
+        } else {
+            backoffDelay = MaxBackoffDelayMillis;
+            break;
+        }
+    }
+    
+    // Add some jitter (±10%) to prevent synchronized retries
+    uint32_t jitter = backoffDelay / 10;
+    backoffDelay += (millis() % (2 * jitter + 1)) - jitter;
+    
+    return std::min(backoffDelay, MaxBackoffDelayMillis);
 }
 
 } // namespace GridChargers::Huawei

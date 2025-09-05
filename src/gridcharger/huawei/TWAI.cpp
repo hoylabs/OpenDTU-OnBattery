@@ -140,7 +140,9 @@ bool TWAI::sendMessage(uint32_t canId, std::array<uint8_t, 8> const& data)
     txMsg.data_length_code = data.size();
     txMsg.identifier = canId;
 
-    return twai_transmit(&txMsg, pdMS_TO_TICKS(1000)) == ESP_OK;
+    // Use shorter timeout to prevent long blocking when device is unresponsive
+    // Reduced from 1000ms to 100ms to minimize impact on main loop
+    return twai_transmit(&txMsg, pdMS_TO_TICKS(100)) == ESP_OK;
 }
 
 } // namespace GridChargers::Huawei
