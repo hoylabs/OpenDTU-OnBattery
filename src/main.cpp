@@ -12,7 +12,7 @@
 #include "MessageOutput.h"
 #include "SerialPortManager.h"
 #include <battery/Controller.h>
-#include <gridcharger/huawei/Controller.h>
+#include <gridcharger/Manager.h>
 #include "MqttHandleDtu.h"
 #include "MqttHandleHass.h"
 #include "MqttHandleInverter.h"
@@ -151,7 +151,7 @@ void setup()
     SolarCharger.init(scheduler);
     PowerMeter.init(scheduler);
     PowerLimiter.init(scheduler);
-    HuaweiCan.init(scheduler);
+    GridChargerManager.init(scheduler);
     Battery.init(scheduler);
 
     ESP_LOGI(TAG, "Startup complete");

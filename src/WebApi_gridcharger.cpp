@@ -3,7 +3,7 @@
  * Copyright (C) 2022-2024 Thomas Basler and others
  */
 #include "WebApi_gridcharger.h"
-#include <gridcharger/huawei/Controller.h>
+#include <gridcharger/Manager.h>
 #include "Configuration.h"
 #include "PinMapping.h"
 #include "WebApi.h"
@@ -17,11 +17,67 @@ void WebApiGridChargerClass::init(AsyncWebServer& server, Scheduler& scheduler)
 
     _server = &server;
 
-    _server->on("/api/gridcharger/status", HTTP_GET, std::bind(&WebApiGridChargerClass::onStatus, this, _1));
-    _server->on("/api/gridcharger/config", HTTP_GET, std::bind(&WebApiGridChargerClass::onAdminGet, this, _1));
-    _server->on("/api/gridcharger/config", HTTP_POST, std::bind(&WebApiGridChargerClass::onAdminPost, this, _1));
-    _server->on("/api/gridcharger/limit", HTTP_POST, std::bind(&WebApiGridChargerClass::onLimitPost, this, _1));
-    _server->on("/api/gridcharger/power", HTTP_POST, std::bind(&WebApiGridChargerClass::onPowerPost, this, _1));
+    // Multi-charger endpoints
+    _server->on("/api/gridcharger/status", HTTP_GET, std::bind(&WebApiGridChargerClass::onStatusAll, this, _1));
+    _server->onNotFound([this](AsyncWebServerRequest* request) {
+        if (request->url().startsWith("/api/gridcharger/") && request->method() == HTTP_GET) {
+            if (request->url().endsWith("/status")) {
+                onStatus(request);
+                return;
+            }
+            if (request->url().endsWith("/config")) {
+                if (request->method() == HTTP_GET) {
+                    onAdminGet(request);
+                } else if (request->method() == HTTP_POST) {
+                    onAdminPost(request);
+                }
+                return;
+            }
+            if (request->url().endsWith("/limit")) {
+                onLimitPost(request);
+                return;
+            }
+            if (request->url().endsWith("/power")) {
+                onPowerPost(request);
+                return;
+            }
+        }
+        request->send(404);
+    });
+
+    // Backward compatibility endpoints
+    _server->on("/api/gridcharger/config", HTTP_GET, std::bind(&WebApiGridChargerClass::onAdminGetCompat, this, _1));
+    _server->on("/api/gridcharger/config", HTTP_POST, std::bind(&WebApiGridChargerClass::onAdminPostCompat, this, _1));
+    _server->on("/api/gridcharger/limit", HTTP_POST, std::bind(&WebApiGridChargerClass::onLimitPostCompat, this, _1));
+    _server->on("/api/gridcharger/power", HTTP_POST, std::bind(&WebApiGridChargerClass::onPowerPostCompat, this, _1));
+}
+
+void WebApiGridChargerClass::onStatusAll(AsyncWebServerRequest* request)
+{
+    if (!WebApi.checkCredentialsReadonly(request)) {
+        return;
+    }
+
+    AsyncJsonResponse* response = new AsyncJsonResponse();
+    auto& root = response->getRoot();
+    GridChargerManager.getAllJsonData(root);
+
+    response->setLength();
+    request->send(response);
+}
+
+uint8_t WebApiGridChargerClass::extractChargerId(AsyncWebServerRequest* request)
+{
+    String url = request->url();
+    // Extract charger ID from URL like "/api/gridcharger/0/status"
+    int firstSlash = url.indexOf('/', 15); // After "/api/gridcharger"
+    int secondSlash = url.indexOf('/', firstSlash + 1);
+    
+    if (firstSlash > 0 && secondSlash > firstSlash) {
+        String idStr = url.substring(firstSlash + 1, secondSlash);
+        return idStr.toInt();
+    }
+    return 0; // Default to first charger
 }
 
 void WebApiGridChargerClass::onStatus(AsyncWebServerRequest* request)
@@ -30,16 +86,43 @@ void WebApiGridChargerClass::onStatus(AsyncWebServerRequest* request)
         return;
     }
 
+    uint8_t chargerId = extractChargerId(request);
+    
     AsyncJsonResponse* response = new AsyncJsonResponse();
     auto& root = response->getRoot();
-    HuaweiCan.getJsonData(root);
+    GridChargerManager.getJsonData(chargerId, root);
 
     response->setLength();
     request->send(response);
 }
 
-void WebApiGridChargerClass::onLimitPost(AsyncWebServerRequest* request)
+// Backward compatibility methods
+void WebApiGridChargerClass::onAdminGetCompat(AsyncWebServerRequest* request)
 {
+    onAdminGet(request, 0);
+}
+
+void WebApiGridChargerClass::onAdminPostCompat(AsyncWebServerRequest* request)
+{
+    onAdminPost(request, 0);
+}
+
+void WebApiGridChargerClass::onLimitPostCompat(AsyncWebServerRequest* request)
+{
+    onLimitPost(request, 0);
+}
+
+void WebApiGridChargerClass::onPowerPostCompat(AsyncWebServerRequest* request)
+{
+    onPowerPost(request, 0);
+}
+
+void WebApiGridChargerClass::onLimitPost(AsyncWebServerRequest* request, uint8_t chargerId)
+{
+    if (chargerId == 255) {
+        chargerId = extractChargerId(request);
+    }
+
     if (!WebApi.checkCredentials(request)) {
         return;
     }
@@ -68,7 +151,7 @@ void WebApiGridChargerClass::onLimitPost(AsyncWebServerRequest* request)
             return false;
         }
 
-        HuaweiCan.setParameter(value, setting);
+        GridChargerManager.setParameter(chargerId, value, setting);
         return true;
     };
 
@@ -97,8 +180,12 @@ void WebApiGridChargerClass::onLimitPost(AsyncWebServerRequest* request)
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
-void WebApiGridChargerClass::onPowerPost(AsyncWebServerRequest* request)
+void WebApiGridChargerClass::onPowerPost(AsyncWebServerRequest* request, uint8_t chargerId)
 {
+    if (chargerId == 255) {
+        chargerId = extractChargerId(request);
+    }
+
     if (!WebApi.checkCredentials(request)) {
         return;
     }
@@ -119,7 +206,7 @@ void WebApiGridChargerClass::onPowerPost(AsyncWebServerRequest* request)
     }
 
     bool power = root["power"].as<bool>();
-    HuaweiCan.setProduction(power);
+    GridChargerManager.setProduction(chargerId, power);
 
     retMsg["type"] = "success";
     retMsg["message"] = "Power production " + String(power ? "en" : "dis") + "abled!";
@@ -128,8 +215,12 @@ void WebApiGridChargerClass::onPowerPost(AsyncWebServerRequest* request)
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
-void WebApiGridChargerClass::onAdminGet(AsyncWebServerRequest* request)
+void WebApiGridChargerClass::onAdminGet(AsyncWebServerRequest* request, uint8_t chargerId)
 {
+    if (chargerId == 255) {
+        chargerId = extractChargerId(request);
+    }
+
     if (!WebApi.checkCredentials(request)) {
         return;
     }
@@ -138,20 +229,33 @@ void WebApiGridChargerClass::onAdminGet(AsyncWebServerRequest* request)
     auto root = response->getRoot().as<JsonObject>();
     auto const& config = Configuration.get();
 
-    ConfigurationClass::serializeGridChargerConfig(config.GridCharger, root);
+    if (chargerId >= GRIDCHARGER_MAX_COUNT) {
+        root["error"] = "Invalid charger ID";
+        response->setLength();
+        request->send(response);
+        return;
+    }
+
+    ConfigurationClass::serializeGridChargerConfig(config.GridCharger[chargerId], root);
 
     auto can = root["can"].to<JsonObject>();
-    ConfigurationClass::serializeGridChargerCanConfig(config.GridCharger.Can, can);
+    ConfigurationClass::serializeGridChargerCanConfig(config.GridCharger[chargerId].Can, can);
 
     auto huawei = root["huawei"].to<JsonObject>();
-    ConfigurationClass::serializeGridChargerHuaweiConfig(config.GridCharger.Huawei, huawei);
+    ConfigurationClass::serializeGridChargerHuaweiConfig(config.GridCharger[chargerId].Huawei, huawei);
+
+    root["id"] = chargerId;
 
     response->setLength();
     request->send(response);
 }
 
-void WebApiGridChargerClass::onAdminPost(AsyncWebServerRequest* request)
+void WebApiGridChargerClass::onAdminPost(AsyncWebServerRequest* request, uint8_t chargerId)
 {
+    if (chargerId == 255) {
+        chargerId = extractChargerId(request);
+    }
+
     if (!WebApi.checkCredentials(request)) {
         return;
     }
@@ -163,6 +267,14 @@ void WebApiGridChargerClass::onAdminPost(AsyncWebServerRequest* request)
     }
 
     auto& retMsg = response->getRoot();
+
+    if (chargerId >= GRIDCHARGER_MAX_COUNT) {
+        retMsg["message"] = "Invalid charger ID!";
+        retMsg["code"] = WebApiError::GenericValueMissing;
+        response->setLength();
+        request->send(response);
+        return;
+    }
 
     if (!(root["enabled"].is<bool>()) ||
         !(root["provider"].is<uint8_t>()) ||
@@ -207,14 +319,14 @@ void WebApiGridChargerClass::onAdminPost(AsyncWebServerRequest* request)
     {
         auto guard = Configuration.getWriteGuard();
         auto& config = guard.getConfig();
-        ConfigurationClass::deserializeGridChargerConfig(root.as<JsonObject>(), config.GridCharger);
-        ConfigurationClass::deserializeGridChargerCanConfig(root["can"].as<JsonObject>(), config.GridCharger.Can);
-        ConfigurationClass::deserializeGridChargerHuaweiConfig(root["huawei"].as<JsonObject>(), config.GridCharger.Huawei);
+        ConfigurationClass::deserializeGridChargerConfig(root.as<JsonObject>(), config.GridCharger[chargerId]);
+        ConfigurationClass::deserializeGridChargerCanConfig(root["can"].as<JsonObject>(), config.GridCharger[chargerId].Can);
+        ConfigurationClass::deserializeGridChargerHuaweiConfig(root["huawei"].as<JsonObject>(), config.GridCharger[chargerId].Huawei);
     }
 
     WebApi.writeConfig(retMsg);
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 
-    HuaweiCan.updateSettings();
+    GridChargerManager.updateSettings();
 }

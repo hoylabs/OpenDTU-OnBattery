@@ -2,6 +2,7 @@
 #pragma once
 
 #include "PinMapping.h"
+#include "defaults.h"
 #include <TaskSchedulerDeclarations.h>
 #include <condition_variable>
 #include <cstdint>
@@ -433,7 +434,7 @@ struct CONFIG_T {
 
     BatteryConfig Battery;
 
-    GridChargerConfig GridCharger;
+    GridChargerConfig GridCharger[GRIDCHARGER_MAX_COUNT];
 
     INVERTER_CONFIG_T Inverter[INV_MAX_COUNT];
     char Dev_PinMapping[DEV_MAX_MAPPING_NAME_STRLEN + 1];
@@ -471,6 +472,10 @@ public:
     INVERTER_CONFIG_T* getFreeInverterSlot();
     INVERTER_CONFIG_T* getInverterConfig(const uint64_t serial);
     void deleteInverterById(const uint8_t id);
+
+    GridChargerConfig* getFreeGridChargerSlot();
+    GridChargerConfig* getGridChargerConfig(const uint8_t id);
+    uint8_t getGridChargerCount() const;
 
     int8_t getIndexForLogModule(const String& moduleName) const;
 
