@@ -23,6 +23,8 @@ public:
         String& offline,
         String& power_w, String& power_kw,
         String& meter_power_w, String& meter_power_kw,
+        String& ac_charger_power_w, String& ac_charger_power_kw,
+        String& solar_charger_power_w, String& solar_charger_power_kw,
         String& yield_today_wh, String& yield_today_kwh,
         String& yield_total_kwh, String& yield_total_mwh,
         String& battery_soc_0_fractions, String& battery_soc_1_fraction, String& battery_soc_2_fractions);

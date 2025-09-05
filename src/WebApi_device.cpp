@@ -89,6 +89,8 @@ void WebApiDeviceClass::onDeviceAdminGet(AsyncWebServerRequest* request)
     display["locale"] = config.Display.Locale;
     display["diagramduration"] = config.Display.Diagram.Duration;
     display["diagrammode"] = config.Display.Diagram.Mode;
+    display["show_charger_power"] = config.Display.ShowChargerPower;
+    display["charger_power_source"] = config.Display.ChargerPowerSource;
 
     auto leds = root["led"].to<JsonArray>();
     for (uint8_t i = 0; i < PINMAPPING_LED_COUNT; i++) {
@@ -176,6 +178,8 @@ void WebApiDeviceClass::onDeviceAdminPost(AsyncWebServerRequest* request)
         strlcpy(config.Display.Locale, root["display"]["locale"].as<String>().c_str(), sizeof(config.Display.Locale));
         config.Display.Diagram.Duration = root["display"]["diagramduration"].as<uint32_t>();
         config.Display.Diagram.Mode = root["display"]["diagrammode"].as<DiagramMode_t>();
+        config.Display.ShowChargerPower = root["display"]["show_charger_power"].as<bool>();
+        config.Display.ChargerPowerSource = root["display"]["charger_power_source"].as<uint8_t>();
 
         for (uint8_t i = 0; i < PINMAPPING_LED_COUNT; i++) {
             config.Led_Single[i].Brightness = root["led"][i]["brightness"].as<uint8_t>();
