@@ -411,6 +411,8 @@ struct CONFIG_T {
             uint32_t Duration;
             uint8_t Mode;
         } Diagram;
+        bool ShowChargerPower;
+        uint8_t ChargerPowerSource; // 0 = Auto, 1 = AC Charger (Huawei), 2 = Solar Charger (MPPT)
     } Display;
 
     struct {

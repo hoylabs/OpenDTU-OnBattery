@@ -9,6 +9,8 @@
 #include "PinMapping.h"
 #include <battery/Controller.h>
 #include <powermeter/Controller.h>
+#include <gridcharger/huawei/Controller.h>
+#include <solarcharger/Controller.h>
 #include <NetworkSettings.h>
 #include <map>
 #include <time.h>
@@ -33,6 +35,12 @@ static const char* const i18n_current_power_kw[] = { "%.1f kW", "%.1f kW", "%.1f
 
 static const char* const i18n_meter_power_w[] = { "grid:   %.0f W", "Netz:   %.0f W", "reseau: %.0f W" };
 static const char* const i18n_meter_power_kw[] = { "grid:   %.1f kW", "Netz:   %.1f kW", "reseau: %.1f kW" };
+
+static const char* const i18n_ac_charger_power_w[] = { "AC:     %.0f W", "AC:     %.0f W", "AC:     %.0f W" };
+static const char* const i18n_ac_charger_power_kw[] = { "AC:     %.1f kW", "AC:     %.1f kW", "AC:     %.1f kW" };
+
+static const char* const i18n_solar_charger_power_w[] = { "MPPT:   %.0f W", "MPPT:   %.0f W", "MPPT:   %.0f W" };
+static const char* const i18n_solar_charger_power_kw[] = { "MPPT:   %.1f kW", "MPPT:   %.1f kW", "MPPT:   %.1f kW" };
 
 static const char* const i18n_yield_today_wh[] = { "today: %4.0f Wh", "Heute: %4.0f Wh", "auj.: %4.0f Wh" };
 static const char* const i18n_yield_today_kwh[] = { "today: %.1f kWh", "Heute: %.1f kWh", "auj.: %.1f kWh" };
@@ -204,6 +212,10 @@ void DisplayGraphicClass::setLocale(const String& locale)
     _i18n_current_power_kw = i18n_current_power_kw[idx];
     _i18n_meter_power_w = i18n_meter_power_w[idx];
     _i18n_meter_power_kw = i18n_meter_power_kw[idx];
+    _i18n_ac_charger_power_w = i18n_ac_charger_power_w[idx];
+    _i18n_ac_charger_power_kw = i18n_ac_charger_power_kw[idx];
+    _i18n_solar_charger_power_w = i18n_solar_charger_power_w[idx];
+    _i18n_solar_charger_power_kw = i18n_solar_charger_power_kw[idx];
     _i18n_yield_today_wh = i18n_yield_today_wh[idx];
     _i18n_yield_today_kwh = i18n_yield_today_kwh[idx];
     _i18n_yield_total_kwh = i18n_yield_total_kwh[idx];
@@ -219,6 +231,10 @@ void DisplayGraphicClass::setLocale(const String& locale)
         _i18n_current_power_kw,
         _i18n_meter_power_w,
         _i18n_meter_power_kw,
+        _i18n_ac_charger_power_w,
+        _i18n_ac_charger_power_kw,
+        _i18n_solar_charger_power_w,
+        _i18n_solar_charger_power_kw,
         _i18n_yield_today_wh,
         _i18n_yield_today_kwh,
         _i18n_yield_total_kwh,
@@ -337,9 +353,13 @@ void DisplayGraphicClass::loop()
 
     bool powerMeterAvailable = Configuration.get().PowerMeter.Enabled;
     bool batteryAvailable = Configuration.get().Battery.Enabled && Battery.getStats()->isSoCValid();
+    bool chargerPowerAvailable = Configuration.get().Display.ShowChargerPower && 
+        ((Configuration.get().Display.ChargerPowerSource == 1 && Configuration.get().GridCharger.Enabled) ||
+         (Configuration.get().Display.ChargerPowerSource == 2 && Configuration.get().SolarCharger.Enabled) ||
+         (Configuration.get().Display.ChargerPowerSource == 0 && (Configuration.get().GridCharger.Enabled || Configuration.get().SolarCharger.Enabled)));
 
-    if (showText && timing && !displayPowerSave && (powerMeterAvailable || batteryAvailable)) {
-        // erase the third line and print the battery SoC or power meter value instead.
+    if (showText && timing && !displayPowerSave && (powerMeterAvailable || batteryAvailable || chargerPowerAvailable)) {
+        // erase the third line and print the battery SoC, power meter value, or charger power instead.
         // we do it this way to touch as least upstream code as possible
         // to make maintenance easier.
         setFont(2);
@@ -349,20 +369,29 @@ void DisplayGraphicClass::loop()
         _display->drawBox(0, y, _display->getDisplayWidth(), lineHeight);
         _display->setDrawColor(1);
 
+        // Determine what to show based on availability and rotation
+        uint8_t availableCount = (powerMeterAvailable ? 1 : 0) + (batteryAvailable ? 1 : 0) + (chargerPowerAvailable ? 1 : 0);
+        uint8_t displayIndex = (_mExtra / 3) % availableCount;
+        
+        uint8_t currentIndex = 0;
         bool showPowerMeter = false;
-
-        // Prioritize power meter and battery alternation when both are available
-        if (powerMeterAvailable && batteryAvailable) {
-            // Alternate between power meter and battery every 3 seconds within the timing window
-            showPowerMeter = ((_mExtra / 3) % 2) == 0;
+        bool showBattery = false;
+        bool showChargerPower = false;
+        
+        if (powerMeterAvailable) {
+            if (currentIndex == displayIndex) {
+                showPowerMeter = true;
+            }
+            currentIndex++;
         }
-        // Show power meter only if battery not available
-        else if (powerMeterAvailable) {
-            showPowerMeter = true;
+        if (batteryAvailable && !showPowerMeter) {
+            if (currentIndex == displayIndex) {
+                showBattery = true;
+            }
+            currentIndex++;
         }
-        // Show battery only if power meter not enabled
-        else if (batteryAvailable) {
-            showPowerMeter = false;
+        if (chargerPowerAvailable && !showPowerMeter && !showBattery) {
+            showChargerPower = true;
         }
 
         if (showPowerMeter) {
@@ -372,7 +401,7 @@ void DisplayGraphicClass::loop()
             } else {
                 snprintf(_fmtText, sizeof(_fmtText), _i18n_meter_power_w.c_str(), acPower);
             }
-        } else {
+        } else if (showBattery) {
             auto precision = Battery.getStats()->getSoCPrecision();
             float soc = Battery.getStats()->getSoC();
 
@@ -382,6 +411,44 @@ void DisplayGraphicClass::loop()
                 snprintf(_fmtText, sizeof(_fmtText), _i18n_battery_soc_2_fractions.c_str(), soc);
             } else {
                 snprintf(_fmtText, sizeof(_fmtText), _i18n_battery_soc_0_fractions.c_str(), soc);
+            }
+        } else if (showChargerPower) {
+            float chargerPower = 0.0;
+            bool useACCharger = false;
+            
+            // Determine which charger to use based on configuration and availability
+            if (Configuration.get().Display.ChargerPowerSource == 1) {
+                // Force AC Charger (Huawei)
+                useACCharger = true;
+            } else if (Configuration.get().Display.ChargerPowerSource == 2) {
+                // Force Solar Charger (MPPT)
+                useACCharger = false;
+            } else {
+                // Auto: prefer AC charger if available, otherwise use solar charger
+                useACCharger = Configuration.get().GridCharger.Enabled;
+            }
+            
+            if (useACCharger && Configuration.get().GridCharger.Enabled) {
+                auto oChargerPower = HuaweiCan.getDataPoints().get<GridChargers::Huawei::DataPointLabel::OutputPower>();
+                chargerPower = oChargerPower.value_or(0.0);
+                
+                if (chargerPower > 999) {
+                    snprintf(_fmtText, sizeof(_fmtText), _i18n_ac_charger_power_kw.c_str(), (chargerPower / 1000));
+                } else {
+                    snprintf(_fmtText, sizeof(_fmtText), _i18n_ac_charger_power_w.c_str(), chargerPower);
+                }
+            } else if (Configuration.get().SolarCharger.Enabled) {
+                auto oChargerPower = SolarCharger.getStats()->getOutputPowerWatts();
+                chargerPower = oChargerPower.value_or(0.0);
+                
+                if (chargerPower > 999) {
+                    snprintf(_fmtText, sizeof(_fmtText), _i18n_solar_charger_power_kw.c_str(), (chargerPower / 1000));
+                } else {
+                    snprintf(_fmtText, sizeof(_fmtText), _i18n_solar_charger_power_w.c_str(), chargerPower);
+                }
+            } else {
+                // Fallback case - should not happen but just in case
+                snprintf(_fmtText, sizeof(_fmtText), "charger: --- W");
             }
         }
 

@@ -82,6 +82,10 @@ private:
     String _i18n_current_power_w;
     String _i18n_meter_power_w;
     String _i18n_meter_power_kw;
+    String _i18n_ac_charger_power_w;
+    String _i18n_ac_charger_power_kw;
+    String _i18n_solar_charger_power_w;
+    String _i18n_solar_charger_power_kw;
     String _i18n_yield_total_mwh;
     String _i18n_yield_total_kwh;
     String _i18n_battery_soc_0_fractions;

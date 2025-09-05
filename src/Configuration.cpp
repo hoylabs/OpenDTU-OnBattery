@@ -356,6 +356,8 @@ bool ConfigurationClass::write()
     display["locale"] = config.Display.Locale;
     display["diagram_duration"] = config.Display.Diagram.Duration;
     display["diagram_mode"] = config.Display.Diagram.Mode;
+    display["show_charger_power"] = config.Display.ShowChargerPower;
+    display["charger_power_source"] = config.Display.ChargerPowerSource;
 
     JsonArray leds = device["led"].to<JsonArray>();
     for (uint8_t i = 0; i < PINMAPPING_LED_COUNT; i++) {
@@ -821,6 +823,8 @@ bool ConfigurationClass::read()
     strlcpy(config.Display.Locale, display["locale"] | DISPLAY_LOCALE, sizeof(config.Display.Locale));
     config.Display.Diagram.Duration = display["diagram_duration"] | DISPLAY_DIAGRAM_DURATION;
     config.Display.Diagram.Mode = display["diagram_mode"] | DISPLAY_DIAGRAM_MODE;
+    config.Display.ShowChargerPower = display["show_charger_power"] | DISPLAY_SHOW_CHARGER_POWER;
+    config.Display.ChargerPowerSource = display["charger_power_source"] | DISPLAY_CHARGER_POWER_SOURCE;
 
     JsonArray leds = device["led"];
     for (uint8_t i = 0; i < PINMAPPING_LED_COUNT; i++) {
