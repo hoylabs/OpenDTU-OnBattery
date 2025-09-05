@@ -41,7 +41,25 @@ void WebApiWebappClass::responseBinaryDataWithETagCache(AsyncWebServerRequest* r
     bool eTagMatch = false;
     if (request->hasHeader("If-None-Match")) {
         const AsyncWebHeader* h = request->getHeader("If-None-Match");
-        eTagMatch = h->value().equals(expectedEtag);
+        String clientEtag = h->value();
+        
+        // Normalize ETag comparison: remove quotes and convert to lowercase for comparison
+        String normalizedExpected = expectedEtag;
+        String normalizedClient = clientEtag;
+        
+        // Remove quotes if present
+        if (normalizedExpected.startsWith("\"") && normalizedExpected.endsWith("\"")) {
+            normalizedExpected = normalizedExpected.substring(1, normalizedExpected.length() - 1);
+        }
+        if (normalizedClient.startsWith("\"") && normalizedClient.endsWith("\"")) {
+            normalizedClient = normalizedClient.substring(1, normalizedClient.length() - 1);
+        }
+        
+        // Convert to lowercase for case-insensitive comparison
+        normalizedExpected.toLowerCase();
+        normalizedClient.toLowerCase();
+        
+        eTagMatch = normalizedExpected.equals(normalizedClient);
     }
 
     // begin response 200 or 304
@@ -56,7 +74,8 @@ void WebApiWebappClass::responseBinaryDataWithETagCache(AsyncWebServerRequest* r
     }
 
     // HTTP requires cache headers in 200 and 304 to be identical
-    response->addHeader("Cache-Control", "public, must-revalidate");
+    // Cache for 31 days (2678400 seconds)
+    response->addHeader("Cache-Control", "public, max-age=2678400");
     response->addHeader("ETag", expectedEtag);
 
     request->send(response);
