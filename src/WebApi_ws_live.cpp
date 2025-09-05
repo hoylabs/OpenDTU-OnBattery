@@ -8,7 +8,7 @@
 #include "WebApi.h"
 #include <battery/Controller.h>
 #include <battery/Stats.h>
-#include <gridcharger/huawei/Controller.h>
+#include <gridcharger/Manager.h>
 #include <powermeter/Controller.h>
 #include "defaults.h"
 #include <solarcharger/Controller.h>
@@ -115,12 +115,13 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
         if (!all) { _lastPublishSolarCharger = millis(); }
     }
 
-    if (all || (HuaweiCan.getDataPoints().getLastUpdate() - _lastPublishGridCharger) < halfOfAllMillis ) {
+    auto* firstCharger = GridChargerManager.getFirstController();
+    if (all || (firstCharger && (firstCharger->getDataPoints().getLastUpdate() - _lastPublishGridCharger) < halfOfAllMillis )) {
         auto gridChargerObj = root["gridcharger"].to<JsonObject>();
-        gridChargerObj["enabled"] = config.GridCharger.Enabled;
+        gridChargerObj["enabled"] = config.GridCharger[0].Enabled;
 
-        if (config.GridCharger.Enabled) {
-            auto const& dataPoints = HuaweiCan.getDataPoints();
+        if (config.GridCharger[0].Enabled && firstCharger) {
+            auto const& dataPoints = firstCharger->getDataPoints();
             auto oInputPower = dataPoints.get<GridChargers::Huawei::DataPointLabel::InputPower>();
             float pwr = oInputPower.value_or(0.0f);
             addTotalField(gridChargerObj, "Power", pwr, "W", 2);

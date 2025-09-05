@@ -26,3 +26,8 @@ export interface GridChargerConfig {
     can: GridChargerCanConfig;
     huawei: GridChargerHuaweiConfig;
 }
+
+export interface GridChargerArrayConfig {
+    chargers: GridChargerConfig[];
+    count: number;
+}
