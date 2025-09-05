@@ -6,6 +6,7 @@
 #include <battery/Controller.h>
 #include <battery/Stats.h>
 #include <powermeter/Controller.h>
+#include <invertermeter/Controller.h>
 #include "PowerLimiter.h"
 #include "Configuration.h"
 #include "MqttSettings.h"
@@ -201,13 +202,17 @@ void PowerLimiterClass::loop()
     }
 
     // if the power meter is being used, i.e., if its data is valid, we want to
-    // wait for a new reading after adjusting the inverter limit. otherwise, we
-    // proceed as we will use a fallback limit independent of the power meter.
+    // wait for a new reading after adjusting the inverter limit. however, if
+    // an inverter meter is available and provides recent data, we can proceed
+    // without waiting as we have a direct measurement of inverter output.
     // the power meter reading is expected to be at most 2 seconds old when it
     // arrives. this can be the case for readings provided by networked meter
     // readers, where a packet needs to travel through the network for some
     // time after the actual measurement was done by the reader.
-    if (PowerMeter.isDataValid() && PowerMeter.getLastUpdate() <= (latestInverterStats + 2000)) {
+    bool hasRecentInverterMeter = InverterMeter.isDataValid() && 
+                                  (millis() - InverterMeter.getLastUpdate()) < 5000;
+    
+    if (PowerMeter.isDataValid() && PowerMeter.getLastUpdate() <= (latestInverterStats + 2000) && !hasRecentInverterMeter) {
         return announceStatus(Status::PowerMeterPending);
     }
 
@@ -567,12 +572,25 @@ uint16_t PowerLimiterClass::calcTargetOutput() const
     }
 
     int16_t currentTotalOutput = 0;
-    for (auto const& upInv : _inverters) {
-        // non-eligible inverters don't participate in this DPL round at all.
-        // inverters in standby report 0 W output, so we can iterate them.
-        if (!upInv->isEligible()) { continue; }
+    
+    // If we have a valid inverter meter reading, use that for more accurate
+    // and faster measurements instead of summing individual inverter outputs
+    bool useInverterMeter = InverterMeter.isDataValid() && 
+                           (millis() - InverterMeter.getLastUpdate()) < 5000;
+    
+    if (useInverterMeter) {
+        currentTotalOutput = static_cast<int16_t>(InverterMeter.getPowerTotal());
+        DTU_LOGD("using inverter meter reading: %.1f W", InverterMeter.getPowerTotal());
+    } else {
+        // Fall back to summing individual inverter outputs from DTU stats
+        for (auto const& upInv : _inverters) {
+            // non-eligible inverters don't participate in this DPL round at all.
+            // inverters in standby report 0 W output, so we can iterate them.
+            if (!upInv->isEligible()) { continue; }
 
-        currentTotalOutput += upInv->getCurrentOutputAcWatts();
+            currentTotalOutput += upInv->getCurrentOutputAcWatts();
+        }
+        DTU_LOGD("using DTU stats total: %d W", currentTotalOutput);
     }
 
     // this value is negative if we are exporting more than "targetConsumption"
