@@ -719,7 +719,7 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested) const
 
             // If battery is discharging, reduce the power sent to inverters
             if (currentBatteryPower < 0) {
-                uint16_t batteryDischargePower = static_cast<uint16_t>(-currentBatteryPower);
+                uint16_t batteryDischargePower = static_cast<uint16_t>(std::abs(currentBatteryPower));
                 uint16_t batteryDischargeAc = dcPowerBusToInverterAc(batteryDischargePower);
 
                 if (batteryDischargeAc > solarOutputAc) {
