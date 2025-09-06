@@ -707,29 +707,52 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested) const
     auto solarOutputDc = getSolarPassthroughPower();
     auto solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
     if (isFullSolarPassthroughActive() && solarOutputAc > powerRequested) {
+        // TODO: we might not want to adjust the limit if solarOutputAc is smaller than powerRequested after we also deducted the DC loads
         uint16_t adjustedOutput = solarOutputAc;
 
-        // Check if battery is being drained and reduce inverter limits accordingly
-        // to account for other DC loads consuming power from the battery
+        // Calculate available power considering all power flows on the DC bus:
+        // - Solar charger power (input)
+        // - Battery power (positive = charging, negative = discharging)
+        // - Current battery-powered inverter consumption
+        // - Unknown DC loads (derived from the difference)
         auto stats = Battery.getStats();
         if (stats->isCurrentValid() && stats->isVoltageValid()) {
             float batteryCurrent = stats->getChargeCurrent(); // negative for discharge
             float batteryVoltage = stats->getVoltage();
             float currentBatteryPower = batteryCurrent * batteryVoltage; // negative for discharge
 
-            // If battery is discharging, reduce the power sent to inverters
-            if (currentBatteryPower < 0) {
-                uint16_t batteryDischargePower = static_cast<uint16_t>(std::abs(currentBatteryPower));
-                uint16_t batteryDischargeAc = dcPowerBusToInverterAc(batteryDischargePower);
+            // Get current DC power consumption by battery-powered inverters
+            // Note: This is an approximation as we convert from AC back to estimated DC
+            float currentInverterAcPower = getBatteryInvertersOutputAcWatts();
+            float currentInverterDcPower = currentInverterAcPower / 0.95; // Assume 95% inverter efficiency
 
-                if (batteryDischargeAc > solarOutputAc) {
-                    adjustedOutput = 0;
-                } else {
-                    adjustedOutput = solarOutputAc - batteryDischargeAc;
-                }
+            // Power balance: Solar input = Battery power + Inverter consumption + DC loads
+            // Therefore: DC loads = Solar - Battery - Inverter consumption
+            // Available power for inverters = Solar - DC loads = Solar - (Solar - Battery - Inverter) = Battery + Inverter
+            // DC loads can not be negative
+            float dcLoads = std::max(0.0f, solarOutputDc - currentInverterDcPower - currentBatteryPower);
 
-                DTU_LOGD("adjusting solar passthrough from %u to %u W AC due to battery discharge (%u W DC, %u W AC)",
-                        solarOutputAc, adjustedOutput, batteryDischargePower, batteryDischargeAc);
+            // Available power for inverters, can be negative
+            float availablePowerDc = solarOutputDc - std::max(0.0f, dcLoads);
+
+            // If available power is negative, FSPT is not possible, return the requested power instead
+            if (availablePowerDc < 0) {
+                // TODO: FSPT is not possible in this case!
+
+                adjustedOutput = powerRequested;
+
+                DTU_LOGD("Limiting solar passthrough to %u W AC: solar=%u W DC, battery=%.1f W, inverter=%.1f W DC, unknown_loads=%.1f W DC, available=%.1f W DC",
+                        adjustedOutput, solarOutputDc, currentBatteryPower, currentInverterDcPower, dcLoads, availablePowerDc);
+
+                return adjustedOutput;
+
+            } else {
+                // Either battery is charging or there's sufficient power available
+                adjustedOutput = dcPowerBusToInverterAc(std::max(0.0f, availablePowerDc + currentInverterDcPower));
+                adjustedOutput = std::min(adjustedOutput, solarOutputAc); // Don't exceed solar output
+
+                DTU_LOGD("Solar passthrough calculation: solar=%u W DC, battery=%.1f W, inverter=%.1f W DC, unknown_loads=%.1f W DC, available=%.1f W DC, output=%u W AC",
+                        solarOutputDc, currentBatteryPower, currentInverterDcPower, unknownDcLoads, availablePowerDc, adjustedOutput);
             }
         }
 
