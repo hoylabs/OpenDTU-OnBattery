@@ -45,6 +45,9 @@ void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
     auto serial = root["serial"].to<JsonObject>();
     ConfigurationClass::serializeBatterySerialConfig(config.Battery.Serial, serial);
 
+    auto jkbmscan = root["jkbmscan"].to<JsonObject>();
+    ConfigurationClass::serializeBatteryJkBmsCanConfig(config.Battery.JkBmsCan, jkbmscan);
+
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
@@ -85,6 +88,7 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
         ConfigurationClass::deserializeBatteryZendureConfig(root["zendure"].as<JsonObject>(), config.Battery.Zendure);
         ConfigurationClass::deserializeBatteryMqttConfig(root["mqtt"].as<JsonObject>(), config.Battery.Mqtt);
         ConfigurationClass::deserializeBatterySerialConfig(root["serial"].as<JsonObject>(), config.Battery.Serial);
+        ConfigurationClass::deserializeBatteryJkBmsCanConfig(root["jkbmscan"].as<JsonObject>(), config.Battery.JkBmsCan);
     }
 
     WebApi.writeConfig(retMsg);

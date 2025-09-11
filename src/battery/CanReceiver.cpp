@@ -33,9 +33,17 @@ bool CanReceiver::init(char const* providerName)
     // esp_intr_dump() function, but that's not available yet in our version
     // of the underlying esp-idf.
     g_config.intr_flags = ESP_INTR_FLAG_LEVEL2;
-
+    twai_timing_config_t t_config;
     // Initialize configuration structures using macro initializers
-    twai_timing_config_t t_config = TWAI_TIMING_CONFIG_500KBITS();
+    if(pin.battery_can_type==2)  {
+        t_config = TWAI_TIMING_CONFIG_250KBITS();
+        DTU_LOGD("Twai driver set to 250 KBITS");
+    }
+    else
+    {
+       t_config = TWAI_TIMING_CONFIG_500KBITS();
+        DTU_LOGD("Twai driver set to 500 KBITS");
+    }
     twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
     // Install TWAI driver
@@ -128,7 +136,6 @@ void CanReceiver::loop()
     DTU_LOGD("Received CAN message: 0x%04X (%d bytes)",
             rx_message.identifier, rx_message.data_length_code);
     LogHelper::dumpBytes(TAG, _providerName, rx_message.data, rx_message.data_length_code);
-
     onMessage(rx_message);
 }
 
@@ -140,6 +147,11 @@ uint8_t CanReceiver::readUnsignedInt8(uint8_t *data)
 uint16_t CanReceiver::readUnsignedInt16(uint8_t *data)
 {
     return (data[1] << 8) | data[0];
+}
+
+uint16_t CanReceiver::readBigEndianUnsignedInt16(uint8_t *data)
+{
+    return (data[0] << 8) | data[1];
 }
 
 int16_t CanReceiver::readSignedInt16(uint8_t *data)

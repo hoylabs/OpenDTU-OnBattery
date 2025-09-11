@@ -38,12 +38,19 @@ export interface BatterySerialConfig {
     polling_interval: number;
 }
 
+export interface BatteryJkBmsCanConfig {
+    number_of_cells: number;
+    can_protocol_version: number;
+
+}
+
 export interface BatteryConfig {
     enabled: boolean;
     provider: number;
     serial: BatterySerialConfig;
     mqtt: BatteryMqttConfig;
     zendure: BatteryZendureConfig;
+    jkbmscan: BatteryJkBmsCanConfig;
     enable_discharge_current_limit: boolean;
     discharge_current_limit: number;
     discharge_current_limit_below_soc: number;

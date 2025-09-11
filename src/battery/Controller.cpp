@@ -8,6 +8,7 @@
 #include <battery/sbs/Provider.h>
 #include <battery/victronsmartshunt/Provider.h>
 #include <battery/zendure/Provider.h>
+#include <battery/jkbmscan/Provider.h>
 #include <Configuration.h>
 #include <LogHelper.h>
 
@@ -76,6 +77,9 @@ void Controller::updateSettings()
             break;
         case 7:
             _upProvider = std::make_unique<Zendure::Provider>();
+            break;
+        case 8:
+            _upProvider = std::make_unique<JkBmsCan::Provider>();
             break;
         default:
             DTU_LOGE("Unknown provider: %d", config.Battery.Provider);
