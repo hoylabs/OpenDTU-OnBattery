@@ -800,7 +800,8 @@
         "OtaStatus": "Statut OTA",
         "OtaSuccess": "Le téléchargement du firmware a réussi. L'appareil a été redémarré automatiquement. Lorsque l'appareil est à nouveau accessible, l'interface est automatiquement rechargée.",
         "FirmwareUpload": "Téléversement du firmware",
-        "UploadProgress": "Progression du téléversement"
+        "UploadProgress": "Progression du téléversement",
+        "InvalidFileType": "Type de fichier invalide. Veuillez sélectionner un fichier firmware avec des extensions valides : {validTypes}"
     },
     "about": {
         "AboutOpendtu": "À propos d'OpenDTU-OnBattery",
@@ -816,7 +817,7 @@
         "ErrorReporting": "Rapport d'erreurs",
         "ErrorReportingBody": "Veuillez signaler les problèmes en utilisant la fonction fournie par <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/issues\" target=\"_blank\">Github</a>.",
         "Discussion": "Discussion",
-        "DiscussionBody": "Discutez avec nous sur <a href=\"https://discord.gg/WzhxEY62mB\" target=\"_blank\">Discord</a> ou sur <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/discussions\" target=\"_blank\">Github</a>."
+        "DiscussionBody": "Discutez avec nous sur <a href=\"https://discord.gg/46hWaXsn\" target=\"_blank\">Discord</a> ou sur <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/discussions\" target=\"_blank\">Github</a>."
     },
     "hints": {
         "NoTotals": "Enable and configure features, e.g., by registering an inverter, to show data.",

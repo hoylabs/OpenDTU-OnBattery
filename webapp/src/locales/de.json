@@ -725,6 +725,8 @@
         "TotalUpperPowerLimitHint": "Die Wechselrichter werden so eingestellt, dass sie in Summe höchstens diese Leistung erbringen.",
         "UpperPowerLimit": "Maximales Leistungslimit",
         "UpperPowerLimitHint": "Der Wechselrichter wird stets so eingestellt, dass höchstens diese Ausgangsleistung erreicht wird. Dieser Wert muss so gewählt werden, dass die Strombelastbarkeit der AC-Anschlussleitungen eingehalten wird.",
+        "AllowStandby": "Standby erlauben",
+        "AllowStandbyHint": "Erlaubt dem Wechselrichter in Standby zu gehen, wenn das berechnete Leistungslimit unter dem minimalen Leistungslimit liegt.",
         "SocThresholds": "Batterie State of Charge (SoC) Schwellwerte",
         "IgnoreSoc": "Nur Spannungs-Schwellwerte nutzen",
         "IgnoreSocHint": "Falls aktiviert werden nur die Spannungs-Schwellwerte berücksichtigt. Deaktiviere diesen Schalter, um Batterie State of Charge (SoC) Schwellwerte zu konfigurieren (nicht empfohlen, da der SoC-Wert häufig ungenau ist).",
@@ -934,7 +936,8 @@
         "OtaStatus": "OTA-Status",
         "OtaSuccess": "Das Hochladen der Firmware war erfolgreich. Das Gerät wurde automatisch neu gestartet. Wenn das Gerät wieder erreichbar ist, wird die Oberfläche automatisch neu geladen.",
         "FirmwareUpload": "Firmware hochladen",
-        "UploadProgress": "Hochlade-Fortschritt"
+        "UploadProgress": "Hochlade-Fortschritt",
+        "InvalidFileType": "Ungültiger Dateityp. Bitte wählen Sie eine Firmware-Datei mit gültigen Erweiterungen: {validTypes}"
     },
     "about": {
         "AboutOpendtu": "Über OpenDTU-OnBattery",
@@ -950,7 +953,7 @@
         "ErrorReporting": "Fehlerberichte",
         "ErrorReportingBody": "Bitte melde Probleme über die Ticketverwaltung von <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/issues\" target=\"_blank\">Github</a>.",
         "Discussion": "Diskussion",
-        "DiscussionBody": "Diskutiere mit uns auf <a href=\"https://discord.gg/WzhxEY62mB\" target=\"_blank\">Discord</a> oder <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/discussions\" target=\"_blank\">Github</a>."
+        "DiscussionBody": "Diskutiere mit uns auf <a href=\"https://discord.gg/46hWaXsn\" target=\"_blank\">Discord</a> oder <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/discussions\" target=\"_blank\">Github</a>."
     },
     "hints": {
         "NoTotals": "Aktiviere und konfiguriere Funktionen, z.B. die Registrierung eines Inverters, um Daten anzuzeigen",
