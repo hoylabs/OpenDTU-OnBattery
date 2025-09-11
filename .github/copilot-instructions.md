@@ -73,8 +73,8 @@ Run these commands to validate code quality:
 ```bash
 # Webapp linting and formatting
 cd webapp
-yarn lint     # Takes ~3 seconds
-yarn format   # Takes ~3 seconds
+yarn lint                   # Takes ~3 seconds
+yarn prettier --check src/  # Takes ~3 seconds
 
 # C++ linting
 cd ..
@@ -133,7 +133,7 @@ After making changes, ALWAYS run this complete validation sequence:
 cd webapp
 yarn install --frozen-lockfile
 yarn lint
-yarn format  
+yarn prettier --check src/
 yarn build
 
 # 2. Validate C++ code
@@ -159,7 +159,7 @@ The project uses these automated workflows:
 ## Common Issues and Troubleshooting
 
 ### Build Failures
-1. **"HTTPClientError" during pio run**: Network restrictions prevent ESP32 platform downloads
+1. **"HTTPClientError" during pio run**: Ensure unrestricted internet access is available for ESP32 platform downloads. Network firewalls or restrictions will cause firmware builds to fail. Contact repository administrators to configure network access if builds fail with network errors.
 2. **"yarn: command not found"**: Run `sudo corepack enable`
 3. **"Node version too old"**: Ensure Node.js 22 is installed and in PATH
 4. **"webapp_dist not found"**: Run `yarn build` in webapp directory first
