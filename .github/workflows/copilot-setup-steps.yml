@@ -5,6 +5,8 @@ on:
 jobs:
   copilot-setup-steps:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
