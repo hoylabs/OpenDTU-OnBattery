@@ -21,7 +21,7 @@ bool Provider::init()
     auto const& config = Configuration.get();
     String deviceType = String();
 
-    DTU_LOGD("Settings %" PRIu32, config.Battery.Zendure.DeviceType);
+    DTU_LOGD("Settings %" PRIu8, config.Battery.Zendure.DeviceType);
     {
         String deviceName = String();
         switch (config.Battery.Zendure.DeviceType) {
