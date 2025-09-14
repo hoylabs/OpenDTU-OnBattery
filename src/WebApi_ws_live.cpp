@@ -302,6 +302,18 @@ void WebApiWsLiveClass::generateInverterChannelJsonResponse(JsonObject& root, st
             addField(chanTypeObj, inv, t, c, FLD_PAC);
             addField(chanTypeObj, inv, t, c, FLD_UAC);
             addField(chanTypeObj, inv, t, c, FLD_IAC);
+            // Add HMT-specific 3-phase fields if available
+            if (t == TYPE_AC) {
+                addField(chanTypeObj, inv, t, c, FLD_UAC_1N);
+                addField(chanTypeObj, inv, t, c, FLD_UAC_2N);
+                addField(chanTypeObj, inv, t, c, FLD_UAC_3N);
+                addField(chanTypeObj, inv, t, c, FLD_UAC_12);
+                addField(chanTypeObj, inv, t, c, FLD_UAC_23);
+                addField(chanTypeObj, inv, t, c, FLD_UAC_31);
+                addField(chanTypeObj, inv, t, c, FLD_IAC_1);
+                addField(chanTypeObj, inv, t, c, FLD_IAC_2);
+                addField(chanTypeObj, inv, t, c, FLD_IAC_3);
+            }
             if (t == TYPE_INV) {
                 addField(chanTypeObj, inv, t, c, FLD_PDC, "Power DC");
             } else {

@@ -19,6 +19,13 @@ export interface InverterStatistics {
     ReactivePower?: ValueObject;
     Efficiency?: ValueObject;
     Irradiation?: ValueObject;
+    // 3-phase fields for HMT inverters
+    'Voltage Ph1-N'?: ValueObject;
+    'Voltage Ph2-N'?: ValueObject;
+    'Voltage Ph3-N'?: ValueObject;
+    'Current Ph1'?: ValueObject;
+    'Current Ph2'?: ValueObject;
+    'Current Ph3'?: ValueObject;
 }
 
 export interface RadioStatistics {
