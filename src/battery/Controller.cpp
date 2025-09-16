@@ -11,6 +11,7 @@
 #include <Configuration.h>
 #include <LogHelper.h>
 
+#undef TAG
 static const char* TAG = "battery";
 static const char* SUBTAG = "Controller";
 
@@ -132,10 +133,10 @@ float Controller::getDischargeCurrentLimit()
         }
 
         bool voltageValid = spStats->getVoltageAgeSeconds() <= 60;
-        if (!voltageValid) { return FLT_MAX; }
-
-        auto threshold = config.Battery.DischargeCurrentLimitBelowVoltage;
-        if (spStats->getVoltage() >= threshold) { return FLT_MAX; }
+        if (voltageValid) {
+            auto threshold = config.Battery.DischargeCurrentLimitBelowVoltage;
+            if (spStats->getVoltage() >= threshold) { return FLT_MAX; }
+        }
 
         return configuredLimit;
     };

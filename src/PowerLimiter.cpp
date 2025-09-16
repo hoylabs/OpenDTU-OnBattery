@@ -19,6 +19,7 @@
 #include "SunPosition.h"
 #include <LogHelper.h>
 
+#undef TAG
 static const char* TAG = "dynamicPowerLimiter";
 static const char* SUBTAG = "Controller";
 
@@ -620,10 +621,14 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
             powerRequested, matchingInverters.size(), filterExpression.c_str(),
             (plural?"s":""), producing, diff, hysteresis);
 
-    // if 0 W are requested, we ignore the hysteresis to allow
-    // battery-powered inverters to go into standby and avoid that the battery
-    // gets fully discharged.
-    if (powerRequested != 0 && std::abs(diff) < static_cast<int32_t>(hysteresis)) { return producing; }
+    // if 0 W are requested, we set hysteresis to 0 to basically ignore it
+    // which allows battery-powered inverters to go into standby and avoid
+    // that the battery gets fully discharged.
+    if (powerRequested == 0) {
+        hysteresis = 0;
+    }
+
+    if (std::abs(diff) < static_cast<int32_t>(hysteresis)) { return producing; }
 
     uint16_t covered = 0;
 
@@ -757,8 +762,8 @@ uint16_t PowerLimiterClass::getSolarPassthroughPower() const
 
     std::optional<float> oSolarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
 
-    // do not trust this value to be positive. in particular, the MQTT solar
-    // provider happily processes negative values as well.
+    // This value can be negative if a charge controller with a load output is used
+    // and the load is consuming more power than the charge controller is producing.
     return std::max<float>(0, oSolarChargerOutput.value_or(0));
 }
 

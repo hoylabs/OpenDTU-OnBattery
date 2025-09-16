@@ -106,6 +106,7 @@
         "7015": "Hass topic must not contain space characters!",
         "7016": "LWT QOS must not greater then {max}!",
         "7017": "Client ID must not longer then {max} characters!",
+        "7018": "Hass topic must end with slash (/)!",
         "8001": "IP address is invalid!",
         "8002": "Netmask is invalid!",
         "8003": "Gateway is invalid!",
@@ -725,6 +726,8 @@
         "TotalUpperPowerLimitHint": "The inverters are configured to output this maximum amount of power in total.",
         "UpperPowerLimit": "Maximum Power Limit",
         "UpperPowerLimitHint": "The inverter is always set such that no more than this output power is achieved. This value must be selected to comply with the current carrying capacity of the AC connection cables.",
+        "AllowStandby": "Allow Standby",
+        "AllowStandbyHint": "Allow the inverter to go into standby if the calculated power limit is below the minimum power limit.",
         "SocThresholds": "Battery State of Charge (SoC) Thresholds",
         "IgnoreSoc": "Use Voltage Thresholds Only",
         "IgnoreSocHint": "When enabled, only voltage thresholds are considered. Disable this switch to configure and use battery State of Charge (SoC) thresholds (not recommended as the SoC value is often inaccurate).",
@@ -818,9 +821,6 @@
         "ZendureSunsetOffset": "@:ntpinfo.Sunset offset",
         "ZendureOutputLimitDay": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Day)",
         "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
-        "ZendureChargeThrough": "Charge Through Settings",
-        "ZendureChargeThroughEnabled": "Charge Through",
-        "ZendureChargeThroughInterval": "Maximum time without full charge",
         "zendure": {
             "deviceTypes": {
                 "Hub1200": "Hub 1200",
@@ -836,7 +836,11 @@
                 "Full": "Full control",
                 "Once": "Write settings only once",
                 "ReadOnly": "Read-Only"
-            }
+            },
+            "chargeThrough": "Charge Through Settings",
+            "chargeThroughEnabled": "Charge Through",
+            "chargeThroughInterval": "Maximum time without full charge",
+            "chargeThroughReset": "Reset Threshold"
         }
     },
     "inverteradmin": {
@@ -932,7 +936,8 @@
         "OtaStatus": "OTA Status",
         "OtaSuccess": "The firmware upload was successful. The device was restarted automatically. When the device is accessible again, the interface is automatically reloaded.",
         "FirmwareUpload": "Firmware Upload",
-        "UploadProgress": "Upload Progress"
+        "UploadProgress": "Upload Progress",
+        "InvalidFileType": "Invalid file type. Please select a firmware file with valid extensions: {validTypes}"
     },
     "about": {
         "AboutOpendtu": "About OpenDTU-OnBattery",
@@ -948,7 +953,7 @@
         "ErrorReporting": "Error Reporting",
         "ErrorReportingBody": "Please report issues using the feature provided by <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/issues\" target=\"_blank\">Github</a>.",
         "Discussion": "Discussion",
-        "DiscussionBody": "Discuss with us on <a href=\"https://discord.gg/WzhxEY62mB\" target=\"_blank\">Discord</a> or <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/discussions\" target=\"_blank\">Github</a>."
+        "DiscussionBody": "Discuss with us on <a href=\"https://discord.gg/guGQeeSQmE\" target=\"_blank\">Discord</a> or <a href=\"https://github.com/hoylabs/OpenDTU-OnBattery/discussions\" target=\"_blank\">Github</a>."
     },
     "hints": {
         "NoTotals": "Enable and configure features, e.g., by registering an inverter, to show data.",
@@ -1225,6 +1230,7 @@
         "midpointVoltage": "Midpoint Voltage",
         "midpointDeviation": "Midpoint Deviation",
         "lastFullCharge": "Last full Charge",
+        "lastEmptyCharge": "Last empty",
         "solarInputPower1": "MPPT1 power",
         "solarInputPower2": "MPPT2 power",
         "totalInputPower": "Total input power",
@@ -1260,10 +1266,20 @@
         "remainInTime": "Remaining charge time",
         "unavail": "N/A",
         "useableCapacity": "Useable capacity",
-        "chargethrough": "Charge through cycle",
         "controlMode": "@:batteryadmin.zendure.controlMode",
         "full-access": "@:batteryadmin.zendure.controlModes.Full",
         "write-once": "Write Once",
-        "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly"
+        "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly",
+        "zendure": {
+            "chargeThroughState": "Charge through state",
+            "chargeThroughStates": {
+                "disabled": "@:battery.disabled",
+                "idle": "@:battery.idle",
+                "soft": "Soft",
+                "hard": "Hard",
+                "keep": "Hold",
+                "invalid": "@:battery.invalid"
+            }
+        }
     }
 }

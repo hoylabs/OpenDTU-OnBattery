@@ -157,6 +157,7 @@ void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig cons
     target["charge_through_interval"] = source.ChargeThroughInterval;
     target["buzzer_enable"] = source.BuzzerEnable;
     target["control_mode"] = source.ControlMode;
+    target["charge_through_reset"] = source.ChargeThroughResetLevel;
 }
 
 void ConfigurationClass::serializeBatteryMqttConfig(BatteryMqttConfig const& source, JsonObject& target)
@@ -222,6 +223,7 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
         t["is_behind_power_meter"] = s.IsBehindPowerMeter;
         t["power_source"] = s.PowerSource;
         t["use_overscaling_to_compensate_shading"] = s.UseOverscaling;
+        t["allow_standby"] = s.AllowStandby;
         t["lower_power_limit"] = s.LowerPowerLimit;
         t["upper_power_limit"] = s.UpperPowerLimit;
     }
@@ -576,6 +578,7 @@ void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& sourc
     target.SunriseOffset = source["sunrise_offset"] | BATTERY_ZENDURE_SUNRISE_OFFSET;
     target.SunsetOffset = source["sunset_offset"] | BATTERY_ZENDURE_SUNSET_OFFSET;
     target.ChargeThroughEnable = source["charge_through_enable"] | BATTERY_ZENDURE_CHARGE_THROUGH_ENABLE;
+    target.ChargeThroughResetLevel = source["charge_through_reset"] | BATTERY_ZENDURE_CHARGE_THROUGH_RESET_LEVEL;
     target.ChargeThroughInterval = source["charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
     target.BuzzerEnable = source["buzzer_enable"] |BATTERY_ZENDURE_BUZZER_ENABLE;
     target.ControlMode = source["control_mode"] | BatteryZendureConfig::ControlMode::ControlModeFull;
@@ -639,6 +642,7 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
         inv.IsBehindPowerMeter = s["is_behind_power_meter"] | POWERLIMITER_IS_INVERTER_BEHIND_POWER_METER;
         inv.PowerSource = s["power_source"] | PowerLimiterInverterConfig::InverterPowerSource::Battery;
         inv.UseOverscaling = s["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING;
+        inv.AllowStandby = s["allow_standby"] | POWERLIMITER_ALLOW_STANDBY;
         inv.LowerPowerLimit = s["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
         inv.UpperPowerLimit = s["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
     }

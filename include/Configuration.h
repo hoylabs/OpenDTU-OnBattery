@@ -148,6 +148,7 @@ struct POWERLIMITER_INVERTER_CONFIG_T {
     bool IsGoverned;
     bool IsBehindPowerMeter;
     bool UseOverscaling;
+    bool AllowStandby;
     uint16_t LowerPowerLimit;
     uint16_t UpperPowerLimit;
 
@@ -202,6 +203,7 @@ struct BATTERY_ZENDURE_CONFIG_T {
     bool BuzzerEnable;
     enum ControlMode { ControlModeFull = 0, ControlModeOnce = 1, ControlModeReadOnly = 2 };
     ControlMode ControlMode;
+    uint8_t ChargeThroughResetLevel;
 };
 using BatteryZendureConfig = struct BATTERY_ZENDURE_CONFIG_T;
 
