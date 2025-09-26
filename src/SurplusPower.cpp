@@ -45,7 +45,6 @@
  * 01.08.2025 - 1.60 - improvement: use the power limiter reload config way to reload the surplus config
  */
 
-#include <solarcharger/Controller.h>
 #include <battery/Controller.h>
 #include <frozen/map.h>
 #include <Configuration.h>
@@ -53,7 +52,7 @@
 #include <LogHelper.h>
 #include "SurplusPower.h"
 
-
+#undef TAG
 static const char* TAG = "dynamicPowerLimiter";
 static const char* SUBTAG = "Surplus";
 
