@@ -308,24 +308,16 @@ void Provider::parsePowerControlResponse()
     int readBytes = TruckiUdp.read(packet, std::min(static_cast<size_t>(packetSize), kMaxPacketSize));
     if (0 == readBytes) { return; }
 
-    // current AC power (W*10)
-    char *saveptr;
-    char *token = strtok_r(packet, ";", &saveptr);
-    char ac_str[6];
-    strncpy(ac_str, token, sizeof(ac_str));
-    ac_str[sizeof(ac_str) - 1] = '\0';
-    float acPowerCurrent = atoi(ac_str) / 10.0f;
-
-    // max AC power (W*10)
-    token = strtok_r(NULL, ";", &saveptr);
-    char limit_str[6];
-    if (token != 0) {
-        strncpy(limit_str, token, sizeof(limit_str));
+    // Parse packet format: "current_power;max_power;battery_state"
+    float acPowerCurrent, acPowerMax;
+    int batteryState;
+    if (sscanf(packet, "%f;%f;%d", &acPowerCurrent, &acPowerMax, &batteryState) >= 2) {
+        acPowerCurrent /= 10.0f; // Convert from W*10 to W
+        acPowerMax /= 10.0f; // Convert from W*10 to W
     } else {
-        strncpy(limit_str, "0", sizeof(limit_str));
+        DTU_LOGW("Invalid packet format: %s", packet);
+        return;
     }
-    limit_str[sizeof(limit_str) - 1] = '\0';
-    float acPowerMax = atoi(limit_str) / 10.0f;
 
     DTU_LOGV("acPowerCurrent: %f, acPowerMax: %f", acPowerCurrent, acPowerMax);
 
