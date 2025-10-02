@@ -138,8 +138,6 @@ void Provider::generalPowerControlLoop()
 
     if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
         // Battery request has changed. Set current to 0, wait for PSU to respond and then clear state
-        // TODO(schlimmchen): this is repeated very often for up to (polling interval) seconds. maybe
-        // trigger sending request for data immediately? otherwise implement a backoff instead.
         setChargerPowerAc(0);
         if (oOutputPower < 1) {
             _batteryEmergencyCharging = false;
@@ -164,11 +162,16 @@ void Provider::generalPowerControlLoop()
             return;
         }
 
+        if (millis() - _dataCurrent.getLastUpdate() > 30 * 1000) {
+            DTU_LOGW("Cannot perform auto power control when critical PSU values are outdated");
+            _autoModeBlockedTillMillis = millis() + 1000;
+            return;
+        }
+
         auto oOutputVoltage = _dataCurrent.get<DataPointLabel::DcVoltage>();
         auto oMinAcPower = _dataCurrent.get<DataPointLabel::MinAcPower>();
         auto oOutputCurrent = _dataCurrent.get<DataPointLabel::DcCurrent>();
 
-        // TODO(andreasboehm): check age of datapoints before using them
         if (!oOutputPower || !oOutputVoltage || !oMinAcPower || !oMaxAcPower || !oOutputCurrent) {
             DTU_LOGW("Cannot perform auto power control while critical PSU values are still unknown");
             _autoModeBlockedTillMillis = millis() + 1000;

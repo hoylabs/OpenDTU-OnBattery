@@ -28,7 +28,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
     root["showSettings"] = false;
 
     root["dataAge"] = millis() - getLastUpdate();
-    root["reachable"] = root["dataAge"] < 10000; // TODO(andreasboehm): check if T2xG is able to reach the PSU
+    root["reachable"] = root["dataAge"] < 10000;
 
     using Label = GridChargers::Trucki::DataPointLabel;
 
