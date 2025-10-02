@@ -344,6 +344,19 @@ float PowerLimiterInverter::getDcVoltage(uint8_t input)
             static_cast<ChannelNum_t>(input), FLD_UDC);
 }
 
+float PowerLimiterInverter::getCurrentDcPower()
+{
+    float dcPower = 0;
+    auto pStats = _spInverter->Statistics();
+    std::vector<ChannelNum_t> dcChannels = _spInverter->getChannelsDC();
+
+    for (auto& c : dcChannels) {
+        dcPower += pStats->getChannelFieldValue(TYPE_DC, c, FLD_PDC);
+    }
+
+    return dcPower;
+}
+
 uint16_t PowerLimiterInverter::getCurrentLimitWatts() const
 {
     auto currentLimitPercent = _spInverter->SystemConfigPara()->getLimitPercent();

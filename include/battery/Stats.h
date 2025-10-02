@@ -28,6 +28,7 @@ public:
 
     float getChargeCurrent() const { return _current; };
     uint8_t getChargeCurrentPrecision() const { return _currentPrecision; }
+    uint32_t getChargeCurrentAgeSeconds() const { return (millis() - _lastUpdateCurrent) / 1000; }
 
     float getDischargeCurrentLimit() const { return _dischargeCurrentLimit; };
     uint32_t getDischargeCurrentLimitAgeSeconds() const { return (millis() - _lastUpdateDischargeCurrentLimit) / 1000; }

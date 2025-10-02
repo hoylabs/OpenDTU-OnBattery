@@ -91,9 +91,13 @@ private:
     uint16_t updateInverterLimits(uint16_t powerRequested, inverter_filter_t filter, std::string const& filterExpression);
     uint16_t calcPowerBusUsage(uint16_t powerRequested) const;
     bool updateInverters();
+
+    uint16_t getSolarOutputPower() const;
     uint16_t getSolarPassthroughPower() const;
+
     std::optional<uint16_t> getBatteryDischargeLimit() const;
     float getBatteryInvertersOutputAcWatts() const;
+    float getBatteryInvertersOutputDcWatts() const;
 
     bool testThreshold(float socThreshold, float voltThreshold,
             std::function<bool(float, float)> compare) const;

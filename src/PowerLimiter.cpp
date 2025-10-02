@@ -704,14 +704,17 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested) const
         return 0;
     }
 
-    auto solarOutputDc = getSolarPassthroughPower();
-    auto solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
-    if (isFullSolarPassthroughActive() && solarOutputAc > powerRequested) {
+    auto solarPassthroughPowerDc = getSolarPassthroughPower();
+    auto solarPassthroughPowerAc = dcPowerBusToInverterAc(solarPassthroughPowerDc);
+    if (isFullSolarPassthroughActive() && solarPassthroughPowerAc > powerRequested) {
         DTU_LOGD("using %u/%u W DC/AC from DC power bus (full solar-passthrough)",
-                solarOutputDc, solarOutputAc);
+                solarPassthroughPowerDc, solarPassthroughPowerAc);
 
-        return solarOutputAc;
+        return solarPassthroughPowerAc;
     }
+
+    auto solarOutputDc = getSolarOutputPower();
+    auto solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
 
     auto oBatteryDischargeLimit = getBatteryDischargeLimit();
     if (!oBatteryDischargeLimit) {
@@ -754,17 +757,68 @@ bool PowerLimiterClass::updateInverters()
     return busy;
 }
 
-uint16_t PowerLimiterClass::getSolarPassthroughPower() const
+uint16_t PowerLimiterClass::getSolarOutputPower() const
 {
     if (!isSolarPassThroughEnabled() || isBelowStopThreshold()) {
         return 0;
     }
 
-    std::optional<float> oSolarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
+    float solarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts().value_or(0);
 
     // This value can be negative if a charge controller with a load output is used
     // and the load is consuming more power than the charge controller is producing.
-    return std::max<float>(0, oSolarChargerOutput.value_or(0));
+    return std::max<float>(0, solarChargerOutput);
+}
+
+// Determine how much of the present solar DC power can be passed to the
+// battery-powered inverters without pulling from the battery. We compute
+// the current DC loads on the power bus (excluding the inverters), then
+// subtract those from the solar output.
+uint16_t PowerLimiterClass::getSolarPassthroughPower() const
+{
+    // Current solar charger DC output (already clamped to >= 0)
+    uint16_t solarOutputDc = getSolarOutputPower();
+
+    if (solarOutputDc <= 0.0f) { return 0; }
+
+    auto stats = Battery.getStats();
+    if (!stats->isCurrentValid() || stats->getChargeCurrentAgeSeconds() >= 60) { return 0; }
+
+    float batteryVoltage = getBatteryVoltage();
+    if (batteryVoltage <= 0.0f) { return 0; }
+
+    // Determine battery power (positive when charging, negative when discharging)
+    float batteryPower = batteryVoltage * stats->getChargeCurrent();
+    float batteryCharge = std::max(0.0f, batteryPower);
+    float batteryDischarge = std::max(0.0f, -batteryPower);
+
+    float inverterDcPower = getBatteryInvertersOutputDcWatts();
+
+    // Other DC loads connected to the DC bus (e.g., DC consumers connected to the charge controller)
+    // Balance on DC bus: solar + batteryDischarge = inverterDcDraw + otherLoads + batteryCharge
+    float otherLoads = solarOutputDc + batteryDischarge - inverterDcPower - batteryCharge;
+    if (otherLoads < 0.0f) {
+        // no other loads, we can use the full solar output power
+        return solarOutputDc;
+    }
+
+    // Solar power that can be passed through to inverters without drawing from the battery
+    float availableForPassthrough = solarOutputDc - otherLoads;
+    if (availableForPassthrough < 0.0f) { availableForPassthrough = 0.0f; }
+
+    return static_cast<uint16_t>(availableForPassthrough);
+}
+
+float PowerLimiterClass::getBatteryInvertersOutputDcWatts() const
+{
+    float res = 0;
+
+    for (auto const& upInv : _inverters) {
+        if (!upInv->isBatteryPowered()) { continue; }
+        res += upInv->getCurrentDcPower();
+    }
+
+    return res;
 }
 
 float PowerLimiterClass::getBatteryInvertersOutputAcWatts() const
