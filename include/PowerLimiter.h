@@ -93,11 +93,10 @@ private:
     bool updateInverters();
 
     uint16_t getSolarOutputPower() const;
-    uint16_t getSolarPassthroughPower() const;
-
     std::optional<uint16_t> getBatteryDischargeLimit() const;
     float getBatteryInvertersOutputAcWatts() const;
     float getBatteryInvertersOutputDcWatts() const;
+    uint16_t getDcLoadsPowerDc() const;
 
     bool testThreshold(float socThreshold, float voltThreshold,
             std::function<bool(float, float)> compare) const;
