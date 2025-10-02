@@ -49,46 +49,46 @@ private:
         _dataCurrent.add<L>(*value);
     }
 
-    void generalPowerControlLoop();
+    void powerControlLoop();
 
-    static void pollingLoopHelper(void* context);
-    void pollingLoop();
-    void poll();
+    static void dataPollingLoopHelper(void* context);
+    void dataPollingLoop();
+    void pollData();
 
-    TaskHandle_t _pollingTaskHandle = nullptr;
-    std::atomic<bool> _pollingTaskDone = false;
-    bool _stopPolling;
-    mutable std::mutex _pollingMutex;
-    std::condition_variable _cv;
-    uint32_t _lastPoll = 0;
+    TaskHandle_t _dataPollingTaskHandle = nullptr;
+    std::atomic<bool> _dataPollingTaskDone = false;
+    bool _stopPollingData = false;
+    mutable std::mutex _dataPollingMutex;
+    std::condition_variable _dataPollingCv;
+    uint32_t _lastDataPoll = 0;
 
     std::unique_ptr<HttpGetter> _httpGetter;
 
-    static constexpr int POLLING_INTERVAL_MS = 1000; // 1 second
+    static constexpr int DATA_POLLING_INTERVAL_MS = 1000; // 1 second
     static constexpr int HTTP_REQUEST_TIMEOUT_MS = 50; // 50ms
 
     void setChargerPowerAc(float powerAc);
     float _requestedPowerAc = 0;
 
-    static void powerControlLoopHelper(void* context);
-    void powerControlLoop();
-    void sendPowerControlRequest();
-    void parsePowerControlResponse();
+    static void commandLoopHelper(void* context);
+    void commandLoop();
+    void sendControlCommandRequest();
+    void parseControlCommandResponse();
 
-    TaskHandle_t _powerControlTaskHandle = nullptr;
-    std::atomic<bool> _powerControlTaskDone = false;
-    bool _stopPowerControl;
-    mutable std::mutex _powerControlMutex;
-    std::condition_variable _powerControlCv;
-    uint32_t _lastPowerControlRequestMillis = 0;
+    TaskHandle_t _commandLoopTaskHandle = nullptr;
+    std::atomic<bool> _commandLoopTaskDone = false;
+    bool _stopCommandLoop = false;
+    mutable std::mutex _commandLoopMutex;
+    std::condition_variable _commandLoopCv;
+    uint32_t _lastControlCommandRequestMillis = 0;
 
-    static constexpr int POWER_CONTROL_INTERVAL_MS = 500; // 500ms
+    static constexpr int CONTROL_COMMAND_INTERVAL_MS = 500; // 500ms
 
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
 
     DataPointContainer _dataCurrent;
 
-    uint32_t _lastPowerMeterUpdateReceivedMillis; // Timestamp of last seen power meter value
+    uint32_t _lastPowerMeterUpdateReceivedMillis = 0; // Timestamp of last seen power meter value
     uint32_t _autoModeBlockedTillMillis = 0;      // Timestamp to block running auto mode for some time
 
     bool _autoPowerEnabled = false;

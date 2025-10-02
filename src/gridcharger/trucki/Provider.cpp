@@ -57,59 +57,59 @@ void Provider::deinit()
     // to the PSU after the configuration was changed without a reboot
     TruckiUdp.stop();
 
-    _pollingTaskDone = false;
+    _dataPollingTaskDone = false;
 
-    std::unique_lock<std::mutex> pollingLock(_pollingMutex);
-    _stopPolling = true;
+    std::unique_lock pollingLock(_dataPollingMutex);
+    _stopPollingData = true;
     pollingLock.unlock();
 
-    _cv.notify_all();
+    _dataPollingCv.notify_all();
 
-    if (_pollingTaskHandle != nullptr) {
-        while (!_pollingTaskDone) { delay(10); }
-        _pollingTaskHandle = nullptr;
+    if (_dataPollingTaskHandle != nullptr) {
+        while (!_dataPollingTaskDone) { delay(10); }
+        _dataPollingTaskHandle = nullptr;
     }
 
-    _powerControlTaskDone = false;
+    _commandLoopTaskDone = false;
 
-    std::unique_lock<std::mutex> powerControlLock(_powerControlMutex);
-    _stopPowerControl = true;
+    std::unique_lock powerControlLock(_commandLoopMutex);
+    _stopCommandLoop = true;
     powerControlLock.unlock();
 
-    _powerControlCv.notify_all();
+    _commandLoopCv.notify_all();
 
-    if (_powerControlTaskHandle != nullptr) {
-        while (!_powerControlTaskDone) { delay(10); }
-        _powerControlTaskHandle = nullptr;
+    if (_commandLoopTaskHandle != nullptr) {
+        while (!_commandLoopTaskDone) { delay(10); }
+        _commandLoopTaskHandle = nullptr;
     }
 }
 
 void Provider::loop()
 {
-    generalPowerControlLoop();
+    powerControlLoop();
 
-    if (_pollingTaskHandle == nullptr) {
-        std::unique_lock<std::mutex> lock(_pollingMutex);
-        _stopPolling = false;
+    if (_dataPollingTaskHandle == nullptr) {
+        std::unique_lock lock(_dataPollingMutex);
+        _stopPollingData = false;
         lock.unlock();
 
         uint32_t constexpr stackSize = 4096;
-        xTaskCreate(Provider::pollingLoopHelper, "TruckiPolling",
-                stackSize, this, 1/*prio*/, &_pollingTaskHandle);
+        xTaskCreate(dataPollingLoopHelper, "TruckiPolling",
+                stackSize, this, 1/*prio*/, &_dataPollingTaskHandle);
     }
 
-    if (_powerControlTaskHandle == nullptr) {
-        std::unique_lock<std::mutex> lock(_powerControlMutex);
-        _stopPowerControl = false;
+    if (_commandLoopTaskHandle == nullptr) {
+        std::unique_lock lock(_commandLoopMutex);
+        _stopCommandLoop = false;
         lock.unlock();
 
         uint32_t constexpr stackSize = 4096;
-        xTaskCreate(Provider::powerControlLoopHelper, "TruckiControl",
-                stackSize, this, 1/*prio*/, &_powerControlTaskHandle);
+        xTaskCreate(commandLoopHelper, "TruckiControl",
+                stackSize, this, 1/*prio*/, &_commandLoopTaskHandle);
     }
 }
 
-void Provider::generalPowerControlLoop()
+void Provider::powerControlLoop()
 {
     auto& config = Configuration.get();
 
@@ -233,7 +233,7 @@ void Provider::generalPowerControlLoop()
                 setChargerPowerAc(newPowerLimit);
 
                 // Don't run auto mode some time to allow for output stabilization after issuing a new value
-                _autoModeBlockedTillMillis = millis() + 4 * POLLING_INTERVAL_MS;
+                _autoModeBlockedTillMillis = millis() + 4 * DATA_POLLING_INTERVAL_MS;
             } else {
                 // requested PL is below minium. Set power to 0
                 _autoPowerEnabled = false;
@@ -248,38 +248,38 @@ void Provider::setChargerPowerAc(float powerAc)
     _requestedPowerAc = powerAc;
 }
 
-void Provider::powerControlLoopHelper(void* context)
+void Provider::commandLoopHelper(void* context)
 {
     auto pInstance = static_cast<Provider*>(context);
-    pInstance->powerControlLoop();
-    pInstance->_powerControlTaskDone = true;
+    pInstance->commandLoop();
+    pInstance->_commandLoopTaskDone = true;
     vTaskDelete(nullptr);
 }
 
-void Provider::powerControlLoop()
+void Provider::commandLoop()
 {
-    std::unique_lock<std::mutex> lock(_powerControlMutex);
+    std::unique_lock lock(_commandLoopMutex);
 
-    while (!_stopPowerControl) {
-        auto elapsedMillis = millis() - _lastPowerControlRequestMillis;
+    while (!_stopCommandLoop) {
+        auto elapsedMillis = millis() - _lastControlCommandRequestMillis;
 
-        if (_lastPowerControlRequestMillis > 0 && elapsedMillis < POWER_CONTROL_INTERVAL_MS) {
-            auto sleepMs = POWER_CONTROL_INTERVAL_MS - elapsedMillis;
-            _powerControlCv.wait_for(lock, std::chrono::milliseconds(sleepMs),
-                    [this] { return _stopPowerControl; }); // releases the mutex
+        if (_lastControlCommandRequestMillis > 0 && elapsedMillis < CONTROL_COMMAND_INTERVAL_MS) {
+            auto sleepMs = CONTROL_COMMAND_INTERVAL_MS - elapsedMillis;
+            _commandLoopCv.wait_for(lock, std::chrono::milliseconds(sleepMs),
+                    [this] { return _stopCommandLoop; }); // releases the mutex
             continue;
         }
 
-        _lastPowerControlRequestMillis = millis();
+        _lastControlCommandRequestMillis = millis();
 
         lock.unlock(); // power control can take quite some time
-        sendPowerControlRequest();
-        parsePowerControlResponse();
+        sendControlCommandRequest();
+        parseControlCommandResponse();
         lock.lock();
     }
 }
 
-void Provider::sendPowerControlRequest()
+void Provider::sendControlCommandRequest()
 {
     auto& config = Configuration.get();
 
@@ -296,7 +296,7 @@ void Provider::sendPowerControlRequest()
     TruckiUdp.endPacket();
 }
 
-void Provider::parsePowerControlResponse()
+void Provider::parseControlCommandResponse()
 {
     int packetSize = TruckiUdp.parsePacket();
     if (0 == packetSize) { return; }
@@ -334,37 +334,37 @@ void Provider::parsePowerControlResponse()
     _stats->updateFrom(_dataCurrent);
 }
 
-void Provider::pollingLoopHelper(void* context)
+void Provider::dataPollingLoopHelper(void* context)
 {
     auto pInstance = static_cast<Provider*>(context);
-    pInstance->pollingLoop();
-    pInstance->_pollingTaskDone = true;
+    pInstance->dataPollingLoop();
+    pInstance->_dataPollingTaskDone = true;
     vTaskDelete(nullptr);
 }
 
-void Provider::pollingLoop()
+void Provider::dataPollingLoop()
 {
-    std::unique_lock<std::mutex> lock(_pollingMutex);
+    std::unique_lock lock(_dataPollingMutex);
 
-    while (!_stopPolling) {
-        auto elapsedMillis = millis() - _lastPoll;
+    while (!_stopPollingData) {
+        auto elapsedMillis = millis() - _lastDataPoll;
 
-        if (_lastPoll > 0 && elapsedMillis < POLLING_INTERVAL_MS) {
-            auto sleepMs = POLLING_INTERVAL_MS - elapsedMillis;
-            _cv.wait_for(lock, std::chrono::milliseconds(sleepMs),
-                    [this] { return _stopPolling; }); // releases the mutex
+        if (_lastDataPoll > 0 && elapsedMillis < DATA_POLLING_INTERVAL_MS) {
+            auto sleepMs = DATA_POLLING_INTERVAL_MS - elapsedMillis;
+            _dataPollingCv.wait_for(lock, std::chrono::milliseconds(sleepMs),
+                    [this] { return _stopPollingData; }); // releases the mutex
             continue;
         }
 
-        _lastPoll = millis();
+        _lastDataPoll = millis();
 
         lock.unlock(); // polling can take quite some time
-        poll();
+        pollData();
         lock.lock();
     }
 }
 
-void Provider::poll()
+void Provider::pollData()
 {
     if (!_httpGetter) {
         DTU_LOGE("HTTP getter not initialized");
@@ -391,31 +391,29 @@ void Provider::poll()
         return;
     }
 
-    using Label = GridChargers::Trucki::DataPointLabel;
-
     {
         auto scopedLock = _dataCurrent.lock();
 
-        addStringToDataPoints<Label::ZEPC>(data, "ZEPCPOWER");
-        addStringToDataPoints<Label::State>(data, "MWPCSTATE");
-        addFloatToDataPoints<Label::Temperature>(data, "TEMP");
-        addFloatToDataPoints<Label::Efficiency>(data, "MWEFFICIENCY");
-        addFloatToDataPoints<Label::DayEnergy>(data, "DAYENERGY");
-        addFloatToDataPoints<Label::TotalEnergy>(data, "TOTALENERGY");
+        addStringToDataPoints<DataPointLabel::ZEPC>(data, "ZEPCPOWER");
+        addStringToDataPoints<DataPointLabel::State>(data, "MWPCSTATE");
+        addFloatToDataPoints<DataPointLabel::Temperature>(data, "TEMP");
+        addFloatToDataPoints<DataPointLabel::Efficiency>(data, "MWEFFICIENCY");
+        addFloatToDataPoints<DataPointLabel::DayEnergy>(data, "DAYENERGY");
+        addFloatToDataPoints<DataPointLabel::TotalEnergy>(data, "TOTALENERGY");
 
-        addFloatToDataPoints<Label::AcVoltage>(data, "VGRID");
-        addFloatToDataPoints<Label::AcPowerSetpoint>(data, "SETACPOWER");
-        addFloatToDataPoints<Label::AcPower>(data, "MQTT_ACDISPLAY_VALUE");
+        addFloatToDataPoints<DataPointLabel::AcVoltage>(data, "VGRID");
+        addFloatToDataPoints<DataPointLabel::AcPowerSetpoint>(data, "SETACPOWER");
+        addFloatToDataPoints<DataPointLabel::AcPower>(data, "MQTT_ACDISPLAY_VALUE");
 
-        addFloatToDataPoints<Label::DcVoltage>(data, "VBAT");
-        addFloatToDataPoints<Label::DcVoltageSetpoint>(data, "VOUTSET");
-        addFloatToDataPoints<Label::DcPower>(data, "DCPOWER");
-        addFloatToDataPoints<Label::DcCurrent>(data, "IOUT");
+        addFloatToDataPoints<DataPointLabel::DcVoltage>(data, "VBAT");
+        addFloatToDataPoints<DataPointLabel::DcVoltageSetpoint>(data, "VOUTSET");
+        addFloatToDataPoints<DataPointLabel::DcPower>(data, "DCPOWER");
+        addFloatToDataPoints<DataPointLabel::DcCurrent>(data, "IOUT");
 
-        addFloatToDataPoints<Label::DcVoltageOffline>(data, "VOUTOFFLINE");
-        addFloatToDataPoints<Label::DcCurrentOffline>(data, "IOUTOFFLINE");
-        addFloatToDataPoints<Label::MinAcPower>(data, "MQTT_MINPOWER_VALUE");
-        addFloatToDataPoints<Label::MaxAcPower>(data, "POWERLIMIT");
+        addFloatToDataPoints<DataPointLabel::DcVoltageOffline>(data, "VOUTOFFLINE");
+        addFloatToDataPoints<DataPointLabel::DcCurrentOffline>(data, "IOUTOFFLINE");
+        addFloatToDataPoints<DataPointLabel::MinAcPower>(data, "MQTT_MINPOWER_VALUE");
+        addFloatToDataPoints<DataPointLabel::MaxAcPower>(data, "POWERLIMIT");
     }
 
     _stats->updateFrom(_dataCurrent);
