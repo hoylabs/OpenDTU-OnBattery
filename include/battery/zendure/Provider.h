@@ -7,6 +7,7 @@
 #include <battery/zendure/HassIntegration.h>
 #include <battery/zendure/Constants.h>
 #include <espMqttClient.h>
+#include <Configuration.h>
 
 namespace Batteries::Zendure {
 
@@ -22,6 +23,7 @@ public:
 private:
     uint16_t setOutputLimit(uint16_t limit) const;
     uint16_t setInverterMax(uint16_t limit) const;
+    void setBypassMode(BatteryZendureConfig::BypassMode_t mode) const;
     void shutdown() const;
 
     void checkChargeThrough(uint32_t predictHours = 0U);
