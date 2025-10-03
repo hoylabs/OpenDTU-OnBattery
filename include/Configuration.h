@@ -188,12 +188,13 @@ struct BATTERY_ZENDURE_CONFIG_T {
     uint8_t PollingInterval;
     uint8_t MinSoC;
     uint8_t MaxSoC;
-    uint8_t BypassMode;
+    enum BypassMode_t : uint8_t { Automatic = 0, AlwaysOff = 1, AlwaysOn = 2 };
+    BypassMode_t BypassMode;
     uint16_t MaxOutput;
     bool AutoShutdown;
     uint16_t OutputLimit;
-    enum ZendureBatteryOutputControl { ControlNone = 0, ControlFixed = 1, ControlSchedule = 2 };
-    ZendureBatteryOutputControl OutputControl;
+    enum OutputControl_t { ControlNone = 0, ControlFixed = 1, ControlSchedule = 2 };
+    OutputControl_t OutputControl;
     int16_t SunriseOffset;
     int16_t SunsetOffset;
     uint16_t OutputLimitDay;
