@@ -112,11 +112,6 @@ private:
     void onMqttMessage(Topic enumTopic,
             const espMqttClientTypes::MessageProperties& properties,
             const char* topic, const uint8_t* payload, size_t len);
-
-    // MQTT callbacks to process updates on subscribed topics are executed in
-    // the MQTT thread's context. we use this queue to switch processing the
-    // user requests into the main loop's context (TaskScheduler context).
-    std::deque<std::function<void()>> _mqttCallbacks;
 };
 
 

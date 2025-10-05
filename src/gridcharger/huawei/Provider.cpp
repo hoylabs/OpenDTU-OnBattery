@@ -138,12 +138,8 @@ void Provider::loop()
     auto const& config = Configuration.get();
 
     if (!config.GridCharger.Enabled) {
-        _mqttCallbacks.clear();
         return;
     }
-
-    for (auto& callback : _mqttCallbacks) { callback(); }
-    _mqttCallbacks.clear();
 
     auto upNewData = _upHardwareInterface->getCurrentData();
     if (upNewData) {
@@ -428,8 +424,7 @@ void Provider::onMqttMessage(Topic enumTopic,
         return;
     }
 
-    std::lock_guard<std::mutex> mqttLock(_mutex);
-    using Setting = GridChargers::Huawei::HardwareInterface::Setting;
+    using Setting = HardwareInterface::Setting;
 
     auto validateAndSetParameter = [this, payload_val](float min, float max,
             Setting setting, const char* paramName, const char* unit) -> bool {
@@ -439,28 +434,28 @@ void Provider::onMqttMessage(Topic enumTopic,
             return false;
         }
         DTU_LOGI("Limit %s: %.2f %s", paramName, payload_val, unit);
-        _mqttCallbacks.push_back(std::bind(&Provider::setParameter, this, payload_val, setting));
+        setParameter(payload_val, setting);
         return true;
     };
 
     switch (enumTopic) {
         case Topic::LimitOnlineVoltage:
-            validateAndSetParameter(Provider::MIN_ONLINE_VOLTAGE, Provider::MAX_ONLINE_VOLTAGE,
+            validateAndSetParameter(MIN_ONLINE_VOLTAGE, MAX_ONLINE_VOLTAGE,
                 Setting::OnlineVoltage, "online voltage", "V");
             break;
 
         case Topic::LimitOfflineVoltage:
-            validateAndSetParameter(Provider::MIN_OFFLINE_VOLTAGE, Provider::MAX_OFFLINE_VOLTAGE,
+            validateAndSetParameter(MIN_OFFLINE_VOLTAGE, MAX_OFFLINE_VOLTAGE,
                 Setting::OfflineVoltage, "offline voltage", "V");
             break;
 
         case Topic::LimitOnlineCurrent:
-            validateAndSetParameter(Provider::MIN_ONLINE_CURRENT, Provider::MAX_ONLINE_CURRENT,
+            validateAndSetParameter(MIN_ONLINE_CURRENT, MAX_ONLINE_CURRENT,
                 Setting::OnlineCurrent, "online current", "A");
             break;
 
         case Topic::LimitOfflineCurrent:
-            validateAndSetParameter(Provider::MIN_OFFLINE_CURRENT, Provider::MAX_OFFLINE_CURRENT,
+            validateAndSetParameter(MIN_OFFLINE_CURRENT, MAX_OFFLINE_CURRENT,
                 Setting::OfflineCurrent, "offline current", "A");
             break;
 
@@ -468,22 +463,22 @@ void Provider::onMqttMessage(Topic enumTopic,
             switch (static_cast<int>(payload_val)) {
                 case 3:
                     DTU_LOGI("Received MQTT msg. New mode: Full internal control");
-                    _mqttCallbacks.push_back(std::bind(&Provider::setMode, this, HUAWEI_MODE_AUTO_INT));
+                    setMode(HUAWEI_MODE_AUTO_INT);
                     break;
 
                 case 2:
                     DTU_LOGI("Received MQTT msg. New mode: Internal on/off control, external power limit");
-                    _mqttCallbacks.push_back(std::bind(&Provider::setMode, this, HUAWEI_MODE_AUTO_EXT));
+                    setMode(HUAWEI_MODE_AUTO_EXT);
                     break;
 
                 case 1:
                     DTU_LOGI("Received MQTT msg. New mode: Turned ON");
-                    _mqttCallbacks.push_back(std::bind(&Provider::setMode, this, HUAWEI_MODE_ON));
+                    setMode(HUAWEI_MODE_ON);
                     break;
 
                 case 0:
                     DTU_LOGI("Received MQTT msg. New mode: Turned OFF");
-                    _mqttCallbacks.push_back(std::bind(&Provider::setMode, this, HUAWEI_MODE_OFF));
+                    setMode(HUAWEI_MODE_OFF);
                     break;
 
                 default:
@@ -496,12 +491,12 @@ void Provider::onMqttMessage(Topic enumTopic,
         {
             bool enable = payload_val > 0;
             DTU_LOGI("Production to be %sabled", (enable?"en":"dis"));
-            _mqttCallbacks.push_back(std::bind(&Provider::setProduction, this, enable));
+            setProduction(enable);
             break;
         }
 
         case Topic::LimitInputCurrent:
-            validateAndSetParameter(Provider::MIN_INPUT_CURRENT_LIMIT, Provider::MAX_INPUT_CURRENT_LIMIT,
+            validateAndSetParameter(MIN_INPUT_CURRENT_LIMIT, MAX_INPUT_CURRENT_LIMIT,
                 Setting::InputCurrentLimit, "input current", "A");
             break;
 
@@ -510,12 +505,10 @@ void Provider::onMqttMessage(Topic enumTopic,
         {
             bool online = (Topic::FanOnlineFullSpeed == enumTopic);
             bool fullSpeed = payload_val > 0;
-            DTU_LOGI("%sline fan %s speed", (online?"On":"Off"), (fullSpeed?"full":"auto"));
-            _mqttCallbacks.push_back(std::bind(&Provider::setFan, this, online, fullSpeed));
+            setFan(online, fullSpeed);
             break;
         }
     }
 }
-
 
 } // namespace GridChargers::Huawei
