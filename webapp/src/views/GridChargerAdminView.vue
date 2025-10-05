@@ -175,7 +175,7 @@
                     :label="$t('gridchargeradmin.enableVoltageLimit')"
                     :tooltip="$t('gridchargeradmin.enableVoltageLimitHint')"
                     v-model="gridChargerConfigList.enable_voltage_limit"
-                    v-if="gridChargerConfigList.auto_power_enabled"
+                    v-if="gridChargerConfigList.auto_power_enabled && gridChargerConfigList.provider === 0"
                     postfix="V"
                     type="number"
                     wide

@@ -34,7 +34,7 @@ bool Provider::init()
     strlcpy(httpRequestConfig.Url, ("http://" + ipAddress.toString() + "/jsonlive").c_str(), sizeof(httpRequestConfig.Url));
     httpRequestConfig.Timeout = HTTP_REQUEST_TIMEOUT_MS;
 
-    DTU_LOGE("Request URL: %s", httpRequestConfig.Url);
+    DTU_LOGI("Request URL: %s", httpRequestConfig.Url);
 
     _httpGetter = std::make_unique<HttpGetter>(httpRequestConfig);
 
@@ -117,7 +117,7 @@ void Provider::powerControlLoop()
     if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
         // Battery request has changed. Set current to 0, wait for PSU to respond and then clear state
         setChargerPowerAc(0);
-        if (oOutputPower < 1) {
+        if (oOutputPower && oOutputPower < 1) {
             _batteryEmergencyCharging = false;
         }
         return;
@@ -147,17 +147,18 @@ void Provider::powerControlLoop()
         }
 
         auto oOutputVoltage = _dataCurrent.get<DataPointLabel::DcVoltage>();
+        auto oBatteryVoltageLimit = _dataCurrent.get<DataPointLabel::DcVoltageSetpoint>();
         auto oMinAcPower = _dataCurrent.get<DataPointLabel::MinAcPower>();
         auto oOutputCurrent = _dataCurrent.get<DataPointLabel::DcCurrent>();
 
-        if (!oOutputPower || !oOutputVoltage || !oMinAcPower || !oMaxAcPower || !oOutputCurrent) {
+        if (!oOutputPower || !oOutputVoltage || !oBatteryVoltageLimit || !oMinAcPower || !oMaxAcPower || !oOutputCurrent) {
             DTU_LOGW("Cannot perform auto power control while critical PSU values are still unknown");
             _autoModeBlockedTillMillis = millis() + 1000;
             return;
         }
 
         // Re-enable automatic power control if the output voltage has dropped below threshold
-        if (oOutputVoltage && *oOutputVoltage < config.GridCharger.AutoPowerEnableVoltageLimit ) {
+        if (oOutputVoltage && *oOutputVoltage < oBatteryVoltageLimit) {
             _autoPowerEnabled = true;
         }
 
