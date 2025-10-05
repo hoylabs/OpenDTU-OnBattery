@@ -52,7 +52,7 @@ protected:
 
 private:
     static void staticLoopHelper(void* context);
-    void logMessage(char const* msg, uint32_t canId, uint32_t valueId, uint32_t value);
+    static void logMessage(char const* msg, uint32_t canId, uint32_t valueId, uint32_t value);
     void loop();
     void processQueue();
 
@@ -88,7 +88,7 @@ private:
 
     bool readBoardProperties(can_message_t const& msg);
 
-    std::string _boardProperties = "";
+    std::string _boardProperties;
     uint16_t _boardPropertiesCounter = 0;
     enum class StringState : uint8_t {
         Unknown,
@@ -105,9 +105,9 @@ private:
     std::optional<uint32_t> _lastDeviceConfigMillis = std::nullopt;
     static constexpr uint32_t DeviceConfigTimeoutMillis = DataRequestIntervalMillis * 4;
 
-    bool readRectifierState(can_message_t const& msg);
+    bool readRectifierState(can_message_t const& msg) const;
 
-    bool readAcks(can_message_t const& msg);
+    bool readAcks(can_message_t const& msg) const;
 
     std::optional<uint32_t> _lastSettingsUpdateMillis = std::nullopt;
     void sendSettings();

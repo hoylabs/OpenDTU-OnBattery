@@ -296,7 +296,7 @@ void Provider::loop()
                 outputCurrent = outputCurrent > 0 ? outputCurrent : 0;
 
                 DTU_LOGD("Setting output current to %.2fA. This is the lower value of "
-                        "calculated %.2fA and BMS permissable %.2fA currents",
+                        "calculated %.2fA and BMS permissible %.2fA currents",
                         outputCurrent, calculatedCurrent, permissibleCurrent);
 
                 _autoPowerEnabled = true;
@@ -324,7 +324,7 @@ void Provider::setFan(bool online, bool fullSpeed)
     _upHardwareInterface->setParameter(setting, fullSpeed ? 1 : 0);
 }
 
-void Provider::_setProduction(bool enable)
+void Provider::_setProduction(bool enable) const
 {
     auto setting = HardwareInterface::Setting::ProductionDisable;
     _upHardwareInterface->setParameter(setting, enable ? 0 : 1);

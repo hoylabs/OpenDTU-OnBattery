@@ -85,7 +85,7 @@ void Stats::mqttPublish() const
     MqttSettings.publish("huawei/data_age", String((millis() - _dataPoints.getLastUpdate()) / 1000));
 }
 
-void Stats::updateFrom(DataPointContainer const& dataPoints)
+void Stats::updateFrom(DataPointContainer const& dataPoints) const
 {
     _dataPoints.updateFrom(dataPoints);
 }

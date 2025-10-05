@@ -49,7 +49,7 @@ void Controller::updateSettings()
     if (!_upProvider->init()) { _upProvider = nullptr; }
 }
 
-void Controller::loop()
+void Controller::loop() const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 

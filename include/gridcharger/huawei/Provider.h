@@ -50,7 +50,7 @@ public:
 
 private:
     void _setParameter(float val, HardwareInterface::Setting setting, bool pollFeedback = false);
-    void _setProduction(bool enable);
+    void _setProduction(bool enable) const;
 
     void setFan(bool online, bool fullSpeed);
     void setMode(uint8_t mode);
@@ -94,7 +94,7 @@ private:
     };
 
     void subscribeTopics();
-    void unsubscribeTopics();
+    static void unsubscribeTopics();
 
     static constexpr frozen::string _cmdtopic = "huawei/cmd/";
     static constexpr frozen::map<frozen::string, Topic, 9> _subscriptions = {

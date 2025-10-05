@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
-#include <gridcharger/huawei/HardwareInterface.h>
 #include <gridcharger/Stats.h>
 
 namespace GridChargers {

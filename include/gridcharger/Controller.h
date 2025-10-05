@@ -3,11 +3,8 @@
 
 #include <memory>
 #include <mutex>
-#include <optional>
-#include <ArduinoJson.h>
 #include <TaskSchedulerDeclarations.h>
 #include <gridcharger/Provider.h>
-#include <gridcharger/huawei/HardwareInterface.h>
 
 namespace GridChargers {
 
@@ -24,7 +21,7 @@ public:
     T* getProvider() const;
 
 private:
-    void loop();
+    void loop() const;
 
     Task _loopTask;
     mutable std::mutex _mutex;

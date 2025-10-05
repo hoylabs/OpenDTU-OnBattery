@@ -19,7 +19,7 @@ void Stats::mqttLoop()
     _lastMqttPublish = millis();
 }
 
-uint32_t Stats::getMqttFullPublishIntervalMs() const
+uint32_t Stats::getMqttFullPublishIntervalMs()
 {
     auto& config = Configuration.get();
 
