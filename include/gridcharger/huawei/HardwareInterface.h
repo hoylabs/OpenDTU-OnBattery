@@ -88,7 +88,7 @@ private:
 
     bool readBoardProperties(can_message_t const& msg);
 
-    std::string _boardProperties;
+    std::string _boardProperties = "";
     uint16_t _boardPropertiesCounter = 0;
     enum class StringState : uint8_t {
         Unknown,
