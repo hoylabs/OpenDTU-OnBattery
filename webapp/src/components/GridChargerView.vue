@@ -27,7 +27,7 @@
                                 <DataAgeDisplay :data-age-ms="data.dataAge" />
                             </div>
                         </div>
-                        <div class="btn-toolbar p-2" role="toolbar" v-if="data.showSettings">
+                        <div class="btn-toolbar p-2" role="toolbar" v-if="data.provider === 0">
                             <div class="btn-group me-2" role="group">
                                 <button
                                     :disabled="!data.reachable"
@@ -115,7 +115,7 @@
             </div>
         </div>
 
-        <template v-if="data.showSettings">
+        <template v-if="data.provider === 0">
             <ModalDialog
                 modalId="gridChargerLimitSettingView"
                 :title="$t('gridcharger.LimitSettings')"

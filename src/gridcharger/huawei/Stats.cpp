@@ -3,7 +3,6 @@
 #include <MqttSettings.h>
 #include <MessageOutput.h>
 #include <gridcharger/huawei/Stats.h>
-#include <numeric>
 
 namespace GridChargers::Huawei {
 
@@ -94,20 +93,18 @@ void Stats::updateFrom(DataPointContainer const& dataPoints)
 void Stats::getLiveViewData(JsonVariant& root) const
 {
     root["dataAge"] = millis() - _dataPoints.getLastUpdate();
-    root["showSettings"] = true;
+    root["provider"] = GridChargerProviderType::HUAWEI;
 
-    using Label = GridChargers::Huawei::DataPointLabel;
-
-    auto oReachable = _dataPoints.get<Label::Reachable>();
+    auto oReachable = _dataPoints.get<DataPointLabel::Reachable>();
     root["reachable"] = oReachable.value_or(false);
 
-    auto oOutputPower = _dataPoints.get<Label::OutputPower>();
-    auto oOutputCurrent = _dataPoints.get<Label::OutputCurrent>();
+    auto oOutputPower = _dataPoints.get<DataPointLabel::OutputPower>();
+    auto oOutputCurrent = _dataPoints.get<DataPointLabel::OutputCurrent>();
     root["producing"] = oOutputPower.value_or(0) > 10 && oOutputCurrent.value_or(0) > 0.1;
 
 #define VAL(l, n) \
     { \
-        auto oVal = _dataPoints.get<Label::l>(); \
+        auto oVal = _dataPoints.get<DataPointLabel::l>(); \
         if (oVal) { root[n] = *oVal; } \
     }
 
@@ -116,42 +113,42 @@ void Stats::getLiveViewData(JsonVariant& root) const
     VAL(ProductName,         "productName");
 #undef VAL
 
-    addStringInSection<Label::BoardType>(root, "device", "boardType", false);
-    addStringInSection<Label::Manufactured>(root, "device", "manufactured", false);
-    addStringInSection<Label::ProductDescription>(root, "device", "productDescription", false);
-    addStringInSection<Label::Row>(root, "device", "row", false);
-    addStringInSection<Label::Slot>(root, "device", "slot", false);
+    addStringInSection<DataPointLabel::BoardType>(root, "device", "boardType", false);
+    addStringInSection<DataPointLabel::Manufactured>(root, "device", "manufactured", false);
+    addStringInSection<DataPointLabel::ProductDescription>(root, "device", "productDescription", false);
+    addStringInSection<DataPointLabel::Row>(root, "device", "row", false);
+    addStringInSection<DataPointLabel::Slot>(root, "device", "slot", false);
 
-    addValueInSection<Label::InputVoltage>(root, "input", "voltage");
-    addValueInSection<Label::InputCurrent>(root, "input", "current");
-    addValueInSection<Label::InputPower>(root, "input", "power");
-    addValueInSection<Label::InputTemperature>(root, "input", "temp");
-    addValueInSection<Label::InputFrequency>(root, "input", "frequency");
-    addValueInSection<Label::Efficiency>(root, "input", "efficiency");
+    addValueInSection<DataPointLabel::InputVoltage>(root, "input", "voltage");
+    addValueInSection<DataPointLabel::InputCurrent>(root, "input", "current");
+    addValueInSection<DataPointLabel::InputPower>(root, "input", "power");
+    addValueInSection<DataPointLabel::InputTemperature>(root, "input", "temp");
+    addValueInSection<DataPointLabel::InputFrequency>(root, "input", "frequency");
+    addValueInSection<DataPointLabel::Efficiency>(root, "input", "efficiency");
 
-    addValueInSection<Label::OutputVoltage>(root, "output", "voltage");
-    addValueInSection<Label::OutputCurrent>(root, "output", "current");
-    addValueInSection<Label::OutputPower>(root, "output", "power");
-    addValueInSection<Label::OutputTemperature>(root, "output", "temp");
-    addValueInSection<Label::OutputCurrentMax>(root, "output", "maxCurrent");
+    addValueInSection<DataPointLabel::OutputVoltage>(root, "output", "voltage");
+    addValueInSection<DataPointLabel::OutputCurrent>(root, "output", "current");
+    addValueInSection<DataPointLabel::OutputPower>(root, "output", "power");
+    addValueInSection<DataPointLabel::OutputTemperature>(root, "output", "temp");
+    addValueInSection<DataPointLabel::OutputCurrentMax>(root, "output", "maxCurrent");
 
-    addValueInSection<Label::OnlineVoltage>(root, "acknowledgements", "onlineVoltage");
-    addValueInSection<Label::OfflineVoltage>(root, "acknowledgements", "offlineVoltage");
-    addValueInSection<Label::OnlineCurrent>(root, "acknowledgements", "onlineCurrent");
-    addValueInSection<Label::OfflineCurrent>(root, "acknowledgements", "offlineCurrent");
-    addValueInSection<Label::InputCurrentLimit>(root, "acknowledgements", "inputCurrentLimit");
+    addValueInSection<DataPointLabel::OnlineVoltage>(root, "acknowledgements", "onlineVoltage");
+    addValueInSection<DataPointLabel::OfflineVoltage>(root, "acknowledgements", "offlineVoltage");
+    addValueInSection<DataPointLabel::OnlineCurrent>(root, "acknowledgements", "onlineCurrent");
+    addValueInSection<DataPointLabel::OfflineCurrent>(root, "acknowledgements", "offlineCurrent");
+    addValueInSection<DataPointLabel::InputCurrentLimit>(root, "acknowledgements", "inputCurrentLimit");
 
-    auto oProductionEnabled = _dataPoints.get<Label::ProductionEnabled>();
+    auto oProductionEnabled = _dataPoints.get<DataPointLabel::ProductionEnabled>();
     if (oProductionEnabled) {
         ::GridChargers::Stats::addStringInSection(root, "acknowledgements", "productionEnabled", *oProductionEnabled?"yes":"no");
     }
 
-    auto oFanOnlineFullSpeed = _dataPoints.get<Label::FanOnlineFullSpeed>();
+    auto oFanOnlineFullSpeed = _dataPoints.get<DataPointLabel::FanOnlineFullSpeed>();
     if (oFanOnlineFullSpeed) {
         ::GridChargers::Stats::addStringInSection(root, "acknowledgements", "fanOnlineFullSpeed", *oFanOnlineFullSpeed?"FanFullSpeed":"FanAuto");
     }
 
-    auto oFanOfflineFullSpeed = _dataPoints.get<Label::FanOfflineFullSpeed>();
+    auto oFanOfflineFullSpeed = _dataPoints.get<DataPointLabel::FanOfflineFullSpeed>();
     if (oFanOfflineFullSpeed) {
         ::GridChargers::Stats::addStringInSection(root, "acknowledgements", "fanOfflineFullSpeed", *oFanOfflineFullSpeed?"FanFullSpeed":"FanAuto");
     }

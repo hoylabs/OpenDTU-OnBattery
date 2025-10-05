@@ -5,7 +5,7 @@ type DataPoint = (ValueObject | StringValue)[];
 
 export interface GridCharger {
     dataAge: number;
-    showSettings: boolean;
+    provider: number;
     reachable: boolean;
     producing: boolean;
     serial?: string;
