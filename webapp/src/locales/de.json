@@ -1048,7 +1048,6 @@
         "productDescription": "Produktbeschreibung",
         "slot": "Steckplatz - Index",
         "row": "Steckplatz - Reihe",
-        "state": "Status",
         "yieldDay": "Tagesertrag",
         "yieldTotal": "Gesamtertrag",
         "input": "Eingang",
@@ -1084,7 +1083,18 @@
         "SetLimits": "Limits setzen",
         "Close": "Schließen",
         "SetVoltageLimit": "Spannungslimit",
-        "SetCurrentLimit": "Stromlimit"
+        "SetCurrentLimit": "Stromlimit",
+        "state": "Status",
+        "trucki": {
+            "batteryGridState": "Batterie/Netz Status",
+            "VBAT_LOW": "Batterie Niedrig",
+            "VBAT_NORMAL": "Batterie Normal",
+            "VBAT_FULL": "Batterie Voll",
+            "VBAT_FULL_DELAYED": "Batterie Voll Verzögert",
+            "VGRID_LOW_DELAYED": "Netz Niedrig Verzögert",
+            "VGRID_LOW": "Netz Niedrig",
+            "UNKNOWN": "Unbekannt"
+        }
     },
     "gridchargeradmin": {
         "ChargerSettings": "AC Ladegerät Einstellungen",

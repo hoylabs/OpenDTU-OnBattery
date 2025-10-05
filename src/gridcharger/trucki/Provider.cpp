@@ -263,9 +263,11 @@ void Provider::parseControlCommandResponse()
     // - first number is the current AC power in W*10
     // - second number is the max AC power in W*10
     // - third number is the battery state and optional, not available in older versions
-    float acPowerCurrent, acPowerMax;
-    int batteryState;
-    if (sscanf(buffer.data(), "%f;%f;%d", &acPowerCurrent, &acPowerMax, &batteryState) >= 2) {
+    float acPowerCurrent;
+    float acPowerMax;
+    int batteryState = -1;
+    int parsedFields = sscanf(buffer.data(), "%f;%f;%d", &acPowerCurrent, &acPowerMax, &batteryState);
+    if (parsedFields >= 2) {
         acPowerCurrent /= 10.0f; // Convert from W*10 to W
         acPowerMax /= 10.0f; // Convert from W*10 to W
     } else {
@@ -273,13 +275,46 @@ void Provider::parseControlCommandResponse()
         return;
     }
 
-    DTU_LOGV("acPowerCurrent: %f, acPowerMax: %f", acPowerCurrent, acPowerMax);
+    DTU_LOGV("acPowerCurrent: %f, acPowerMax: %f, batteryState: %d", acPowerCurrent, acPowerMax, batteryState);
 
     // Update data points
     {
         auto scopedLock = _dataCurrent.lock();
         _dataCurrent.add<DataPointLabel::AcPower>(acPowerCurrent);
         _dataCurrent.add<DataPointLabel::MaxAcPower>(acPowerMax);
+
+        // only use batteryState when it could be parsed from the packet
+        if (parsedFields == 3) {
+            switch (batteryState) {
+                case 5:
+                    _dataCurrent.add<DataPointLabel::BatteryGridState>(std::string("trucki.VGRID_LOW"));
+                    break;
+
+                case 4:
+                    _dataCurrent.add<DataPointLabel::BatteryGridState>(std::string("trucki.VGRID_DELAYED"));
+                    break;
+
+                case 3:
+                    _dataCurrent.add<DataPointLabel::BatteryGridState>(std::string("trucki.VBAT_FULL_DELAYED"));
+                    break;
+
+                case 2:
+                    _dataCurrent.add<DataPointLabel::BatteryGridState>(std::string("trucki.VBAT_FULL"));
+                    break;
+
+                case 1:
+                    _dataCurrent.add<DataPointLabel::BatteryGridState>(std::string("trucki.VBAT_NORMAL"));
+                    break;
+
+                case 0:
+                    _dataCurrent.add<DataPointLabel::BatteryGridState>(std::string("trucki.VBAT_LOW"));
+                    break;
+
+                default:
+                    _dataCurrent.add<DataPointLabel::BatteryGridState>(std::string("trucki.UNKNOWN"));
+                    break;
+            }
+        }
     }
 
     _stats->updateFrom(_dataCurrent);

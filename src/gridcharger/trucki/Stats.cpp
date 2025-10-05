@@ -33,8 +33,9 @@ void Stats::getLiveViewData(JsonVariant& root) const
     auto oDcCurrent = _dataPoints.get<DataPointLabel::DcCurrent>();
     root["producing"] = oDcPower.value_or(0) > 10 && oDcCurrent.value_or(0) > 0.1;
 
-    addStringInSection<DataPointLabel::ZEPC>(root, "device", "zepc", false);
+    addStringInSection<DataPointLabel::ZEPC>(root, "device", "trucki.zepc", false);
     addStringInSection<DataPointLabel::State>(root, "device", "state", false);
+    addStringInSection<DataPointLabel::BatteryGridState>(root, "device", "trucki.batteryGridState");
     addValueInSection<DataPointLabel::Temperature>(root, "device", "temp", 1);
     addValueInSection<DataPointLabel::Efficiency>(root, "device", "efficiency", 0);
     addValueInSection<DataPointLabel::DayEnergy>(root, "device", "yieldDay", 2);

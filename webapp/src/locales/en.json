@@ -1050,7 +1050,6 @@
         "productDescription": "Product Description",
         "slot": "Slot - Index",
         "row": "Slot - Row",
-        "state": "State",
         "yieldDay": "Daily Yield",
         "yieldTotal": "Total Yield",
         "input": "Input",
@@ -1087,7 +1086,18 @@
         "Close": "Close",
         "SetVoltageLimit": "Voltage Limit",
         "SetCurrentLimit": "Current Limit",
-        "zepc": "ZEPC"
+        "state": "State",
+        "trucki": {
+            "zepc": "ZEPC",
+            "batteryGridState": "Battery/Grid State",
+            "VBAT_LOW": "Battery Low",
+            "VBAT_NORMAL": "Battery Normal",
+            "VBAT_FULL": "Battery Full",
+            "VBAT_FULL_DELAYED": "Battery Full Delayed",
+            "VGRID_LOW_DELAYED": "Grid Low Delayed",
+            "VGRID_LOW": "Grid Low",
+            "UNKNOWN": "Unknown"
+        }
     },
     "gridchargeradmin": {
         "ChargerSettings": "AC Charger Settings",

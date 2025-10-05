@@ -7,6 +7,7 @@ namespace GridChargers::Trucki {
 enum class DataPointLabel : uint8_t {
     ZEPC,
     State,
+    BatteryGridState,
     Temperature,
     Efficiency,
     DayEnergy,
@@ -34,6 +35,7 @@ template<DataPointLabel> struct DataPointLabelTraits;
 
 LABEL_TRAIT(ZEPC,                   std::string, "");
 LABEL_TRAIT(State,                  std::string, "");
+LABEL_TRAIT(BatteryGridState,       std::string, "");
 LABEL_TRAIT(Temperature,            float,       "°C");
 LABEL_TRAIT(Efficiency,             float,       "%");
 LABEL_TRAIT(DayEnergy,              float,       "kWh");
