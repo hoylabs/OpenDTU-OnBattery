@@ -19,7 +19,7 @@ public:
 
     // the interval at which all data will be re-published, even
     // if they did not change. used to calculate Home Assistant expiration.
-    static uint32_t getMqttFullPublishIntervalMs() ;
+    static uint32_t getMqttFullPublishIntervalMs();
 
 protected:
     virtual void mqttPublish() const = 0;
