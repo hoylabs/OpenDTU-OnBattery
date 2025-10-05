@@ -291,7 +291,7 @@ void Provider::parseControlCommandResponse()
                     break;
 
                 case 4:
-                    _dataCurrent.add<DataPointLabel::BatteryGridState>(std::string("trucki.VGRID_DELAYED"));
+                    _dataCurrent.add<DataPointLabel::BatteryGridState>(std::string("trucki.VGRID_LOW_DELAYED"));
                     break;
 
                 case 3:
