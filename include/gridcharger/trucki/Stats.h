@@ -10,16 +10,16 @@ class Stats : public ::GridChargers::Stats {
 friend class Provider;
 
 public:
-    uint32_t getLastUpdate() const;
+    uint32_t getLastUpdate() const final;
 
-    std::optional<float> getInputPower() const;
+    std::optional<float> getInputPower() const final;
 
-    void getLiveViewData(JsonVariant& root) const;
+    void getLiveViewData(JsonVariant& root) const final;
 
 protected:
     void mqttPublish() const final {}
 
-    void updateFrom(DataPointContainer const& dataPoints);
+    void updateFrom(DataPointContainer const& dataPoints) const;
 
 private:
     template<DataPointLabel L>

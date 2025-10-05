@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <DataPoints.h>
 
 namespace GridChargers::Trucki {

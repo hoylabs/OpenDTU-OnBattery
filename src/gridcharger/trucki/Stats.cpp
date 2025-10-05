@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include <Configuration.h>
 #include <MqttSettings.h>
 #include <gridcharger/trucki/Stats.h>
-#include <numeric>
 
 namespace GridChargers::Trucki {
 
@@ -16,7 +14,7 @@ std::optional<float> Stats::getInputPower() const
    return _dataPoints.get<DataPointLabel::AcPower>();
 }
 
-void Stats::updateFrom(DataPointContainer const& dataPoints)
+void Stats::updateFrom(DataPointContainer const& dataPoints) const
 {
     _dataPoints.updateFrom(dataPoints);
 }

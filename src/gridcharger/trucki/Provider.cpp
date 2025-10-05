@@ -279,7 +279,7 @@ void Provider::commandLoop()
     }
 }
 
-void Provider::sendControlCommandRequest()
+void Provider::sendControlCommandRequest() const
 {
     auto& config = Configuration.get();
 

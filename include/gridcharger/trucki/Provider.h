@@ -72,7 +72,7 @@ private:
 
     static void commandLoopHelper(void* context);
     void commandLoop();
-    void sendControlCommandRequest();
+    void sendControlCommandRequest() const;
     void parseControlCommandResponse();
 
     TaskHandle_t _commandLoopTaskHandle = nullptr;
