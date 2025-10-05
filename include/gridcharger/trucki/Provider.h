@@ -17,7 +17,8 @@ public:
     std::shared_ptr<::GridChargers::Stats> getStats() const final { return _stats; }
 
     bool getAutoPowerStatus() const final {
-        return _dataCurrent.get<DataPointLabel::AcPowerSetpoint>().value_or(0) > 0.0f
+        return _requestedPowerAc > 0
+            || _dataCurrent.get<DataPointLabel::AcPowerSetpoint>().value_or(0) > 0.0f
             || _dataCurrent.get<DataPointLabel::DcPower>().value_or(0) > 0.0f;
     }
 
