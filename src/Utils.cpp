@@ -127,6 +127,13 @@ void Utils::skipBom(File& f)
 }
 
 /* OpenDTU-OnBatter-specific utils go here: */
+template<typename T>
+std::optional<T> Utils::getFromString(char const* val)
+{
+    static_assert(sizeof(T) == 0, "getFromString not implemented for this type");
+    return std::nullopt;
+}
+
 template<>
 std::optional<float> Utils::getFromString(char const* val)
 {
