@@ -4,8 +4,6 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <ArduinoJson.h>
-#include <TaskSchedulerDeclarations.h>
 #include <gridcharger/Provider.h>
 #include <gridcharger/huawei/HardwareInterface.h>
 #include <gridcharger/huawei/DataPoints.h>
@@ -36,8 +34,6 @@ public:
 
     void setProduction(bool enable);
     void setParameter(float val, HardwareInterface::Setting setting);
-
-    uint8_t getMode() const { return _mode; };
 
     // determined through trial and error (voltage limits, R4850G2)
     // and some educated guessing (current limits, no R4875 at hand)
