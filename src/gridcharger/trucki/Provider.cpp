@@ -53,8 +53,6 @@ bool Provider::init()
 
 void Provider::deinit()
 {
-    // TODO(andreasboehm): probably something is not working correctly because we 'loose connection'
-    // to the PSU after the configuration was changed without a reboot
     TruckiUdp.stop();
 
     _dataPollingTaskDone = false;
@@ -69,24 +67,14 @@ void Provider::deinit()
         while (!_dataPollingTaskDone) { delay(10); }
         _dataPollingTaskHandle = nullptr;
     }
-
-    _commandLoopTaskDone = false;
-
-    std::unique_lock powerControlLock(_commandLoopMutex);
-    _stopCommandLoop = true;
-    powerControlLock.unlock();
-
-    _commandLoopCv.notify_all();
-
-    if (_commandLoopTaskHandle != nullptr) {
-        while (!_commandLoopTaskDone) { delay(10); }
-        _commandLoopTaskHandle = nullptr;
-    }
 }
 
 void Provider::loop()
 {
     powerControlLoop();
+
+    sendControlCommandRequest();
+    parseControlCommandResponse();
 
     if (_dataPollingTaskHandle == nullptr) {
         std::unique_lock lock(_dataPollingMutex);
@@ -96,16 +84,6 @@ void Provider::loop()
         uint32_t constexpr stackSize = 4096;
         xTaskCreate(dataPollingLoopHelper, "TruckiPolling",
                 stackSize, this, 1/*prio*/, &_dataPollingTaskHandle);
-    }
-
-    if (_commandLoopTaskHandle == nullptr) {
-        std::unique_lock lock(_commandLoopMutex);
-        _stopCommandLoop = false;
-        lock.unlock();
-
-        uint32_t constexpr stackSize = 4096;
-        xTaskCreate(commandLoopHelper, "TruckiControl",
-                stackSize, this, 1/*prio*/, &_commandLoopTaskHandle);
     }
 }
 
@@ -248,44 +226,17 @@ void Provider::setChargerPowerAc(float powerAc)
     _requestedPowerAc = powerAc;
 }
 
-void Provider::commandLoopHelper(void* context)
-{
-    auto pInstance = static_cast<Provider*>(context);
-    pInstance->commandLoop();
-    pInstance->_commandLoopTaskDone = true;
-    vTaskDelete(nullptr);
-}
-
-void Provider::commandLoop()
-{
-    std::unique_lock lock(_commandLoopMutex);
-
-    while (!_stopCommandLoop) {
-        auto elapsedMillis = millis() - _lastControlCommandRequestMillis;
-
-        if (_lastControlCommandRequestMillis > 0 && elapsedMillis < CONTROL_COMMAND_INTERVAL_MS) {
-            auto sleepMs = CONTROL_COMMAND_INTERVAL_MS - elapsedMillis;
-            _commandLoopCv.wait_for(lock, std::chrono::milliseconds(sleepMs),
-                    [this] { return _stopCommandLoop; }); // releases the mutex
-            continue;
-        }
-
-        _lastControlCommandRequestMillis = millis();
-
-        lock.unlock(); // power control can take quite some time
-        sendControlCommandRequest();
-        parseControlCommandResponse();
-        lock.lock();
-    }
-}
-
 void Provider::sendControlCommandRequest() const
 {
     auto& config = Configuration.get();
 
-    if (!config.GridCharger.AutoPowerEnabled && !_batteryEmergencyCharging) {
+    if (!config.GridCharger.AutoPowerEnabled && !config.GridCharger.EmergencyChargeEnabled) {
         return;
     }
+
+    uint32_t currentMillis = millis();
+
+    if (currentMillis - _lastControlCommandRequestMillis < CONTROL_COMMAND_INTERVAL_MS) { return; }
 
     DTU_LOGI("Setting charging power to %.02fW AC", _requestedPowerAc);
 
@@ -301,24 +252,23 @@ void Provider::parseControlCommandResponse()
     int packetSize = TruckiUdp.parsePacket();
     if (0 == packetSize) { return; }
 
-    // Expected packet format: "1000;1000;1" (~14 chars max)
+    std::vector<char> buffer(packetSize);
+    int readBytes = TruckiUdp.read(buffer.data(), packetSize);
+    if (0 == readBytes) { return; }
+
+    DTU_LOGD("received %d bytes - %s", packetSize, buffer.data());
+
+    // Parse packet format: "current_power;max_power;battery_state", e.g. "1000;1000;1"
     // - first number is the current AC power in W*10
     // - second number is the max AC power in W*10
     // - third number is the battery state and optional, not available in older versions
-    // Using 64 bytes for safety margin and UDP packet alignment
-    static constexpr size_t kMaxPacketSize = 64;
-    char packet[kMaxPacketSize];
-    int readBytes = TruckiUdp.read(packet, std::min(static_cast<size_t>(packetSize), kMaxPacketSize));
-    if (0 == readBytes) { return; }
-
-    // Parse packet format: "current_power;max_power;battery_state"
     float acPowerCurrent, acPowerMax;
     int batteryState;
-    if (sscanf(packet, "%f;%f;%d", &acPowerCurrent, &acPowerMax, &batteryState) >= 2) {
+    if (sscanf(buffer.data(), "%f;%f;%d", &acPowerCurrent, &acPowerMax, &batteryState) >= 2) {
         acPowerCurrent /= 10.0f; // Convert from W*10 to W
         acPowerMax /= 10.0f; // Convert from W*10 to W
     } else {
-        DTU_LOGW("Invalid packet format: %s", packet);
+        DTU_LOGW("Invalid packet format: %s", buffer.data());
         return;
     }
 

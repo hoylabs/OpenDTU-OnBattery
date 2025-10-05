@@ -71,18 +71,9 @@ private:
     void setChargerPowerAc(float powerAc);
     float _requestedPowerAc = 0;
 
-    static void commandLoopHelper(void* context);
-    void commandLoop();
     void sendControlCommandRequest() const;
     void parseControlCommandResponse();
-
-    TaskHandle_t _commandLoopTaskHandle = nullptr;
-    std::atomic<bool> _commandLoopTaskDone = false;
-    bool _stopCommandLoop = false;
-    mutable std::mutex _commandLoopMutex;
-    std::condition_variable _commandLoopCv;
     uint32_t _lastControlCommandRequestMillis = 0;
-
     static constexpr int CONTROL_COMMAND_INTERVAL_MS = 500; // 500ms
 
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();

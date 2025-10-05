@@ -330,7 +330,6 @@
         "Task_huaweitwai": "Grid Charger TWAI",
         "Task_huaweimcp2515": "Grid Charger MCP2515",
         "Task_truckipolling": "Trucki T2xG Polling",
-        "Task_truckicontrol": "Trucki T2xG Control Loop",
         "Task_pmsdm": "PowerMeter (SDM)",
         "Task_pmhttpjson": "PowerMeter (HTTP+JSON)",
         "Task_pmsml": "PowerMeter (Serial SML)",
