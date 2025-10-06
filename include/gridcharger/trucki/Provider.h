@@ -71,7 +71,7 @@ private:
     void setChargerPowerAc(float powerAc);
     float _requestedPowerAc = 0;
 
-    void sendControlCommandRequest() const;
+    void sendControlCommandRequest();
     void parseControlCommandResponse();
     uint32_t _lastControlCommandRequestMillis = 0;
     static constexpr int CONTROL_COMMAND_INTERVAL_MS = 500; // 500ms

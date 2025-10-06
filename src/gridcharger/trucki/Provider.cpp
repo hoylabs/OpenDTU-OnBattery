@@ -227,7 +227,7 @@ void Provider::setChargerPowerAc(float powerAc)
     _requestedPowerAc = powerAc;
 }
 
-void Provider::sendControlCommandRequest() const
+void Provider::sendControlCommandRequest()
 {
     auto& config = Configuration.get();
 
@@ -246,6 +246,8 @@ void Provider::sendControlCommandRequest() const
     TruckiUdp.beginPacket(config.GridCharger.Trucki.IpAddress, udpPort);
     TruckiUdp.print(String(acPowerSetpoint));
     TruckiUdp.endPacket();
+
+    _lastControlCommandRequestMillis = currentMillis;
 }
 
 void Provider::parseControlCommandResponse()
