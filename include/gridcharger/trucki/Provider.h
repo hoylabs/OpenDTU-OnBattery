@@ -65,8 +65,8 @@ private:
 
     std::unique_ptr<HttpGetter> _httpGetter;
 
-    static constexpr int DATA_POLLING_INTERVAL_MS = 1000; // 1 second
-    static constexpr int HTTP_REQUEST_TIMEOUT_MS = 50; // 50ms
+    static constexpr int DATA_POLLING_INTERVAL_MS = 3000; // 3 seconds
+    static constexpr int HTTP_REQUEST_TIMEOUT_MS = 500; // 500ms
 
     void setChargerPowerAc(float powerAc);
     float _requestedPowerAc = 0;
