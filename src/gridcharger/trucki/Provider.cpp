@@ -137,6 +137,7 @@ void Provider::powerControlLoop()
             setChargerPowerAc(0);
             _autoPowerEnabled = false;
             DTU_LOGI("Inverter is active, disable PSU");
+            _autoModeBlockedTillMillis = millis() + 1000;
             return;
         }
 
