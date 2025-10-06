@@ -34,7 +34,7 @@ bool Provider::init()
     strlcpy(httpRequestConfig.Url, ("http://" + ipAddress.toString() + "/jsonlive").c_str(), sizeof(httpRequestConfig.Url));
     httpRequestConfig.Timeout = HTTP_REQUEST_TIMEOUT_MS;
 
-    DTU_LOGI("Request URL: %s", httpRequestConfig.Url);
+    DTU_LOGD("Request URL: %s", httpRequestConfig.Url);
 
     _httpGetter = std::make_unique<HttpGetter>(httpRequestConfig);
 
@@ -176,7 +176,7 @@ void Provider::powerControlLoop()
             // Powerlimit is the current output power + permissable Grid consumption
             newPowerLimit += *oOutputPower + config.GridCharger.AutoPowerTargetPowerConsumption;
 
-            DTU_LOGD("powerTotal: %.0f, outputPower: %.01f, newPowerLimit: %.0f", powerTotal, *oOutputPower, newPowerLimit);
+            DTU_LOGV("powerTotal: %.0f, outputPower: %.01f, newPowerLimit: %.0f", powerTotal, *oOutputPower, newPowerLimit);
 
             // Check whether the battery SoC limit setting is enabled
             if (config.Battery.Enabled && config.GridCharger.AutoPowerBatterySoCLimitsEnabled) {
@@ -184,7 +184,7 @@ void Provider::powerControlLoop()
                 // Sets power limit to 0 if the BMS reported SoC reaches or exceeds the user configured value
                 if (_batterySoC >= config.GridCharger.AutoPowerStopBatterySoCThreshold) {
                     newPowerLimit = 0;
-                    DTU_LOGD("Current battery SoC %i reached stop threshold %i, set newPowerLimit to %f",
+                    DTU_LOGV("Current battery SoC %i reached stop threshold %i, set newPowerLimit to %f",
                             _batterySoC, config.GridCharger.AutoPowerStopBatterySoCThreshold, newPowerLimit);
                 }
             }
