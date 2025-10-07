@@ -23,6 +23,7 @@ public:
     void deinit() final;
     void loop() final;
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
+    std::shared_ptr<::Batteries::Stats> setStats() final { return _stats; }
     std::shared_ptr<::Batteries::HassIntegration> getHassIntegration() final { return _hassIntegration; }
 
 private:

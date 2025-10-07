@@ -10,6 +10,7 @@
 #include <battery/zendure/Provider.h>
 #include <Configuration.h>
 #include <LogHelper.h>
+#include <Utils.h>
 
 #undef TAG
 static const char* TAG = "battery";
@@ -94,6 +95,8 @@ void Controller::loop()
 
     _upProvider->loop();
 
+    _upProvider->getStats()->checkFullyChargedTime();
+
     _upProvider->getStats()->mqttLoop();
 
     auto spHassIntegration = _upProvider->getHassIntegration();
@@ -150,6 +153,28 @@ float Controller::getDischargeCurrentLimit()
     };
 
     return std::min(getConfiguredLimit(), getBatteryLimit());
+}
+
+void Controller::serializeRTD(JsonObject const& obj) const
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (!_upProvider) {
+        obj["fully_charged_epoch"] = 0; // no battery in the system
+        return;
+    }
+
+    obj["fully_charged_epoch"] = _upProvider->getStats()->getFullyChargedTime().value_or(0);
+}
+
+void Controller::deserializeRTD(JsonObject const& obj)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (!_upProvider) { return; } // no battery, nothing to do
+
+    time_t fulltime =  obj["fully_charged_epoch"] | 0;
+    _upProvider->setStats()->setFullyChargedTime(fulltime == 0 ? std::nullopt : std::make_optional(fulltime));
 }
 
 } // namespace Batteries

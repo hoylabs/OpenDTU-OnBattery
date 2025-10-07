@@ -16,6 +16,7 @@ public:
     void onMessage(twai_message_t rx_message) final;
 
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
+    std::shared_ptr<::Batteries::Stats> setStats() final { return _stats; }
     std::shared_ptr<::Batteries::HassIntegration> getHassIntegration() final { return _hassIntegration; }
 
 private:

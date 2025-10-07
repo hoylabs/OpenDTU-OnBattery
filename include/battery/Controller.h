@@ -16,6 +16,9 @@ public:
 
     float getDischargeCurrentLimit();
 
+    void serializeRTD(JsonObject const&) const;
+    void deserializeRTD(JsonObject const&);
+
     std::shared_ptr<Stats const> getStats() const;
 
 private:

@@ -3,6 +3,7 @@
 #include <battery/Stats.h>
 #include <Configuration.h>
 #include <MqttSettings.h>
+#include "Utils.h"
 
 namespace Batteries {
 
@@ -118,6 +119,14 @@ void Stats::mqttPublish() const
 
     if (isChargeCurrentLimitValid()) {
         MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimit));
+    }
+}
+
+void Stats::checkFullyChargedTime(void)
+{
+    time_t fulltime;
+    if (isSoCValid() && (getSoCAgeSeconds() <= 30) && (getSoC() >= 100.0f) && Utils::getEpoch(&fulltime, 5)) {
+        _oSoCFullTime = fulltime;
     }
 }
 
