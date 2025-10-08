@@ -24,9 +24,11 @@ public:
     uint8_t getSoCPrecision() const { return _socPrecision; }
 
     float getVoltage() const { return _voltage; }
+    uint32_t getLastVoltageUpdate() const { return _lastUpdateVoltage; }
     uint32_t getVoltageAgeSeconds() const { return (millis() - _lastUpdateVoltage) / 1000; }
 
     float getChargeCurrent() const { return _current; };
+    uint32_t getLastCurrentUpdate() const { return _lastUpdateCurrent; }
     uint8_t getChargeCurrentPrecision() const { return _currentPrecision; }
 
     float getDischargeCurrentLimit() const { return _dischargeCurrentLimit; };
