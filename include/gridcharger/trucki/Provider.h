@@ -63,6 +63,7 @@ private:
     std::condition_variable _dataPollingCv;
     uint32_t _lastDataPoll = 0;
 
+    std::unique_ptr<HttpRequestConfig> _httpRequestConfig;
     std::unique_ptr<HttpGetter> _httpGetter;
 
     static constexpr int DATA_POLLING_INTERVAL_MS = 3000; // 3 seconds

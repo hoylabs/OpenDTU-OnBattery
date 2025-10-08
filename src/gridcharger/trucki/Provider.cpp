@@ -30,22 +30,28 @@ bool Provider::init()
         return false;
     }
 
-    HttpRequestConfig httpRequestConfig;
-    strlcpy(httpRequestConfig.Url, ("http://" + ipAddress.toString() + "/jsonlive").c_str(), sizeof(httpRequestConfig.Url));
-    httpRequestConfig.Timeout = HTTP_REQUEST_TIMEOUT_MS;
+    if (!TruckiUdp.begin(udpPort)) {
+        DTU_LOGE("Failed to initialize UDP");
+        return false;
+    }
 
-    DTU_LOGD("Request URL: %s", httpRequestConfig.Url);
+    _httpRequestConfig = std::make_unique<HttpRequestConfig>();
+    strlcpy(_httpRequestConfig->Url, ("http://" + ipAddress.toString() + "/jsonlive").c_str(), sizeof(_httpRequestConfig->Url));
+    _httpRequestConfig->Timeout = HTTP_REQUEST_TIMEOUT_MS;
+    _httpRequestConfig->AuthType = HttpRequestConfig::Auth::None;
+    strlcpy(_httpRequestConfig->HeaderKey, "", sizeof(_httpRequestConfig->HeaderKey));
+    strlcpy(_httpRequestConfig->HeaderValue, "", sizeof(_httpRequestConfig->HeaderValue));
+    strlcpy(_httpRequestConfig->Username, "", sizeof(_httpRequestConfig->Username));
+    strlcpy(_httpRequestConfig->Password, "", sizeof(_httpRequestConfig->Password));
 
-    _httpGetter = std::make_unique<HttpGetter>(httpRequestConfig);
+    DTU_LOGD("Request URL: %s", _httpRequestConfig->Url);
+
+    _httpGetter = std::make_unique<HttpGetter>(*_httpRequestConfig);
     _httpGetter->addHeader("Accept", "*/*");
 
     if (!_httpGetter->init()) {
         DTU_LOGE("Initializing HTTP getter failed: %s", _httpGetter->getErrorText());
-        return false;
-    }
-
-    if (!TruckiUdp.begin(udpPort)) {
-        DTU_LOGE("Failed to initialize UDP");
+        _httpGetter = nullptr;
         return false;
     }
 
@@ -68,6 +74,9 @@ void Provider::deinit()
         while (!_dataPollingTaskDone) { delay(10); }
         _dataPollingTaskHandle = nullptr;
     }
+
+    _httpGetter = nullptr;
+    _httpRequestConfig = nullptr;
 }
 
 void Provider::loop()
