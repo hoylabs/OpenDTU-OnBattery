@@ -236,9 +236,7 @@ void Provider::sendControlCommandRequest()
         return;
     }
 
-    uint32_t currentMillis = millis();
-
-    if (currentMillis - _lastControlCommandRequestMillis < CONTROL_COMMAND_INTERVAL_MS) { return; }
+    if (millis() - _lastControlCommandRequestMillis < CONTROL_COMMAND_INTERVAL_MS) { return; }
 
     DTU_LOGI("Setting charging power to %.02fW AC", _requestedPowerAc);
 
@@ -248,7 +246,7 @@ void Provider::sendControlCommandRequest()
     TruckiUdp.print(String(acPowerSetpoint));
     TruckiUdp.endPacket();
 
-    _lastControlCommandRequestMillis = currentMillis;
+    _lastControlCommandRequestMillis = millis();
 }
 
 void Provider::parseControlCommandResponse()
