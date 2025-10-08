@@ -38,11 +38,16 @@ bool Provider::init()
     _httpRequestConfig = std::make_unique<HttpRequestConfig>();
     strlcpy(_httpRequestConfig->Url, ("http://" + ipAddress.toString() + "/jsonlive").c_str(), sizeof(_httpRequestConfig->Url));
     _httpRequestConfig->Timeout = HTTP_REQUEST_TIMEOUT_MS;
-    _httpRequestConfig->AuthType = HttpRequestConfig::Auth::None;
     strlcpy(_httpRequestConfig->HeaderKey, "", sizeof(_httpRequestConfig->HeaderKey));
     strlcpy(_httpRequestConfig->HeaderValue, "", sizeof(_httpRequestConfig->HeaderValue));
-    strlcpy(_httpRequestConfig->Username, "", sizeof(_httpRequestConfig->Username));
-    strlcpy(_httpRequestConfig->Password, "", sizeof(_httpRequestConfig->Password));
+    strlcpy(_httpRequestConfig->Username, "admin", sizeof(_httpRequestConfig->Username)); // default username
+    strlcpy(_httpRequestConfig->Password, config.GridCharger.Trucki.Password, sizeof(_httpRequestConfig->Password));
+
+    if (strlen(_httpRequestConfig->Password) > 0) {
+        _httpRequestConfig->AuthType = HttpRequestConfig::Auth::Basic;
+    } else {
+        _httpRequestConfig->AuthType = HttpRequestConfig::Auth::None;
+    }
 
     DTU_LOGD("Request URL: %s", _httpRequestConfig->Url);
 

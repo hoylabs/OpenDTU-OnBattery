@@ -1,5 +1,6 @@
 export interface GridChargerTruckiConfig {
     ip_address: string;
+    password: string;
 }
 
 export interface GridChargerCanConfig {

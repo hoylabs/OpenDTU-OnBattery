@@ -249,6 +249,7 @@ enum GridChargerHardwareInterface { MCP2515 = 0, TWAI = 1 };
 
 struct GRID_CHARGER_TRUCKI_CONFIG_T {
     uint8_t IpAddress[4];
+    char Password[HTTP_REQUEST_MAX_PASSWORD_STRLEN + 1];
 };
 using GridChargerTruckiConfig = struct GRID_CHARGER_TRUCKI_CONFIG_T;
 

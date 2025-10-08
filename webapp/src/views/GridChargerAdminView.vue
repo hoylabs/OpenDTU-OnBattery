@@ -72,6 +72,15 @@
                             maxlength="15"
                             wide
                         />
+
+                        <InputElement
+                            :label="$t('gridchargeradmin.Password')"
+                            :tooltip="$t('gridchargeradmin.PasswordHint')"
+                            v-model="gridChargerConfigList.trucki.password"
+                            type="password"
+                            maxlength="64"
+                            wide
+                        />
                     </template>
 
                     <InputElement

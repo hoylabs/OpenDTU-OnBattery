@@ -1111,6 +1111,8 @@
         "HardwareInterfaceTWAI": "Internal CAN-Controller on CAN-Transceiver SN65HVD230 (VP230)",
         "CanControllerFrequency": "CAN controller quarz frequency",
         "IpAddress": "IP Address",
+        "Password": "Password",
+        "PasswordHint": "Leave empty if no password is set.",
         "EnableAutoPower": "Automatic power control",
         "EnableBatterySoCLimits": "Use SoC data of a connected battery",
         "HuaweiSettings": "Huawei R48xx PSU Settings",

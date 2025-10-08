@@ -262,6 +262,7 @@ void ConfigurationClass::serializeGridChargerHuaweiConfig(GridChargerHuaweiConfi
 void ConfigurationClass::serializeGridChargerTruckiConfig(GridChargerTruckiConfig const& source, JsonObject& target)
 {
     target["ip_address"] = IPAddress(source.IpAddress).toString();
+    target["password"] = source.Password;
 }
 
 bool ConfigurationClass::write()
@@ -694,6 +695,7 @@ void ConfigurationClass::deserializeGridChargerTruckiConfig(JsonObject const& so
     target.IpAddress[1] = ip[1];
     target.IpAddress[2] = ip[2];
     target.IpAddress[3] = ip[3];
+    strlcpy(target.Password, source["password"] | "", sizeof(target.Password));
 }
 
 bool ConfigurationClass::read()
