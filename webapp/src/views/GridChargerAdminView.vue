@@ -154,7 +154,8 @@
                 add-space
                 v-if="
                     gridChargerConfigList.enabled &&
-                    (gridChargerConfigList.auto_power_enabled || gridChargerConfigList.emergency_charge_enabled)
+                    (gridChargerConfigList.auto_power_enabled ||
+                        (gridChargerConfigList.emergency_charge_enabled && gridChargerConfigList.provider === 0))
                 "
             >
                 <InputElement
