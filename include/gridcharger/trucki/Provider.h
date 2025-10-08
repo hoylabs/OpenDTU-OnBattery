@@ -69,7 +69,7 @@ private:
     static constexpr int DATA_POLLING_INTERVAL_MS = 3000; // 3 seconds
     static constexpr int HTTP_REQUEST_TIMEOUT_MS = 500; // 500ms
 
-    void setChargerPowerAc(float powerAc);
+    void setRequestedPowerAc(float power);
     float _requestedPowerAc = 0;
 
     void sendControlCommandRequest();

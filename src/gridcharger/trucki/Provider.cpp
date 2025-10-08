@@ -125,13 +125,13 @@ void Provider::powerControlLoop()
         _batteryEmergencyCharging = true;
 
         DTU_LOGI("Emergency Charge AC Power %.02f", *oMaxAcPower);
-        setChargerPowerAc(*oMaxAcPower);
+        setRequestedPowerAc(*oMaxAcPower);
         return;
     }
 
     if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
         // Battery request has changed. Set current to 0, wait for PSU to respond and then clear state
-        setChargerPowerAc(0);
+        setRequestedPowerAc(0);
         if (oOutputPower && oOutputPower < 1) {
             _batteryEmergencyCharging = false;
         }
@@ -149,7 +149,7 @@ void Provider::powerControlLoop()
         }
 
         if (PowerLimiter.isGovernedBatteryPoweredInverterProducing()) {
-            setChargerPowerAc(0);
+            setRequestedPowerAc(0);
             _autoPowerEnabled = false;
             DTU_LOGI("Inverter is active, disable PSU");
             _autoModeBlockedTillMillis = millis() + 1000;
@@ -225,22 +225,22 @@ void Provider::powerControlLoop()
                 newPowerLimit = (outputCurrent * *oOutputVoltage) / efficiency;
 
                 _autoPowerEnabled = true;
-                setChargerPowerAc(newPowerLimit);
+                setRequestedPowerAc(newPowerLimit);
 
                 // Don't run auto mode some time to allow for output stabilization after issuing a new value
                 _autoModeBlockedTillMillis = millis() + 4 * DATA_POLLING_INTERVAL_MS;
             } else {
                 // requested PL is below minium. Set power to 0
                 _autoPowerEnabled = false;
-                setChargerPowerAc(0);
+                setRequestedPowerAc(0);
             }
         }
     }
 }
 
-void Provider::setChargerPowerAc(float powerAc)
+void Provider::setRequestedPowerAc(float power)
 {
-    _requestedPowerAc = powerAc;
+    _requestedPowerAc = power;
 }
 
 void Provider::sendControlCommandRequest()
