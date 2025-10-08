@@ -37,6 +37,7 @@ bool Provider::init()
     DTU_LOGD("Request URL: %s", httpRequestConfig.Url);
 
     _httpGetter = std::make_unique<HttpGetter>(httpRequestConfig);
+    _httpGetter->addHeader("Accept", "*/*");
 
     if (!_httpGetter->init()) {
         DTU_LOGE("Initializing HTTP getter failed: %s", _httpGetter->getErrorText());
@@ -81,7 +82,7 @@ void Provider::loop()
         _stopPollingData = false;
         lock.unlock();
 
-        uint32_t constexpr stackSize = 4096;
+        uint32_t constexpr stackSize = 6144;
         xTaskCreate(dataPollingLoopHelper, "TruckiPolling",
                 stackSize, this, 1/*prio*/, &_dataPollingTaskHandle);
     }
