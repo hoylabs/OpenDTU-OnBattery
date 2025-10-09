@@ -307,9 +307,6 @@ void WebApiWsLiveClass::generateInverterChannelJsonResponse(JsonObject& root, st
                 addField(chanTypeObj, inv, t, c, FLD_UAC_1N);
                 addField(chanTypeObj, inv, t, c, FLD_UAC_2N);
                 addField(chanTypeObj, inv, t, c, FLD_UAC_3N);
-                addField(chanTypeObj, inv, t, c, FLD_UAC_12);
-                addField(chanTypeObj, inv, t, c, FLD_UAC_23);
-                addField(chanTypeObj, inv, t, c, FLD_UAC_31);
                 addField(chanTypeObj, inv, t, c, FLD_IAC_1);
                 addField(chanTypeObj, inv, t, c, FLD_IAC_2);
                 addField(chanTypeObj, inv, t, c, FLD_IAC_3);
