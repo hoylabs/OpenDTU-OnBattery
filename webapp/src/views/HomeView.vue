@@ -192,22 +192,6 @@
                                     <template v-if="chanType.obj != null">
                                         <!-- Handle AC data -->
                                         <template v-if="chanType.name == 'AC'">
-                                            <!-- Show individual phase sections for 3-phase inverters -->
-                                            <template v-if="isThreePhaseInverter(inverter)">
-                                                <div
-                                                    v-for="phase in [3, 2, 1]"
-                                                    :key="`${chanType.name}-phase-${phase}`"
-                                                    class="col"
-                                                >
-                                                    <InverterChannelInfo
-                                                        :channelData="getPhaseDataWithPower(inverter.AC[0], phase)"
-                                                        :channelType="chanType.name"
-                                                        :channelNumber="0"
-                                                        :phaseNumber="phase"
-                                                    />
-                                                </div>
-                                            </template>
-
                                             <!-- Always show AC summary section for all inverters -->
                                             <template
                                                 v-for="channel in Object.keys(chanType.obj)
@@ -221,7 +205,22 @@
                                                         :channelData="chanType.obj[channel]"
                                                         :channelType="chanType.name"
                                                         :channelNumber="channel"
-                                                        :isThreePhaseInverter="false"
+                                                    />
+                                                </div>
+                                            </template>
+
+                                            <!-- Show individual phase sections for 3-phase inverters -->
+                                            <template v-if="isThreePhaseInverter(inverter) && inverter.AC[0]">
+                                                <div
+                                                    v-for="phase in [3, 2, 1]"
+                                                    :key="`${chanType.name}-phase-${phase}`"
+                                                    class="col"
+                                                >
+                                                    <InverterChannelInfo
+                                                        :channelData="getPhaseDataWithPower(inverter.AC[0], phase)"
+                                                        :channelType="chanType.name"
+                                                        :channelNumber="0"
+                                                        :phaseNumber="phase"
                                                     />
                                                 </div>
                                             </template>
@@ -246,12 +245,11 @@
                                                         0 > 0
                                                     "
                                                 >
-                                                    <div class="col">
+                                                    <div class="col" v-if="chanType.obj[channel]">
                                                         <InverterChannelInfo
                                                             :channelData="chanType.obj[channel]"
                                                             :channelType="chanType.name"
                                                             :channelNumber="channel"
-                                                            :isThreePhaseInverter="false"
                                                         />
                                                     </div>
                                                 </template>
@@ -1047,45 +1045,6 @@ export default defineComponent({
 
             return hasPhase1Voltage && hasPhase2Voltage && hasPhase3Voltage;
         },
-        getPhaseData(acData: InverterStatistics, phase: number): Partial<InverterStatistics> {
-            // Extract data for a specific phase from the AC data
-            const phaseData: Partial<InverterStatistics> = {};
-
-            // Copy phase-specific voltage field
-            const voltageField = `Voltage Ph${phase}-N` as keyof InverterStatistics;
-            if (acData[voltageField]) {
-                phaseData.Voltage = acData[voltageField];
-            }
-
-            // Copy phase-specific current field
-            const currentField = `Current Ph${phase}` as keyof InverterStatistics;
-            if (acData[currentField]) {
-                phaseData.Current = acData[currentField];
-            }
-
-            // Add common fields that apply to all phases (frequency, power factor, etc.)
-            if (acData.Frequency) {
-                phaseData.Frequency = acData.Frequency;
-            }
-            if (acData.PowerFactor) {
-                phaseData.PowerFactor = acData.PowerFactor;
-            }
-            if (acData.Temperature) {
-                phaseData.Temperature = acData.Temperature;
-            }
-
-            // For phase 1, also include total power and reactive power
-            if (phase === 1) {
-                if (acData.Power) {
-                    phaseData.Power = acData.Power;
-                }
-                if (acData.ReactivePower) {
-                    phaseData.ReactivePower = acData.ReactivePower;
-                }
-            }
-
-            return phaseData;
-        },
         getPhaseDataWithPower(acData: InverterStatistics, phase: number): Partial<InverterStatistics> {
             // Extract data for a specific phase from the AC data with calculated power
             const phaseData: Partial<InverterStatistics> = {};
@@ -1102,25 +1061,12 @@ export default defineComponent({
                 phaseData.Current = acData[currentField];
             }
 
-            // Add common fields that apply to all phases
-            if (acData.Frequency) {
-                phaseData.Frequency = acData.Frequency;
-            }
-            if (acData.PowerFactor) {
-                phaseData.PowerFactor = acData.PowerFactor;
-            }
-            if (acData.Temperature) {
-                phaseData.Temperature = acData.Temperature;
-            }
-
             // Calculate power for this phase: P = V * I * PowerFactor
-            const voltage = acData[voltageField];
-            const current = acData[currentField];
-            const powerFactor = acData.PowerFactor;
+            if (phaseData.Voltage && phaseData.Current) {
+                const powerFactor = acData.PowerFactor?.v ?? 1; // Default to 1 if not available
 
-            if (voltage && current && powerFactor) {
                 phaseData.Power = {
-                    v: voltage.v * current.v * powerFactor.v,
+                    v: phaseData.Voltage.v * phaseData.Current.v * powerFactor,
                     u: 'W',
                     d: 2,
                     max: 0,
