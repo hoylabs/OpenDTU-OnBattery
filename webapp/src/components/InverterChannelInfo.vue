@@ -57,7 +57,6 @@ export default defineComponent({
         channelType: { type: String, required: true },
         channelNumber: { type: Number, required: true },
         phaseNumber: { type: Number, required: false },
-        isThreePhaseInverter: { type: Boolean, required: false, default: false },
     },
 });
 </script>
