@@ -85,6 +85,7 @@ export interface Battery {
 export interface PowerMeter {
     enabled: boolean;
     Power: ValueObject;
+    isDataValid?: boolean;
 }
 
 export interface LiveData {

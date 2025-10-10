@@ -169,7 +169,11 @@
             </div>
         </template>
         <div class="col" v-if="powerMeterData.enabled">
-            <CardElement centerContent textVariant="text-bg-primary" :text="$t('invertertotalinfo.HomePower')">
+            <CardElement
+                centerContent
+                :textVariant="powerMeterData.isDataValid === false ? 'text-bg-danger' : 'text-bg-primary'"
+                :text="$t('invertertotalinfo.HomePower')"
+            >
                 <h2>
                     {{
                         $n(powerMeterData.Power.v, 'decimal', {

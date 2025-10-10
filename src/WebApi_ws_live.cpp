@@ -162,6 +162,7 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
 
         if (config.PowerMeter.Enabled) {
             addTotalField(powerMeterObj, "Power", PowerMeter.getPowerTotal(), "W", 1);
+            powerMeterObj["isDataValid"] = PowerMeter.isDataValid();
         }
 
         if (!all) { _lastPublishPowerMeter = millis(); }
