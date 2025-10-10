@@ -111,6 +111,8 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
             if (yieldTotal) {
                 addTotalField(solarchargerObj, "yieldTotal", *yieldTotal, "kWh", 2);
             }
+
+            solarchargerObj["isDataValid"] = solarChargerAge < (30 * 1000);
         }
 
         if (!all) { _lastPublishSolarCharger = millis(); }
@@ -125,6 +127,8 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
             auto oInputPower = gridChargerStats->getInputPower();
             float pwr = oInputPower.value_or(0.0f);
             addTotalField(gridChargerObj, "Power", pwr, "W", 2);
+            auto lastUpdate = gridChargerStats->getLastUpdate();
+            gridChargerObj["isDataValid"] = lastUpdate > 0 && ((millis() - lastUpdate) < (30 * 1000));
         }
 
         if (!all) { _lastPublishGridCharger = millis(); }
@@ -151,6 +155,8 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
             if (spStats->isVoltageValid() && spStats->isCurrentValid()) {
                 addTotalField(batteryObj, "power", spStats->getVoltage() * spStats->getChargeCurrent(), "W", 1);
             }
+
+            batteryObj["isDataValid"] = spStats->getAgeSeconds() < 30;
         }
 
         if (!all) { _lastPublishBattery = millis(); }

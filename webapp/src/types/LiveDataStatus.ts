@@ -67,11 +67,13 @@ export interface SolarCharger {
     power?: ValueObject;
     yieldDay?: ValueObject;
     yieldTotal?: ValueObject;
+    isDataValid?: boolean;
 }
 
 export interface GridCharger {
     enabled: boolean;
     Power: ValueObject;
+    isDataValid?: boolean;
 }
 
 export interface Battery {
@@ -80,6 +82,7 @@ export interface Battery {
     voltage?: ValueObject;
     power?: ValueObject;
     current?: ValueObject;
+    isDataValid?: boolean;
 }
 
 export interface PowerMeter {
