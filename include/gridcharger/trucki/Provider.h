@@ -26,11 +26,14 @@ private:
     template<DataPointLabel L>
     void addStringToDataPoints(const JsonDocument& doc, const char* key)
     {
-        if (!doc[key].is<std::string>()) {
+        if (doc[key].is<std::string>()) {
+            _dataCurrent.add<L>(doc[key].as<std::string>());
             return;
         }
 
-        _dataCurrent.add<L>(doc[key].as<std::string>());
+        if (doc[key].is<const char*>()) {
+            _dataCurrent.add<L>(std::string{doc[key].as<const char*>()});
+        }
     }
 
     template<DataPointLabel L>

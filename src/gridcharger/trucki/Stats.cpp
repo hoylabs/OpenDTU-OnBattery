@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <Arduino.h>
 #include <Configuration.h>
 #include <MqttSettings.h>
 #include <gridcharger/trucki/Stats.h>
@@ -26,12 +27,13 @@ void Stats::getLiveViewData(JsonVariant& root) const
     root["productName"] = "T2HG/T2MG";
     root["provider"] = GridChargerProviderType::TRUCKI;
 
-    root["dataAge"] = millis() - getLastUpdate();
-    root["reachable"] = root["dataAge"] < 10000;
+    const auto dataAge = millis() - getLastUpdate();
+    root["dataAge"] = dataAge;
+    root["reachable"] = dataAge < 10000;
 
-    auto oDcPower = _dataPoints.get<DataPointLabel::DcPower>();
-    auto oDcCurrent = _dataPoints.get<DataPointLabel::DcCurrent>();
-    root["producing"] = oDcPower.value_or(0) > 10 && oDcCurrent.value_or(0) > 0.1;
+    const auto oDcPower = _dataPoints.get<DataPointLabel::DcPower>();
+    const auto oDcCurrent = _dataPoints.get<DataPointLabel::DcCurrent>();
+    root["producing"] = oDcPower.value_or(0.0f) > 10.0f && oDcCurrent.value_or(0.0f) > 0.1f;
 
     addStringInSection<DataPointLabel::ZEPC>(root, "device", "trucki.zepc", false);
     addStringInSection<DataPointLabel::State>(root, "device", "state", false);

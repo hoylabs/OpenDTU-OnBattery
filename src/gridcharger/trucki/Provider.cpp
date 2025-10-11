@@ -253,7 +253,7 @@ void Provider::sendControlCommandRequest()
 
     if (millis() - _lastControlCommandRequestMillis < CONTROL_COMMAND_INTERVAL_MS) { return; }
 
-    DTU_LOGI("Setting charging power to %.02fW AC", _requestedPowerAc);
+    DTU_LOGV("Setting charging power to %.02fW AC", _requestedPowerAc);
 
     uint16_t acPowerSetpoint = _requestedPowerAc * 10; // ac power in W*10
 
@@ -269,9 +269,10 @@ void Provider::parseControlCommandResponse()
     int packetSize = TruckiUdp.parsePacket();
     if (0 == packetSize) { return; }
 
-    std::vector<char> buffer(packetSize);
+    std::vector<char> buffer(packetSize + 1, '\0');
     int readBytes = TruckiUdp.read(buffer.data(), packetSize);
-    if (0 == readBytes) { return; }
+    if (readBytes <= 0) { return; }
+    buffer[readBytes] = '\0'; // ensure null-terminated string
 
     DTU_LOGD("received %d bytes - %s", packetSize, buffer.data());
 

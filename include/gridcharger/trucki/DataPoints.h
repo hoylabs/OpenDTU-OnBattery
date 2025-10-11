@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DataPoints.h>
+#include <string>
 
 namespace GridChargers::Trucki {
 
@@ -60,5 +61,5 @@ template class DataPointContainer<DataPoint<float, std::string>,
                                   GridChargers::Trucki::DataPointLabelTraits>;
 
 namespace GridChargers::Trucki {
-    using DataPointContainer = DataPointContainer<DataPoint<float, std::string>, DataPointLabel, DataPointLabelTraits>;
+    using DataPointContainer = ::DataPointContainer<::DataPoint<float, std::string>, DataPointLabel, DataPointLabelTraits>;
 } // namespace GridChargers::Trucki
