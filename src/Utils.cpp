@@ -137,12 +137,19 @@ std::optional<T> Utils::getFromString(char const* val)
 template<>
 std::optional<float> Utils::getFromString(char const* val)
 {
+    if (val == nullptr) {
+        return std::nullopt;
+    }
+
     float res = 0;
 
     try {
         res = std::stof(val);
     }
-    catch (std::invalid_argument const& e) {
+    catch (std::invalid_argument const&) {
+        return std::nullopt;
+    }
+    catch (std::out_of_range const&) {
         return std::nullopt;
     }
 
