@@ -28,14 +28,15 @@ public:
 
 private:
     void loop(void);
-    bool getWriteTrigger(void) const;
+    bool getWriteTrigger(void);
 
     Task _loopTask;
-    std::atomic<bool> _readOK = false;      // true if the last read/write operation was successful
-    std::atomic<bool> _writeOK = false;     // true if the last read/write operation was successful
+    std::atomic<bool> _readOK = false;      // true if the last read operation was successful
+    std::atomic<bool> _writeOK = false;     // true if the last write operation was successful
     mutable std::mutex _mutex;              // to protect the shared data below
+    bool _lastTrigger = false;              // auxiliary value to prevent multiple triggering on the same day
     uint16_t _writeVersion = 0;             // shared data: version of the runtime data
-    uint16_t _writeCount = 0;               // shared data: number of times the data was written
+    uint16_t _writeCount = 0;               // shared data: number of write operations
     time_t _writeEpoch = 0;                 // shared data: epoch time when the data was written
 };
 

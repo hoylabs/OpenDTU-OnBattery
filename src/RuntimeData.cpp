@@ -194,17 +194,16 @@ String RuntimeClass::getWriteCountAndTimeString(void) const
 /*
  * Returns true at the daily trigger time at 00:05
  */
-bool RuntimeClass::getWriteTrigger(void) const {
-    static bool lastTrigger = false;
+bool RuntimeClass::getWriteTrigger(void) {
     struct tm actTime;
     if (getLocalTime(&actTime, 5)) {
         if ((actTime.tm_hour == 0) && (actTime.tm_min >= 5) && (actTime.tm_min <= 10)) {
-            if (lastTrigger == false) {
-                lastTrigger = true;
+            if (_lastTrigger == false) {
+                _lastTrigger = true;
                 return true;
             }
         } else {
-            lastTrigger = false;
+            _lastTrigger = false;
         }
     }
     return false;
