@@ -69,28 +69,29 @@ bool RuntimeClass::write(void)
         return writeOk;
     };
 
-    // we need the local time before we can write the runtime data
-    time_t nowEpoch;
-    if (!Utils::getEpoch(&nowEpoch, 5)) { return cleanExit(true, "Local time not available, skipping write"); }
+    // we need the next local time before we can write the runtime data
+    time_t nextEpoch;
+    if (!Utils::getEpoch(&nextEpoch, 5)) { return cleanExit(true, "Local time not available, skipping write"); }
+    uint16_t nextCount;
 
-    JsonDocument doc;
-    { // mutex is automatically released when lock goes out of this scope
+    { // prepare the next write count
         std::lock_guard<std::mutex> lock(_mutex);
 
         // we do not write more than once in a hour
-        if ((_writeEpoch != 0) && (difftime(nowEpoch, _writeEpoch) < 60 * 60)) {
+        if ((_writeEpoch != 0) && (difftime(nextEpoch, _writeEpoch) < 60 * 60)) {
             return cleanExit(true, "Last write less than 1 hour ago, skipping write");
         }
-
-        _writeEpoch = nowEpoch;
-        _writeCount++;
-        JsonObject info = doc["info"].to<JsonObject>();
-        info["version"] = _writeVersion;
-        info["save_count"] = _writeCount;
-        info["save_epoch"] = _writeEpoch;
+        nextCount = _writeCount + 1;
     } // mutex is automatically released when lock goes out of this scope
 
+    JsonDocument doc;
+    JsonObject info = doc["info"].to<JsonObject>();
+    info["version"] = RUNTIME_VERSION;
+    info["save_count"] = nextCount;
+    info["save_epoch"] = nextEpoch;
+
     // Insert additional runtime data here and protect the shared data with a local mutex
+
 
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
@@ -106,6 +107,14 @@ bool RuntimeClass::write(void)
     }
 
     fRuntime.close();
+
+    { // commit the new state only after a successful write
+        std::lock_guard<std::mutex> lock(_mutex);
+        _writeVersion = RUNTIME_VERSION;
+        _writeEpoch = nextEpoch;
+        _writeCount = nextCount;
+    } // mutex is automatically released when lock goes out of this scope
+
     return cleanExit(true, "Written to file");
 }
 
