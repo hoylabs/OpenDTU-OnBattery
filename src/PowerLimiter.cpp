@@ -706,14 +706,29 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested) const
 
     auto solarOutputDc = getSolarPassthroughPower();
     auto solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
+    
+    auto oBatteryDischargeLimit = getBatteryDischargeLimit();
+    
     if (isFullSolarPassthroughActive() && solarOutputAc > powerRequested) {
+        // Full solar passthrough is active and solar power exceeds request.
+        // However, we must still respect the battery discharge limit (stop threshold).
+        // If battery discharge is disabled, we can only use solar power.
+        if (!oBatteryDischargeLimit || *oBatteryDischargeLimit == 0) {
+            // Battery discharge is disabled (stop threshold reached).
+            // Only use solar power, not more than requested.
+            uint16_t allowedPower = std::min(powerRequested, solarOutputAc);
+            DTU_LOGD("using %u W AC from DC power bus (full solar-passthrough, "
+                    "limited by stop threshold), solar power is %u/%u W DC/AC",
+                    allowedPower, solarOutputDc, solarOutputAc);
+            return allowedPower;
+        }
+        
         DTU_LOGD("using %u/%u W DC/AC from DC power bus (full solar-passthrough)",
                 solarOutputDc, solarOutputAc);
 
         return solarOutputAc;
     }
-
-    auto oBatteryDischargeLimit = getBatteryDischargeLimit();
+    
     if (!oBatteryDischargeLimit) {
         DTU_LOGD("granting %d W from DC power bus (no battery discharge "
                 "limit), solar power is %u/%u W DC/AC",
