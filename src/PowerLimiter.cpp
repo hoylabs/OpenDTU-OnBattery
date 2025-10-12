@@ -713,7 +713,7 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested) const
         // Full solar passthrough is active and solar power exceeds request.
         // However, we must still respect the battery discharge limit (stop threshold).
         // If battery discharge is disabled, we can only use solar power.
-        if (!oBatteryDischargeLimit || *oBatteryDischargeLimit == 0) {
+        if (oBatteryDischargeLimit && *oBatteryDischargeLimit == 0) {
             // Battery discharge is disabled (stop threshold reached).
             // Only use solar power, not more than requested.
             uint16_t allowedPower = std::min(powerRequested, solarOutputAc);
