@@ -3,12 +3,14 @@
 /* Runtime Data Management
  *
  * Read and write runtime data persistent on LittleFS
- * - The data is stored in JSON format.
- * - The data is written once a day at 00:05, during WebApp 'OTA firmware update' and 'Reset'.
- * - The data is not written if last write was less then 1 hour ago.
+ * - The data is stored in JSON format
+ * - The data is written during WebApp 'OTA firmware upgrade' and during Webapp 'Reboot'
+ * - For security reasons such as 'unexpected power cycles' or 'physical resets', data is also written once a day at 00:05
+ * - The data will not be written if the last write operation was less than one hour ago.
  * - Threadsave access to the data is provided by a mutex.
- * Note: Additional runtime data must be added in the read() and write() methods.
- *       To avoid reenter deadlocks, do not call write() or read() from a locally locked mutex to save local data!
+ *
+ * Note: Runtime data must be added in the read() and write() methods.
+ *       To avoid reenter deadlocks, do not call write() or read() from a locally locked mutex to save local data on demand!
  *
  * 2025.09.11 - 1.0 - first version
  */
@@ -20,8 +22,8 @@
 
 
 #undef TAG
-static const char* TAG = "configuration";
-static const char* SUBTAG = "runtime";
+static const char* TAG = "runtimedata";
+static const char* SUBTAG = "Handler";
 
 
 constexpr const char* RUNTIME_FILENAME = "/runtime.json";   // filename of the runtime data file
@@ -49,15 +51,16 @@ void RuntimeClass::init(Scheduler& scheduler)
  */
 void RuntimeClass::loop(void)
 {
-    // check whether it is time to write the runtime data
-    if (getWriteTrigger()) { write(); }
+    // check whether it is time to write the runtime data but do not write if last write operation was less than 60 min ago
+    if (getWriteTrigger()) { write(60); }
 }
 
 
 /*
  * Writes the runtime data to LittleFS file
+ * freezeTime: Minimum necessary time [minutes] between now and last write operation
  */
-bool RuntimeClass::write(void)
+bool RuntimeClass::write(uint16_t const freezeTime = 10)
 {
     auto cleanExit = [this](const bool writeOk, const char* text) -> bool {
         if (writeOk) {
@@ -78,7 +81,7 @@ bool RuntimeClass::write(void)
         std::lock_guard<std::mutex> lock(_mutex);
 
         // we do not write more than once in a hour
-        if ((_writeEpoch != 0) && (difftime(nextEpoch, _writeEpoch) < 60 * 60)) {
+        if ((_writeEpoch != 0) && (difftime(nextEpoch, _writeEpoch) < 60 * freezeTime)) {
             return cleanExit(true, "Last write less than 1 hour ago, skipping write");
         }
         nextCount = _writeCount + 1;
@@ -189,6 +192,8 @@ String RuntimeClass::getWriteCountAndTimeString(void) const
     std::lock_guard<std::mutex> lock(_mutex);
     char buf[32] = "";
     struct tm time;
+
+    // Check if time service is available before converting epoch to local time
     if ((_writeEpoch != 0) && (getLocalTime(&time, 5))) {
         localtime_r(&_writeEpoch, &time);
         strftime(buf, sizeof(buf), " / %d-%h %R", &time);

@@ -48,6 +48,9 @@ void WebApiFirmwareClass::onFirmwareUpdateFinish(AsyncWebServerRequest* request)
     response->addHeader(asyncsrv::T_Connection, asyncsrv::T_close);
     response->addHeader(asyncsrv::T_CORS_ACAO, "*");
     request->send(response);
+
+    // write the runtime data to LittleFS, but do not write if last write operation was less than 60 min ago
+    RuntimeData.write(60);
     RestartHelper.triggerRestart();
 }
 
@@ -85,7 +88,6 @@ void WebApiFirmwareClass::onFirmwareUpdateUpload(AsyncWebServerRequest* request,
     }
 
     if (final) { // if the final flag is set then this is the last frame of data
-        RuntimeData.write(); // write the runtime data to LittleFS
         if (!Update.end(true)) { // true to set the size to the current progress
             Update.printError(Serial);
             return request->send(400, asyncsrv::T_text_plain, "Could not end OTA");
