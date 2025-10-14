@@ -18,7 +18,7 @@ public:
 
     void init(Scheduler& scheduler);
     bool read(void);
-    bool write(uint16_t const freezeTime);
+    bool write(uint16_t const freezeMinutes = 10); // do not write if last write operation was less than freezeMinutes ago
 
     uint16_t getWriteCount(void) const;
     time_t getWriteEpochTime(void) const;

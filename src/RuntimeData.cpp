@@ -60,7 +60,7 @@ void RuntimeClass::loop(void)
  * Writes the runtime data to LittleFS file
  * freezeTime: Minimum necessary time [minutes] between now and last write operation
  */
-bool RuntimeClass::write(uint16_t const freezeTime = 10)
+bool RuntimeClass::write(uint16_t const freezeTime)
 {
     auto cleanExit = [this](const bool writeOk, const char* text) -> bool {
         if (writeOk) {
@@ -74,7 +74,7 @@ bool RuntimeClass::write(uint16_t const freezeTime = 10)
 
     // we need the next local time before we can write the runtime data
     time_t nextEpoch;
-    if (!Utils::getEpoch(&nextEpoch, 5)) { return cleanExit(true, "Local time not available, skipping write"); }
+    if (!Utils::getEpoch(&nextEpoch, 5)) { return cleanExit(false, "Local time not available, skipping write"); }
     uint16_t nextCount;
 
     { // prepare the next write count
@@ -82,7 +82,7 @@ bool RuntimeClass::write(uint16_t const freezeTime = 10)
 
         // we do not write more than once in a hour
         if ((_writeEpoch != 0) && (difftime(nextEpoch, _writeEpoch) < 60 * freezeTime)) {
-            return cleanExit(true, "Last write less than 1 hour ago, skipping write");
+            return cleanExit(false, "Time interval between 2 write operations too short, skipping write");
         }
         nextCount = _writeCount + 1;
     } // mutex is automatically released when lock goes out of this scope
@@ -207,6 +207,7 @@ String RuntimeClass::getWriteCountAndTimeString(void) const
 
 /*
  * Returns true at the daily trigger time at 00:05
+ * Note: This function is not protected by a mutex, but if it is only called by loop() and loop() is only executed on a single thread, we are safe
  */
 bool RuntimeClass::getWriteTrigger(void) {
     struct tm actTime;
