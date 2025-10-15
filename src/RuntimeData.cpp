@@ -58,9 +58,9 @@ void RuntimeClass::loop(void)
 
 /*
  * Writes the runtime data to LittleFS file
- * freezeTime: Minimum necessary time [minutes] between now and last write operation
+ * freezeMinutes: Minimum necessary time [minutes] between now and last write operation
  */
-bool RuntimeClass::write(uint16_t const freezeTime)
+bool RuntimeClass::write(uint16_t const freezeMinutes)
 {
     auto cleanExit = [this](const bool writeOk, const char* text) -> bool {
         if (writeOk) {
@@ -81,7 +81,7 @@ bool RuntimeClass::write(uint16_t const freezeTime)
         std::lock_guard<std::mutex> lock(_mutex);
 
         // we do not write more than once in a hour
-        if ((_writeEpoch != 0) && (difftime(nextEpoch, _writeEpoch) < 60 * freezeTime)) {
+        if ((_writeEpoch != 0) && (difftime(nextEpoch, _writeEpoch) < 60 * freezeMinutes)) {
             return cleanExit(false, "Time interval between 2 write operations too short, skipping write");
         }
         nextCount = _writeCount + 1;
@@ -193,7 +193,8 @@ String RuntimeClass::getWriteCountAndTimeString(void) const
     char buf[32] = "";
     struct tm time;
 
-    // Check if time service is available before converting epoch to local time
+    // Before we can convert the epoch to local time, we need to ensure we've received the correct time
+    // from the time server. This may take some time after the system boots.
     if ((_writeEpoch != 0) && (getLocalTime(&time, 5))) {
         localtime_r(&_writeEpoch, &time);
         strftime(buf, sizeof(buf), " / %d-%h %R", &time);
@@ -207,9 +208,9 @@ String RuntimeClass::getWriteCountAndTimeString(void) const
 
 /*
  * Returns true at the daily trigger time at 00:05
- * Note: This function is not protected by a mutex, but if it is only called by loop() and loop() is only executed on a single thread, we are safe
  */
 bool RuntimeClass::getWriteTrigger(void) {
+    std::lock_guard<std::mutex> lock(_mutex);
     struct tm actTime;
     if (getLocalTime(&actTime, 5)) {
         if ((actTime.tm_hour == 0) && (actTime.tm_min >= 5) && (actTime.tm_min <= 10)) {
