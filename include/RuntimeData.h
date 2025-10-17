@@ -19,6 +19,7 @@ public:
     void init(Scheduler& scheduler);
     bool read(void);
     bool write(uint16_t const freezeMinutes = 10); // do not write if last write operation was less than freezeMinutes ago
+    void requestWriteOnNextTaskLoop(void) { _writeNow = true; }; // use this member function to store data on demand
 
     uint16_t getWriteCount(void) const;
     time_t getWriteEpochTime(void) const;
@@ -33,6 +34,7 @@ private:
     Task _loopTask;
     std::atomic<bool> _readOK = false;      // true if the last read operation was successful
     std::atomic<bool> _writeOK = false;     // true if the last write operation was successful
+    std::atomic<bool> _writeNow = false;    // if true, the data is stored in the next loop()
     mutable std::mutex _mutex;              // to protect the shared data below
     bool _lastTrigger = false;              // auxiliary value to prevent multiple triggering on the same day
     uint16_t _writeVersion = 0;             // shared data: version of the runtime data

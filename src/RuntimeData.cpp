@@ -6,11 +6,13 @@
  * - The data is stored in JSON format
  * - The data is written during WebApp 'OTA firmware upgrade' and during Webapp 'Reboot'
  * - For security reasons such as 'unexpected power cycles' or 'physical resets', data is also written once a day at 00:05
- * - The data will not be written if the last write operation was less than one hour ago.
+ * - The data will not be written if the last write operation was less than one hour ago. ('OTA firmware upgrade' and 'Reboot')
  * - Threadsave access to the data is provided by a mutex.
  *
- * Note: Runtime data must be added in the read() and write() methods.
- *       To avoid reenter deadlocks, do not call write() or read() from a locally locked mutex to save local data on demand!
+ * How to use:
+ *  - Runtime data must be added in the read() and write() methods.
+ *  - To avoid reenter deadlocks, do not call write() or read() from a locally locked mutex to save locally data on demand!
+ *  - Use requestWriteOnNextTaskLoop() to avoid deadlocks if you want to save locally data on demand.
  *
  * 2025.09.11 - 1.0 - first version
  */
@@ -51,8 +53,12 @@ void RuntimeClass::init(Scheduler& scheduler)
  */
 void RuntimeClass::loop(void)
 {
-    // check whether it is time to write the runtime data but do not write if last write operation was less than 60 min ago
-    if (getWriteTrigger()) { write(60); }
+
+    // check if we need to write the runtime data, either it is 00:05 or on request
+    if (_writeNow || getWriteTrigger()) {
+        _writeNow = false;
+        write(0); // no freeze time.
+    }
 }
 
 
@@ -77,45 +83,46 @@ bool RuntimeClass::write(uint16_t const freezeMinutes)
     if (!Utils::getEpoch(&nextEpoch, 5)) { return cleanExit(false, "Local time not available, skipping write"); }
     uint16_t nextCount;
 
-    { // prepare the next write count
+    {
         std::lock_guard<std::mutex> lock(_mutex);
 
-        // we do not write more than once in a hour
+        // check minimum interval between writes (enforced only when freezeMinutes > 0)
         if ((_writeEpoch != 0) && (difftime(nextEpoch, _writeEpoch) < 60 * freezeMinutes)) {
             return cleanExit(false, "Time interval between 2 write operations too short, skipping write");
         }
+
+        // prepare the next write count
         nextCount = _writeCount + 1;
-    } // mutex is automatically released when lock goes out of this scope
 
-    JsonDocument doc;
-    JsonObject info = doc["info"].to<JsonObject>();
-    info["version"] = RUNTIME_VERSION;
-    info["save_count"] = nextCount;
-    info["save_epoch"] = nextEpoch;
+        JsonDocument doc;
+        JsonObject info = doc["info"].to<JsonObject>();
+        info["version"] = RUNTIME_VERSION;
+        info["save_count"] = nextCount;
+        info["save_epoch"] = nextEpoch;
 
-    // Insert additional runtime data here and protect the shared data with a local mutex
-
+        // Insert additional runtime data here and protect the shared data with a local mutex
 
 
-    if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
-        return cleanExit(false, "JSON alloc fault, skipping write");
-    }
 
-    File fRuntime = LittleFS.open(RUNTIME_FILENAME, "w");
-    if (!fRuntime) { return cleanExit(false, "Failed to open file for writing"); }
+        if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
+            return cleanExit(false, "JSON alloc fault, skipping write");
+        }
 
-    if (serializeJson(doc, fRuntime) == 0) {
+        File fRuntime = LittleFS.open(RUNTIME_FILENAME, "w");
+        if (!fRuntime) { return cleanExit(false, "Failed to open file for writing"); }
+
+        if (serializeJson(doc, fRuntime) == 0) {
+            fRuntime.close();
+            return cleanExit(false, "Failed to serialize to file");
+        }
+
         fRuntime.close();
-        return cleanExit(false, "Failed to serialize to file");
-    }
 
-    fRuntime.close();
-
-    { // commit the new state only after a successful write
-        std::lock_guard<std::mutex> lock(_mutex);
+        // commit the new state only after a successful write
         _writeVersion = RUNTIME_VERSION;
         _writeEpoch = nextEpoch;
         _writeCount = nextCount;
+
     } // mutex is automatically released when lock goes out of this scope
 
     return cleanExit(true, "Written to file");
@@ -210,17 +217,20 @@ String RuntimeClass::getWriteCountAndTimeString(void) const
  * Returns true at the daily trigger time at 00:05
  */
 bool RuntimeClass::getWriteTrigger(void) {
+
+    struct tm nowTime;
+    if (!getLocalTime(&nowTime, 5)) {
+        return false;
+    }
+
     std::lock_guard<std::mutex> lock(_mutex);
-    struct tm actTime;
-    if (getLocalTime(&actTime, 5)) {
-        if ((actTime.tm_hour == 0) && (actTime.tm_min >= 5) && (actTime.tm_min <= 10)) {
-            if (_lastTrigger == false) {
-                _lastTrigger = true;
-                return true;
-            }
-        } else {
-            _lastTrigger = false;
+    if ((nowTime.tm_hour == 0) && (nowTime.tm_min >= 5) && (nowTime.tm_min <= 10)) {
+        if (_lastTrigger == false) {
+            _lastTrigger = true;
+            return true;
         }
+    } else {
+        _lastTrigger = false;
     }
     return false;
 }
