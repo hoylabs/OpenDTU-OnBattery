@@ -68,15 +68,22 @@ void Stats::mqttPublish() const {
     MqttSettings.publish("battery/midpointDeviation", String(_midpointDeviation));
 }
 
-void Stats::checkFullyChargedTime(void) {
-    time_t nowTime;
-    if (isSoCValid() && (getSoCAgeSeconds() <= 30) && (_lastFullCharge > 0) && Utils::getEpoch(&nowTime, 5)) {
-        auto lastTime = getFullyChargedTime();
-        auto shuntTime = difftime(nowTime, _lastFullCharge * 60.0);
+void Stats::checkSoCFullEpoch(void) {
+    static uint32_t lastUpdate = 0;
 
-        // We only update if we don't have time yet or if the new time is later
-        if (!lastTime.has_value() || (difftime(shuntTime, lastTime.value()) > 0.0)) {
-            setFullyChargedTime(shuntTime);
+    if (lastUpdate == _lastUpdate) { return; } // fast exit from already processed values
+    lastUpdate = _lastUpdate;
+    time_t nowEpoch;
+
+    if (isSoCValid() && (getSoCAgeSeconds() <= 30) && (_lastFullCharge > 0) && Utils::getEpoch(&nowEpoch, 5)) {
+
+        // reverse calculation to get 'fully charged epoch' from the smart shunt duration value
+        auto shuntEpoch = std::make_optional(nowEpoch - static_cast<time_t>(_lastFullCharge * 60));
+        auto lastEpoch = getSoCFullEpoch();
+
+        // We only update if the value is not in the future and we don't have epoch yet or we have a newer value
+        if ((shuntEpoch.value() <= nowEpoch) && (!lastEpoch.has_value() || (shuntEpoch.value() > lastEpoch))) {
+            setSoCFullEpoch(shuntEpoch);
         }
     }
 }

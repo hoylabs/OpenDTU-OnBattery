@@ -17,7 +17,7 @@ public:
     void deinit() final;
     void loop() final;
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
-    std::shared_ptr<::Batteries::Stats> getStatsForWrite() final { return _stats; }
+    void setFullyChargedEpoch(std::optional<time_t> chargeEpoch) final { _stats->setSoCFullEpoch(chargeEpoch); }
     std::shared_ptr<::Batteries::HassIntegration> getHassIntegration() final { return _hassIntegration; }
 
 private:

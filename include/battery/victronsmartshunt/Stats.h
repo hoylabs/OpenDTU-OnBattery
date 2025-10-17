@@ -12,7 +12,7 @@ public:
     void mqttPublish() const final;
 
     void updateFrom(VeDirectShuntController::data_t const& shuntData);
-    void checkFullyChargedTime(void) final;
+    void checkSoCFullEpoch(void) final;
 
 private:
     float _temperature;

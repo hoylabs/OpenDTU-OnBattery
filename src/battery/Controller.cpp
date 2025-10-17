@@ -95,7 +95,7 @@ void Controller::loop()
 
     _upProvider->loop();
 
-    _upProvider->getStats()->checkFullyChargedTime();
+    _upProvider->getStats()->checkSoCFullEpoch();
 
     _upProvider->getStats()->mqttLoop();
 
@@ -164,7 +164,7 @@ void Controller::serializeRTD(JsonObject const& obj) const
         return;
     }
 
-    obj["fully_charged_epoch"] = _upProvider->getStats()->getFullyChargedTime().value_or(0);
+    obj["fully_charged_epoch"] = _upProvider->getStats()->getSoCFullEpoch().value_or(0);
 }
 
 void Controller::deserializeRTD(JsonObject const& obj)
@@ -173,8 +173,8 @@ void Controller::deserializeRTD(JsonObject const& obj)
 
     if (!_upProvider) { return; } // no battery, nothing to do
 
-    time_t fulltime =  obj["fully_charged_epoch"] | 0;
-    _upProvider->getStatsForWrite()->setFullyChargedTime(fulltime == 0 ? std::nullopt : std::make_optional(fulltime));
+    time_t fullEpoch =  obj["fully_charged_epoch"] | 0;
+    _upProvider->setFullyChargedEpoch(fullEpoch == 0 ? std::nullopt : std::make_optional(fullEpoch));
 }
 
 } // namespace Batteries

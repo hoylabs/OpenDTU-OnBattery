@@ -49,10 +49,10 @@ void Stats::getLiveViewData(JsonVariant& root) const
         addLiveViewValue(root, "SoC", _soc, "%", _socPrecision);
     }
 
-    if (_oSoCFullTime.has_value()) {
+    if (_oSoCFullEpoch.has_value()) {
         tm fullTime;
         time_t nowTime;
-        localtime_r(&_oSoCFullTime.value(), &fullTime);
+        localtime_r(&_oSoCFullEpoch.value(), &fullTime);
         fullTime.tm_hour = fullTime.tm_min = fullTime.tm_sec = 0; // always start from midnight
         if (Utils::getEpoch(&nowTime, 5)) {
             auto midnightEpoch = mktime(&fullTime);
@@ -136,11 +136,19 @@ void Stats::mqttPublish() const
     }
 }
 
-void Stats::checkFullyChargedTime(void)
+void Stats::checkSoCFullEpoch(void)
 {
-    time_t fulltime;
-    if (isSoCValid() && (getSoCAgeSeconds() <= 30) && (getSoC() >= 100.0f) && Utils::getEpoch(&fulltime, 5)) {
-        _oSoCFullTime = fulltime;
+    static uint32_t lastUpdate = 0;
+
+    if (lastUpdate == _lastUpdate) { return; } // fast exit from already processed values
+    lastUpdate = _lastUpdate;
+    time_t nowEpoch;
+
+    // The goal is to save the last epoch time the battery was at 100% SoC and maintain that value until we reach 100% again.
+    if (isSoCValid() && (getSoCAgeSeconds() <= 30) && (getSoC() >= 100.0f) && Utils::getEpoch(&nowEpoch, 5)) {
+        if (!_oSoCFullEpoch.has_value() || (nowEpoch > _oSoCFullEpoch.value())) {
+            _oSoCFullEpoch = nowEpoch;
+        }
     }
 }
 

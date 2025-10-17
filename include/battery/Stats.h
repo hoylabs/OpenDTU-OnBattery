@@ -35,9 +35,9 @@ public:
     float getChargeCurrentLimit() const { return _chargeCurrentLimit; };
     uint32_t getChargeCurrentLimitAgeSeconds() const { return (millis() - _lastUpdateChargeCurrentLimit) / 1000; }
 
-    std::optional<time_t> getFullyChargedTime() const { return _oSoCFullTime; }
-    void setFullyChargedTime(std::optional<time_t> full) { _oSoCFullTime = full; }
-    virtual void checkFullyChargedTime(void);
+    std::optional<time_t> getSoCFullEpoch() const { return _oSoCFullEpoch; }
+    void setSoCFullEpoch(std::optional<time_t> full) { _oSoCFullEpoch = full; }
+    virtual void checkSoCFullEpoch(void);
 
     // convert stats to JSON for web application live view
     virtual void getLiveViewData(JsonVariant& root) const;
@@ -179,7 +179,7 @@ private:
     uint32_t _lastMqttPublish = 0;
     float _soc = 0;
     uint8_t _socPrecision = 0; // decimal places
-    std::optional<time_t> _oSoCFullTime = std::nullopt;
+    std::optional<time_t> _oSoCFullEpoch = std::nullopt;
     uint32_t _lastUpdateSoC = 0;
     float _voltage = 0; // total battery pack voltage
     uint32_t _lastUpdateVoltage = 0;
