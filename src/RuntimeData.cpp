@@ -87,7 +87,7 @@ bool RuntimeClass::write(uint16_t const freezeMinutes)
         std::lock_guard<std::mutex> lock(_mutex);
 
         // check minimum interval between writes (enforced only when freezeMinutes > 0)
-        if ((_writeEpoch != 0) && (difftime(nextEpoch, _writeEpoch) < 60 * freezeMinutes)) {
+        if ((freezeMinutes > 0) && (_writeEpoch != 0) && (difftime(nextEpoch, _writeEpoch) < 60 * freezeMinutes)) {
             return cleanExit(false, "Time interval between 2 write operations too short, skipping write");
         }
 
@@ -214,7 +214,7 @@ String RuntimeClass::getWriteCountAndTimeString(void) const
 
 
 /*
- * Returns true at the daily trigger time at 00:05
+ * Returns true once a day between 00:05 - 00:10
  */
 bool RuntimeClass::getWriteTrigger(void) {
 
