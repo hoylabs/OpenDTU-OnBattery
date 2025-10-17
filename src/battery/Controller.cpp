@@ -174,7 +174,7 @@ void Controller::deserializeRTD(JsonObject const& obj)
     if (!_upProvider) { return; } // no battery, nothing to do
 
     time_t fulltime =  obj["fully_charged_epoch"] | 0;
-    _upProvider->setStats()->setFullyChargedTime(fulltime == 0 ? std::nullopt : std::make_optional(fulltime));
+    _upProvider->getStatsForWrite()->setFullyChargedTime(fulltime == 0 ? std::nullopt : std::make_optional(fulltime));
 }
 
 } // namespace Batteries

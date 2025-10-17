@@ -69,10 +69,10 @@ void Stats::mqttPublish() const {
 }
 
 void Stats::checkFullyChargedTime(void) {
-    time_t aktTime;
-    if (isSoCValid() && (getSoCAgeSeconds() <= 30) && (_lastFullCharge > 0) && Utils::getEpoch(&aktTime, 5)) {
+    time_t nowTime;
+    if (isSoCValid() && (getSoCAgeSeconds() <= 30) && (_lastFullCharge > 0) && Utils::getEpoch(&nowTime, 5)) {
         auto lastTime = getFullyChargedTime();
-        auto shuntTime = difftime(aktTime, _lastFullCharge * 60.0);
+        auto shuntTime = difftime(nowTime, _lastFullCharge * 60.0);
 
         // We only update if we don't have time yet or if the new time is later
         if (!lastTime.has_value() || (difftime(shuntTime, lastTime.value()) > 0.0)) {

@@ -15,7 +15,7 @@ public:
     virtual void deinit() = 0;
     virtual void loop() = 0;
     virtual std::shared_ptr<Stats> getStats() const = 0;
-    virtual std::shared_ptr<Stats> setStats() = 0;
+    virtual std::shared_ptr<Stats> getStatsForWrite() = 0;
     virtual std::shared_ptr<HassIntegration> getHassIntegration() = 0;
 };
 
