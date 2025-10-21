@@ -18,6 +18,7 @@
 #include <frozen/map.h>
 #include "SunPosition.h"
 #include <LogHelper.h>
+#include "SurplusPower.h"
 
 #undef TAG
 static const char* TAG = "dynamicPowerLimiter";
@@ -163,6 +164,7 @@ void PowerLimiterClass::loop()
 
     if (_reloadConfigFlag) {
         reloadConfig();
+        Surplus.reloadConfig();
         return announceStatus(Status::ConfigReload);
     }
 
@@ -272,8 +274,9 @@ void PowerLimiterClass::loop()
     };
 
     auto getFullSolarPassthrough = [this,&config]() -> bool {
-        // we only do full solar PT if general solar PT is enabled
-        if (!isSolarPassThroughEnabled()) { return false; }
+        // we only do full solar PT if general solar PT is enabled or if solar-surplus is enabled
+        // Note: Maybe rename the flag _fullSolarPassThroughActive to _useExcessiveSolarPower?
+        if (!isSolarPassThroughEnabled() && !Surplus.isSurplusEnabled()) { return false; }
 
         if (testThreshold(config.PowerLimiter.FullSolarPassThroughSoc,
                         config.PowerLimiter.FullSolarPassThroughStartVoltage,
@@ -704,13 +707,46 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested) const
         return 0;
     }
 
-    auto solarOutputDc = getSolarPassthroughPower();
-    auto solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
-    if (isFullSolarPassthroughActive() && solarOutputAc > powerRequested) {
-        DTU_LOGD("using %u/%u W DC/AC from DC power bus (full solar-passthrough)",
-                solarOutputDc, solarOutputAc);
+    uint16_t solarOutputDc = 0;
+    uint16_t solarOutputAc = 0;
 
-        return solarOutputAc;
+    if (isFullSolarPassthroughActive()) {
+        if (Surplus.isSurplusEnabled()) {
+            // we use the solar-surplus power to determine how much power
+            // the battery-powered inverters shall draw from the DC power bus.
+
+            // first, we need the latest stats of the battery-powered inverters
+            uint32_t latestBatteryInverterStats = 0;
+            for (auto const& upInv : _inverters) {
+                if (!upInv->isEligible()) { continue; }
+                if (!upInv->isBatteryPowered()) { continue; }
+                auto oStatsMillis = upInv->getLatestStatsMillis();
+                if (oStatsMillis.has_value()) { latestBatteryInverterStats = std::max(*oStatsMillis, latestBatteryInverterStats); }
+            }
+
+            // second, we calculate the surplus power
+            solarOutputAc = Surplus.calculateSurplus(powerRequested, getBatteryInvertersOutputAcWatts(), latestBatteryInverterStats);
+            solarOutputDc = solarOutputAc / 0.95f; // convert AC to DC power
+            if (solarOutputAc > powerRequested) {
+                DTU_LOGD("using %u/%u W DC/AC from DC power bus (solar-surplus)",
+                        solarOutputDc, solarOutputAc);
+                return solarOutputAc;
+            }
+        } else {
+            // we use the full-solar-passthrough power to determine how much power
+            // the battery-powered inverters shall draw from the DC power bus.
+            solarOutputDc = getSolarPassthroughPower();
+            solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
+            if (solarOutputAc > powerRequested) {
+                DTU_LOGD("using %u/%u W DC/AC from DC power bus (full solar-passthrough)",
+                    solarOutputDc, solarOutputAc);
+
+                return solarOutputAc;
+            }
+        }
+    } else {
+        // in case of stop threshold reached, we switch to idle and to cleanup the state machine
+        if (Surplus.isSurplusEnabled()) { Surplus.stopSurplus(); }
     }
 
     auto oBatteryDischargeLimit = getBatteryDischargeLimit();

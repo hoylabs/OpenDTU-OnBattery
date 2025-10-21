@@ -225,6 +225,15 @@
                     />
 
                     <InputElement
+                        v-if="canUseSolarPassthrough"
+                        :label="$t('powerlimiteradmin.EnableSurplus')"
+                        :tooltip="$t('powerlimiteradmin.SurplusInfo')"
+                        v-model="powerLimiterConfigList.surplus_enabled"
+                        type="checkbox"
+                        wide
+                    />
+
+                    <InputElement
                         :label="$t('powerlimiteradmin.BatteryDischargeAtNight')"
                         :tooltip="$t('powerlimiteradmin.BatteryDischargeAtNightHint')"
                         v-model="powerLimiterConfigList.battery_always_use_at_night"
@@ -333,8 +342,16 @@
 
                     <template v-if="isSolarPassthroughEnabled">
                         <InputElement
-                            :label="$t('powerlimiteradmin.FullSolarPassthroughStartThreshold')"
-                            :tooltip="$t('powerlimiteradmin.FullSolarPassthroughStartThresholdHint')"
+                            :label="
+                                isSurplusEnabled
+                                    ? $t('powerlimiteradmin.SurplusStartThreshold')
+                                    : $t('powerlimiteradmin.FullSolarPassthroughStartThreshold')
+                            "
+                            :tooltip="
+                                isSurplusEnabled
+                                    ? $t('powerlimiteradmin.SurplusStartThresholdHint')
+                                    : $t('powerlimiteradmin.FullSolarPassthroughStartThresholdHint')
+                            "
                             v-model="powerLimiterConfigList.full_solar_passthrough_start_voltage"
                             placeholder="49"
                             min="16"
@@ -346,7 +363,11 @@
                         />
 
                         <InputElement
-                            :label="$t('powerlimiteradmin.VoltageSolarPassthroughStopThreshold')"
+                            :label="
+                                isSurplusEnabled
+                                    ? $t('powerlimiteradmin.SurplusStopThreshold')
+                                    : $t('powerlimiteradmin.VoltageSolarPassthroughStopThreshold')
+                            "
                             v-model="powerLimiterConfigList.full_solar_passthrough_stop_voltage"
                             placeholder="49"
                             min="16"
@@ -404,8 +425,16 @@
                     />
 
                     <InputElement
-                        :label="$t('powerlimiteradmin.FullSolarPassthroughStartThreshold')"
-                        :tooltip="$t('powerlimiteradmin.FullSolarPassthroughStartThresholdHint')"
+                        :label="
+                            isSurplusEnabled
+                                ? $t('powerlimiteradmin.SurplusStartThreshold')
+                                : $t('powerlimiteradmin.FullSolarPassthroughStartThreshold')
+                        "
+                        :tooltip="
+                            isSurplusEnabled
+                                ? $t('powerlimiteradmin.SurplusStartThresholdHint')
+                                : $t('powerlimiteradmin.FullSolarPassthroughStartThresholdHint')
+                        "
                         v-model="powerLimiterConfigList.full_solar_passthrough_soc"
                         v-if="isSolarPassthroughEnabled"
                         placeholder="80"
@@ -507,8 +536,11 @@ export default defineComponent({
         isSolarPassthroughEnabled(): boolean {
             return (
                 this.powerLimiterMetaData.charge_controller_enabled &&
-                this.powerLimiterConfigList.solar_passthrough_enabled
+                (this.powerLimiterConfigList.solar_passthrough_enabled || this.powerLimiterConfigList.surplus_enabled)
             );
+        },
+        isSurplusEnabled(): boolean {
+            return this.powerLimiterMetaData.charge_controller_enabled && this.powerLimiterConfigList.surplus_enabled;
         },
         hasPowerMeter(): boolean {
             return this.powerLimiterMetaData.power_meter_enabled;

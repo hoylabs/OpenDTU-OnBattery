@@ -135,6 +135,8 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["discharge_current_limit_below_soc"] = config.Battery.DischargeCurrentLimitBelowSoc;
     target["discharge_current_limit_below_voltage"] = config.Battery.DischargeCurrentLimitBelowVoltage;
     target["use_battery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
+    target["nominal_voltage"] = config.Battery.NominalVoltage;
+    target["nominal_capacity"] = config.Battery.NominalCapacity;
 }
 
 void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target)
@@ -211,6 +213,14 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
     target["inverter_channel_id_for_dc_voltage"] = source.InverterChannelIdForDcVoltage;
     target["inverter_restart_hour"] = source.RestartHour;
     target["total_upper_power_limit"] = source.TotalUpperPowerLimit;
+    target["surplus_enabled"] = source.SurplusEnabled;
+    target["surplus_tweak_enabled"] = source.SurplusTweakEnabled;
+    target["surplus_power_limit"] = source.SurplusPowerLimit;
+    target["surplus_safety_minutes"] = source.SurplusSafetyMinutes;
+    target["surplus_safety_factor"] = source.SurplusSafetyFactor;
+    target["surplus_slope_enabled"] = source.SurplusSlopeEnabled;
+    target["surplus_slope_target"] = source.SurplusSlopeTarget;
+    target["surplus_slope_decrease_rate"] = source.SurplusSlopeDecreaseRate;
 
     JsonArray inverters = target["inverters"].to<JsonArray>();
     for (size_t i = 0; i < INV_MAX_COUNT; ++i) {
@@ -568,6 +578,8 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     target.DischargeCurrentLimitBelowSoc = source["discharge_current_limit_below_soc"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_SOC;
     target.DischargeCurrentLimitBelowVoltage = source["discharge_current_limit_below_voltage"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_VOLTAGE;
     target.UseBatteryReportedDischargeCurrentLimit = source["use_battery_reported_discharge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_DISCHARGE_CURRENT_LIMIT;
+    target.NominalVoltage = source["nominal_voltage"] | 0.0f;
+    target.NominalCapacity = source["nominal_capacity"] | 0;
 }
 
 void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target)
@@ -640,6 +652,14 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
     target.InverterChannelIdForDcVoltage = source["inverter_channel_id_for_dc_voltage"] | POWERLIMITER_INVERTER_CHANNEL_ID;
     target.RestartHour = source["inverter_restart_hour"] | POWERLIMITER_RESTART_HOUR;
     target.TotalUpperPowerLimit = source["total_upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
+    target.SurplusEnabled = source["surplus_enabled"] | false;
+    target.SurplusTweakEnabled = source["surplus_tweak_enabled"] | false;
+    target.SurplusPowerLimit = source["surplus_power_limit"] | 0;
+    target.SurplusSafetyMinutes = source["surplus_safety_minutes"] | 0;
+    target.SurplusSafetyFactor = source["surplus_safety_factor"] | 0.0f;
+    target.SurplusSlopeEnabled = source["surplus_slope_enabled"] | true;
+    target.SurplusSlopeTarget = source["surplus_slope_target"] | 0;
+    target.SurplusSlopeDecreaseRate = source["surplus_slope_decrease_rate"] | 0;
 
     JsonArray inverters = source["inverters"].as<JsonArray>();
     for (size_t i = 0; i < INV_MAX_COUNT; ++i) {

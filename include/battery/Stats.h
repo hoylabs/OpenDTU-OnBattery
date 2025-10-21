@@ -27,6 +27,7 @@ public:
     uint32_t getVoltageAgeSeconds() const { return (millis() - _lastUpdateVoltage) / 1000; }
 
     float getChargeCurrent() const { return _current; };
+    uint32_t getLastCurrentUpdate() const { return _lastUpdateCurrent; }
     uint8_t getChargeCurrentPrecision() const { return _currentPrecision; }
 
     float getDischargeCurrentLimit() const { return _dischargeCurrentLimit; };

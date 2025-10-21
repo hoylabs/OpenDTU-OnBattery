@@ -737,6 +737,9 @@
         "FullSolarPassthroughStartThreshold": "Full Solar-Passthrough Start Threshold",
         "FullSolarPassthroughStartThresholdHint": "The inverters' output power is set equal to the charge controller's output power (after accounting efficiency factors) while above this threshold. Use this if you want to supply excess power to the grid when the battery is full.",
         "VoltageSolarPassthroughStopThreshold": "Full Solar-Passthrough Stop Threshold",
+        "SurplusStartThreshold": "Solar-Surplus Start Threshold",
+        "SurplusStartThresholdHint": "The inverters' output power is set equal to the charge controller's output power (after accounting battery power) while above this threshold. Use this if you want to supply excess power to the grid.",
+        "SurplusStopThreshold": "Solar-Surplus Stop Threshold",
         "VoltageLoadCorrectionFactor": "Load correction factor",
         "BatterySocInfo": "<b>Hint:</b> The use of battery State of Charge (SoC) thresholds is prioritized. However, SoC thresholds are only used if the battery communication interface has processed valid SoC values in the last minute. Otherwise, the voltage thresholds will be used as fallback.",
         "InverterIsBehindPowerMeter": "PowerMeter reading includes inverter output",
@@ -750,7 +753,9 @@
         "VoltageThresholds": "Battery Voltage Thresholds",
         "VoltageLoadCorrectionInfo": "<b>Hint:</b> When the battery is discharged, its voltage drops. The voltage drop scales with the discharge current. In order to not stop inverters too early (stop threshold), this load correction factor can be specified to calculate the battery voltage if it was idle. Corrected voltage = DC Voltage + (Current power * correction factor).",
         "InverterRestartHour": "Automatic Inverter Restart Time",
-        "InverterRestartHint": "The inverter(s) will be automatically restarted daily at the desired time. This is necessary because the inverter may behave unexpectedly if not restarted and powered continuously for days/weeks/months. A restart is also required to reset the daily yield."
+        "InverterRestartHint": "The inverter(s) will be automatically restarted daily at the desired time. This is necessary because the inverter may behave unexpectedly if not restarted and powered continuously for days/weeks/months. A restart is also required to reset the daily yield.",
+        "EnableSurplus": "Enable Solar-Surplus",
+        "SurplusInfo": "Solar-Surplus attempts to utilize excess solar energy as early as possible, avoiding wasting solar energy needed to fully charge the battery by sunset. Configure the battery capacity and the start/stop thresholds. Full Solar-Passthrough is automatically disabled when Solar-Surplus is enabled."
     },
     "batteryadmin": {
         "BatterySettings": "Battery Settings",
@@ -782,6 +787,9 @@
         "JbdBmsConfiguration": "JBD BMS Settings",
         "PollingInterval": "Polling Interval",
         "Seconds": "@:base.Seconds",
+        "BatteryDataConfiguration": "General Data Settings",
+        "NominalVoltage": "Nominal Voltage",
+        "NominalCapacity": "Nominal Capacity",
         "DischargeCurrentLimitConfiguration": "Discharge Current Limit Settings",
         "LimitDischargeCurrent": "Limit Discharge Current",
         "DischargeCurrentLimit": "max. Discharge Current",
