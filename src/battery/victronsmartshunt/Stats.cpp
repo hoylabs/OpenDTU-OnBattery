@@ -75,7 +75,7 @@ void Stats::checkSoCFullEpoch(void) {
     lastUpdate = _lastUpdate;
     time_t nowEpoch;
 
-    if (isSoCValid() && (getSoCAgeSeconds() <= 30) && (_lastFullCharge > 0) && Utils::getEpoch(&nowEpoch, 5)) {
+    if (Utils::getEpoch(&nowEpoch, 5)) {
 
         // reverse calculation to get 'fully charged epoch' from the smart shunt duration value
         auto shuntEpoch = std::make_optional(nowEpoch - static_cast<time_t>(_lastFullCharge * 60));

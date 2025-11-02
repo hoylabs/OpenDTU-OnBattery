@@ -144,7 +144,8 @@ void Stats::checkSoCFullEpoch(void)
     lastUpdate = _lastUpdate;
     time_t nowEpoch;
 
-    // The goal is to save the last epoch time the battery was at 100% SoC and maintain that value until we reach 100% again.
+    // The goal is to record the time when we reach 100% SoC, to record the time as long as we have 100% SoC,
+    // and to maintain the time until we reach 100% SoC again.
     if (isSoCValid() && (getSoCAgeSeconds() <= 30) && (getSoC() >= 100.0f) && Utils::getEpoch(&nowEpoch, 5)) {
         if (!_oSoCFullEpoch.has_value() || (nowEpoch > _oSoCFullEpoch.value())) {
             _oSoCFullEpoch = nowEpoch;
