@@ -21,6 +21,7 @@
 #include <LittleFS.h>
 #include <LogHelper.h>
 #include "RuntimeData.h"
+#include "PowerLimiter.h"
 
 
 #undef TAG
@@ -101,6 +102,7 @@ bool RuntimeClass::write(uint16_t const freezeMinutes)
         info["save_epoch"] = nextEpoch;
 
         // Insert additional runtime data here and protect the shared data with a local mutex
+        PowerLimiter.serializeRTD(doc["power_limiter"].to<JsonObject>());
 
 
 
@@ -156,7 +158,8 @@ bool RuntimeClass::read(void)
     } // mutex is automatically released when lock goes out of this scope
 
     // deserialize additional runtime data here, prepare default values and protect the shared data with a local mutex
-
+    PowerLimiter.deserializeRTD(doc["power_limiter"]);
+    
 
     if (fRuntime) { fRuntime.close(); }
     if (readOk) {
