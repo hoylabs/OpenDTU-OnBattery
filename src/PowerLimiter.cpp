@@ -237,38 +237,71 @@ void PowerLimiterClass::loop()
 
     autoRestartInverters();
 
-    auto getBatteryPower = [this,&config]() -> bool {
-        if (!usesBatteryPoweredInverter()) { return false; }
+    auto getBatteryState = [this,&config]() -> BatteryState {
 
-        auto isDayPeriod = SunPosition.isDayPeriod();
+        // State machine for the battery
+        // Conditions:          we use 'Below Stop Threshold', 'Above Start Threshold', 'Solar-Passthrough', 'Use Battery at night',
+        //                      'Night/Day' and 'From which direction did we enter the stop-start zone' to determine the state.
+        //
+        // states               description
+        // --------------------------------------------------------------------------------------------------------------------------------
+        // STOP:                we must stop the inverter, because the battery is below the stop threshold
+        // NO_DISCHARGE:        we can use the inverter, but we do not allow to discharge the battery, A requirement from 'Solar-Passthrough'
+        // DISCHARGE_ALLOWED:   we can use the inverter and we allow discharging of the battery
+        // DISCHARGE_NIGHT:     we can use the inverter and we allow discharging of a partial charged battery at night.
+        //                      A requirement from 'Use Battery at night'
+        //
+        // Notes: The combination of 'Use Battery at night' and use of 'voltage thresholds' can leads to oscillation between the states
+        // STOP and DISCHARGE_NIGHT. To avoid this problem, we allow only one transmission from STOP to DISCHARGE_NIGHT per night.
+        // In case of restart or power-cycle, we accept that the inverter may start discharging at night once again.
+        // Start-Up can be tricky, because data from the battery provider may not be available. As fallback we use the not very
+        // accurate inverter voltage and this can lead to the wrong state. Especially if we use the runtime file to save the state.
 
-        if (_nighttimeDischarging && isDayPeriod) {
-            _nighttimeDischarging = false;
-            return isStartThresholdReached();
+        // check if have a battery powered inverter
+        if (!usesBatteryPoweredInverter()) { return BatteryState::STOP; }
+
+        // check the stop condition
+        auto day = SunPosition.isDayPeriod();
+        if (isStopThresholdReached()) {
+            _fromStart = false;
+            _oneStopPerNightDone = day ? false : true;
+            return BatteryState::STOP;
         }
 
-        if (isStopThresholdReached()) { return false; }
-
-        if (isStartThresholdReached()) { return true; }
-
-        // start a nighttime discharge cycle on a partially charged battery if
-        //   1. the respective switch/setting is enabled
-        //   2. it is now after sunset, i.e., it is nighttime
-        //   3. we are not already in a discharge cycle
-        //   4. we did not start a nighttime discharge cycle on a partially
-        //      charged battery already (the _nighttimeDischarging flag will
-        //      only be reset at sunrise, see above)
-        if (config.PowerLimiter.BatteryAlwaysUseAtNight &&
-                !isDayPeriod &&
-                !_batteryDischargeEnabled &&
-                !_nighttimeDischarging) {
-            _nighttimeDischarging = true;
-            return true;
+        // check the start condition
+        if (isStartThresholdReached()) {
+            _fromStart = true;
+            return BatteryState::DISCHARGE_ALLOWED;
         }
 
-        // we are between start and stop threshold and keep the state that was
-        // last triggered, either charging or discharging.
-        return _batteryDischargeEnabled;
+        // all of the following conditions mean that we are in the "stop-start zone",
+        // and we must use the buffered information 'From which direction did we enter the stop-start zone'.
+
+        // if we come from start we always allow discharging of the battery
+        if (_fromStart) { return BatteryState::DISCHARGE_ALLOWED; }
+
+        // if we reach this line we come from stop and have to consider the 'Solar-Passthrough' and the 'Use Battery at night' settings.
+        auto solarPassThroughEnabled = isSolarPassThroughEnabled();
+        auto isBatteryAlwaysUseAtNightEnabled = config.PowerLimiter.BatteryAlwaysUseAtNight;
+
+        if (!isBatteryAlwaysUseAtNightEnabled) { _oneStopPerNightDone = false; }
+
+        if (!solarPassThroughEnabled && !isBatteryAlwaysUseAtNightEnabled) { return BatteryState::STOP; }
+
+        if (solarPassThroughEnabled && !isBatteryAlwaysUseAtNightEnabled) { return BatteryState::NO_DISCHARGE; }
+
+        // we reach this line only if 'Use Battery at night' is enabled
+        if (day) {
+            _oneStopPerNightDone = false;
+            return (solarPassThroughEnabled) ? BatteryState::DISCHARGE_ALLOWED : BatteryState::STOP;
+        } else {
+            return (_oneStopPerNightDone) ? BatteryState::STOP : BatteryState::DISCHARGE_NIGHT;
+        }
+
+        // we should never reach this line, but if we do, we use a safe fallback.
+        DTU_LOGE("Unexpected condition in battery state machine, using fallback state: STOP");
+        _fromStart = false;
+        return BatteryState::STOP;
     };
 
     auto getFullSolarPassthrough = [this,&config]() -> bool {
@@ -301,9 +334,18 @@ void PowerLimiterClass::loop()
         return dcVoltage + (acPower * config.PowerLimiter.VoltageLoadCorrectionFactor);
     };
 
-    _batteryDischargeEnabled = getBatteryPower();
-    _fullSolarPassThroughActive = getFullSolarPassthrough();
     _loadCorrectedVoltage = getLoadCorrectedVoltage();
+    _batteryState = getBatteryState();
+
+    // todo: Remove debug logs
+    if (_batteryState == BatteryState::DISCHARGE_ALLOWED) { DTU_LOGI("SW-Nico: Battery State: %s", "Discharge allowed"); }
+    else if (_batteryState == BatteryState::NO_DISCHARGE) { DTU_LOGI("SW-Nico: Battery State: %s", "No discharge"); }
+    else if (_batteryState == BatteryState::DISCHARGE_NIGHT) { DTU_LOGI("SW-Nico: Battery State: %s", "Discharge at night"); }
+    else { DTU_LOGI("SW-Nico: Battery State: %s", "Stopped"); }
+    DTU_LOGI("SW-Nico: Battery come from: %s", (_fromStart)?"start":"stop");
+    DTU_LOGI("SW-Nico: One battery stop per night done: %s", (_oneStopPerNightDone)?"yes":"no");
+
+    _fullSolarPassThroughActive = getFullSolarPassthrough();
 
     DTU_LOGD("up %lu s, it is %s, next inverter restart at %d s (set to %d)",
             millis()/1000,
@@ -326,7 +368,8 @@ void PowerLimiterClass::loop()
                 config.PowerLimiter.VoltageLoadCorrectionFactor);
 
         DTU_LOGD("battery discharge %s, start %.2f V or %u %%, stop %.2f V or %u %%",
-                (_batteryDischargeEnabled?"allowed":"restricted"),
+                (((_batteryState == BatteryState::DISCHARGE_ALLOWED) || (_batteryState == BatteryState::DISCHARGE_NIGHT))?"allowed":
+                (_batteryState == BatteryState::NO_DISCHARGE)?"restricted":"stopped"),
                 config.PowerLimiter.VoltageStartThreshold,
                 config.PowerLimiter.BatterySocStartThreshold,
                 config.PowerLimiter.VoltageStopThreshold,
@@ -345,7 +388,7 @@ void PowerLimiterClass::loop()
                 (isStopThresholdReached()?"":"NOT "),
                 (isSolarPassThroughEnabled()?"en":"dis"),
                 (config.PowerLimiter.BatteryAlwaysUseAtNight?"en":"dis"),
-                (_nighttimeDischarging?"active":"dormant"));
+                ((_batteryState == BatteryState::DISCHARGE_NIGHT)?"active":"dormant"));
 
         DTU_LOGD("total max AC power is %u W, conduction losses are %u %%",
             config.PowerLimiter.TotalUpperPowerLimit,
@@ -517,7 +560,8 @@ uint8_t PowerLimiterClass::getPowerLimiterState() const
         return PL_UI_STATE_CHARGING;
     }
 
-    return _batteryDischargeEnabled ? PL_UI_STATE_USE_SOLAR_AND_BATTERY : PL_UI_STATE_USE_SOLAR_ONLY;
+    return ((_batteryState == BatteryState::DISCHARGE_ALLOWED || _batteryState == BatteryState::DISCHARGE_NIGHT))
+        ? PL_UI_STATE_USE_SOLAR_AND_BATTERY : PL_UI_STATE_USE_SOLAR_ONLY;
 }
 
 uint16_t PowerLimiterClass::calcTargetOutput() const
@@ -704,6 +748,11 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested) const
         return 0;
     }
 
+    if (_batteryState == BatteryState::STOP) {
+        DTU_LOGD("DC power bus usage blocked by battery below the stop threshold");
+        return 0;
+    }
+
     auto solarOutputDc = getSolarPassthroughPower();
     auto solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
     if (isFullSolarPassthroughActive() && solarOutputAc > powerRequested) {
@@ -784,7 +833,7 @@ float PowerLimiterClass::getBatteryInvertersOutputAcWatts() const
 
 std::optional<uint16_t> PowerLimiterClass::getBatteryDischargeLimit() const
 {
-    if (!_batteryDischargeEnabled) { return 0; }
+    if ((_batteryState == BatteryState::STOP) || (_batteryState == BatteryState::NO_DISCHARGE)) { return 0; }
 
     auto currentLimit = Battery.getDischargeCurrentLimit();
     if (currentLimit == FLT_MAX) { return std::nullopt; }
@@ -934,4 +983,18 @@ bool PowerLimiterClass::isGovernedBatteryPoweredInverterProducing() const
         if (upInv->isBatteryPowered() && upInv->isProducing()) { return true; }
     }
     return false;
+}
+
+void PowerLimiterClass::serializeRTD(JsonObject const& obj) const
+{
+    // Note: Up to now the PowerLimiterClass does not use a mutex
+    // Use of atomic<bool> would be an solution but I want to avoid the overhead
+    obj["battery_from_start"] = _fromStart;
+}
+
+void PowerLimiterClass::deserializeRTD(JsonObject const& obj)
+{
+    // Note: Up to now the PowerLimiterClass does not use a mutex
+    // Use of atomic<bool> would be an solution but I want to avoid the overhead
+    _fromStart =  obj["battery_from_start"] | false;
 }
