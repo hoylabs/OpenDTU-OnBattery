@@ -144,11 +144,12 @@ void Stats::checkSoCFullEpoch(void)
     lastUpdate = _lastUpdate;
     time_t nowEpoch;
 
-    // The goal is to record the time when we reach 100% SoC, to record the time as long as we have 100% SoC,
-    // and to maintain the time until we reach 100% SoC again.
+    // The goal is to capture the moment we reach 100% SoC, to continuously capture the time while we have 100% SoC,
+    // and to record the last time until we reach 100% SoC again.
     if (isSoCValid() && (getSoCAgeSeconds() <= 30) && (getSoC() >= 100.0f) && Utils::getEpoch(&nowEpoch, 5)) {
-        if (!_oSoCFullEpoch.has_value() || (nowEpoch > _oSoCFullEpoch.value())) {
-            _oSoCFullEpoch = nowEpoch;
+        auto lastSoCEpoch = getSoCFullEpoch();
+        if (!lastSoCEpoch.has_value() || (nowEpoch > lastSoCEpoch.value())) {
+            setSoCFullEpoch(nowEpoch);
         }
     }
 }
