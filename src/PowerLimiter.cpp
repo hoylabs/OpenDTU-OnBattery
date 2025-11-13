@@ -336,15 +336,6 @@ void PowerLimiterClass::loop()
 
     _loadCorrectedVoltage = getLoadCorrectedVoltage();
     _batteryState = getBatteryState();
-
-    // todo: Remove debug logs
-    if (_batteryState == BatteryState::DISCHARGE_ALLOWED) { DTU_LOGI("SW-Nico: Battery State: %s", "Discharge allowed"); }
-    else if (_batteryState == BatteryState::NO_DISCHARGE) { DTU_LOGI("SW-Nico: Battery State: %s", "No discharge"); }
-    else if (_batteryState == BatteryState::DISCHARGE_NIGHT) { DTU_LOGI("SW-Nico: Battery State: %s", "Discharge at night"); }
-    else { DTU_LOGI("SW-Nico: Battery State: %s", "Stopped"); }
-    DTU_LOGI("SW-Nico: Battery come from: %s", (_fromStart)?"start":"stop");
-    DTU_LOGI("SW-Nico: One battery stop per night done: %s", (_oneStopPerNightDone)?"yes":"no");
-
     _fullSolarPassThroughActive = getFullSolarPassthrough();
 
     DTU_LOGD("up %lu s, it is %s, next inverter restart at %d s (set to %d)",
