@@ -192,7 +192,7 @@ struct BATTERY_ZENDURE_CONFIG_T {
     uint16_t MaxOutput;
     bool AutoShutdown;
     uint16_t OutputLimit;
-    enum OutputControl_t { ControlNone = 0, ControlFixed = 1, ControlSchedule = 2 };
+    enum OutputControl_t : uint8_t { ControlNone = 0, ControlFixed = 1, ControlSchedule = 2 };
     OutputControl_t OutputControl;
     int16_t SunriseOffset;
     int16_t SunsetOffset;
@@ -201,7 +201,7 @@ struct BATTERY_ZENDURE_CONFIG_T {
     bool ChargeThroughEnable;
     uint16_t ChargeThroughInterval;
     bool BuzzerEnable;
-    enum ControlMode { ControlModeFull = 0, ControlModeOnce = 1, ControlModeReadOnly = 2 };
+    enum ControlMode : uint8_t { ControlModeFull = 0, ControlModeOnce = 1, ControlModeReadOnly = 2 };
     ControlMode ControlMode;
     uint8_t ChargeThroughResetLevel;
 };
