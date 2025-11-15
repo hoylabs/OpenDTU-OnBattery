@@ -11,7 +11,7 @@
 
 namespace Batteries::Zendure {
 
-static const char* invalid = "invalid";
+static constexpr const char* invalid = "invalid";
 
 enum class State : uint8_t {
     Idle        = 0,
@@ -39,7 +39,7 @@ static constexpr frozen::map<ChargeThroughState, const char*, 5> _chargeThroughS
 static constexpr frozen::map<BatteryZendureConfig::BypassMode_t, const char*, 3> _bypassModeStrings {
     { BatteryZendureConfig::BypassMode_t::Automatic, "automatic" },
     { BatteryZendureConfig::BypassMode_t::AlwaysOff, "alwaysoff" },
-    { BatteryZendureConfig::BypassMode_t::AlwaysOn,  "alwaysofn" }
+    { BatteryZendureConfig::BypassMode_t::AlwaysOn,  "alwayson" }
 };
 
 

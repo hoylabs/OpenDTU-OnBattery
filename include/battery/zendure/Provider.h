@@ -24,6 +24,9 @@ private:
     uint16_t setOutputLimit(uint16_t limit) const;
     uint16_t setInverterMax(uint16_t limit) const;
     void setBypassMode(BatteryZendureConfig::BypassMode_t mode) const;
+    void setBuzzer(bool enable) const;
+    void setAutoshutdown(bool enable) const;
+
     void shutdown() const;
 
     void checkChargeThrough(uint32_t predictHours = 0U);
@@ -64,18 +67,27 @@ private:
 
     uint32_t _messageCounter = 0;
 
-    String _deviceId = String();
-
-    String _baseTopic = String();
     String _topicLog = String();
     String _topicReadReply = String();
     String _topicReport = String();
     String _topicRead = String();
     String _topicWrite = String();
     String _topicTimesync = String();
+    String _topicTimesyncReply = String();
     String _topicPersistentSettings = String();
 
-    String _payloadSettings = String();
+    void setTopics(const String& deviceType, const String& deviceId) {
+        String baseTopic = "/" + deviceType + "/" + deviceId + "/";
+
+        _topicRead   = "iot" + baseTopic + "properties/read";
+        _topicWrite  = "iot" + baseTopic + "properties/write";
+        _topicLog    = baseTopic + "log";
+        _topicReport = baseTopic + "properties/report";
+
+        _topicTimesync      = baseTopic + "time-sync";
+        _topicTimesyncReply = "iot" + baseTopic + "time-sync/reply";
+    }
+
     String _payloadFullUpdate = String();
 
     bool _full_log_supported = false;

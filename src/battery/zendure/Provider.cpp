@@ -69,11 +69,7 @@ bool Provider::init()
     }
 
     // store device ID as we will need them for checking when receiving messages
-    _deviceId = config.Battery.Zendure.DeviceId;
-
-    _baseTopic = "/" + deviceType + "/" + _deviceId + "/";
-    _topicRead = "iot" + _baseTopic + "properties/read";
-    _topicWrite = "iot" + _baseTopic + "properties/write";
+    setTopics(deviceType, config.Battery.Zendure.DeviceId);
 
     _topicPersistentSettings = MqttSettings.getPrefix() + "battery/persistent/";
 
@@ -86,7 +82,6 @@ bool Provider::init()
     DTU_LOGD("Subscribed to '%s' for persistent settings", topic.c_str());
 
     // subscribe for log messages
-    _topicLog = _baseTopic + "log";
     MqttSettings.subscribe(_topicLog, 0/*QoS*/,
             std::bind(&Provider::onMqttMessageLog,
                 this, std::placeholders::_1, std::placeholders::_2,
@@ -95,7 +90,6 @@ bool Provider::init()
     DTU_LOGD("Subscribed to '%s' for status readings", _topicLog.c_str());
 
     // subscribe for report messages
-    _topicReport = _baseTopic + "properties/report";
     MqttSettings.subscribe(_topicReport, 0/*QoS*/,
             std::bind(&Provider::onMqttMessageReport,
                 this, std::placeholders::_1, std::placeholders::_2,
@@ -104,7 +98,6 @@ bool Provider::init()
     DTU_LOGD("Subscribed to '%s' for status readings", _topicReport.c_str());
 
     // subscribe for timesync messages
-    _topicTimesync = _baseTopic + "time-sync";
     MqttSettings.subscribe(_topicTimesync, 0/*QoS*/,
             std::bind(&Provider::onMqttMessageTimesync,
                 this, std::placeholders::_1, std::placeholders::_2,
@@ -119,18 +112,9 @@ bool Provider::init()
     _rateSunCalcMs      = ZENDURE_SECONDS_SUNPOSITION * 1000;
     _nextSunCalc        = millis() + _rateSunCalcMs / 2;
 
-    // pre-generate the settings request
-    JsonDocument root;
-    JsonVariant prop = root[ZENDURE_REPORT_PROPERTIES].to<JsonObject>();
-    prop[ZENDURE_REPORT_PV_BRAND] = 1; // means Hoymiles
-    prop[ZENDURE_REPORT_PV_AUTO_MODEL] = 0; // we did static setup
-    prop[ZENDURE_REPORT_AUTO_SHUTDOWN] = static_cast<uint8_t>(config.Battery.Zendure.AutoShutdown);
-    prop[ZENDURE_REPORT_BUZZER_SWITCH] = static_cast<uint8_t>(config.Battery.Zendure.BuzzerEnable);
-    prop[ZENDURE_REPORT_SMART_MODE] = 0; // should be disabled
-    serializeJson(root, _payloadSettings);
 
     // pre-generate the full update request
-    root.clear();
+    JsonDocument root;
     JsonArray array = root[ZENDURE_REPORT_PROPERTIES].to<JsonArray>();
     array.add("getAll");
     array.add("getInfo");
@@ -145,8 +129,7 @@ bool Provider::init()
     if (config.Battery.Zendure.ControlMode == BatteryZendureConfig::ControlMode::ControlModeReadOnly) {
         DTU_LOGI("Running in READ-ONLY mode");
 
-        // forget about write topic and payload to prevent it will ever be written
-        _payloadSettings.clear();
+        // forget about write topic to prevent it will ever be written
         _topicWrite.clear();
     }
 
@@ -273,17 +256,23 @@ void Provider::loop()
 }
 
 void Provider::writeSettings() {
-    if (_topicWrite.isEmpty() || _payloadSettings.isEmpty()) {
+    if (_topicWrite.isEmpty()) {
         return;
     }
 
-    MqttSettings.publishGeneric(_topicWrite, _payloadSettings, false, 0);
-
     auto const& config = Configuration.get();
 
-    // if running in OnlyOnce mode, forget about write topic and payload to prevent it will ever be written again
+    setBuzzer(config.Battery.Zendure.BuzzerEnable);
+    setAutoshutdown(config.Battery.Zendure.AutoShutdown);
+
+    publishProperties(_topicWrite,
+        ZENDURE_REPORT_PV_BRAND,        "1",    // means Hoymiles
+        ZENDURE_REPORT_PV_AUTO_MODEL,   "0",    // we did static setup
+        ZENDURE_REPORT_SMART_MODE,      "0"     // disable smart mode
+    );
+
+    // if running in OnlyOnce mode, forget about write topic to prevent it will ever be written again
     if (config.Battery.Zendure.ControlMode == BatteryZendureConfig::ControlMode::ControlModeOnce) {
-        _payloadSettings.clear();
         _topicWrite.clear();
     }
 }
@@ -323,7 +312,6 @@ void Provider::checkChargeThrough(uint32_t predictHours /* = 0 */)
     if (!config.Battery.Zendure.ChargeThroughEnable) {
         return;
     }
-
 
     // hard charge through will start after configured interval (given in hours)
     auto hardChargeThrough = config.Battery.Zendure.ChargeThroughInterval;
@@ -424,6 +412,26 @@ uint16_t Provider::setInverterMax(uint16_t limit) const
     return limit;
 }
 
+void Provider::setBuzzer(bool enable) const
+{
+    if (_topicWrite.isEmpty() || !alive() || _stats->_buzzer == enable) {
+        return;
+    }
+
+    publishProperty(_topicWrite, ZENDURE_REPORT_BUZZER_SWITCH, String(enable ? "1" : "0"));
+    DTU_LOGD("%s buzzer", enable ? "Enabling" : "Disabling");
+}
+
+void Provider::setAutoshutdown(bool enable) const
+{
+    if (_topicWrite.isEmpty() || !alive() || _stats->_auto_shutdown == enable) {
+        return;
+    }
+
+    publishProperty(_topicWrite, ZENDURE_REPORT_AUTO_SHUTDOWN, String(enable ? "1" : "0"));
+    DTU_LOGD("%s autoshutdown", enable ? "Enabling" : "Disabling");
+}
+
 void Provider::shutdown() const
 {
     if (!_topicWrite.isEmpty()) {
@@ -465,8 +473,8 @@ void Provider::publishProperties(const String& topic, Arg&&... args) const
 void Provider::timesync()
 {
     time_t now;
-    if (!_baseTopic.isEmpty() && Utils::getEpoch(&now)) {
-        MqttSettings.publishGeneric("iot" + _baseTopic + "time-sync/reply", "{\"zoneOffset\": \"+00:00\", \"messageId\": " + String(++_messageCounter) + ", \"timestamp\": " + String(now) + "}", false, 0);
+    if (!_topicTimesyncReply.isEmpty() && Utils::getEpoch(&now)) {
+        MqttSettings.publishGeneric(_topicTimesyncReply, "{\"zoneOffset\": \"+00:00\", \"messageId\": " + String(++_messageCounter) + ", \"timestamp\": " + String(now) + "}", false, 0);
         DTU_LOGD("Timesync Reply");
     }
 }
@@ -558,7 +566,7 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
         DTU_LOGE("Invalid or missing 'messageId' in '%s'", logValue.c_str());
         return;
     }
-    if (!json["deviceId"].as<String>().equals(_deviceId)) {
+    if (!json["deviceId"].as<String>().equals(Configuration.get().Battery.Zendure.DeviceId)) {
         DTU_LOGE("Invalid or missing 'deviceId' in '%s'", logValue.c_str());
         return;
     }
@@ -770,7 +778,7 @@ void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& pro
     // validate input data
     // deviceId has to be set to the configured deviceId
     // logType has to be set to "2"
-    if (!json["deviceId"].as<String>().equals(_deviceId)) {
+    if (!json["deviceId"].as<String>().equals(Configuration.get().Battery.Zendure.DeviceId)) {
         DTU_LOGE("Invalid or missing 'deviceId' in '%s'", logValue.c_str());
         return;
     }
