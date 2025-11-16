@@ -1133,8 +1133,21 @@
         "EnableEmergencyCharge": "Notfallladen",
         "EnableEmergencyChargeHint": "Batterie wird mit maximaler Leistung geladen wenn durch das Batterie BMS angefordert",
         "targetPowerConsumption": "Angestrebter Netzbezug",
-        "targetPowerConsumptionHint": "Bei positiven Werten wird die eingestellte Leistung aus dem Stromnetz bezogen. Bei negativen Werten wird das Netzteil vorzeitig abgeschaltet."
-    },
+        "targetPowerConsumptionHint": "Bei positiven Werten wird die eingestellte Leistung aus dem Stromnetz bezogen. Bei negativen Werten wird das Netzteil vorzeitig abgeschaltet.",
+        "ProviderHTTP": "AC Charger an Smart Steckerdose via HTTP request",
+        "HTTPipAddress": "Url mit IP-Adresse oder Hostname",
+        "HTTPuriON": "Uri zum Einschalten des Kontaktes",
+        "HTTPuriOFF": "Uri zum Ausschalten des Kontaktes",
+        "HTTPuriSTATS": "Uri zum Auslesen des Zustandes",
+        "HTTPuriPOWERPARAM": "Wert mit dem Inhalt Leistung",
+        "HTTPAddressHint": "URL mit Ip oder voller Hostname des smart plugs z.b. http://192.168.2.100 oder https://HTTP123.domain.local",
+        "HTTPuriONHint": "URi welche zum Einschalten des Kontaktes angehängt wird, mit führendem /",
+        "HTTPuriOFFHint": "URi welche zum Einschalten des Kontaktes angehängt wird, mit führendem /",
+        "HTTPuriSTATSHint": "URi welche zum Auslesen des Zustandes und der Leistung des Kontaktes angehängt wird, mit führendem /",
+        "HTTPuriPOWERPARAMHint": "Wert der den Leistungswert markiert",
+        "HTTPSettings": "AC Charger via HTTP Einstellungen",
+        "HTTPAcPower": "AC Leistung des angeschlossenen Ladegeräts"
+        },
     "battery": {
         "battery": "Batterie",
         "FwVersion": "Firmware-Version",

@@ -16,6 +16,15 @@ export interface GridChargerHuaweiConfig {
     fan_offline_full_speed: boolean;
 }
 
+export interface GridChargerHTTPConfig {
+    url: string;
+    uri_on: string;
+    uri_off: string;
+    uri_stats: string;
+    uri_powerparam: string;
+    AcPower: number;
+}
+
 export interface GridChargerConfig {
     enabled: boolean;
     provider: number;
@@ -31,4 +40,5 @@ export interface GridChargerConfig {
     can: GridChargerCanConfig;
     huawei: GridChargerHuaweiConfig;
     trucki: GridChargerTruckiConfig;
+    HTTP: GridChargerHTTPConfig;
 }

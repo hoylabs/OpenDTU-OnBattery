@@ -84,6 +84,63 @@
                         />
                     </template>
 
+                    <template v-if="gridChargerConfigList.provider === 2">
+                        <InputElement
+                            :label="$t('gridchargeradmin.IpAddress')"
+                            :tooltip="$t('gridchargeradmin.HTTPipAddressHint')"
+                            v-model="gridChargerConfigList.HTTP.url"
+                            placeholder="http://192.168.2.153"
+                            type="text"
+                            wide
+                        />
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPuriON')"
+                            v-model="gridChargerConfigList.HTTP.uri_on"
+                            :tooltip="$t('gridchargeradmin.HTTPuriONHint')"
+                            placeholder="/relay/0?turn=on"
+                            type="text"
+                            wide
+                        />
+
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPuriOFF')"
+                            v-model="gridChargerConfigList.HTTP.uri_off"
+                            :tooltip="$t('gridchargeradmin.HTTPuriOFFHint')"
+                            placeholder="/relay/0?turn=off"
+                            type="text"
+                            wide
+                        />
+
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPuriSTATS')"
+                            v-model="gridChargerConfigList.HTTP.uri_stats"
+                            :tooltip="$t('gridchargeradmin.HTTPuriSTATSHint')"
+                            placeholder="/relay/0?turn=stats"
+                            type="text"
+                            wide
+                        />
+
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPuriPOWERPARAM')"
+                            v-model="gridChargerConfigList.HTTP.uri_powerparam"
+                            :tooltip="$t('gridchargeradmin.HTTPuriPOWERPARAMHint')"
+                            placeholder="apower"
+                            type="text"
+                            wide
+                        />
+
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPAcPower')"
+                            v-model="gridChargerConfigList.HTTP.AcPower"
+                            placeholder="500"
+                            postfix="W"
+                            type="number"
+                            wide
+                            required
+                        />
+
+                    </template>
+
                     <InputElement
                         :label="$t('gridchargeradmin.EnableAutoPower')"
                         v-model="gridChargerConfigList.auto_power_enabled"
@@ -289,6 +346,7 @@ export default defineComponent({
             providerTypeList: [
                 { key: 0, value: 'Huawei' },
                 { key: 1, value: 'Trucki' },
+                { key: 2, value: 'HTTP' },
             ],
             frequencyTypeList: [
                 { key: 8, value: 8000000 },
