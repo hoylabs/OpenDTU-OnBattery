@@ -1147,7 +1147,7 @@
         "HTTPuriPOWERPARAMHint": "Wert der den Leistungswert markiert",
         "HTTPSettings": "AC Charger via HTTP Einstellungen",
         "HTTPAcPower": "AC Leistung des angeschlossenen Ladegeräts"
-        },
+    },
     "battery": {
         "battery": "Batterie",
         "FwVersion": "Firmware-Version",
