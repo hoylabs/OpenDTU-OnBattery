@@ -161,7 +161,7 @@
                         <InputElement
                             :label="$t('powerlimiteradmin.AllowStandby')"
                             :tooltip="$t('powerlimiteradmin.AllowStandbyHint')"
-                            v-if="inv.power_source == 2"
+                            v-if="inv.power_source == 2 || inv.power_source == 0"
                             v-model="inv.allow_standby"
                             type="checkbox"
                             wide
