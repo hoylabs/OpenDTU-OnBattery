@@ -737,6 +737,8 @@
         "UpperPowerLimit": "Maximales Leistungslimit",
         "UpperPowerLimitHint": "Der Wechselrichter wird stets so eingestellt, dass höchstens diese Ausgangsleistung erreicht wird. Dieser Wert muss so gewählt werden, dass die Strombelastbarkeit der AC-Anschlussleitungen eingehalten wird.",
         "AllowStandby": "Standby erlauben",
+        "UseATF": "ATF aktivieren",
+        "UseATFHint": "ATF (Adaptive Transfer Function) ersetzt die lineare Berechnung des prozentualen Limits aus der Leistung. Damit ist es z.B. möglich einen HM-Inverter an 24VDC ohne Einschränkungen zu betreiben. ATF benötigt nach der Aktivierung etwas Zeit für die automatische Anpassung an den Inverter. Diese Option kann für maximal 2 Inverter aktiviert werden.",
         "AllowStandbyHint": "Erlaubt dem Wechselrichter in Standby zu gehen, wenn das berechnete Leistungslimit unter dem minimalen Leistungslimit liegt. Ansonsten wird der Wechselrichter auf das minimale Leistungslimit gesetzt.",
         "SocThresholds": "Batterie State of Charge (SoC) Schwellwerte",
         "IgnoreSoc": "Nur Spannungs-Schwellwerte nutzen",
