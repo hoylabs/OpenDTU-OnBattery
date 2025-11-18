@@ -224,6 +224,7 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
         t["power_source"] = s.PowerSource;
         t["use_overscaling_to_compensate_shading"] = s.UseOverscaling;
         t["allow_standby"] = s.AllowStandby;
+        t["use_atf"] = s.UseATF;
         t["lower_power_limit"] = s.LowerPowerLimit;
         t["upper_power_limit"] = s.UpperPowerLimit;
     }
@@ -672,6 +673,7 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
         inv.PowerSource = s["power_source"] | PowerLimiterInverterConfig::InverterPowerSource::Battery;
         inv.UseOverscaling = s["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING;
         inv.AllowStandby = s["allow_standby"] | POWERLIMITER_ALLOW_STANDBY;
+        inv.UseATF = s["use_atf"] | false;
         inv.LowerPowerLimit = s["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
         inv.UpperPowerLimit = s["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
     }

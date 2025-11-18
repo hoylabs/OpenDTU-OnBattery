@@ -149,6 +149,7 @@ struct POWERLIMITER_INVERTER_CONFIG_T {
     bool IsBehindPowerMeter;
     bool UseOverscaling;
     bool AllowStandby;
+    bool UseATF;
     uint16_t LowerPowerLimit;
     uint16_t UpperPowerLimit;
 
