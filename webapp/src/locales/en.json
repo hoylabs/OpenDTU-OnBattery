@@ -1138,7 +1138,7 @@
         "EnableEmergencyChargeHint": "Battery charged with maximum power if requested by Battery BMS",
         "targetPowerConsumption": "Target power consumption",
         "targetPowerConsumptionHint": "Postitive values use grid power to charge the battery. Negative values result in early shutdown",
-        "ProviderHTTP": "AC Charger an Smart Steckerdose via HTTP request",
+        "ProviderHTTP": "AC Charger via Smart Plug (HTTP request)",
         "HTTPipAddress": "URL with IP address or hostname",
         "HTTPuriON": "URI to switch on the contact",
         "HTTPuriOFF": "URI to switch off the contact",

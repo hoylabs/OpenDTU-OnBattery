@@ -1142,7 +1142,7 @@
         "HTTPuriPOWERPARAM": "Wert mit dem Inhalt Leistung",
         "HTTPAddressHint": "URL mit Ip oder voller Hostname des smart plugs z.b. http://192.168.2.100 oder https://HTTP123.domain.local",
         "HTTPuriONHint": "URi welche zum Einschalten des Kontaktes angehängt wird, mit führendem /",
-        "HTTPuriOFFHint": "URi welche zum Einschalten des Kontaktes angehängt wird, mit führendem /",
+        "HTTPuriOFFHint": "URi welche zum Ausschalten des Kontaktes angehängt wird, mit führendem /",
         "HTTPuriSTATSHint": "URi welche zum Auslesen des Zustandes und der Leistung des Kontaktes angehängt wird, mit führendem /",
         "HTTPuriPOWERPARAMHint": "Wert der den Leistungswert markiert",
         "HTTPSettings": "AC Charger via HTTP Einstellungen",

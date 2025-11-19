@@ -294,6 +294,10 @@ void Provider::pollData()
     {
         powerstate=true;
     }
+    else
+    {
+        powerstate=false;
+    }
     // Update data points
     {
         auto scopedLock = _dataCurrent.lock();
