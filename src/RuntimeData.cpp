@@ -12,9 +12,10 @@
  * How to use:
  *  - Runtime data must be added in the read() and write() methods.
  *  - To avoid reenter deadlocks, do not call write() or read() from a locally locked mutex to save locally data on demand!
- *  - Use requestWriteOnNextTaskLoop() to avoid deadlocks if you want to save locally data on demand.
+ *  - Use requestWriteOnNextTaskLoop() and requestReadOnNextTaskLoop() to avoid deadlocks if you want to handle locally data on demand.
  *
  * 2025.09.11 - 1.0 - first version
+ * 2025.12.01 - 1.1 - added read mode ON_DEMAND
  */
 
 #include <Utils.h>
@@ -59,6 +60,13 @@ void RuntimeClass::loop(void)
     if (_writeNow || getWriteTrigger()) {
         _writeNow = false;
         write(0); // no freeze time.
+    }
+
+    // check if we need to read the runtime data on request
+    // for example, if some data is not available during startup
+    if (_readNow) {
+        _readNow = false;
+        read(ReadMode::ON_DEMAND); // read data that can be read on demand
     }
 }
 
@@ -133,8 +141,10 @@ bool RuntimeClass::write(uint16_t const freezeMinutes)
 
 /*
  * Read the runtime data from LittleFS file
+ * mode = START_UP: read data that can be initialized during startup
+ * mode = ON_DEMAND: read data that can not be read during startup
  */
-bool RuntimeClass::read(void)
+bool RuntimeClass::read(ReadMode const mode)
 {
     bool readOk = false;
     JsonDocument doc;
@@ -158,8 +168,13 @@ bool RuntimeClass::read(void)
     } // mutex is automatically released when lock goes out of this scope
 
     // deserialize additional runtime data here, prepare default values and protect the shared data with a local mutex
-    PowerLimiter.deserializeRTD(doc["power_limiter"]);
-    
+    // use mode == 0 for all data that can be initialized during startup
+    if (mode == ReadMode::START_UP) {
+        PowerLimiter.deserializeRTD(doc["power_limiter"]);
+    } else {
+        ;
+    }
+
 
     if (fRuntime) { fRuntime.close(); }
     if (readOk) {
