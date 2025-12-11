@@ -437,6 +437,17 @@ struct CONFIG_T {
         PowerMeterUdpVictronConfig UdpVictron;
     } PowerMeter;
 
+    struct InverterMeterConfig {
+        bool Enabled;
+        uint32_t Source;
+        uint64_t Serial;
+        PowerMeterMqttConfig Mqtt;
+        PowerMeterSerialSdmConfig SerialSdm;
+        PowerMeterHttpJsonConfig HttpJson;
+        PowerMeterHttpSmlConfig HttpSml;
+        PowerMeterUdpVictronConfig UdpVictron;
+    } InverterMeter;
+
     PowerLimiterConfig PowerLimiter;
 
     BatteryConfig Battery;
