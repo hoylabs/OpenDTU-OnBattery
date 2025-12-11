@@ -34,6 +34,7 @@ public:
         InverterStatsPending,
         UnconditionalSolarPassthrough,
         Stable,
+        InverterPowerMeterPending,
     };
 
     void init(Scheduler& scheduler);

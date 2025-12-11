@@ -309,7 +309,8 @@ uint16_t PowerLimiterInverter::getConfiguredMaxPowerWatts() const
 
 uint16_t PowerLimiterInverter::getCurrentOutputAcWatts() const
 {
-    return _spInverter->Statistics()->getChannelFieldValue(TYPE_AC, CH0, FLD_PAC);
+    if (_oInverterMeterPower.has_value()) { return _oInverterMeterPower.value();} // use the external inverter meter
+    return _spInverter->Statistics()->getChannelFieldValue(TYPE_AC, CH0, FLD_PAC); // use the inverter stats
 }
 
 uint16_t PowerLimiterInverter::getExpectedOutputAcWatts() const
@@ -446,4 +447,23 @@ char PowerLimiterInverter::mpptName(MpptNum_t mppt)
         default:
             return '?';
     }
+}
+
+bool PowerLimiterInverter::setCurrentOutputAcWatts(float power, uint32_t timestamp) {
+
+    auto oStatsMillis = getLatestStatsMillis();
+    if ((power <= 0.0f) || timestamp == 0|| !oStatsMillis.has_value() || !isEligible()) {
+        _oInverterMeterPower = std::nullopt;
+        return true; // longer waiting makes no sense
+    }
+
+    // todo: use inverter meter delay time instead of fixed 2 seconds?
+    auto nowMillis = millis();
+    if (((nowMillis - timestamp) > (nowMillis - oStatsMillis.value() + 2000))) {
+        _oInverterMeterPower = std::nullopt;
+        return false; // we want to wait longer for a newer value
+    }
+
+    _oInverterMeterPower = power;
+    return true; // ok, now we have a valid value
 }

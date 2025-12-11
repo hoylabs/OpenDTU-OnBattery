@@ -29,6 +29,7 @@
 #include "Utils.h"
 #include "WebApi.h"
 #include <powermeter/Controller.h>
+#include <invertermeter/Controller.h>
 #include "PowerLimiter.h"
 #include "defaults.h"
 #include <solarcharger/Controller.h>
@@ -149,6 +150,7 @@ void setup()
     // OpenDTU-OnBattery-specific initializations go between here...
     SolarCharger.init(scheduler);
     PowerMeter.init(scheduler);
+    InverterMeter.init(scheduler);
     PowerLimiter.init(scheduler);
     GridCharger.init(scheduler);
     Battery.init(scheduler);

@@ -5,6 +5,7 @@
 #include "Datastore.h"
 #include "Configuration.h"
 #include <Hoymiles.h>
+#include "invertermeter/Controller.h"
 
 DatastoreClass Datastore;
 
@@ -91,10 +92,16 @@ void DatastoreClass::loop()
             }
         }
 
-        for (auto& c : inv->Statistics()->getChannelsByType(TYPE_AC)) {
-            if (inv->getEnablePolling()) {
-                _totalAcPowerEnabled += inv->Statistics()->getChannelFieldValue(TYPE_AC, c, FLD_PAC);
-                _totalAcPowerDigits = max<unsigned int>(_totalAcPowerDigits, inv->Statistics()->getChannelFieldDigits(TYPE_AC, c, FLD_PAC));
+        auto oACPower = InverterMeter.getPower(inv->serial());
+        if (oACPower.has_value()) {
+            _totalAcPowerEnabled += *oACPower;
+            _totalAcPowerDigits = max<unsigned int>(_totalAcPowerDigits,  1);
+        } else {
+            for (auto& c : inv->Statistics()->getChannelsByType(TYPE_AC)) {
+                if (inv->getEnablePolling()) {
+                    _totalAcPowerEnabled += inv->Statistics()->getChannelFieldValue(TYPE_AC, c, FLD_PAC);
+                    _totalAcPowerDigits = max<unsigned int>(_totalAcPowerDigits, inv->Statistics()->getChannelFieldDigits(TYPE_AC, c, FLD_PAC));
+                }
             }
         }
 

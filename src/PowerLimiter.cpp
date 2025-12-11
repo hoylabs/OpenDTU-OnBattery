@@ -6,6 +6,7 @@
 #include <battery/Controller.h>
 #include <battery/Stats.h>
 #include <powermeter/Controller.h>
+#include <invertermeter/Controller.h>
 #include "PowerLimiter.h"
 #include "Configuration.h"
 #include "MqttSettings.h"
@@ -55,7 +56,7 @@ frozen::string const& PowerLimiterClass::getStatusText(PowerLimiterClass::Status
 {
     static const frozen::string missing = "programmer error: missing status text";
 
-    static const frozen::map<Status, frozen::string, 11> texts = {
+    static const frozen::map<Status, frozen::string, 12> texts = {
         { Status::Initializing, "initializing (should not see me)" },
         { Status::DisabledByConfig, "disabled by configuration" },
         { Status::DisabledByMqtt, "disabled by MQTT" },
@@ -67,6 +68,7 @@ frozen::string const& PowerLimiterClass::getStatusText(PowerLimiterClass::Status
         { Status::InverterStatsPending, "waiting for sufficiently recent inverter data" },
         { Status::UnconditionalSolarPassthrough, "unconditionally passing through all solar power (MQTT override)" },
         { Status::Stable, "the system is stable, the last power limit is still valid" },
+        { Status::InverterPowerMeterPending, "waiting for sufficiently recent inverter power meter data" },
     };
 
     auto iter = texts.find(status);
@@ -201,13 +203,19 @@ void PowerLimiterClass::loop()
         return unconditionalFullSolarPassthrough();
     }
 
-    // if the power meter is being used, i.e., if its data is valid, we want to
-    // wait for a new reading after adjusting the inverter limit. otherwise, we
-    // proceed as we will use a fallback limit independent of the power meter.
-    // the power meter reading is expected to be at most 2 seconds old when it
-    // arrives. this can be the case for readings provided by networked meter
-    // readers, where a packet needs to travel through the network for some
-    // time after the actual measurement was done by the reader.
+    // if an external inverter power meter is being used, i.e., if its data is valid, we want to
+    // wait a certain time for a new reading after adjusting the inverter limit.
+    // however, if the time is over, we proceed and use the internal inverter measurement.
+    if (config.InverterMeter.Enabled) {
+        for (auto& upInv : _inverters) {
+            auto power = InverterMeter.getPower(upInv->getSerial()).value_or(0.0f);
+            auto time = InverterMeter.getTime(upInv->getSerial());
+            if (!upInv->setCurrentOutputAcWatts(power, time)) {
+                return announceStatus(Status::InverterPowerMeterPending);
+            }
+        }
+    }
+
     if (PowerMeter.isDataValid() && PowerMeter.getLastUpdate() <= (latestInverterStats + 2000)) {
         return announceStatus(Status::PowerMeterPending);
     }
