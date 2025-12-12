@@ -12,6 +12,7 @@
         "DeviceManager": "Device-Manager",
         "SolarChargerSettings": "Solar Charger",
         "PowerMeterSettings": "Power Meter",
+        "InverterMeterSettings": "Inverter Meter",
         "BatterySettings": "Battery",
         "AcChargerSettings": "AC Charger",
         "ConfigManagement": "Config Management",
@@ -673,6 +674,13 @@
         "testHttpSmlRequest": "Send HTTP(S) request and process response",
         "HTTP_SML": "Configuration",
         "UDP_VICTRON": "Configuration"
+    },
+    "invertermeteradmin": {
+        "InverterMeterSettings": "Inverter Meter Settings",
+        "InverterMeterConfiguration": "Inverter Meter Configuration",
+        "InverterMeterEnable": "Enable Inverter Meter",
+        "InverterMeterSource": "Inverter Meter Type",
+        "Serial": "Inverter Serial Number"
     },
     "httprequestsettings": {
         "url": "URL",

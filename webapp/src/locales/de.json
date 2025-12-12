@@ -12,6 +12,7 @@
         "DeviceManager": "Hardware",
         "SolarChargerSettings": "Solarladeregler",
         "PowerMeterSettings": "Stromzähler",
+        "InverterMeterSettings": "Wechselrichter-Stromzähler",
         "BatterySettings": "Batterie",
         "AcChargerSettings": "AC-Ladegerät",
         "ConfigManagement": "Konfigurationsverwaltung",
@@ -673,6 +674,13 @@
         "testHttpSmlRequest": "HTTP(S)-Anfrage senden und Antwort verarbeiten",
         "HTTP_SML": "HTTP(S) + SML - Konfiguration",
         "UDP_VICTRON": "Victron VM-3P75CT (Modbus UDP) - Konfiguration"
+    },
+    "invertermeteradmin": {
+        "InverterMeterSettings": "Wechselrichter-Stromzähler Einstellungen",
+        "InverterMeterConfiguration": "Wechselrichter-Stromzähler Konfiguration",
+        "InverterMeterEnable": "Aktiviere Wechselrichter-Stromzähler",
+        "InverterMeterSource": "Wechselrichter-Stromzählertyp",
+        "Serial": "Wechselrichter-Seriennummer"
     },
     "httprequestsettings": {
         "url": "URL",
