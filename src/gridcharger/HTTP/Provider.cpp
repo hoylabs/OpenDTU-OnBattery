@@ -229,12 +229,16 @@ void Provider::powerControlLoop()
                 DTU_LOGV("Current battery SoC %i reached stop threshold %i", _batterySoC, config.GridCharger.AutoPowerStopBatterySoCThreshold);
                 PowerOFF();
                 _autoPowerEnabled = false;
+                powerstate=false;
+                return;
             }
             // Don't run auto mode some time to allow for output stabilization after issuing a new value
             _autoModeBlockedTillMillis = millis() + 19900;
         } else if (powerstate){
             _autoPowerEnabled = false;
             PowerOFF();
+            powerstate=false;
+            return;
         }
 
         // We have received a new PowerMeter value. Also we're _autoPowerEnabled
