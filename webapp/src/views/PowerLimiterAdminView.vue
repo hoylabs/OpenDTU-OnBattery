@@ -542,8 +542,7 @@ export default defineComponent({
         isATFFull(): boolean {
             let full = false;
             for (const inv of this.powerLimiterConfigList.inverters) {
-                if ( inv.use_atf)
-                {
+                if (inv.use_atf) {
                     // currently ATF is limited to 1 inverter only
                     full = true;
                     break;

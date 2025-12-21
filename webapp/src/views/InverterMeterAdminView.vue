@@ -43,12 +43,10 @@
                         maxlength="32"
                         wide
                     />
-
                 </template>
             </CardElement>
 
             <template v-if="inverterMeterConfigList.enabled">
-
                 <!-- yarn linter wants us to not combine v-if with v-for, so we need to wrap the CardElements //-->
                 <template v-if="inverterMeterConfigList.source === 0">
                     <CardElement
