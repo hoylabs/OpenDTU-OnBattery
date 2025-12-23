@@ -358,9 +358,7 @@ void InverterATF::deserializeATFData(JsonObject obj) {
             if (newValue < 0.0f) { newValue = 0.0f; }
             if (newValue > _maxInvPower) { newValue = _maxInvPower; }
 
-            #ifndef DEBUG_LOGGING
             _realPower[idx] = newValue;
-            #endif
 
             ++idx;
         }
@@ -396,7 +394,9 @@ void InverterATF::printATFReport(char const* serialStr) const {
     size_t constexpr columnWidth = 5;
     size_t constexpr columnMaxNr = 20;
     size_t constexpr rowMaxNr = 5;
-    char cBuffer[columnMaxNr * columnWidth + 10];
+    static constexpr size_t  kTableWidth = columnMaxNr * columnWidth + 10;
+
+    char cBuffer[kTableWidth];
 
     for (auto row = 0; row < rowMaxNr; ++row) {
         for (auto kind = 0; kind < 2; ++kind) {
