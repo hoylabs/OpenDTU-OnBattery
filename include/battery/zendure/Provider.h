@@ -56,6 +56,8 @@ private:
 
     void publishPersistentSettings(const char* subtopic, const String& payload);
 
+    void setTopics(const String& deviceType, const String& deviceId);
+
     uint32_t _rateFullUpdateMs = 0;
     uint64_t _nextFullUpdate = 0;
 
@@ -75,18 +77,6 @@ private:
     String _topicTimesync = String();
     String _topicTimesyncReply = String();
     String _topicPersistentSettings = String();
-
-    void setTopics(const String& deviceType, const String& deviceId) {
-        String baseTopic = "/" + deviceType + "/" + deviceId + "/";
-
-        _topicRead   = "iot" + baseTopic + "properties/read";
-        _topicWrite  = "iot" + baseTopic + "properties/write";
-        _topicLog    = baseTopic + "log";
-        _topicReport = baseTopic + "properties/report";
-
-        _topicTimesync      = baseTopic + "time-sync";
-        _topicTimesyncReply = "iot" + baseTopic + "time-sync/reply";
-    }
 
     String _payloadFullUpdate = String();
 

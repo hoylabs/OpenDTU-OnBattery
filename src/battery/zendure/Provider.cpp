@@ -137,6 +137,18 @@ bool Provider::init()
     return true;
 }
 
+void Provider::setTopics(const String& deviceType, const String& deviceId) {
+    String baseTopic = "/" + deviceType + "/" + deviceId + "/";
+
+    _topicRead   = "iot" + baseTopic + "properties/read";
+    _topicWrite  = "iot" + baseTopic + "properties/write";
+    _topicLog    = baseTopic + "log";
+    _topicReport = baseTopic + "properties/report";
+
+    _topicTimesync      = baseTopic + "time-sync";
+    _topicTimesyncReply = "iot" + baseTopic + "time-sync/reply";
+}
+
 void Provider::deinit()
 {
     if (!_topicReport.isEmpty()) {
@@ -373,7 +385,7 @@ uint16_t Provider::setOutputLimit(uint16_t limit) const
     if (_stats->_output_limit != limit) {
         limit = calcOutputLimit(limit);
         publishProperty(_topicWrite, ZENDURE_REPORT_OUTPUT_LIMIT, String(limit));
-        DTU_LOGD("Adjusting outputlimit from %" PRIu32 " W to %" PRIu32 " W", _stats->_output_limit, limit);
+        DTU_LOGD("Adjusting outputlimit from %" PRIu16 " W to %" PRIu16 " W", _stats->_output_limit, limit);
     }
 
     return limit;
@@ -387,13 +399,13 @@ void Provider::setBypassMode(BatteryZendureConfig::BypassMode_t mode) const
 
     if (_stats->_bypass_mode != mode) {
         publishProperty(_topicWrite, ZENDURE_REPORT_BYPASS_MODE, String(static_cast<uint8_t>(mode)));
-        DTU_LOGD("Adjusting bypassmode from %" PRIu32 " to %" PRIu32 "", _stats->_bypass_mode, mode);
+        DTU_LOGD("Adjusting bypassmode from %" PRIu8 " to %" PRIu8 "", _stats->_bypass_mode, mode);
     }
 
     bool recover = (mode == BatteryZendureConfig::BypassMode_t::Automatic);
     if (_stats->_auto_recover != recover) {
         publishProperty(_topicWrite, ZENDURE_REPORT_AUTO_RECOVER, String(static_cast<uint8_t>(recover)));
-        DTU_LOGD("Adjusting autorecover from %" PRIu32 " to %" PRIu32 "", _stats->_auto_recover, recover);
+        DTU_LOGD("Adjusting autorecover from %" PRIu8 " to %" PRIu8 "", _stats->_auto_recover, recover);
     }
 }
 
@@ -406,7 +418,7 @@ uint16_t Provider::setInverterMax(uint16_t limit) const
     if (_stats->_inverse_max != limit) {
         limit = calcOutputLimit(limit);
         publishProperty(_topicWrite, ZENDURE_REPORT_INVERSE_MAX_POWER, String(limit));
-        DTU_LOGD("Adjusting inverter max output from %" PRIu32 " W to %" PRIu32 " W", _stats->_inverse_max, limit);
+        DTU_LOGD("Adjusting inverter max output from %" PRIu16 " W to %" PRIu16 " W", _stats->_inverse_max, limit);
     }
 
     return limit;
@@ -904,7 +916,7 @@ String Provider::parseVersion(uint32_t version)
     uint8_t bugfix = version & 0xFF;
 
     char buffer[16];
-    snprintf(buffer, sizeof(buffer), "%" PRIu32 ".%" PRIu32 ".%" PRIu32, major, minor, bugfix);
+    snprintf(buffer, sizeof(buffer), "%" PRIu8 ".%" PRIu8 ".%" PRIu8, major, minor, bugfix);
     return String(buffer);
 }
 
