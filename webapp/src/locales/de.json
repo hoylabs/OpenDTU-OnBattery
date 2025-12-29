@@ -856,7 +856,8 @@
             "clientId": "Client Identifikation",
             "appKey": "Applikations Schlüssel",
             "apiDescription": "Weitere Informationen zur Zendure Entwickler Schnittstelle sind im <a href=\"https://github.com/Zendure/developer-device-data-report\" target=\"_blank\">Official Zendure Repository</a> zu finden",
-            "secret": "Geheimnis"
+            "secret": "Geheimnis",
+            "socMinWarning": "Der eingestellte minimale Ladezustand ({soc}%) ist kleiner als der empfohlene Mindestwert von {min}%. Dies kann zu einer Beschädigung der Batterie führen."
         }
     },
     "inverteradmin": {

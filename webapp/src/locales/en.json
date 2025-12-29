@@ -857,7 +857,8 @@
             "clientId": "Client ID",
             "appKey": "Application Key",
             "apiDescription": "Please refer the <a href=\"https://github.com/Zendure/developer-device-data-report\" target=\"_blank\">Official Zendure Repository</a> for further information about the Zendudure Cloud API.",
-            "secret": "Secret"
+            "secret": "Secret",
+            "socMinWarning": "The configured minimum charge level ({soc}%) is below the recommended minimum of {min}%. This can lead to battery damage."
         }
     },
     "inverteradmin": {

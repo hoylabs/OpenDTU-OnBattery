@@ -473,6 +473,22 @@
                                 step="1"
                                 :postfix="$t('batteryadmin.Percent')"
                             />
+                            <div class="row">
+                                <div class="col-sm-2"></div>
+                                <div class="col-sm-10">
+                                    <div
+                                        v-if="batteryConfigList.zendure.soc_min >= 0 && batteryConfigList.zendure.soc_min < 10"
+                                        class="alert alert-warning"
+                                        role="alert"
+                                        v-html="
+                                            $t('batteryadmin.zendure.socMinWarning', {
+                                                soc: batteryConfigList.zendure.soc_min,
+                                                min: 10,
+                                            })
+                                        "
+                                    ></div>
+                                </div>
+                            </div>
                             <InputElement
                                 :label="$t('batteryadmin.ZendureMaxSoc')"
                                 v-model="batteryConfigList.zendure.soc_max"
