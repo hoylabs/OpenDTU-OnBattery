@@ -24,6 +24,8 @@ export interface BatteryZendureConfig {
     client_id: string;
     app_key: string;
     secret: string;
+    battery_protection_enable: boolean;
+    min_soc_hysteresis: number;
 }
 
 export interface BatteryMqttConfig {

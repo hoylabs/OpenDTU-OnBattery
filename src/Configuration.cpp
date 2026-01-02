@@ -164,6 +164,8 @@ void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig cons
     target["client_id"] = source.ClientId;
     target["app_key"] = source.AppKey;
     target["secret"] = source.Secret;
+    target["battery_protection_enable"] = source.BatteryProtectionEnable;
+    target["min_soc_hysteresis"] = source.MinSoCHysteresis;
 }
 
 void ConfigurationClass::serializeBatteryMqttConfig(BatteryMqttConfig const& source, JsonObject& target)
@@ -604,6 +606,8 @@ void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& sourc
     strlcpy(target.ClientId, source["client_id"] | NetworkSettings.getApName().substring(0,ZENDURE_MAX_CLIENTID_STRLEN).c_str(), sizeof(target.ClientId));
     strlcpy(target.AppKey, source["app_key"] | "", sizeof(target.AppKey));
     strlcpy(target.Secret, source["secret"] | "", sizeof(target.Secret));
+    target.BatteryProtectionEnable = source["battery_protection_enable"] | BATTERY_ZENDURE_BATTERY_PROTECTION_ENABLE;
+    target.MinSoCHysteresis = source["min_soc_hysteresis"] | BATTERY_ZENDURE_MIN_SOC_HYSTERESIS;
 }
 
 void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, BatteryMqttConfig& target)

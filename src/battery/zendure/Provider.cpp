@@ -68,6 +68,46 @@ void Provider::loop()
         return;
     }
 
+    if (!_topicRead.isEmpty() && !_payloadFullUpdate.isEmpty() && ms >= _nextFullUpdate) {
+        _nextFullUpdate = ms + _rateFullUpdateMs;
+        MqttSettings.publishGeneric(_topicRead, _payloadFullUpdate, false, 0);
+    }
+
+    if (ms >= _nextTimesync) {
+        _nextTimesync = ms + _rateTimesyncMs;
+        timesync();
+
+        // update settings (will be skipped if unchanged)
+        setInverterMax(config.Battery.Zendure.MaxOutput);
+
+        // republish settings - just to be sure
+        writeSettings();
+    }
+
+    // prevent discharge if single pack SoC is below configured MinSoC
+    if (config.Battery.Zendure.BatteryProtectionEnable && _stats->_packSocMin.value_or(101) <= config.Battery.Zendure.MinSoC) {
+        if (_stats->_output_limit > 0 && _stats->_state == State::Discharging) {
+            DTU_LOGW("Calculated pack min SoC: %.1f %% is smaller than configured MinSoC of %" PRIu8 " %% - stop discharge!", *_stats->_packSocMin, config.Battery.Zendure.MinSoC);
+        }
+        setControlState(ControlState::BatteryProtection);
+    }
+
+    if (_stats->_controlState == ControlState::BatteryProtection) {
+        // force output limit to 0
+        setOutputLimit(0);
+
+        auto reenable_soc = config.Battery.Zendure.MinSoC + config.Battery.Zendure.MinSoCHysteresis;
+        if (_stats->_packSocMin.value_or(0) > reenable_soc) {
+            DTU_LOGI("Calculated pack min SoC: %.1f %% is above configured MinSoC+Hysteresis of %.1f %% - resume normal operation!", *_stats->_packSocMin, reenable_soc);
+            setControlState(ControlState::NormalOperation);
+        }
+    }
+
+    // must only proceed in normal operation mode
+    if (_stats->_controlState != ControlState::NormalOperation) {
+        return;
+    }
+
     // check if we run in schedule mode
     if (ms >= _nextSunCalc) {
         _nextSunCalc = ms + _rateSunCalcMs;
@@ -133,24 +173,6 @@ void Provider::loop()
                 break;
         }
 
-    }
-
-    if (!_topicRead.isEmpty()) {
-        if (!_payloadFullUpdate.isEmpty() && ms >= _nextFullUpdate) {
-            _nextFullUpdate = ms + _rateFullUpdateMs;
-            MqttSettings.publishGeneric(_topicRead, _payloadFullUpdate, false, 0);
-        }
-    }
-
-    if (ms >= _nextTimesync) {
-        _nextTimesync = ms + _rateTimesyncMs;
-        timesync();
-
-        // update settings (will be skipped if unchanged)
-        setInverterMax(config.Battery.Zendure.MaxOutput);
-
-        // republish settings - just to be sure
-        writeSettings();
     }
 }
 
@@ -235,13 +257,44 @@ uint16_t Provider::calcOutputLimit(uint16_t limit) const
     return 30 * base + 30 * remain;
 }
 
+void Provider::setControlState(ControlState mode)
+{
+    if (Configuration.get().Battery.Zendure.OutputControl == BatteryZendureConfig::OutputControl_t::ControlNone) {
+        return;
+    }
+
+    if (_stats->_controlState == mode) {
+        return;
+    }
+
+    DTU_LOGD("Setting control state to '%s'!", Stats::controlStateToString(mode));
+
+    switch (mode) {
+        case ControlState::NormalOperation:
+            rescheduleSunCalc();
+            break;
+        case ControlState::BatteryProtection:
+            setOutputLimit(0);
+            break;
+        default:
+            DTU_LOGW("Unknown control state '%d'!", static_cast<uint8_t>(mode));
+            return;
+    }
+
+    _stats->_controlState = mode;
+}
+
 uint16_t Provider::setOutputLimit(uint16_t limit) const
 {
     auto const& config = Configuration.get();
 
     if (config.Battery.Zendure.OutputControl == BatteryZendureConfig::OutputControl_t::ControlNone ||
-        _topicWrite.isEmpty() || !alive() ) {
+        _topicWrite.isEmpty() || !alive()) {
         return _stats->_output_limit.value_or(0);
+    }
+
+    if (_stats->_controlState == ControlState::BatteryProtection) {
+        limit = 0;
     }
 
     // keep limit below MaxOutput
@@ -466,6 +519,7 @@ void Provider::calculatePackStats(const uint64_t timestamp)
 
     size_t avg_count = 0;
     size_t soc_count = 0;
+    std::optional<float> socMin = std::nullopt;
     std::optional<float> soc = std::nullopt;
     std::optional<float> power = std::nullopt;
     std::optional<float> current = std::nullopt;
@@ -490,6 +544,7 @@ void Provider::calculatePackStats(const uint64_t timestamp)
             avg_count++;
         }
         if (pack->_soc_level.has_value()) {
+            socMin = std::min(socMin.value_or(std::numeric_limits<float>::max()), *pack->_soc_level);
             soc = soc.value_or(0) + *pack->_soc_level;
             soc_count++;
         }
@@ -500,13 +555,13 @@ void Provider::calculatePackStats(const uint64_t timestamp)
             current = current.value_or(0) + *pack->_current;
         }
         if (pack->_cell_voltage_min.has_value()) {
-            cellMin = std::min(pack->_cell_voltage_min.value_or(std::numeric_limits<uint16_t>::max()), *pack->_cell_voltage_min);
+            cellMin = std::min(cellMin.value_or(std::numeric_limits<uint16_t>::max()), *pack->_cell_voltage_min);
         }
         if (pack->_cell_voltage_max.has_value()) {
-            cellMax = std::max(pack->_cell_voltage_max.value_or(std::numeric_limits<uint16_t>::min()), *pack->_cell_voltage_max);
+            cellMax = std::max(cellMax.value_or(std::numeric_limits<uint16_t>::min()), *pack->_cell_voltage_max);
         }
         if (pack->_cell_temperature_max.has_value()) {
-            cellTemp = std::max(pack->_cell_temperature_max.value_or(std::numeric_limits<float>::min()), *pack->_cell_temperature_max);
+            cellTemp = std::max(cellTemp.value_or(std::numeric_limits<float>::min()), *pack->_cell_temperature_max);
         }
     }
 
@@ -523,6 +578,7 @@ void Provider::calculatePackStats(const uint64_t timestamp)
         _stats->setCurrent(*current, 1, timestamp);
     }
 
+    _stats->_packSocMin = socMin;
     _stats->_cellMinMilliVolt = cellMin;
     _stats->_cellMaxMilliVolt = cellMax;
     _stats->_cellTemperature = cellTemp;

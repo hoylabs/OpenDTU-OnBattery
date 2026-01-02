@@ -23,6 +23,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
     addLiveViewInSection(root, section, "availableCapacity", _capacity_avail, "Wh", 0, true);
     addLiveViewInSection(root, section, "useableCapacity", getUseableCapacity(), "Wh", 0, false);
     addLiveViewTextInSection(root, section, "zendure.mainState", "zendure.mainStates." + std::string(stateToString(_state)));
+    addLiveViewTextInSection(root, section, "zendure.controlState", "zendure.controlStates." + std::string(controlStateToString(_controlState)));
     addLiveViewBooleanInSection(root, section, "heatState", _heat_state);
     addLiveViewBooleanInSection(root, section, "bypassState", _bypass_state);
     addLiveViewTextInSection(root, section, "zendure.chargeThroughState", "zendure.chargeThroughStates." + std::string(chargeThroughStateToString(_charge_through_state)));
@@ -35,6 +36,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
     section = "settings";
     if (config.Battery.Zendure.ConnectionType != BatteryZendureConfig::ConnectionType::ZendureMqtt) {
         addLiveViewTextInSection(root, section, "controlMode", std::string(controlModeToString(config.Battery.Zendure.ControlMode)));
+        addLiveViewBooleanInSection(root, section, "zendure.batteryProtection", config.Battery.Zendure.BatteryProtectionEnable);
     }
     addLiveViewInSection(root, section, "maxInversePower", _inverse_max, "W", 0);
     addLiveViewInSection(root, section, "outputLimit", _output_limit, "W", 0);
@@ -101,6 +103,7 @@ void Stats::mqttPublish() const
     publish("battery/dischargePower", _discharge_power);
     publish("battery/heating", boolToString(_heat_state));
     publish("battery/state", String(stateToString(_state)));
+    publish("battery/controlState", String(controlStateToString(_controlState)));
     publish("battery/numPacks", _num_batteries);
     publish("battery/efficiency", _efficiency);
     publish("battery/serial", _serial);
@@ -135,6 +138,7 @@ void Stats::mqttPublish() const
 
     if (config.Battery.Zendure.ConnectionType != BatteryZendureConfig::ConnectionType::ZendureMqtt) {
         publish("battery/settings/controlMode", String(controlModeToString(config.Battery.Zendure.ControlMode)));
+        publish("battery/settings/batteryProtection", boolToString(config.Battery.Zendure.BatteryProtectionEnable));
     }
 
     publish("battery/settings/outputLimitPower", _output_limit);

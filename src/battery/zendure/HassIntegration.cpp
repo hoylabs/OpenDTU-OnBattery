@@ -19,7 +19,8 @@ void HassIntegration::publishSensors() const
     publishSensor("Charge Power", "mdi:battery-charging", "chargePower", "power", "measurement", "W");
     publishSensor("Discharge Power", "mdi:battery-discharging", "dischargePower", "power", "measurement", "W");
     publishBinarySensor("Battery Heating", NULL, "heating", "1", "0");
-    publishSensor("State", NULL, "state");
+    publishSensor("BMS State", NULL, "state");
+    publishSensor("Control State", NULL, "controlState");
     publishSensor("Number of Batterie Packs", "mdi:counter", "numPacks");
     publishSensor("Efficiency", NULL, "efficiency", NULL, "measurement", "%");
     publishSensor("Last Full Charge", "mdi:timelapse", "lastFullCharge", NULL, NULL, "h");
