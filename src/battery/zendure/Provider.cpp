@@ -21,55 +21,12 @@ bool Provider::init()
     auto const& config = Configuration.get();
     String deviceType = String();
 
-    DTU_LOGD("Settings %" PRIu8, config.Battery.Zendure.DeviceType);
-    {
-        String deviceName = String();
-        switch (config.Battery.Zendure.DeviceType) {
-            case 0:
-                deviceType = ZENDURE_HUB1200;
-                deviceName = String("SolarFlow HUB 1200");
-                _full_log_supported = true;
-                break;
-            case 1:
-                deviceType = ZENDURE_HUB2000;
-                deviceName = String("SolarFlow HUB 2000");
-                _full_log_supported = true;
-                break;
-            case 2:
-                deviceType = ZENDURE_AIO2400;
-                deviceName = String("AIO 2400");
-                break;
-            case 3:
-                deviceType = ZENDURE_ACE1500;
-                deviceName = String("SolarFlow Ace 1500");
-                break;
-            case 4:
-                deviceType = ZENDURE_HYPER2000_A;
-                deviceName = String("SolarFlow Hyper 2000");
-                break;
-            case 5:
-                deviceType = ZENDURE_HYPER2000_B;
-                deviceName = String("SolarFlow Hyper 2000");
-                break;
-            default:
-                DTU_LOGE("Invalid device type!");
-                return false;
-        }
-
-        if (strlen(config.Battery.Zendure.DeviceId) != 8) {
-            DTU_LOGE("Invalid device id '%s'!", config.Battery.Zendure.DeviceId);
-            return false;
-        }
-
-        // setup static device info
-        DTU_LOGI("Device name '%s' - LOG messages are %s supported\r\n",
-                deviceName.c_str(), (_full_log_supported ? "fully" : "partly"));
-        _stats->setDevice(std::move(deviceName));
-        _stats->setManufacturer("Zendure");
+    if (strlen(config.Battery.Zendure.DeviceId) != 8) {
+        DTU_LOGE("Invalid device id '%s'!", config.Battery.Zendure.DeviceId);
+        return false;
     }
 
-    // store device ID as we will need them for checking when receiving messages
-    setTopics(deviceType, config.Battery.Zendure.DeviceId);
+    _stats->setManufacturer("Zendure");
 
     _topicPersistentSettings = MqttSettings.getPrefix() + "battery/persistent/";
 
@@ -81,88 +38,18 @@ bool Provider::init()
             );
     DTU_LOGD("Subscribed to '%s' for persistent settings", topic.c_str());
 
-    // subscribe for log messages
-    MqttSettings.subscribe(_topicLog, 0/*QoS*/,
-            std::bind(&Provider::onMqttMessageLog,
-                this, std::placeholders::_1, std::placeholders::_2,
-                std::placeholders::_3, std::placeholders::_4)
-            );
-    DTU_LOGD("Subscribed to '%s' for status readings", _topicLog.c_str());
-
-    // subscribe for report messages
-    MqttSettings.subscribe(_topicReport, 0/*QoS*/,
-            std::bind(&Provider::onMqttMessageReport,
-                this, std::placeholders::_1, std::placeholders::_2,
-                std::placeholders::_3, std::placeholders::_4)
-            );
-    DTU_LOGD("Subscribed to '%s' for status readings", _topicReport.c_str());
-
-    // subscribe for timesync messages
-    MqttSettings.subscribe(_topicTimesync, 0/*QoS*/,
-            std::bind(&Provider::onMqttMessageTimesync,
-                this, std::placeholders::_1, std::placeholders::_2,
-                std::placeholders::_3, std::placeholders::_4)
-            );
-    DTU_LOGD("Subscribed to '%s' for timesync requests", _topicTimesync.c_str());
-
-    _rateFullUpdateMs   = config.Battery.Zendure.PollingInterval * 1000;
+    _rateFullUpdateMs   = Configuration.get().Battery.Zendure.PollingInterval * 1000;
     _nextFullUpdate     = millis() + _rateFullUpdateMs / 2;
     _rateTimesyncMs     = ZENDURE_SECONDS_TIMESYNC * 1000;
     _nextTimesync       = _nextFullUpdate;
     _rateSunCalcMs      = ZENDURE_SECONDS_SUNPOSITION * 1000;
     _nextSunCalc        = millis() + _rateSunCalcMs / 2;
 
-
-    // pre-generate the full update request
-    JsonDocument root;
-    JsonArray array = root[ZENDURE_REPORT_PROPERTIES].to<JsonArray>();
-    array.add("getAll");
-    array.add("getInfo");
-    serializeJson(root, _payloadFullUpdate);
-
-    // disable charge through cycle if disable by config
-    if (!config.Battery.Zendure.ChargeThroughEnable) {
-        setChargeThroughState(ChargeThroughState::Disabled);
-    }
-
-    // check if we are allowed to write stuff
-    if (config.Battery.Zendure.ControlMode == BatteryZendureConfig::ControlMode::ControlModeReadOnly) {
-        DTU_LOGI("Running in READ-ONLY mode");
-
-        // forget about write topic to prevent it will ever be written
-        _topicWrite.clear();
-    }
-
-    DTU_LOGI("INIT DONE");
     return true;
-}
-
-void Provider::setTopics(const String& deviceType, const String& deviceId) {
-    String baseTopic = "/" + deviceType + "/" + deviceId + "/";
-
-    _topicRead   = "iot" + baseTopic + "properties/read";
-    _topicWrite  = "iot" + baseTopic + "properties/write";
-    _topicLog    = baseTopic + "log";
-    _topicReport = baseTopic + "properties/report";
-
-    _topicTimesync      = baseTopic + "time-sync";
-    _topicTimesyncReply = "iot" + baseTopic + "time-sync/reply";
 }
 
 void Provider::deinit()
 {
-    if (!_topicReport.isEmpty()) {
-        MqttSettings.unsubscribe(_topicReport);
-        _topicReport.clear();
-    }
-    if (!_topicLog.isEmpty()) {
-        MqttSettings.unsubscribe(_topicLog);
-        _topicLog.clear();
-    }
-    if (!_topicTimesync.isEmpty()) {
-        MqttSettings.unsubscribe(_topicTimesync);
-        _topicTimesync.clear();
-    }
     if (!_topicPersistentSettings.isEmpty()) {
         MqttSettings.unsubscribe(_topicPersistentSettings + "#");
         _topicPersistentSettings.clear();
@@ -267,28 +154,6 @@ void Provider::loop()
     }
 }
 
-void Provider::writeSettings() {
-    if (_topicWrite.isEmpty()) {
-        return;
-    }
-
-    auto const& config = Configuration.get();
-
-    setBuzzer(config.Battery.Zendure.BuzzerEnable);
-    setAutoshutdown(config.Battery.Zendure.AutoShutdown);
-
-    publishProperties(_topicWrite,
-        ZENDURE_REPORT_PV_BRAND,        "1",    // means Hoymiles
-        ZENDURE_REPORT_PV_AUTO_MODEL,   "0",    // we did static setup
-        ZENDURE_REPORT_SMART_MODE,      "0"     // disable smart mode
-    );
-
-    // if running in OnlyOnce mode, forget about write topic to prevent it will ever be written again
-    if (config.Battery.Zendure.ControlMode == BatteryZendureConfig::ControlMode::ControlModeOnce) {
-        _topicWrite.clear();
-    }
-}
-
 void Provider::calculateFullChargeAge()
 {
     time_t now;
@@ -352,10 +217,10 @@ void Provider::setTargetSoCs(const float soc_min, const float soc_max)
         return;
     }
 
-    if (_stats->_soc_min != soc_min || _stats->_soc_max != soc_max) {
+    if (_stats->_soc_min.value_or(100) != soc_min || _stats->_soc_max.value_or(0) != soc_max) {
         publishProperties(_topicWrite, ZENDURE_REPORT_MIN_SOC, String(soc_min * 10, 0), ZENDURE_REPORT_MAX_SOC, String(soc_max * 10, 0));
         DTU_LOGD("Setting target minSoC from %.1f %% to %.1f %% and target maxSoC from %.1f %% to %.1f %%",
-                _stats->_soc_min, soc_min, _stats->_soc_max, soc_max);
+                _stats->_soc_min.value_or(100), soc_min, _stats->_soc_max.value_or(0), soc_max);
     }
 }
 
@@ -376,7 +241,7 @@ uint16_t Provider::setOutputLimit(uint16_t limit) const
 
     if (config.Battery.Zendure.OutputControl == BatteryZendureConfig::OutputControl_t::ControlNone ||
         _topicWrite.isEmpty() || !alive() ) {
-        return _stats->_output_limit;
+        return _stats->_output_limit.value_or(0);
     }
 
     // keep limit below MaxOutput
@@ -385,71 +250,25 @@ uint16_t Provider::setOutputLimit(uint16_t limit) const
     if (_stats->_output_limit != limit) {
         limit = calcOutputLimit(limit);
         publishProperty(_topicWrite, ZENDURE_REPORT_OUTPUT_LIMIT, String(limit));
-        DTU_LOGD("Adjusting outputlimit from %" PRIu16 " W to %" PRIu16 " W", _stats->_output_limit, limit);
+        DTU_LOGD("Adjusting outputlimit from %" PRIu16 " W to %" PRIu16 " W", _stats->_output_limit.value_or(0), limit);
     }
 
     return limit;
-}
-
-void Provider::setBypassMode(BatteryZendureConfig::BypassMode_t mode) const
-{
-    if (_topicWrite.isEmpty() || !alive()) {
-        return;
-    }
-
-    if (_stats->_bypass_mode != mode) {
-        publishProperty(_topicWrite, ZENDURE_REPORT_BYPASS_MODE, String(static_cast<uint8_t>(mode)));
-        DTU_LOGD("Adjusting bypassmode from %" PRIu8 " to %" PRIu8 "", _stats->_bypass_mode, mode);
-    }
-
-    bool recover = (mode == BatteryZendureConfig::BypassMode_t::Automatic);
-    if (_stats->_auto_recover != recover) {
-        publishProperty(_topicWrite, ZENDURE_REPORT_AUTO_RECOVER, String(static_cast<uint8_t>(recover)));
-        DTU_LOGD("Adjusting autorecover from %" PRIu8 " to %" PRIu8 "", _stats->_auto_recover, recover);
-    }
 }
 
 uint16_t Provider::setInverterMax(uint16_t limit) const
 {
     if (_topicWrite.isEmpty() || !alive()) {
-        return _stats->_inverse_max;
+        return _stats->_inverse_max.value_or(0);
     }
 
     if (_stats->_inverse_max != limit) {
         limit = calcOutputLimit(limit);
         publishProperty(_topicWrite, ZENDURE_REPORT_INVERSE_MAX_POWER, String(limit));
-        DTU_LOGD("Adjusting inverter max output from %" PRIu16 " W to %" PRIu16 " W", _stats->_inverse_max, limit);
+        DTU_LOGD("Adjusting inverter max output from %" PRIu16 " W to %" PRIu16 " W", _stats->_inverse_max.value_or(0), limit);
     }
 
     return limit;
-}
-
-void Provider::setBuzzer(bool enable) const
-{
-    if (_topicWrite.isEmpty() || !alive() || _stats->_buzzer == enable) {
-        return;
-    }
-
-    publishProperty(_topicWrite, ZENDURE_REPORT_BUZZER_SWITCH, String(enable ? "1" : "0"));
-    DTU_LOGD("%s buzzer", enable ? "Enabling" : "Disabling");
-}
-
-void Provider::setAutoshutdown(bool enable) const
-{
-    if (_topicWrite.isEmpty() || !alive() || _stats->_auto_shutdown == enable) {
-        return;
-    }
-
-    publishProperty(_topicWrite, ZENDURE_REPORT_AUTO_SHUTDOWN, String(enable ? "1" : "0"));
-    DTU_LOGD("%s autoshutdown", enable ? "Enabling" : "Disabling");
-}
-
-void Provider::shutdown() const
-{
-    if (!_topicWrite.isEmpty()) {
-        publishProperty(_topicWrite, ZENDURE_REPORT_MASTER_SWITCH, "1");
-        DTU_LOGD("Shutting down HUB");
-    }
 }
 
 void Provider::publishProperty(const String& topic, const String& property, const String& value) const
@@ -482,15 +301,6 @@ void Provider::publishProperties(const String& topic, Arg&&... args) const
     MqttSettings.publishGeneric(topic, out, false, 0);
 }
 
-void Provider::timesync()
-{
-    time_t now;
-    if (!_topicTimesyncReply.isEmpty() && Utils::getEpoch(&now)) {
-        MqttSettings.publishGeneric(_topicTimesyncReply, "{\"zoneOffset\": \"+00:00\", \"messageId\": " + String(++_messageCounter) + ", \"timestamp\": " + String(now) + "}", false, 0);
-        DTU_LOGD("Timesync Reply");
-    }
-}
-
 void Provider::setChargeThroughState(const ChargeThroughState value, const bool publish /* = true */)
 {
     if (_stats->_charge_through_state.has_value() && value == *_stats->_charge_through_state) {
@@ -507,187 +317,106 @@ void Provider::setChargeThroughState(const ChargeThroughState value, const bool 
     rescheduleSunCalc();
 }
 
-void Provider::onMqttMessagePersistentSettings(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len)
+void Provider::processProperties(std::optional<JsonObjectConst>& props, const uint64_t timestamp)
 {
-    String t(topic);
-    String string(reinterpret_cast<const char*>(payload), len);
-    auto integer = static_cast<uint64_t>(string.toInt());
+    if (!props.has_value()) { return; }
 
-    DTU_LOGD("Received Persistent Settings %s = %s [aka %" PRId64 "]", topic, string.substring(0, 32).c_str(), integer);
+    _stats->setFirmwareVersion(Utils::getJsonElement<uint32_t>(*props, ZENDURE_REPORT_MASTER_FW_VERSION));
+    _stats->setHardwareVersion(Utils::getJsonElement<uint32_t>(*props, ZENDURE_REPORT_MASTER_HW_VERSION));
 
-    if (t.endsWith(ZENDURE_PERSISTENT_SETTINGS_LAST_FULL) && integer) {
-        _stats->_last_full_timestamp = integer;
-        return;
+    auto soc_max = Utils::getJsonElement<float>(*props, ZENDURE_REPORT_MAX_SOC);
+    if (soc_max.has_value()) {
+        _stats->setSocMax(*soc_max / 10);
     }
-    if (t.endsWith(ZENDURE_PERSISTENT_SETTINGS_LAST_EMPTY) && integer) {
-        _stats->_last_empty_timestamp = integer;
-        return;
-    }
-    if (t.endsWith(ZENDURE_PERSISTENT_SETTINGS_CHARGE_THROUGH)) {
-        // only accept state from MQTT if not set during init
-        if (_stats->_charge_through_state.has_value()) { return; }
 
-        auto mode = Stats::chargeThroughStateFromString(string);
-        if (mode.has_value()) {
-            // interpret recent values if decodeable
-            setChargeThroughState(*mode, false);
-        } else {
-            // otherwise, interpret legacy values that might be stored on broker
-            setChargeThroughState(integer > 0 ? ChargeThroughState::Hard : ChargeThroughState::Idle, false);
-        }
-
-        return;
+    auto soc_min = Utils::getJsonElement<float>(*props, ZENDURE_REPORT_MIN_SOC);
+    if (soc_min.has_value()) {
+        _stats->setSocMin(*soc_min / 10);
     }
+
+    auto input_limit = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_INPUT_LIMIT);
+    if (input_limit.has_value()) {
+        _stats->_input_limit = *input_limit;
+    }
+
+    auto output_limit = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_OUTPUT_LIMIT);
+    if (output_limit.has_value()) {
+        _stats->setOutputLimit(*output_limit);
+    }
+
+    auto inverse_max = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_INVERSE_MAX_POWER);
+    if (inverse_max.has_value()) {
+        _stats->_inverse_max = *inverse_max;
+    }
+
+    auto state = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BATTERY_STATE);
+    if (state.has_value() && *state <= 2) {
+        _stats->_state = static_cast<State>(*state);
+    }
+
+    auto heat_state = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_HEAT_STATE);
+    if (heat_state.has_value()) {
+        _stats->_heat_state = static_cast<bool>(*heat_state);
+    }
+
+    auto auto_shutdown = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_AUTO_SHUTDOWN);
+    if (auto_shutdown.has_value()) {
+        _stats->_auto_shutdown = static_cast<bool>(*auto_shutdown);
+    }
+
+    auto auto_recover = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_AUTO_RECOVER);
+    if (auto_recover.has_value()) {
+        _stats->setAutoRecover(*auto_recover);
+    }
+
+    auto buzzer = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BUZZER_SWITCH);
+    if (buzzer.has_value()) {
+        _stats->_buzzer = static_cast<bool>(*buzzer);
+    }
+
+    auto output_power = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_OUTPUT_POWER);
+    if (output_power.has_value()) {
+        _stats->setOutputPower(*output_power);
+    }
+
+    auto discharge_power = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_DISCHARGE_POWER);
+    if (discharge_power.has_value()) {
+        _stats->setDischargePower(*discharge_power);
+    }
+
+    auto charge_power = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_CHARGE_POWER);
+    if (charge_power.has_value()) {
+        _stats->setChargePower(*charge_power);
+    }
+
+    auto solar_power_1 = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_SOLAR_POWER_MPPT_1);
+    if (solar_power_1.has_value()) {
+        _stats->setSolarPower1(*solar_power_1);
+    }
+
+    auto solar_power_2 = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_SOLAR_POWER_MPPT_2);
+    if (solar_power_2.has_value()) {
+        _stats->setSolarPower2(*solar_power_2);
+    }
+
+    auto bypass_mode = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BYPASS_MODE);
+    if (bypass_mode.has_value() && *bypass_mode <= 2) {
+        _stats->_bypass_mode = static_cast<BatteryZendureConfig::BypassMode_t>(*bypass_mode);
+    }
+
+    auto bypass_state = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BYPASS_STATE);
+    if (bypass_state.has_value()) {
+        _stats->_bypass_state = static_cast<bool>(*bypass_state);
+    }
+
+    _stats->_lastUpdate = timestamp;
 }
 
-void Provider::onMqttMessageTimesync(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len)
+void Provider::processPackData(std::optional<JsonArrayConst>& packData, std::string& logValue, const uint64_t timestamp)
 {
-    timesync();
-}
-
-void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len)
-{
-    auto ms = millis();
-
-    std::string const src = std::string(reinterpret_cast<const char*>(payload), len);
-    std::string logValue = src.substr(0, 64);
-    if (src.length() > logValue.length()) { logValue += "..."; }
-
-    JsonDocument json;
-
-    const DeserializationError error = deserializeJson(json, src);
-    if (error) {
-        DTU_LOGE("cannot parse payload '%s' as JSON", logValue.c_str());
-        return;
-    }
-
-    if (json.overflowed()) {
-        DTU_LOGE("payload too large to process as JSON");
-        return;
-    }
-
-    auto obj = json.as<JsonObjectConst>();
-
-    // validate input data
-    // messageId has to be set to "123"
-    // deviceId has to be set to the configured deviceId
-    if (!json["messageId"].as<String>().equals("123")) {
-        DTU_LOGE("Invalid or missing 'messageId' in '%s'", logValue.c_str());
-        return;
-    }
-    if (!json["deviceId"].as<String>().equals(Configuration.get().Battery.Zendure.DeviceId)) {
-        DTU_LOGE("Invalid or missing 'deviceId' in '%s'", logValue.c_str());
-        return;
-    }
-
-    auto props = Utils::getJsonElement<JsonObjectConst>(obj, ZENDURE_REPORT_PROPERTIES, 1);
-    if (props.has_value()) {
-        auto sw_version = Utils::getJsonElement<uint32_t>(*props, ZENDURE_REPORT_MASTER_FW_VERSION);
-        if (sw_version.has_value()) {
-            _stats->setFwVersion(std::move(parseVersion(*sw_version)));
-        }
-
-        auto hw_version = Utils::getJsonElement<uint32_t>(*props, ZENDURE_REPORT_MASTER_HW_VERSION);
-        if (hw_version.has_value()) {
-            _stats->setHwVersion(std::move(parseVersion(*hw_version)));
-        }
-
-        auto soc_max = Utils::getJsonElement<float>(*props, ZENDURE_REPORT_MAX_SOC);
-        if (soc_max.has_value()) {
-            _stats->setSocMax(*soc_max / 10);
-        }
-
-        auto soc_min = Utils::getJsonElement<float>(*props, ZENDURE_REPORT_MIN_SOC);
-        if (soc_min.has_value()) {
-            _stats->setSocMin(*soc_min / 10);
-        }
-
-        auto input_limit = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_INPUT_LIMIT);
-        if (input_limit.has_value()) {
-            _stats->_input_limit = *input_limit;
-        }
-
-        auto output_limit = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_OUTPUT_LIMIT);
-        if (output_limit.has_value()) {
-            _stats->setOutputLimit(*output_limit);
-        }
-
-        auto inverse_max = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_INVERSE_MAX_POWER);
-        if (inverse_max.has_value()) {
-            _stats->_inverse_max = *inverse_max;
-        }
-
-        auto state = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BATTERY_STATE);
-        if (state.has_value() && *state <= 2) {
-            _stats->_state = static_cast<State>(*state);
-        }
-
-        auto heat_state = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_HEAT_STATE);
-        if (heat_state.has_value()) {
-            _stats->_heat_state = static_cast<bool>(*heat_state);
-        }
-
-        auto auto_shutdown = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_AUTO_SHUTDOWN);
-        if (auto_shutdown.has_value()) {
-            _stats->_auto_shutdown = static_cast<bool>(*auto_shutdown);
-        }
-
-        auto auto_recover = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_AUTO_RECOVER);
-        if (auto_recover.has_value()) {
-            _stats->setAutoRecover(*auto_recover);
-        }
-
-        auto buzzer = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BUZZER_SWITCH);
-        if (buzzer.has_value()) {
-            _stats->_buzzer = static_cast<bool>(*buzzer);
-        }
-
-        auto output_power = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_OUTPUT_POWER);
-        if (output_power.has_value()) {
-            _stats->setOutputPower(*output_power);
-        }
-
-        auto discharge_power = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_DISCHARGE_POWER);
-        if (discharge_power.has_value()) {
-            _stats->setDischargePower(*discharge_power);
-        }
-
-        auto charge_power = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_CHARGE_POWER);
-        if (charge_power.has_value()) {
-            _stats->setChargePower(*charge_power);
-        }
-
-        auto solar_power_1 = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_SOLAR_POWER_MPPT_1);
-        if (solar_power_1.has_value()) {
-            _stats->setSolarPower1(*solar_power_1);
-        }
-
-        auto solar_power_2 = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_SOLAR_POWER_MPPT_2);
-        if (solar_power_2.has_value()) {
-            _stats->setSolarPower2(*solar_power_2);
-        }
-
-        auto bypass_mode = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BYPASS_MODE);
-        if (bypass_mode.has_value() && *bypass_mode <= 2) {
-            _stats->_bypass_mode = static_cast<BatteryZendureConfig::BypassMode_t>(*bypass_mode);
-        }
-
-        auto bypass_state = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_BYPASS_STATE);
-        if (bypass_state.has_value()) {
-            _stats->_bypass_state = static_cast<bool>(*bypass_state);
-        }
-
-        _stats->_lastUpdate = ms;
-    }
-
     // stop processing here, if no pack data found in message
-    auto packData = Utils::getJsonElement<JsonArrayConst>(obj, ZENDURE_REPORT_PACK_DATA, 2);
-    if (!packData.has_value() || _stats->_num_batteries == 0) {
-        return;
-    }
+    // or number of batteries is unkown
+    if (!packData.has_value() || _stats->_num_batteries == 0) { return; }
 
     // get serial number related to index only if all packs given in message
     if ((*packData).size() == _stats->_num_batteries) {
@@ -715,219 +444,101 @@ void Provider::onMqttMessageReport(espMqttClientTypes::MessageProperties const& 
         return;
     }
 
-
     for (auto packDataJson : *packData) {
         auto serial = Utils::getJsonElement<String>(packDataJson, ZENDURE_REPORT_PACK_SERIAL);
-        auto state = Utils::getJsonElement<uint8_t>(packDataJson, ZENDURE_REPORT_PACK_STATE);
-        auto version = Utils::getJsonElement<uint32_t>(packDataJson, ZENDURE_REPORT_PACK_FW_VERSION);
-        auto soh = Utils::getJsonElement<uint16_t>(packDataJson, ZENDURE_REPORT_PACK_HEALTH);
-        auto voltage = Utils::getJsonElement<uint16_t>(packDataJson, ZENDURE_REPORT_PACK_TOTAL_VOLTAGE);
 
         // do not waste processing time if nothing to do
-        if (!serial.has_value() || !(state.has_value() || version.has_value() || soh.has_value() || voltage.has_value())) {
-            continue;
-        }
+        if (!serial.has_value()) { return; }
 
-        // find pack data related to serial number
-        for (auto& entry : _stats->_packData) {
-            auto pack = entry.second;
-            if (pack->_serial != serial) {
-                continue;
-            }
-            if (state.has_value()) {
-                pack->_state = static_cast<State>(*state);
-            }
-
-            if (version.has_value()) {
-                pack->setFwVersion(std::move(parseVersion(*version)));
-            }
-
-            if (soh.has_value()) {
-                pack->setSoH(static_cast<float>(*soh) / 10.0);
-            }
-
-            // Fallback to voltage reported by the FIRST pack if we are unable to use values from loggin messages.
-            // This is only precise, if there is exactly ONE pack - when there are more packs, using only the first
-            // is not sufficient and voltage will be completely unavailable to prevent erroneous reporting.
-            if (voltage.has_value() && !_full_log_supported && entry.first == 1 && _stats->_num_batteries == 1) {
-                _stats->setVoltage(static_cast<float>(*voltage) / 100.0, ms);
-            }
-
-            pack->_lastUpdate = ms;
-
-            // found the pack we searched for, so terminate loop here
-            break;
-        }
+        processPackDataJson(packDataJson, *serial, timestamp);
     }
+
+    // calculate additional statistics from received data
+    calculatePackStats(timestamp);
 }
 
-void Provider::onMqttMessageLog(espMqttClientTypes::MessageProperties const& properties,
-        char const* topic, uint8_t const* payload, size_t len)
+void Provider::calculatePackStats(const uint64_t timestamp)
 {
-    auto ms = millis();
+    if (_stats->_num_batteries == 0) { return; }
 
-    DTU_LOGD("Logging Frame received!");
+    std::optional<uint16_t> capacity = std::nullopt;
+    std::optional<uint16_t> capacity_avail = std::nullopt;
 
-    std::string const src = std::string(reinterpret_cast<const char*>(payload), len);
-    std::string logValue = src.substr(0, 64);
-    if (src.length() > logValue.length()) { logValue += "..."; }
+    size_t avg_count = 0;
+    size_t soc_count = 0;
+    std::optional<float> soc = std::nullopt;
+    std::optional<float> power = std::nullopt;
+    std::optional<float> current = std::nullopt;
+    std::optional<uint32_t> cellAvg = std::nullopt;
+    std::optional<uint16_t> cellMin = std::nullopt;
+    std::optional<uint16_t> cellMax = std::nullopt;
+    std::optional<float> cellTemp = std::nullopt;
 
-    JsonDocument json;
+    for (size_t i = 1 ; i <= _stats->_num_batteries ; i++) {
+        auto pack = _stats->getPackData(i);
+        if (pack == nullptr) { continue; }
 
-    const DeserializationError error = deserializeJson(json, src);
-    if (error) {
-        DTU_LOGE("cannot parse payload '%s' as JSON", logValue.c_str());
-        return;
-    }
-
-    if (json.overflowed()) {
-        DTU_LOGE("payload too large to process as JSON");
-        return;
-    }
-
-    auto obj = json.as<JsonObjectConst>();
-
-    // validate input data
-    // deviceId has to be set to the configured deviceId
-    // logType has to be set to "2"
-    if (!json["deviceId"].as<String>().equals(Configuration.get().Battery.Zendure.DeviceId)) {
-        DTU_LOGE("Invalid or missing 'deviceId' in '%s'", logValue.c_str());
-        return;
-    }
-    if (!json["logType"].as<String>().equals("2")) {
-        DTU_LOGE("Invalid or missing 'v' in '%s'", logValue.c_str());
-        return;
-    }
-
-    auto data = Utils::getJsonElement<JsonObjectConst>(obj, ZENDURE_LOG_ROOT, 2);
-    if (!data.has_value()) {
-        DTU_LOGE("Unable to find 'log' in '%s'", logValue.c_str());
-        return;
-    }
-
-    _stats->setSerial(Utils::getJsonElement<String>(*data, ZENDURE_LOG_SERIAL));
-
-    auto params = Utils::getJsonElement<JsonArrayConst>(*data, ZENDURE_LOG_PARAMS, 1);
-    if (!params.has_value()) {
-        DTU_LOGE("Unable to find 'params' in '%s'", logValue.c_str());
-        return;
-    }
-
-    auto v = *params;
-
-    uint16_t soc = 0;
-    uint16_t voltage = 0;
-    int16_t power = 0;
-    int16_t current = 0;
-    uint16_t capacity = 0;
-    uint16_t capacity_avail = 0;
-
-    uint8_t num = v[ZENDURE_LOG_OFFSET_PACKNUM].as<uint8_t>();
-    if (num > 0 && num <= ZENDURE_MAX_PACKS) {
-        uint32_t cellMin = UINT32_MAX;
-        uint32_t cellMax = 0;
-        uint32_t cellAvg = 0;
-        uint32_t cellDelta = 0;
-        int32_t cellTemp = 0;
-
-        for (size_t i = 1 ; i <= num ; i++) {
-            uint16_t pvol = v[ZENDURE_LOG_OFFSET_PACK_VOLTAGE(i)].as<uint16_t>() * 10;
-            int16_t  pcur = v[ZENDURE_LOG_OFFSET_PACK_CURRENT(i)].as<int16_t>();
-            uint16_t psoc = v[ZENDURE_LOG_OFFSET_PACK_SOC(i)].as<uint16_t>();
-
-            int32_t  ctmp = v[ZENDURE_LOG_OFFSET_PACK_TEMPERATURE(i)].as<int32_t>();
-            uint32_t cmin = v[ZENDURE_LOG_OFFSET_PACK_CELL_MIN(i)].as<uint32_t>() * 10;
-            uint32_t cmax = v[ZENDURE_LOG_OFFSET_PACK_CELL_MAX(i)].as<uint32_t>() * 10;
-            uint32_t cdel = cmax - cmin;
-
-            auto pack = _stats->getPackData(i);
-            if (pack != nullptr) {
-                auto cavg = pvol / pack->getCellCount();
-
-                pack->_cell_voltage_min = static_cast<uint16_t>(cmin);
-                pack->_cell_voltage_max = static_cast<uint16_t>(cmax);
-                pack->_cell_voltage_avg = static_cast<uint16_t>(cavg);
-                pack->_cell_voltage_spread = static_cast<uint16_t>(cdel);
-                pack->_cell_temperature_max = static_cast<int16_t>(ctmp);
-                pack->_current = static_cast<float>(pcur) / 10.0;
-                pack->_voltage_total = static_cast<float>(pvol) / 1000.0;
-                pack->_soc_level = static_cast<float>(psoc) / 10.0;
-                pack->_power = static_cast<int16_t>(pack->_current * pack->_voltage_total);
-                pack->_lastUpdate = ms;
-
-                capacity_avail += pack->_capacity_avail;
-                capacity += pack->_capacity;
-                cellAvg += cavg;
-                power += pack->_power;
-            }
-
-            cellMin = min(cmin, cellMin);
-            cellMax = max(cmax, cellMax);
-            cellDelta = max(cdel, cellDelta);
-            cellTemp = max(ctmp, cellTemp);
-
-            soc += psoc;
-            voltage += pvol;
-            current += pcur;
+        if (pack->_capacity.has_value()) {
+            capacity = capacity.value_or(0) + *pack->_capacity;
+        }
+        if (pack->_capacity_avail.has_value()) {
+            capacity_avail = capacity_avail.value_or(0) + *pack->_capacity_avail;
         }
 
-        _stats->_cellMinMilliVolt = static_cast<uint16_t>(cellMin);
-        _stats->_cellMaxMilliVolt = static_cast<uint16_t>(cellMax);
-        _stats->_cellAvgMilliVolt = static_cast<uint16_t>(cellAvg) / num;
-        _stats->_cellDeltaMilliVolt = static_cast<uint16_t>(cellDelta);
-        _stats->_cellTemperature = static_cast<int16_t>(cellTemp);
+        if (pack->_cell_voltage_avg.has_value()) {
+            cellAvg = cellAvg.value_or(0) + *pack->_cell_voltage_avg;
+            avg_count++;
+        }
+        if (pack->_soc_level.has_value()) {
+            soc = soc.value_or(0) + *pack->_soc_level;
+            soc_count++;
+        }
+        if (pack->_power.has_value()) {
+            power = power.value_or(0) + *pack->_power;
+        }
+        if (pack->_current.has_value()) {
+            current = current.value_or(0) + *pack->_current;
+        }
+        if (pack->_cell_voltage_min.has_value()) {
+            cellMin = std::min(pack->_cell_voltage_min.value_or(std::numeric_limits<uint16_t>::max()), *pack->_cell_voltage_min);
+        }
+        if (pack->_cell_voltage_max.has_value()) {
+            cellMax = std::max(pack->_cell_voltage_max.value_or(std::numeric_limits<uint16_t>::min()), *pack->_cell_voltage_max);
+        }
+        if (pack->_cell_temperature_max.has_value()) {
+            cellTemp = std::max(pack->_cell_temperature_max.value_or(std::numeric_limits<float>::min()), *pack->_cell_temperature_max);
+        }
     }
 
-    setSoC(static_cast<float>(soc) / 10.0 / num, ms);
+    if (cellMin.has_value() && cellMax.has_value()) {
+        _stats->_cellDeltaMilliVolt = *cellMax - *cellMin;
+    }
+    if (cellAvg.has_value() && avg_count > 0) {
+        _stats->_cellAvgMilliVolt = std::round(*cellAvg / avg_count);
+    }
+    if (soc.has_value() && soc_count > 0) {
+        setSoC(*soc / soc_count, timestamp);
+    }
+    if (current.has_value()) {
+        _stats->setCurrent(*current, 1, timestamp);
+    }
 
-    _stats->_num_batteries = num;
+    _stats->_cellMinMilliVolt = cellMin;
+    _stats->_cellMaxMilliVolt = cellMax;
+    _stats->_cellTemperature = cellTemp;
+
     _stats->_capacity = capacity;
     _stats->_capacity_avail = capacity_avail;
-
-    _stats->setCurrent(static_cast<float>(current) / 10.0, 1, ms);
-
-    // some devices have different log structure - only process for devices explicitly enabled!
-    if (_full_log_supported) {
-        _stats->setVoltage(v[ZENDURE_LOG_OFFSET_VOLTAGE].as<float>() / 10.0, ms);
-
-        _stats->setAutoRecover(v[ZENDURE_LOG_OFFSET_AUTO_RECOVER].as<uint8_t>());
-        _stats->setSocMin(v[ZENDURE_LOG_OFFSET_MIN_SOC].as<float>());
-
-        _stats->setOutputLimit(static_cast<uint16_t>(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER_LIMIT].as<uint32_t>() / 100));
-        _stats->setOutputPower(v[ZENDURE_LOG_OFFSET_OUTPUT_POWER].as<uint16_t>());
-        _stats->setChargePower(v[ZENDURE_LOG_OFFSET_CHARGE_POWER].as<uint16_t>());
-        _stats->setDischargePower(v[ZENDURE_LOG_OFFSET_DISCHARGE_POWER].as<uint16_t>());
-        _stats->setSolarPower1(v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_1].as<uint16_t>());
-        _stats->setSolarPower2(v[ZENDURE_LOG_OFFSET_SOLAR_POWER_MPPT_2].as<uint16_t>());
-    }
-
-    _stats->_lastUpdate = ms;
-    calculateEfficiency();
-}
-
-String Provider::parseVersion(uint32_t version)
-{
-    if (version == 0) {
-        return String();
-    }
-
-    uint8_t major = (version >> 12) & 0xF;
-    uint8_t minor = (version >> 8) & 0xF;
-    uint8_t bugfix = version & 0xFF;
-
-    char buffer[16];
-    snprintf(buffer, sizeof(buffer), "%" PRIu8 ".%" PRIu8 ".%" PRIu8, major, minor, bugfix);
-    return String(buffer);
 }
 
 void Provider::calculateEfficiency()
 {
-    float in = static_cast<float>(_stats->_input_power);
-    float out = static_cast<float>(_stats->_output_power);
+    float in = static_cast<float>(_stats->_input_power.value_or(0));
+    float out = static_cast<float>(_stats->_output_power.value_or(0));
     float efficiency = 0.0;
 
-    in += static_cast<float>(_stats->_discharge_power);
-    out += static_cast<float>(_stats->_charge_power);
+    in += static_cast<float>(_stats->_discharge_power.value_or(0));
+    out += static_cast<float>(_stats->_charge_power.value_or(0));
 
     if (in <= 0.0) {
         _stats->_efficiency.reset();
@@ -969,6 +580,45 @@ void Provider::setSoC(const float soc, const uint32_t timestamp /* = 0 */, const
     }
 
     _stats->setSoC(soc, precision, timestamp ? timestamp : millis());
+}
+
+void Provider::onMqttMessagePersistentSettings(espMqttClientTypes::MessageProperties const& properties,
+        char const* topic, uint8_t const* payload, size_t len)
+{
+    String t(topic);
+    String string(reinterpret_cast<const char*>(payload), len);
+    auto integer = static_cast<uint64_t>(string.toInt());
+
+    DTU_LOGD("Received Persistent Settings %s = %s [aka %" PRId64 "]", topic, string.substring(0, 32).c_str(), integer);
+
+    if (t.endsWith(ZENDURE_PERSISTENT_SETTINGS_LAST_FULL) && integer) {
+        _stats->_last_full_timestamp = integer;
+        return;
+    }
+    if (t.endsWith(ZENDURE_PERSISTENT_SETTINGS_LAST_EMPTY) && integer) {
+        _stats->_last_empty_timestamp = integer;
+        return;
+    }
+    if (t.endsWith(ZENDURE_PERSISTENT_SETTINGS_CHARGE_THROUGH)) {
+        // only accept state from MQTT if not set during init
+        if (_stats->_charge_through_state.has_value()) { return; }
+
+        auto mode = Stats::chargeThroughStateFromString(string);
+        if (mode.has_value()) {
+            // if we recieve disabled state but configuration is set to enabled, overwrite with IDLE state
+            if (Configuration.get().Battery.Zendure.ChargeThroughEnable && mode == ChargeThroughState::Disabled) {
+                mode = ChargeThroughState::Idle;
+            }
+
+            // interpret recent values if decodeable
+            setChargeThroughState(*mode, false);
+        } else {
+            // otherwise, interpret legacy values that might be stored on broker
+            setChargeThroughState(integer > 0 ? ChargeThroughState::Hard : ChargeThroughState::Idle, false);
+        }
+
+        return;
+    }
 }
 
 void Provider::publishPersistentSettings(const char* subtopic, const String& payload)

@@ -766,7 +766,7 @@
         "ProviderMqtt": "Battery data from MQTT broker",
         "ProviderVictron": "Victron SmartShunt using VE.Direct interface",
         "ProviderPytesCan": "Pytes using CAN bus",
-        "ProviderZendureMqtt": "Zendure using local MQTT broker",
+        "ProviderZendureMqtt": "Zendure",
         "MqttConfiguration": "MQTT Settings",
         "MqttSocConfiguration": "SoC Settings",
         "MqttVoltageConfiguration": "Voltage Settings",
@@ -796,9 +796,6 @@
         "MqttDischargeCurrentLimitTopic": "Discharge Current Limit Value Topic",
         "MqttAmperageUnit": "@:base.Unit",
         "ZendureConfiguration": "Configuration",
-        "ZendureDeviceType": "Product Type",
-        "ZendureDeviceId": "Product ID",
-        "ZendureDeviceIdDescription": "The product ID has to be read manually via bluetooth",
         "ZendureMinSoc": "Minimum SoC",
         "ZendureMaxSoc": "Maximum SoC",
         "ZendureBypassMode": "Bypass mode",
@@ -825,6 +822,7 @@
         "ZendureOutputLimitDay": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Day)",
         "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
         "zendure": {
+            "deviceType": "Product Type",
             "deviceTypes": {
                 "Hub1200": "Hub 1200",
                 "Hub2000": "Hub 2000",
@@ -843,7 +841,23 @@
             "chargeThrough": "Charge Through Settings",
             "chargeThroughEnabled": "Charge Through",
             "chargeThroughInterval": "Maximum time without full charge",
-            "chargeThroughReset": "Reset Threshold"
+            "chargeThroughReset": "Reset Threshold",
+            "connectionType": "Connection Type",
+            "connectionTypes": {
+                "local": "Local MQTT Broker",
+                "cloud": "Zendure Developer API",
+                "bluetooth": "Direct Bluetooth Connection",
+                "invalid": "@:battery.invalid"
+            },
+            "deviceId": "Device ID",
+            "deviceIdDescription": "The Device ID has to be read manually using <a href=\"https://github.com/nograx/zendure-cloud-disconnector\" target=\"_blank\">Zendure Cloud Disconnector</a>, <a href=\"https://github.com/reinhard-brandstaedter/solarflow-bt-manager\" target=\"_blank\">Solarflow Bluetooth Manager</a> or by sniffing MQTT traffic.",
+            "deviceIdInfo": "<u>Zendure authentication settings for local MQTT broker:</u> <ul style=\"list-style-type:none;\"><li>Username: {user}</li><li>Password: {pass}</li></ul>",
+            "server": "Server",
+            "port": "Port",
+            "clientId": "Client ID",
+            "appKey": "Application Key",
+            "apiDescription": "Please refer the <a href=\"https://github.com/Zendure/developer-device-data-report\" target=\"_blank\">Official Zendure Repository</a> for further information about the Zendudure Cloud API.",
+            "secret": "Secret"
         }
     },
     "inverteradmin": {
@@ -1268,7 +1282,6 @@
         "inputLimit": "Input power limit",
         "minSoC": "Minimal State of Charge",
         "maxSoC": "Maximal State of Charge",
-        "state": "Current state of operation",
         "bypassMode": "Bypass mode",
         "bypassState": "Bypass switch",
         "heatState": "Battery heating",
@@ -1276,10 +1289,9 @@
         "autoShutdown": "Automatic shutdown",
         "buzzer": "Audible signals",
         "batteries": "Number of batteries",
-        "charging": "Charging",
-        "discharging": "Discharging",
         "idle": "Idle",
         "invalid": "Invalid",
+        "unkown": "Unkown",
         "enabled": "Enabled",
         "disabled": "Disabled",
         "automatic": "Automatic",
@@ -1305,6 +1317,14 @@
                 "hard": "Hard",
                 "keep": "Hold",
                 "invalid": "@:battery.invalid"
+            },
+            "mainState": "Current state of operation",
+            "mainStates": {
+                "idle": "@:battery.idle",
+                "charging": "Charging",
+                "discharging": "Discharging",
+                "invalid": "@:battery.invalid",
+                "unkown": "@:battery.unkown"
             }
         }
     }
