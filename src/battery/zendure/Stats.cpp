@@ -37,6 +37,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
     if (config.Battery.Zendure.ConnectionType != BatteryZendureConfig::ConnectionType::ZendureMqtt) {
         addLiveViewTextInSection(root, section, "controlMode", std::string(controlModeToString(config.Battery.Zendure.ControlMode)));
         addLiveViewBooleanInSection(root, section, "zendure.batteryProtection", config.Battery.Zendure.BatteryProtectionEnable);
+        addLiveViewInSection(root, section, "zendure.batteryProtectionHysteresis", config.Battery.Zendure.MinSoCHysteresis, "%", 1);
     }
     addLiveViewInSection(root, section, "maxInversePower", _inverse_max, "W", 0);
     addLiveViewInSection(root, section, "outputLimit", _output_limit, "W", 0);

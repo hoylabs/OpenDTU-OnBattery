@@ -859,7 +859,7 @@
             "apiDescription": "Please refer the <a href=\"https://github.com/Zendure/developer-device-data-report\" target=\"_blank\">Official Zendure Repository</a> for further information about the Zendudure Cloud API.",
             "secret": "Secret",
             "socMinWarning": "The configured minimum charge level ({soc}%) is below the recommended minimum of {min}%. This can lead to battery damage.",
-            "socMinHysteresis": "Minimum SoC Hysteresis",
+            "socMinHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
             "pollingIntervalDescription": "The BMS also transmitts data asynchonously. The polling interval additionally enforces full data refreshes at the specified interval.",
             "batteryProtectionEnabled": "Battery Protection",
             "batteryProtection": "Advanced Battery Protection Settings"
@@ -1337,7 +1337,8 @@
                 "batteryprotection": "Battery Protection",
                 "invalid": "@:battery.invalid"
             },
-            "batteryProtection": "Battery Protection"
+            "batteryProtection": "Battery Protection",
+            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis"
         }
     }
 }
