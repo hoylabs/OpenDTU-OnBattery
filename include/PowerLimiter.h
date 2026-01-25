@@ -79,6 +79,9 @@ private:
     bool _fullSolarPassThroughActive = false;
     float _loadCorrectedVoltage = 0.0f;
 
+    bool _lastPowerChangeSufficient = false;
+    std::pair<uint32_t, float> _lastPowerMeterData = { 0, 0.0f };
+
     frozen::string const& getStatusText(Status status) const;
     void announceStatus(Status status);
     void reloadConfig();
@@ -102,6 +105,8 @@ private:
     bool isBelowStopThreshold() const;
     void calcNextInverterRestart();
     bool isSolarPassThroughEnabled() const;
+
+    bool isPowerChangeSufficient();
 };
 
 extern PowerLimiterClass PowerLimiter;

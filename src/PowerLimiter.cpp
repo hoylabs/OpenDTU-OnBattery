@@ -214,7 +214,9 @@ void PowerLimiterClass::loop()
 
     // since _lastCalculation and _calculationBackoffMs are initialized to
     // zero, this test is passed the first time the condition is checked.
-    if ((millis() - _lastCalculation) < _calculationBackoffMs) {
+    // to improve responsiveness, we use the minium backoff time for power changes above the power hysteresis.
+    auto backOffMs = isPowerChangeSufficient() ? _calculationBackoffMsDefault : _calculationBackoffMs;
+    if ((millis() - _lastCalculation) < backOffMs) {
         return announceStatus(Status::Stable);
     }
 
@@ -934,4 +936,33 @@ bool PowerLimiterClass::isGovernedBatteryPoweredInverterProducing() const
         if (upInv->isBatteryPowered() && upInv->isProducing()) { return true; }
     }
     return false;
+}
+
+/*
+ * If the power meter data has changed significantly since the last check,
+ * return true to use the minimal backoff time.
+ */
+bool PowerLimiterClass::isPowerChangeSufficient() {
+
+    // if power meter data is not valid, we cannot determine power changes
+    // Note: There are scenarios where the cache is not valid (new hysteresis, power meta data invalid, etc.),
+    //       we do not clean the cache, because it is not critical.
+    if (!PowerMeter.isDataValid()) { return false; }
+
+    // check if we analyzed the power meter data before, if yes return the last result
+    auto newPowerTime = PowerMeter.getLastUpdate();
+    if (newPowerTime == _lastPowerMeterData.first) { return _lastPowerChangeSufficient; }
+
+    // not all power changes are relevant.
+    // e.g. if power is above the inverter limit. But we don't want to do complicate calculations here.
+    auto result = false;
+    auto newPowerTotal = PowerMeter.getPowerTotal();
+    auto hysteresis = Configuration.get().PowerLimiter.TargetPowerConsumptionHysteresis;
+    if ((std::abs(newPowerTotal - _lastPowerMeterData.second) > hysteresis)) {
+        result = true;
+    }
+
+    _lastPowerMeterData = {newPowerTime, newPowerTotal};
+    _lastPowerChangeSufficient = result;
+    return result;
 }
