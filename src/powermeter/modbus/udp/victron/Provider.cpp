@@ -21,6 +21,7 @@ static constexpr uint8_t sUnitId = 0x01;
 static constexpr uint8_t sFunctionCode = 0x03; // read holding registers
 static constexpr uint16_t sRegisterAddress = 0x3032;
 static constexpr uint16_t sRegisterCount = 0x005A;
+static constexpr uint16_t sMinPollingIntervalMs = 100;
 
 static WiFiUDP VictronUdp;
 
@@ -42,7 +43,9 @@ Provider::~Provider()
 
 void Provider::sendModbusRequest()
 {
-    auto interval = _cfg.PollingIntervalMs;
+    auto interval = _cfg.PollingIntervalMs < sMinPollingIntervalMs
+        ? sMinPollingIntervalMs
+        : _cfg.PollingIntervalMs;
 
     uint32_t currentMillis = millis();
 
