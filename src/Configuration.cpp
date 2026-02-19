@@ -145,6 +145,8 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["charge_current_limit_below_soc"] = config.Battery.ChargeCurrentLimitBelowSoc;
     target["charge_current_limit_below_voltage"] = config.Battery.ChargeCurrentLimitBelowVoltage;
     target["use_battery_reported_charge_current_limit"] = config.Battery.UseBatteryReportedChargeCurrentLimit;
+    target["nominal_voltage"] = config.Battery.NominalVoltage;
+    target["nominal_capacity"] = config.Battery.NominalCapacity;
 }
 
 void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target, bool includeCredentials)
@@ -598,6 +600,8 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     target.ChargeCurrentLimitBelowSoc = source["charge_current_limit_below_soc"] | BATTERY_CHARGE_CURRENT_LIMIT_BELOW_SOC;
     target.ChargeCurrentLimitBelowVoltage = source["charge_current_limit_below_voltage"] | BATTERY_CHARGE_CURRENT_LIMIT_BELOW_VOLTAGE;
     target.UseBatteryReportedChargeCurrentLimit = source["use_battery_reported_charge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_CHARGE_CURRENT_LIMIT;
+    target.NominalVoltage = source["nominal_voltage"] | 0.0f;
+    target.NominalCapacity = source["nominal_capacity"] | 0;
 }
 
 void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target)
