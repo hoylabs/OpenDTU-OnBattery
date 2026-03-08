@@ -12,7 +12,7 @@
 #undef TAG
 static const char* TAG = "gridCharger";
 static const char* SUBTAG = "HTTP";
-
+uint32_t _autowaitTillMillis = millis() + 10000;
 namespace GridChargers::HTTP {
 
 bool Provider::init()
@@ -164,6 +164,11 @@ void Provider::powerControlLoop()
 {
     auto& config = Configuration.get();
     auto oAcPower = _dataCurrent.get<DataPointLabel::AcPower>();
+    uint8_t _batterySoC = Battery.getStats()->getSoC();
+            if (_autowaitTillMillis < millis()) {
+                DTU_LOGI("SoC: %i", _batterySoC);
+                _autowaitTillMillis=millis() + 10000;
+        }
 
     // ***********************
     // Emergency charge
@@ -177,7 +182,7 @@ void Provider::powerControlLoop()
 
         _batteryEmergencyCharging = true;
 
-        DTU_LOGI("Emergency Charge AC Power %.02f", *oAcPower);
+        DTU_LOGI("Emergency Charge AC Power %.02f SoC: %i", *oAcPower, _batterySoC);
         PowerON();
         return;
     }
@@ -221,8 +226,8 @@ void Provider::powerControlLoop()
 
 
         // Check whether the battery SoC limit setting is enabled
-        if (config.Battery.Enabled && config.GridCharger.AutoPowerBatterySoCLimitsEnabled) {
-            uint8_t _batterySoC = Battery.getStats()->getSoC();
+        if (config.Battery.Enabled && config.GridCharger.AutoPowerBatterySoCLimitsEnabled && !PowerLimiter.isGovernedBatteryPoweredInverterProducing()) {
+
             _autoPowerEnabled = true;
             // Power OFF charger if the BMS reported SoC reaches or exceeds the user configured value
             if (_batterySoC >= config.GridCharger.AutoPowerStopBatterySoCThreshold && powerstate) {
@@ -252,7 +257,7 @@ void Provider::powerControlLoop()
                 _autoModeBlockedTillMillis = millis() + 29900;
                 return;
             }
-            else if (powerTotal < config.GridCharger.AutoPowerTargetPowerConsumption - maximumAcPower && !powerstate) {
+            else if (powerTotal < config.GridCharger.AutoPowerTargetPowerConsumption - maximumAcPower && !powerstate && !PowerLimiter.isGovernedBatteryPoweredInverterProducing() && _batterySoC < config.GridCharger.AutoPowerStopBatterySoCThreshold) {
                 DTU_LOGI("Set AC Power to %.0fW to reach target consumption of %.0fW (current total: %.0fW)", maximumAcPower, config.GridCharger.AutoPowerTargetPowerConsumption , powerTotal);
                 PowerON();
                 _autoModeBlockedTillMillis = millis() + 29900;
