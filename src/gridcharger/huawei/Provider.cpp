@@ -377,6 +377,10 @@ void Provider::setMode(uint8_t mode) {
 
     if (!_upHardwareInterface) { return; }
 
+    if (_mode == HUAWEI_MODE_AUTO_INT && mode != HUAWEI_MODE_AUTO_INT) {
+        _autoPowerEnabled = false;
+        _setParameter(0, HardwareInterface::Setting::OnlineCurrent);
+    }
     if (mode == HUAWEI_MODE_OFF) {
         disableOutput();
         _mode = HUAWEI_MODE_OFF;
@@ -395,11 +399,6 @@ void Provider::setMode(uint8_t mode) {
         DTU_LOGW("Trying to set mode to internal automatic power control "
                 "without being enabled in the UI. Ignoring command.");
         return;
-    }
-
-    if (_mode == HUAWEI_MODE_AUTO_INT && mode != HUAWEI_MODE_AUTO_INT) {
-        _autoPowerEnabled = false;
-        _setParameter(0, HardwareInterface::Setting::OnlineCurrent);
     }
 
     if (mode == HUAWEI_MODE_AUTO_EXT || mode == HUAWEI_MODE_AUTO_INT) {
