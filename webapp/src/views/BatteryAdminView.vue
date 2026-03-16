@@ -172,6 +172,7 @@
                         max="100"
                         step="0.1"
                         postfix="V"
+                        :tooltip="$t('batteryadmin.NominalVoltageInfo')"
                         wide
                     />
 
@@ -183,6 +184,7 @@
                         max="500"
                         step="1"
                         postfix="Ah"
+                        :tooltip="$t('batteryadmin.NominalCapacityInfo')"
                         wide
                     />
                 </CardElement>
