@@ -11,12 +11,17 @@
         </div>
 
         <div v-if="channelType == 'DC'" class="card-header">
-            <template v-if="channelData.name.u != ''">{{ channelData.name.u }}</template>
+            <template v-if="channelData.name && channelData.name.u != ''">{{ channelData.name.u }}</template>
             <template v-else>{{ $t('inverterchannelinfo.String', { num: channelNumber + 1 }) }}</template>
         </div>
 
         <div v-if="channelType == 'AC'" class="card-header text-bg-info">
-            {{ $t('inverterchannelinfo.Phase', { num: channelNumber + 1 }) }}
+            <template v-if="phaseNumber !== undefined">
+                {{ $t('inverterchannelinfo.Phase', { num: phaseNumber }) }}
+            </template>
+            <template v-else>
+                {{ $t('inverterchannelinfo.AC') }}
+            </template>
         </div>
 
         <div class="table-responsive">
@@ -48,9 +53,10 @@ import { defineComponent, type PropType } from 'vue';
 
 export default defineComponent({
     props: {
-        channelData: { type: Object as PropType<InverterStatistics>, required: true },
+        channelData: { type: Object as PropType<Partial<InverterStatistics>>, required: true },
         channelType: { type: String, required: true },
         channelNumber: { type: Number, required: true },
+        phaseNumber: { type: Number, required: false },
     },
 });
 </script>

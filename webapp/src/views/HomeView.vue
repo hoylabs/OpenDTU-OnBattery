@@ -190,22 +190,15 @@
                                     ].reverse()"
                                 >
                                     <template v-if="chanType.obj != null">
-                                        <template
-                                            v-for="channel in Object.keys(chanType.obj)
-                                                .sort()
-                                                .reverse()
-                                                .map((x) => +x)"
-                                            :key="channel"
-                                        >
+                                        <!-- Handle AC data -->
+                                        <template v-if="chanType.name == 'AC'">
+                                            <!-- Always show AC summary section for all inverters -->
                                             <template
-                                                v-if="
-                                                    chanType.name != 'DC' ||
-                                                    (chanType.name == 'DC' && getSumIrridiation(inverter) == 0) ||
-                                                    (chanType.name == 'DC' &&
-                                                        getSumIrridiation(inverter) > 0 &&
-                                                        chanType.obj[channel]?.Irradiation?.max) ||
-                                                    0 > 0
-                                                "
+                                                v-for="channel in Object.keys(chanType.obj)
+                                                    .sort()
+                                                    .reverse()
+                                                    .map((x) => +x)"
+                                                :key="`${chanType.name}-summary-${channel}`"
                                             >
                                                 <div class="col" v-if="chanType.obj[channel]">
                                                     <InverterChannelInfo
@@ -214,6 +207,52 @@
                                                         :channelNumber="channel"
                                                     />
                                                 </div>
+                                            </template>
+
+                                            <!-- Show individual phase sections for 3-phase inverters -->
+                                            <template v-if="isThreePhaseInverter(inverter) && inverter.AC[0]">
+                                                <div
+                                                    v-for="phase in [3, 2, 1]"
+                                                    :key="`${chanType.name}-phase-${phase}`"
+                                                    class="col"
+                                                >
+                                                    <InverterChannelInfo
+                                                        :channelData="getPhaseDataWithPower(inverter.AC[0], phase)"
+                                                        :channelType="chanType.name"
+                                                        :channelNumber="0"
+                                                        :phaseNumber="phase"
+                                                    />
+                                                </div>
+                                            </template>
+                                        </template>
+
+                                        <!-- Handle non-AC channel types normally -->
+                                        <template v-else>
+                                            <template
+                                                v-for="channel in Object.keys(chanType.obj)
+                                                    .sort()
+                                                    .reverse()
+                                                    .map((x) => +x)"
+                                                :key="channel"
+                                            >
+                                                <template
+                                                    v-if="
+                                                        chanType.name != 'DC' ||
+                                                        (chanType.name == 'DC' && getSumIrridiation(inverter) == 0) ||
+                                                        (chanType.name == 'DC' &&
+                                                            getSumIrridiation(inverter) > 0 &&
+                                                            chanType.obj[channel]?.Irradiation?.max) ||
+                                                        0 > 0
+                                                    "
+                                                >
+                                                    <div class="col" v-if="chanType.obj[channel]">
+                                                        <InverterChannelInfo
+                                                            :channelData="chanType.obj[channel]"
+                                                            :channelType="chanType.name"
+                                                            :channelNumber="channel"
+                                                        />
+                                                    </div>
+                                                </template>
                                             </template>
                                         </template>
                                     </template>
@@ -528,7 +567,7 @@ import type { GridProfileRawdata } from '@/types/GridProfileRawdata';
 import type { GridProfileStatus } from '@/types/GridProfileStatus';
 import type { LimitConfig } from '@/types/LimitConfig';
 import type { LimitStatus } from '@/types/LimitStatus';
-import type { Inverter, LiveData } from '@/types/LiveDataStatus';
+import type { Inverter, LiveData, InverterStatistics } from '@/types/LiveDataStatus';
 import { authHeader, authUrl, handleResponse, isLoggedIn } from '@/utils/authentication';
 import * as bootstrap from 'bootstrap';
 import {
@@ -991,6 +1030,50 @@ export default defineComponent({
                 return '-';
             }
             return this.$n(val_small / val_large, 'percent');
+        },
+        isThreePhaseInverter(inverter: Inverter): boolean {
+            // Check if the inverter has 3-phase specific fields
+            if (!inverter.AC || !inverter.AC[0]) {
+                return false;
+            }
+
+            const acData = inverter.AC[0];
+            // Look for 3-phase specific field names
+            const hasPhase1Voltage = !!acData['Voltage Ph1-N'];
+            const hasPhase2Voltage = !!acData['Voltage Ph2-N'];
+            const hasPhase3Voltage = !!acData['Voltage Ph3-N'];
+
+            return hasPhase1Voltage && hasPhase2Voltage && hasPhase3Voltage;
+        },
+        getPhaseDataWithPower(acData: InverterStatistics, phase: number): Partial<InverterStatistics> {
+            // Extract data for a specific phase from the AC data with calculated power
+            const phaseData: Partial<InverterStatistics> = {};
+
+            // Copy phase-specific voltage field
+            const voltageField = `Voltage Ph${phase}-N` as keyof InverterStatistics;
+            if (acData[voltageField]) {
+                phaseData.Voltage = acData[voltageField];
+            }
+
+            // Copy phase-specific current field
+            const currentField = `Current Ph${phase}` as keyof InverterStatistics;
+            if (acData[currentField]) {
+                phaseData.Current = acData[currentField];
+            }
+
+            // Calculate power for this phase: P = V * I * PowerFactor
+            if (phaseData.Voltage && phaseData.Current) {
+                const powerFactor = acData.PowerFactor?.v ?? 1; // Default to 1 if not available
+
+                phaseData.Power = {
+                    v: phaseData.Voltage.v * phaseData.Current.v * powerFactor,
+                    u: 'W',
+                    d: 2,
+                    max: 0,
+                };
+            }
+
+            return phaseData;
         },
     },
 });
