@@ -251,6 +251,9 @@ void Stats::populateJsonWithInstanceStats(const JsonObject &root, const VeDirect
         device["MpptTemperature"]["u"] = "°C";
         device["MpptTemperature"]["d"] = "1";
     }
+    device["MpptTransmitError"]["v"] = mpptData.transmissionErrors_Day;
+    device["MpptTransmitError"]["u"] = "1/d";
+    device["MpptTransmitError"]["d"] = "1";
 
     if (mpptData.ChargeCurrentLimit.first > 0) {
         if (mpptData.ChargeCurrentLimit.second == UINT16_MAX) {
