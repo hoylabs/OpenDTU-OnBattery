@@ -31,6 +31,7 @@
  * 2020.06.21 - 0.2 - add MIT license, no code changes
  * 2020.08.20 - 0.3 - corrected #include reference
  * 2024.03.08 - 0.4 - adds the ability to send hex commands and disassemble hex messages
+ * 2025.03.29 - 0.5 - add of transmit error counters
  */
 
 #include <Arduino.h>
@@ -73,6 +74,9 @@ void VeDirectFrameHandler<T>::init(char const* who, gpio_num_t rx, gpio_num_t tx
 	_startUpPassed = false; // to obtain a complete dataset after a new start or restart
 	_dataValid = false;     // data is not valid on start or restart
 	snprintf(_logId, sizeof(_logId), "%s %d/%d", who, rx, tx);
+
+    _lastErrorCalcAndPrint = 0;     // initialize error counter print timer
+    _errorCounter.fill(0);          // initialize error counters
 	DTU_LOGI("init complete");
 }
 
@@ -109,10 +113,25 @@ void VeDirectFrameHandler<T>::loop()
 	// if such a large gap is observed, reset the state machine so it tries
 	// to decode a new frame / hex messages once more data arrives.
 	if ((State::IDLE != _state) && ((millis() - _lastByteMillis) > 500)) {
+        setErrorCounter(veStruct::Error::TIMEOUT);
 		DTU_LOGW("Resetting state machine (was %d) after timeout", static_cast<unsigned>(_state));
 		dumpDebugBuffer();
 		reset();
-	}
+    }
+
+    if ((millis() - _lastErrorCalcAndPrint) > 60*1000) {
+        _lastErrorCalcAndPrint = millis();
+
+        // calculate the average transmission errors per day
+        _tmpFrame.transmissionErrors_Day = _errorCounter.at(static_cast<size_t>(veStruct::Error::SUM));
+        float errorDays = esp_timer_get_time() / (24.0f*60*60*1000*1000); // 24h, use float to avoid int overflow
+        if (errorDays > 1.0f) { _tmpFrame.transmissionErrors_Day /= errorDays; }
+
+        // no need to print the errors if log level is not at least INFO or if we do not have any
+        if (DTU_LOG_IS_INFO && (_errorCounter.at(static_cast<size_t>(veStruct::Error::SUM)) != 0)) {
+            printErrorCounter();
+        }
+    }
 }
 
 static bool isValidChar(uint8_t inbyte)
@@ -144,17 +163,26 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 		_debugBuffer[_debugIn] = inbyte;
 		_debugIn = (_debugIn + 1) % _debugBuffer.size();
 		if (0 == _debugIn) {
+            setErrorCounter(veStruct::Error::DEBUG_BUFFER);
 			DTU_LOGE("debug buffer overrun!");
 		}
 	}
 	if (_state != State::CHECKSUM && !isValidChar(inbyte)) {
+        setErrorCounter(veStruct::Error::NON_VALID_CHAR);
 		DTU_LOGW("non-ASCII character 0x%02x, invalid frame", inbyte);
 		reset();
 		return;
 	}
 
 	if ( (inbyte == ':') && (_state != State::CHECKSUM) ) {
-		_prevState = _state; //hex frame can interrupt TEXT
+
+        if (_prevState == State::RECORD_HEX) { setErrorCounter(veStruct::Error::NESTED_HEX); }
+
+        // Hex frame can interrupt text frame but hex frame
+        // never interrupt hex frame, in that case we had a transmission fault
+        // We just store the state if we come from a text frame state
+        if (_state != State::RECORD_HEX) { _prevState = _state; }
+
 		_state = State::RECORD_HEX;
 		_hexSize = 0;
 	}
@@ -250,6 +278,7 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 			frameValidEvent();
 		}
 		else {
+            setErrorCounter(veStruct::Error::TEXT_CHECKSUM);
 			DTU_LOGW("checksum 0x%02x != 0x00, invalid frame", _checksum);
 		}
 		reset();
@@ -304,6 +333,7 @@ void VeDirectFrameHandler<T>::processTextData(std::string const& name, std::stri
 		return;
 	}
 
+    setErrorCounter(veStruct::Error::UNKNOWN_TEXT_DATA);
 	DTU_LOGI("Unknown text data '%s' (value '%s')", name.c_str(), value.c_str());
 }
 
@@ -338,6 +368,7 @@ typename VeDirectFrameHandler<T>::State VeDirectFrameHandler<T>::hexRxEvent(uint
 		_hexBuffer[_hexSize++]=inbyte;
 
 		if (_hexSize>=VE_MAX_HEX_LEN) { // oops -buffer overflow - something went wrong, we abort
+            setErrorCounter(veStruct::Error::HEX_BUFFER);
 			DTU_LOGE("hexRx buffer overflow - aborting read");
 			_hexSize=0;
 			ret = State::IDLE;
@@ -353,4 +384,49 @@ template<typename T>
 uint32_t VeDirectFrameHandler<T>::getLastUpdate() const
 {
 	return _lastUpdate;
+}
+
+/*
+ * Counts the transmission errors
+ */
+template<typename T>
+void VeDirectFrameHandler<T>::setErrorCounter(veStruct::Error type)
+{
+    // Start-up can be in the middle of a VE.Direct transmit.
+    // That errors must be ignored. We wait until the startup condition is passed
+    if (_startUpPassed) {
+
+        // increment the error counters
+        _errorCounter.at(static_cast<size_t>(veStruct::Error::SUM))++;
+        _errorCounter.at(static_cast<size_t>(type))++;
+
+        // to avoid overflow, we divide all counters by 2 if the sum exceeds 50k
+        if (_errorCounter.at(static_cast<size_t>(veStruct::Error::SUM)) > 50000) {
+            for (auto& counter : _errorCounter) { counter /= 2; }
+        }
+    }
+}
+
+/*
+ * Prints the specific error counters every 60 seconds
+ */
+template<typename T>
+void VeDirectFrameHandler<T>::printErrorCounter(void)
+{
+    DTU_LOGI("Average transmission errors per day: %0.1f 1/d", _tmpFrame.transmissionErrors_Day);
+
+    auto constexpr maxPerLine = 3; // maximum number of errors per line
+    std::string sBuffer;
+    for(size_t idx = 0; idx < _errorCounter.size(); ++idx) {
+        sBuffer.append(_tmpFrame.getTransmissionErrorAsString(static_cast<veStruct::Error>(idx)).data());
+        sBuffer.append(": ");
+        sBuffer.append(std::to_string(_errorCounter.at(static_cast<size_t>(idx))));
+
+        if (((idx + 1) % maxPerLine == 0) || (idx == _errorCounter.size() - 1)) {
+            DTU_LOGI("%s", sBuffer.c_str()); // print the buffer
+            sBuffer.clear();
+        } else {
+            sBuffer.append(", "); // add a comma to separate the errors
+        }
+    }
 }

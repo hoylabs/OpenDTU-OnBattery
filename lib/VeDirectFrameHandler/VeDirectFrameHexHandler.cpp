@@ -81,7 +81,11 @@ bool VeDirectFrameHandler<T>::disassembleHexData(VeDirectHexData &data) {
     // reset hex data first
     data = {};
 
-    if ((len > 3) && (calcHexFrameCheckSum(buffer, len) == 0x00)) {
+    if (len <= 3) {
+        setErrorCounter(veStruct::Error::HEX_BUFFER);
+    } else if (calcHexFrameCheckSum(buffer, len) != 0x00) {
+        setErrorCounter(veStruct::Error::HEX_CHECKSUM);
+    } else {
         data.rsp = static_cast<VeDirectHexResponse>(AsciiHexLE2Int(buffer+1, 1));
 
         using Response = VeDirectHexResponse;
