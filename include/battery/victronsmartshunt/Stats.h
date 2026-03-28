@@ -29,6 +29,7 @@ private:
     bool _alarmLowSOC;
     bool _alarmLowTemperature;
     bool _alarmHighTemperature;
+    float _transmissionErrors;
 };
 
 } // namespace Batteries::VictronSmartShunt
