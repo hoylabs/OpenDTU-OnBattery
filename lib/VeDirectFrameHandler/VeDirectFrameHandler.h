@@ -94,8 +94,9 @@ private:
     void setErrorCounter(veStruct::Error type);
     void printErrorCounter(void);
 
-    std::array<uint16_t, static_cast<size_t>(veStruct::Error::LAST)> _errorCounter;
-    uint32_t _lastErrorCalcAndPrint;           // timestamp of the last logging print
+    std::array<uint16_t, static_cast<size_t>(veStruct::Error::LAST)> _errorCounter = {0}; // error counters for each error type
+    uint32_t _errorSumSinceStartup = 0;        // sum of all errors since startup
+    uint32_t _lastErrorCalcAndPrint = 0;       // timestamp of the last logging print
 };
 
 template class VeDirectFrameHandler<veMpptStruct>;

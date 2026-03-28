@@ -364,17 +364,15 @@ frozen::string const& VeDirectHexData::getRegisterAsString() const
 /*
  * returns the transmission error as readable text.
  */
-frozen::string const& veStruct::getTransmissionErrorAsString(veStruct::Error error) const
+frozen::string const& veStruct::getTransmitErrorAsString(veStruct::Error error) const
 {
-	static constexpr frozen::map<veStruct::Error, frozen::string, 9> values = {
-		{ Error::SUM, "Total Sum" },
+	static constexpr frozen::map<veStruct::Error, frozen::string, 7> values = {
         { Error::TIMEOUT, "Frame Timeout" },
 		{ Error::TEXT_CHECKSUM, "Text Checksum" },
         { Error::HEX_CHECKSUM, "Hex Checksum" },
         { Error::HEX_BUFFER, "Hex Buffer" },
         { Error::NESTED_HEX, "Nested Hex" },
         { Error::DEBUG_BUFFER, "Debug Buffer" },
-        { Error::UNKNOWN_TEXT_DATA, "Unknown Data" },
         { Error::NON_VALID_CHAR, "Invalid Char" }
     };
 
