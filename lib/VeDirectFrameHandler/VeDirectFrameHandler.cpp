@@ -75,8 +75,6 @@ void VeDirectFrameHandler<T>::init(char const* who, gpio_num_t rx, gpio_num_t tx
 	_dataValid = false;     // data is not valid on start or restart
 	snprintf(_logId, sizeof(_logId), "%s %d/%d", who, rx, tx);
 
-    _lastErrorCalcAndPrint = 0;     // initialize error counter print timer
-    _errorCounter.fill(0);          // initialize error counters
 	DTU_LOGI("init complete");
 }
 
@@ -122,13 +120,13 @@ void VeDirectFrameHandler<T>::loop()
     if ((millis() - _lastErrorCalcAndPrint) > 60*1000) {
         _lastErrorCalcAndPrint = millis();
 
-        // calculate the average transmission errors per day
-        _tmpFrame.transmissionErrors_Day = _errorCounter.at(static_cast<size_t>(veStruct::Error::SUM));
+        // calculate the average transmit errors per day
+        _tmpFrame.transmitErrors_Day = static_cast<float>(_errorSumSinceStartup);
         float errorDays = esp_timer_get_time() / (24.0f*60*60*1000*1000); // 24h, use float to avoid int overflow
-        if (errorDays > 1.0f) { _tmpFrame.transmissionErrors_Day /= errorDays; }
+        if (errorDays > 1.0f) { _tmpFrame.transmitErrors_Day /= errorDays; }
 
         // no need to print the errors if log level is not at least INFO or if we do not have any
-        if (DTU_LOG_IS_INFO && (_errorCounter.at(static_cast<size_t>(veStruct::Error::SUM)) != 0)) {
+        if (DTU_LOG_IS_INFO && (_errorSumSinceStartup != 0)) {
             printErrorCounter();
         }
     }
@@ -179,7 +177,7 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
         if (_prevState == State::RECORD_HEX) { setErrorCounter(veStruct::Error::NESTED_HEX); }
 
         // Hex frame can interrupt text frame but hex frame
-        // never interrupt hex frame, in that case we had a transmission fault
+        // never interrupt hex frame, in that case we had a transmit fault
         // We just store the state if we come from a text frame state
         if (_state != State::RECORD_HEX) { _prevState = _state; }
 
@@ -333,7 +331,6 @@ void VeDirectFrameHandler<T>::processTextData(std::string const& name, std::stri
 		return;
 	}
 
-    setErrorCounter(veStruct::Error::UNKNOWN_TEXT_DATA);
 	DTU_LOGI("Unknown text data '%s' (value '%s')", name.c_str(), value.c_str());
 }
 
@@ -387,7 +384,7 @@ uint32_t VeDirectFrameHandler<T>::getLastUpdate() const
 }
 
 /*
- * Counts the transmission errors
+ * Counts the transmit errors
  */
 template<typename T>
 void VeDirectFrameHandler<T>::setErrorCounter(veStruct::Error type)
@@ -397,12 +394,15 @@ void VeDirectFrameHandler<T>::setErrorCounter(veStruct::Error type)
     if (_startUpPassed) {
 
         // increment the error counters
-        _errorCounter.at(static_cast<size_t>(veStruct::Error::SUM))++;
         _errorCounter.at(static_cast<size_t>(type))++;
+        _errorSumSinceStartup++; // with 1 error per second we would overflow after 136 years
 
-        // to avoid overflow, we divide all counters by 2 if the sum exceeds 50k
-        if (_errorCounter.at(static_cast<size_t>(veStruct::Error::SUM)) > 50000) {
-            for (auto& counter : _errorCounter) { counter /= 2; }
+        // to avoid overflow, we divide all counters by 2 if one of them exceeds 50k
+        for (size_t idx = 0; idx < _errorCounter.size(); ++idx) {
+            if (_errorCounter.at(idx) > 50000) {
+                for (auto& counter : _errorCounter) { counter /= 2; }
+                break;
+            }
         }
     }
 }
@@ -413,12 +413,12 @@ void VeDirectFrameHandler<T>::setErrorCounter(veStruct::Error type)
 template<typename T>
 void VeDirectFrameHandler<T>::printErrorCounter(void)
 {
-    DTU_LOGI("Average transmission errors per day: %0.1f 1/d", _tmpFrame.transmissionErrors_Day);
+    DTU_LOGI("Average transmit errors per day: %0.1f 1/d", _tmpFrame.transmitErrors_Day);
 
     auto constexpr maxPerLine = 3; // maximum number of errors per line
     std::string sBuffer;
     for(size_t idx = 0; idx < _errorCounter.size(); ++idx) {
-        sBuffer.append(_tmpFrame.getTransmissionErrorAsString(static_cast<veStruct::Error>(idx)).data());
+        sBuffer.append(_tmpFrame.getTransmitErrorAsString(static_cast<veStruct::Error>(idx)).data());
         sBuffer.append(": ");
         sBuffer.append(std::to_string(_errorCounter.at(static_cast<size_t>(idx))));
 
