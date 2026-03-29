@@ -705,29 +705,37 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested) const
         return 0;
     }
 
-    auto solarOutputDc = getSolarPassthroughPower();
+    auto solarOutputDc = getSolarOutputPower();
     auto solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
-    if (isFullSolarPassthroughActive() && solarOutputAc > powerRequested) {
-        DTU_LOGD("using %u/%u W DC/AC from DC power bus (full solar-passthrough)",
-                solarOutputDc, solarOutputAc);
 
-        return solarOutputAc;
+    auto dcLoadsPowerDc = getDcLoadsPowerDc();
+    auto solarPassthroughPowerDc = solarOutputDc - dcLoadsPowerDc;
+    auto solarPassthroughPowerAc = dcPowerBusToInverterAc(solarPassthroughPowerDc);
+    if (isFullSolarPassthroughActive() && solarPassthroughPowerAc > powerRequested) {
+        DTU_LOGD("using %u/%u W DC/AC from DC power bus, solar power is %u/%u W DC/AC, "
+                 "dc loads are %u W DC (full solar-passthrough)",
+                solarPassthroughPowerDc, solarPassthroughPowerAc,
+                solarOutputDc, solarOutputAc,
+                dcLoadsPowerDc);
+
+        return solarPassthroughPowerAc;
     }
 
     auto oBatteryDischargeLimit = getBatteryDischargeLimit();
     if (!oBatteryDischargeLimit) {
         DTU_LOGD("granting %d W from DC power bus (no battery discharge "
-                "limit), solar power is %u/%u W DC/AC",
-                powerRequested, solarOutputDc, solarOutputAc);
+                "limit), solar power is %u/%u W DC/AC, dc loads are %u W DC",
+                powerRequested, solarOutputDc, solarOutputAc, dcLoadsPowerDc);
         return powerRequested;
     }
 
     auto batteryAllowanceAc = dcPowerBusToInverterAc(*oBatteryDischargeLimit);
 
     DTU_LOGD("battery allowance is %u/%u W DC/AC, solar power is %u/%u W DC/AC, "
-            "requested are %u W AC",
+            "dc loads are %u W DC, requested are %u W AC",
             *oBatteryDischargeLimit, batteryAllowanceAc,
-            solarOutputDc, solarOutputAc, powerRequested);
+            solarOutputDc, solarOutputAc,
+            dcLoadsPowerDc, powerRequested);
 
     uint16_t allowance = batteryAllowanceAc + solarOutputAc;
     return std::min(powerRequested, allowance);
@@ -755,17 +763,58 @@ bool PowerLimiterClass::updateInverters()
     return busy;
 }
 
-uint16_t PowerLimiterClass::getSolarPassthroughPower() const
+uint16_t PowerLimiterClass::getSolarOutputPower() const
 {
     if (!isSolarPassThroughEnabled() || isBelowStopThreshold()) {
         return 0;
     }
 
-    std::optional<float> oSolarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts();
+    float solarChargerOutput = SolarCharger.getStats()->getOutputPowerWatts().value_or(0);
 
     // This value can be negative if a charge controller with a load output is used
     // and the load is consuming more power than the charge controller is producing.
-    return std::max<float>(0, oSolarChargerOutput.value_or(0));
+    return std::max<float>(0, solarChargerOutput);
+}
+
+// Determine how much of the present solar DC power can be passed to the
+// battery-powered inverters without pulling from the battery. We compute
+// the current DC loads on the power bus (excluding the inverters), then
+// subtract those from the solar output.
+uint16_t PowerLimiterClass::getDcLoadsPowerDc() const
+{
+    uint16_t solarOutputDc = getSolarOutputPower();
+    if (solarOutputDc == 0) { return 0; }
+
+    auto stats = Battery.getStats();
+    if (!stats->isCurrentValid() || stats->getChargeCurrentAgeSeconds() >= 60) { return 0; }
+
+    float batteryVoltage = getBatteryVoltage();
+    if (batteryVoltage <= 0.0f) { return 0; }
+
+    // Determine battery power (positive when charging, negative when discharging)
+    float batteryPower = batteryVoltage * stats->getChargeCurrent();
+    float batteryCharge = std::max(0.0f, batteryPower);
+    float batteryDischarge = std::max(0.0f, -batteryPower);
+
+    float inverterDcPower = getBatteryInvertersOutputDcWatts();
+
+    // Other DC loads connected to the DC bus (e.g., DC consumers connected to the charge controller)
+    // Balance on DC bus: solar + batteryDischarge = inverterDcDraw + otherLoads + batteryCharge
+    float dcLoads = solarOutputDc + batteryDischarge - inverterDcPower - batteryCharge;
+
+    return std::max<float>(0.0f, dcLoads);
+}
+
+float PowerLimiterClass::getBatteryInvertersOutputDcWatts() const
+{
+    float res = 0;
+
+    for (auto const& upInv : _inverters) {
+        if (!upInv->isBatteryPowered()) { continue; }
+        res += upInv->getCurrentDcPower();
+    }
+
+    return res;
 }
 
 float PowerLimiterClass::getBatteryInvertersOutputAcWatts() const

@@ -68,6 +68,7 @@ public:
 
     float getGridVoltage() const;
     float getDcVoltage(uint8_t input);
+    float getCurrentDcPower();
     bool isSendingCommandsEnabled() const { return _spInverter->getEnableCommands(); }
     bool isReachable() const { return _spInverter->isReachable(); }
     bool isProducing() const { return _spInverter->isProducing(); }
