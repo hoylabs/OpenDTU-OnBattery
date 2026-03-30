@@ -51,20 +51,17 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
 {
     String sensorId = sanitizeUniqueId(caption);
 
-    String configTopic = "sensor/dtu_battery_" + _serial
+    String configTopic = "sensor/" + createBatteryId()
         + "/" + sensorId
         + "/config";
 
     String statTopic = MqttSettings.getPrefix() + "battery/";
-    // omit serial to avoid a breaking change
-    // statTopic.concat(_serial);
-    // statTopic.concat("/");
     statTopic.concat(subTopic);
 
     JsonDocument root;
     root["name"] = caption;
     root["stat_t"] = statTopic;
-    root["uniq_id"] = _serial + "_" + sensorId;
+    root["uniq_id"] = createBatteryId() + "_" + sensorId;
 
     if (icon != NULL) {
         root["icon"] = icon;
@@ -108,20 +105,17 @@ void HassIntegration::publishBinarySensor(const char* caption,
 {
     String sensorId = sanitizeUniqueId(caption);
 
-    String configTopic = "binary_sensor/dtu_battery_" + _serial
+    String configTopic = "binary_sensor/" + createBatteryId()
         + "/" + sensorId
         + "/config";
 
     String statTopic = MqttSettings.getPrefix() + "battery/";
-    // omit serial to avoid a breaking change
-    // statTopic.concat(_serial);
-    // statTopic.concat("/");
     statTopic.concat(subTopic);
 
     JsonDocument root;
 
     root["name"] = caption;
-    root["uniq_id"] = _serial + "_" + sensorId;
+    root["uniq_id"] = createBatteryId() + "_" + sensorId;
     root["stat_t"] = statTopic;
     root["pl_on"] = payload_on;
     root["pl_off"] = payload_off;
@@ -149,7 +143,7 @@ void HassIntegration::publishBinarySensor(const char* caption,
 void HassIntegration::createDeviceInfo(JsonObject& object) const
 {
     object["name"] = *_spStats->getHassDeviceName();
-    object["ids"] = _serial;
+    object["ids"] = createBatteryId();
     object["cu"] = MqttHandleHass.getDtuUrl();
     object["mf"] = "OpenDTU";
     object["mdl"] = *_spStats->getManufacturer();
@@ -162,6 +156,10 @@ void HassIntegration::publish(const String& subtopic, const String& payload) con
     String topic = Configuration.get().Mqtt.Hass.Topic;
     topic += subtopic;
     MqttSettings.publishGeneric(topic.c_str(), payload.c_str(), Configuration.get().Mqtt.Hass.Retain);
+}
+
+String HassIntegration::createBatteryId() {
+    return MqttHandleHass.getDtuUniqueId() + "_battery";
 }
 
 String HassIntegration::sanitizeUniqueId(const char* value) {
