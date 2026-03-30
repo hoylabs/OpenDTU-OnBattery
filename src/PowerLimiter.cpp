@@ -284,18 +284,30 @@ void PowerLimiterClass::loop()
         auto solarPassThroughEnabled = isSolarPassThroughEnabled();
         auto isBatteryAlwaysUseAtNightEnabled = config.PowerLimiter.BatteryAlwaysUseAtNight;
 
-        if (!isBatteryAlwaysUseAtNightEnabled) { _oneStopPerNightDone = false; }
+        // when `Use Battery at night` is disabled
+        if (!isBatteryAlwaysUseAtNightEnabled) {
+            _oneStopPerNightDone = false;
 
-        if (!solarPassThroughEnabled && !isBatteryAlwaysUseAtNightEnabled) { return BatteryState::STOP; }
+            // only allow discharging if we are in solar pass-through mode.
+            // Otherwise we stop the battery.
+            if (solarPassThroughEnabled) { return BatteryState::NO_DISCHARGE; }
+            return BatteryState::STOP;
+        }
 
-        if (solarPassThroughEnabled && !isBatteryAlwaysUseAtNightEnabled) { return BatteryState::NO_DISCHARGE; }
-
-        // we reach this line only if 'Use Battery at night' is enabled
+        // when `Use Battery at night` is enabled, and its day time
         if (day) {
             _oneStopPerNightDone = false;
-            return (solarPassThroughEnabled) ? BatteryState::DISCHARGE_ALLOWED : BatteryState::STOP;
+
+            // only allow discharging if we are in solar pass-through mode.
+            // Otherwise we stop the battery.
+            if (solarPassThroughEnabled) { return BatteryState::DISCHARGE_ALLOWED; }
+            return BatteryState::STOP;
+
         } else {
-            return (_oneStopPerNightDone) ? BatteryState::STOP : BatteryState::DISCHARGE_NIGHT;
+            // if we are at night and we have already stopped the battery once per night, we keep the STOP state.
+            // Otherwise we allow discharging of a partially charged battery.
+            if (_oneStopPerNightDone) { return BatteryState::STOP; }
+            return BatteryState::DISCHARGE_NIGHT;
         }
     };
 
