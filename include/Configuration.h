@@ -19,7 +19,6 @@
 #define SYSLOG_MAX_HOSTNAME_STRLEN 128
 
 #define NTP_MAX_SERVER_STRLEN 31
-#define NTP_MAX_TIMEZONE_STRLEN 50
 #define NTP_MAX_TIMEZONEDESCR_STRLEN 50
 
 #define MQTT_MAX_HOSTNAME_STRLEN 128
@@ -188,12 +187,13 @@ struct BATTERY_ZENDURE_CONFIG_T {
     uint8_t PollingInterval;
     uint8_t MinSoC;
     uint8_t MaxSoC;
-    uint8_t BypassMode;
+    enum BypassMode_t : uint8_t { Automatic = 0, AlwaysOff = 1, AlwaysOn = 2 };
+    BypassMode_t BypassMode;
     uint16_t MaxOutput;
     bool AutoShutdown;
     uint16_t OutputLimit;
-    enum ZendureBatteryOutputControl { ControlNone = 0, ControlFixed = 1, ControlSchedule = 2 };
-    ZendureBatteryOutputControl OutputControl;
+    enum OutputControl_t : uint8_t { ControlNone = 0, ControlFixed = 1, ControlSchedule = 2 };
+    OutputControl_t OutputControl;
     int16_t SunriseOffset;
     int16_t SunsetOffset;
     uint16_t OutputLimitDay;
@@ -201,7 +201,7 @@ struct BATTERY_ZENDURE_CONFIG_T {
     bool ChargeThroughEnable;
     uint16_t ChargeThroughInterval;
     bool BuzzerEnable;
-    enum ControlMode { ControlModeFull = 0, ControlModeOnce = 1, ControlModeReadOnly = 2 };
+    enum ControlMode : uint8_t { ControlModeFull = 0, ControlModeOnce = 1, ControlModeReadOnly = 2 };
     ControlMode ControlMode;
     uint8_t ChargeThroughResetLevel;
 };
@@ -348,7 +348,6 @@ struct CONFIG_T {
 
     struct {
         char Server[NTP_MAX_SERVER_STRLEN + 1];
-        char Timezone[NTP_MAX_TIMEZONE_STRLEN + 1];
         char TimezoneDescr[NTP_MAX_TIMEZONEDESCR_STRLEN + 1];
         double Longitude;
         double Latitude;

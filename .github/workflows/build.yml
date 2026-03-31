@@ -20,17 +20,17 @@ jobs:
     name: Gather Environments
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
@@ -55,7 +55,7 @@ jobs:
       matrix:
         environment: ${{ fromJSON(needs.get_default_envs.outputs.environments) }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Get tags
         run: git fetch --force --tags origin
@@ -70,7 +70,7 @@ jobs:
           git switch -c ${OWNER}/${NAME}/pr${ID}-${DATE}
 
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -78,13 +78,13 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Cache PlatformIO
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.platformio
           key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
@@ -99,7 +99,7 @@ jobs:
             corepack enable
 
       - name: Setup Node.js and yarn
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: "yarn"
@@ -124,7 +124,7 @@ jobs:
       - name: Rename Factory Firmware
         run: mv .pio/build/${{ matrix.environment }}/firmware.factory.bin .pio/build/${{ matrix.environment }}/opendtu-onbattery-${{ matrix.environment }}.factory.bin
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: opendtu-onbattery-${{ matrix.environment }}
           path: |
@@ -185,7 +185,7 @@ jobs:
           echo "${{ steps.generate_pr_artifacts_comment.outputs.message }}" > ./pr/${{ github.event.number }}.md
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pr
           path: pr/
@@ -195,11 +195,15 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      pull-requests: read
+      contents: write
     needs: [get_default_envs, build]
     if: startsWith(github.ref, 'refs/tags/2')
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Get openDTU core tags
         run: git fetch --force --tags https://github.com/tbnobody/OpenDTU.git
@@ -210,7 +214,7 @@ jobs:
 
       - name: Create openDTU-core-release-Badge
         if: vars.BADGE_GIST_ID != ''
-        uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483 # version 1.7.0
+        uses: schneegans/dynamic-badges-action@0e50b8bad39e7e1afd3e4e9c2b7dd145fad07501 # version 1.8.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: ${{ vars.BADGE_GIST_ID }}
@@ -221,15 +225,13 @@ jobs:
 
       - name: Build Changelog
         id: github_release
-        uses: mikepenz/release-changelog-builder-action@v6.0.0
+        uses: mikepenz/release-changelog-builder-action@v6.2.0
         with:
           failOnError: true
           commitMode: true
           configuration: ".github/workflows/config/release-notes-config.json"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts/
 
@@ -261,5 +263,3 @@ jobs:
           draft: False
           files: |
             release-artifacts/*.bin
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022-2025 Thomas Basler and others
+ * Copyright (C) 2022-2026 Thomas Basler and others
  */
 #include "Configuration.h"
 #include "NetworkSettings.h"
@@ -302,7 +302,6 @@ bool ConfigurationClass::write()
 
     JsonObject ntp = doc["ntp"].to<JsonObject>();
     ntp["server"] = config.Ntp.Server;
-    ntp["timezone"] = config.Ntp.Timezone;
     ntp["timezone_descr"] = config.Ntp.TimezoneDescr;
     ntp["latitude"] = config.Ntp.Latitude;
     ntp["longitude"] = config.Ntp.Longitude;
@@ -577,11 +576,11 @@ void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& sourc
     target.PollingInterval = source["polling_interval"] | BATTERY_ZENDURE_POLLING_INTERVAL;
     target.MinSoC = source["soc_min"] | BATTERY_ZENDURE_MIN_SOC;
     target.MaxSoC = source["soc_max"] | BATTERY_ZENDURE_MAX_SOC;
-    target.BypassMode = source["bypass_mode"] | BATTERY_ZENDURE_BYPASS_MODE;
+    target.BypassMode = source["bypass_mode"] | BatteryZendureConfig::BypassMode_t::Automatic;
     target.MaxOutput = source["max_output"] | BATTERY_ZENDURE_MAX_OUTPUT;
     target.AutoShutdown = source["auto_shutdown"] | BATTERY_ZENDURE_AUTO_SHUTDOWN;
     target.OutputLimit = source["output_limit"] | BATTERY_ZENDURE_OUTPUT_LIMIT;
-    target.OutputControl = source["output_control"] | BatteryZendureConfig::ZendureBatteryOutputControl::ControlFixed;
+    target.OutputControl = source["output_control"] | BatteryZendureConfig::OutputControl_t::ControlFixed;
     target.OutputLimitDay = source["output_limit_day"] | BATTERY_ZENDURE_OUTPUT_LIMIT_DAY;
     target.OutputLimitNight = source["output_limit_night"] | BATTERY_ZENDURE_OUTPUT_LIMIT_NIGHT;
     target.SunriseOffset = source["sunrise_offset"] | BATTERY_ZENDURE_SUNRISE_OFFSET;
@@ -782,7 +781,6 @@ bool ConfigurationClass::read()
 
     JsonObject ntp = doc["ntp"];
     strlcpy(config.Ntp.Server, ntp["server"] | NTP_SERVER, sizeof(config.Ntp.Server));
-    strlcpy(config.Ntp.Timezone, ntp["timezone"] | NTP_TIMEZONE, sizeof(config.Ntp.Timezone));
     strlcpy(config.Ntp.TimezoneDescr, ntp["timezone_descr"] | NTP_TIMEZONEDESCR, sizeof(config.Ntp.TimezoneDescr));
     config.Ntp.Latitude = ntp["latitude"] | NTP_LATITUDE;
     config.Ntp.Longitude = ntp["longitude"] | NTP_LONGITUDE;
