@@ -67,8 +67,6 @@ bool LocalMqttProvider::init()
     // store device ID as we will need them for checking when receiving messages
     setTopics(deviceType, config.Battery.Zendure.DeviceId);
 
-    _topicPersistentSettings = MqttSettings.getPrefix() + "battery/persistent/";
-
     // subscribe for log messages
     MqttSettings.subscribe(_topicLog, 0/*QoS*/,
             std::bind(&LocalMqttProvider::onMqttMessageLog,
@@ -156,7 +154,7 @@ void LocalMqttProvider::writeSettings() {
 
     setBuzzer(config.Battery.Zendure.BuzzerEnable);
     setAutoshutdown(config.Battery.Zendure.AutoShutdown);
-    setBypassMode(config.Battery.Zendure.BypassMode);
+    //setBypassMode(config.Battery.Zendure.BypassMode);
 
     publishProperty(_topicWrite, ZENDURE_REPORT_PV_BRAND, "1");         // means Hoymiles
     publishProperty(_topicWrite, ZENDURE_REPORT_PV_AUTO_MODEL, "0");    // we did static setup
@@ -199,13 +197,14 @@ void LocalMqttProvider::timesync()
     time_t now;
     if (!_topicTimesyncReply.isEmpty() && Utils::getEpoch(&now)) {
         MqttSettings.publishGeneric(_topicTimesyncReply, "{\"zoneOffset\": \"+00:00\", \"messageId\": " + String(++_messageCounter) + ", \"timestamp\": " + String(now) + "}", false, 0);
-        DTU_LOGD("Timesync Reply");
+        DTU_LOGD("Timesync Reply Sent");
     }
 }
 
 void LocalMqttProvider::onMqttMessageTimesync(espMqttClientTypes::MessageProperties const& properties,
         char const* topic, uint8_t const* payload, size_t len)
 {
+    DTU_LOGD("Timesync Request Received");
     timesync();
 }
 

@@ -11,6 +11,9 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
     auto const& config = Configuration.get();
 
+    // set maximum age for aging within UI
+    root["max_age"] = 90;
+
     // values go into the "Status" card of the web application
     std::string section("status");
     addLiveViewInSection(root, section, "totalInputPower", _input_power, "W", 0, false);
@@ -31,6 +34,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
     addLiveViewInSection(root, section, "lastEmptyCharge", _last_empty_hours, "h", 0);
     addLiveViewInSection(root, section, "remainOutTime", _remain_out_time, "min", 0);
     addLiveViewInSection(root, section, "remainInTime", _remain_in_time, "min", 0);
+    addLiveViewInSection(root, section, "zendure.keepUntil", _keep_until_minutes, "min", 0);
 
     // values go into the "Settings" card of the web application
     section = "settings";
@@ -44,6 +48,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
     addLiveViewInSection(root, section, "inputLimit", _output_limit, "W", 0);
     addLiveViewInSection(root, section, "minSoC", _soc_min, "%", 1);
     addLiveViewInSection(root, section, "maxSoC", _soc_max, "%", 1);
+    addLiveViewInSection(root, section, "zendure.packMinSoc", _packSocMin, "%", 1);
     addLiveViewBooleanInSection(root, section, "autoRecover", _auto_recover);
     addLiveViewBooleanInSection(root, section, "autoShutdown", _auto_shutdown);
     addLiveViewTextInSection(root, section, "bypassMode", std::string(bypassModeToString(_bypass_mode)));
@@ -134,6 +139,10 @@ void Stats::mqttPublish() const
     publish("battery/bypass", boolToString(_bypass_state));
     publish("battery/lastFullCharge", _last_full_hours);
     publish("battery/lastEmpty", _last_empty_hours);
+    publish("remainOutTime", _remain_out_time);
+    publish("remainInTime", _remain_in_time);
+    publish("packMinSoc", _packSocMin, 1);
+    publish("keepForMinutes", _keep_until_minutes);
 
     publish("battery/chargeThroughState", String(chargeThroughStateToString(_charge_through_state)));
 

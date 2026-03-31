@@ -209,7 +209,7 @@ struct BATTERY_ZENDURE_CONFIG_T {
     bool BuzzerEnable;
     enum ControlMode : uint8_t { ControlModeFull = 0, ControlModeOnce = 1, ControlModeReadOnly = 2 };
     ControlMode ControlMode;
-    uint8_t ChargeThroughResetLevel;
+    uint16_t ChargeThroughKeepMinutes;
     enum ConnectionType { LocalMqtt = 0, ZendureMqtt = 1, Bluetooth = 2 };
     ConnectionType ConnectionType;
     char Server[ZENDURE_MAX_SERVER_STRLEN + 1];

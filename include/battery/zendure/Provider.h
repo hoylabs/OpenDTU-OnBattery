@@ -56,7 +56,8 @@ protected:
     String _topicWrite = String();
     String _topicTimesync = String();
     String _topicTimesyncReply = String();
-    String _topicPersistentSettings = String();
+    String _topicPersistentSettingsPublish = String();
+    String _topicPersistentSettingsSubscribe = String();
 
     String _payloadFullUpdate = String();
 
@@ -69,10 +70,13 @@ private:
     uint16_t calcOutputLimit(uint16_t limit) const;
     void setTargetSoCs(const float soc_min, const float soc_max);
 
-    void calculateFullChargeAge();
+    void calculateTimeDiff();
     void rescheduleSunCalc() { _nextSunCalc = 0; }
+    void rescheduleOutputCalc() { _nextOutputCalc = 0; }
     void publishPersistentSettings(const char* subtopic, const String& payload);
-    void setControlState(ControlState mode);
+    void setControlState(ControlState mode, const bool publish = true);
+    bool isControlState(ControlState mode) const { return _stats->_controlState == mode; }
+    void checkBatteryProtection();
 
     uint32_t _rateFullUpdateMs = 0;
     uint64_t _nextFullUpdate = 0;
@@ -82,6 +86,9 @@ private:
 
     uint32_t _rateSunCalcMs = 0;
     uint64_t _nextSunCalc = 0;
+
+    uint32_t _rateOutputCalcMs = 0;
+    uint64_t _nextOutputCalc = 0;
 };
 
 } // namespace Batteries::Zendure

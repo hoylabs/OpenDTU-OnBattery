@@ -833,9 +833,9 @@
             "buzzerEnable": "Akustische Signale",
             "controlMode": "Zugriffsmodus",
             "controlModes": {
-                "Full": "Volle Kontrolle",
-                "Once": "Einstellungen einmalig schreiben",
-                "ReadOnly": "Nur Lesezugriff"
+                "full": "Volle Kontrolle",
+                "once": "Einstellungen einmalig schreiben",
+                "readOnly": "Nur Lesezugriff"
             },
             "chargeThrough": "Vollladeeinstellungen",
             "chargeThroughEnabled": "Vollladen",
@@ -861,7 +861,9 @@
             "socMinHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
             "pollingIntervalDescription": "Das BMS überträgt Daten auch asynchron. Zusätzlich wird eine vollständige Datenaktualisierungen im angegebenen Interval Erzwungen.",
             "batteryProtectionEnabled": "Batterieschutz",
-            "batteryProtection": "Erweiterte Batterieschutz Einstellungen"
+            "batteryProtection": "Erweiterte Batterieschutz Einstellungen",
+            "chargeThroughKeepMinutes": "Volllade-Modus halten",
+            "chargeThroughKeepMinutesDescription": "Volllade-Modus für mindestens diese Anzahl von Minuten beibehalten, nachdem die Batterie 100% SoC erreicht hat"
         }
     },
     "inverteradmin": {
@@ -1308,9 +1310,9 @@
         "unavail": "N/A",
         "useableCapacity": "Nutzbare Kapazität",
         "controlMode": "@:batteryadmin.zendure.controlMode",
-        "full-access": "@:batteryadmin.zendure.controlModes.Full",
+        "full-access": "@:batteryadmin.zendure.controlModes.full",
         "write-once": "Einmalig Schreiben",
-        "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly",
+        "read-only": "@:batteryadmin.zendure.controlModes.readOnly",
         "zendure": {
             "chargeThroughState": "Status Vollladezyklus",
             "chargeThroughStates": {
@@ -1336,7 +1338,9 @@
                 "invalid": "@:battery.invalid"
             },
             "batteryProtection": "Batterieschutz",
-            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis"
+            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
+            "keepUntil": "Volle Ladung halten für",
+            "packMinSoc": "Minimaler Pack Ladezustand"
         }
     }
 }

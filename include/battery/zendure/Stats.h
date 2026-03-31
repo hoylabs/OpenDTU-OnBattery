@@ -76,12 +76,22 @@ class Stats : public ::Batteries::Stats {
         return String(buffer);
     }
 
-     static const char* controlStateToString(ControlState mode) {
+    static const char* controlStateToString(ControlState mode) {
         if (_controlStateStrings.contains(mode)) {
             return _controlStateStrings.at(mode);
         }
 
         return invalid;
+    }
+
+    static std::optional<ControlState> controlStateFromString(String value) {
+        for (auto entry : _controlStateStrings) {
+            if (String(entry.second) == value) {
+                return entry.first;
+            }
+        }
+
+        return std::nullopt;
     }
 
     static const char* chargeThroughStateToString(std::optional<ChargeThroughState> mode) {
@@ -430,6 +440,12 @@ private:
     std::optional<uint64_t> _last_empty_timestamp = std::nullopt;
     std::optional<uint32_t> _last_empty_hours = std::nullopt;
     std::optional<ChargeThroughState>  _charge_through_state = std::nullopt;
+    std::optional<uint64_t> _keep_until_timestamp = std::nullopt;
+    std::optional<uint64_t> _keep_until_minutes = std::nullopt;
+
+    std::optional<float> _inaccurateSoC= std::nullopt;
+    uint32_t _inaccurateSoCTimestamp = 0;
+    bool _is_acurate_soc = false;
 
     ControlState _controlState = ControlState::NormalOperation;
 };

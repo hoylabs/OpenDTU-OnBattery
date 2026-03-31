@@ -834,15 +834,15 @@
             "buzzerEnable": "Audible signals",
             "controlMode": "Access mode",
             "controlModes": {
-                "Full": "Full control",
-                "Once": "Write settings only once",
-                "ReadOnly": "Read-Only"
+                "full": "Full control",
+                "once": "Write settings only once",
+                "readOnly": "Read-Only"
             },
             "chargeThrough": "Charge Through Settings",
             "chargeThroughEnabled": "Charge Through",
             "chargeThroughInterval": "Maximum time without full charge",
             "chargeThroughReset": "Reset Threshold",
-            "connectionType": "Connection Type",
+            "connectionType": "Type",
             "connectionTypes": {
                 "local": "Local MQTT Broker",
                 "cloud": "Zendure Developer API",
@@ -862,7 +862,9 @@
             "socMinHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
             "pollingIntervalDescription": "The BMS also transmitts data asynchonously. The polling interval additionally enforces full data refreshes at the specified interval.",
             "batteryProtectionEnabled": "Battery Protection",
-            "batteryProtection": "Advanced Battery Protection Settings"
+            "batteryProtection": "Advanced Battery Protection Settings",
+            "chargeThroughKeepMinutes": "Keep charge through mode",
+            "chargeThroughKeepMinutesDescription": "Keep charge through mode for at least this amount of minutes after battery reached 100% SoC"
         }
     },
     "inverteradmin": {
@@ -1312,9 +1314,9 @@
         "unavail": "N/A",
         "useableCapacity": "Useable capacity",
         "controlMode": "@:batteryadmin.zendure.controlMode",
-        "full-access": "@:batteryadmin.zendure.controlModes.Full",
+        "full-access": "@:batteryadmin.zendure.controlModes.full",
         "write-once": "Write Once",
-        "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly",
+        "read-only": "@:batteryadmin.zendure.controlModes.readOnly",
         "zendure": {
             "chargeThroughState": "Charge through state",
             "chargeThroughStates": {
@@ -1340,7 +1342,9 @@
                 "invalid": "@:battery.invalid"
             },
             "batteryProtection": "Battery Protection",
-            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis"
+            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
+            "keepUntil": "Hold full charge for",
+            "packMinSoc": "Minimum Pack SoC"
         }
     }
 }
