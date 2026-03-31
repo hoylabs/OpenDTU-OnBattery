@@ -28,7 +28,7 @@ void WebApiWsGridChargerLiveClass::init(AsyncWebServer& server, Scheduler& sched
     using std::placeholders::_6;
 
     _server = &server;
-    _server->on("/api/gridchargerlivedata/status", HTTP_GET, std::bind(&WebApiWsGridChargerLiveClass::onLivedataStatus, this, _1));
+    _server->on("/api/gridchargerlivedata/status", HTTP_GET, static_cast<ArRequestHandlerFunction>(std::bind(&WebApiWsGridChargerLiveClass::onLivedataStatus, this, _1)));
 
     _server->addHandler(&_ws);
     _ws.onEvent(std::bind(&WebApiWsGridChargerLiveClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
@@ -47,6 +47,7 @@ void WebApiWsGridChargerLiveClass::init(AsyncWebServer& server, Scheduler& sched
 
     _simpleDigestAuth.setUsername(AUTH_USERNAME);
     _simpleDigestAuth.setRealm("AC charger websocket");
+    _simpleDigestAuth.setAuthType(AsyncAuthType::AUTH_DIGEST);
 
     reload();
 }
