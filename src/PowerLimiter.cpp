@@ -35,11 +35,17 @@ static auto sSolarPoweredFilter = [](PowerLimiterInverter const& inv) {
 
 static const char sSolarPoweredExpression[] = "solar-powered";
 
-static auto sSmartBufferPoweredFilter = [](PowerLimiterInverter const& inv) {
-    return inv.isSmartBufferPowered();
+static auto sSecondarySmartBufferPoweredFilter = [](PowerLimiterInverter const& inv) {
+    return inv.isSmartBufferPowered() && !inv.hasPriority();
 };
 
-static const char sSmartBufferPoweredExpression[] = "smart-buffer-powered";
+static const char sSecondarySmartBufferPoweredExpression[] = "secondary-smart-buffer-powered";
+
+static auto sPrimarySmartBufferPoweredFilter = [](PowerLimiterInverter const& inv) {
+    return inv.isSmartBufferPowered() && inv.hasPriority();
+};
+
+static const char sPrimarySmartBufferPoweredExpression[] = "primary-smart-buffer-powered";
 
 PowerLimiterClass PowerLimiter;
 
@@ -360,14 +366,19 @@ void PowerLimiterClass::loop()
 
     auto coveredBySolar = updateInverterLimits(inverterTotalPower, sSolarPoweredFilter, sSolarPoweredExpression);
     auto remainingAfterSolar = (inverterTotalPower >= coveredBySolar) ? inverterTotalPower - coveredBySolar : 0;
-    auto coveredBySmartBuffer = updateInverterLimits(remainingAfterSolar, sSmartBufferPoweredFilter, sSmartBufferPoweredExpression);
-    auto remainingAfterSmartBuffer = (remainingAfterSolar >= coveredBySmartBuffer) ? remainingAfterSolar - coveredBySmartBuffer : 0;
-    auto powerBusUsage = calcPowerBusUsage(remainingAfterSmartBuffer);
+
+    auto coveredByPrimarySmartBuffer = updateInverterLimits(remainingAfterSolar, sPrimarySmartBufferPoweredFilter, sPrimarySmartBufferPoweredExpression);
+    auto remainingAfterPrimarySmartBuffer = (remainingAfterSolar >= coveredByPrimarySmartBuffer) ? remainingAfterSolar - coveredByPrimarySmartBuffer : 0;
+
+    auto coveredBySecondarySmartBuffer = updateInverterLimits(remainingAfterPrimarySmartBuffer, sSecondarySmartBufferPoweredFilter, sSecondarySmartBufferPoweredExpression);
+    auto remainingAfterSecondarySmartBuffer = (remainingAfterPrimarySmartBuffer >= coveredBySecondarySmartBuffer) ? remainingAfterPrimarySmartBuffer - coveredBySecondarySmartBuffer : 0;
+
+    auto powerBusUsage = calcPowerBusUsage(remainingAfterSecondarySmartBuffer);
     auto coveredByBattery = updateInverterLimits(powerBusUsage, sBatteryPoweredFilter, sBatteryPoweredExpression);
 
     for (auto const &upInv : _inverters) { upInv->debug(); }
 
-    _lastExpectedInverterOutput = coveredBySolar + coveredBySmartBuffer + coveredByBattery;
+    _lastExpectedInverterOutput = coveredBySolar + coveredByPrimarySmartBuffer + coveredBySecondarySmartBuffer + coveredByBattery;
 
     bool limitUpdated = updateInverters();
 
