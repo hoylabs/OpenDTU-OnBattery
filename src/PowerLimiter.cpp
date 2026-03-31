@@ -6,6 +6,7 @@
 #include <battery/Controller.h>
 #include <battery/Stats.h>
 #include <powermeter/Controller.h>
+#include <invertermeter/Controller.h>
 #include "PowerLimiter.h"
 #include "Configuration.h"
 #include "MqttSettings.h"
@@ -18,6 +19,7 @@
 #include <frozen/map.h>
 #include "SunPosition.h"
 #include <LogHelper.h>
+#include "RuntimeData.h"
 
 #undef TAG
 static const char* TAG = "dynamicPowerLimiter";
@@ -55,7 +57,7 @@ frozen::string const& PowerLimiterClass::getStatusText(PowerLimiterClass::Status
 {
     static const frozen::string missing = "programmer error: missing status text";
 
-    static const frozen::map<Status, frozen::string, 11> texts = {
+    static const frozen::map<Status, frozen::string, 12> texts = {
         { Status::Initializing, "initializing (should not see me)" },
         { Status::DisabledByConfig, "disabled by configuration" },
         { Status::DisabledByMqtt, "disabled by MQTT" },
@@ -67,6 +69,7 @@ frozen::string const& PowerLimiterClass::getStatusText(PowerLimiterClass::Status
         { Status::InverterStatsPending, "waiting for sufficiently recent inverter data" },
         { Status::UnconditionalSolarPassthrough, "unconditionally passing through all solar power (MQTT override)" },
         { Status::Stable, "the system is stable, the last power limit is still valid" },
+        { Status::InverterPowerMeterPending, "waiting for sufficiently recent inverter power meter data" },
     };
 
     auto iter = texts.find(status);
@@ -140,6 +143,7 @@ void PowerLimiterClass::reloadConfig()
 
     calcNextInverterRestart();
 
+    _checkATF = true; // ATF: re-check ATF initialization on next loop
     _reloadConfigFlag = false;
 }
 
@@ -194,6 +198,9 @@ void PowerLimiterClass::loop()
         latestInverterStats = std::max(*oStatsMillis, latestInverterStats);
     }
 
+    // ATF, we do this here because we need inverter max power info to initialize the ATF
+    if (_checkATF) { _checkATF = !initATF(); }
+
     // note that we can only perform unconditional full solar-passthrough or any
     // calculation at all after surviving the loop above, which ensures that we
     // have inverter stats more recent than their respective last update command
@@ -201,13 +208,19 @@ void PowerLimiterClass::loop()
         return unconditionalFullSolarPassthrough();
     }
 
-    // if the power meter is being used, i.e., if its data is valid, we want to
-    // wait for a new reading after adjusting the inverter limit. otherwise, we
-    // proceed as we will use a fallback limit independent of the power meter.
-    // the power meter reading is expected to be at most 2 seconds old when it
-    // arrives. this can be the case for readings provided by networked meter
-    // readers, where a packet needs to travel through the network for some
-    // time after the actual measurement was done by the reader.
+    // if an external inverter power meter is being used, i.e., if its data is valid, we want to
+    // wait a certain time for a new reading after adjusting the inverter limit.
+    // however, if the time is over, we proceed and use the internal inverter measurement.
+    if (config.InverterMeter.Enabled) {
+        for (auto& upInv : _inverters) {
+            auto power = InverterMeter.getPower(upInv->getSerial()).value_or(0.0f);
+            auto time = InverterMeter.getTime(upInv->getSerial());
+            if (!upInv->setCurrentOutputAcWatts(power, time)) {
+                return announceStatus(Status::InverterPowerMeterPending);
+            }
+        }
+    }
+
     if (PowerMeter.isDataValid() && PowerMeter.getLastUpdate() <= (latestInverterStats + 2000)) {
         return announceStatus(Status::PowerMeterPending);
     }
@@ -237,38 +250,71 @@ void PowerLimiterClass::loop()
 
     autoRestartInverters();
 
-    auto getBatteryPower = [this,&config]() -> bool {
-        if (!usesBatteryPoweredInverter()) { return false; }
+    auto getBatteryState = [this,&config]() -> BatteryState {
 
-        auto isDayPeriod = SunPosition.isDayPeriod();
+        // State machine for the battery
+        // Conditions:          we use 'Below Stop Threshold', 'Above Start Threshold', 'Solar-Passthrough', 'Use Battery at night',
+        //                      'Night/Day' and 'From which direction did we enter the stop-start zone' to determine the state.
+        //
+        // states               description
+        // --------------------------------------------------------------------------------------------------------------------------------
+        // STOP:                we must stop the inverter, because the battery is below the stop threshold
+        // NO_DISCHARGE:        we can use the inverter, but we do not allow to discharge the battery, A requirement from 'Solar-Passthrough'
+        // DISCHARGE_ALLOWED:   we can use the inverter and we allow discharging of the battery
+        // DISCHARGE_NIGHT:     we can use the inverter and we allow discharging of a partial charged battery at night.
+        //                      A requirement from 'Use Battery at night'
+        //
+        // Notes: The combination of 'Use Battery at night' and use of 'voltage thresholds' can leads to oscillation between the states
+        // STOP and DISCHARGE_NIGHT. To avoid this problem, we allow only one transmission from STOP to DISCHARGE_NIGHT per night.
+        // In case of restart or power-cycle, we accept that the inverter may start discharging at night once again.
+        // Start-Up can be tricky, because data from the battery provider may not be available. As fallback we use the not very
+        // accurate inverter voltage and this can lead to the wrong state. Especially if we use the runtime file to save the state.
 
-        if (_nighttimeDischarging && isDayPeriod) {
-            _nighttimeDischarging = false;
-            return isStartThresholdReached();
+        // check if have a battery powered inverter
+        if (!usesBatteryPoweredInverter()) { return BatteryState::STOP; }
+
+        // check the stop condition
+        auto day = SunPosition.isDayPeriod();
+        if (isStopThresholdReached()) {
+            _fromStart = false;
+            _oneStopPerNightDone = day ? false : true;
+            return BatteryState::STOP;
         }
 
-        if (isStopThresholdReached()) { return false; }
-
-        if (isStartThresholdReached()) { return true; }
-
-        // start a nighttime discharge cycle on a partially charged battery if
-        //   1. the respective switch/setting is enabled
-        //   2. it is now after sunset, i.e., it is nighttime
-        //   3. we are not already in a discharge cycle
-        //   4. we did not start a nighttime discharge cycle on a partially
-        //      charged battery already (the _nighttimeDischarging flag will
-        //      only be reset at sunrise, see above)
-        if (config.PowerLimiter.BatteryAlwaysUseAtNight &&
-                !isDayPeriod &&
-                !_batteryDischargeEnabled &&
-                !_nighttimeDischarging) {
-            _nighttimeDischarging = true;
-            return true;
+        // check the start condition
+        if (isStartThresholdReached()) {
+            _fromStart = true;
+            return BatteryState::DISCHARGE_ALLOWED;
         }
 
-        // we are between start and stop threshold and keep the state that was
-        // last triggered, either charging or discharging.
-        return _batteryDischargeEnabled;
+        // all of the following conditions mean that we are in the "stop-start zone",
+        // and we must use the buffered information 'From which direction did we enter the stop-start zone'.
+
+        // if we come from start we always allow discharging of the battery
+        if (_fromStart) { return BatteryState::DISCHARGE_ALLOWED; }
+
+        // if we reach this line we come from stop and have to consider the 'Solar-Passthrough' and the 'Use Battery at night' settings.
+        auto solarPassThroughEnabled = isSolarPassThroughEnabled();
+        auto isBatteryAlwaysUseAtNightEnabled = config.PowerLimiter.BatteryAlwaysUseAtNight;
+
+        if (!isBatteryAlwaysUseAtNightEnabled) { _oneStopPerNightDone = false; }
+
+        if (!solarPassThroughEnabled && !isBatteryAlwaysUseAtNightEnabled) { return BatteryState::STOP; }
+
+        if (solarPassThroughEnabled && !isBatteryAlwaysUseAtNightEnabled) { return BatteryState::NO_DISCHARGE; }
+
+        // we reach this line only if 'Use Battery at night' is enabled
+        if (day) {
+            _oneStopPerNightDone = false;
+            return (solarPassThroughEnabled) ? BatteryState::DISCHARGE_ALLOWED : BatteryState::STOP;
+        } else {
+            return (_oneStopPerNightDone) ? BatteryState::STOP : BatteryState::DISCHARGE_NIGHT;
+        }
+
+        // we should never reach this line, but if we do, we use a safe fallback.
+        DTU_LOGE("Unexpected condition in battery state machine, using fallback state: STOP");
+        _fromStart = false;
+        return BatteryState::STOP;
     };
 
     auto getFullSolarPassthrough = [this,&config]() -> bool {
@@ -302,9 +348,9 @@ void PowerLimiterClass::loop()
         return dcVoltage + (acPower * config.PowerLimiter.VoltageLoadCorrectionFactor);
     };
 
-    _batteryDischargeEnabled = getBatteryPower();
-    _fullSolarPassThroughActive = getFullSolarPassthrough();
     _loadCorrectedVoltage = getLoadCorrectedVoltage();
+    _batteryState = getBatteryState();
+    _fullSolarPassThroughActive = getFullSolarPassthrough();
 
     DTU_LOGD("up %lu s, it is %s, next inverter restart at %d s (set to %d)",
             millis()/1000,
@@ -327,7 +373,8 @@ void PowerLimiterClass::loop()
                 config.PowerLimiter.VoltageLoadCorrectionFactor);
 
         DTU_LOGD("battery discharge %s, start %.2f V or %u %%, stop %.2f V or %u %%",
-                (_batteryDischargeEnabled?"allowed":"restricted"),
+                (((_batteryState == BatteryState::DISCHARGE_ALLOWED) || (_batteryState == BatteryState::DISCHARGE_NIGHT))?"allowed":
+                (_batteryState == BatteryState::NO_DISCHARGE)?"restricted":"stopped"),
                 config.PowerLimiter.VoltageStartThreshold,
                 config.PowerLimiter.BatterySocStartThreshold,
                 config.PowerLimiter.VoltageStopThreshold,
@@ -346,11 +393,26 @@ void PowerLimiterClass::loop()
                 (isStopThresholdReached()?"":"NOT "),
                 (isSolarPassThroughEnabled()?"en":"dis"),
                 (config.PowerLimiter.BatteryAlwaysUseAtNight?"en":"dis"),
-                (_nighttimeDischarging?"active":"dormant"));
+                ((_batteryState == BatteryState::DISCHARGE_NIGHT)?"active":"dormant"));
 
         DTU_LOGD("total max AC power is %u W, conduction losses are %u %%",
             config.PowerLimiter.TotalUpperPowerLimit,
             config.PowerLimiter.ConductionLosses);
+    }
+
+    // ATF: Check if it is time to print the ATF report
+    bool printReport = false;
+    if (millis() - _lastATFPrint > 60*1000) {
+        printReport = true;
+        _lastATFPrint = millis();
+    }
+
+    // ATF: Update the adaptive transfer function with the current power and limit
+    for (auto& upInv : _inverters) {
+        if (!upInv->isATFActive()) { continue; }
+        upInv->setATFData();
+
+        if (printReport) { upInv->printATFReport(); }
     }
 
     uint16_t inverterTotalPower = calcTargetOutput();
@@ -518,7 +580,8 @@ uint8_t PowerLimiterClass::getPowerLimiterState() const
         return PL_UI_STATE_CHARGING;
     }
 
-    return _batteryDischargeEnabled ? PL_UI_STATE_USE_SOLAR_AND_BATTERY : PL_UI_STATE_USE_SOLAR_ONLY;
+    return ((_batteryState == BatteryState::DISCHARGE_ALLOWED || _batteryState == BatteryState::DISCHARGE_NIGHT))
+        ? PL_UI_STATE_USE_SOLAR_AND_BATTERY : PL_UI_STATE_USE_SOLAR_ONLY;
 }
 
 uint16_t PowerLimiterClass::calcTargetOutput() const
@@ -610,6 +673,14 @@ uint16_t PowerLimiterClass::updateInverterLimits(uint16_t powerRequested,
     }
 
     if (matchingInverters.empty()) { return 0; }
+
+    // if we have battery-powered inverters and the battery is below the stop threshold,
+    // we set all into standby
+    if ((matchingInverters[0]->isBatteryPowered()) && (_batteryState == BatteryState::STOP)) {
+        for (auto pInv : matchingInverters) { pInv->standby(); }
+        DTU_LOGD("battery below stop threshold, all battery-powered inverters are stopped");
+        return 0;
+    }
 
     int32_t diff = powerRequested - producing;
 
@@ -705,6 +776,11 @@ uint16_t PowerLimiterClass::calcPowerBusUsage(uint16_t powerRequested) const
         return 0;
     }
 
+    if (_batteryState == BatteryState::STOP) {
+        DTU_LOGD("DC power bus usage blocked by battery below the stop threshold");
+        return 0;
+    }
+
     auto solarOutputDc = getSolarPassthroughPower();
     auto solarOutputAc = dcPowerBusToInverterAc(solarOutputDc);
     if (isFullSolarPassthroughActive() && solarOutputAc > powerRequested) {
@@ -785,7 +861,7 @@ float PowerLimiterClass::getBatteryInvertersOutputAcWatts() const
 
 std::optional<uint16_t> PowerLimiterClass::getBatteryDischargeLimit() const
 {
-    if (!_batteryDischargeEnabled) { return 0; }
+    if ((_batteryState == BatteryState::STOP) || (_batteryState == BatteryState::NO_DISCHARGE)) { return 0; }
 
     auto currentLimit = Battery.getDischargeCurrentLimit();
     if (currentLimit == FLT_MAX) { return std::nullopt; }
@@ -935,4 +1011,118 @@ bool PowerLimiterClass::isGovernedBatteryPoweredInverterProducing() const
         if (upInv->isBatteryPowered() && upInv->isProducing()) { return true; }
     }
     return false;
+}
+
+void PowerLimiterClass::serializeRTD(JsonObject const& obj) const
+{
+    // Note: Up to now the PowerLimiterClass does not use a mutex
+    // Use of atomic<bool> would be an solution but I want to avoid the overhead
+    obj["battery_from_start"] = _fromStart;
+}
+
+void PowerLimiterClass::deserializeRTD(JsonObject const& obj)
+{
+    // Note: Up to now the PowerLimiterClass does not use a mutex
+    // Use of atomic<bool> would be an solution but I want to avoid the overhead
+    _fromStart =  obj["battery_from_start"] | false;
+}
+
+/*
+ * Initialize or deinitialize the Adaptive Transfer Function (ATF) data structure
+ * We need late initialization because it cannot be done directly after starting the DPL:
+ * - we need the power limiter inverter class
+ * - we need inverter stats about the inverter max power to initialize the ATF data
+ * - we must check if the runtime file contains already ATF data
+ */
+bool PowerLimiterClass::initATF(void) {
+
+    bool allDone = true;
+    uint16_t counter = 0;
+    for (auto const& upInv : _inverters) {
+        if (!upInv->isBatteryPowered()) { continue; } // ATF only for battery-powered inverters
+        if (counter >= 1) { continue; }               // limit to 1 inverters for now
+
+        if (!upInv->isEligible()) {
+            allDone = false; // inverter not reachable yet, that is normal short after DPL start
+            continue;
+        }
+
+        if (upInv->isATFEnabled() && !upInv->isATFActive()) {
+
+            auto maxPower = upInv->getInverterMaxPowerWatts();
+            //if (maxPower == 0) { maxPower = upInv->getATFConfigPower(); } // todo: delete after testing
+            if (maxPower == 0) {
+                //DTU_LOGW("cannot initialize ATF: inverter max power unknown");
+                allDone = false;
+                continue;
+            }
+            if (!upInv->activateATF(maxPower)) {
+                //DTU_LOGW("cannot initialize ATF: activate data structure");
+                allDone = false;
+                continue;
+            }
+
+            // trigger read of ATF data from the runtime data file
+            RuntimeData.requestReadOnNextTaskLoop();
+            ++counter;
+
+        } else if (!upInv->isATFEnabled() && upInv->isATFActive()) {
+            upInv->deactivateATF();
+        }
+    }
+
+    return allDone;
+}
+
+/*
+ * Serialize the Adaptive Transfer Function (ATF) data to/from the runtime data file (RTD)
+ */
+void PowerLimiterClass::serializeATFtoRTD(JsonVariant var) const {
+
+    auto arr = var["inverter_atf"].to<JsonArray>();
+
+    // serialize ATF data for every inverter with active ATF
+    for (auto const& upInv : _inverters) {
+        if (!upInv->isATFActive()) { continue; }
+
+        auto inv = arr.add<JsonObject>();
+        inv["serial"] = upInv->getSerialStr();  // human-readable serial number
+        upInv->serializeATFData(inv);
+    }
+}
+
+/*
+ * Deserialize the Adaptive Transfer Function (ATF) data from the runtime data file (RTD)
+ */
+void PowerLimiterClass::deserializeRTDtoATF(JsonVariant var) {
+
+    for (JsonObject inv : var["inverter_atf"].as<JsonArray>()) {
+
+        // Interpret the string as a hex value and convert it to uint64_t
+        const uint64_t serial = strtoll(inv["serial"].as<String>().c_str(), NULL, 16);
+        if (serial == 0ULL) { continue; }
+
+        for (auto& upInv : _inverters) {
+
+            // we use the serial to find the matching inverter
+            if (upInv->getSerial() != serial) { continue; }
+            upInv->deserializeATFData(inv);
+        }
+    }
+}
+
+/*
+ * Get the power limit from the Adaptive Transfer Function (ATF) for a given inverter
+ * Used to show the ATF calculated power in the webapp-UI
+ */
+std::optional<uint16_t> PowerLimiterClass::getATFInverterPower(uint64_t inverterSerial, float limit) const {
+    for (auto& upInv : _inverters) {
+        if (!upInv->isATFActive()) { continue; }
+        if (upInv->getSerial() != inverterSerial) { continue; }
+
+        // found matching inverter, get power from its ATF
+        auto power = upInv->getATFPower(limit);
+        if (power != 0) { return power; }
+    }
+    return std::nullopt;
 }

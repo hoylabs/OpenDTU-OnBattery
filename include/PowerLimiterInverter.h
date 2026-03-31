@@ -5,8 +5,9 @@
 #include <Hoymiles.h>
 #include <optional>
 #include <memory>
+#include "InverterATF.h"
 
-class PowerLimiterInverter {
+class PowerLimiterInverter  : public InverterATF {
 public:
     static std::unique_ptr<PowerLimiterInverter> create(PowerLimiterInverterConfig const& config);
 
@@ -37,6 +38,8 @@ public:
     // upper power limit (additionally restricted by inverter's absolute max)
     uint16_t getConfiguredMaxPowerWatts() const;
 
+    // returns the current amount of AC output power
+    // either as per inverter stats or preferred from the external power meter
     uint16_t getCurrentOutputAcWatts() const;
 
     // this differs from current output power if new limit was assigned
@@ -71,6 +74,27 @@ public:
     bool isSendingCommandsEnabled() const { return _spInverter->getEnableCommands(); }
     bool isReachable() const { return _spInverter->isReachable(); }
     bool isProducing() const { return _spInverter->isProducing(); }
+
+    // sets the AC value measured by the external power meter
+    // compares the timestamp of the external power meter with the timestamp of the inverter stats
+    // returns true if the value is accepted or if further waiting makes no sense
+    // returns false if we want to wait longer for a newer value
+    bool setCurrentOutputAcWatts(float power, uint32_t timestamp);
+
+    // indicates whether ATF is enabled in the configuration
+    // use isATFActive() to check whether ATF is actually active
+    bool isATFEnabled(void) const { return _config.UseATF; }
+
+    // update the ATF data with the current power and limit pair
+    // just call this method after getting new stats from the inverter
+    // because the values must be in sync
+    void setATFData(void) { InverterATF::setATFData(getCurrentOutputAcWatts(), _spInverter->SystemConfigPara()->getLimitPercent()); }
+
+    // print the ATF report to the log
+    void printATFReport(void) const { InverterATF::printATFReport(getSerialStr()); }
+
+    // todo: delete after testing
+    uint16_t getATFConfigPower(void) const { return _config.UpperPowerLimit; }
 
     uint64_t getSerial() const { return _config.Serial; }
     char const* getSerialStr() const { return _serialStr; }
@@ -134,6 +158,9 @@ private:
     std::optional<uint16_t> _oTargetPowerLimitWatts = std::nullopt;
     std::optional<bool> _oTargetPowerState = std::nullopt;
     mutable std::optional<uint32_t> _oStatsMillis = std::nullopt;
+
+    // the external power meter value if available and recent enough
+    std::optional<float> _oInverterMeterPower = std::nullopt;
 
     // the expected AC output (possibly is different from the target limit)
     uint16_t _expectedOutputAcWatts = 0;

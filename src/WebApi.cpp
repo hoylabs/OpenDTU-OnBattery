@@ -41,6 +41,7 @@ void WebApiClass::init(Scheduler& scheduler)
     _webApiWsLive.init(_server, scheduler);
     _webApiBattery.init(_server, scheduler);
     _webApiPowerMeter.init(_server, scheduler);
+    _webApiInverterMeter.init(_server, scheduler);
     _webApiPowerLimiter.init(_server, scheduler);
     _webApiWsSolarChargerLive.init(_server, scheduler);
     _webApiSolarCharger.init(_server, scheduler);

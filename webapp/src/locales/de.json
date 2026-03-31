@@ -12,6 +12,7 @@
         "DeviceManager": "Hardware",
         "SolarChargerSettings": "Solarladeregler",
         "PowerMeterSettings": "Stromzähler",
+        "InverterMeterSettings": "Wechselrichter-Stromzähler",
         "BatterySettings": "Batterie",
         "AcChargerSettings": "AC-Ladegerät",
         "ConfigManagement": "Konfigurationsverwaltung",
@@ -282,6 +283,7 @@
         "ResetReason0": "Reset Grund CPU 0",
         "ResetReason1": "Reset Grund CPU 1",
         "ConfigSaveCount": "Anzahl der Konfigurationsspeicherungen",
+        "RuntimeSaveCount": "Laufzeitdatenspeicherungen Anzahl / Zeit",
         "Uptime": "Betriebszeit",
         "UptimeValue": "0 Tage {time} | 1 Tag {time} | {count} Tage {time}"
     },
@@ -673,6 +675,13 @@
         "HTTP_SML": "HTTP(S) + SML - Konfiguration",
         "UDP_VICTRON": "Victron VM-3P75CT (Modbus UDP) - Konfiguration"
     },
+    "invertermeteradmin": {
+        "InverterMeterSettings": "Wechselrichter-Stromzähler Einstellungen",
+        "InverterMeterConfiguration": "Wechselrichter-Stromzähler Konfiguration",
+        "InverterMeterEnable": "Aktiviere Wechselrichter-Stromzähler",
+        "InverterMeterSource": "Wechselrichter-Stromzählertyp",
+        "Serial": "Wechselrichter-Seriennummer"
+    },
     "httprequestsettings": {
         "url": "URL",
         "urlDescription": "Die URL muss mit 'http://' oder 'https://' beginnen. Zeichen wie Leerzeichen und = müssen mit URL-kodiert werden (%xx). Achtung: Eine Überprüfung von SSL-Server-Zertifikaten ist nicht implementiert (MITM-Attacken sind möglich)!",
@@ -728,7 +737,9 @@
         "UpperPowerLimit": "Maximales Leistungslimit",
         "UpperPowerLimitHint": "Der Wechselrichter wird stets so eingestellt, dass höchstens diese Ausgangsleistung erreicht wird. Dieser Wert muss so gewählt werden, dass die Strombelastbarkeit der AC-Anschlussleitungen eingehalten wird.",
         "AllowStandby": "Standby erlauben",
-        "AllowStandbyHint": "Erlaubt dem Wechselrichter in Standby zu gehen, wenn das berechnete Leistungslimit unter dem minimalen Leistungslimit liegt.",
+        "UseATF": "ATF aktivieren",
+        "UseATFHint": "ATF (Adaptive Transfer Function) ersetzt die lineare Berechnung des prozentualen Limits aus der Leistung. Damit ist es z.B. möglich einen HM-Inverter an 24VDC ohne Einschränkungen zu betreiben. ATF benötigt nach der Aktivierung etwas Zeit für die automatische Anpassung an den Inverter. Diese Option kann für maximal 2 Inverter aktiviert werden.",
+        "AllowStandbyHint": "Erlaubt dem Wechselrichter in Standby zu gehen, wenn das berechnete Leistungslimit unter dem minimalen Leistungslimit liegt. Ansonsten wird der Wechselrichter auf das minimale Leistungslimit gesetzt.",
         "SocThresholds": "Batterie State of Charge (SoC) Schwellwerte",
         "IgnoreSoc": "Nur Spannungs-Schwellwerte nutzen",
         "IgnoreSocHint": "Falls aktiviert werden nur die Spannungs-Schwellwerte berücksichtigt. Deaktiviere diesen Schalter, um Batterie State of Charge (SoC) Schwellwerte zu konfigurieren (nicht empfohlen, da der SoC-Wert häufig ungenau ist).",

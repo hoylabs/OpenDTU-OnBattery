@@ -148,6 +148,7 @@ struct POWERLIMITER_INVERTER_CONFIG_T {
     bool IsBehindPowerMeter;
     bool UseOverscaling;
     bool AllowStandby;
+    bool UseATF;
     uint16_t LowerPowerLimit;
     uint16_t UpperPowerLimit;
 
@@ -435,6 +436,17 @@ struct CONFIG_T {
         PowerMeterHttpSmlConfig HttpSml;
         PowerMeterUdpVictronConfig UdpVictron;
     } PowerMeter;
+
+    struct InverterMeterConfig {
+        bool Enabled;
+        uint32_t Source;
+        uint64_t Serial;
+        PowerMeterMqttConfig Mqtt;
+        PowerMeterSerialSdmConfig SerialSdm;
+        PowerMeterHttpJsonConfig HttpJson;
+        PowerMeterHttpSmlConfig HttpSml;
+        PowerMeterUdpVictronConfig UdpVictron;
+    } InverterMeter;
 
     PowerLimiterConfig PowerLimiter;
 

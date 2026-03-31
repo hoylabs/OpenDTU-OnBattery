@@ -12,6 +12,7 @@ import SolarChargerAdminView from '@/views/SolarChargerAdminView.vue';
 import PowerMeterAdminView from '@/views/PowerMeterAdminView.vue';
 import PowerLimiterAdminView from '@/views/PowerLimiterAdminView.vue';
 import InverterAdminView from '@/views/InverterAdminView.vue';
+import InverterMeterAdminView from '@/views/InverterMeterAdminView.vue';
 import LoginView from '@/views/LoginView.vue';
 import MaintenanceRebootView from '@/views/MaintenanceRebootView.vue';
 import LoggingAdminView from '@/views/LoggingAdminView.vue';
@@ -126,6 +127,11 @@ const router = createRouter({
             path: '/settings/inverter',
             name: 'Inverter Settings',
             component: InverterAdminView,
+        },
+        {
+            path: '/settings/invertermeter',
+            name: 'Inverter Meter Settings',
+            component: InverterMeterAdminView,
         },
         {
             path: '/settings/dtu',

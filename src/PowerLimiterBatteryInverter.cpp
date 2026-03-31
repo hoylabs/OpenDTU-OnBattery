@@ -1,4 +1,5 @@
 #include "PowerLimiterBatteryInverter.h"
+#include "LogHelper.h"
 
 PowerLimiterBatteryInverter::PowerLimiterBatteryInverter(PowerLimiterInverterConfig const& config)
     : PowerLimiterInverter(config) { }
@@ -9,7 +10,7 @@ uint16_t PowerLimiterBatteryInverter::getMaxReductionWatts(bool allowStandby) co
 
     if (!isProducing()) { return 0; }
 
-    if (allowStandby) { return getCurrentOutputAcWatts(); }
+    if (allowStandby && _config.AllowStandby) { return getCurrentOutputAcWatts(); }
 
     if (getCurrentOutputAcWatts() <= _config.LowerPowerLimit) { return 0; }
 
@@ -44,11 +45,11 @@ uint16_t PowerLimiterBatteryInverter::applyReduction(uint16_t reduction, bool al
 
     auto low = std::min(getCurrentLimitWatts(), getCurrentOutputAcWatts());
     if (low <= _config.LowerPowerLimit) {
-        if (allowStandby) {
+        if (allowStandby && _config.AllowStandby) {
             standby();
             return std::min(reduction, getCurrentOutputAcWatts());
         }
-        return 0;
+        return 0; // todo @SW-Niko: would it be more safe to set the lower limit again?
     }
 
     if ((getCurrentLimitWatts() - _config.LowerPowerLimit) >= reduction) {
@@ -56,7 +57,7 @@ uint16_t PowerLimiterBatteryInverter::applyReduction(uint16_t reduction, bool al
         return reduction;
     }
 
-    if (allowStandby) {
+    if (allowStandby && _config.AllowStandby) {
         standby();
         return std::min(reduction, getCurrentOutputAcWatts());
     }

@@ -87,6 +87,11 @@
                                 }}</router-link>
                             </li>
                             <li>
+                                <router-link @click="onClick" class="dropdown-item" to="/settings/invertermeter">{{
+                                    $t('menu.InverterMeterSettings')
+                                }}</router-link>
+                            </li>
+                            <li>
                                 <router-link @click="onClick" class="dropdown-item" to="/settings/powerlimiter"
                                     >Dynamic Power Limiter</router-link
                                 >

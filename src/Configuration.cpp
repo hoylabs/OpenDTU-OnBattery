@@ -224,6 +224,7 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
         t["power_source"] = s.PowerSource;
         t["use_overscaling_to_compensate_shading"] = s.UseOverscaling;
         t["allow_standby"] = s.AllowStandby;
+        t["use_atf"] = s.UseATF;
         t["lower_power_limit"] = s.LowerPowerLimit;
         t["upper_power_limit"] = s.UpperPowerLimit;
     }
@@ -427,6 +428,26 @@ bool ConfigurationClass::write()
 
     JsonObject powermeter_udp_victron = powermeter["udp_victron"].to<JsonObject>();
     serializePowerMeterUdpVictronConfig(config.PowerMeter.UdpVictron, powermeter_udp_victron);
+
+    JsonObject invertermeter = doc["invertermeter"].to<JsonObject>();
+    invertermeter["enabled"] = config.InverterMeter.Enabled;
+    invertermeter["source"] = config.InverterMeter.Source;
+    invertermeter["serial"] = config.InverterMeter.Serial;
+
+    JsonObject invertermeter_mqtt = invertermeter["mqtt"].to<JsonObject>();
+    serializePowerMeterMqttConfig(config.InverterMeter.Mqtt, invertermeter_mqtt);
+
+    JsonObject invertermeter_serial_sdm = invertermeter["serial_sdm"].to<JsonObject>();
+    serializePowerMeterSerialSdmConfig(config.InverterMeter.SerialSdm, invertermeter_serial_sdm);
+
+    JsonObject invertermeter_http_json = invertermeter["http_json"].to<JsonObject>();
+    serializePowerMeterHttpJsonConfig(config.InverterMeter.HttpJson, invertermeter_http_json);
+
+    JsonObject invertermeter_http_sml = invertermeter["http_sml"].to<JsonObject>();
+    serializePowerMeterHttpSmlConfig(config.InverterMeter.HttpSml, invertermeter_http_sml);
+
+    JsonObject invertermeter_udp_victron = invertermeter["udp_victron"].to<JsonObject>();
+    serializePowerMeterUdpVictronConfig(config.InverterMeter.UdpVictron, invertermeter_udp_victron);
 
     JsonObject powerlimiter = doc["powerlimiter"].to<JsonObject>();
     serializePowerLimiterConfig(config.PowerLimiter, powerlimiter);
@@ -651,6 +672,7 @@ void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source,
         inv.PowerSource = s["power_source"] | PowerLimiterInverterConfig::InverterPowerSource::Battery;
         inv.UseOverscaling = s["use_overscaling_to_compensate_shading"] | POWERLIMITER_USE_OVERSCALING;
         inv.AllowStandby = s["allow_standby"] | POWERLIMITER_ALLOW_STANDBY;
+        inv.UseATF = s["use_atf"] | false;
         inv.LowerPowerLimit = s["lower_power_limit"] | POWERLIMITER_LOWER_POWER_LIMIT;
         inv.UpperPowerLimit = s["upper_power_limit"] | POWERLIMITER_UPPER_POWER_LIMIT;
     }
@@ -896,6 +918,16 @@ bool ConfigurationClass::read()
     deserializePowerMeterHttpSmlConfig(powermeter["http_sml"], config.PowerMeter.HttpSml);
 
     deserializePowerMeterUdpVictronConfig(powermeter["udp_victron"], config.PowerMeter.UdpVictron);
+
+    JsonObject invertermeter = doc["invertermeter"];
+    config.InverterMeter.Enabled = invertermeter["enabled"] | false;
+    config.InverterMeter.Source =  invertermeter["source"] | POWERMETER_SOURCE;
+    config.InverterMeter.Serial =  invertermeter["serial"] | 0ULL;
+    deserializePowerMeterMqttConfig(invertermeter["mqtt"], config.InverterMeter.Mqtt);
+    deserializePowerMeterSerialSdmConfig(invertermeter["serial_sdm"], config.InverterMeter.SerialSdm);
+    deserializePowerMeterHttpJsonConfig(invertermeter["http_json"], config.InverterMeter.HttpJson);
+    deserializePowerMeterHttpSmlConfig(invertermeter["http_sml"], config.InverterMeter.HttpSml);
+    deserializePowerMeterUdpVictronConfig(invertermeter["udp_victron"], config.InverterMeter.UdpVictron);
 
     deserializePowerLimiterConfig(doc["powerlimiter"], config.PowerLimiter);
 

@@ -161,9 +161,19 @@
                         <InputElement
                             :label="$t('powerlimiteradmin.AllowStandby')"
                             :tooltip="$t('powerlimiteradmin.AllowStandbyHint')"
-                            v-if="inv.power_source == 2"
+                            v-if="inv.power_source == 2 || inv.power_source == 0"
                             v-model="inv.allow_standby"
                             type="checkbox"
+                            wide
+                        />
+
+                        <InputElement
+                            v-if="inv.power_source == 0"
+                            :label="$t('powerlimiteradmin.UseATF')"
+                            :tooltip="$t('powerlimiteradmin.UseATFHint')"
+                            v-model="inv.use_atf"
+                            type="checkbox"
+                            :disabled="isATFFull && !inv.use_atf"
                             wide
                         />
 
@@ -528,6 +538,17 @@ export default defineComponent({
         hasBatteryInterface(): boolean {
             const meta = this.powerLimiterMetaData;
             return meta.battery_enabled && this.governingBatteryPoweredInverters;
+        },
+        isATFFull(): boolean {
+            let full = false;
+            for (const inv of this.powerLimiterConfigList.inverters) {
+                if (inv.use_atf) {
+                    // currently ATF is limited to 1 inverter only
+                    full = true;
+                    break;
+                }
+            }
+            return full;
         },
     },
     methods: {

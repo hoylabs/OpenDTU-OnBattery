@@ -12,6 +12,7 @@
         "DeviceManager": "Device-Manager",
         "SolarChargerSettings": "Solar Charger",
         "PowerMeterSettings": "Power Meter",
+        "InverterMeterSettings": "Inverter Meter",
         "BatterySettings": "Battery",
         "AcChargerSettings": "AC Charger",
         "ConfigManagement": "Config Management",
@@ -282,6 +283,7 @@
         "ResetReason0": "Reset Reason CPU 0",
         "ResetReason1": "Reset Reason CPU 1",
         "ConfigSaveCount": "Config save count",
+        "RuntimeSaveCount": "Runtime data save count / time",
         "Uptime": "Uptime",
         "UptimeValue": "0 days {time} | 1 day {time} | {count} days {time}"
     },
@@ -673,6 +675,13 @@
         "HTTP_SML": "Configuration",
         "UDP_VICTRON": "Configuration"
     },
+    "invertermeteradmin": {
+        "InverterMeterSettings": "Inverter Meter Settings",
+        "InverterMeterConfiguration": "Inverter Meter Configuration",
+        "InverterMeterEnable": "Enable Inverter Meter",
+        "InverterMeterSource": "Inverter Meter Type",
+        "Serial": "Inverter Serial Number"
+    },
     "httprequestsettings": {
         "url": "URL",
         "urlDescription": "URL must start with 'http://' or 'https://'. Characters like spaces and '=' have to be URL-encoded (%xx). Warning: SSL server certificate check is not implemented (MITM attacks are possible)!",
@@ -728,7 +737,9 @@
         "UpperPowerLimit": "Maximum Power Limit",
         "UpperPowerLimitHint": "The inverter is always set such that no more than this output power is achieved. This value must be selected to comply with the current carrying capacity of the AC connection cables.",
         "AllowStandby": "Allow Standby",
-        "AllowStandbyHint": "Allow the inverter to go into standby if the calculated power limit is below the minimum power limit.",
+        "UseATF": "Enable ATF",
+        "UseATFHint": "ATF (Adaptive Transfer Function) replaces the linear calculation of the percentage limit based on power. This makes it possible, for example, to operate an HM inverter on 24VDC without restrictions. After activation, ATF requires some time to automatically adapt to the inverter. This option can be activated for a maximum of two inverters.",
+        "AllowStandbyHint": "Allow the inverter to go into standby if the calculated power limit is below the minimum power limit. Otherwise, the inverter will be set to the minimum power limit.",
         "SocThresholds": "Battery State of Charge (SoC) Thresholds",
         "IgnoreSoc": "Use Voltage Thresholds Only",
         "IgnoreSocHint": "When enabled, only voltage thresholds are considered. Disable this switch to configure and use battery State of Charge (SoC) thresholds (not recommended as the SoC value is often inaccurate).",
