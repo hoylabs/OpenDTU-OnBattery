@@ -321,7 +321,33 @@ void NetworkSettingsClass::applyConfig()
         return;
     }
 
-    const bool newCredentials = strcmp(WiFi.SSID().c_str(), config.Ssid) || strcmp(WiFi.psk().c_str(), config.Password);
+    uint8_t const* configuredBssid = NULL; // auto
+    if (std::any_of(std::begin(Configuration.get().WiFi.Bssid),
+                    std::end(Configuration.get().WiFi.Bssid),
+                    [](uint8_t b) { return b != 0; })) {
+        configuredBssid = Configuration.get().WiFi.Bssid;
+    }
+
+    auto bssidChanged = [configuredBssid]() -> bool {
+        uint8_t* currentBssid = WiFi.BSSID();
+        if (configuredBssid == NULL && currentBssid == NULL) {
+            return false;
+        }
+
+        if (configuredBssid == NULL || currentBssid == NULL) {
+            return true;
+        }
+
+        for (int i = 0; i < WIFI_BSSID_OCTETS; i++) {
+            if (configuredBssid[i] != currentBssid[i]) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    const bool newCredentials = strcmp(WiFi.SSID().c_str(), config.Ssid) || strcmp(WiFi.psk().c_str(), config.Password) || bssidChanged();
 
     ESP_LOGI(TAG, "Start configuring WiFi STA using %s credentials",
         newCredentials ? "new" : "existing");
@@ -330,7 +356,9 @@ void NetworkSettingsClass::applyConfig()
     if (newCredentials) {
         success = WiFi.begin(
             config.Ssid,
-            config.Password) != WL_CONNECT_FAILED;
+            config.Password,
+            0, // channel (0 = auto)
+            configuredBssid) != WL_CONNECT_FAILED;
     } else {
         success = WiFi.begin() != WL_CONNECT_FAILED;
     }
