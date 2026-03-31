@@ -15,6 +15,7 @@ public:
     void deinit() final;
     void loop() final { return; } // this class is event-driven
     std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
+    void setFullyChargedEpoch(std::optional<time_t> chargeEpoch) final { _stats->setSoCFullEpoch(chargeEpoch); }
     std::shared_ptr<HassIntegration> getHassIntegration() final { return nullptr; }
 
 private:

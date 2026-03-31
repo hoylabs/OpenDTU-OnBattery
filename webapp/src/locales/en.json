@@ -282,6 +282,7 @@
         "ResetReason0": "Reset Reason CPU 0",
         "ResetReason1": "Reset Reason CPU 1",
         "ConfigSaveCount": "Config save count",
+        "RuntimeSaveCount": "Runtime data save count / time",
         "Uptime": "Uptime",
         "UptimeValue": "0 days {time} | 1 day {time} | {count} days {time}"
     },
@@ -1152,6 +1153,7 @@
         "Value": "Value",
         "Unit": "@:base.Unit",
         "SoC": "State of Charge",
+        "fullyChargedDays": "Days since fully charged",
         "stateOfHealth": "State of Health",
         "voltage": "Voltage",
         "current": "Current",

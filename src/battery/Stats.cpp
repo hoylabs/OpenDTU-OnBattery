@@ -3,6 +3,7 @@
 #include <battery/Stats.h>
 #include <Configuration.h>
 #include <MqttSettings.h>
+#include "Utils.h"
 
 namespace Batteries {
 
@@ -46,6 +47,20 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
     if (isSoCValid()) {
         addLiveViewValue(root, "SoC", _soc, "%", _socPrecision);
+    }
+
+    if (_oSoCFullEpoch.has_value()) {
+        tm fullTime;
+        time_t nowTime;
+        localtime_r(&_oSoCFullEpoch.value(), &fullTime);
+        fullTime.tm_hour = fullTime.tm_min = fullTime.tm_sec = 0; // always start from midnight
+        if (Utils::getEpoch(&nowTime, 5)) {
+            auto midnightEpoch = mktime(&fullTime);
+            if ((midnightEpoch != -1) && (nowTime >= midnightEpoch)) {
+                auto days = static_cast<uint16_t>(difftime(nowTime, midnightEpoch) / (60.0 * 60.0 * 24.0));
+                addLiveViewValue(root, "fullyChargedDays", days, "days", 0);
+            }
+        }
     }
 
     if (isVoltageValid()) {
@@ -118,6 +133,24 @@ void Stats::mqttPublish() const
 
     if (isChargeCurrentLimitValid()) {
         MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimit));
+    }
+}
+
+void Stats::checkSoCFullEpoch(void)
+{
+    static uint32_t lastUpdate = 0;
+
+    if (lastUpdate == _lastUpdate) { return; } // fast exit from already processed values
+    lastUpdate = _lastUpdate;
+    time_t nowEpoch;
+
+    // The goal is to capture the moment we reach 100% SoC, to continuously capture the time while we have 100% SoC,
+    // and to record the last time until we reach 100% SoC again.
+    if (isSoCValid() && (getSoCAgeSeconds() <= 30) && (getSoC() >= 100.0f) && Utils::getEpoch(&nowEpoch, 5)) {
+        auto lastSoCEpoch = getSoCFullEpoch();
+        if (!lastSoCEpoch.has_value() || (nowEpoch > lastSoCEpoch.value())) {
+            setSoCFullEpoch(nowEpoch);
+        }
     }
 }
 

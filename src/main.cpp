@@ -36,6 +36,7 @@
 #include <LittleFS.h>
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
+#include "RuntimeData.h"
 
 #undef TAG
 static const char* TAG = "main";
@@ -145,12 +146,17 @@ void setup()
     Datastore.init(scheduler);
     RestartHelper.init(scheduler);
 
-    // OpenDTU-OnBattery-specific initializations go below
+    // OpenDTU-OnBattery-specific initializations go between here...
     SolarCharger.init(scheduler);
     PowerMeter.init(scheduler);
     PowerLimiter.init(scheduler);
     GridCharger.init(scheduler);
     Battery.init(scheduler);
+    // ... and here (before RuntimeData)
+
+    // Must be done after all other components have been initialized
+    RuntimeData.init(scheduler);
+    RuntimeData.read();
 
     ESP_LOGI(TAG, "Startup complete");
 }
