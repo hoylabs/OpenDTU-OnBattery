@@ -142,6 +142,33 @@ struct POWERMETER_UDP_VICTRON_CONFIG_T {
 };
 using PowerMeterUdpVictronConfig = struct POWERMETER_UDP_VICTRON_CONFIG_T;
 
+struct POWERMETER_MODBUS_REGISTER_CONFIG_T {
+    uint16_t Address;
+    float ScalingFactor;
+    
+    enum RegisterDataType { INT16 = 0, UINT16 = 1, INT32 = 2, UINT32 = 3, FLOAT = 4 };
+    RegisterDataType DataType;
+};
+
+struct POWERMETER_MODBUS_TCP_CONFIG_T {
+    uint32_t PollingInterval;
+    uint8_t IpAddress[4];
+    uint16_t Port;
+    uint8_t DeviceId;
+    
+    POWERMETER_MODBUS_REGISTER_CONFIG_T PowerRegister;
+    POWERMETER_MODBUS_REGISTER_CONFIG_T PowerL1Register;
+    POWERMETER_MODBUS_REGISTER_CONFIG_T PowerL2Register;
+    POWERMETER_MODBUS_REGISTER_CONFIG_T PowerL3Register;
+    POWERMETER_MODBUS_REGISTER_CONFIG_T VoltageL1Register;
+    POWERMETER_MODBUS_REGISTER_CONFIG_T VoltageL2Register;
+    POWERMETER_MODBUS_REGISTER_CONFIG_T VoltageL3Register;
+    POWERMETER_MODBUS_REGISTER_CONFIG_T ImportRegister;
+    POWERMETER_MODBUS_REGISTER_CONFIG_T ExportRegister;
+};
+using PowerMeterModbusTcpRegisterConfig = struct POWERMETER_MODBUS_REGISTER_CONFIG_T;
+using PowerMeterModbusTcpConfig = struct POWERMETER_MODBUS_TCP_CONFIG_T;
+
 struct POWERLIMITER_INVERTER_CONFIG_T {
     uint64_t Serial;
     bool IsGoverned;
@@ -434,6 +461,7 @@ struct CONFIG_T {
         PowerMeterHttpJsonConfig HttpJson;
         PowerMeterHttpSmlConfig HttpSml;
         PowerMeterUdpVictronConfig UdpVictron;
+        PowerMeterModbusTcpConfig ModbusTcp;
     } PowerMeter;
 
     PowerLimiterConfig PowerLimiter;
@@ -489,6 +517,7 @@ public:
     static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target);
     static void serializePowerMeterUdpVictronConfig(PowerMeterUdpVictronConfig const& source, JsonObject& target);
+    static void serializePowerMeterModbusTcpConfig(PowerMeterModbusTcpConfig const& source, JsonObject& target);
     static void serializeBatteryConfig(BatteryConfig const& source, JsonObject& target);
     static void serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target);
     static void serializeBatteryMqttConfig(BatteryMqttConfig const& source, JsonObject& target);
@@ -507,6 +536,7 @@ public:
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);
     static void deserializePowerMeterHttpSmlConfig(JsonObject const& source, PowerMeterHttpSmlConfig& target);
     static void deserializePowerMeterUdpVictronConfig(JsonObject const& source, PowerMeterUdpVictronConfig& target);
+    static void deserializePowerMeterModbusTcpConfig(JsonObject const& source, PowerMeterModbusTcpConfig& target);
     static void deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target);
     static void deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target);
     static void deserializeBatteryMqttConfig(JsonObject const& source, BatteryMqttConfig& target);

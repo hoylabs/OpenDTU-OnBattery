@@ -126,6 +126,32 @@ void ConfigurationClass::serializePowerMeterUdpVictronConfig(PowerMeterUdpVictro
     target["ip_address"] = IPAddress(source.IpAddress).toString();
 }
 
+void ConfigurationClass::serializePowerMeterModbusTcpConfig(PowerMeterModbusTcpConfig const& source, JsonObject& target)
+{
+    target["polling_interval"] = source.PollingInterval;
+    target["ip_address"] = IPAddress(source.IpAddress).toString();
+    target["port"] = source.Port;
+    target["device_id"] = source.DeviceId;
+    
+    // Power registers
+    auto serializeRegisterConfig = [](JsonObject& parent, const char* name, const PowerMeterModbusTcpRegisterConfig& reg) {
+        JsonObject regObj = parent[name].to<JsonObject>();
+        regObj["address"] = reg.Address;
+        regObj["scaling_factor"] = reg.ScalingFactor;
+        regObj["data_type"] = static_cast<uint8_t>(reg.DataType);
+    };
+    
+    serializeRegisterConfig(target, "power_register", source.PowerRegister);
+    serializeRegisterConfig(target, "power_l1_register", source.PowerL1Register);
+    serializeRegisterConfig(target, "power_l2_register", source.PowerL2Register);
+    serializeRegisterConfig(target, "power_l3_register", source.PowerL3Register);
+    serializeRegisterConfig(target, "voltage_l1_register", source.VoltageL1Register);
+    serializeRegisterConfig(target, "voltage_l2_register", source.VoltageL2Register);
+    serializeRegisterConfig(target, "voltage_l3_register", source.VoltageL3Register);
+    serializeRegisterConfig(target, "import_register", source.ImportRegister);
+    serializeRegisterConfig(target, "export_register", source.ExportRegister);
+}
+
 void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, JsonObject& target)
 {
     target["enabled"] = config.Battery.Enabled;
@@ -428,6 +454,9 @@ bool ConfigurationClass::write()
     JsonObject powermeter_udp_victron = powermeter["udp_victron"].to<JsonObject>();
     serializePowerMeterUdpVictronConfig(config.PowerMeter.UdpVictron, powermeter_udp_victron);
 
+    JsonObject powermeter_modbus_tcp = powermeter["modbus_tcp"].to<JsonObject>();
+    serializePowerMeterModbusTcpConfig(config.PowerMeter.ModbusTcp, powermeter_modbus_tcp);
+
     JsonObject powerlimiter = doc["powerlimiter"].to<JsonObject>();
     serializePowerLimiterConfig(config.PowerLimiter, powerlimiter);
 
@@ -556,6 +585,40 @@ void ConfigurationClass::deserializePowerMeterUdpVictronConfig(JsonObject const&
     target.IpAddress[1] = ip[1];
     target.IpAddress[2] = ip[2];
     target.IpAddress[3] = ip[3];
+}
+
+void ConfigurationClass::deserializePowerMeterModbusTcpConfig(JsonObject const& source, PowerMeterModbusTcpConfig& target)
+{
+    target.PollingInterval = source["polling_interval"] | POWERMETER_POLLING_INTERVAL;
+    target.Port = source["port"] | 502; // Default Modbus TCP port
+    target.DeviceId = source["device_id"] | 1;
+    
+    IPAddress ip;
+    ip.fromString(source["ip_address"] | "");
+    target.IpAddress[0] = ip[0];
+    target.IpAddress[1] = ip[1];
+    target.IpAddress[2] = ip[2];
+    target.IpAddress[3] = ip[3];
+    
+    // Deserialize register configurations
+    auto deserializeRegisterConfig = [](JsonObject const& parent, const char* name, PowerMeterModbusTcpRegisterConfig& reg) {
+        JsonObject regObj = parent[name];
+        reg.Address = regObj["address"] | 0;
+        reg.ScalingFactor = regObj["scaling_factor"] | 1.0f;
+        reg.DataType = static_cast<PowerMeterModbusTcpRegisterConfig::RegisterDataType>(
+            regObj["data_type"] | static_cast<uint8_t>(PowerMeterModbusTcpRegisterConfig::RegisterDataType::UINT16)
+        );
+    };
+    
+    deserializeRegisterConfig(source, "power_register", target.PowerRegister);
+    deserializeRegisterConfig(source, "power_l1_register", target.PowerL1Register);
+    deserializeRegisterConfig(source, "power_l2_register", target.PowerL2Register);
+    deserializeRegisterConfig(source, "power_l3_register", target.PowerL3Register);
+    deserializeRegisterConfig(source, "voltage_l1_register", target.VoltageL1Register);
+    deserializeRegisterConfig(source, "voltage_l2_register", target.VoltageL2Register);
+    deserializeRegisterConfig(source, "voltage_l3_register", target.VoltageL3Register);
+    deserializeRegisterConfig(source, "import_register", target.ImportRegister);
+    deserializeRegisterConfig(source, "export_register", target.ExportRegister);
 }
 
 void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target)
@@ -896,6 +959,8 @@ bool ConfigurationClass::read()
     deserializePowerMeterHttpSmlConfig(powermeter["http_sml"], config.PowerMeter.HttpSml);
 
     deserializePowerMeterUdpVictronConfig(powermeter["udp_victron"], config.PowerMeter.UdpVictron);
+
+    deserializePowerMeterModbusTcpConfig(powermeter["modbus_tcp"], config.PowerMeter.ModbusTcp);
 
     deserializePowerLimiterConfig(doc["powerlimiter"], config.PowerLimiter);
 
