@@ -651,6 +651,14 @@
         "ZendureChargeThroughInterval": "Maximum time without full charge",
         "ZendureBuzzerEnable": "Audible signals"
     },
+    "powermeteradmin": {
+        "AveragingEnable": "Activer le moyennage",
+        "AveragingMode": "Mode de moyennage",
+        "AveragingModeSamples": "Base sur les mesures",
+        "AveragingModeTime": "Base sur le temps",
+        "AveragingWindow": "Fenetre de moyennage",
+        "samples": "mesures"
+    },
     "inverteradmin": {
         "InverterSettings": "Paramètres des onduleurs",
         "AddInverter": "Ajouter un nouvel onduleur",

@@ -19,6 +19,42 @@
                 />
 
                 <template v-if="powerMeterConfigList.enabled">
+                    <InputElement
+                        :label="$t('powermeteradmin.AveragingEnable')"
+                        v-model="powerMeterConfigList.averaging.enabled"
+                        type="checkbox"
+                        wide
+                    />
+
+                    <template v-if="powerMeterConfigList.averaging.enabled">
+                        <div class="row mb-3">
+                            <label for="inputAveragingMode" class="col-sm-4 col-form-label">{{
+                                $t('powermeteradmin.AveragingMode')
+                            }}</label>
+                            <div class="col-sm-8">
+                                <select
+                                    id="inputAveragingMode"
+                                    class="form-select"
+                                    v-model="powerMeterConfigList.averaging.mode"
+                                >
+                                    <option v-for="mode in averagingModeList" :key="mode.key" :value="mode.key">
+                                        {{ mode.value }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <InputElement
+                            :label="$t('powermeteradmin.AveragingWindow')"
+                            v-model="powerMeterConfigList.averaging.window"
+                            type="number"
+                            min="1"
+                            :max="averagingWindowMax"
+                            :postfix="averagingWindowPostfix"
+                            wide
+                        />
+                    </template>
+
                     <div class="row mb-3">
                         <label for="inputPowerMeterSource" class="col-sm-4 col-form-label">{{
                             $t('powermeteradmin.PowerMeterSource')
@@ -339,6 +375,10 @@ export default defineComponent({
                 { key: 6, value: this.$t('powermeteradmin.typeHTTP_SML') },
                 { key: 7, value: this.$t('powermeteradmin.typeUDP_VICTRON') },
             ],
+            averagingModeList: [
+                { key: 0, value: this.$t('powermeteradmin.AveragingModeSamples') },
+                { key: 1, value: this.$t('powermeteradmin.AveragingModeTime') },
+            ],
             unitTypeList: [
                 { key: 1, value: 'mW' },
                 { key: 0, value: 'W' },
@@ -371,6 +411,14 @@ export default defineComponent({
                 this.powerMeterConfigList.udp_victron.polling_interval_ms = value * 1000;
             },
         },
+        averagingWindowMax(): number {
+            return this.powerMeterConfigList.averaging?.mode === 0 ? 200 : 120;
+        },
+        averagingWindowPostfix(): string {
+            return this.powerMeterConfigList.averaging?.mode === 0
+                ? this.$t('powermeteradmin.samples').toString()
+                : this.$t('powermeteradmin.seconds').toString();
+        },
     },
     methods: {
         getPowerMeterConfig() {
@@ -379,6 +427,9 @@ export default defineComponent({
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
                     this.powerMeterConfigList = data;
+                    if (!this.powerMeterConfigList.averaging) {
+                        this.powerMeterConfigList.averaging = { enabled: false, mode: 0, window: 10 };
+                    }
                     this.dataLoading = false;
                 });
         },

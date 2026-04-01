@@ -9,6 +9,7 @@
 #include <LittleFS.h>
 #include <esp_log.h>
 #include <nvs_flash.h>
+#include <algorithm>
 
 #undef TAG
 static const char* TAG = "configuration";
@@ -124,6 +125,13 @@ void ConfigurationClass::serializePowerMeterUdpVictronConfig(PowerMeterUdpVictro
 {
     target["polling_interval_ms"] = source.PollingIntervalMs;
     target["ip_address"] = IPAddress(source.IpAddress).toString();
+}
+
+void ConfigurationClass::serializePowerMeterAveragingConfig(PowerMeterAveragingConfig const& source, JsonObject& target)
+{
+    target["enabled"] = source.Enabled;
+    target["mode"] = source.WindowMode;
+    target["window"] = source.WindowSize;
 }
 
 void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, JsonObject& target)
@@ -413,6 +421,9 @@ bool ConfigurationClass::write()
     powermeter["enabled"] = config.PowerMeter.Enabled;
     powermeter["source"] = config.PowerMeter.Source;
 
+    JsonObject powermeter_averaging = powermeter["averaging"].to<JsonObject>();
+    serializePowerMeterAveragingConfig(config.PowerMeter.Averaging, powermeter_averaging);
+
     JsonObject powermeter_mqtt = powermeter["mqtt"].to<JsonObject>();
     serializePowerMeterMqttConfig(config.PowerMeter.Mqtt, powermeter_mqtt);
 
@@ -556,6 +567,14 @@ void ConfigurationClass::deserializePowerMeterUdpVictronConfig(JsonObject const&
     target.IpAddress[1] = ip[1];
     target.IpAddress[2] = ip[2];
     target.IpAddress[3] = ip[3];
+}
+
+void ConfigurationClass::deserializePowerMeterAveragingConfig(JsonObject const& source, PowerMeterAveragingConfig& target)
+{
+    target.Enabled = source["enabled"] | POWERMETER_AVERAGING_ENABLED;
+    target.WindowMode = static_cast<PowerMeterAveragingConfig::Mode>(source["mode"] | POWERMETER_AVERAGING_MODE);
+    target.WindowSize = source["window"] | POWERMETER_AVERAGING_WINDOW;
+    target.WindowSize = std::max<uint16_t>(1, target.WindowSize);
 }
 
 void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target)
@@ -889,6 +908,7 @@ bool ConfigurationClass::read()
     JsonObject powermeter = doc["powermeter"];
     config.PowerMeter.Enabled = powermeter["enabled"] | POWERMETER_ENABLED;
     config.PowerMeter.Source =  powermeter["source"] | POWERMETER_SOURCE;
+    deserializePowerMeterAveragingConfig(powermeter["averaging"], config.PowerMeter.Averaging);
 
     deserializePowerMeterMqttConfig(powermeter["mqtt"], config.PowerMeter.Mqtt);
     deserializePowerMeterSerialSdmConfig(powermeter["serial_sdm"], config.PowerMeter.SerialSdm);
