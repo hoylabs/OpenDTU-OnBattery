@@ -192,7 +192,9 @@ void HoymilesRadio_NRF::sendEsbPacket(CommandAbstract& cmd)
 
     _radio->setRetries(0, 0);
     openReadingPipe();
-    _radio->setChannel(getRxNxtChannel());
+    // Switch to response channel: inverter responds on (txChIdx + 3) % 5
+    _rxChIdx = (_txChIdx + 3) % sizeof(_rxChLst);
+    _radio->setChannel(_rxChLst[_rxChIdx]);
     _radio->startListening();
     _busyFlag = true;
     _rxTimeout.set(cmd.getTimeout());
