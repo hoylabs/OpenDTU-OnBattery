@@ -60,8 +60,9 @@ uint16_t PowerLimiterSmartBufferInverter::applyReduction(uint16_t reduction, boo
     if (reduction == 0) { return 0; }
 
     uint16_t currentOutputAcWatts = getCurrentOutputAcWatts();
+    uint16_t currentLimitWatts = getCurrentLimitWatts();
 
-    auto low = std::min(getCurrentLimitWatts(), currentOutputAcWatts);
+    auto low = std::min(currentLimitWatts, currentOutputAcWatts);
     if (low <= _config.LowerPowerLimit) {
         if (allowStandby && _config.AllowStandby) {
             standby();
@@ -70,8 +71,15 @@ uint16_t PowerLimiterSmartBufferInverter::applyReduction(uint16_t reduction, boo
         return 0;
     }
 
-    if ((currentOutputAcWatts - _config.LowerPowerLimit) >= reduction) {
-        setAcOutput(currentOutputAcWatts - reduction);
+    uint16_t baseline = currentOutputAcWatts;
+
+    // when the output is higher than the limit, we must use the limit as the baseline
+    if (currentOutputAcWatts > currentLimitWatts) {
+        baseline = currentLimitWatts;
+    }
+
+    if ((baseline - _config.LowerPowerLimit) >= reduction) {
+        setAcOutput(baseline - reduction);
         return reduction;
     }
 

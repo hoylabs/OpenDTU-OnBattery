@@ -109,9 +109,16 @@ uint16_t PowerLimiterSolarInverter::applyReduction(uint16_t reduction, bool)
     if (reduction == 0) { return 0; }
 
     uint16_t currentOutputAcWatts = getCurrentOutputAcWatts();
+    uint16_t currentLimitWatts = getCurrentLimitWatts();
+    uint16_t baseline = currentOutputAcWatts;
 
-    if ((currentOutputAcWatts - _config.LowerPowerLimit) >= reduction) {
-        setAcOutput(currentOutputAcWatts - reduction);
+    // when the output is higher than the limit, we must use the limit as the baseline
+    if (currentOutputAcWatts > currentLimitWatts) {
+        baseline = currentLimitWatts;
+    }
+
+    if ((baseline - _config.LowerPowerLimit) >= reduction) {
+        setAcOutput(baseline - reduction);
         return reduction;
     }
 
