@@ -13,11 +13,18 @@ namespace Batteries::Zendure {
 #define ZENDURE_HYPER2000_A "ja72U0ha"
 #define ZENDURE_HYPER2000_B "gDa3tb"
 
+#define ZENDURE_HUB1200_NAME   "SolarFlow HUB 1200"
+#define ZENDURE_HUB2000_NAME   "SolarFlow HUB 2000"
+#define ZENDURE_AIO2400_NAME   "AIO 2400"
+#define ZENDURE_ACE1500_NAME   "SolarFlow Ace 1500"
+#define ZENDURE_HYPER2000_NAME "SolarFlow Hyper 2000"
+
 #define ZENDURE_MAX_PACKS                           4U
 #define ZENDURE_REMAINING_TIME_OVERFLOW             59940U
 
-#define ZENDURE_SECONDS_SUNPOSITION                 60U
+#define ZENDURE_SECONDS_SUNPOSITION                 300U
 #define ZENDURE_SECONDS_TIMESYNC                    3600U
+#define ZENDURE_SECONDS_OUTPUTCALC                  30U
 
 #define ZENDURE_LOG_ROOT                            "log"
 #define ZENDURE_LOG_SERIAL                          "sn"
@@ -127,8 +134,11 @@ namespace Batteries::Zendure {
 
 
 #define ZENDURE_REPORT_PROPERTIES                   "properties"
+#define ZENDURE_REPORT_PACK_NUM                     "packNum"
 #define ZENDURE_REPORT_MIN_SOC                      "minSoc"
 #define ZENDURE_REPORT_MAX_SOC                      "socSet"
+#define ZENDURE_REPORT_SERIAL                       "sn"
+#define ZENDURE_REPORT_SOC                          "electricLevel"
 #define ZENDURE_REPORT_INPUT_LIMIT                  "inputLimit"
 #define ZENDURE_REPORT_OUTPUT_LIMIT                 "outputLimit"
 #define ZENDURE_REPORT_INVERSE_MAX_POWER            "inverseMaxPower"
@@ -180,7 +190,7 @@ namespace Batteries::Zendure {
 #define ZENDURE_REPORT_LOCAL_STATE                  "localState"        // always 0
 
 #define ZENDURE_REPORT_PACK_DATA                    "packData"
-#define ZENDURE_REPORT_PACK_SERIAL                  "sn"
+#define ZENDURE_REPORT_PACK_SERIAL                  ZENDURE_REPORT_SERIAL
 #define ZENDURE_REPORT_PACK_STATE                   "state"
 #define ZENDURE_REPORT_PACK_POWER                   "power"
 #define ZENDURE_REPORT_PACK_SOC                     "socLevel"
