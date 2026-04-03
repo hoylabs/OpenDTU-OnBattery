@@ -49,8 +49,8 @@ void WebApiFirmwareClass::onFirmwareUpdateFinish(AsyncWebServerRequest* request)
     response->addHeader(asyncsrv::T_CORS_ACAO, "*");
     request->send(response);
 
-    // write the runtime data to LittleFS, but do not write if last write operation was less than 60 min ago
-    RuntimeData.write(60);
+    // write the runtime data to LittleFS, but do not write if last write operation was less than 10 min ago
+    RuntimeData.write(10);
     RestartHelper.triggerRestart();
 }
 

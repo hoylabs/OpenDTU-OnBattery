@@ -45,8 +45,8 @@ void WebApiMaintenanceClass::onRebootPost(AsyncWebServerRequest* request)
 
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 
-        // write the runtime data to LittleFS, but do not write if last write operation was less than 60 min ago
-        RuntimeData.write(60);
+        // write the runtime data to LittleFS, but do not write if last write operation was less than 10 min ago
+        RuntimeData.write(10);
         RestartHelper.triggerRestart();
     } else {
         retMsg["message"] = "Reboot cancled!";
