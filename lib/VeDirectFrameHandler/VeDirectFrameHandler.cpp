@@ -49,6 +49,7 @@ template<typename T>
 VeDirectFrameHandler<T>::VeDirectFrameHandler() :
 	_lastUpdate(0),
 	_state(State::IDLE),
+    _prevState(State::IDLE),
 	_checksum(0),
 	_textPointer(0),
 	_hexSize(0),
@@ -174,12 +175,15 @@ void VeDirectFrameHandler<T>::rxData(uint8_t inbyte)
 
 	if ( (inbyte == ':') && (_state != State::CHECKSUM) ) {
 
-        if (_prevState == State::RECORD_HEX) { setErrorCounter(veStruct::Error::NESTED_HEX); }
-
-        // Hex frame can interrupt text frame but hex frame
-        // never interrupt hex frame, in that case we had a transmit fault
-        // We just store the state if we come from a text frame state
-        if (_state != State::RECORD_HEX) { _prevState = _state; }
+        // hex frame can interrupt text frame, but hex frame
+        // never interrupt hex frame, if we reach this line with
+        // _state == State::RECORD_HEX we had a transmit fault
+        if (_state == State::RECORD_HEX) {
+            setErrorCounter(veStruct::Error::NESTED_HEX);
+        } else {
+            // We just store the current state if we come from a text frame state
+            _prevState = _state;
+        }
 
 		_state = State::RECORD_HEX;
 		_hexSize = 0;
