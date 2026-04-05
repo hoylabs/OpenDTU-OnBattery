@@ -174,6 +174,7 @@ import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
 import InputElement from '@/components/InputElement.vue';
 import BootstrapAlert from '@/components/BootstrapAlert.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
+import WebSocketService from '@/utils/websocketService';
 
 export default defineComponent({
     components: {
@@ -188,15 +189,15 @@ export default defineComponent({
     },
     data() {
         return {
-            socket: {} as WebSocket,
+            socket: {} as WebSocketService,
             heartInterval: 0,
             dataAgeInterval: 0,
             dataLoading: true,
             data: {} as GridCharger,
             isFirstFetchAfterConnect: true,
             targetLimitList: {} as GridChargerLimitConfig,
-            gridChargerLimitSettingView: {} as bootstrap.Modal,
-            gridChargerPowerView: {} as bootstrap.Modal,
+            gridChargerLimitSettingView: null as bootstrap.Modal | null,
+            gridChargerPowerView: null as bootstrap.Modal | null,
             alertMessageLimit: '',
             alertTypeLimit: 'info',
             showAlertLimit: false,
@@ -208,10 +209,10 @@ export default defineComponent({
         this.initDataAgeing();
     },
     unmounted() {
-        this.closeSocket();
+        this.socket?.close();
         clearInterval(this.dataAgeInterval);
-        this.gridChargerLimitSettingView.dispose();
-        this.gridChargerPowerView.dispose();
+        this.gridChargerLimitSettingView?.dispose();
+        this.gridChargerPowerView?.dispose();
     },
     methods: {
         isStringValue,
@@ -226,6 +227,11 @@ export default defineComponent({
                     this.dataLoading = false;
                 });
         },
+        handleMessage(event: MessageEvent) {
+            console.log(event);
+            this.data = JSON.parse(event.data);
+            this.dataLoading = false;
+        },
         initSocket() {
             console.log('Starting connection to GridCharger WebSocket Server');
 
@@ -233,24 +239,22 @@ export default defineComponent({
             const authString = authUrl();
             const webSocketUrl = `${protocol === 'https:' ? 'wss' : 'ws'}://${authString}${host}/gridchargerlivedata`;
 
-            this.socket = new WebSocket(webSocketUrl);
-
-            this.socket.onmessage = (event) => {
-                console.log(event);
-                this.data = JSON.parse(event.data);
-                this.dataLoading = false;
-                this.heartCheck(); // Reset heartbeat detection
-            };
-
-            this.socket.onopen = function (event) {
-                console.log(event);
-                console.log('Successfully connected to the GridCharger websocket server...');
-            };
+            this.socket = new WebSocketService(webSocketUrl, {
+                onMessage: this.handleMessage,
+                onOpen: () => {
+                    console.log('GridCharger WebSocket connected');
+                },
+                onClose: () => {
+                    console.log('GridCharger WebSocket closed');
+                },
+            });
 
             // Listen to window events , When the window closes , Take the initiative to disconnect websocket Connect
             window.onbeforeunload = () => {
-                this.closeSocket();
+                this.socket?.close();
             };
+
+            this.socket?.connect();
         },
         initDataAgeing() {
             this.dataAgeInterval = setInterval(() => {
@@ -259,35 +263,13 @@ export default defineComponent({
                 }
             }, 1000);
         },
-        // Send heartbeat packets regularly * 59s Send a heartbeat
-        heartCheck() {
-            if (this.heartInterval) {
-                clearInterval(this.heartInterval);
-            }
-            this.heartInterval = setInterval(() => {
-                if (this.socket.readyState === 1) {
-                    // Connection status
-                    this.socket.send('ping');
-                } else {
-                    this.initSocket(); // Breakpoint reconnection 5 Time
-                }
-            }, 59 * 1000);
-        },
-        /** To break off websocket Connect */
-        closeSocket() {
-            this.socket.close();
-            if (this.heartInterval) {
-                clearInterval(this.heartInterval);
-            }
-            this.isFirstFetchAfterConnect = true;
-        },
         onShowLimitSettings() {
             this.gridChargerLimitSettingView = new bootstrap.Modal('#gridChargerLimitSettingView');
-            this.gridChargerLimitSettingView.show();
+            this.gridChargerLimitSettingView?.show();
         },
         onShowPowerModal() {
             this.gridChargerPowerView = new bootstrap.Modal('#gridChargerPowerView');
-            this.gridChargerPowerView.show();
+            this.gridChargerPowerView?.show();
         },
         onSubmitLimit(e: Event) {
             e.preventDefault();
@@ -305,7 +287,7 @@ export default defineComponent({
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((response) => {
                     if (response.type === 'success') {
-                        this.gridChargerLimitSettingView.hide();
+                        this.gridChargerLimitSettingView?.hide();
                         this.showAlertLimit = false;
                     } else {
                         this.alertMessageLimit = this.$t('onbatteryapiresponse.' + response.code, response.param);
@@ -327,7 +309,7 @@ export default defineComponent({
                 .then((response) => {
                     console.log(response);
                     if (response.type === 'success') {
-                        this.gridChargerPowerView.hide();
+                        this.gridChargerPowerView?.hide();
                     }
                 });
         },

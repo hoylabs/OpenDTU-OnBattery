@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2022-2024 Thomas Basler and others
+ * Copyright (C) 2022-2026 Thomas Basler and others
  */
 #include "WebApi_dtu.h"
 #include "Configuration.h"
@@ -18,8 +18,8 @@ void WebApiDtuClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
     using std::placeholders::_1;
 
-    server.on("/api/dtu/config", HTTP_GET, std::bind(&WebApiDtuClass::onDtuAdminGet, this, _1));
-    server.on("/api/dtu/config", HTTP_POST, std::bind(&WebApiDtuClass::onDtuAdminPost, this, _1));
+    server.on("/api/dtu/config", HTTP_GET, static_cast<ArRequestHandlerFunction>(std::bind(&WebApiDtuClass::onDtuAdminGet, this, _1)));
+    server.on("/api/dtu/config", HTTP_POST, static_cast<ArRequestHandlerFunction>(std::bind(&WebApiDtuClass::onDtuAdminPost, this, _1)));
 
     scheduler.addTask(_applyDataTask);
 }
