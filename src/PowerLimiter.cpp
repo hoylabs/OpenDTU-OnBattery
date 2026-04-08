@@ -214,7 +214,9 @@ void PowerLimiterClass::loop()
 
     // since _lastCalculation and _calculationBackoffMs are initialized to
     // zero, this test is passed the first time the condition is checked.
-    if ((millis() - _lastCalculation) < _calculationBackoffMs) {
+    // to improve responsiveness, we ignore the backoff time if the change of the power consumption
+    // is sufficient high enough to do a complete recalculation immediately.
+    if (!isConsumptionPowerChangeSufficient() && ((millis() - _lastCalculation) < _calculationBackoffMs)) {
         return announceStatus(Status::Stable);
     }
 
@@ -552,7 +554,7 @@ uint8_t PowerLimiterClass::getPowerLimiterState() const
         ? PL_UI_STATE_USE_SOLAR_AND_BATTERY : PL_UI_STATE_USE_SOLAR_ONLY;
 }
 
-uint16_t PowerLimiterClass::calcTargetOutput() const
+uint16_t PowerLimiterClass::calcTargetOutput(bool loggingRequested) const
 {
     auto const& config = Configuration.get();
     auto targetConsumption = config.PowerLimiter.TargetPowerConsumption;
@@ -561,9 +563,11 @@ uint16_t PowerLimiterClass::calcTargetOutput() const
     auto meterValid = PowerMeter.isDataValid();
     auto meterValue = PowerMeter.getPowerTotal();
 
-    DTU_LOGD("targeting %d W, base load is %u W, power meter reads %.1f W (%s)",
-            targetConsumption, baseLoad, meterValue,
-            (meterValid?"valid":"stale"));
+    if (loggingRequested) {
+        DTU_LOGD("targeting %d W, base load is %u W, power meter reads %.1f W (%s)",
+                targetConsumption, baseLoad, meterValue,
+                (meterValid?"valid":"stale"));
+    }
 
     if (!meterValid) { return baseLoad; }
 
@@ -980,4 +984,81 @@ bool PowerLimiterClass::isGovernedBatteryPoweredInverterProducing() const
         if (upInv->isBatteryPowered() && upInv->isProducing()) { return true; }
     }
     return false;
+}
+
+/*
+ * returns true if the consumption power has changed more as the double hysteresis since the last check
+ * Note: we do not handle all cases. For example if all inverters are in standby and will be switched on!
+ */
+bool PowerLimiterClass::isConsumptionPowerChangeSufficient() {
+
+    // if power meter data is not valid, we abort
+    if (!PowerMeter.isDataValid()) { return false; }
+
+    // if the power meter data has not changed since the last check, we abort
+    auto newPowerMeterUpdate = PowerMeter.getLastUpdate();
+    if (newPowerMeterUpdate == _lastPowerMeterUpdate) { return false; }
+
+    // we got new power meter data, we can do a fast pre check if the consumption power change is sufficient
+    auto newConsumptionPower = calcTargetOutput(false);
+    auto totalUpperPower = Configuration.get().PowerLimiter.TotalUpperPowerLimit;
+    uint16_t hysteresis = Configuration.get().PowerLimiter.TargetPowerConsumptionHysteresis * 2; // double the hysteresis
+
+    // we calculate the upper power limit of all active inverters and the lower power limit if only one inverter is producing.
+    uint16_t lowerPowerOneActiveInverter = totalUpperPower;
+    uint16_t upperPowerAllActiveInverter = 0;
+    bool hasActiveInverter = false;
+    for (auto const& upInv : _inverters) {
+        if (!upInv->isEligible()) { continue; }
+        if (!upInv->isProducing()) { continue; }
+
+        hasActiveInverter = true;
+        if (upInv->getLowerPowerLimit() < lowerPowerOneActiveInverter) { lowerPowerOneActiveInverter = upInv->getLowerPowerLimit(); }
+        upperPowerAllActiveInverter += upInv->getUpperPowerLimit();
+    }
+    upperPowerAllActiveInverter = std::min(upperPowerAllActiveInverter, totalUpperPower);
+
+    // if we don't have any active inverter, we abort
+    if (!hasActiveInverter) { return false; }
+
+    // the power change is sufficient if we are at least with one value inside the lower and upper power limits
+    // and the change is bigger than the double of the hysteresis.
+    auto result = true;
+    if (((_lastConsumptionPower > upperPowerAllActiveInverter) && (newConsumptionPower > upperPowerAllActiveInverter))
+        || ((_lastConsumptionPower < lowerPowerOneActiveInverter) && (newConsumptionPower < lowerPowerOneActiveInverter))
+        || ((std::abs(newConsumptionPower - _lastConsumptionPower) < hysteresis))) {
+        result = false;
+    }
+
+    // todo: remove information log after testing
+    static uint32_t lastLogTime = 0;
+    static uint32_t saveTimeTotal = 0;
+    static float exportEnergy = 0.0f;
+    static float importEnergy = 0.0f;
+    if (result && (_lastCalculation > 0)) {
+        if ((millis() - _lastCalculation) < _calculationBackoffMs) {
+            auto saveTime = _calculationBackoffMs - millis() + _lastCalculation;
+            saveTimeTotal += saveTime;
+            auto newPower = (newConsumptionPower > upperPowerAllActiveInverter) ? upperPowerAllActiveInverter : newConsumptionPower;
+            auto oldPower = (_lastConsumptionPower > upperPowerAllActiveInverter) ? upperPowerAllActiveInverter : _lastConsumptionPower;
+            float diffPower = newPower - oldPower;
+            if (diffPower >= 0.0f) {
+                importEnergy += diffPower * (saveTime / 1000.0f);   // in watt-seconds
+            } else {
+                exportEnergy += -diffPower * (saveTime / 1000.0f);  // in watt-seconds
+            }
+        }
+    }
+    if (millis() - lastLogTime > 30*1000) {
+        DTU_LOGI("Stable-Time: save time total: %us, less export energy: %.3fWh, less import energy: %.3fWh",
+            saveTimeTotal / 1000, exportEnergy / (60.0f * 60.0f), importEnergy / (60.0f * 60.0f));
+        DTU_LOGI("Stable-Time: power range: %uW - %uW, minimum power change: %uW",
+            lowerPowerOneActiveInverter, upperPowerAllActiveInverter, hysteresis);
+        lastLogTime = millis();
+    }
+    // todo: remove information log after testing
+
+    _lastPowerMeterUpdate = newPowerMeterUpdate;
+    _lastConsumptionPower = newConsumptionPower;
+    return result;
 }
