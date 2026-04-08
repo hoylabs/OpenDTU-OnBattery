@@ -200,8 +200,7 @@
             "RELAY": "Error relay state",
             "ERR": "Error code",
             "HSDS": "Day sequence number (0..364)",
-            "MpptTemperature": "Charge controller temperature",
-            "NetworkStatus": "Network status"
+            "MpptTemperature": "Charge controller temperature"
         },
         "section_output": "Output (Battery)",
         "output": {
@@ -209,15 +208,12 @@
             "V": "Voltage",
             "I": "Current",
             "E": "Efficiency (calculated)",
-            "VoltageSetting": "Voltage preset",
             "AbsorptionVoltage": "Absorption voltage",
             "FloatVoltage": "Float voltage",
             "SBSTemperature": "SBS temperature",
             "Power": "Power",
             "RemoteVoltage": "Remote voltage",
-            "RemoteTemperature": "Remote temperature",
-            "RemoteCurrent": "Remote current",
-            "RemoteCurrentLimit": "Remote current limit"
+            "RemoteTemperature": "Remote temperature"
         },
         "section_input": "Input (Solar Panels)",
         "input": {
@@ -623,7 +619,7 @@
         "ProviderMqtt": "Solar Charger data from MQTT broker",
         "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change",
         "ForwardBatteryData": "Forward battery data",
-        "ForwardBatteryDataDescription": "If enabled, forward battery BMS data to the charger (remote sensing)",
+        "ForwardBatteryDataDescription": "If enabled, forward battery BMS data to the charge controllers (emulate 'Victron Smart Battery Sense' functionality)",
         "CalculateOutputPower": "Calculate Solar Charger output power",
         "CalculateOutputPowerDescription": "If enabled, the output power of the Solar Charger will be calculated based on the current and voltage values. If disabled, the output power will be taken from the Solar Charger directly.",
         "OutputPowerUsageHint": "<b>Hint:</b> The output power is used by the DPL solar-passthrough feature. Details can be found in the documentation concerning Solar-Passthrough.",

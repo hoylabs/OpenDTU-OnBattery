@@ -11,7 +11,7 @@
 #include "VeDirectMpptController.h"
 #include <LogHelper.h>
 
-#define PROCESS_NETWORK_STATE
+//#define PROCESS_NETWORK_STATE
 
 #undef TAG
 static const char* TAG = "veDirect";
@@ -142,19 +142,19 @@ void VeDirectMpptController::loop()
 
 	// Third we check if HEX-Data is outdated
     if (!isHexCommandPossible()) { return; }
-	resetTimestamp(_tmpFrame.Capabilities);
 	resetTimestamp(_tmpFrame.MpptTemperatureMilliCelsius);
 	resetTimestamp(_tmpFrame.SmartBatterySenseTemperatureMilliCelsius);
 	resetTimestamp(_tmpFrame.NetworkTotalDcInputPowerMilliWatts);
-	resetTimestamp(_tmpFrame.BatteryVoltageSettingVolt);
 	resetTimestamp(_tmpFrame.BatteryFloatMilliVolt);
 	resetTimestamp(_tmpFrame.BatteryAbsorptionMilliVolt);
-	resetTimestamp(_tmpFrame.ChargeCurrentLimit);
 
 #ifdef PROCESS_NETWORK_STATE
 	resetTimestamp(_tmpFrame.NetworkInfo);
-	resetTimestamp(_tmpFrame.NetworkStatus);
+	resetTimestamp(_tmpFrame.NetworkMode);
 #endif // PROCESS_NETWORK_STATE
+
+    // always handled because it is used for our SBS emulation
+	resetTimestamp(_tmpFrame.NetworkStatus);
 }
 
 
@@ -166,11 +166,8 @@ void VeDirectMpptController::loop()
 bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 	if (data.rsp == VeDirectHexResponse::SET) {
 		switch (data.addr) {
-		case VeDirectHexRegister::NetworkMode: return true;
 		case VeDirectHexRegister::BatteryVoltageSense: return true;
 		case VeDirectHexRegister::BatteryTemperatureSense: return true;
-		case VeDirectHexRegister::BatteryChargeCurrent: return true;
-		case VeDirectHexRegister::ChargeVoltageSetPoint: return true;
 		default: return false;
 		}
 	}
@@ -186,22 +183,6 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 	}
 
 	switch (data.addr) {
-		case VeDirectHexRegister::DeviceCapabilities:
-			_tmpFrame.Capabilities = { millis(), data.value };
-			ESP_LOGD(TAG, "%s Hex Data: MPPT Capabilties: 0x%08X", _logId, data.value);
-			return true;
-			break;
-
-		case VeDirectHexRegister::PanelCurrent:
-			if (data.value == 0xFFFF) {
-				ESP_LOGD(TAG, "%s Hex Data: Panel Current is not available\r\n", _logId);
-				return true; // we know what to do with it, and we decided to ignore the value
-			}
-
-			ESP_LOGD(TAG, "%s Hex Data: Panel Current: 0x%04X", _logId, static_cast<int16_t>(data.value));
-			return true;
-			break;
-
 		case VeDirectHexRegister::ChargeControllerTemperature:
 			_tmpFrame.MpptTemperatureMilliCelsius =
 				{ millis(), static_cast<int32_t>(data.value) * 10 };
@@ -244,35 +225,12 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			return true;
 			break;
 
-		case VeDirectHexRegister::ChargeCurrentLimit:
-			if (data.value != 0xFFFF) {
-				_tmpFrame.ChargeCurrentLimit =
-					{ millis(), static_cast<uint32_t>(data.value) * 100 };
-
-				ESP_LOGD(TAG,
-                    "%s Hex Data: MPPT Current Limit (0x%04X): %.2fA",
-                    _logId, regLog,
-                    _tmpFrame.ChargeCurrentLimit.second / 1000.0
-                );
-			}
-			return true;
-			break;
-
 		case VeDirectHexRegister::BatteryAbsorptionVoltage:
 			_tmpFrame.BatteryAbsorptionMilliVolt =
 				{ millis(), static_cast<uint32_t>(data.value) * 10 };
 			ESP_LOGD(TAG, "%s Hex Data: MPPT Absorption Voltage (0x%04X): %.2fV",
 					_logId, regLog,
 					_tmpFrame.BatteryAbsorptionMilliVolt.second / 1000.0);
-			return true;
-			break;
-
-		case VeDirectHexRegister::BatteryVoltageSetting:
-			_tmpFrame.BatteryVoltageSettingVolt =
-				{ millis(), static_cast<uint8_t>(data.value) };
-
-			ESP_LOGD(TAG, "%s Hex Data: MPPT Voltage Setting (0x%04X): %dV\r\n",
-						_logId, regLog, data.value);
 			return true;
 			break;
 
@@ -304,7 +262,9 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 					_logId, regLog, data.value);
 			return true;
 			break;
+#endif // PROCESS_NETWORK_STATE
 
+        // always handled because it is used for our SBS emulation
 		case VeDirectHexRegister::NetworkStatus:
 			_tmpFrame.NetworkStatus =
 				{ millis(), static_cast<uint8_t>(data.value) };
@@ -313,7 +273,6 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 					_logId, regLog, data.value);
 			return true;
 			break;
-#endif // PROCESS_NETWORK_STATE
 
 		default:
 			return false;
@@ -399,21 +358,6 @@ void VeDirectMpptController::sendNextHexCommandFromQueue(void) {
 }
 
 /*
- * setRemoteChargeVoltageSetPoint()
- * set VSENSE information using HEX command 2001
- */
-void VeDirectMpptController::setRemoteChargeVoltageSetPoint(float volt) {
-	for (auto& cmd : _hexQueue) {
-		if (cmd._hexRegister == VeDirectHexRegister::ChargeVoltageSetPoint) {
-			float value = volt * 100.0;
-			if (value > 0 && value < UINT16_MAX) {
-				cmd._writeData = static_cast<uint32_t>(value);
-			}
-		}
-	}
-}
-
-/*
  * setRemoteVoltage()
  * set VSENSE information using HEX command 2002
  */
@@ -428,17 +372,6 @@ void VeDirectMpptController::setRemoteVoltage(float volt) {
 	}
 }
 
-/*
- * setRemoteMode()
- * set network mode using HEX command 200E
- */
-void VeDirectMpptController::setRemoteMode(VeDirectNetworkMode mode) {
-	for (auto& cmd : _hexQueue) {
-		if (cmd._hexRegister == VeDirectHexRegister::NetworkMode) {
-			cmd._writeData = static_cast<uint32_t>(mode);
-		}
-	}
-}
 
 /*
  * setRemoteTemperature()
@@ -450,38 +383,6 @@ void VeDirectMpptController::setRemoteTemperature(float degreeCelsius) {
 			float value = degreeCelsius * 100.0;
 			if (value > INT16_MIN && value < INT16_MAX) {
 				cmd._writeData = static_cast<uint32_t>(static_cast<int16_t>(value));
-			}
-		}
-	}
-}
-
-/*
- * setRemoteCurrent()
- * set ISENSE information using HEX command 200A
- */
-void VeDirectMpptController::setRemoteCurrent(float ampere) {
-	for (auto& cmd : _hexQueue) {
-		if (cmd._hexRegister == VeDirectHexRegister::BatteryChargeCurrent) {
-			float milliAmp = ampere * 1000.0;
-			if (milliAmp > INT32_MIN && milliAmp < INT32_MAX) {
-				// Casting directly to uint32_t may yield 0 for negative values.
-				int32_t value = static_cast<int32_t>(milliAmp);
-				cmd._writeData = static_cast<uint32_t>(value);
-			}
-		}
-	}
-}
-
-/*
- * setRemoteChargeCurrentLimit()
- * remote control charge current using HEX command 2015
- */
-void VeDirectMpptController::setRemoteChargeCurrentLimit(float ampere) {
-	for (auto& cmd : _hexQueue) {
-		if (cmd._hexRegister == VeDirectHexRegister::ChargeCurrentLimit) {
-			float value = ampere * 10.0;
-			if (value > 0 && value < UINT16_MAX) {
-				cmd._writeData = static_cast<uint16_t>(value);
 			}
 		}
 	}

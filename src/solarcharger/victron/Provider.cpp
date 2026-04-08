@@ -69,24 +69,18 @@ void Provider::loop()
 {
     auto const& config = Configuration.get();
     auto forwardBatteryData = config.SolarCharger.ForwardBatteryData;
+    auto batteryStats = Battery.getStats();
+
     std::lock_guard<std::mutex> lock(_mutex);
 
     for (auto const& upController : _controllers) {
         upController->loop();
-#if 0
-        upController->setRemoteMode(VeDirectNetworkMode::EXTERNAL_CONTROL);
-        //upController->setRemoteVoltage(12.34);
-        upController->setRemoteTemperature(21.34);
-        upController->setRemoteChargeVoltageSetPoint(13.45);
-        //upController->setRemoteCurrent(0.1);
-        upController->setRemoteChargeCurrentLimit(0.5);
-#endif
+
         if (forwardBatteryData) {
-            auto batteryStats = Battery.getStats();
             if (batteryStats->isVoltageValid()) {
                 upController->setRemoteVoltage(batteryStats->getVoltage());
             }
-            if (batteryStats->getTemperature().has_value()) {
+            if (batteryStats->getTemperature().has_value()) { // TODO: what if no value is available? Should we send a fake value or can we simply skip it?
                 upController->setRemoteTemperature(batteryStats->getTemperature().value());
             }
         }
