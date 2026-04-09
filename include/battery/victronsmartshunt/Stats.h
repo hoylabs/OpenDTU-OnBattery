@@ -10,6 +10,7 @@ class Stats : public ::Batteries::Stats {
 public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
+    std::optional<float> getTemperature() const final { if (_tempPresent) return _temperature; else return std::nullopt; }
 
     void updateFrom(VeDirectShuntController::data_t const& shuntData);
 
