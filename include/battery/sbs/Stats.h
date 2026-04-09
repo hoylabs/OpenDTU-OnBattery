@@ -11,14 +11,12 @@ friend class Provider;
 public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
-    std::optional<float> getTemperature() const final { if (_lastUpdate > 0) return _temperature; else return std::nullopt; }
 
 private:
     void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
 
     float _chargeVoltage;
     uint16_t _stateOfHealth;
-    float _temperature;
 
     bool _alarmUnderTemperature;
     bool _alarmOverTemperature;

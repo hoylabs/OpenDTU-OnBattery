@@ -23,8 +23,6 @@ public:
 
     void updateFrom(DataPointContainer const& dp);
 
-    std::optional<float> getTemperature() const final;
-
 private:
     void getJsonData(JsonVariant& root, bool verbose) const;
 

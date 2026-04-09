@@ -12,7 +12,12 @@ void Stats::getLiveViewData(JsonVariant& root) const
     addLiveViewValue(root, "chargeVoltage", _chargeVoltage, "V", 1);
     addLiveViewValue(root, "dischargeVoltageLimitation", _dischargeVoltageLimitation, "V", 1);
     addLiveViewValue(root, "stateOfHealth", _stateOfHealth, "%", 0);
-    addLiveViewValue(root, "temperature", _temperature, "°C", 1);
+
+    auto oTemperature = getTemperature();
+    if (oTemperature) {
+        addLiveViewValue(root, "temperature", *oTemperature, "°C", 1);
+    }
+
     addLiveViewValue(root, "modules", _moduleCount, "", 0);
 
     addLiveViewTextValue(root, "chargeEnabled", (_chargeEnabled?"yes":"no"));
@@ -49,7 +54,12 @@ void Stats::mqttPublish() const
     MqttSettings.publish("battery/settings/chargeVoltage", String(_chargeVoltage));
     MqttSettings.publish("battery/settings/dischargeVoltageLimitation", String(_dischargeVoltageLimitation));
     MqttSettings.publish("battery/stateOfHealth", String(_stateOfHealth));
-    MqttSettings.publish("battery/temperature", String(_temperature));
+
+    auto oTemperature = getTemperature();
+    if (oTemperature) {
+        MqttSettings.publish("battery/temperature", String(*oTemperature));
+    }
+
     MqttSettings.publish("battery/alarm/overCurrentDischarge", String(_alarmOverCurrentDischarge));
     MqttSettings.publish("battery/alarm/overCurrentCharge", String(_alarmOverCurrentCharge));
     MqttSettings.publish("battery/alarm/underTemperature", String(_alarmUnderTemperature));

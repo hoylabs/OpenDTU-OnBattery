@@ -12,7 +12,6 @@ public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
     bool getImmediateChargingRequest() const { return _chargeImmediately; };
-    std::optional<float> getTemperature() const final { if (_lastUpdate > 0) return _temperature; else return std::nullopt; }
 
 private:
     void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
@@ -31,8 +30,6 @@ private:
     uint16_t _stateOfHealth;
     int _chargeCycles = -1;
     int _balance = -1;
-
-    float _temperature;
 
     uint16_t _cellMinMilliVolt;
     uint16_t _cellMaxMilliVolt;
