@@ -76,12 +76,12 @@ void Provider::loop()
         if (forwardBatteryData) {
             auto batteryStats = Battery.getStats();
 
-            if (batteryStats->isVoltageValid()) {
+            if (batteryStats->isVoltageValid() && batteryStats->getVoltageAgeSeconds() < 60) {
                 upController->setRemoteVoltage(batteryStats->getVoltage());
             }
 
             auto oTemperature = batteryStats->getTemperature();
-            if (oTemperature.has_value()) {
+            if (oTemperature.has_value() && batteryStats->getTemperatureAgeSeconds() < 60) {
                 upController->setRemoteTemperature(*oTemperature);
             }
         }
