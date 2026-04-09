@@ -12,6 +12,7 @@ public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
     bool getImmediateChargingRequest() const { return _chargeImmediately; } ;
+    std::optional<float> getTemperature() const final { if (_lastUpdate > 0) return _temperature; else return std::nullopt; }
 
 private:
     void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
