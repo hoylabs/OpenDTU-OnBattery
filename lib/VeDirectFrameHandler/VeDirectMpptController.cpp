@@ -166,9 +166,9 @@ void VeDirectMpptController::loop()
 bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 	if (data.rsp == VeDirectHexResponse::SET) {
 		switch (data.addr) {
-		case VeDirectHexRegister::BatteryVoltageSense: return true;
-		case VeDirectHexRegister::BatteryTemperatureSense: return true;
-		default: return false;
+            case VeDirectHexRegister::BatteryVoltageSense: return true;
+            case VeDirectHexRegister::BatteryTemperatureSense: return true;
+            default: return false;
 		}
 	}
 
