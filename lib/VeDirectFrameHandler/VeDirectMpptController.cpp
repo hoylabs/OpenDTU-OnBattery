@@ -168,6 +168,8 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
         data.rsp != VeDirectHexResponse::SET &&
         data.rsp != VeDirectHexResponse::ASYNC) { return false; }
 
+    auto regLog = static_cast<uint16_t>(data.addr);
+
     // we check whether the answer matches a previous SET or GET command
 	if ((data.rsp == VeDirectHexResponse::GET || data.rsp == VeDirectHexResponse::SET) &&
         (data.addr == _hexQueue[_sendQueueNr]._hexRegister)) {
@@ -181,8 +183,6 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
             default: return false;
 		}
 	}
-
-	auto regLog = static_cast<uint16_t>(data.addr);
 
 	switch (data.addr) {
 		case VeDirectHexRegister::ChargeControllerTemperature:
@@ -329,22 +329,21 @@ void VeDirectMpptController::sendNextHexCommandFromQueue(void) {
 					(!prio && (_hexQueue[idx]._readPeriod != HIGH_PRIO_COMMAND))) &&
 					(millisTime - _hexQueue[idx]._lastSendTime) > (_hexQueue[idx]._readPeriod * 1000)) {
 
+                    bool sent = false;
                     if (_hexQueue[idx]._setCommand) {
                         if (_hexQueue[idx]._data.has_value()) {
                             sendHexCommand(VeDirectHexCommand::SET, _hexQueue[idx]._hexRegister,
                                 _hexQueue[idx]._data.value(),
                                 _hexQueue[idx]._dataLength);
                             _hexQueue[idx]._data.reset();
-                            _hexQueue[idx]._lastSendTime = millisTime;
-
-                            // we need this information to check if we get an answer, see hexDataHandler()
-                            _sendTimeout = 500;
-                            _sendQueueNr = idx;
-                            return;
+                            sent = true;
                         }
                     } else {
                         sendHexCommand(VeDirectHexCommand::GET, _hexQueue[idx]._hexRegister);
+                        sent = true;
+                    }
 
+                    if (sent) {
                         _hexQueue[idx]._lastSendTime = millisTime;
 
                         // we need this information to check if we get an answer, see hexDataHandler()
