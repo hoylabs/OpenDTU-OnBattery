@@ -69,7 +69,6 @@ void Provider::loop()
 {
     auto const& config = Configuration.get();
     auto forwardBatteryData = config.SolarCharger.ForwardBatteryData;
-    auto batteryStats = Battery.getStats();
 
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -77,10 +76,12 @@ void Provider::loop()
         upController->loop();
 
         if (forwardBatteryData) {
+            auto batteryStats = Battery.getStats();
+
             if (batteryStats->isVoltageValid()) {
                 upController->setRemoteVoltage(batteryStats->getVoltage());
             }
-            if (batteryStats->getTemperature().has_value()) { // TODO: what if no value is available? Should we send a fake value or can we simply skip it?
+            if (batteryStats->getTemperature().has_value()) { // TODO(andreasboehm): what if no value is available? Should we send a fake value or can we simply skip it?
                 upController->setRemoteTemperature(batteryStats->getTemperature().value());
             }
         }
