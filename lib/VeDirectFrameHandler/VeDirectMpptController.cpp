@@ -323,24 +323,21 @@ void VeDirectMpptController::sendNextHexCommandFromQueue(void) {
 
 			do {
 				// we check if it is time to send the command again
-				if (prio && (_hexQueue[idx]._readPeriod == WRITE_ONLY_COMMAND) &&
-                    (millisTime - _hexQueue[idx]._lastSendTime) > (1 * 1000)) { // every second
-					if (_hexQueue[idx]._writeData.has_value()) {
-						sendHexCommand(VeDirectHexCommand::SET, _hexQueue[idx]._hexRegister,
-							_hexQueue[idx]._writeData.value(),
-							_hexQueue[idx]._writeSize);
-						_hexQueue[idx]._lastSendTime = millisTime;
-						_hexQueue[idx]._writeData.reset();
-
-						// we need this information to check if we get an answer, see hexDataHandler()
-						_sendTimeout = 500;
-						_sendQueueNr = idx;
-					}
-				} else if (((prio && (_hexQueue[idx]._readPeriod == HIGH_PRIO_COMMAND)) ||
-					(!prio && (_hexQueue[idx]._readPeriod > HIGH_PRIO_COMMAND))) &&
+				if (((prio && (_hexQueue[idx]._readPeriod == HIGH_PRIO_COMMAND)) ||
+					(!prio && (_hexQueue[idx]._readPeriod != HIGH_PRIO_COMMAND))) &&
 					(millisTime - _hexQueue[idx]._lastSendTime) > (_hexQueue[idx]._readPeriod * 1000)) {
 
-					sendHexCommand(VeDirectHexCommand::GET, _hexQueue[idx]._hexRegister);
+                    if (_hexQueue[idx]._setCommand) {
+                        if (_hexQueue[idx]._data.has_value()) {
+                            sendHexCommand(VeDirectHexCommand::SET, _hexQueue[idx]._hexRegister,
+                                _hexQueue[idx]._data.value(),
+                                _hexQueue[idx]._dataLength);
+                            _hexQueue[idx]._data.reset();
+                        }
+                    } else {
+                        sendHexCommand(VeDirectHexCommand::GET, _hexQueue[idx]._hexRegister);
+                    }
+
 					_hexQueue[idx]._lastSendTime = millisTime;
 
 					// we need this information to check if we get an answer, see hexDataHandler()
@@ -367,7 +364,7 @@ void VeDirectMpptController::setRemoteVoltage(float volt) {
 		if (cmd._hexRegister == VeDirectHexRegister::BatteryVoltageSense) {
 			float value = volt * 100.0;
 			if (value > 0 && value < UINT16_MAX) {
-				cmd._writeData = static_cast<uint32_t>(value);
+				cmd._data = static_cast<uint32_t>(value);
 			}
 		}
 	}
@@ -383,7 +380,7 @@ void VeDirectMpptController::setRemoteTemperature(float degreeCelsius) {
 		if (cmd._hexRegister == VeDirectHexRegister::BatteryTemperatureSense) {
 			float value = degreeCelsius * 100.0;
 			if (value > INT16_MIN && value < INT16_MAX) {
-				cmd._writeData = static_cast<uint32_t>(static_cast<int16_t>(value));
+				cmd._data = static_cast<uint32_t>(static_cast<int16_t>(value));
 			}
 		}
 	}
