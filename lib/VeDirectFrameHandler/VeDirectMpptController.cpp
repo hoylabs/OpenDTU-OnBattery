@@ -333,17 +333,23 @@ void VeDirectMpptController::sendNextHexCommandFromQueue(void) {
                                 _hexQueue[idx]._data.value(),
                                 _hexQueue[idx]._dataLength);
                             _hexQueue[idx]._data.reset();
+                            _hexQueue[idx]._lastSendTime = millisTime;
+
+                            // we need this information to check if we get an answer, see hexDataHandler()
+                            _sendTimeout = 500;
+                            _sendQueueNr = idx;
+                            return;
                         }
                     } else {
                         sendHexCommand(VeDirectHexCommand::GET, _hexQueue[idx]._hexRegister);
+
+                        _hexQueue[idx]._lastSendTime = millisTime;
+
+                        // we need this information to check if we get an answer, see hexDataHandler()
+                        _sendTimeout = 500;
+                        _sendQueueNr = idx;
+                        return;
                     }
-
-					_hexQueue[idx]._lastSendTime = millisTime;
-
-					// we need this information to check if we get an answer, see hexDataHandler()
-					_sendTimeout = 500;
-					_sendQueueNr = idx;
-					return;
 				}
 
 				++idx;
