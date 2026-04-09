@@ -164,6 +164,16 @@ void VeDirectMpptController::loop()
  * handles the received hex data from the MPPT
  */
 bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
+	if (data.rsp != VeDirectHexResponse::GET &&
+        data.rsp != VeDirectHexResponse::SET &&
+        data.rsp != VeDirectHexResponse::ASYNC) { return false; }
+
+    // we check whether the answer matches a previous SET or GET command
+	if ((data.rsp == VeDirectHexResponse::GET || data.rsp == VeDirectHexResponse::SET) &&
+        (data.addr == _hexQueue[_sendQueueNr]._hexRegister)) {
+		_sendTimeout = 0;
+	}
+
 	if (data.rsp == VeDirectHexResponse::SET) {
 		switch (data.addr) {
             case VeDirectHexRegister::BatteryVoltageSense: return true;
@@ -172,15 +182,7 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 		}
 	}
 
-	if (data.rsp != VeDirectHexResponse::GET &&
-			data.rsp != VeDirectHexResponse::ASYNC) { return false; }
-
 	auto regLog = static_cast<uint16_t>(data.addr);
-
-	// we check whether the answer matches a previously asked query
-	if ((data.rsp == VeDirectHexResponse::GET) && (data.addr == _hexQueue[_sendQueueNr]._hexRegister)) {
-		_sendTimeout = 0;
-	}
 
 	switch (data.addr) {
 		case VeDirectHexRegister::ChargeControllerTemperature:
