@@ -52,6 +52,13 @@ bool Provider::initController(gpio_num_t rx, gpio_num_t tx, uint8_t instance)
         return false;
     }
 
+    auto const& config = Configuration.get();
+    auto forwardBatteryData = config.SolarCharger.ForwardBatteryData;
+
+    if (tx <= GPIO_NUM_NC && forwardBatteryData) {
+        DTU_LOGE("Instance %d: TX pin not configured but forwaredBatteryData enabled", instance);
+    }
+
     String owner("Victron MPPT ");
     owner += String(instance);
     auto oHwSerialPort = SerialPortManager.allocatePort(owner.c_str());
