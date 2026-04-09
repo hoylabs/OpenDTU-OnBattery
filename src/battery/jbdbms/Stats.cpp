@@ -197,4 +197,16 @@ void Stats::updateFrom(JbdBms::DataPointContainer const& dp)
     _lastUpdate = millis();
 }
 
+
+std::optional<float> Stats::getTemperature() const {
+    using Label = JbdBms::DataPointLabel;
+
+    auto oTemperatureOne = _dataPoints.get<Label::BatteryTempOneCelsius>();
+    if (oTemperatureOne.has_value()) {
+        return *oTemperatureOne;
+    }
+
+    return _dataPoints.get<Label::BatteryTempTwoCelsius>();
+}
+
 } // namespace Batteries::JbdBms
