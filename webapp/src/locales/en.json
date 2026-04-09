@@ -619,7 +619,7 @@
         "ProviderMqtt": "Solar Charger data from MQTT broker",
         "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change",
         "ForwardBatteryData": "Forward battery data",
-        "ForwardBatteryDataDescription": "If enabled, forward battery BMS data to the charge controllers (emulate 'Victron Smart Battery Sense' functionality)",
+        "ForwardBatteryDataDescription": "If enabled, forward battery BMS data (voltage and temperature) to the charge controllers (emulates 'Victron Smart Battery Sense' functionality)",
         "CalculateOutputPower": "Calculate Solar Charger output power",
         "CalculateOutputPowerDescription": "If enabled, the output power of the Solar Charger will be calculated based on the current and voltage values. If disabled, the output power will be taken from the Solar Charger directly.",
         "OutputPowerUsageHint": "<b>Hint:</b> The output power is used by the DPL solar-passthrough feature. Details can be found in the documentation concerning Solar-Passthrough.",

@@ -211,7 +211,9 @@
             "AbsorptionVoltage": "Absorptionsspannung",
             "FloatVoltage": "Erhaltungsspannung",
             "SBSTemperature": "SBS Temperatur",
-            "Power": "Leistung"
+            "Power": "Leistung",
+            "RemoteVoltage": "Remote Spannung",
+            "RemoteTemperature": "Remote Temperatur"
         },
         "section_input": "Eingang (Solarpanele)",
         "input": {
@@ -616,6 +618,8 @@
         "ProviderVeDirect": "Victron MPPT(s) per VE.Direct Schnittstelle",
         "ProviderMqtt": "Solarladereglerwerte aus MQTT Broker",
         "MqttPublishUpdatesOnly": "Werte nur bei Änderung an MQTT broker senden",
+        "ForwardBatteryData": "Batteriewerte weiterleiten",
+        "ForwardBatteryDataDescription": "Wenn aktiviert, werden Batterie-BMS-Daten (Spannung und Temperatur) an die Laderegler weitergeleitet (emuliert die Funktionalität des 'Victron Smart Battery Sense')",
         "CalculateOutputPower": "Solarladeregler-Ausgangsleistung berechnen",
         "CalculateOutputPowerDescription": "Wenn aktiviert, wird die Ausgangsleistung des Solarladeregler basierend auf den Strom- und Spannungswerten berechnet. Wenn deaktiviert, wird die Ausgangsleistung direkt vom Solarladeregler übernommen.",
         "OutputPowerUsageHint": "<b>Hinweis:</b> Die Ausgangsleistung wird von der DPL-Solar-Passthrough-Funktion verwendet. Weitere Details findest du in der Solar-Passthrough Dokumentation.",
