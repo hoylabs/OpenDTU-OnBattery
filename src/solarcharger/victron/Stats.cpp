@@ -280,7 +280,11 @@ void Stats::populateJsonWithInstanceStats(const JsonObject &root, const VeDirect
         output["FloatVoltage"]["u"] = "V";
         output["FloatVoltage"]["d"] = "2";
     }
-    if (mpptData.NetworkStatus.first > 0) {
+
+    auto const& config = Configuration.get();
+    auto forwardBatteryData = config.SolarCharger.ForwardBatteryData;
+
+    if (mpptData.NetworkStatus.first > 0 && forwardBatteryData) {
         auto value = mpptData.NetworkStatus.second;
         output["RemoteVoltage"] = value & 0x80 ? "ON" : "OFF";
         output["RemoteTemperature"] = value & 0x40 ? "ON" : "OFF";
