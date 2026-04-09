@@ -81,7 +81,7 @@ void Provider::loop()
             }
 
             auto oTemperature = batteryStats->getTemperature();
-            if (oTemperature.has_value()) { // TODO(andreasboehm): what if no value is available? Should we send a fake value or can we simply skip it?
+            if (oTemperature.has_value()) {
                 upController->setRemoteTemperature(*oTemperature);
             }
         }
