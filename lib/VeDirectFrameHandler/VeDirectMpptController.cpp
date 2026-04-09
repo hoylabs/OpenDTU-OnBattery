@@ -323,7 +323,8 @@ void VeDirectMpptController::sendNextHexCommandFromQueue(void) {
 
 			do {
 				// we check if it is time to send the command again
-				if (prio && (_hexQueue[idx]._readPeriod == WRITE_ONLY_COMMAND)) {
+				if (prio && (_hexQueue[idx]._readPeriod == WRITE_ONLY_COMMAND) &&
+                    (millisTime - _hexQueue[idx]._lastSendTime) > (1 * 1000)) { // every second
 					if (_hexQueue[idx]._writeData.has_value()) {
 						sendHexCommand(VeDirectHexCommand::SET, _hexQueue[idx]._hexRegister,
 							_hexQueue[idx]._writeData.value(),
