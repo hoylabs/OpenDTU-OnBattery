@@ -28,7 +28,7 @@ void WebApiPowerMeterClass::init(AsyncWebServer& server, Scheduler& scheduler)
     _server->on("/api/powermeter/testhttpsmlrequest", HTTP_POST, static_cast<ArRequestHandlerFunction>(std::bind(&WebApiPowerMeterClass::onTestHttpSmlRequest, this, _1)));
 }
 
-void WebApiPowerMeterClass::generateStatus(AsyncWebServerRequest* request, bool fullAccess)
+void WebApiPowerMeterClass::generateStatus(AsyncWebServerRequest* request, bool includeCredentials)
 {
     AsyncJsonResponse* response = new AsyncJsonResponse();
     auto& root = response->getRoot();
@@ -44,10 +44,10 @@ void WebApiPowerMeterClass::generateStatus(AsyncWebServerRequest* request, bool 
     Configuration.serializePowerMeterSerialSdmConfig(config.PowerMeter.SerialSdm, serialSdm);
 
     auto httpJson = root["http_json"].to<JsonObject>();
-    Configuration.serializePowerMeterHttpJsonConfig(config.PowerMeter.HttpJson, httpJson, fullAccess);
+    Configuration.serializePowerMeterHttpJsonConfig(config.PowerMeter.HttpJson, httpJson, includeCredentials);
 
     auto httpSml = root["http_sml"].to<JsonObject>();
-    Configuration.serializePowerMeterHttpSmlConfig(config.PowerMeter.HttpSml, httpSml, fullAccess);
+    Configuration.serializePowerMeterHttpSmlConfig(config.PowerMeter.HttpSml, httpSml, includeCredentials);
 
     auto udpVictron = root["udp_victron"].to<JsonObject>();
     Configuration.serializePowerMeterUdpVictronConfig(config.PowerMeter.UdpVictron, udpVictron);

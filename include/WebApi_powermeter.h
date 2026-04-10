@@ -17,7 +17,7 @@ private:
     void onTestHttpJsonRequest(AsyncWebServerRequest* request);
     void onTestHttpSmlRequest(AsyncWebServerRequest* request);
 
-    void generateStatus(AsyncWebServerRequest* request, bool fullAccess);
+    void generateStatus(AsyncWebServerRequest* request, bool includeCredentials);
 
     AsyncWebServer* _server;
 };

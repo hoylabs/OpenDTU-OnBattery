@@ -482,13 +482,13 @@ public:
 
     int8_t getIndexForLogModule(const String& moduleName) const;
 
-    static void serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target, bool fullAccess);
+    static void serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target, bool includeCredentials);
     static void serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target);
     static void serializeSolarChargerMqttConfig(SolarChargerMqttConfig const& source, JsonObject& target);
     static void serializePowerMeterMqttConfig(PowerMeterMqttConfig const& source, JsonObject& target);
     static void serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmConfig const& source, JsonObject& target);
-    static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target, bool fullAccess);
-    static void serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target, bool fullAccess);
+    static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target, bool includeCredentials);
+    static void serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target, bool includeCredentials);
     static void serializePowerMeterUdpVictronConfig(PowerMeterUdpVictronConfig const& source, JsonObject& target);
     static void serializeBatteryConfig(BatteryConfig const& source, JsonObject& target);
     static void serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target);

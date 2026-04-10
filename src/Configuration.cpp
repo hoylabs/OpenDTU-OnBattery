@@ -42,14 +42,13 @@ double ConfigurationClass::roundedFloat(float val)
     return static_cast<int>(val * 100 + (val > 0 ? 0.5 : -0.5)) / 100.0;
 }
 
-void ConfigurationClass::serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target, bool fullAccess)
+void ConfigurationClass::serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target, bool includeCredentials)
 {
     JsonObject target_http_config = target["http_request"].to<JsonObject>();
     target_http_config["url"] = source.Url;
     target_http_config["timeout"] = source.Timeout;
 
-    // only include auth details if we have full access
-    if (!fullAccess) { return; }
+    if (!includeCredentials) { return; }
 
     target_http_config["auth_type"] = source.AuthType;
     target_http_config["username"] = source.Username;
@@ -100,7 +99,7 @@ void ConfigurationClass::serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmC
     target["polling_interval"] = source.PollingInterval;
 }
 
-void ConfigurationClass::serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target, bool fullAccess)
+void ConfigurationClass::serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target, bool includeCredentials)
 {
     target["polling_interval"] = source.PollingInterval;
     target["individual_requests"] = source.IndividualRequests;
@@ -110,7 +109,7 @@ void ConfigurationClass::serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonCon
         JsonObject t = values.add<JsonObject>();
         PowerMeterHttpJsonValue const& s = source.Values[i];
 
-        serializeHttpRequestConfig(s.HttpRequest, t, fullAccess);
+        serializeHttpRequestConfig(s.HttpRequest, t, includeCredentials);
 
         t["enabled"] = s.Enabled;
         t["json_path"] = s.JsonPath;
@@ -119,10 +118,10 @@ void ConfigurationClass::serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonCon
     }
 }
 
-void ConfigurationClass::serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target, bool fullAccess)
+void ConfigurationClass::serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target, bool includeCredentials)
 {
     target["polling_interval"] = source.PollingInterval;
-    serializeHttpRequestConfig(source.HttpRequest, target, fullAccess);
+    serializeHttpRequestConfig(source.HttpRequest, target, includeCredentials);
 }
 
 void ConfigurationClass::serializePowerMeterUdpVictronConfig(PowerMeterUdpVictronConfig const& source, JsonObject& target)
