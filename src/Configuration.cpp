@@ -132,21 +132,21 @@ void ConfigurationClass::serializePowerMeterUdpVictronConfig(PowerMeterUdpVictro
 
 void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, JsonObject& target)
 {
-    target["enabled"] = config.Battery.Enabled;
-    target["provider"] = config.Battery.Provider;
-    target["enable_discharge_current_limit"] = config.Battery.EnableDischargeCurrentLimit;
-    target["discharge_current_limit"] = config.Battery.DischargeCurrentLimit;
-    target["discharge_current_limit_below_soc"] = config.Battery.DischargeCurrentLimitBelowSoc;
-    target["discharge_current_limit_below_voltage"] = config.Battery.DischargeCurrentLimitBelowVoltage;
-    target["use_battery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
-    target["enable_charge_current_limit"] = config.Battery.EnableChargeCurrentLimit;
-    target["max_charge_current_limit"] = config.Battery.MaxChargeCurrentLimit;
-    target["min_charge_current_limit"] = config.Battery.MinChargeCurrentLimit;
-    target["charge_current_limit_below_soc"] = config.Battery.ChargeCurrentLimitBelowSoc;
-    target["charge_current_limit_below_voltage"] = config.Battery.ChargeCurrentLimitBelowVoltage;
-    target["use_battery_reported_charge_current_limit"] = config.Battery.UseBatteryReportedChargeCurrentLimit;
-    target["nominal_voltage"] = config.Battery.NominalVoltage;
-    target["nominal_capacity"] = config.Battery.NominalCapacity;
+    target["enabled"] = source.Enabled;
+    target["provider"] = source.Provider;
+    target["enable_discharge_current_limit"] = source.EnableDischargeCurrentLimit;
+    target["discharge_current_limit"] = source.DischargeCurrentLimit;
+    target["discharge_current_limit_below_soc"] = source.DischargeCurrentLimitBelowSoc;
+    target["discharge_current_limit_below_voltage"] = source.DischargeCurrentLimitBelowVoltage;
+    target["use_battery_reported_discharge_current_limit"] = source.UseBatteryReportedDischargeCurrentLimit;
+    target["enable_charge_current_limit"] = source.EnableChargeCurrentLimit;
+    target["max_charge_current_limit"] = source.MaxChargeCurrentLimit;
+    target["min_charge_current_limit"] = source.MinChargeCurrentLimit;
+    target["charge_current_limit_below_soc"] = source.ChargeCurrentLimitBelowSoc;
+    target["charge_current_limit_below_voltage"] = source.ChargeCurrentLimitBelowVoltage;
+    target["use_battery_reported_charge_current_limit"] = source.UseBatteryReportedChargeCurrentLimit;
+    target["nominal_voltage"] = source.NominalVoltage;
+    target["nominal_capacity"] = source.NominalCapacity;
 }
 
 void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target, bool includeCredentials)
