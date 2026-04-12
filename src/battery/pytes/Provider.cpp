@@ -248,9 +248,10 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x379: { // BatterySize: Installed Ah
-            _stats->_totalCapacity = this->readUnsignedInt16(rx_message.data);
+            auto capacity = this->readUnsignedInt16(rx_message.data);
+            _stats->setNominalCapacity(capacity);
 
-            DTU_LOGD("totalCapacity: %f Ah", _stats->_totalCapacity);
+            DTU_LOGD("totalCapacity: %u Ah", capacity);
             break;
         }
 
@@ -402,14 +403,15 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x409: { // Pytes protocol: full mAh / remaining mAh
-            _stats->_totalCapacity = this->scaleValue(this->readUnsignedInt32(rx_message.data), 0.001);
+            auto capacity = this->scaleValue(this->readUnsignedInt32(rx_message.data), 0.001);
+            _stats->setNominalCapacity(capacity);
             _stats->_availableCapacity = this->scaleValue(this->readUnsignedInt32(rx_message.data + 4), 0.001);
             _stats->_capacityPrecision = 2;
-            float soc = 100.0 * _stats->_availableCapacity / _stats->_totalCapacity;
+            float soc = 100.0 * _stats->_availableCapacity / capacity;
             _stats->setSoC(soc, 2/*precision*/, millis());
 
             DTU_LOGD("soc: %.2f totalCapacity: %.2f Ah availableCapacity: %.2f Ah",
-                    soc, _stats->_totalCapacity, _stats->_availableCapacity);
+                    soc, capacity, _stats->_availableCapacity);
             break;
         }
 

@@ -64,6 +64,14 @@ void Stats::getLiveViewData(JsonVariant& root) const
         addLiveViewValue(root, "chargeCurrentLimitation", _chargeCurrentLimit, "A", 1);
     }
 
+    if (getNominalCapacity().has_value()) {
+        addLiveViewValue(root, "nominalCapacity", *getNominalCapacity(), "Ah", 0);
+    }
+
+    if (getNominalVoltage().has_value()) {
+        addLiveViewValue(root, "nominalVoltage", *getNominalVoltage(), "V", 2);
+    }
+
     root["showIssues"] = supportsAlarmsAndWarnings();
 }
 
@@ -119,6 +127,44 @@ void Stats::mqttPublish() const
     if (isChargeCurrentLimitValid()) {
         MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimit));
     }
+
+    if (getNominalCapacity().has_value()) {
+        MqttSettings.publish("battery/nominalCapacity", String(*getNominalCapacity()));
+    }
+
+    if (getNominalVoltage().has_value()) {
+        MqttSettings.publish("battery/nominalVoltage", String(*getNominalVoltage()));
+    }
+}
+
+/*
+ * Returns the nominal capacity of the battery, preferring a value reported by the battery itself (if available),
+ * but falling back to a user-configured value if not. If neither is available, returns std::nullopt.
+*/
+std::optional<uint16_t> Stats::getNominalCapacity() const {
+    std::optional<uint16_t> capacity = std::nullopt;
+
+    if (_nominalCapacity > 0) {
+        capacity = _nominalCapacity;
+    } else if (Configuration.get().Battery.NominalCapacity > 0) {
+        capacity = Configuration.get().Battery.NominalCapacity;
+    }
+    return capacity;
+}
+
+/*
+ * Returns the nominal voltage of the battery, preferring a value reported by the battery itself (if available),
+ * but falling back to a user-configured value if not. If neither is available, returns std::nullopt.
+*/
+std::optional<float> Stats::getNominalVoltage() const {
+    std::optional<float> voltage = std::nullopt;
+
+    if (_nominalVoltage > 0) {
+        voltage = _nominalVoltage;
+    } else if (Configuration.get().Battery.NominalVoltage > 0) {
+        voltage = Configuration.get().Battery.NominalVoltage;
+    }
+    return voltage;
 }
 
 } // namespace Batteries
