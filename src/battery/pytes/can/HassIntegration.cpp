@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include <battery/pytes/HassIntegration.h>
+#include <battery/pytes/can/HassIntegration.h>
 #include <algorithm>
 
-namespace Batteries::Pytes {
+namespace Batteries::Pytes::Can {
 
 HassIntegration::HassIntegration(std::shared_ptr<Stats> spStats)
     : ::Batteries::HassIntegration(spStats)
@@ -140,4 +140,4 @@ void HassIntegration::publishDeferredSensors() const
     }
 }
 
-} // namespace Batteries::Pytes
+} // namespace Batteries::Pytes::Can

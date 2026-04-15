@@ -2,9 +2,9 @@
 #pragma once
 
 #include <battery/HassIntegration.h>
-#include <battery/pytes/Stats.h>
+#include <battery/pytes/can/Stats.h>
 
-namespace Batteries::Pytes {
+namespace Batteries::Pytes::Can {
 
 class HassIntegration : public ::Batteries::HassIntegration {
 public:
@@ -23,4 +23,4 @@ private:
     mutable uint32_t _lastModulePublish = 0;
 };
 
-} // namespace Batteries::Pytes
+} // namespace Batteries::Pytes::Can

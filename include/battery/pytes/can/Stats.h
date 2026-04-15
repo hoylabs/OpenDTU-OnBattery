@@ -5,7 +5,7 @@
 #include <vector>
 #include <battery/Stats.h>
 
-namespace Batteries::Pytes {
+namespace Batteries::Pytes::Can {
 
 class Stats : public ::Batteries::Stats {
 friend class Provider;
@@ -128,4 +128,4 @@ private:
     bool _moduleMasksValid = false;
 };
 
-} // namespace Batteries::Pytes
+} // namespace Batteries::Pytes::Can
