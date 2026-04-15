@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include <battery/pytes/HassIntegration.h>
+#include <battery/pytes/can/HassIntegration.h>
 
-namespace Batteries::Pytes {
+namespace Batteries::Pytes::Can {
 
 HassIntegration::HassIntegration(std::shared_ptr<Stats> spStats)
     : ::Batteries::HassIntegration(spStats) { }
@@ -68,4 +68,4 @@ void HassIntegration::publishSensors() const
     publishBinarySensor("Charge immediately", "mdi:alert", "charging/chargeImmediately", "1", "0");
 }
 
-} // namespace Batteries::Pytes
+} // namespace Batteries::Pytes::Can

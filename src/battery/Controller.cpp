@@ -4,7 +4,7 @@
 #include <battery/jkbms/Provider.h>
 #include <battery/mqtt/Provider.h>
 #include <battery/pylontech/Provider.h>
-#include <battery/pytes/Provider.h>
+#include <battery/pytes/can/Provider.h>
 #include <battery/sbs/Provider.h>
 #include <battery/victronsmartshunt/Provider.h>
 #include <battery/zendure/LocalMqttProvider.h>
@@ -68,7 +68,7 @@ void Controller::updateSettings()
             _upProvider = std::make_unique<VictronSmartShunt::Provider>();
             break;
         case 4:
-            _upProvider = std::make_unique<Pytes::Provider>();
+            _upProvider = std::make_unique<Pytes::Can::Provider>();
             break;
         case 5:
             _upProvider = std::make_unique<SBS::Provider>();
