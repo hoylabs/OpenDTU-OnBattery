@@ -247,8 +247,13 @@ using BatterySerialConfig = struct BATTERY_SERIAL_CONFIG_T;
 
 struct BATTERY_CONFIG_T {
     bool Enabled;
+
     enum ProviderType { PYLONTECH = 0, JKBMS = 1, MQTT = 2, VICTRON = 3, PYTES = 4, SBS = 5, JBDBMS = 6, ZENDURE = 7 };
     ProviderType Provider;
+
+    enum BusType : uint8_t { CAN = 0, RS485 = 1 };
+    BusType Bus;
+
     BatteryMqttConfig Mqtt;
     BatteryZendureConfig Zendure;
     BatterySerialConfig Serial;

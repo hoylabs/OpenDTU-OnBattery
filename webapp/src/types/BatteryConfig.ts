@@ -51,6 +51,7 @@ export interface BatterySerialConfig {
 export interface BatteryConfig {
     enabled: boolean;
     provider: number;
+    bus_type: number;
     serial: BatterySerialConfig;
     mqtt: BatteryMqttConfig;
     zendure: BatteryZendureConfig;
