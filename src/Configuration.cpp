@@ -584,7 +584,7 @@ void ConfigurationClass::deserializePowerMeterUdpVictronConfig(JsonObject const&
 void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target)
 {
     target.Enabled = source["enabled"] | BATTERY_ENABLED;
-    target.Provider = source["provider"] | BATTERY_PROVIDER;
+    target.Provider = source["provider"] | BatteryConfig::ProviderType::PYLONTECH;
     target.EnableDischargeCurrentLimit = source["enable_discharge_current_limit"] | BATTERY_ENABLE_DISCHARGE_CURRENT_LIMIT;
     target.DischargeCurrentLimit = source["discharge_current_limit"] | BATTERY_DISCHARGE_CURRENT_LIMIT;
     target.DischargeCurrentLimitBelowSoc = source["discharge_current_limit_below_soc"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_SOC;
