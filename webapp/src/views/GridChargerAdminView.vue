@@ -89,7 +89,7 @@
                             :label="$t('gridchargeradmin.IpAddress')"
                             :tooltip="$t('gridchargeradmin.HTTPipAddressHint')"
                             v-model="gridChargerConfigList.HTTP.url"
-                            placeholder="http://192.168.2.153"
+                            placeholder="http://192.168.2.100"
                             type="text"
                             wide
                         />

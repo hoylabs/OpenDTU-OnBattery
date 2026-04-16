@@ -17,6 +17,7 @@ namespace GridChargers::HTTP {
 
 bool Provider::init()
 {
+    _stopPollingData = false;
     DTU_LOGI("Initialize HTTP AC charger interface...");
 
     auto const& config = Configuration.get();
@@ -178,6 +179,7 @@ void Provider::powerControlLoop()
     if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
         DTU_LOGI("Emergency Charge OFF %.02f", oAcPower.value_or(0.0f));
         PowerOFF();
+        _batteryEmergencyCharging = false;
         return;
     }
     // ***********************

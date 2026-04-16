@@ -219,6 +219,16 @@ void WebApiGridChargerClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
+    if (root["provider"].as<uint8_t>() == static_cast<uint8_t>(GridChargerProviderType::HTTP)) {
+        if (!(root["HTTP"]["url"].is<const char*>()) ||
+            !(root["HTTP"]["AcPower"].is<float>())) {
+            retMsg["message"] = "HTTP values are missing or of wrong type!";
+            retMsg["code"] = WebApiError::GenericValueMissing;
+            response->setLength();
+            request->send(response);
+            return;
+        }
+    }
     using HuaweiProvider = GridChargers::Huawei::Provider;
 
     auto isValidRange = [&](const char* valueName, float min, float max, WebApiError error) -> bool {

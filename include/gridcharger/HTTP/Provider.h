@@ -6,6 +6,9 @@
 #include <gridcharger/HTTP/Stats.h>
 #include <HttpGetter.h>
 #include <Utils.h>
+#include <memory>
+#include <mutex>
+#include <condition_variable>
 
 namespace GridChargers::HTTP {
 
