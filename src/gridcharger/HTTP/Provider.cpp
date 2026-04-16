@@ -12,7 +12,7 @@
 #undef TAG
 static const char* TAG = "gridCharger";
 static const char* SUBTAG = "HTTP";
-uint32_t _autowaitTillMillis = millis() + 10000;
+
 namespace GridChargers::HTTP {
 
 bool Provider::init()
@@ -21,11 +21,11 @@ bool Provider::init()
 
     auto const& config = Configuration.get();
     String  url = config.GridCharger.HTTP.url;
-    uri_on = url + config.GridCharger.HTTP.uri_on;
-    uri_off = url + config.GridCharger.HTTP.uri_off;
-    uri_stats = url + config.GridCharger.HTTP.uri_stats;
-    uri_powerparam = config.GridCharger.HTTP.uri_powerparam;
-    maximumAcPower = config.GridCharger.HTTP.AcPower;
+    _uriOn = url + config.GridCharger.HTTP.uri_on;
+    _uriOff = url + config.GridCharger.HTTP.uri_off;
+    _uriStats = url + config.GridCharger.HTTP.uri_stats;
+    _uriPowerparam = config.GridCharger.HTTP.uri_powerparam;
+    _maximumAcPower = config.GridCharger.HTTP.AcPower;
     return true;
 }
 
@@ -45,9 +45,6 @@ void Provider::deinit()
         while (!_dataPollingTaskDone) { delay(10); }
         _dataPollingTaskHandle = nullptr;
     }
-
-    _httpGetter = nullptr;
-    _httpRequestConfig = nullptr;
 }
 
 void Provider::loop()
@@ -62,27 +59,26 @@ void Provider::loop()
             xTaskCreate(dataPollingLoopHelper, "HTTPPolling",
                         stackSize, this, 1/*prio*/, &_dataPollingTaskHandle);
         }
-        // No need to unlock here, lock will be released automatically
     }
 }
 
 void Provider::PowerON()
 {
-    if (!send_http(uri_on))
+    if (!send_http(_uriOn))
     {
         return;
     }
-    powerstate=true;
+    _powerState = true;
     DTU_LOGI("Power ON\r\n");
 }
 
 void Provider::PowerOFF()
 {
-    if (!send_http(uri_off))
+    if (!send_http(_uriOff))
     {
         return;
     };
-    powerstate=false;
+    _powerState = false;
     DTU_LOGI("Power OFF\r\n");
 }
 
@@ -90,23 +86,20 @@ bool Provider::send_http(String Url)
 {
     HttpRequestConfig HttpRequest;
     strlcpy(HttpRequest.Url, Url.c_str(), sizeof(HttpRequest.Url));
-    HttpRequest.Timeout = 60; // 60 seconds
-    _httpGetter = std::make_unique<HttpGetter>(HttpRequest);
+    HttpRequest.Timeout = 60000; // 60 seconds
+    auto httpGetter = std::make_unique<HttpGetter>(HttpRequest);
     DTU_LOGI("Start sending to URL: %s\r\n",Url.c_str());
 
-    if (!_httpGetter->init()) {
-        DTU_LOGE("ERROR INIT HttpGetter %s\r\n", _httpGetter->getErrorText());
-        _httpGetter = nullptr;  // Ensure cleanup on error
+    if (!httpGetter->init()) {
+        DTU_LOGE("ERROR INIT HttpGetter %s\r\n", httpGetter->getErrorText());
         return false;
     }
 
-    if (!_httpGetter->performGetRequest()) {
-        DTU_LOGE("ERROR GET HttpGetter %s\r\n", _httpGetter->getErrorText());
-        _httpGetter = nullptr;  // Ensure cleanup on error
+    if (!httpGetter->performGetRequest()) {
+        DTU_LOGE("ERROR GET HttpGetter %s\r\n", httpGetter->getErrorText());
         return false;
     }
 
-    _httpGetter = nullptr;
     return true;
 }
 
@@ -116,47 +109,42 @@ float Provider::read_http(String Url)
     HttpRequestConfig HttpRequest;
     JsonDocument jsonResponse;
     strlcpy(HttpRequest.Url, Url.c_str(), sizeof(HttpRequest.Url));
-    HttpRequest.Timeout = 60;  // 60 seconds
-    _httpGetter = std::make_unique<HttpGetter>(HttpRequest);
+    HttpRequest.Timeout = 60000;  // 60 seconds
+    auto httpGetter = std::make_unique<HttpGetter>(HttpRequest);
     DTU_LOGI("Start reading from URL: %s\r\n",Url.c_str());
 
-    if (!_httpGetter->init()) {
-        DTU_LOGE("ERROR INIT HttpGetter %s\r\n", _httpGetter->getErrorText());
-        _httpGetter = nullptr;  // Ensure cleanup on error
-        return *oAcPower;
+    if (!httpGetter->init()) {
+        DTU_LOGE("ERROR INIT HttpGetter %s\r\n", httpGetter->getErrorText());
+        return oAcPower.value_or(0.0f);
     }
 
-    _httpGetter->addHeader("Content-Type", "application/json");
-    _httpGetter->addHeader("Accept", "application/json");
+    httpGetter->addHeader("Content-Type", "application/json");
+    httpGetter->addHeader("Accept", "application/json");
 
-    auto res = _httpGetter->performGetRequest();
+    auto res = httpGetter->performGetRequest();
     if (!res) {
-        DTU_LOGE("ERROR GET HttpGetter %s\r\n", _httpGetter->getErrorText());
-        _httpGetter = nullptr;  // Ensure cleanup on error
-        return *oAcPower;
+        DTU_LOGE("ERROR GET HttpGetter %s\r\n", httpGetter->getErrorText());
+        return oAcPower.value_or(0.0f);
     }
 
     auto pStream = res.getStream();
     if (!pStream) {
         DTU_LOGE("Programmer error: HTTP request yields no stream");
-        _httpGetter = nullptr;  // Ensure cleanup on error
-        return *oAcPower;
+        return oAcPower.value_or(0.0f);
     }
 
     const DeserializationError error = deserializeJson(jsonResponse, *pStream);
     if (error) {
         String msg = error.c_str();
         DTU_LOGE("Unable to parse server response as JSON: %s\r\n", msg.c_str());
-        _httpGetter = nullptr;  // Ensure cleanup on error
-        return *oAcPower;
+        return oAcPower.value_or(0.0f);
     }
 
-    auto pathResolutionResult = Utils::getJsonValueByPath<float>(jsonResponse, uri_powerparam);
+    auto pathResolutionResult = Utils::getJsonValueByPath<float>(jsonResponse, _uriPowerparam);
     if (!pathResolutionResult.second.isEmpty()) {
         DTU_LOGE("ERROR reading AC Power from Smart Plug %s\r\n",pathResolutionResult.second.c_str());
     }
 
-    _httpGetter = nullptr;
     return pathResolutionResult.first;
 }
 
@@ -165,10 +153,10 @@ void Provider::powerControlLoop()
     auto& config = Configuration.get();
     auto oAcPower = _dataCurrent.get<DataPointLabel::AcPower>();
     uint8_t _batterySoC = Battery.getStats()->getSoC();
-            if (_autowaitTillMillis < millis()) {
-                DTU_LOGI("SoC: %i", _batterySoC);
-                _autowaitTillMillis=millis() + 10000;
-        }
+    if (_autowaitTillMillis < millis()) {
+        DTU_LOGI("SoC: %i", _batterySoC);
+        _autowaitTillMillis = millis() + 10000;
+    }
 
     // ***********************
     // Emergency charge
@@ -188,7 +176,7 @@ void Provider::powerControlLoop()
     }
 
     if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
-        DTU_LOGI("Emergency Charge OFF %.02f", *oAcPower);
+        DTU_LOGI("Emergency Charge OFF %.02f", oAcPower.value_or(0.0f));
         PowerOFF();
         return;
     }
@@ -204,9 +192,8 @@ void Provider::powerControlLoop()
              return;
         }
 
-        if (PowerLimiter.isGovernedBatteryPoweredInverterProducing() && powerstate) {
+        if (PowerLimiter.isGovernedBatteryPoweredInverterProducing() && _powerState) {
             PowerOFF();
-            powerstate=false;
             DTU_LOGI("Inverter is active, disable PSU");
             _autoModeBlockedTillMillis = millis() + 19900;
             return;
@@ -230,19 +217,17 @@ void Provider::powerControlLoop()
 
             _autoPowerEnabled = true;
             // Power OFF charger if the BMS reported SoC reaches or exceeds the user configured value
-            if (_batterySoC >= config.GridCharger.AutoPowerStopBatterySoCThreshold && powerstate) {
+            if (_batterySoC >= config.GridCharger.AutoPowerStopBatterySoCThreshold && _powerState) {
                 DTU_LOGV("Current battery SoC %i reached stop threshold %i", _batterySoC, config.GridCharger.AutoPowerStopBatterySoCThreshold);
                 PowerOFF();
                 _autoPowerEnabled = false;
-                powerstate=false;
                 return;
             }
             // Don't run auto mode some time to allow for output stabilization after issuing a new value
             _autoModeBlockedTillMillis = millis() + 19900;
-        } else if (powerstate){
+        } else if (_powerState){
             _autoPowerEnabled = false;
             PowerOFF();
-            powerstate=false;
             return;
         }
 
@@ -250,15 +235,15 @@ void Provider::powerControlLoop()
         if (PowerMeter.getLastUpdate() > _lastPowerMeterUpdateReceivedMillis && _autoPowerEnabled) {
             _lastPowerMeterUpdateReceivedMillis = PowerMeter.getLastUpdate();
             float powerTotal = round(PowerMeter.getPowerTotal());
-            DTU_LOGV("powerTotal: %.0fW, AC Power: %.0fW, Target to Power on Charger: %.0fW", powerTotal, *oAcPower, config.GridCharger.AutoPowerTargetPowerConsumption - maximumAcPower);
-            if (powerTotal > config.GridCharger.AutoPowerTargetPowerConsumption && powerstate) {
+            DTU_LOGV("powerTotal: %.0fW, AC Power: %.0fW, Target to Power on Charger: %.0fW", powerTotal, *oAcPower, config.GridCharger.AutoPowerTargetPowerConsumption - _maximumAcPower);
+            if (powerTotal > config.GridCharger.AutoPowerTargetPowerConsumption && _powerState) {
                 DTU_LOGI("Power consumption %.0fW exceeds target %.0fW, disable PSU", powerTotal, config.GridCharger.AutoPowerTargetPowerConsumption );
                 PowerOFF();
                 _autoModeBlockedTillMillis = millis() + 29900;
                 return;
             }
-            else if (powerTotal < config.GridCharger.AutoPowerTargetPowerConsumption - maximumAcPower && !powerstate && !PowerLimiter.isGovernedBatteryPoweredInverterProducing() && _batterySoC < config.GridCharger.AutoPowerStopBatterySoCThreshold) {
-                DTU_LOGI("Set AC Power to %.0fW to reach target consumption of %.0fW (current total: %.0fW)", maximumAcPower, config.GridCharger.AutoPowerTargetPowerConsumption , powerTotal);
+            else if (powerTotal < config.GridCharger.AutoPowerTargetPowerConsumption - _maximumAcPower && !_powerState && !PowerLimiter.isGovernedBatteryPoweredInverterProducing() && _batterySoC < config.GridCharger.AutoPowerStopBatterySoCThreshold) {
+                DTU_LOGI("Set AC Power to %.0fW to reach target consumption of %.0fW (current total: %.0fW)", _maximumAcPower, config.GridCharger.AutoPowerTargetPowerConsumption , powerTotal);
                 PowerON();
                 _autoModeBlockedTillMillis = millis() + 29900;
             }
@@ -297,16 +282,10 @@ void Provider::dataPollingLoop()
 }
 void Provider::pollData()
 {
-    acPowerCurrent = read_http(uri_stats);
+    float acPowerCurrent = read_http(_uriStats);
     DTU_LOGV("acPowerCurrent: %f", acPowerCurrent);
-    if (acPowerCurrent > 0)
-    {
-        powerstate=true;
-    }
-    else
-    {
-        powerstate=false;
-    }
+    _powerState = (acPowerCurrent > 0);
+
     // Update data points
     {
         auto scopedLock = _dataCurrent.lock();

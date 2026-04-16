@@ -24,9 +24,9 @@ LABEL_TRAIT(AcPower,                float,       "W");
 
 } // namespace GridChargers::HTTP
 
-template class DataPointContainer<DataPoint<float, std::string>,
-                                  GridChargers::HTTP::DataPointLabel,
-                                  GridChargers::HTTP::DataPointLabelTraits>;
+extern template class DataPointContainer<DataPoint<float, std::string>,
+                                        GridChargers::HTTP::DataPointLabel,
+                                        GridChargers::HTTP::DataPointLabelTraits>;
 
 namespace GridChargers::HTTP {
     using DataPointContainer = ::DataPointContainer<::DataPoint<float, std::string>, DataPointLabel, DataPointLabelTraits>;

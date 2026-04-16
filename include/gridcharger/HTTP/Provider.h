@@ -16,15 +16,6 @@ public:
     void loop() final;
     void PowerON();
     void PowerOFF();
-    bool send_http(String Url);
-    float read_http(String uri);
-    bool powerstate = false;
-    float acPowerCurrent=0;
-    String uri_on;
-    String uri_off;
-    String uri_stats;
-    String uri_powerparam;
-    float maximumAcPower;
     std::shared_ptr<::GridChargers::Stats> getStats() const final { return _stats; }
 
     bool getAutoPowerStatus() const final {
@@ -63,6 +54,8 @@ private:
         _dataCurrent.add<L>(*value);
     }
 
+    bool send_http(String Url);
+    float read_http(String uri);
     void powerControlLoop();
     static void dataPollingLoopHelper(void* context);
     void dataPollingLoop();
@@ -75,26 +68,24 @@ private:
     std::condition_variable _dataPollingCv;
     uint32_t _lastDataPoll = 0;
 
-    std::unique_ptr<HttpRequestConfig> _httpRequestConfig;
-    std::unique_ptr<HttpGetter> _httpGetter;
-
-    static constexpr int DATA_POLLING_INTERVAL_MS = 5000; // 3 seconds
-    static constexpr int HTTP_REQUEST_TIMEOUT_MS = 500; // 500ms
+    static constexpr int DATA_POLLING_INTERVAL_MS = 5000; // 5 seconds
 
     float _requestedPowerAc = 0;
+    std::atomic<bool> _powerState{false};
 
-    void parseControlCommandResponse();
-
-    uint32_t _lastControlCommandRequestMillis = 0;
-    uint32_t _lastparseControlCommandRequestMillis = 0;
-    static constexpr int CONTROL_COMMAND_INTERVAL_MS = 500; // 500ms
+    String _uriOn;
+    String _uriOff;
+    String _uriStats;
+    String _uriPowerparam;
+    float _maximumAcPower = 0.0f;
 
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
 
     DataPointContainer _dataCurrent;
 
-    uint32_t _lastPowerMeterUpdateReceivedMillis = 0; // Timestamp of last seen power meter value
-    uint32_t _autoModeBlockedTillMillis = 0;      // Timestamp to block running auto mode for some time
+    uint32_t _lastPowerMeterUpdateReceivedMillis = 0;
+    uint32_t _autoModeBlockedTillMillis = 0;
+    uint32_t _autowaitTillMillis = 0;
 
     bool _autoPowerEnabled = false;
     bool _batteryEmergencyCharging = false;

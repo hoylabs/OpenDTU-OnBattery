@@ -268,14 +268,15 @@ struct GRID_CHARGER_HUAWEI_CONFIG_T {
 };
 using GridChargerHuaweiConfig = struct GRID_CHARGER_HUAWEI_CONFIG_T;
 
-struct GRID_CHARGER_HTTP_CONFIG_T{
+struct GRID_CHARGER_HTTP_CONFIG_T {
     char url[1025];
     char uri_on[1025];
     char uri_off[1025];
     char uri_stats[1025];
     char uri_powerparam[256];
     float AcPower;
-};using GridChargerHTTPConfig = struct GRID_CHARGER_HTTP_CONFIG_T;
+};
+using GridChargerHTTPConfig = struct GRID_CHARGER_HTTP_CONFIG_T;
 
 struct GRID_CHARGER_CONFIG_T {
     bool Enabled;
