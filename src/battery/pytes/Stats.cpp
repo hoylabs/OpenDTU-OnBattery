@@ -15,7 +15,11 @@ void Stats::getLiveViewData(JsonVariant& root) const
     if (_chargeCycles != -1) {
         addLiveViewValue(root, "chargeCycles", _chargeCycles, "", 0);
     }
-    addLiveViewValue(root, "temperature", _temperature, "°C", 1);
+
+    auto oTemperature = getTemperature();
+    if (oTemperature) {
+        addLiveViewValue(root, "temperature", *oTemperature, "°C", 1);
+    }
 
     addLiveViewValue(root, "capacity", _totalCapacity, "Ah", _capacityPrecision);
     addLiveViewValue(root, "availableCapacity", _availableCapacity, "Ah", _capacityPrecision);
@@ -95,7 +99,11 @@ void Stats::mqttPublish() const
     if (_balance != -1) {
         MqttSettings.publish("battery/balancingActive", String(_balance ? 1 : 0));
     }
-    MqttSettings.publish("battery/temperature", String(_temperature));
+
+    auto oTemperature = getTemperature();
+    if (oTemperature) {
+        MqttSettings.publish("battery/temperature", String(*oTemperature));
+    }
 
     if (_chargedEnergy != -1) {
         MqttSettings.publish("battery/chargedEnergy", String(_chargedEnergy));

@@ -281,6 +281,15 @@ void Stats::populateJsonWithInstanceStats(const JsonObject &root, const VeDirect
         output["FloatVoltage"]["d"] = "2";
     }
 
+    auto const& config = Configuration.get();
+    auto forwardBatteryData = config.SolarCharger.ForwardBatteryData;
+
+    if (mpptData.NetworkStatus.first > 0 && forwardBatteryData) {
+        auto value = mpptData.NetworkStatus.second;
+        output["RemoteVoltage"] = value & 0x80 ? "ON" : "OFF";
+        output["RemoteTemperature"] = value & 0x40 ? "ON" : "OFF";
+    }
+
     const JsonObject input = values["input"].to<JsonObject>();
     if (mpptData.NetworkTotalDcInputPowerMilliWatts.first > 0) {
         input["NetworkPower"]["v"] = mpptData.NetworkTotalDcInputPowerMilliWatts.second / 1000.0;

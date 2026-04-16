@@ -99,12 +99,6 @@ void WebApiWsBatteryLiveClass::sendDataTaskCb()
             String buffer;
             serializeJson(root, buffer);
 
-            if (Configuration.get().Security.AllowReadonly) {
-                _ws.setAuthentication("", "");
-            } else {
-                _ws.setAuthentication(AUTH_USERNAME, Configuration.get().Security.Password);
-            }
-
             _ws.textAll(buffer);
         }
     } catch (std::bad_alloc& bad_alloc) {

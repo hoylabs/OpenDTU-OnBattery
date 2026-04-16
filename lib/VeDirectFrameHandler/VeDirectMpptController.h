@@ -37,9 +37,12 @@ private:
 };
 
 struct VeDirectHexQueue {
-    VeDirectHexRegister _hexRegister;   // hex register
-    uint8_t _readPeriod;                // time period in sec until we send the command again
-    uint32_t _lastSendTime;             // time stamp in milli sec of last send
+    VeDirectHexRegister _hexRegister;               // hex register
+    bool _setCommand;                               // true if the command is a SET-command, false if GET
+    uint8_t _readPeriod;                            // time period in sec until we send the command again
+    uint32_t _lastSendTime;                         // time stamp in milli sec of last send
+    uint8_t _dataLength = 0;                        // length of data (only at SET-command -> 8/16/32)
+    std::optional<uint32_t> _data = std::nullopt;   // data to send (only at SET-command)
 };
 
 class VeDirectMpptController : public VeDirectFrameHandler<veMpptStruct> {
@@ -51,6 +54,9 @@ public:
     using data_t = veMpptStruct;
 
     void loop() final;
+
+    void setRemoteVoltage(float volt);
+    void setRemoteTemperature(float degreeCelsius);
 
 private:
     bool hexDataHandler(VeDirectHexData const &data) final;
@@ -65,9 +71,14 @@ private:
 
     // for slow changing values we use a send time period of 4 sec
     #define HIGH_PRIO_COMMAND 1
-    std::array<VeDirectHexQueue, 5> _hexQueue { VeDirectHexRegister::NetworkTotalDcInputPower, HIGH_PRIO_COMMAND, 0,
-                                                VeDirectHexRegister::ChargeControllerTemperature, 4, 0,
-                                                VeDirectHexRegister::SmartBatterySenseTemperature, 4, 0,
-                                                VeDirectHexRegister::BatteryFloatVoltage, 4, 0,
-                                                VeDirectHexRegister::BatteryAbsorptionVoltage, 4, 0 };
+    std::array<VeDirectHexQueue, 8> _hexQueue {{
+         { VeDirectHexRegister::NetworkTotalDcInputPower, false, HIGH_PRIO_COMMAND, 0 },
+         { VeDirectHexRegister::NetworkStatus, false, 4, 0 },
+         { VeDirectHexRegister::ChargeControllerTemperature, false, 4, 0 },
+         { VeDirectHexRegister::SmartBatterySenseTemperature, false, 4, 0 },
+         { VeDirectHexRegister::BatteryFloatVoltage, false, 4, 0 },
+         { VeDirectHexRegister::BatteryAbsorptionVoltage, false, 4, 0 },
+         { VeDirectHexRegister::BatteryVoltageSense, true, 4, 0, 16 },
+         { VeDirectHexRegister::BatteryTemperatureSense, true, 4, 0, 16 },
+    }};
 };

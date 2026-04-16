@@ -335,7 +335,7 @@ frozen::string const& VeDirectHexData::getResponseAsString() const
 frozen::string const& VeDirectHexData::getRegisterAsString() const
 {
 	using Register = VeDirectHexRegister;
-	static constexpr frozen::map<Register, frozen::string, 20> values = {
+	static constexpr frozen::map<Register, frozen::string, 21> values = {
 		{ Register::DeviceMode, "Device Mode" },
 		{ Register::DeviceState, "Device State" },
 		{ Register::RemoteControlUsed, "Remote Control Used" },
@@ -354,6 +354,7 @@ frozen::string const& VeDirectHexData::getRegisterAsString() const
 		{ Register::TotalChargeCurrent, "Total Charge Current" },
 		{ Register::ChargeStateElapsedTime, "Charge State Elapsed Time" },
 		{ Register::BatteryVoltageSense, "Battery Voltage Sense" },
+		{ Register::BatteryTemperatureSense, "Battery Temperature Sense" },
 		{ Register::LoadCurrent, "Load current" },
 		{ Register::LoadOutputVoltage, "Load Output Voltage" }
 	};

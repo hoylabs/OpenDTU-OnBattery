@@ -241,6 +241,14 @@ void Stats::updateFrom(JkBms::DataPointContainer const& dp)
         }
     }
 
+    auto oTemperatureOne = _dataPoints.get<Label::BatteryTempOneCelsius>();
+    auto oTemperatureTwo = _dataPoints.get<Label::BatteryTempTwoCelsius>();
+    if (oTemperatureOne.has_value()) {
+        setTemperature(*oTemperatureOne, millis());
+    } else if (oTemperatureTwo.has_value()) {
+        setTemperature(*oTemperatureTwo, millis());
+    }
+
     _lastUpdate = millis();
 }
 

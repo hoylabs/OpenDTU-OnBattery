@@ -16,8 +16,11 @@ void Stats::updateFrom(VeDirectShuntController::data_t const& shuntData) {
     _chargedEnergy = static_cast<float>(shuntData.H18) / 100;
     _dischargedEnergy = static_cast<float>(shuntData.H17) / 100;
     setManufacturer(String("Victron ") + shuntData.getPidAsString().data());
-    _temperature = shuntData.T;
-    _tempPresent = shuntData.tempPresent;
+
+    if (shuntData.tempPresent) {
+        ::Batteries::Stats::setTemperature(shuntData.T, millis());
+    }
+
     _midpointVoltage = static_cast<float>(shuntData.VM) / 1000;
     _midpointDeviation = static_cast<float>(shuntData.DM) / 10;
     _instantaneousPower = shuntData.P;
@@ -43,8 +46,10 @@ void Stats::getLiveViewData(JsonVariant& root) const {
     addLiveViewValue(root, "midpointVoltage", _midpointVoltage, "V", 2);
     addLiveViewValue(root, "midpointDeviation", _midpointDeviation, "%", 1);
     addLiveViewValue(root, "lastFullCharge", _lastFullCharge, "min", 0);
-    if (_tempPresent) {
-        addLiveViewValue(root, "temperature", _temperature, "°C", 0);
+
+    auto oTemperature = getTemperature();
+    if (oTemperature) {
+        addLiveViewValue(root, "temperature", *oTemperature, "°C", 0);
     }
 
     addLiveViewAlarm(root, "lowVoltage", _alarmLowVoltage);

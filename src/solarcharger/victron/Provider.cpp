@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <solarcharger/victron/Provider.h>
+#include <battery/Controller.h>
 #include "Configuration.h"
 #include "PinMapping.h"
 #include "SerialPortManager.h"
@@ -51,6 +52,13 @@ bool Provider::initController(gpio_num_t rx, gpio_num_t tx, uint8_t instance)
         return false;
     }
 
+    auto const& config = Configuration.get();
+    auto forwardBatteryData = config.SolarCharger.ForwardBatteryData;
+
+    if (tx <= GPIO_NUM_NC && forwardBatteryData) {
+        DTU_LOGE("Instance %d: TX pin not configured but forwaredBatteryData enabled", instance);
+    }
+
     String owner("Victron MPPT ");
     owner += String(instance);
     auto oHwSerialPort = SerialPortManager.allocatePort(owner.c_str());
@@ -66,9 +74,25 @@ bool Provider::initController(gpio_num_t rx, gpio_num_t tx, uint8_t instance)
 
 void Provider::loop()
 {
+    auto const& config = Configuration.get();
+    auto forwardBatteryData = config.SolarCharger.ForwardBatteryData;
+
     std::lock_guard<std::mutex> lock(_mutex);
 
     for (auto const& upController : _controllers) {
+        if (forwardBatteryData) {
+            auto batteryStats = Battery.getStats();
+
+            if (batteryStats->isVoltageValid() && batteryStats->getVoltageAgeSeconds() < 60) {
+                upController->setRemoteVoltage(batteryStats->getVoltage());
+            }
+
+            auto oTemperature = batteryStats->getTemperature();
+            if (oTemperature.has_value() && batteryStats->getTemperatureAgeSeconds() < 60) {
+                upController->setRemoteTemperature(*oTemperature);
+            }
+        }
+
         upController->loop();
 
         if (upController->isDataValid()) {

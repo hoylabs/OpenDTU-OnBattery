@@ -19,7 +19,6 @@ private:
     float _chargeVoltage;
     float _dischargeVoltageLimitation;
     uint16_t _stateOfHealth;
-    float _temperature;
 
     bool _alarmOverCurrentDischarge;
     bool _alarmOverCurrentCharge;

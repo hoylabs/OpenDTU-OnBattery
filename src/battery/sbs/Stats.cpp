@@ -11,7 +11,12 @@ void Stats::getLiveViewData(JsonVariant& root) const
     // values go into the "Status" card of the web application
     addLiveViewValue(root, "chargeVoltage", _chargeVoltage, "V", 1);
     addLiveViewValue(root, "stateOfHealth", _stateOfHealth, "%", 0);
-    addLiveViewValue(root, "temperature", _temperature, "°C", 1);
+
+    auto oTemperature = getTemperature();
+    if (oTemperature) {
+        addLiveViewValue(root, "temperature", *oTemperature, "°C", 1);
+    }
+
     addLiveViewTextValue(root, "chargeEnabled", (_chargeEnabled?"yes":"no"));
     addLiveViewTextValue(root, "dischargeEnabled", (_dischargeEnabled?"yes":"no"));
 
@@ -31,7 +36,12 @@ void Stats::mqttPublish() const
 
     MqttSettings.publish("battery/settings/chargeVoltage", String(_chargeVoltage));
     MqttSettings.publish("battery/stateOfHealth", String(_stateOfHealth));
-    MqttSettings.publish("battery/temperature", String(_temperature));
+
+    auto oTemperature = getTemperature();
+    if (oTemperature) {
+        MqttSettings.publish("battery/temperature", String(*oTemperature));
+    }
+
     MqttSettings.publish("battery/alarm/underVoltage", String(_alarmUnderVoltage));
     MqttSettings.publish("battery/alarm/overVoltage", String(_alarmOverVoltage));
     MqttSettings.publish("battery/alarm/bmsInternal", String(_alarmBmsInternal));
