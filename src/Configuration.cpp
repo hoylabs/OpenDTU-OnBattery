@@ -271,11 +271,11 @@ void ConfigurationClass::serializeGridChargerTruckiConfig(GridChargerTruckiConfi
 
 void ConfigurationClass::serializeGridChargerHTTPConfig(GridChargerHTTPConfig const& source, JsonObject& target)
 {
-    target["url"] = source.url;
-    target["uri_on"] = source.uri_on;
-    target["uri_off"] = source.uri_off;
-    target["uri_stats"] = source.uri_stats;
-    target["uri_powerparam"] = source.uri_powerparam;
+    target["Url"] = source.Url;
+    target["UriOn"] = source.UriOn;
+    target["UriOff"] = source.UriOff;
+    target["UriStats"] = source.UriStats;
+    target["UriPowerParam"] = source.UriPowerParam;
     target["AcPower"] = source.AcPower;
 }
 
@@ -717,11 +717,11 @@ void ConfigurationClass::deserializeGridChargerTruckiConfig(JsonObject const& so
 
 void ConfigurationClass::deserializeGridChargerHTTPConfig(JsonObject const& source, GridChargerHTTPConfig& target)
 {
-    strlcpy(target.url, source["url"] | GRIDCHARGER_HTTP_IPADDRESS, sizeof(target.url));
-    strlcpy(target.uri_on, source["uri_on"] | GRIDCHARGER_HTTP_URION, sizeof(target.uri_on));
-    strlcpy(target.uri_off, source["uri_off"] | GRIDCHARGER_HTTP_URIOFF, sizeof(target.uri_off));
-    strlcpy(target.uri_stats, source["uri_stats"] | GRIDCHARGER_HTTP_URISTATS, sizeof(target.uri_stats));
-    strlcpy(target.uri_powerparam, source["uri_powerparam"] | GRIDCHARGER_HTTP_URIPOWERPARAM, sizeof(target.uri_powerparam));
+    strlcpy(target.Url, source["Url"] | GRIDCHARGER_HTTP_IPADDRESS, sizeof(target.Url));
+    strlcpy(target.UriOn, source["UriOn"] | GRIDCHARGER_HTTP_URION, sizeof(target.UriOn));
+    strlcpy(target.UriOff, source["UriOff"] | GRIDCHARGER_HTTP_URIOFF, sizeof(target.UriOff));
+    strlcpy(target.UriStats, source["UriStats"] | GRIDCHARGER_HTTP_URISTATS, sizeof(target.UriStats));
+    strlcpy(target.UriPowerParam, source["UriPowerParam"] | GRIDCHARGER_HTTP_URIPOWERPARAM, sizeof(target.UriPowerParam));
     target.AcPower = source["AcPower"] | GRIDCHARGER_HTTP_ACPOWER;
 }
 

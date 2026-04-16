@@ -21,11 +21,11 @@ bool Provider::init()
     DTU_LOGI("Initialize HTTP AC charger interface...");
 
     auto const& config = Configuration.get();
-    String  url = config.GridCharger.HTTP.url;
-    _uriOn = url + config.GridCharger.HTTP.uri_on;
-    _uriOff = url + config.GridCharger.HTTP.uri_off;
-    _uriStats = url + config.GridCharger.HTTP.uri_stats;
-    _uriPowerparam = config.GridCharger.HTTP.uri_powerparam;
+    String  url = config.GridCharger.HTTP.Url;
+    _uriOn = url + config.GridCharger.HTTP.UriOn;
+    _uriOff = url + config.GridCharger.HTTP.UriOff;
+    _uriStats = url + config.GridCharger.HTTP.UriStats;
+    _uriPowerparam = config.GridCharger.HTTP.UriPowerParam;
     _maximumAcPower = config.GridCharger.HTTP.AcPower;
     return true;
 }

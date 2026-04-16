@@ -88,14 +88,14 @@
                         <InputElement
                             :label="$t('gridchargeradmin.IpAddress')"
                             :tooltip="$t('gridchargeradmin.HTTPipAddressHint')"
-                            v-model="gridChargerConfigList.HTTP.url"
+                            v-model="gridChargerConfigList.HTTP.Url"
                             placeholder="http://192.168.2.100"
                             type="text"
                             wide
                         />
                         <InputElement
                             :label="$t('gridchargeradmin.HTTPuriON')"
-                            v-model="gridChargerConfigList.HTTP.uri_on"
+                            v-model="gridChargerConfigList.HTTP.UriOn"
                             :tooltip="$t('gridchargeradmin.HTTPuriONHint')"
                             placeholder="/relay/0?turn=on"
                             type="text"
@@ -104,7 +104,7 @@
 
                         <InputElement
                             :label="$t('gridchargeradmin.HTTPuriOFF')"
-                            v-model="gridChargerConfigList.HTTP.uri_off"
+                            v-model="gridChargerConfigList.HTTP.UriOff"
                             :tooltip="$t('gridchargeradmin.HTTPuriOFFHint')"
                             placeholder="/relay/0?turn=off"
                             type="text"
@@ -113,7 +113,7 @@
 
                         <InputElement
                             :label="$t('gridchargeradmin.HTTPuriSTATS')"
-                            v-model="gridChargerConfigList.HTTP.uri_stats"
+                            v-model="gridChargerConfigList.HTTP.UriStats"
                             :tooltip="$t('gridchargeradmin.HTTPuriSTATSHint')"
                             placeholder="/relay/0?turn=stats"
                             type="text"
@@ -122,7 +122,7 @@
 
                         <InputElement
                             :label="$t('gridchargeradmin.HTTPuriPOWERPARAM')"
-                            v-model="gridChargerConfigList.HTTP.uri_powerparam"
+                            v-model="gridChargerConfigList.HTTP.UriPowerParam"
                             :tooltip="$t('gridchargeradmin.HTTPuriPOWERPARAMHint')"
                             placeholder="apower"
                             type="text"

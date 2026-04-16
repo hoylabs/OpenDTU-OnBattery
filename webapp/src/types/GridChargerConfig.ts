@@ -17,11 +17,11 @@ export interface GridChargerHuaweiConfig {
 }
 
 export interface GridChargerHTTPConfig {
-    url: string;
-    uri_on: string;
-    uri_off: string;
-    uri_stats: string;
-    uri_powerparam: string;
+    Url: string;
+    UriOn: string;
+    UriOff: string;
+    UriStats: string;
+    UriPowerParam: string;
     AcPower: number;
 }
 
