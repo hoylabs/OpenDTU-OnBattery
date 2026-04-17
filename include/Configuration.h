@@ -249,6 +249,7 @@ using BatterySerialConfig = struct BATTERY_SERIAL_CONFIG_T;
 
 struct BATTERY_JKBMSCAN_CONFIG_T {
     uint8_t NumberOfCells;
+    uint8_t configuredId;
     uint8_t CanProtocolVersion;
 };
 using BatteryJkBmsCanConfig = struct BATTERY_JKBMSCAN_CONFIG_T;

@@ -141,4 +141,95 @@ void Stats::mqttPublish() const
 
 }
 
+
+void Stats::updateFromV2(uint8_t* rx, uint32_t now)
+{
+    _v2ErrorMask =
+        rx[0] |
+        (rx[1] << 8) |
+        (rx[2] << 16);
+
+    _lastV2Ts = now;
+}
+
+void Stats::updateFromV1(uint8_t* rx, uint32_t now)
+{
+    _v1SeverityMask =
+        (uint64_t)rx[0] |
+        ((uint64_t)rx[1] << 8) |
+        ((uint64_t)rx[2] << 16) |
+        ((uint64_t)rx[3] << 24);
+
+    _lastV1Ts = now;
+}
+
+void Stats::evaluateErrors(uint32_t now)
+{
+    const uint32_t timeout = 2000;
+
+    bool v2Valid = (now - _lastV2Ts) < timeout;
+    bool v1Valid = (now - _lastV1Ts) < timeout;
+
+    // alles zurücksetzen
+    _alarmOverCurrentDischarge = false;
+    _alarmOverCurrentCharge = false;
+    _alarmUnderTemperature = false;
+    _alarmOverTemperature = false;
+    _alarmUnderVoltage = false;
+    _alarmOverVoltage = false;
+    _alarmBmsInternal = false;
+
+    _warningHighCurrentDischarge = false;
+    _warningHighCurrentCharge = false;
+    _warningLowTemperature = false;
+    _warningHighTemperature = false;
+    _warningLowVoltage = false;
+    _warningHighVoltage = false;
+    _warningBmsInternal = false;
+
+    if (v2Valid) {
+        applyV2();
+    }
+    else if (v1Valid) {
+        applyV1();
+    }
+}
+
+void Stats::applyV2()
+{
+    uint32_t m = _v2ErrorMask;
+
+    _alarmOverVoltage          = m & (1 << 4);
+    _alarmUnderVoltage         = m & (1 << 11);
+    _alarmOverCurrentCharge    = m & (1 << 6);
+    _alarmOverCurrentDischarge = m & (1 << 13);
+    _alarmOverTemperature      = m & (1 << 8);
+    _alarmUnderTemperature     = m & (1 << 9);
+    _alarmBmsInternal          = m & (1 << 10);
+}
+
+uint8_t Stats::getSeverity(uint8_t alarm)
+{
+    uint8_t shift = (alarm - 1) * 2;
+    return (_v1SeverityMask >> shift) & 0x3;
+}
+
+void Stats::applyV1()
+{
+    auto map = [&](uint8_t sev, bool& alarm, bool& warn)
+    {
+        if (sev == 1) alarm = true;
+        else if (sev == 2 || sev == 3) warn = true;
+    };
+
+    map(getSeverity(1), _alarmOverVoltage, _warningHighVoltage);
+    map(getSeverity(2), _alarmUnderVoltage, _warningLowVoltage);
+    map(getSeverity(6), _alarmOverCurrentDischarge, _warningHighCurrentDischarge);
+    map(getSeverity(7), _alarmOverCurrentCharge, _warningHighCurrentCharge);
+    map(getSeverity(8), _alarmOverTemperature, _warningHighTemperature);
+    map(getSeverity(9), _alarmUnderTemperature, _warningLowTemperature);
+    map(getSeverity(15), _alarmBmsInternal, _warningBmsInternal);
+}
+
+
 } // namespace Batteries::JkBmsCan

@@ -11,8 +11,12 @@ friend class Provider;
 public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
-    // bool getImmediateChargingRequest() const { return _chargeImmediately; } ;
+
     float getChargeCurrentLimitation() const { return _chargeCurrentLimitation; } ;
+    
+    void updateFromV2(uint8_t* rx, uint32_t now);
+    void updateFromV1(uint8_t* rx, uint32_t now);
+    void evaluateErrors(uint32_t now);
 
 private:
     void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
@@ -37,6 +41,16 @@ private:
 
     uint32_t _bmsRunTime;
     uint16_t _heaterCurrent;
+
+    void applyV2();
+    void applyV1();
+    uint8_t getSeverity(uint8_t alarm);
+
+    uint32_t _v2ErrorMask = 0;
+    uint64_t _v1SeverityMask = 0;
+
+    uint32_t _lastV2Ts = 0;
+    uint32_t _lastV1Ts = 0;
 
 
     bool _alarmOverCurrentDischarge;
