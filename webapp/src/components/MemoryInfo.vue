@@ -18,6 +18,7 @@
                         :used="systemStatus.heap_used"
                     />
                     <FsInfo
+                        v-if="systemStatus.psram_total > 0"
                         :name="$t('memoryinfo.PsRam')"
                         :total="systemStatus.psram_total"
                         :used="systemStatus.psram_used"

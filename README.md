@@ -61,10 +61,7 @@ board](https://opendtu-onbattery.net/3rd_party/opendtu_fusion/)**.
 ### Distribution Channels
 
 OpenDTU Fusion boards and accessories (cases in particular) are available
-exclusively through:
-
-- [AllianceApps](https://shop.allianceapps.io/)
-- [Semy3D](https://shop.semy3d.de/)
+exclusively through [AllianceApps](https://shop.allianceapps.io/).
 
 Please note that we do not have any connections to hardware sold on platforms
 like eBay, Kleinanzeigen, or similar marketplaces. Items sold there may not
