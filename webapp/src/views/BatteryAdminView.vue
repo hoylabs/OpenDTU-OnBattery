@@ -573,6 +573,7 @@
                             min="10"
                             max="120"
                             step="1"
+                            :tooltip="$t('batteryadmin.zendure.pollingIntervalDescription')"
                             :postfix="$t('batteryadmin.Seconds')"
                         />
 
@@ -622,7 +623,25 @@
                                 step="1"
                                 :postfix="$t('batteryadmin.Percent')"
                             />
-
+                            <div class="row">
+                                <div class="col-sm-2"></div>
+                                <div class="col-sm-10">
+                                    <div
+                                        v-if="
+                                            batteryConfigList.zendure.soc_min >= 0 &&
+                                            batteryConfigList.zendure.soc_min < 10
+                                        "
+                                        class="alert alert-warning"
+                                        role="alert"
+                                        v-html="
+                                            $t('batteryadmin.zendure.socMinWarning', {
+                                                soc: batteryConfigList.zendure.soc_min,
+                                                min: 10,
+                                            })
+                                        "
+                                    ></div>
+                                </div>
+                            </div>
                             <InputElement
                                 :label="$t('batteryadmin.ZendureMaxSoc')"
                                 v-model="batteryConfigList.zendure.soc_max"
@@ -671,7 +690,33 @@
                         batteryConfigList.zendure.connection_type == 0 || batteryConfigList.zendure.connection_type == 2
                     "
                 >
-                    <template v-if="batteryConfigList.zendure.control_mode == 0">
+                    <template
+                        v-if="
+                            batteryConfigList.zendure.control_mode == 0 && batteryConfigList.zendure.output_control != 0
+                        "
+                    >
+                        <CardElement
+                            :text="$t('batteryadmin.zendure.batteryProtection')"
+                            textVariant="text-bg-primary"
+                            addSpace
+                        >
+                            <InputElement
+                                :label="$t('batteryadmin.zendure.batteryProtectionEnabled')"
+                                v-model="batteryConfigList.zendure.battery_protection_enable"
+                                type="checkbox"
+                            />
+                            <template v-if="batteryConfigList.zendure.battery_protection_enable">
+                                <InputElement
+                                    :label="$t('batteryadmin.zendure.batteryProtectionHysteresis')"
+                                    v-model="batteryConfigList.zendure.battery_protection_hysteresis"
+                                    type="number"
+                                    min="5"
+                                    max="50"
+                                    step="1"
+                                    :postfix="$t('batteryadmin.Percent')"
+                                />
+                            </template>
+                        </CardElement>
                         <CardElement
                             :text="$t('batteryadmin.zendure.chargeThrough')"
                             textVariant="text-bg-primary"
@@ -716,6 +761,10 @@
                                     id="zendure_output_mode"
                                     class="form-select"
                                     v-model="batteryConfigList.zendure.output_control"
+                                    @change="
+                                        batteryConfigList.zendure.charge_through_enable = false;
+                                        batteryConfigList.zendure.battery_protection_enable = false;
+                                    "
                                 >
                                     <option :key="0" :value="0">
                                         {{ $t('batteryadmin.ZendureOutputMode' + zendureOutputControlList[0]?.value) }}

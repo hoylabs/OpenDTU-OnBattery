@@ -20,6 +20,7 @@ void HassIntegration::publishSensors() const
     publishSensor("Discharge Power", "mdi:battery-discharging", "dischargePower", "power", "measurement", "W");
     publishBinarySensor("Battery Heating", NULL, "heating", "1", "0");
     publishSensor("State", NULL, "state");
+    publishSensor("Control State", NULL, "controlState");
     publishSensor("Number of Batterie Packs", "mdi:counter", "numPacks");
     publishSensor("Efficiency", NULL, "efficiency", NULL, "measurement", "%");
     publishSensor("Last Full Charge", "mdi:timelapse", "lastFullCharge", "duration", "measurement", "h");
@@ -36,6 +37,7 @@ void HassIntegration::publishSensors() const
     publishSensor("Remaining Discharge Time", NULL, "remainOutTime", "duration", "measurement", "min");
     publishSensor("Remaining Charge Time", NULL, "remainInTime", "duration", "measurement", "min");
 
+    publishSensor("Minimum Pack State of Charge", NULL, "packMinSoc", NULL, "measurement", "%");
     publishSensor("Control Mode", NULL, "controlMode");
     publishSensor("Output Power Limit", NULL, "settings/outputLimitPower", "power", NULL, "W");
     publishSensor("Input Power Limit", NULL, "settings/inputLimitPower", "power", NULL, "W");

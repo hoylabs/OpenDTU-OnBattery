@@ -878,7 +878,12 @@
             "clientId": "Client ID",
             "appKey": "Application Key",
             "apiDescription": "Please refer the <a href=\"https://github.com/Zendure/developer-device-data-report\" target=\"_blank\">Official Zendure Repository</a> for further information about the Zendure Cloud API.",
-            "secret": "Secret"
+            "secret": "Secret",
+            "socMinWarning": "The configured minimum charge level ({soc}%) is below the recommended minimum of {min}%. This can lead to battery damage.",
+            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
+            "pollingIntervalDescription": "The BMS also transmits data asynchronously. The polling interval additionally enforces full data refreshes at the specified interval.",
+            "batteryProtectionEnabled": "Battery Protection",
+            "batteryProtection": "Advanced Battery Protection Settings"
         }
     },
     "inverteradmin": {
@@ -1349,7 +1354,16 @@
                 "invalid": "@:battery.invalid",
                 "unknown": "@:battery.unknown"
             },
-            "keepUntil": "Hold full charge for"
+            "keepUntil": "Hold full charge for",
+            "controlState": "Control state",
+            "controlStates": {
+                "normal": "Normal",
+                "batteryprotection": "Battery Protection",
+                "invalid": "@:battery.invalid"
+            },
+            "batteryProtection": "Battery Protection",
+            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
+            "packMinSoc": "Minimum Pack State of Charge"
         }
     }
 }

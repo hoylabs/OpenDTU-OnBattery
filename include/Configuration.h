@@ -216,6 +216,8 @@ struct BATTERY_ZENDURE_CONFIG_T {
     char ClientId[ZENDURE_MAX_CLIENTID_STRLEN + 1];
     char AppKey[ZENDURE_MAX_APPKEY_STRLEN + 1];
     char Secret[ZENDURE_MAX_SECRET_STRLEN + 1];
+    bool BatteryProtectionEnable;
+    uint8_t BatteryProtectionHysteresis;
 };
 using BatteryZendureConfig = struct BATTERY_ZENDURE_CONFIG_T;
 

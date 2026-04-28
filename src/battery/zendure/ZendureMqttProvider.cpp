@@ -60,8 +60,6 @@ bool ZendureMqttProvider::init()
     createMqttClientObject();
     performConnect();
 
-    //if (!performConnect()) {  return false; }
-
     DTU_LOGI("INIT DONE");
     return true;
 }
