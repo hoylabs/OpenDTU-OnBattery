@@ -569,13 +569,14 @@
                                     :postfix="$t('batteryadmin.Hours')"
                                 />
                                 <InputElement
-                                    :label="$t('batteryadmin.zendure.chargeThroughReset')"
-                                    v-model="batteryConfigList.zendure.charge_through_reset"
+                                    :label="$t('batteryadmin.zendure.chargeThroughKeepMinutes')"
+                                    v-model="batteryConfigList.zendure.charge_through_keep_minutes"
                                     type="number"
-                                    min="25"
-                                    max="100"
+                                    min="0"
+                                    max="720"
                                     step="1"
-                                    :postfix="$t('batteryadmin.Percent')"
+                                    :postfix="$t('batteryadmin.Minutes')"
+                                    :tooltip="$t('batteryadmin.zendure.chargeThroughKeepMinutesDescription')"
                                 />
                             </template>
                         </CardElement>

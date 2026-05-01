@@ -844,7 +844,8 @@
             "chargeThrough": "Vollladeeinstellungen",
             "chargeThroughEnabled": "Vollladen",
             "chargeThroughInterval": "Maximales Interval",
-            "chargeThroughReset": "Reset Schwellwert",
+            "chargeThroughKeepMinutes": "Volllade-Modus halten",
+            "chargeThroughKeepMinutesDescription": "Volllade-Modus für mindestens diese Anzahl von Minuten beibehalten, nachdem die Batterie 100% SoC erreicht hat",
             "connectionType": "Verbindungstyp",
             "connectionTypes": {
                 "local": "Lokaler MQTT Broker",
@@ -1331,7 +1332,8 @@
                 "discharging": "Entladen",
                 "invalid": "@:battery.invalid",
                 "unknown": "@:battery.unknown"
-            }
+            },
+            "keepUntil": "Volle Ladung halten für"
         }
     }
 }

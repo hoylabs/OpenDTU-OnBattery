@@ -17,7 +17,7 @@ export interface BatteryZendureConfig {
     charge_through_interval: number;
     buzzer_enable: boolean;
     control_mode: number;
-    charge_through_reset: number;
+    charge_through_keep_minutes: number;
     connection_type: number;
     server: string;
     port: number;

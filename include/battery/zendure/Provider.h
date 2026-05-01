@@ -29,6 +29,7 @@ protected:
     void setSoC(const float soc, const uint32_t timestamp = 0, const uint8_t precision = 2);
     bool alive() const { return _stats->getAgeSeconds() < ZENDURE_ALIVE_SECONDS; }
 
+    ChargeThroughState getChargeThroughState(ChargeThroughState defaultValue = ChargeThroughState::Disabled) { return _stats->_charge_through_state.value_or(defaultValue); };
     void setChargeThroughState(const ChargeThroughState value, const bool publish = true);
 
     void publishProperty(const String& topic, const String& property, const String& value) const;
@@ -82,7 +83,7 @@ private:
     uint16_t calcOutputLimit(uint16_t limit) const;
     void setTargetSoCs(const float soc_min, const float soc_max);
 
-    void calculateFullChargeAge();
+    void calculateTimeDiff();
     void rescheduleSunCalc() { _nextSunCalc = 0; }
     void publishPersistentSettings(const char* subtopic, const String& payload);
 

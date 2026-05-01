@@ -25,12 +25,16 @@ void HassIntegration::publishSensors() const
     publishSensor("Last Full Charge", "mdi:timelapse", "lastFullCharge", "duration", "measurement", "h");
     publishSensor("Last Empty", "mdi:timelapse", "lastEmpty", "duration", "measurement", "h");
     publishSensor("Charge Through State", NULL, "chargeThroughState");
+    publishSensor("Keep Full Charge For", "mdi:timelapse", "keepForMinutes", "duration", "measurement", "min");
 
     publishSensor("Solar Power MPPT 1", "mdi:solar-power", "solarPowerMppt1", "power", "measurement", "W");
     publishSensor("Solar Power MPPT 2", "mdi:solar-power", "solarPowerMppt2", "power", "measurement", "W");
     publishSensor("Total Output Power", NULL, "outputPower", "power", "measurement", "W");
     publishSensor("Total Input Power", NULL, "inputPower", "power", "measurement", "W");
     publishBinarySensor("Bypass State", NULL, "bypass", "1", "0");
+
+    publishSensor("Remaining Discharge Time", NULL, "remainOutTime", "duration", "measurement", "min");
+    publishSensor("Remaining Charge Time", NULL, "remainInTime", "duration", "measurement", "min");
 
     publishSensor("Control Mode", NULL, "controlMode");
     publishSensor("Output Power Limit", NULL, "settings/outputLimitPower", "power", NULL, "W");

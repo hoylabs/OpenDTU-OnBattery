@@ -845,7 +845,8 @@
             "chargeThrough": "Charge Through Settings",
             "chargeThroughEnabled": "Charge Through",
             "chargeThroughInterval": "Maximum time without full charge",
-            "chargeThroughReset": "Reset Threshold",
+            "chargeThroughKeepMinutes": "Keep charge through mode",
+            "chargeThroughKeepMinutesDescription": "Keep charge through mode for at least this amount of minutes after battery reached 100% SoC",
             "connectionType": "Connection Type",
             "connectionTypes": {
                 "local": "Local MQTT Broker",
@@ -1334,7 +1335,8 @@
                 "discharging": "Discharging",
                 "invalid": "@:battery.invalid",
                 "unknown": "@:battery.unknown"
-            }
+            },
+            "keepUntil": "Hold full charge for"
         }
     }
 }

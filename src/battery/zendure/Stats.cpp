@@ -30,6 +30,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
     addLiveViewInSection(root, section, "lastEmptyCharge", _last_empty_hours, "h", 0);
     addLiveViewInSection(root, section, "remainOutTime", _remain_out_time, "min", 0);
     addLiveViewInSection(root, section, "remainInTime", _remain_in_time, "min", 0);
+    addLiveViewInSection(root, section, "zendure.keepUntil", _keep_until_minutes, "min", 0);
 
     // values go into the "Settings" card of the web application
     section = "settings";
@@ -130,6 +131,10 @@ void Stats::mqttPublish() const
     publish("battery/bypass", boolToString(_bypass_state));
     publish("battery/lastFullCharge", _last_full_hours);
     publish("battery/lastEmpty", _last_empty_hours);
+    publish("battery/remainOutTime", _remain_out_time);
+    publish("battery/remainInTime", _remain_in_time);
+    publish("battery/keepForMinutes", _keep_until_minutes);
+
     publish("battery/chargeThroughState", String(chargeThroughStateToString(_charge_through_state)));
 
     if (config.Battery.Zendure.ConnectionType != BatteryZendureConfig::ConnectionType_t::ZendureMqtt) {
