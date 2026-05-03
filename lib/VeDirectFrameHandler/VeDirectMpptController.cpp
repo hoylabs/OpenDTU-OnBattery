@@ -252,7 +252,7 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			_tmpFrame.BatteryMaximumCurrent =
 				{ millis(), static_cast<uint16_t>(data.value) };
 
-			ESP_LOGD(TAG, "%s Hex Data: MPPT Bettery Max Current (0x%04X): %.1fA",
+			ESP_LOGD(TAG, "%s Hex Data: MPPT Battery Max Current (0x%04X): %.1fA",
 					_logId, regLog,
 					_tmpFrame.BatteryMaximumCurrent.second / 10.0);
 			return true;
