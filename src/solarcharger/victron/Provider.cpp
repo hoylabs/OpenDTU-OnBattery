@@ -72,22 +72,19 @@ bool Provider::initController(gpio_num_t rx, gpio_num_t tx, uint8_t instance)
     return true;
 }
 
-void Provider::setChargeLimit( float limit, float act_charge_current )
-{
-    _chargeLimit = limit;
-    _chargeCurrent = act_charge_current;
-}
-
-
 void Provider::loop()
 {
     auto const& config = Configuration.get();
     auto forwardBatteryData = config.SolarCharger.ForwardBatteryData;
 
+    auto batteryStats = Battery.getStats();
+    float chargeLimit = Battery.getChargeCurrentLimit();
+    float chargeCurrent = batteryStats->getChargeCurrent();
+
     std::lock_guard<std::mutex> lock(_mutex);
 
     float overallChargeCurrent  { 0.0f };
-    float remainingLimit        { _chargeLimit };
+    float remainingLimit        { chargeLimit };
     float reservedChargeCurrent { 0.5f };   // minimum current for a controller whenever the given limit is higher
 
     uint8_t numControllers { 0 };
@@ -99,7 +96,7 @@ void Provider::loop()
     }
 
     // increase the charge limit with the current drawn by the inverter(s)
-    const float inverterCurrent { overallChargeCurrent - _chargeCurrent };
+    const float inverterCurrent { overallChargeCurrent - chargeCurrent };
 	if (inverterCurrent >= 0.0f) {
 		remainingLimit += inverterCurrent;
 	}
@@ -151,8 +148,6 @@ void Provider::loop()
         upController->setChargeLimit(controllerLimit);
 
         if (forwardBatteryData) {
-            auto batteryStats = Battery.getStats();
-
             if (batteryStats->isVoltageValid() && batteryStats->getVoltageAgeSeconds() < 60) {
                 upController->setRemoteVoltage(batteryStats->getVoltage());
             }

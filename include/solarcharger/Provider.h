@@ -12,7 +12,6 @@ public:
     virtual bool init() = 0;
     virtual void deinit() = 0;
     virtual void loop() = 0;
-    virtual void setChargeLimit(float limit, float act_charge_current) = 0;
     virtual std::shared_ptr<Stats> getStats() const = 0;
 };
 
