@@ -82,6 +82,6 @@ private:
          { VeDirectHexRegister::BatteryMaximumCurrent, false, 4,  0 },
          { VeDirectHexRegister::BatteryVoltageSense, true, 4, 0, 16 },
          { VeDirectHexRegister::BatteryTemperatureSense, true, 4, 0, 16 },
-         { VeDirectHexRegister::ChargeCurrentLimit, true, 4, 0, 16, 0xFFFF }, // default: 0xFFFF (=full current)
+         { VeDirectHexRegister::ChargeCurrentLimit, true, 4, 0, 16 },
     }};
 };
