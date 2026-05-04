@@ -216,6 +216,7 @@ void Provider::powerControlLoop()
                 // Calculate output current
                 float calculatedCurrent = efficiency * (newPowerLimit / *oOutputVoltage);
 
+                // TODO(andreasboehm): Respect the battery settings 'charge current limit'
                 // Limit output current to value requested by BMS
                 float permissibleCurrent = stats->getChargeCurrentLimit() - (stats->getChargeCurrent() - *oOutputCurrent); // BMS current limit - current from other sources, e.g. Victron MPPT charger
                 float outputCurrent = std::min(calculatedCurrent, permissibleCurrent);
