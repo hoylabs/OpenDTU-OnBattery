@@ -18,6 +18,12 @@ export interface BatteryZendureConfig {
     buzzer_enable: boolean;
     control_mode: number;
     charge_through_reset: number;
+    connection_type: number;
+    server: string;
+    port: number;
+    client_id: string;
+    app_key: string;
+    secret: string;
 }
 
 export interface BatteryMqttConfig {

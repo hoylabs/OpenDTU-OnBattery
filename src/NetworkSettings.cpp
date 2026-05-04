@@ -123,16 +123,41 @@ void NetworkSettingsClass::NetworkEvent(const WiFiEvent_t event, WiFiEventInfo_t
     }
 }
 
-bool NetworkSettingsClass::onEvent(DtuNetworkEventCb cbEvent, const network_event event)
+bool NetworkSettingsClass::onEvent(DtuNetworkEventCb cbEvent, const network_event event, const String &name)
 {
-    if (!cbEvent) {
-        return pdFALSE;
+    if (!cbEvent) { return pdFALSE; }
+
+    if (!name.isEmpty()) {
+        for (auto it = _cbEventList.begin(); it != _cbEventList.end(); ++it) {
+            if (it->name != name) { continue; }
+
+            ESP_LOGE(TAG, "Event with name '%s' already registered!", name.c_str());
+            return pdFALSE;
+        }
     }
+
     DtuNetworkEventCbList_t newEventHandler;
     newEventHandler.cb = cbEvent;
     newEventHandler.event = event;
+    newEventHandler.name = name;
+
+    ESP_LOGD(TAG, "Registering event: '%s'", name.c_str());
+
     _cbEventList.push_back(newEventHandler);
     return true;
+}
+
+void NetworkSettingsClass::deregisterEvent(const String &name)
+{
+    if (name.isEmpty()) { return; }
+
+    for (auto it = _cbEventList.begin(); it != _cbEventList.end(); ++it) {
+        if (it->name != name) { continue; }
+
+        ESP_LOGD(TAG, "Deregistering event: '%s'", name.c_str());
+        _cbEventList.erase(it);
+        break;
+    }
 }
 
 void NetworkSettingsClass::raiseEvent(const network_event event)
