@@ -22,6 +22,23 @@ bool Provider::init()
 
     auto const& config = Configuration.get();
     String  url = config.GridCharger.HTTP.Url;
+
+    auto const checkLength = [&url](char const* label, char const* uri) {
+        size_t const combined = url.length() + strlen(uri);
+        if (combined >= HTTP_REQUEST_MAX_URL_STRLEN) {
+            DTU_LOGE("Combined URL for %s exceeds %u chars (got %u) and would be truncated",
+                    label, HTTP_REQUEST_MAX_URL_STRLEN, combined);
+            return false;
+        }
+        return true;
+    };
+
+    if (!checkLength("UriOn", config.GridCharger.HTTP.UriOn) ||
+        !checkLength("UriOff", config.GridCharger.HTTP.UriOff) ||
+        !checkLength("UriStats", config.GridCharger.HTTP.UriStats)) {
+        return false;
+    }
+
     _uriOn = url + config.GridCharger.HTTP.UriOn;
     _uriOff = url + config.GridCharger.HTTP.UriOff;
     _uriStats = url + config.GridCharger.HTTP.UriStats;
@@ -286,7 +303,12 @@ void Provider::pollData()
 {
     float acPowerCurrent = read_http(_uriStats);
     DTU_LOGV("acPowerCurrent: %f", acPowerCurrent);
-    _powerState = (acPowerCurrent > 0);
+
+    // One-way confirmation: a non-zero measurement proves the charger is
+    // drawing power, but a zero reading does not prove it is off (battery
+    // may be full, or the charger may not yet have ramped up). The
+    // commanded state is otherwise maintained by PowerON()/PowerOFF().
+    if (acPowerCurrent > 0) { _powerState = true; }
 
     // Update data points
     {
