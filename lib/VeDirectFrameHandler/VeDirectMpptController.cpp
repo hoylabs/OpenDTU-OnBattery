@@ -182,6 +182,7 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 		switch (data.addr) {
             case VeDirectHexRegister::BatteryVoltageSense: return true;
             case VeDirectHexRegister::BatteryTemperatureSense: return true;
+		    case VeDirectHexRegister::ChargeCurrentLimit: return true;
             default: return false;
 		}
 	}
@@ -262,7 +263,7 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			_tmpFrame.ChargeCurrentLimit =
 				{ millis(), static_cast<uint16_t>(data.value) };
 
-			ESP_LOGD(TAG, "%s Hex Data: Charge Current Limit (0x%04X): %.1fA",
+			ESP_LOGD(TAG, "%s Hex Data: MPPT Charge Current Limit (0x%04X): %.1fA",
 					_logId, regLog,
 					static_cast<float>(_tmpFrame.ChargeCurrentLimit.second) / 10.0);
 			return true;
