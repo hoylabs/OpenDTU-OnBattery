@@ -161,6 +161,7 @@ float Provider::read_http(String Url)
     auto pathResolutionResult = Utils::getJsonValueByPath<float>(jsonResponse, _uriPowerparam);
     if (!pathResolutionResult.second.isEmpty()) {
         DTU_LOGE("ERROR reading AC Power from Smart Plug %s\r\n",pathResolutionResult.second.c_str());
+        return oAcPower.value_or(0.0f);
     }
 
     return pathResolutionResult.first;
@@ -170,7 +171,8 @@ void Provider::powerControlLoop()
 {
     auto& config = Configuration.get();
     auto oAcPower = _dataCurrent.get<DataPointLabel::AcPower>();
-    uint8_t _batterySoC = Battery.getStats()->getSoC();
+    auto stats = Battery.getStats();
+    uint8_t _batterySoC = stats->getSoC();
     if (_autowaitTillMillis < millis()) {
         DTU_LOGI("SoC: %i", _batterySoC);
         _autowaitTillMillis = millis() + 10000;
@@ -179,7 +181,6 @@ void Provider::powerControlLoop()
     // ***********************
     // Emergency charge
     // ***********************
-    auto stats = Battery.getStats();
     if (!_batteryEmergencyCharging && config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
         if (!oAcPower) {
             DTU_LOGW("Cannot perform emergency charging with unknown PSU max ac power value");
@@ -231,12 +232,14 @@ void Provider::powerControlLoop()
         }
 
 
-        // Check whether the battery SoC limit setting is enabled
-        if (config.Battery.Enabled && config.GridCharger.AutoPowerBatterySoCLimitsEnabled && !PowerLimiter.isGovernedBatteryPoweredInverterProducing()) {
+        // Decide whether auto mode should be active. The SoC limit is an
+        // optional gate on top of this, not a precondition.
+        _autoPowerEnabled = config.Battery.Enabled && !PowerLimiter.isGovernedBatteryPoweredInverterProducing();
 
-            _autoPowerEnabled = true;
-            // Power OFF charger if the BMS reported SoC reaches or exceeds the user configured value
-            if (_batterySoC >= config.GridCharger.AutoPowerStopBatterySoCThreshold && _powerState) {
+        if (_autoPowerEnabled) {
+            // Optionally power OFF charger if the BMS reported SoC reaches or exceeds the user configured value
+            if (config.GridCharger.AutoPowerBatterySoCLimitsEnabled &&
+                _batterySoC >= config.GridCharger.AutoPowerStopBatterySoCThreshold && _powerState) {
                 DTU_LOGV("Current battery SoC %i reached stop threshold %i", _batterySoC, config.GridCharger.AutoPowerStopBatterySoCThreshold);
                 PowerOFF();
                 _autoPowerEnabled = false;
@@ -244,8 +247,7 @@ void Provider::powerControlLoop()
             }
             // Don't run auto mode some time to allow for output stabilization after issuing a new value
             _autoModeBlockedTillMillis = millis() + 19900;
-        } else if (_powerState){
-            _autoPowerEnabled = false;
+        } else if (_powerState) {
             PowerOFF();
             return;
         }
