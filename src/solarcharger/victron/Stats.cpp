@@ -431,6 +431,7 @@ void Stats::publishMpptData(const VeDirectMpptController::data_t &currentData, c
     PUBLISH_OPT(loadCurrent_IL_mA,                        "IL",                           currentData.loadCurrent_IL_mA.second / 1000.0);
     PUBLISH_OPT(NetworkTotalDcInputPowerMilliWatts,       "NetworkTotalDcInputPower",     currentData.NetworkTotalDcInputPowerMilliWatts.second / 1000.0);
     PUBLISH_OPT(MpptTemperatureMilliCelsius,              "MpptTemperature",              currentData.MpptTemperatureMilliCelsius.second / 1000.0);
+    PUBLISH_OPT(ChargeCurrentLimit,                       "ChargeCurrentLimit",           currentData.ChargeCurrentLimit.second / 10.0);
     PUBLISH_OPT(BatteryAbsorptionMilliVolt,               "BatteryAbsorption",            currentData.BatteryAbsorptionMilliVolt.second / 1000.0);
     PUBLISH_OPT(BatteryFloatMilliVolt,                    "BatteryFloat",                 currentData.BatteryFloatMilliVolt.second / 1000.0);
     PUBLISH_OPT(SmartBatterySenseTemperatureMilliCelsius, "SmartBatterySenseTemperature", currentData.SmartBatterySenseTemperatureMilliCelsius.second / 1000.0);
