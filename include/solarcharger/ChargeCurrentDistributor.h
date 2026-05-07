@@ -4,7 +4,7 @@
 #include <optional>
 #include <vector>
 
-namespace SolarChargers::Victron {
+namespace SolarChargers {
 
 // Distributes a total charge current limit across multiple MPPT controllers.
 // No hardware or framework dependencies — testable on the host.
@@ -38,4 +38,4 @@ class ChargeCurrentDistributor {
                                          std::vector<ControllerData> const& controllers);
 };
 
-} // namespace SolarChargers::Victron
+} // namespace SolarChargers

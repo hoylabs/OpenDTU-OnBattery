@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <solarcharger/victron/Provider.h>
-#include <solarcharger/victron/ChargeCurrentDistributor.h>
+#include <solarcharger/ChargeCurrentDistributor.h>
 #include <battery/Controller.h>
 #include "Configuration.h"
 #include "PinMapping.h"

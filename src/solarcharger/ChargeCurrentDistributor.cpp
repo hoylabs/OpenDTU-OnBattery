@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include <solarcharger/victron/ChargeCurrentDistributor.h>
-
+#include <solarcharger/ChargeCurrentDistributor.h>
 #include <algorithm>
 #include <cmath>
-#include <float.h>
 #include <numeric>
 
-namespace SolarChargers::Victron {
+namespace SolarChargers {
 
 std::vector<float> ChargeCurrentDistributor::distribute(float chargeLimit, float chargeCurrent,
                                                         std::vector<ControllerData> const& controllers)
@@ -153,4 +151,4 @@ std::vector<float> ChargeCurrentDistributor::distribute(float chargeLimit, float
     return limits;
 }
 
-} // namespace SolarChargers::Victron
+} // namespace SolarChargers
