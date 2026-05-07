@@ -24,7 +24,7 @@ class ChargeCurrentDistributor {
     struct ControllerData {
         float batteryCurrent;                  // actual (smoothed) battery charge current in A
         std::optional<float> maxCurrent;       // hardware maximum charge current in A (currentlimit)
-        std::optional<float> previousLimit = std::nullopt; // charge current limit set last cycle (maxchargecurrent);
+        std::optional<float> previousLimit;    // charge current limit set last cycle in A (maxchargecurrent)
                                                // nullopt = no prior limit known
     };
 
