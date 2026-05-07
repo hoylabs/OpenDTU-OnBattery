@@ -163,7 +163,7 @@ float Controller::getDischargeCurrentLimit()
     return std::min(getConfiguredLimit(), getBatteryLimit());
 }
 
-float Controller::getChargeCurrentLimit()
+float Controller::getChargeCurrentLimit() const
 {
     auto const& config = Configuration.get();
 
@@ -183,7 +183,7 @@ float Controller::getChargeCurrentLimit()
      */
     auto spStats = getStats();
 
-    auto getConfiguredMinLimit = [&config,&spStats]() -> float {
+    auto getConfiguredMinLimit = [&config]() -> float {
         auto configuredMinLimit = config.Battery.MinChargeCurrentLimit;
         if (configuredMinLimit < 0.0f) { return 0.0f; } // invalid setting
 
@@ -219,6 +219,7 @@ float Controller::getChargeCurrentLimit()
 
         return spStats->getChargeCurrentLimit();
     };
+
     auto maxChargeLimit = std::min(getConfiguredMaxLimit(), getBatteryLimit());
     return std::max(maxChargeLimit, getConfiguredMinLimit());
 }
