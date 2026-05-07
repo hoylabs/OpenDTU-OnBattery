@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <solarcharger/victron/Provider.h>
+#include <solarcharger/victron/ChargeCurrentDistributor.h>
 #include <battery/Controller.h>
 #include "Configuration.h"
 #include "PinMapping.h"
@@ -75,79 +76,35 @@ bool Provider::initController(gpio_num_t rx, gpio_num_t tx, uint8_t instance)
 void Provider::loop()
 {
     auto const& config = Configuration.get();
-    auto forwardBatteryData = config.SolarCharger.ForwardBatteryData;
+    auto const forwardBatteryData = config.SolarCharger.ForwardBatteryData;
+    auto const batteryEnabled = config.Battery.Enabled;
 
-    auto batteryStats = Battery.getStats();
-    float chargeLimit = Battery.getChargeCurrentLimit();
-    float chargeCurrent = batteryStats->getChargeCurrent();
+    std::shared_ptr<::Batteries::Stats const> batteryStats;
+    float chargeLimit = FLT_MAX;
+    float chargeCurrent = 0.0f;
+
+    if (batteryEnabled) {
+        batteryStats = Battery.getStats();
+        chargeLimit = Battery.getChargeCurrentLimit();
+        chargeCurrent = batteryStats->getChargeCurrent();
+    }
+
+    bool const limitActive = (chargeLimit != FLT_MAX);
 
     std::lock_guard<std::mutex> lock(_mutex);
 
-    float overallChargeCurrent  { 0.0f };
-    float remainingLimit        { chargeLimit };
-    float reservedChargeCurrent { 0.5f };   // minimum current for a controller whenever the given limit is higher
-
-    uint8_t numControllers { 0 };
-
-    // calculate the actual charge current of all MPPTs
-    for (auto const& upController : _controllers) {
-        overallChargeCurrent += static_cast<float>( upController->getData().batteryCurrent_I_mA ) / 1000.0f;
-        numControllers++;
-    }
-
-    // increase the charge limit with the current drawn by the inverter(s)
-    const float inverterCurrent { overallChargeCurrent - chargeCurrent };
-	if (inverterCurrent >= 0.0f) {
-		remainingLimit += inverterCurrent;
-	}
-
-    // reserve a minimum charge-current for every controller, to ensure that we get a good distribution over all MPPTs
-    const float overallReservedChargeCurrent { reservedChargeCurrent * static_cast<float>(numControllers) };
-    if (remainingLimit > overallReservedChargeCurrent) {
-        remainingLimit -= overallReservedChargeCurrent;
-    } else {
-        // the limit is lower than the needed reserve --> distribute the allowed limit in a simple way over all MPPTs
-        reservedChargeCurrent = remainingLimit / static_cast<float>(numControllers);
-        remainingLimit = 0.0f;
+    if (limitActive) {
+        applyChargeCurrentLimit(chargeLimit, chargeCurrent);
+    } else if (_chargeLimitActive) {
+        // transition: release any previously set limit in the MPPTs (once)
+        for (auto const& upController : _controllers) {
+            upController->setChargeLimit(FLT_MAX);
+        }
+        _chargeLimitActive = false;
     }
 
     for (auto const& upController : _controllers) {
-        const float batCurrent { static_cast<float>( upController->getData().batteryCurrent_I_mA ) / 1000.0f };
-
-        float factor { 0.0f };
-        // if there is not current for automatic distribution --> distribute the limit uniformly to all controllers
-        if (overallChargeCurrent <= 0.0f) {
-            factor = 1.0 / static_cast<float>(numControllers);
-        } else {
-            factor = batCurrent / overallChargeCurrent;
-        }
-
-        float controllerLimit { reservedChargeCurrent};
-
-        // no limit left for this controller? Only apply the absolute minimum
-        if (remainingLimit > 0.0f) {
-            controllerLimit += factor * remainingLimit;
-        }
-
-        // get the maximum allowed battery current of the charger
-        auto batMaxCurrent { upController->getData().BatteryMaximumCurrent };
-
-        // is the data valid?
-        if (batMaxCurrent.first > 0) {
-            const float maxControllerCurrent { static_cast<float>( batMaxCurrent.second ) / 10.0f };
-            // limit to the maximum allowed battery current of the charger
-            if (controllerLimit > maxControllerCurrent) {
-                controllerLimit = maxControllerCurrent;
-            }
-        }
-
-        // substract the set limit from the remaining limit for distribution to the other chargers
-        remainingLimit -= controllerLimit;
-        overallChargeCurrent -= batCurrent;
-
-        upController->setChargeLimit(controllerLimit);
-
-        if (forwardBatteryData) {
+        if (forwardBatteryData && batteryEnabled) {
             if (batteryStats->isVoltageValid() && batteryStats->getVoltageAgeSeconds() < 60) {
                 upController->setRemoteVoltage(batteryStats->getVoltage());
             }
@@ -164,6 +121,40 @@ void Provider::loop()
             _stats->update(upController->getLogId(), upController->getData(), upController->getLastUpdate());
         }
     }
+}
+
+void Provider::applyChargeCurrentLimit(float chargeLimit, float chargeCurrent)
+{
+    std::vector<ChargeCurrentDistributor::ControllerData> data;
+    data.reserve(_controllers.size());
+
+    for (auto const& upController : _controllers) {
+        auto const& mpptData = upController->getData();
+
+        std::optional<float> maxCurrent;
+        if (mpptData.BatteryMaximumCurrent.first > 0) {
+            maxCurrent = static_cast<float>(mpptData.BatteryMaximumCurrent.second) / 10.0f;
+        }
+
+        std::optional<float> previousLimit;
+        if (mpptData.ChargeCurrentLimit.first > 0) {
+            previousLimit = static_cast<float>(mpptData.ChargeCurrentLimit.second) / 10.0f;
+        }
+
+        data.push_back({
+            static_cast<float>(mpptData.batteryCurrent_I_mA) / 1000.0f,
+            maxCurrent,
+            previousLimit
+        });
+    }
+
+    auto const limits = ChargeCurrentDistributor::distribute(chargeLimit, chargeCurrent, data);
+
+    for (size_t i = 0; i < _controllers.size(); ++i) {
+        _controllers[i]->setChargeLimit(limits[i]);
+    }
+
+    _chargeLimitActive = true;
 }
 
 } // namespace SolarChargers::Victron
