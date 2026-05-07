@@ -18,9 +18,17 @@ static bool near(float a, float b)
     return std::fabs(a - b) < eps;
 }
 
-// ---------------------------------------------------------------------------
-// Inverter-current correction
-// ---------------------------------------------------------------------------
+// Empty controller list must return an empty vector without crashing.
+void testEmptyControllerList()
+{
+  std::cout << "Testing: empty controller list → empty result" << std::endl;
+
+  auto limits = CCD::distribute(10.0f, 0.0f, {});
+
+  assert(limits.empty());
+
+  std::cout << "  PASSED" << std::endl;
+}
 
 void testSingleController()
 {
@@ -48,6 +56,10 @@ void testSingleControllerHwMax()
 
     std::cout << "  PASSED" << std::endl;
 }
+
+// ---------------------------------------------------------------------------
+// Inverter-current correction
+// ---------------------------------------------------------------------------
 
 // overallChargeCurrent=8, chargeCurrent=5 → inverterCurrent=3 → adjustedLimit=13
 void testInverterCurrentCorrection()
@@ -405,11 +417,42 @@ void testSpilloverForwardedPastCappedController()
 }
 
 // ---------------------------------------------------------------------------
+// Edge cases
+// ---------------------------------------------------------------------------
+
+// chargeLimit=0 (battery full/in protection) but controllers are feeding
+// inverters with high load. adjustedLimit = 0 + 19 = 19A, which is 95% of
+// totalCapacity=20A. the shortcut must NOT fire because chargeLimit=0 — using
+// adjustedLimit for the threshold would set controllers to maxCurrent and flood
+// the battery with (90 - 19) = 4A despite the 0A charge limit.
+// expected: proportional path runs, each controller gets 9.5A → battery gets 0A.
+void testNearCapacityViaInverterCorrectionDoesNotFireShortcut()
+{
+    std::cout << "Testing: chargeLimit=0 + high inverter load does not trigger near-capacity shortcut" << std::endl;
+
+    std::vector<CD> controllers = {
+        { 9.5f, std::make_optional(10.0f) },
+        { 9.5f, std::make_optional(10.0f) },
+    };
+    auto limits = CCD::distribute(0.0f, 0.0f, controllers);
+
+    // shortcut must not have fired: limits must not be maxCurrent (10A)
+    assert(limits.size() == 2);
+    assert(near(limits[0], 9.5f));
+    assert(near(limits[1], 9.5f));
+    // total equals adjustedLimit (19A), so battery receives 0A
+    assert(near(limits[0] + limits[1], 19.0f));
+
+    std::cout << "  PASSED" << std::endl;
+}
+
+// ---------------------------------------------------------------------------
 
 int main()
 {
     std::cout << "=== ChargeCurrentDistributor tests ===" << std::endl;
 
+    testEmptyControllerList();
     testSingleController();
     testSingleControllerHwMax();
     testInverterCurrentCorrection();
@@ -433,6 +476,8 @@ int main()
     testNoPreviousLimitFallsBackToReserve();
 
     testSpilloverForwardedPastCappedController();
+
+    testNearCapacityViaInverterCorrectionDoesNotFireShortcut();
 
     std::cout << "All tests passed." << std::endl;
     return 0;

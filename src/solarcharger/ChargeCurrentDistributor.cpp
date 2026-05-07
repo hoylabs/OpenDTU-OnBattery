@@ -32,10 +32,13 @@ std::vector<float> ChargeCurrentDistributor::distribute(float chargeLimit, float
     }
 
     // near-capacity shortcut (inspired by Victron's dbus-systemcalc-py / DVCC):
-    // when the requested limit is at or above 95 % of the combined hardware
-    // maximum, lift all software limits so the controllers can run at their own
-    // hardware maximum without any interference from us. this avoids unnecessary
-    // register writes and hunting behaviour near the top of the operating range.
+    // when the battery's requested charge limit is at or above 95 % of the
+    // combined hardware maximum, set every controller to its own hardware
+    // maximum. this avoids unnecessary register writes and hunting behaviour
+    // near the top of the operating range.
+    // intentionally uses chargeLimit (not adjustedLimit): inverter load must
+    // not influence this check, as it could cause the shortcut to fire when
+    // the battery limit is near zero, flooding the battery with excess current.
     // the shortcut only activates when every controller has reported its maximum,
     // because without all values we cannot reliably compute the 95 % threshold.
     bool const allHaveCapacity = std::all_of(controllers.begin(), controllers.end(),
@@ -46,7 +49,7 @@ std::vector<float> ChargeCurrentDistributor::distribute(float chargeLimit, float
             std::accumulate(controllers.begin(), controllers.end(), 0.0f,
                             [](const float sum, ControllerData const& c) { return sum + *c.maxCurrent; });
 
-        if (adjustedLimit >= totalCapacity * 0.95f) {
+        if (chargeLimit >= totalCapacity * 0.95f) {
             std::vector<float> limits(N);
             for (size_t i = 0; i < N; ++i) {
                 limits[i] = *controllers[i].maxCurrent;
