@@ -253,9 +253,13 @@ void Stats::populateJsonWithInstanceStats(const JsonObject &root, const VeDirect
     }
 
     if (mpptData.ChargeCurrentLimit.first > 0) {
-        device["ChargeCurrentLimit"]["v"] = mpptData.ChargeCurrentLimit.second / 10.0;
-        device["ChargeCurrentLimit"]["u"] = "A";
-        device["ChargeCurrentLimit"]["d"] = 1;
+        if (mpptData.ChargeCurrentLimit.second == UINT16_MAX) {
+            device["ChargeCurrentLimit"] = "Not limited";
+        } else {
+            device["ChargeCurrentLimit"]["v"] = mpptData.ChargeCurrentLimit.second / 10.0;
+            device["ChargeCurrentLimit"]["u"] = "A";
+            device["ChargeCurrentLimit"]["d"] = 1;
+        }
     }
 
     const JsonObject output = values["output"].to<JsonObject>();
