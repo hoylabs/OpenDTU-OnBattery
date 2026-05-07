@@ -48,7 +48,12 @@
             </CardElement>
 
             <CardElement
-                v-if="batteryConfigList.enabled && (batteryConfigList.provider == 1 || batteryConfigList.provider == 6 || (batteryConfigList.provider == 4 && batteryConfigList.bus_type == 1))"
+                v-if="
+                    batteryConfigList.enabled &&
+                    (batteryConfigList.provider == 1 ||
+                        batteryConfigList.provider == 6 ||
+                        (batteryConfigList.provider == 4 && batteryConfigList.bus_type == 1))
+                "
                 :text="$t('batteryadmin.SerialSettings')"
                 textVariant="text-bg-primary"
                 addSpace
