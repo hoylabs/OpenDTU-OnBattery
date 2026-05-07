@@ -290,17 +290,6 @@
 
                 <template v-if="batteryConfigList.enable_charge_current_limit">
                     <InputElement
-                        :label="$t('batteryadmin.MinChargeCurrentLimit')"
-                        v-model="batteryConfigList.min_charge_current_limit"
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        postfix="A"
-                        :tooltip="$t('batteryadmin.MinChargeCurrentLimitInfo')"
-                        wide
-                    />
-
-                    <InputElement
                         :label="$t('batteryadmin.MaxChargeCurrentLimit')"
                         v-model="batteryConfigList.max_charge_current_limit"
                         type="number"
@@ -352,10 +341,20 @@
                         />
 
                         <template v-if="batteryConfigList.use_battery_reported_charge_current_limit">
+                            <InputElement
+                                :label="$t('batteryadmin.MinChargeCurrentLimit')"
+                                v-model="batteryConfigList.min_charge_current_limit"
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                postfix="A"
+                                :tooltip="$t('batteryadmin.MinChargeCurrentLimitInfo')"
+                                wide
+                            />
+
                             <div
                                 class="alert alert-secondary"
                                 role="alert"
-                                v-if="batteryConfigList.enabled"
                                 v-html="$t('batteryadmin.BatteryReportedChargeCurrentLimitInfo')"
                             ></div>
                         </template>
