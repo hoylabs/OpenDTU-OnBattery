@@ -5,6 +5,7 @@
 #include <battery/mqtt/Provider.h>
 #include <battery/pylontech/Provider.h>
 #include <battery/pytes/can/Provider.h>
+#include <battery/pytes/rs485/Provider.h>
 #include <battery/sbs/Provider.h>
 #include <battery/victronsmartshunt/Provider.h>
 #include <battery/zendure/LocalMqttProvider.h>
@@ -68,7 +69,11 @@ void Controller::updateSettings()
             _upProvider = std::make_unique<VictronSmartShunt::Provider>();
             break;
         case BatteryConfig::ProviderType::PYTES:
-            _upProvider = std::make_unique<Pytes::Can::Provider>();
+            if (config.Battery.Bus == BatteryConfig::BusType::RS485) {
+                _upProvider = std::make_unique<Pytes::Rs485::Provider>();
+            } else {
+                _upProvider = std::make_unique<Pytes::Can::Provider>();
+            }
             break;
         case BatteryConfig::ProviderType::SBS:
             _upProvider = std::make_unique<SBS::Provider>();
