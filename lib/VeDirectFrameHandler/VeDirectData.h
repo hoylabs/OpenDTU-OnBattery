@@ -56,8 +56,8 @@ struct veMpptStruct : veStruct {
     std::pair<uint32_t, uint32_t> NetworkTotalDcInputPowerMilliWatts;
     std::pair<uint32_t, uint32_t> BatteryAbsorptionMilliVolt;
     std::pair<uint32_t, uint32_t> BatteryFloatMilliVolt;
-	std::pair<uint32_t, uint16_t> BatteryMaximumCurrent;
-	std::pair<uint32_t, uint16_t> ChargeCurrentLimit;
+    std::pair<uint32_t, uint16_t> BatteryMaximumCurrent;
+    std::pair<uint32_t, uint16_t> ChargeCurrentLimit;
     std::pair<uint32_t, uint8_t> NetworkInfo;
     std::pair<uint32_t, uint8_t> NetworkMode;
     std::pair<uint32_t, uint8_t> NetworkStatus;
