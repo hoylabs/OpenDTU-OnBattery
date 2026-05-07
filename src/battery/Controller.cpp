@@ -184,6 +184,8 @@ float Controller::getChargeCurrentLimit() const
     auto spStats = getStats();
 
     auto getConfiguredMinLimit = [&config]() -> float {
+        if (!config.Battery.UseBatteryReportedChargeCurrentLimit) { return 0.0f; }
+
         auto configuredMinLimit = config.Battery.MinChargeCurrentLimit;
         if (configuredMinLimit < 0.0f) { return 0.0f; } // invalid setting
 
