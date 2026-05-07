@@ -78,18 +78,16 @@ void Provider::loop()
     auto const& config = Configuration.get();
     auto const forwardBatteryData = config.SolarCharger.ForwardBatteryData;
     auto const batteryEnabled = config.Battery.Enabled;
+    auto const chargeLimit = Battery.getChargeCurrentLimit();
+    auto const limitActive = (chargeLimit != FLT_MAX);
 
     std::shared_ptr<::Batteries::Stats const> batteryStats;
-    float chargeLimit = FLT_MAX;
-    float chargeCurrent = 0.0f;
+    auto chargeCurrent = 0.0f;
 
     if (batteryEnabled) {
         batteryStats = Battery.getStats();
-        chargeLimit = Battery.getChargeCurrentLimit();
         chargeCurrent = batteryStats->getChargeCurrent();
     }
-
-    bool const limitActive = (chargeLimit != FLT_MAX);
 
     std::lock_guard<std::mutex> lock(_mutex);
 
