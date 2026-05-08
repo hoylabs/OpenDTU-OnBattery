@@ -54,7 +54,7 @@ export default defineConfig({
         comments: false,
       },
     },
-    chunkSizeWarningLimit: 1024,
+    chunkSizeWarningLimit: 1536,
     rollupOptions: {
       output: {
         // Only create one js file
