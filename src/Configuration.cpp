@@ -139,6 +139,12 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["discharge_current_limit_below_soc"] = config.Battery.DischargeCurrentLimitBelowSoc;
     target["discharge_current_limit_below_voltage"] = config.Battery.DischargeCurrentLimitBelowVoltage;
     target["use_battery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
+    target["enable_charge_current_limit"] = config.Battery.EnableChargeCurrentLimit;
+    target["max_charge_current_limit"] = config.Battery.MaxChargeCurrentLimit;
+    target["min_charge_current_limit"] = config.Battery.MinChargeCurrentLimit;
+    target["charge_current_limit_below_soc"] = config.Battery.ChargeCurrentLimitBelowSoc;
+    target["charge_current_limit_below_voltage"] = config.Battery.ChargeCurrentLimitBelowVoltage;
+    target["use_battery_reported_charge_current_limit"] = config.Battery.UseBatteryReportedChargeCurrentLimit;
 }
 
 void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target, bool includeCredentials)
@@ -160,7 +166,7 @@ void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig cons
     target["charge_through_interval"] = source.ChargeThroughInterval;
     target["buzzer_enable"] = source.BuzzerEnable;
     target["control_mode"] = source.ControlMode;
-    target["charge_through_reset"] = source.ChargeThroughResetLevel;
+    target["charge_through_keep_minutes"] = source.ChargeThroughKeepMinutes;
     target["connection_type"] = source.ConnectionType;
     target["server"] = source.Server;
     target["port"] = source.Port;
@@ -186,6 +192,9 @@ void ConfigurationClass::serializeBatteryMqttConfig(BatteryMqttConfig const& sou
     target["discharge_current_limit_topic"] = source.DischargeCurrentLimitTopic;
     target["discharge_current_limit_json_path"] = source.DischargeCurrentLimitJsonPath;
     target["discharge_current_limit_unit"] = source.DischargeCurrentLimitUnit;
+    target["charge_current_limit_topic"] = source.ChargeCurrentLimitTopic;
+    target["charge_current_limit_json_path"] = source.ChargeCurrentLimitJsonPath;
+    target["charge_current_limit_unit"] = source.ChargeCurrentLimitUnit;
 }
 
 void ConfigurationClass::serializeBatterySerialConfig(BatterySerialConfig const& source, JsonObject& target)
@@ -594,6 +603,12 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     target.DischargeCurrentLimitBelowSoc = source["discharge_current_limit_below_soc"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_SOC;
     target.DischargeCurrentLimitBelowVoltage = source["discharge_current_limit_below_voltage"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_VOLTAGE;
     target.UseBatteryReportedDischargeCurrentLimit = source["use_battery_reported_discharge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_DISCHARGE_CURRENT_LIMIT;
+    target.EnableChargeCurrentLimit = source["enable_charge_current_limit"] | BATTERY_ENABLE_CHARGE_CURRENT_LIMIT;
+    target.MaxChargeCurrentLimit = source["max_charge_current_limit"] | BATTERY_CHARGE_CURRENT_LIMIT_MAX;
+    target.MinChargeCurrentLimit = source["min_charge_current_limit"] | BATTERY_CHARGE_CURRENT_LIMIT_MIN;
+    target.ChargeCurrentLimitBelowSoc = source["charge_current_limit_below_soc"] | BATTERY_CHARGE_CURRENT_LIMIT_BELOW_SOC;
+    target.ChargeCurrentLimitBelowVoltage = source["charge_current_limit_below_voltage"] | BATTERY_CHARGE_CURRENT_LIMIT_BELOW_VOLTAGE;
+    target.UseBatteryReportedChargeCurrentLimit = source["use_battery_reported_charge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_CHARGE_CURRENT_LIMIT;
 }
 
 void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target)
@@ -613,7 +628,7 @@ void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& sourc
     target.SunriseOffset = source["sunrise_offset"] | BATTERY_ZENDURE_SUNRISE_OFFSET;
     target.SunsetOffset = source["sunset_offset"] | BATTERY_ZENDURE_SUNSET_OFFSET;
     target.ChargeThroughEnable = source["charge_through_enable"] | BATTERY_ZENDURE_CHARGE_THROUGH_ENABLE;
-    target.ChargeThroughResetLevel = source["charge_through_reset"] | BATTERY_ZENDURE_CHARGE_THROUGH_RESET_LEVEL;
+    target.ChargeThroughKeepMinutes = source["charge_through_keep_minutes"] | BATTERY_ZENDURE_CHARGE_THROUGH_KEEP_MINUTES;
     target.ChargeThroughInterval = source["charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
     target.BuzzerEnable = source["buzzer_enable"] |BATTERY_ZENDURE_BUZZER_ENABLE;
     target.ControlMode = source["control_mode"] | BatteryZendureConfig::ControlMode::ControlModeFull;
@@ -638,6 +653,9 @@ void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, 
     strlcpy(target.DischargeCurrentLimitTopic, source["discharge_current_limit_topic"] | "", sizeof(target.DischargeCurrentLimitTopic));
     strlcpy(target.DischargeCurrentLimitJsonPath, source["discharge_current_limit_json_path"] | "", sizeof(target.DischargeCurrentLimitJsonPath));
     target.DischargeCurrentLimitUnit = source["discharge_current_limit_unit"] | BatteryAmperageUnit::Amps;
+    strlcpy(target.ChargeCurrentLimitTopic, source["charge_current_limit_topic"] | "", sizeof(target.ChargeCurrentLimitTopic));
+    strlcpy(target.ChargeCurrentLimitJsonPath, source["charge_current_limit_json_path"] | "", sizeof(target.ChargeCurrentLimitJsonPath));
+    target.ChargeCurrentLimitUnit = source["charge_current_limit_unit"] | BatteryAmperageUnit::Amps;
 }
 
 void ConfigurationClass::deserializeBatterySerialConfig(JsonObject const& source, BatterySerialConfig& target)

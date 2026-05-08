@@ -208,7 +208,7 @@ struct BATTERY_ZENDURE_CONFIG_T {
     bool BuzzerEnable;
     enum ControlMode : uint8_t { ControlModeFull = 0, ControlModeOnce = 1, ControlModeReadOnly = 2 };
     ControlMode ControlMode;
-    uint8_t ChargeThroughResetLevel;
+    uint16_t ChargeThroughKeepMinutes;
     enum ConnectionType_t { LocalMqtt = 0, ZendureMqtt = 1 };
     ConnectionType_t ConnectionType;
     char Server[ZENDURE_MAX_SERVER_STRLEN + 1];
@@ -233,6 +233,9 @@ struct BATTERY_MQTT_CONFIG_T {
     char DischargeCurrentLimitTopic[MQTT_MAX_TOPIC_STRLEN + 1];
     char DischargeCurrentLimitJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryAmperageUnit DischargeCurrentLimitUnit;
+    char ChargeCurrentLimitTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char ChargeCurrentLimitJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    BatteryAmperageUnit ChargeCurrentLimitUnit;
 };
 using BatteryMqttConfig = struct BATTERY_MQTT_CONFIG_T;
 
@@ -253,6 +256,12 @@ struct BATTERY_CONFIG_T {
     float DischargeCurrentLimitBelowSoc;
     float DischargeCurrentLimitBelowVoltage;
     bool UseBatteryReportedDischargeCurrentLimit;
+    bool EnableChargeCurrentLimit;
+    float MaxChargeCurrentLimit;
+    float MinChargeCurrentLimit;
+    float ChargeCurrentLimitBelowSoc;
+    float ChargeCurrentLimitBelowVoltage;
+    bool UseBatteryReportedChargeCurrentLimit;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 

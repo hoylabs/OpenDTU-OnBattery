@@ -109,7 +109,7 @@ void Provider::loop()
     if (ms >= _nextSunCalc) {
         _nextSunCalc = ms + _rateSunCalcMs;
 
-        calculateFullChargeAge();
+        calculateTimeDiff();
 
         struct tm timeinfo_local;
         struct tm timeinfo_sun;
@@ -189,7 +189,7 @@ void Provider::loop()
     }
 }
 
-void Provider::calculateFullChargeAge()
+void Provider::calculateTimeDiff()
 {
     time_t now;
     if (!Utils::getEpoch(&now)) {
@@ -200,7 +200,7 @@ void Provider::calculateFullChargeAge()
         auto last_full = *(_stats->_last_full_timestamp);
         uint32_t age = now > last_full  ? (now - last_full) / 3600U : 0U;
 
-        DTU_LOGD("Now: %ld, LastFull: %" PRIu64 ", Diff: %" PRIu32, now, last_full, age);
+        DTU_LOGD("calculateTimeDiff: Now is %ld, LastFull was %" PRIu64 " and therefore %" PRIu32 " hours ago", now, last_full, age);
 
         // store for webview
         _stats->_last_full_hours = age;
@@ -210,10 +210,20 @@ void Provider::calculateFullChargeAge()
         auto last_empty = *(_stats->_last_empty_timestamp);
         uint32_t age = now > last_empty  ? (now - last_empty) / 3600U : 0U;
 
-        DTU_LOGD("Now: %ld, LastEmpty: %" PRIu64 ", Diff: %" PRIu32, now, last_empty, age);
+        DTU_LOGD("calculateTimeDiff: Now is %ld, LastEmpty was %" PRIu64 " and therefore %" PRIu32 " hours ago", now, last_empty, age);
 
         // store for webview
         _stats->_last_empty_hours = age;
+    }
+
+    if(_stats->_keep_until_timestamp.has_value()) {
+        auto keep_until = *(_stats->_keep_until_timestamp);
+        uint32_t remain_minutes = now < keep_until ? (keep_until - now) / 60U : 0U;
+
+        DTU_LOGD("calculateTimeDiff: Now is %ld, KeepUntil is %" PRIu64 " and therefore %u minutes remaining", now, keep_until, remain_minutes);
+
+        // store for webview
+        _stats->_keep_until_minutes = remain_minutes;
     }
 
 }
@@ -233,6 +243,8 @@ void Provider::checkChargeThrough(uint32_t predictHours /* = 0 */)
 
     auto currentValue      = _stats->_last_full_hours.value_or(0) + predictHours;
     auto noValue           = !_stats->_last_full_timestamp.has_value();
+
+    DTU_LOGD("checkChargeThrough: softChargeThrough is %" PRIu32 " hours, hardChargeThrough is %" PRIu32 " hours, Current value is %" PRIu32 " hours (with %s value)", softChargeThrough, hardChargeThrough, currentValue, noValue ? "invalid" : "valid");
 
     if (noValue || currentValue > hardChargeThrough) {
         return setChargeThroughState(ChargeThroughState::Hard);
@@ -617,26 +629,30 @@ void Provider::calculateEfficiency()
 void Provider::setSoC(const float soc, const uint32_t timestamp /* = 0 */, const uint8_t precision /* = 2 */)
 {
     time_t now;
-
-    if (Utils::getEpoch(&now)) {
-        if (soc >= 100.0) {
-            _stats->_last_full_timestamp = now;
-            publishPersistentSettings(ZENDURE_PERSISTENT_SETTINGS_LAST_FULL, String(now));
-
-            if (Configuration.get().Battery.Zendure.ChargeThroughEnable) {
-                setChargeThroughState(ChargeThroughState::Keep);
-            }
-        }
-         if (soc < static_cast<float>(Configuration.get().Battery.Zendure.ChargeThroughResetLevel) && _stats->_charge_through_state.value_or(ChargeThroughState::Disabled) == ChargeThroughState::Keep) {
-            setChargeThroughState(ChargeThroughState::Idle);
-        }
-        if (soc <= 0.0) {
-            _stats->_last_empty_timestamp = now;
-            publishPersistentSettings(ZENDURE_PERSISTENT_SETTINGS_LAST_EMPTY, String(now));
-        }
-    }
+    auto const& config = Configuration.get();
+    auto const chargeThroughState = getChargeThroughState();
 
     _stats->setSoC(soc, precision, timestamp ? timestamp : millis());
+
+    if (!Utils::getEpoch(&now)) { return; }
+
+    if (chargeThroughState == ChargeThroughState::Keep && (now > _stats->_keep_until_timestamp.value_or(UINT64_MAX))) {
+        setChargeThroughState(ChargeThroughState::Idle);
+    }
+
+    if (soc >= 100.0) {
+        _stats->_last_full_timestamp = now;
+        publishPersistentSettings(ZENDURE_PERSISTENT_SETTINGS_LAST_FULL, String(now));
+
+        if (chargeThroughState == ChargeThroughState::Soft || chargeThroughState == ChargeThroughState::Hard) {
+            _stats->_keep_until_timestamp = now + config.Battery.Zendure.ChargeThroughKeepMinutes * 60;
+            publishPersistentSettings(ZENDURE_PERSISTENT_SETTINGS_KEEP_EPOCH, String(_stats->_keep_until_timestamp.value_or(0)));
+            setChargeThroughState(ChargeThroughState::Keep);
+        }
+    } else if (soc <= 0.0) {
+        _stats->_last_empty_timestamp = now;
+        publishPersistentSettings(ZENDURE_PERSISTENT_SETTINGS_LAST_EMPTY, String(now));
+    }
 }
 
 void Provider::onMqttMessagePersistentSettings(espMqttClientTypes::MessageProperties const& properties,
@@ -650,10 +666,12 @@ void Provider::onMqttMessagePersistentSettings(espMqttClientTypes::MessageProper
 
     if (t.endsWith(ZENDURE_PERSISTENT_SETTINGS_LAST_FULL) && integer) {
         _stats->_last_full_timestamp = integer;
+        calculateTimeDiff();
         return;
     }
     if (t.endsWith(ZENDURE_PERSISTENT_SETTINGS_LAST_EMPTY) && integer) {
         _stats->_last_empty_timestamp = integer;
+        calculateTimeDiff();
         return;
     }
     if (t.endsWith(ZENDURE_PERSISTENT_SETTINGS_CHARGE_THROUGH)) {
@@ -674,6 +692,11 @@ void Provider::onMqttMessagePersistentSettings(espMqttClientTypes::MessageProper
             setChargeThroughState(integer > 0 ? ChargeThroughState::Hard : ChargeThroughState::Idle, false);
         }
 
+        return;
+    }
+    if (t.endsWith(ZENDURE_PERSISTENT_SETTINGS_KEEP_EPOCH) && integer) {
+        _stats->_keep_until_timestamp = integer;
+        calculateTimeDiff();
         return;
     }
 }

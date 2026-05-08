@@ -200,7 +200,8 @@
             "RELAY": "Error relay state",
             "ERR": "Error code",
             "HSDS": "Day sequence number (0..364)",
-            "MpptTemperature": "Charge controller temperature"
+            "MpptTemperature": "Charge controller temperature",
+            "ChargeCurrentLimit": "Charge current limit"
         },
         "section_output": "Output (Battery)",
         "output": {
@@ -795,9 +796,21 @@
         "DischargeCurrentLimitBelowVoltage": "Apply limit below voltage",
         "DischargeCurrentLimitBelowVoltageInfo": "The discharge current limit is only applied below this voltage (used if 'Ignore Battery SoC' is enabled in the DPL settings or when SoC is unavailable).",
         "UseBatteryReportedDischargeCurrentLimit": "Use Battery-Reported limit",
-        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hint:</b> The lowest limit will be applied, with the battery-reported discharge current limit used only if an update was received in the last minute; otherwise, the previously specified limit will act as a fallback.",
+        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hint:</b> The more restrictive of the configured max limit and the battery-reported limit will be applied. The battery-reported limit is only considered if an update was received in the last minute; if it is stale, only the configured max limit applies.",
         "MqttDischargeCurrentLimitTopic": "Discharge Current Limit Value Topic",
         "MqttAmperageUnit": "@:base.Unit",
+        "ChargeCurrentLimitConfiguration": "Charge Current Limit Settings",
+        "LimitChargeCurrent": "Limit Charge Current",
+        "MinChargeCurrentLimit": "min. Charge Current",
+        "MinChargeCurrentLimitInfo": "The configured minimum acts as a floor: if the battery-reported limit falls below this value, this value will be used instead.",
+        "MaxChargeCurrentLimit": "max. Charge Current",
+        "ChargeCurrentLimitBelowSoc": "Apply max limit below SoC",
+        "ChargeCurrentLimitBelowSocInfo": "The charge max current limit is only applied below this SoC (not used if 'Ignore Battery SoC' is enabled in the DPL settings).",
+        "ChargeCurrentLimitBelowVoltage": "Apply max limit below voltage",
+        "ChargeCurrentLimitBelowVoltageInfo": "The max charge current limit is only applied below this voltage (used if 'Ignore Battery SoC' is enabled in the DPL settings or when SoC is unavailable).",
+        "UseBatteryReportedChargeCurrentLimit": "Use Battery-Reported limit",
+        "BatteryReportedChargeCurrentLimitInfo": "<b>Hint:</b> The more restrictive of the configured max limit and the battery-reported limit will be applied. The battery-reported limit is only considered if an update was received in the last minute; if it is stale, only the configured max limit applies.",
+        "MqttChargeCurrentLimitTopic": "Charge Current Limit Value Topic",
         "ZendureConfiguration": "Configuration",
         "ZendureMinSoc": "Minimum SoC",
         "ZendureMaxSoc": "Maximum SoC",
@@ -845,7 +858,8 @@
             "chargeThrough": "Charge Through Settings",
             "chargeThroughEnabled": "Charge Through",
             "chargeThroughInterval": "Maximum time without full charge",
-            "chargeThroughReset": "Reset Threshold",
+            "chargeThroughKeepMinutes": "Keep charge through mode",
+            "chargeThroughKeepMinutesDescription": "Keep charge through mode for at least this amount of minutes after battery reached 100% SoC",
             "connectionType": "Connection Type",
             "connectionTypes": {
                 "local": "Local MQTT Broker",
@@ -1347,7 +1361,8 @@
                 "discharging": "Discharging",
                 "invalid": "@:battery.invalid",
                 "unknown": "@:battery.unknown"
-            }
+            },
+            "keepUntil": "Hold full charge for"
         }
     }
 }
