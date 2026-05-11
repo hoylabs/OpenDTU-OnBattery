@@ -3,8 +3,10 @@
 
 #include "HoymilesRadio_CMT.h"
 #include "HoymilesRadio_NRF.h"
+#include "HoymilesRadio_WiFi.h"
 #include "inverters/InverterAbstract.h"
 #include "types.h"
+#include <IPAddress.h>
 #include <Print.h>
 #include <SPI.h>
 #include <memory>
@@ -21,6 +23,7 @@ public:
     void loop();
 
     std::shared_ptr<InverterAbstract> addInverter(const char* name, const uint64_t serial);
+    std::shared_ptr<InverterAbstract> addInverterWifi(const char* name, const uint64_t serial, const IPAddress& ip);
     std::shared_ptr<InverterAbstract> getInverterByPos(const uint8_t pos);
     std::shared_ptr<InverterAbstract> getInverterBySerial(const uint64_t serial);
     std::shared_ptr<InverterAbstract> getInverterByFragment(const fragment_t& fragment);
@@ -37,8 +40,9 @@ public:
 
 private:
     std::vector<std::shared_ptr<InverterAbstract>> _inverters;
-    std::unique_ptr<HoymilesRadio_NRF> _radioNrf;
-    std::unique_ptr<HoymilesRadio_CMT> _radioCmt;
+    std::unique_ptr<HoymilesRadio_NRF>  _radioNrf;
+    std::unique_ptr<HoymilesRadio_CMT>  _radioCmt;
+    std::unique_ptr<HoymilesRadio_WiFi> _radioWifi;
 
     std::mutex _mutex;
 

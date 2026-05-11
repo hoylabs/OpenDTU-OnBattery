@@ -138,6 +138,7 @@ public:
 
 protected:
     HoymilesRadio* _radio;
+    void setLastRssi(int8_t rssi) { _lastRssi = rssi; }
 
 private:
     serial_u _serial;

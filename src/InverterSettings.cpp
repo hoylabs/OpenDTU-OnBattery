@@ -7,6 +7,7 @@
 #include "PinMapping.h"
 #include "SunPosition.h"
 #include <Hoymiles.h>
+#include <IPAddress.h>
 #include <SpiManager.h>
 
 #undef TAG
@@ -29,7 +30,15 @@ void InverterSettingsClass::init(Scheduler& scheduler)
     ESP_LOGI(TAG, "Initialize Hoymiles interface...");
     Hoymiles.init();
 
-    if (!PinMapping.isValidNrf24Config() && !PinMapping.isValidCmt2300Config()) {
+    bool hasWifiInverter = false;
+    for (uint8_t i = 0; i < INV_MAX_COUNT; i++) {
+        if (config.Inverter[i].Serial != 0 && config.Inverter[i].IsWifi) {
+            hasWifiInverter = true;
+            break;
+        }
+    }
+
+    if (!PinMapping.isValidNrf24Config() && !PinMapping.isValidCmt2300Config() && !hasWifiInverter) {
         ESP_LOGE(TAG, "Invalid pin config");
         return;
     }
@@ -74,12 +83,24 @@ void InverterSettingsClass::init(Scheduler& scheduler)
             continue;
         }
 
-        ESP_LOGI(TAG, "Adding inverter: %0" PRIx32 "%08" PRIx32 " - %s",
+        ESP_LOGI(TAG, "Adding inverter: %0" PRIx32 "%08" PRIx32 " - %s%s",
             static_cast<uint32_t>((inv_cfg.Serial >> 32) & 0xFFFFFFFF),
             static_cast<uint32_t>(inv_cfg.Serial & 0xFFFFFFFF),
-            inv_cfg.Name);
+            inv_cfg.Name,
+            inv_cfg.IsWifi ? " (WiFi)" : "");
 
-        auto inv = Hoymiles.addInverter(inv_cfg.Name, inv_cfg.Serial);
+        std::shared_ptr<InverterAbstract> inv;
+        if (inv_cfg.IsWifi) {
+            IPAddress ip;
+            if (!ip.fromString(inv_cfg.IpAddress)) {
+                ESP_LOGW(TAG, "Adding WiFi inverter failed: invalid IP '%s'", inv_cfg.IpAddress);
+                continue;
+            }
+            inv = Hoymiles.addInverterWifi(inv_cfg.Name, inv_cfg.Serial, ip);
+        } else {
+            inv = Hoymiles.addInverter(inv_cfg.Name, inv_cfg.Serial);
+        }
+
         if (inv == nullptr) {
             ESP_LOGW(TAG, "Adding inverter failed: Unsupported type");
             continue;

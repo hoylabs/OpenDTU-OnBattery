@@ -10,6 +10,7 @@
 #include "inverters/HMS_1CH.h"
 #include "inverters/HMS_1CHv2.h"
 #include "inverters/HMS_2CH.h"
+#include "inverters/HMS_2T.h"
 #include "inverters/HMS_4CH.h"
 #include "inverters/HMT_4CH.h"
 #include "inverters/HMT_6CH.h"
@@ -29,6 +30,7 @@ void HoymilesClass::init()
     _pollInterval = 0;
     _radioNrf.reset(new HoymilesRadio_NRF());
     _radioCmt.reset(new HoymilesRadio_CMT());
+    _radioWifi.reset(new HoymilesRadio_WiFi());
 }
 
 void HoymilesClass::initNRF(SPIClass* initialisedSpiBus, const uint8_t pinCE, const uint8_t pinIRQ)
@@ -187,6 +189,18 @@ std::shared_ptr<InverterAbstract> HoymilesClass::addInverter(const char* name, c
     }
 
     return nullptr;
+}
+
+std::shared_ptr<InverterAbstract> HoymilesClass::addInverterWifi(const char* name,
+                                                                   const uint64_t serial,
+                                                                   const IPAddress& ip)
+{
+    auto i = std::make_shared<HMS_2T>(_radioWifi.get(), serial);
+    i->setWifiIp(ip);
+    i->setName(name);
+    i->init();
+    _inverters.push_back(std::move(i));
+    return _inverters.back();
 }
 
 std::shared_ptr<InverterAbstract> HoymilesClass::getInverterByPos(const uint8_t pos)

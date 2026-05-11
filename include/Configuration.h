@@ -77,6 +77,9 @@ struct INVERTER_CONFIG_T {
     bool ClearEventlogOnMidnight;
     bool YieldDayCorrection;
     CHANNEL_CONFIG_T channel[INV_MAX_CHAN_COUNT];
+    // WiFi (HMS-xxxxW-2T) support
+    bool IsWifi;
+    char IpAddress[16]; // "xxx.xxx.xxx.xxx\0"
 };
 
 struct HTTP_REQUEST_CONFIG_T {

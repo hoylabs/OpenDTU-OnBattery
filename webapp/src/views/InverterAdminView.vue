@@ -20,6 +20,23 @@
                         required
                     />
                 </div>
+                <div class="form-group d-flex align-items-center my-2">
+                    <input
+                        v-model="newInverterData.is_wifi"
+                        type="checkbox"
+                        class="form-check-input me-2"
+                        id="new-is-wifi"
+                    />
+                    <label class="form-check-label me-4" for="new-is-wifi">{{ $t('inverteradmin.IsWifi') }}</label>
+                    <input
+                        v-if="newInverterData.is_wifi"
+                        v-model="newInverterData.ip_address"
+                        type="text"
+                        class="form-control ml-sm-2"
+                        placeholder="192.168.1.100"
+                        pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+                    />
+                </div>
                 <div class="d-flex my-3">
                     <button type="submit" class="btn btn-primary ms-auto">
                         {{ $t('inverteradmin.Add') }}
@@ -156,6 +173,26 @@
                         class="form-control"
                         maxlength="31"
                     />
+
+                    <div class="d-flex align-items-center mt-2 mb-1">
+                        <input
+                            v-model="selectedInverterData.is_wifi"
+                            type="checkbox"
+                            class="form-check-input me-2"
+                            id="edit-is-wifi"
+                        />
+                        <label class="form-check-label me-3" for="edit-is-wifi">
+                            {{ $t('inverteradmin.IsWifi') }}
+                        </label>
+                        <input
+                            v-if="selectedInverterData.is_wifi"
+                            v-model="selectedInverterData.ip_address"
+                            type="text"
+                            class="form-control"
+                            :placeholder="$t('inverteradmin.IpAddress')"
+                            pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+                        />
+                    </div>
 
                     <CardElement :text="$t('inverteradmin.InverterStatus')" addSpace>
                         <InputElement

@@ -12,6 +12,7 @@
 #include "helper.h"
 #include <AsyncJson.h>
 #include <Hoymiles.h>
+#include <IPAddress.h>
 
 void WebApiInverterClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -59,6 +60,8 @@ void WebApiInverterClass::onInverterList(AsyncWebServerRequest* request)
             obj["zero_day"] = config.Inverter[i].ZeroYieldDayOnMidnight;
             obj["clear_eventlog"] = config.Inverter[i].ClearEventlogOnMidnight;
             obj["yieldday_correction"] = config.Inverter[i].YieldDayCorrection;
+            obj["is_wifi"] = config.Inverter[i].IsWifi;
+            obj["ip_address"] = config.Inverter[i].IpAddress;
 
             auto inv = Hoymiles.getInverterBySerial(config.Inverter[i].Serial);
             uint8_t max_channels;
@@ -133,16 +136,36 @@ void WebApiInverterClass::onInverterAdd(AsyncWebServerRequest* request)
         return;
     }
 
+    const bool isWifi = root["is_wifi"] | false;
+    IPAddress wifiIp;
+    if (isWifi) {
+        String ipStr = root["ip_address"] | String("0.0.0.0");
+        if (!wifiIp.fromString(ipStr)) {
+            retMsg["message"] = "Invalid IP address for WiFi inverter!";
+            retMsg["code"] = WebApiError::GenericValueMissing;
+            WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
+            return;
+        }
+    }
+
     // Interpret the string as a hex value and convert it to uint64_t
     inverter->Serial = serial;
 
     strncpy(inverter->Name, root["name"].as<String>().c_str(), INV_MAX_NAME_STRLEN);
+    inverter->IsWifi = isWifi;
+    strlcpy(inverter->IpAddress, (root["ip_address"] | String("0.0.0.0")).c_str(),
+            sizeof(inverter->IpAddress));
 
     WebApi.writeConfig(retMsg, WebApiError::InverterAdded, "Inverter created!");
 
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 
-    auto inv = Hoymiles.addInverter(inverter->Name, inverter->Serial);
+    std::shared_ptr<InverterAbstract> inv;
+    if (isWifi) {
+        inv = Hoymiles.addInverterWifi(inverter->Name, inverter->Serial, wifiIp);
+    } else {
+        inv = Hoymiles.addInverter(inverter->Name, inverter->Serial);
+    }
 
     if (inv != nullptr) {
         for (uint8_t c = 0; c < INV_MAX_CHAN_COUNT; c++) {
@@ -233,6 +256,9 @@ void WebApiInverterClass::onInverterEdit(AsyncWebServerRequest* request)
         inverter.ZeroYieldDayOnMidnight = root["zero_day"] | false;
         inverter.ClearEventlogOnMidnight = root["clear_eventlog"] | false;
         inverter.YieldDayCorrection = root["yieldday_correction"] | false;
+        inverter.IsWifi = root["is_wifi"] | false;
+        strlcpy(inverter.IpAddress, (root["ip_address"] | String("0.0.0.0")).c_str(),
+                sizeof(inverter.IpAddress));
 
         uint8_t arrayCount = 0;
         for (JsonVariant channel : channelArray) {
@@ -250,16 +276,28 @@ void WebApiInverterClass::onInverterEdit(AsyncWebServerRequest* request)
     INVERTER_CONFIG_T const& inverter = Configuration.get().Inverter[root["id"].as<uint8_t>()];
     std::shared_ptr<InverterAbstract> inv = Hoymiles.getInverterBySerial(old_serial);
 
+    IPAddress wifiIp;
+    if (inverter.IsWifi) {
+        wifiIp.fromString(inverter.IpAddress);
+    }
+
+    auto addInverterByConfig = [&]() -> std::shared_ptr<InverterAbstract> {
+        if (inverter.IsWifi) {
+            return Hoymiles.addInverterWifi(inverter.Name, inverter.Serial, wifiIp);
+        }
+        return Hoymiles.addInverter(inverter.Name, inverter.Serial);
+    };
+
     if (inv != nullptr && new_serial != old_serial) {
         // Valid inverter exists but serial changed --> remove it and insert new one
         Hoymiles.removeInverterBySerial(old_serial);
-        inv = Hoymiles.addInverter(inverter.Name, inverter.Serial);
+        inv = addInverterByConfig();
     } else if (inv != nullptr && new_serial == old_serial) {
         // Valid inverter exists and serial stays the same --> update name
         inv->setName(inverter.Name);
     } else if (inv == nullptr) {
         // Valid inverter did not exist --> try to create one
-        inv = Hoymiles.addInverter(inverter.Name, inverter.Serial);
+        inv = addInverterByConfig();
     }
 
     if (inv != nullptr) {
