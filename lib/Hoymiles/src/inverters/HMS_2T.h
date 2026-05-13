@@ -35,6 +35,7 @@ public:
     bool sendChangeChannelRequest() override { return false; }
     bool sendGridOnProFileParaRequest() override;
     bool supportsPowerDistributionLogic() override { return false; }
+    uint32_t getEffectivePollIntervalSecs() const override { return kMinPollIntervalMs / 1000U; }
 
 private:
     IPAddress _wifiIp;

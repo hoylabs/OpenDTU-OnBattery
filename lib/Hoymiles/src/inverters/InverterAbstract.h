@@ -123,6 +123,11 @@ public:
     // This feature will limit the AC output instead of limiting the DC inputs.
     virtual bool supportsPowerDistributionLogic() = 0;
 
+    // Returns the minimum interval between stats updates in seconds, or 0 to
+    // use the global Hoymiles poll interval. Override in inverter subclasses
+    // that impose their own throttle (e.g. WiFi inverters).
+    virtual uint32_t getEffectivePollIntervalSecs() const { return 0; }
+
     HoymilesRadio* getRadio();
 
     AlarmLogParser* EventLog();
