@@ -42,16 +42,19 @@ double ConfigurationClass::roundedFloat(float val)
     return static_cast<int>(val * 100 + (val > 0 ? 0.5 : -0.5)) / 100.0;
 }
 
-void ConfigurationClass::serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target)
+void ConfigurationClass::serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target, bool includeCredentials)
 {
     JsonObject target_http_config = target["http_request"].to<JsonObject>();
     target_http_config["url"] = source.Url;
+    target_http_config["timeout"] = source.Timeout;
+
+    if (!includeCredentials) { return; }
+
     target_http_config["auth_type"] = source.AuthType;
     target_http_config["username"] = source.Username;
     target_http_config["password"] = source.Password;
     target_http_config["header_key"] = source.HeaderKey;
     target_http_config["header_value"] = source.HeaderValue;
-    target_http_config["timeout"] = source.Timeout;
 }
 
 void ConfigurationClass::serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target)
@@ -59,6 +62,7 @@ void ConfigurationClass::serializeSolarChargerConfig(SolarChargerConfig const& s
     target["enabled"] = source.Enabled;
     target["provider"] = source.Provider;
     target["publish_updates_only"] = source.PublishUpdatesOnly;
+    target["forward_battery_data"] = source.ForwardBatteryData;
 }
 
 void ConfigurationClass::serializeSolarChargerMqttConfig(SolarChargerMqttConfig const& source, JsonObject& target)
@@ -95,7 +99,7 @@ void ConfigurationClass::serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmC
     target["polling_interval"] = source.PollingInterval;
 }
 
-void ConfigurationClass::serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target)
+void ConfigurationClass::serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target, bool includeCredentials)
 {
     target["polling_interval"] = source.PollingInterval;
     target["individual_requests"] = source.IndividualRequests;
@@ -105,7 +109,7 @@ void ConfigurationClass::serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonCon
         JsonObject t = values.add<JsonObject>();
         PowerMeterHttpJsonValue const& s = source.Values[i];
 
-        serializeHttpRequestConfig(s.HttpRequest, t);
+        serializeHttpRequestConfig(s.HttpRequest, t, includeCredentials);
 
         t["enabled"] = s.Enabled;
         t["json_path"] = s.JsonPath;
@@ -114,10 +118,10 @@ void ConfigurationClass::serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonCon
     }
 }
 
-void ConfigurationClass::serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target)
+void ConfigurationClass::serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target, bool includeCredentials)
 {
     target["polling_interval"] = source.PollingInterval;
-    serializeHttpRequestConfig(source.HttpRequest, target);
+    serializeHttpRequestConfig(source.HttpRequest, target, includeCredentials);
 }
 
 void ConfigurationClass::serializePowerMeterUdpVictronConfig(PowerMeterUdpVictronConfig const& source, JsonObject& target)
@@ -135,12 +139,17 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["discharge_current_limit_below_soc"] = config.Battery.DischargeCurrentLimitBelowSoc;
     target["discharge_current_limit_below_voltage"] = config.Battery.DischargeCurrentLimitBelowVoltage;
     target["use_battery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
+    target["enable_charge_current_limit"] = config.Battery.EnableChargeCurrentLimit;
+    target["max_charge_current_limit"] = config.Battery.MaxChargeCurrentLimit;
+    target["min_charge_current_limit"] = config.Battery.MinChargeCurrentLimit;
+    target["charge_current_limit_below_soc"] = config.Battery.ChargeCurrentLimitBelowSoc;
+    target["charge_current_limit_below_voltage"] = config.Battery.ChargeCurrentLimitBelowVoltage;
+    target["use_battery_reported_charge_current_limit"] = config.Battery.UseBatteryReportedChargeCurrentLimit;
 }
 
-void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target)
+void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target, bool includeCredentials)
 {
     target["device_type"] = source.DeviceType;
-    target["device_id"] = source.DeviceId;
     target["polling_interval"] = source.PollingInterval;
     target["soc_min"] = source.MinSoC;
     target["soc_max"] = source.MaxSoC;
@@ -157,7 +166,19 @@ void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig cons
     target["charge_through_interval"] = source.ChargeThroughInterval;
     target["buzzer_enable"] = source.BuzzerEnable;
     target["control_mode"] = source.ControlMode;
-    target["charge_through_reset"] = source.ChargeThroughResetLevel;
+    target["charge_through_keep_minutes"] = source.ChargeThroughKeepMinutes;
+    target["connection_type"] = source.ConnectionType;
+    target["server"] = source.Server;
+    target["port"] = source.Port;
+    target["client_id"] = source.ClientId;
+    target["battery_protection_enable"] = source.BatteryProtectionEnable;
+    target["battery_protection_hysteresis"] = source.BatteryProtectionHysteresis;
+
+    if (!includeCredentials) { return; }
+
+    target["device_id"] = source.DeviceId;
+    target["app_key"] = source.AppKey;
+    target["secret"] = source.Secret;
 }
 
 void ConfigurationClass::serializeBatteryMqttConfig(BatteryMqttConfig const& source, JsonObject& target)
@@ -173,6 +194,9 @@ void ConfigurationClass::serializeBatteryMqttConfig(BatteryMqttConfig const& sou
     target["discharge_current_limit_topic"] = source.DischargeCurrentLimitTopic;
     target["discharge_current_limit_json_path"] = source.DischargeCurrentLimitJsonPath;
     target["discharge_current_limit_unit"] = source.DischargeCurrentLimitUnit;
+    target["charge_current_limit_topic"] = source.ChargeCurrentLimitTopic;
+    target["charge_current_limit_json_path"] = source.ChargeCurrentLimitJsonPath;
+    target["charge_current_limit_unit"] = source.ChargeCurrentLimitUnit;
 }
 
 void ConfigurationClass::serializeBatterySerialConfig(BatterySerialConfig const& source, JsonObject& target)
@@ -420,10 +444,10 @@ bool ConfigurationClass::write()
     serializePowerMeterSerialSdmConfig(config.PowerMeter.SerialSdm, powermeter_serial_sdm);
 
     JsonObject powermeter_http_json = powermeter["http_json"].to<JsonObject>();
-    serializePowerMeterHttpJsonConfig(config.PowerMeter.HttpJson, powermeter_http_json);
+    serializePowerMeterHttpJsonConfig(config.PowerMeter.HttpJson, powermeter_http_json, true);
 
     JsonObject powermeter_http_sml = powermeter["http_sml"].to<JsonObject>();
-    serializePowerMeterHttpSmlConfig(config.PowerMeter.HttpSml, powermeter_http_sml);
+    serializePowerMeterHttpSmlConfig(config.PowerMeter.HttpSml, powermeter_http_sml, true);
 
     JsonObject powermeter_udp_victron = powermeter["udp_victron"].to<JsonObject>();
     serializePowerMeterUdpVictronConfig(config.PowerMeter.UdpVictron, powermeter_udp_victron);
@@ -435,7 +459,7 @@ bool ConfigurationClass::write()
     serializeBatteryConfig(config.Battery, battery);
 
     JsonObject battery_zendure = battery["zendure"].to<JsonObject>();
-    serializeBatteryZendureConfig(config.Battery.Zendure, battery_zendure);
+    serializeBatteryZendureConfig(config.Battery.Zendure, battery_zendure, true);
 
     JsonObject battery_mqtt = battery["mqtt"].to<JsonObject>();
     serializeBatteryMqttConfig(config.Battery.Mqtt, battery_mqtt);
@@ -485,6 +509,7 @@ void ConfigurationClass::deserializeSolarChargerConfig(JsonObject const& source,
     target.Enabled = source["enabled"] | SOLAR_CHARGER_ENABLED;
     target.Provider = source["provider"] | SolarChargerProviderType::VEDIRECT;
     target.PublishUpdatesOnly = source["publish_updates_only"] | SOLAR_CHARGER_PUBLISH_UPDATES_ONLY;
+    target.ForwardBatteryData = source["forward_battery_data"] | SOLAR_CHARGER_FORWARD_BATTERY_DATA;
 }
 
 void ConfigurationClass::deserializeSolarChargerMqttConfig(JsonObject const& source, SolarChargerMqttConfig& target)
@@ -567,11 +592,17 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     target.DischargeCurrentLimitBelowSoc = source["discharge_current_limit_below_soc"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_SOC;
     target.DischargeCurrentLimitBelowVoltage = source["discharge_current_limit_below_voltage"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_VOLTAGE;
     target.UseBatteryReportedDischargeCurrentLimit = source["use_battery_reported_discharge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_DISCHARGE_CURRENT_LIMIT;
+    target.EnableChargeCurrentLimit = source["enable_charge_current_limit"] | BATTERY_ENABLE_CHARGE_CURRENT_LIMIT;
+    target.MaxChargeCurrentLimit = source["max_charge_current_limit"] | BATTERY_CHARGE_CURRENT_LIMIT_MAX;
+    target.MinChargeCurrentLimit = source["min_charge_current_limit"] | BATTERY_CHARGE_CURRENT_LIMIT_MIN;
+    target.ChargeCurrentLimitBelowSoc = source["charge_current_limit_below_soc"] | BATTERY_CHARGE_CURRENT_LIMIT_BELOW_SOC;
+    target.ChargeCurrentLimitBelowVoltage = source["charge_current_limit_below_voltage"] | BATTERY_CHARGE_CURRENT_LIMIT_BELOW_VOLTAGE;
+    target.UseBatteryReportedChargeCurrentLimit = source["use_battery_reported_charge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_CHARGE_CURRENT_LIMIT;
 }
 
 void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target)
 {
-    target.DeviceType = source["device_type"] | BATTERY_ZENDURE_DEVICE;
+    target.DeviceType = source["device_type"] | BatteryZendureConfig::DeviceType_t::HUB1200;
     strlcpy(target.DeviceId, source["device_id"] | "", sizeof(target.DeviceId));
     target.PollingInterval = source["polling_interval"] | BATTERY_ZENDURE_POLLING_INTERVAL;
     target.MinSoC = source["soc_min"] | BATTERY_ZENDURE_MIN_SOC;
@@ -586,10 +617,18 @@ void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& sourc
     target.SunriseOffset = source["sunrise_offset"] | BATTERY_ZENDURE_SUNRISE_OFFSET;
     target.SunsetOffset = source["sunset_offset"] | BATTERY_ZENDURE_SUNSET_OFFSET;
     target.ChargeThroughEnable = source["charge_through_enable"] | BATTERY_ZENDURE_CHARGE_THROUGH_ENABLE;
-    target.ChargeThroughResetLevel = source["charge_through_reset"] | BATTERY_ZENDURE_CHARGE_THROUGH_RESET_LEVEL;
+    target.ChargeThroughKeepMinutes = source["charge_through_keep_minutes"] | BATTERY_ZENDURE_CHARGE_THROUGH_KEEP_MINUTES;
     target.ChargeThroughInterval = source["charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
     target.BuzzerEnable = source["buzzer_enable"] |BATTERY_ZENDURE_BUZZER_ENABLE;
     target.ControlMode = source["control_mode"] | BatteryZendureConfig::ControlMode::ControlModeFull;
+    target.ConnectionType = source["connection_type"] | BatteryZendureConfig::ConnectionType_t::LocalMqtt;
+    strlcpy(target.Server, source["server"] | BATTERY_ZENDURE_SERVER, sizeof(target.Server));
+    target.Port = source["port"] | BATTERY_ZENDURE_PORT;
+    strlcpy(target.ClientId, source["client_id"] | NetworkSettings.getApName().substring(0, ZENDURE_MAX_CLIENTID_STRLEN).c_str(), sizeof(target.ClientId));
+    strlcpy(target.AppKey, source["app_key"] | "", sizeof(target.AppKey));
+    strlcpy(target.Secret, source["secret"] | "", sizeof(target.Secret));
+    target.BatteryProtectionEnable = source["battery_protection_enable"] | BATTERY_ZENDURE_BATTERY_PROTECTION_ENABLE;
+    target.BatteryProtectionHysteresis = source["battery_protection_hysteresis"] | BATTERY_ZENDURE_BATTERY_PROTECTION_HYSTERESIS;
 }
 
 void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, BatteryMqttConfig& target)
@@ -605,6 +644,9 @@ void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, 
     strlcpy(target.DischargeCurrentLimitTopic, source["discharge_current_limit_topic"] | "", sizeof(target.DischargeCurrentLimitTopic));
     strlcpy(target.DischargeCurrentLimitJsonPath, source["discharge_current_limit_json_path"] | "", sizeof(target.DischargeCurrentLimitJsonPath));
     target.DischargeCurrentLimitUnit = source["discharge_current_limit_unit"] | BatteryAmperageUnit::Amps;
+    strlcpy(target.ChargeCurrentLimitTopic, source["charge_current_limit_topic"] | "", sizeof(target.ChargeCurrentLimitTopic));
+    strlcpy(target.ChargeCurrentLimitJsonPath, source["charge_current_limit_json_path"] | "", sizeof(target.ChargeCurrentLimitJsonPath));
+    target.ChargeCurrentLimitUnit = source["charge_current_limit_unit"] | BatteryAmperageUnit::Amps;
 }
 
 void ConfigurationClass::deserializeBatterySerialConfig(JsonObject const& source, BatterySerialConfig& target)

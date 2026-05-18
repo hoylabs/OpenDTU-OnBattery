@@ -252,6 +252,16 @@ void Stats::populateJsonWithInstanceStats(const JsonObject &root, const VeDirect
         device["MpptTemperature"]["d"] = "1";
     }
 
+    if (mpptData.ChargeCurrentLimit.first > 0) {
+        if (mpptData.ChargeCurrentLimit.second == UINT16_MAX) {
+            device["ChargeCurrentLimit"] = "Not limited";
+        } else {
+            device["ChargeCurrentLimit"]["v"] = mpptData.ChargeCurrentLimit.second / 10.0;
+            device["ChargeCurrentLimit"]["u"] = "A";
+            device["ChargeCurrentLimit"]["d"] = 1;
+        }
+    }
+
     const JsonObject output = values["output"].to<JsonObject>();
     output["P"]["v"] = mpptData.batteryOutputPower_W;
     output["P"]["u"] = "W";
@@ -279,6 +289,15 @@ void Stats::populateJsonWithInstanceStats(const JsonObject &root, const VeDirect
         output["FloatVoltage"]["v"] = mpptData.BatteryFloatMilliVolt.second / 1000.0;
         output["FloatVoltage"]["u"] = "V";
         output["FloatVoltage"]["d"] = "2";
+    }
+
+    auto const& config = Configuration.get();
+    auto forwardBatteryData = config.SolarCharger.ForwardBatteryData;
+
+    if (mpptData.NetworkStatus.first > 0 && forwardBatteryData) {
+        auto value = mpptData.NetworkStatus.second;
+        output["RemoteVoltage"] = value & 0x80 ? "ON" : "OFF";
+        output["RemoteTemperature"] = value & 0x40 ? "ON" : "OFF";
     }
 
     const JsonObject input = values["input"].to<JsonObject>();
@@ -416,6 +435,7 @@ void Stats::publishMpptData(const VeDirectMpptController::data_t &currentData, c
     PUBLISH_OPT(loadCurrent_IL_mA,                        "IL",                           currentData.loadCurrent_IL_mA.second / 1000.0);
     PUBLISH_OPT(NetworkTotalDcInputPowerMilliWatts,       "NetworkTotalDcInputPower",     currentData.NetworkTotalDcInputPowerMilliWatts.second / 1000.0);
     PUBLISH_OPT(MpptTemperatureMilliCelsius,              "MpptTemperature",              currentData.MpptTemperatureMilliCelsius.second / 1000.0);
+    PUBLISH_OPT(ChargeCurrentLimit,                       "ChargeCurrentLimit",           currentData.ChargeCurrentLimit.second / 10.0);
     PUBLISH_OPT(BatteryAbsorptionMilliVolt,               "BatteryAbsorption",            currentData.BatteryAbsorptionMilliVolt.second / 1000.0);
     PUBLISH_OPT(BatteryFloatMilliVolt,                    "BatteryFloat",                 currentData.BatteryFloatMilliVolt.second / 1000.0);
     PUBLISH_OPT(SmartBatterySenseTemperatureMilliCelsius, "SmartBatterySenseTemperature", currentData.SmartBatterySenseTemperatureMilliCelsius.second / 1000.0);

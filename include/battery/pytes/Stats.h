@@ -31,8 +31,6 @@ private:
     int _chargeCycles = -1;
     int _balance = -1;
 
-    float _temperature;
-
     uint16_t _cellMinMilliVolt;
     uint16_t _cellMaxMilliVolt;
     float _cellMinTemperature;

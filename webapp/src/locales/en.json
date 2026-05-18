@@ -200,7 +200,8 @@
             "RELAY": "Error relay state",
             "ERR": "Error code",
             "HSDS": "Day sequence number (0..364)",
-            "MpptTemperature": "Charge controller temperature"
+            "MpptTemperature": "Charge controller temperature",
+            "ChargeCurrentLimit": "Charge current limit"
         },
         "section_output": "Output (Battery)",
         "output": {
@@ -211,7 +212,9 @@
             "AbsorptionVoltage": "Absorption voltage",
             "FloatVoltage": "Float voltage",
             "SBSTemperature": "SBS temperature",
-            "Power": "Power"
+            "Power": "Power",
+            "RemoteVoltage": "Remote voltage",
+            "RemoteTemperature": "Remote temperature"
         },
         "section_input": "Input (Solar Panels)",
         "input": {
@@ -307,8 +310,9 @@
         "LittleFs": "LittleFs",
         "Sketch": "Sketch"
     },
-    "heapdetails": {
+    "memorydetails": {
         "HeapDetails": "Heap Details",
+        "PsramDetails": "PSRAM Details",
         "TotalFree": "Total free",
         "LargestFreeBlock": "Biggest contiguous free block",
         "MaxUsage": "Maximum usage since start",
@@ -616,6 +620,8 @@
         "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
         "ProviderMqtt": "Solar Charger data from MQTT broker",
         "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change",
+        "ForwardBatteryData": "Forward battery data",
+        "ForwardBatteryDataDescription": "If enabled, forward battery BMS data (voltage and temperature) to the charge controllers (emulates 'Victron Smart Battery Sense' functionality)",
         "CalculateOutputPower": "Calculate Solar Charger output power",
         "CalculateOutputPowerDescription": "If enabled, the output power of the Solar Charger will be calculated based on the current and voltage values. If disabled, the output power will be taken from the Solar Charger directly.",
         "OutputPowerUsageHint": "<b>Hint:</b> The output power is used by the DPL solar-passthrough feature. Details can be found in the documentation concerning Solar-Passthrough.",
@@ -728,7 +734,7 @@
         "UpperPowerLimit": "Maximum Power Limit",
         "UpperPowerLimitHint": "The inverter is always set such that no more than this output power is achieved. This value must be selected to comply with the current carrying capacity of the AC connection cables.",
         "AllowStandby": "Allow Standby",
-        "AllowStandbyHint": "Allow the inverter to go into standby if the calculated power limit is below the minimum power limit.",
+        "AllowStandbyHint": "Allow the inverter to go into standby if the calculated power limit is below the minimum power limit. Otherwise, the inverter will be set to the minimum power limit.",
         "SocThresholds": "Battery State of Charge (SoC) Thresholds",
         "IgnoreSoc": "Use Voltage Thresholds Only",
         "IgnoreSocHint": "When enabled, only voltage thresholds are considered. Disable this switch to configure and use battery State of Charge (SoC) thresholds (not recommended as the SoC value is often inaccurate).",
@@ -764,7 +770,7 @@
         "ProviderMqtt": "Battery data from MQTT broker",
         "ProviderVictron": "Victron SmartShunt using VE.Direct interface",
         "ProviderPytesCan": "Pytes using CAN bus",
-        "ProviderZendureMqtt": "Zendure using local MQTT broker",
+        "ProviderZendureMqtt": "Zendure",
         "MqttConfiguration": "MQTT Settings",
         "MqttSocConfiguration": "SoC Settings",
         "MqttVoltageConfiguration": "Voltage Settings",
@@ -790,13 +796,22 @@
         "DischargeCurrentLimitBelowVoltage": "Apply limit below voltage",
         "DischargeCurrentLimitBelowVoltageInfo": "The discharge current limit is only applied below this voltage (used if 'Ignore Battery SoC' is enabled in the DPL settings or when SoC is unavailable).",
         "UseBatteryReportedDischargeCurrentLimit": "Use Battery-Reported limit",
-        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hint:</b> The lowest limit will be applied, with the battery-reported discharge current limit used only if an update was received in the last minute; otherwise, the previously specified limit will act as a fallback.",
+        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hint:</b> The more restrictive of the configured max limit and the battery-reported limit will be applied. The battery-reported limit is only considered if an update was received in the last minute; if it is stale, only the configured max limit applies.",
         "MqttDischargeCurrentLimitTopic": "Discharge Current Limit Value Topic",
         "MqttAmperageUnit": "@:base.Unit",
+        "ChargeCurrentLimitConfiguration": "Charge Current Limit Settings",
+        "LimitChargeCurrent": "Limit Charge Current",
+        "MinChargeCurrentLimit": "min. Charge Current",
+        "MinChargeCurrentLimitInfo": "The configured minimum acts as a floor: if the battery-reported limit falls below this value, this value will be used instead.",
+        "MaxChargeCurrentLimit": "max. Charge Current",
+        "ChargeCurrentLimitBelowSoc": "Apply max limit below SoC",
+        "ChargeCurrentLimitBelowSocInfo": "The charge max current limit is only applied below this SoC (not used if 'Ignore Battery SoC' is enabled in the DPL settings).",
+        "ChargeCurrentLimitBelowVoltage": "Apply max limit below voltage",
+        "ChargeCurrentLimitBelowVoltageInfo": "The max charge current limit is only applied below this voltage (used if 'Ignore Battery SoC' is enabled in the DPL settings or when SoC is unavailable).",
+        "UseBatteryReportedChargeCurrentLimit": "Use Battery-Reported limit",
+        "BatteryReportedChargeCurrentLimitInfo": "<b>Hint:</b> The more restrictive of the configured max limit and the battery-reported limit will be applied. The battery-reported limit is only considered if an update was received in the last minute; if it is stale, only the configured max limit applies.",
+        "MqttChargeCurrentLimitTopic": "Charge Current Limit Value Topic",
         "ZendureConfiguration": "Configuration",
-        "ZendureDeviceType": "Product Type",
-        "ZendureDeviceId": "Product ID",
-        "ZendureDeviceIdDescription": "The product ID has to be read manually via bluetooth",
         "ZendureMinSoc": "Minimum SoC",
         "ZendureMaxSoc": "Maximum SoC",
         "ZendureBypassMode": "Bypass mode",
@@ -823,11 +838,13 @@
         "ZendureOutputLimitDay": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Day)",
         "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
         "zendure": {
+            "deviceType": "Product Type",
             "deviceTypes": {
                 "Hub1200": "Hub 1200",
                 "Hub2000": "Hub 2000",
                 "AIO2400": "AIO 2400",
                 "Ace1500": "Ace 1500",
+                "Hyper2000": "Hyper 2000",
                 "Hyper2000A": "Hyper 2000 (older revisions)",
                 "Hyper2000B": "Hyper 2000 (newer revisions)"
             },
@@ -841,7 +858,32 @@
             "chargeThrough": "Charge Through Settings",
             "chargeThroughEnabled": "Charge Through",
             "chargeThroughInterval": "Maximum time without full charge",
-            "chargeThroughReset": "Reset Threshold"
+            "chargeThroughKeepMinutes": "Keep charge through mode",
+            "chargeThroughKeepMinutesDescription": "Keep charge through mode for at least this amount of minutes after battery reached 100% SoC",
+            "connectionType": "Connection Type",
+            "connectionTypes": {
+                "local": "Local MQTT Broker",
+                "cloud": "Zendure Developer API"
+            },
+            "deviceId": "Device ID",
+            "deviceIdDescription": "The Device ID has to be read manually using <a href=\"https://github.com/nograx/zendure-cloud-disconnector\" target=\"_blank\">Zendure Cloud Disconnector</a>, <a href=\"https://github.com/reinhard-brandstaedter/solarflow-bt-manager\" target=\"_blank\">Solarflow Bluetooth Manager</a> or by sniffing MQTT traffic.",
+            "deviceIdInfo": "<u>Zendure authentication settings for local MQTT broker:</u> <ul style=\"list-style-type:none;\"><li>Username: {user}</li><li>Password: {pass}</li></ul>",
+            "server": "Server",
+            "serverInfo": "If you are unable to connect to the Zendure API, please double check if you are using the correct server region.",
+            "servers": {
+                "eu": "Europe ({url})",
+                "global": "Global ({url})"
+            },
+            "port": "Port",
+            "clientId": "Client ID",
+            "appKey": "Application Key",
+            "apiDescription": "Please refer the <a href=\"https://github.com/Zendure/developer-device-data-report\" target=\"_blank\">Official Zendure Repository</a> for further information about the Zendure Cloud API.",
+            "secret": "Secret",
+            "socMinWarning": "The configured minimum charge level ({soc}%) is below the recommended minimum of {min}%. This can lead to battery damage.",
+            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
+            "pollingIntervalDescription": "The BMS also transmits data asynchronously. The polling interval additionally enforces full data refreshes at the specified interval.",
+            "batteryProtectionEnabled": "Battery Protection",
+            "batteryProtection": "Advanced Battery Protection Settings"
         }
     },
     "inverteradmin": {
@@ -1267,8 +1309,7 @@
         "outputLimit": "Output power limit",
         "inputLimit": "Input power limit",
         "minSoC": "Minimal State of Charge",
-        "maxSoC": "Maximal State of Charge",
-        "state": "Current state of operation",
+        "maxSoC": "Maximum State of Charge",
         "bypassMode": "Bypass mode",
         "bypassState": "Bypass switch",
         "heatState": "Battery heating",
@@ -1276,10 +1317,9 @@
         "autoShutdown": "Automatic shutdown",
         "buzzer": "Audible signals",
         "batteries": "Number of batteries",
-        "charging": "Charging",
-        "discharging": "Discharging",
         "idle": "Idle",
         "invalid": "Invalid",
+        "unknown": "unknown",
         "enabled": "Enabled",
         "disabled": "Disabled",
         "automatic": "Automatic",
@@ -1305,7 +1345,25 @@
                 "hard": "Hard",
                 "keep": "Hold",
                 "invalid": "@:battery.invalid"
-            }
+            },
+            "mainState": "Current state of operation",
+            "mainStates": {
+                "idle": "@:battery.idle",
+                "charging": "Charging",
+                "discharging": "Discharging",
+                "invalid": "@:battery.invalid",
+                "unknown": "@:battery.unknown"
+            },
+            "keepUntil": "Hold full charge for",
+            "controlState": "Control state",
+            "controlStates": {
+                "normal": "Normal",
+                "batteryprotection": "Battery Protection",
+                "invalid": "@:battery.invalid"
+            },
+            "batteryProtection": "Battery Protection",
+            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
+            "packMinSoc": "Minimum Pack State of Charge"
         }
     }
 }

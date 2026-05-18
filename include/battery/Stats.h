@@ -35,6 +35,16 @@ public:
     float getChargeCurrentLimit() const { return _chargeCurrentLimit; };
     uint32_t getChargeCurrentLimitAgeSeconds() const { return (millis() - _lastUpdateChargeCurrentLimit) / 1000; }
 
+    std::optional<float> getTemperature() const {
+        if (_lastUpdateTemperature > 0) {
+            return _temperature;
+        } else {
+            return std::nullopt;
+        }
+    }
+
+    uint32_t getTemperatureAgeSeconds() const { return (millis() - _lastUpdateTemperature) / 1000; }
+
     // convert stats to JSON for web application live view
     virtual void getLiveViewData(JsonVariant& root) const;
 
@@ -84,6 +94,11 @@ protected:
     void setChargeCurrentLimit(float chargeCurrentLimit, uint32_t timestamp) {
         _chargeCurrentLimit = chargeCurrentLimit;
         _lastUpdateChargeCurrentLimit = _lastUpdate = timestamp;
+    }
+
+    void setTemperature(float temperature, uint32_t timestamp) {
+        _temperature = temperature;
+        _lastUpdateTemperature = _lastUpdate = timestamp;
     }
 
     void setManufacturer(const String& m);
@@ -189,6 +204,9 @@ private:
     uint32_t _lastUpdateDischargeCurrentLimit = 0;
     float _chargeCurrentLimit = FLT_MAX;
     uint32_t _lastUpdateChargeCurrentLimit = 0;
+
+    float _temperature = 0;
+    uint32_t _lastUpdateTemperature = 0;
 };
 
 } // namespace Batteries

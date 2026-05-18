@@ -9,7 +9,7 @@ uint16_t PowerLimiterBatteryInverter::getMaxReductionWatts(bool allowStandby) co
 
     if (!isProducing()) { return 0; }
 
-    if (allowStandby) { return getCurrentOutputAcWatts(); }
+    if (allowStandby && _config.AllowStandby) { return getCurrentOutputAcWatts(); }
 
     if (getCurrentOutputAcWatts() <= _config.LowerPowerLimit) { return 0; }
 
@@ -44,7 +44,7 @@ uint16_t PowerLimiterBatteryInverter::applyReduction(uint16_t reduction, bool al
 
     auto low = std::min(getCurrentLimitWatts(), getCurrentOutputAcWatts());
     if (low <= _config.LowerPowerLimit) {
-        if (allowStandby) {
+        if (allowStandby && _config.AllowStandby) {
             standby();
             return std::min(reduction, getCurrentOutputAcWatts());
         }
@@ -56,7 +56,7 @@ uint16_t PowerLimiterBatteryInverter::applyReduction(uint16_t reduction, bool al
         return reduction;
     }
 
-    if (allowStandby) {
+    if (allowStandby && _config.AllowStandby) {
         standby();
         return std::min(reduction, getCurrentOutputAcWatts());
     }

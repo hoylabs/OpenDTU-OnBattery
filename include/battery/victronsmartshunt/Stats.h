@@ -14,8 +14,6 @@ public:
     void updateFrom(VeDirectShuntController::data_t const& shuntData);
 
 private:
-    float _temperature;
-    bool _tempPresent;
     uint8_t _chargeCycles;
     uint32_t _timeToGo;
     float _chargedEnergy;

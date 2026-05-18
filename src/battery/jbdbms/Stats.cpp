@@ -194,6 +194,14 @@ void Stats::updateFrom(JbdBms::DataPointContainer const& dp)
         _hwversion = oHardwareVersion->c_str();
     }
 
+    auto oTemperatureOne = _dataPoints.get<Label::BatteryTempOneCelsius>();
+    auto oTemperatureTwo = _dataPoints.get<Label::BatteryTempTwoCelsius>();
+    if (oTemperatureOne.has_value()) {
+        setTemperature(*oTemperatureOne, millis());
+    } else if (oTemperatureTwo.has_value()) {
+        setTemperature(*oTemperatureTwo, millis());
+    }
+
     _lastUpdate = millis();
 }
 

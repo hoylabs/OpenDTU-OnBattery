@@ -56,6 +56,8 @@ struct veMpptStruct : veStruct {
     std::pair<uint32_t, uint32_t> NetworkTotalDcInputPowerMilliWatts;
     std::pair<uint32_t, uint32_t> BatteryAbsorptionMilliVolt;
     std::pair<uint32_t, uint32_t> BatteryFloatMilliVolt;
+    std::pair<uint32_t, uint16_t> BatteryMaximumCurrent;
+    std::pair<uint32_t, uint16_t> ChargeCurrentLimit;
     std::pair<uint32_t, uint8_t> NetworkInfo;
     std::pair<uint32_t, uint8_t> NetworkMode;
     std::pair<uint32_t, uint8_t> NetworkStatus;
@@ -131,25 +133,28 @@ enum class VeDirectHexRegister : uint16_t {
     DeviceMode = 0x0200,
     DeviceState = 0x0201,
     RemoteControlUsed = 0x0202,
+    HistoryTotal = 0x104F,
+    HistoryMPPTD30 = 0x10BE,
+    BatteryVoltageSense = 0x2002,
+    BatteryTemperatureSense = 0x2003,
+    ChargeStateElapsedTime= 0x2007,
+    NetworkInfo = 0x200D,
+    NetworkMode = 0x200E,
+    NetworkStatus = 0x200F,
+    TotalChargeCurrent = 0x2013,
+    ChargeCurrentLimit = 0x2015,
+    NetworkTotalDcInputPower = 0x2027,
+    BatteryMaximumCurrent = 0xEDF0,
+    BatteryAbsorptionVoltage = 0xEDF7,
+    BatteryFloatVoltage = 0xEDF6,
+    LoadCurrent = 0xEDAD,
+    LoadOutputVoltage = 0xEDA9,
     PanelVoltage = 0xEDBB,
     PanelPower = 0xEDBC,
     ChargerVoltage = 0xEDD5,
     ChargerCurrent = 0xEDD7,
-    NetworkTotalDcInputPower = 0x2027,
     ChargeControllerTemperature = 0xEDDB,
     SmartBatterySenseTemperature = 0xEDEC,
-    NetworkInfo = 0x200D,
-    NetworkMode = 0x200E,
-    NetworkStatus = 0x200F,
-    HistoryTotal = 0x104F,
-    HistoryMPPTD30 = 0x10BE,
-    BatteryAbsorptionVoltage = 0xEDF7,
-    BatteryFloatVoltage = 0xEDF6,
-    TotalChargeCurrent = 0x2013,
-    ChargeStateElapsedTime= 0x2007,
-    BatteryVoltageSense = 0x2002,
-    LoadCurrent = 0xEDAD,
-    LoadOutputVoltage = 0xEDA9
 };
 
 struct VeDirectHexData {

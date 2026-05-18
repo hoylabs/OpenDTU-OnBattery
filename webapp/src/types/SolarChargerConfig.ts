@@ -15,5 +15,6 @@ export interface SolarChargerConfig {
     enabled: boolean;
     provider: number;
     publish_updates_only: boolean;
+    forward_battery_data: boolean;
     mqtt: SolarChargerMqttConfig;
 }

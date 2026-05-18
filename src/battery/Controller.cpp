@@ -7,7 +7,8 @@
 #include <battery/pytes/Provider.h>
 #include <battery/sbs/Provider.h>
 #include <battery/victronsmartshunt/Provider.h>
-#include <battery/zendure/Provider.h>
+#include <battery/zendure/LocalMqttProvider.h>
+#include <battery/zendure/ZendureMqttProvider.h>
 #include <Configuration.h>
 #include <LogHelper.h>
 
@@ -76,7 +77,17 @@ void Controller::updateSettings()
             _upProvider = std::make_unique<JbdBms::Provider>();
             break;
         case 7:
-            _upProvider = std::make_unique<Zendure::Provider>();
+            switch (config.Battery.Zendure.ConnectionType) {
+                case BatteryZendureConfig::ConnectionType_t::LocalMqtt:
+                    _upProvider = std::make_unique<Zendure::LocalMqttProvider>();
+                    break;
+                case BatteryZendureConfig::ConnectionType_t::ZendureMqtt:
+                    _upProvider = std::make_unique<Zendure::ZendureMqttProvider>();
+                    break;
+                default:
+                    DTU_LOGE("Unknown Zendure connection type: %d", config.Battery.Zendure.ConnectionType);
+                    return;
+            }
             break;
         default:
             DTU_LOGE("Unknown provider: %d", config.Battery.Provider);
@@ -152,4 +163,66 @@ float Controller::getDischargeCurrentLimit()
     return std::min(getConfiguredLimit(), getBatteryLimit());
 }
 
+float Controller::getChargeCurrentLimit() const
+{
+    auto const& config = Configuration.get();
+
+    if (!config.Battery.EnableChargeCurrentLimit) { return FLT_MAX; }
+
+    /**
+     * we are looking at three limits: (1) the static max charge current limit
+     * setup by the user as part of the configuration, which is effective below
+     * a (SoC or voltage) threshold, (2) the dynamic charge current
+     * limit reported by the BMS and (3) the static min charge current limit, setup by
+     * the user which defines the lowest possible charge current limit.
+     * for the first both types of limits, we will determine its value, then test a bunch
+     * of excuses why the limit might not be applicable.
+     *
+     * the smaller limit will be enforced.
+     * If the resulting limit is smaller than (3), (3) will be used instead
+     */
+    auto spStats = getStats();
+
+    auto getConfiguredMinLimit = [&config]() -> float {
+        if (!config.Battery.UseBatteryReportedChargeCurrentLimit) { return 0.0f; }
+
+        auto configuredMinLimit = config.Battery.MinChargeCurrentLimit;
+        if (configuredMinLimit < 0.0f) { return 0.0f; } // invalid setting
+
+        return configuredMinLimit;
+    };
+
+    auto getConfiguredMaxLimit = [&config,&spStats]() -> float {
+        auto configuredMaxLimit = config.Battery.MaxChargeCurrentLimit;
+        if (configuredMaxLimit <= 0.0f) { return FLT_MAX; } // invalid setting
+
+        bool useSoC = spStats->getSoCAgeSeconds() <= 60 && !config.PowerLimiter.IgnoreSoc;
+        if (useSoC) {
+            auto threshold = config.Battery.ChargeCurrentLimitBelowSoc;
+            if (spStats->getSoC() >= threshold) { return FLT_MAX; }
+
+            return configuredMaxLimit;
+        }
+
+        bool voltageValid = spStats->getVoltageAgeSeconds() <= 60;
+        if (voltageValid) {
+            auto threshold = config.Battery.ChargeCurrentLimitBelowVoltage;
+            if (spStats->getVoltage() >= threshold) { return FLT_MAX; }
+
+            return configuredMaxLimit;
+        }
+        return configuredMaxLimit;
+    };
+
+    auto getBatteryLimit = [&config,&spStats]() -> float {
+        if (!config.Battery.UseBatteryReportedChargeCurrentLimit) { return FLT_MAX; }
+
+        if (spStats->getChargeCurrentLimitAgeSeconds() > 60) { return FLT_MAX; } // unusable
+
+        return spStats->getChargeCurrentLimit();
+    };
+
+    auto maxChargeLimit = std::min(getConfiguredMaxLimit(), getBatteryLimit());
+    return std::max(maxChargeLimit, getConfiguredMinLimit());
+}
 } // namespace Batteries

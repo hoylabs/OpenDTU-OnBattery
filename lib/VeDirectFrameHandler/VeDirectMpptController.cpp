@@ -147,12 +147,16 @@ void VeDirectMpptController::loop()
 	resetTimestamp(_tmpFrame.NetworkTotalDcInputPowerMilliWatts);
 	resetTimestamp(_tmpFrame.BatteryFloatMilliVolt);
 	resetTimestamp(_tmpFrame.BatteryAbsorptionMilliVolt);
+    resetTimestamp(_tmpFrame.BatteryMaximumCurrent);
+    resetTimestamp(_tmpFrame.ChargeCurrentLimit);
 
 #ifdef PROCESS_NETWORK_STATE
 	resetTimestamp(_tmpFrame.NetworkInfo);
 	resetTimestamp(_tmpFrame.NetworkMode);
-	resetTimestamp(_tmpFrame.NetworkStatus);
 #endif // PROCESS_NETWORK_STATE
+
+    // always handled because it is used for our SBS emulation
+	resetTimestamp(_tmpFrame.NetworkStatus);
 }
 
 
@@ -163,13 +167,24 @@ void VeDirectMpptController::loop()
  */
 bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 	if (data.rsp != VeDirectHexResponse::GET &&
-			data.rsp != VeDirectHexResponse::ASYNC) { return false; }
+        data.rsp != VeDirectHexResponse::SET &&
+        data.rsp != VeDirectHexResponse::ASYNC) { return false; }
 
-	auto regLog = static_cast<uint16_t>(data.addr);
+    auto regLog = static_cast<uint16_t>(data.addr);
 
-	// we check whether the answer matches a previously asked query
-	if ((data.rsp == VeDirectHexResponse::GET) && (data.addr == _hexQueue[_sendQueueNr]._hexRegister)) {
+    // we check whether the answer matches a previous SET or GET command
+	if ((data.rsp == VeDirectHexResponse::GET || data.rsp == VeDirectHexResponse::SET) &&
+        (data.addr == _hexQueue[_sendQueueNr]._hexRegister)) {
 		_sendTimeout = 0;
+	}
+
+	if (data.rsp == VeDirectHexResponse::SET) {
+		switch (data.addr) {
+            case VeDirectHexRegister::BatteryVoltageSense: return true;
+            case VeDirectHexRegister::BatteryTemperatureSense: return true;
+		    case VeDirectHexRegister::ChargeCurrentLimit: return true;
+            default: return false;
+		}
 	}
 
 	switch (data.addr) {
@@ -234,6 +249,26 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			return true;
 			break;
 
+        case VeDirectHexRegister::BatteryMaximumCurrent:
+			_tmpFrame.BatteryMaximumCurrent =
+				{ millis(), static_cast<uint16_t>(data.value) };
+
+			ESP_LOGD(TAG, "%s Hex Data: MPPT Battery Max Current (0x%04X): %.1fA",
+					_logId, regLog,
+					_tmpFrame.BatteryMaximumCurrent.second / 10.0);
+			return true;
+			break;
+
+		case VeDirectHexRegister::ChargeCurrentLimit:
+			_tmpFrame.ChargeCurrentLimit =
+				{ millis(), static_cast<uint16_t>(data.value) };
+
+			ESP_LOGD(TAG, "%s Hex Data: MPPT Charge Current Limit (0x%04X): %.1fA",
+					_logId, regLog,
+					static_cast<float>(_tmpFrame.ChargeCurrentLimit.second) / 10.0);
+			return true;
+			break;
+
 #ifdef PROCESS_NETWORK_STATE
 		case VeDirectHexRegister::NetworkInfo:
 			_tmpFrame.NetworkInfo =
@@ -252,7 +287,9 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 					_logId, regLog, data.value);
 			return true;
 			break;
+#endif // PROCESS_NETWORK_STATE
 
+        // always handled because it is used for our SBS emulation
 		case VeDirectHexRegister::NetworkStatus:
 			_tmpFrame.NetworkStatus =
 				{ millis(), static_cast<uint8_t>(data.value) };
@@ -261,7 +298,6 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 					_logId, regLog, data.value);
 			return true;
 			break;
-#endif // PROCESS_NETWORK_STATE
 
 		default:
 			return false;
@@ -316,13 +352,28 @@ void VeDirectMpptController::sendNextHexCommandFromQueue(void) {
 					(!prio && (_hexQueue[idx]._readPeriod != HIGH_PRIO_COMMAND))) &&
 					(millisTime - _hexQueue[idx]._lastSendTime) > (_hexQueue[idx]._readPeriod * 1000)) {
 
-					sendHexCommand(VeDirectHexCommand::GET, _hexQueue[idx]._hexRegister);
-					_hexQueue[idx]._lastSendTime = millisTime;
+                    bool sent = false;
+                    if (_hexQueue[idx]._setCommand) {
+                        if (_hexQueue[idx]._data.has_value()) {
+                            sendHexCommand(VeDirectHexCommand::SET, _hexQueue[idx]._hexRegister,
+                                _hexQueue[idx]._data.value(),
+                                _hexQueue[idx]._dataLength);
+                            _hexQueue[idx]._data.reset();
+                            sent = true;
+                        }
+                    } else {
+                        sendHexCommand(VeDirectHexCommand::GET, _hexQueue[idx]._hexRegister);
+                        sent = true;
+                    }
 
-					// we need this information to check if we get an answer, see hexDataHandler()
-					_sendTimeout = 500;
-					_sendQueueNr = idx;
-					return;
+                    if (sent) {
+                        _hexQueue[idx]._lastSendTime = millisTime;
+
+                        // we need this information to check if we get an answer, see hexDataHandler()
+                        _sendTimeout = 500;
+                        _sendQueueNr = idx;
+                        return;
+                    }
 				}
 
 				++idx;
@@ -332,4 +383,54 @@ void VeDirectMpptController::sendNextHexCommandFromQueue(void) {
 			prio = false; // second loop for low prio commands
 		}
 	}
+}
+
+/*
+ * setRemoteVoltage()
+ * set VSENSE information using HEX command 2002
+ */
+void VeDirectMpptController::setRemoteVoltage(float volt) {
+	for (auto& cmd : _hexQueue) {
+		if (cmd._hexRegister == VeDirectHexRegister::BatteryVoltageSense && cmd._setCommand) {
+			float value = volt * 100.0;
+			if (value > 0 && value < UINT16_MAX) {
+				cmd._data = static_cast<uint32_t>(value);
+			}
+		}
+	}
+}
+
+
+/*
+ * setRemoteTemperature()
+ * set TSENSE information using HEX command 2003
+ */
+void VeDirectMpptController::setRemoteTemperature(float degreeCelsius) {
+	for (auto& cmd : _hexQueue) {
+		if (cmd._hexRegister == VeDirectHexRegister::BatteryTemperatureSense && cmd._setCommand) {
+			float value = degreeCelsius * 100.0;
+			if (value > INT16_MIN && value < INT16_MAX) {
+				cmd._data = static_cast<uint32_t>(static_cast<int16_t>(value));
+			}
+		}
+	}
+}
+
+
+void VeDirectMpptController::setChargeLimit(float limit){
+    for (auto& cmd : _hexQueue) {
+        if (cmd._hexRegister == VeDirectHexRegister::ChargeCurrentLimit && cmd._setCommand) {
+            if (limit == __FLT_MAX__) {
+                cmd._data = 0xFFFF; // default value -> no limit
+            } else {
+                // Victron MPPT needs limit with a resolution of 0.1A
+                float value = limit * 10.0f;
+                if (value > 0 && value < UINT16_MAX) {
+                    cmd._data = static_cast<uint32_t>(static_cast<uint16_t>(value));
+                } else {
+                    cmd._data = 0; // invalid value, we set the limit to 0A to be on the safe side
+                }
+            }
+        }
+    }
 }

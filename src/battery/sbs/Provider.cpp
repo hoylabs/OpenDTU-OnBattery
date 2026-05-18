@@ -90,9 +90,9 @@ void Provider::onMessage(twai_message_t rx_message)
 
         case 0x650: {
             byte temp = rx_message.data[0];
-            _stats->_temperature = (static_cast<float>(temp)-32) /1.8;
+            _stats->setTemperature((static_cast<float>(temp)-32) / 1.8, millis());
 
-            DTU_LOGD("1616 Temp %f", _stats->_temperature);
+            DTU_LOGD("1616 Temp %f", _stats->getTemperature().value());
             break;
         }
 

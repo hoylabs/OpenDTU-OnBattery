@@ -46,10 +46,10 @@ void Provider::onMessage(twai_message_t rx_message)
         case 0x356: {
             _stats->setVoltage(this->scaleValue(this->readSignedInt16(rx_message.data), 0.01), millis());
             _stats->setCurrent(this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1), 1/*precision*/, millis());
-            _stats->_temperature = this->scaleValue(this->readSignedInt16(rx_message.data + 4), 0.1);
+            _stats->setTemperature(this->scaleValue(this->readSignedInt16(rx_message.data + 4), 0.1), millis());
 
             DTU_LOGD("voltage: %f current: %f temperature: %f",
-                    _stats->getVoltage(), _stats->getChargeCurrent(), _stats->_temperature);
+                    _stats->getVoltage(), _stats->getChargeCurrent(), _stats->getTemperature().value());
             break;
         }
 

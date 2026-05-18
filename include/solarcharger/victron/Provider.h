@@ -31,8 +31,10 @@ private:
     std::vector<controller_t> _controllers;
     std::vector<String> _serialPortOwners;
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
+    bool _chargeLimitActive = true;
 
     bool initController(gpio_num_t rx, gpio_num_t tx, uint8_t instance);
+    void applyChargeCurrentLimit(float chargeLimit, float chargeCurrent);
 };
 
 } // namespace SolarChargers::Victron
