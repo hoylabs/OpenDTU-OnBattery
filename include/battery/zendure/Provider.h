@@ -77,7 +77,7 @@ protected:
 private:
     template<typename... Arg> void publishProperties(const String& topic, Arg&&... args) const;
 
-    uint16_t setOutputLimit(uint16_t limit) const;
+    uint16_t setOutputLimit(uint16_t limit, bool forced = false) const;
     uint16_t setInverterMax(uint16_t limit) const;
     void checkChargeThrough(uint32_t predictHours = 0U);
     uint16_t calcOutputLimit(uint16_t limit) const;
@@ -85,7 +85,11 @@ private:
 
     void calculateTimeDiff();
     void rescheduleSunCalc() { _nextSunCalc = 0; }
+    void rescheduleOutputCalc() { _nextOutputCalc = 0; }
     void publishPersistentSettings(const char* subtopic, const String& payload);
+    void setControlState(ControlState mode, const bool publish = true);
+    bool isControlState(ControlState mode) const { return _stats->_controlState == mode; }
+    bool checkBatteryProtection();
 
     uint32_t _rateFullUpdateMs = 0;
     uint64_t _nextFullUpdate = 0;

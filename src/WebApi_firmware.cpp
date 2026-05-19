@@ -10,6 +10,7 @@
 #include <AsyncJson.h>
 #include <Update.h>
 #include "esp_partition.h"
+#include "RuntimeData.h"
 
 void WebApiFirmwareClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -47,6 +48,9 @@ void WebApiFirmwareClass::onFirmwareUpdateFinish(AsyncWebServerRequest* request)
     response->addHeader(asyncsrv::T_Connection, asyncsrv::T_close);
     response->addHeader(asyncsrv::T_CORS_ACAO, "*");
     request->send(response);
+
+    // write the runtime data to LittleFS, but do not write if last write operation was less than 10 min ago
+    RuntimeData.write(10);
     RestartHelper.triggerRestart();
 }
 
