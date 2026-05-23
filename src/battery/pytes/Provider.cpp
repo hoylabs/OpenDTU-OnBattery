@@ -251,7 +251,7 @@ void Provider::onMessage(twai_message_t rx_message)
             auto capacity = this->readUnsignedInt16(rx_message.data);
             _stats->setNominalCapacity(capacity);
 
-            DTU_LOGD("totalCapacity: %u Ah", capacity);
+            DTU_LOGD("nominalCapacity: %u Ah", capacity);
             break;
         }
 
@@ -407,10 +407,10 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->setNominalCapacity(capacity);
             _stats->_availableCapacity = this->scaleValue(this->readUnsignedInt32(rx_message.data + 4), 0.001);
             _stats->_capacityPrecision = 2;
-            float soc = 100.0 * _stats->_availableCapacity / capacity;
+            float soc = (capacity > 0) ? (100.0f * _stats->_availableCapacity / capacity) : 0.0f;
             _stats->setSoC(soc, 2/*precision*/, millis());
 
-            DTU_LOGD("soc: %.2f totalCapacity: %.2f Ah availableCapacity: %.2f Ah",
+            DTU_LOGD("soc: %.2f nominalCapacity: %.2f Ah availableCapacity: %.2f Ah",
                     soc, capacity, _stats->_availableCapacity);
             break;
         }
