@@ -182,7 +182,7 @@
                         v-model="batteryConfigList.nominal_capacity"
                         type="number"
                         min="0"
-                        max="500"
+                        max="2000"
                         step="1"
                         postfix="Ah"
                         :tooltip="$t('batteryadmin.NominalCapacityInfo')"
