@@ -12,13 +12,14 @@
 #include <optional>
 #include <TaskSchedulerDeclarations.h>
 #include <frozen/string.h>
+#include "RuntimeData.h"
 
 #define PL_UI_STATE_INACTIVE 0
 #define PL_UI_STATE_CHARGING 1
 #define PL_UI_STATE_USE_SOLAR_ONLY 2
 #define PL_UI_STATE_USE_SOLAR_AND_BATTERY 3
 
-class PowerLimiterClass {
+class PowerLimiterClass : public InterfaceProviderRT {
 public:
     PowerLimiterClass() = default;
 
@@ -57,6 +58,11 @@ public:
     // used to interlock Huawei R48xx grid charger against battery-powered inverters
     bool isGovernedBatteryPoweredInverterProducing() const;
 
+    // interface to the Runtime Provider
+    String getIdRT() const override { return "power_limiter"; }
+    void serializeRT(JsonObject obj) const override;
+    void deserializeRT(JsonObject obj) override;
+
 private:
     void loop();
 
@@ -77,7 +83,10 @@ private:
     enum class BatteryState : uint8_t { STOP = 0, NO_DISCHARGE = 1, DISCHARGE_ALLOWED = 2, DISCHARGE_NIGHT = 3 };
     BatteryState _batteryState = BatteryState::STOP;
     bool _fromStart = false;
+    bool _fromStartRT = false;
     bool _oneStopPerNightDone = false;
+    bool _oneStopPerNightDoneRT = false;
+    time_t _lastBatteryStateSaveEpoch = 0;
 
     std::pair<bool, uint32_t> _nextInverterRestart = { false, 0 };
     bool _fullSolarPassThroughActive = false;
