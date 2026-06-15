@@ -21,7 +21,10 @@ namespace Batteries::JkBmsCan
         return ::Batteries::CanReceiver::init("JkBmsCan");
     }
 
-    bool isSelectedBms(uint32_t can_id, uint8_t configuredId)
+    // The JK BMS allows configuring a device ID.
+    // This ID is encoded in the lower 8 bits of the CAN identifier (starting at 0xF4).
+    // This function filters incoming frames and only processes those matching the configured BMS ID.
+    bool Provider::isSelectedBms(uint32_t can_id, uint8_t configuredId)
     {
         uint8_t src = can_id & 0xFF;
 
@@ -31,20 +34,44 @@ namespace Batteries::JkBmsCan
         return (src - 0xF4) == configuredId;
     }
 
+    void Provider::updateCellCountIfNeeded()
+    {
+        auto const &config = Configuration.get();
+        uint8_t cfg = config.Battery.JkBmsCan.NumberOfCells;
+
+        if (cfg != _lastConfiguredCells)
+        {
+            _lastConfiguredCells = cfg;
+
+            _cellCount = std::min<uint8_t>(cfg, Stats::MAX_CELLS);
+
+            if (cfg > Stats::MAX_CELLS)
+            {
+                DTU_LOGW("[JkBmsCan] Configured cells (%d) exceed max (%d), clamped",
+                         cfg, Stats::MAX_CELLS);
+            }
+        }
+    }
+
     void Provider::onMessage(twai_message_t rx_message)
     {
         auto const &config = Configuration.get();
+
         if (!isSelectedBms(rx_message.identifier, config.Battery.JkBmsCan.configuredId))
         {
             return;
         }
+
+        // Check for configuration changes and update cell count within limits.
+        updateCellCountIfNeeded();
+
         switch (rx_message.identifier & 0xFFFFFF00)
         {
             uint32_t now = millis();
         case 0x0200:
         {
-            // If the CAN Protocol is configured to Version 1, the reported voltage from this frame is used as pack voltage.
-            // Otherwise the voltage is calculated from single cell voltages because it is more accurate.
+            // CAN protocol v1 provides pack voltage directly in this frame.
+            // For newer versions, pack voltage is derived from cell voltages for better accuracy.
             if (config.Battery.JkBmsCan.CanProtocolVersion == 1)
             {
                 _stats->setVoltage(this->scaleValue(this->readSignedInt16(rx_message.data), 0.1), now);
@@ -61,7 +88,7 @@ namespace Batteries::JkBmsCan
             _stats->setCurrent((this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1) - 400.0), 1 /*precision*/, now);
             _stats->setSoC(static_cast<uint8_t>(this->readUnsignedInt8(rx_message.data + 4)), 0 /*precision*/, now);
 
-            String manufacturer = "JKBMS ID: " + String((rx_message.identifier & 0x000000FF)-0xF4);
+            String manufacturer = "JKBMS ID: " + String((rx_message.identifier & 0x000000FF) - 0xF4);
 
             DTU_LOGD("[JkBmsCan] Manufacturer: %s\r\n", manufacturer.c_str());
 
@@ -107,6 +134,8 @@ namespace Batteries::JkBmsCan
 
         case 0x18E02800:
         {
+            // When this frame is received, the BMS is reporting single cell voltages and the pack voltage can be calculated from the single cell voltages.
+            // It
             _stats->_cellVoltage[0] = (static_cast<uint16_t>(this->readUnsignedInt16(rx_message.data)));
             _stats->_cellVoltage[1] = (static_cast<uint16_t>(this->readUnsignedInt16(rx_message.data + 2)));
             _stats->_cellVoltage[2] = (static_cast<uint16_t>(this->readUnsignedInt16(rx_message.data + 4)));
@@ -231,5 +260,5 @@ namespace Batteries::JkBmsCan
 
         _stats->setLastUpdate(now);
     }
-
+    om
 } // namespace Batteries::JkBmsCan

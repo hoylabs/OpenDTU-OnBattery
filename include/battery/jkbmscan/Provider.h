@@ -20,9 +20,13 @@ public:
 
 private:
     void dummyData();
+    void updateCellCountIfNeeded();
+    bool isSelectedBms(uint32_t can_id, uint8_t configuredId);
 
     std::shared_ptr<Stats> _stats;
     std::shared_ptr<HassIntegration> _hassIntegration;
+    uint8_t _cellCount = 0;
+    uint8_t _lastConfiguredCells = 0;
 };
 
 } // namespace Batteries::JkBmsCan

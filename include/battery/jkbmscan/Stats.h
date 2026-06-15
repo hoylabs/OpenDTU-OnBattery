@@ -18,6 +18,9 @@ public:
     void updateFromV1(uint8_t* rx, uint32_t now);
     void evaluateErrors(uint32_t now);
 
+    // Configuration / limits
+    static constexpr uint8_t MAX_CELLS = 24;
+
 private:
     void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
 
@@ -27,7 +30,7 @@ private:
     uint8_t _stateOfHealth;
     float _temperature;
 
-    float _cellVoltage[25];
+    float _cellVoltage[MAX_CELLS];
     float _packVoltage;
     float _MaxCellVoltage;
     uint8_t _MaxCellVoltageNumber;

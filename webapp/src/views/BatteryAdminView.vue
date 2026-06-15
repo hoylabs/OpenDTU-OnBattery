@@ -86,7 +86,7 @@
                 />
                   <InputElement
                     :label="$t('batteryadmin.JkBmsCanProtocolVersion')"
-                    v-model="batteryConfigList.jkbmscan.can_protocol_version"
+                    v-model="batteryConfigList.jkbmscan.configured_id"
                     type="number"
                     min="1"
                     step="1"

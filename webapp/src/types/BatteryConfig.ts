@@ -52,7 +52,7 @@ export interface BatterySerialConfig {
 
 export interface BatteryJkBmsCanConfig {
     number_of_cells: number;
-    can_protocol_version: number;
+    configured_id: number;
 
 }
 
