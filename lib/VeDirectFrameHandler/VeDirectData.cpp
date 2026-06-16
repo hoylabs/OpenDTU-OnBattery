@@ -24,10 +24,10 @@ frozen::string const& veStruct::getPidAsString() const
 	 * [1] but rev2 in [2].
      * additionally, the PIDs 0xC038 and 0xC039 are not listed in either
 	 *
-	 * [1] https://www.victronenergy.com/upload/documents/VE.Direct-Protocol-3.33.pdf
+	 * [1] https://www.victronenergy.com/upload/documents/VE.Direct-Protocol-3.34.pdf
 	 * [2] https://www.victronenergy.com/upload/documents/BlueSolar-HEX-protocol.pdf
 	 */
-	static constexpr frozen::map<uint16_t, frozen::string, 107> values = {
+	static constexpr frozen::map<uint16_t, frozen::string, 109> values = {
 		{ 0x0203, "BMV-700" },
 		{ 0x0204, "BMV-702" },
 		{ 0x0205, "BMV-700H" },
@@ -96,6 +96,8 @@ frozen::string const& veStruct::getPidAsString() const
 		{ 0xA07D, "BlueSolar MPPT 75|15 rev3" },
 		{ 0xA07E, "SmartSolar MPPT 100|30 12V" },
 		{ 0xA07F, "All-In-1 SmartSolar MPPT 75|15 12V" },
+        { 0xA080, "SmartSolar MPPT 250|60 rev3" },
+        { 0xA081, "SmartSolar MPPT 250|70 rev3" },
 		{ 0xA102, "SmartSolar MPPT VE.Can 150|70" },
 		{ 0xA103, "SmartSolar MPPT VE.Can 150|45" },
 		{ 0xA104, "SmartSolar MPPT VE.Can 150|60" },
