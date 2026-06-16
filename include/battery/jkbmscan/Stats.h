@@ -83,7 +83,7 @@ private:
     bool _chargeAndHeat;
 
     uint8_t _moduleCount;
-    uint8_t _JkBmsCanVersion;
+    bool _hasV2Frames = false;
 };
 
 } // namespace Batteries::JkBmsCan

@@ -208,7 +208,6 @@ void ConfigurationClass::serializeBatterySerialConfig(BatterySerialConfig const&
 void ConfigurationClass::serializeBatteryJkBmsCanConfig(BatteryJkBmsCanConfig const& source, JsonObject& target)
 {
     target["number_of_cells"] = source.NumberOfCells;
-    target["can_protocol_version"] = source.CanProtocolVersion;
 }
 
 void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target)
@@ -667,7 +666,6 @@ void ConfigurationClass::deserializeBatterySerialConfig(JsonObject const& source
 void ConfigurationClass::deserializeBatteryJkBmsCanConfig(JsonObject const& source, BatteryJkBmsCanConfig& target)
 {
     target.NumberOfCells = source["number_of_cells"] | BATTERY_NUMBER_OF_CELLS;
-    target.CanProtocolVersion = source["can_protocol_version"] | BATTERY_JKBMS_CAN_PROTOCOL_VERSION;
 }
 
 void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target)

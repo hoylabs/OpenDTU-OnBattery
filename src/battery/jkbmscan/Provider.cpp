@@ -7,6 +7,7 @@
 #include <Configuration.h>
 #include <LogHelper.h>
 
+#undef TAG
 static const char *TAG = "battery";
 static const char *SUBTAG = "JkBmsCan";
 
@@ -64,15 +65,17 @@ namespace Batteries::JkBmsCan
 
         // Check for configuration changes and update cell count within limits.
         updateCellCountIfNeeded();
-
+        uint32_t now = millis();
         switch (rx_message.identifier & 0xFFFFFF00)
         {
-            uint32_t now = millis();
+           
         case 0x0200:
         {
             // CAN protocol v1 provides pack voltage directly in this frame.
             // For newer versions, pack voltage is derived from cell voltages for better accuracy.
-            if (config.Battery.JkBmsCan.CanProtocolVersion == 1)
+            // If one v2 frame with voltages was received, the value from 0x0200 is not used anymore.
+            // Instead the pack voltage is calculated from single cell voltages.
+            if (!_stats->_hasV2Frames)
             {
                 _stats->setVoltage(this->scaleValue(this->readSignedInt16(rx_message.data), 0.1), now);
             }
@@ -128,14 +131,15 @@ namespace Batteries::JkBmsCan
                      rx_message.data[7]);
             // Just provide data for stats. The data is combined with the V2 frame data in _stats.evaluateErrors
 
-            _stats.updateFromV1(rx_message.data, millis());
+            _stats->updateFromV1(rx_message.data, millis());
             break;
         }
 
         case 0x18E02800:
         {
             // When this frame is received, the BMS is reporting single cell voltages and the pack voltage can be calculated from the single cell voltages.
-            // It
+            // So we can set the variable _hasV2Frame to true and the voltages will be calculated from single cell voltages.
+            _stats->_hasV2Frames = true;
             _stats->_cellVoltage[0] = (static_cast<uint16_t>(this->readUnsignedInt16(rx_message.data)));
             _stats->_cellVoltage[1] = (static_cast<uint16_t>(this->readUnsignedInt16(rx_message.data + 2)));
             _stats->_cellVoltage[2] = (static_cast<uint16_t>(this->readUnsignedInt16(rx_message.data + 4)));
@@ -186,7 +190,9 @@ namespace Batteries::JkBmsCan
         }
         case 0x18E62800:
         {
-            _stats->_cellVoltage[24] = (static_cast<uint16_t>(this->readUnsignedInt16(rx_message.data)));
+            if (Stats::MAX_CELLS > 24) {
+                _stats->_cellVoltage[24] = (static_cast<uint16_t>(this->readUnsignedInt16(rx_message.data)));
+            }
             break;
         }
 
@@ -209,7 +215,7 @@ namespace Batteries::JkBmsCan
                      rx_message.data[3]);
 
             // Just provide data for stats. The data is combined with the V1 frame data in _stats.evaluateErrors
-            _stats.updateFromV2(rx_message.data, now);
+            _stats->updateFromV2(rx_message.data, now);
         }
 
         break;
@@ -260,5 +266,5 @@ namespace Batteries::JkBmsCan
 
         _stats->setLastUpdate(now);
     }
-    om
+    
 } // namespace Batteries::JkBmsCan

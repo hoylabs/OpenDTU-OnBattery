@@ -165,12 +165,14 @@ void Stats::updateFromV1(uint8_t* rx, uint32_t now)
 
 void Stats::evaluateErrors(uint32_t now)
 {
+    // Set an error timeout of 2 seconds.
     const uint32_t timeout = 2000;
 
+    // Check whether an error was received within the last validity window.
     bool v2Valid = (now - _lastV2Ts) < timeout;
     bool v1Valid = (now - _lastV1Ts) < timeout;
 
-    // alles zurücksetzen
+    // Reset all errors.
     _alarmOverCurrentDischarge = false;
     _alarmOverCurrentCharge = false;
     _alarmUnderTemperature = false;
