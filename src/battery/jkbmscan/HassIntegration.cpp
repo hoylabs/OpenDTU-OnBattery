@@ -21,6 +21,9 @@ void HassIntegration::publishSensors() const
     publishSensor("Discharge voltage limit", NULL, "settings/dischargeVoltageLimitation", "voltage", "measurement", "V");
     publishSensor("Discharge current limit", NULL, "settings/dischargeCurrentLimitation", "current", "measurement", "A");
     publishSensor("Module Count", "mdi:counter", "modulesTotal");
+    publishSensor("Capacity Remaining", "mdi:battery-high", "Capacity_Remaining", NULL, "measurement", "Ah");
+    publishSensor("Full Charge Capacity", "mdi:battery", "Full_Charge_Cap", NULL, "measurement", "Ah");
+    publishSensor("Cycle Capacity", "mdi:battery-sync", "Cycle_Capacity", NULL, "measurement", "Ah");
 
     publishBinarySensor("Alarm Discharge current", "mdi:alert", "alarm/overCurrentDischarge", "1", "0");
     publishBinarySensor("Warning Discharge current", "mdi:alert-outline", "warning/highCurrentDischarge", "1", "0");
@@ -48,30 +51,19 @@ void HassIntegration::publishSensors() const
     publishBinarySensor("Charge immediately", "mdi:alert", "charging/chargeImmediately", "1", "0");
 
     String cellno;
-    //char str[4];
-    String str;
+    String caption;
     for (i=0; i<config.Battery.JkBmsCan.NumberOfCells; i++)
     {
-        str = String(i); //itoa(i, str, 10);
-        if (i>99)
-        {
-            i=99;
+        if (i < 10) {
+            caption = "Cell 0" + String(i) + " Voltage";
+            cellno  = "Cell0" + String(i) + "Voltage";
+        } else {
+            caption = "Cell " + String(i) + " Voltage";
+            cellno  = "Cell" + String(i) + "Voltage";
         }
-        if (i<10)
-        {
-            cellno="battery/Cell0"+str+"Voltage";
-            //cellno.concat("battery/Cell0");
-            //cellno.concat(str);
-            //cellno.concat("Voltage");
-        }
-        else
-        {
-            cellno="battery/Cell0"+str+"Voltage";
-            //cellno.concat("battery/Cell");
-            //cellno.concat(str);
-            //cellno.concat("Voltage");
-        }
-        publishSensor(cellno.c_str(), NULL, cellno.c_str(), "voltage", "measurement", "mV");
+    
+
+        publishSensor(caption.c_str(), NULL, cellno.c_str(), "voltage", "measurement", "mV");
     }
 
     

@@ -50,7 +50,7 @@ private:
     uint8_t getSeverity(uint8_t alarm);
 
     uint32_t _v2ErrorMask = 0;
-    uint64_t _v1SeverityMask = 0;
+    uint32_t _v1SeverityMask = 0;
 
     uint32_t _lastV2Ts = 0;
     uint32_t _lastV1Ts = 0;

@@ -37,15 +37,15 @@ void Stats::getLiveViewData(JsonVariant& root) const
         addLiveViewValue(root, cellno, _cellVoltage[i], "mV", 0);
     }
 
-    addLiveViewValue(root, "Number_Of_Cells", (float) config.Battery.JkBmsCan.NumberOfCells, "Cells", 0);
+    addLiveViewValue(root, "Number_Of_Cells", static_cast<float> (config.Battery.JkBmsCan.NumberOfCells), "Cells", 0);
     addLiveViewValue(root, "Max_Cell_Voltage", _MaxCellVoltage, "mV", 0);
     addLiveViewValue(root, "Max_Cell_Voltage_Number", _MaxCellVoltageNumber, "Cell", 0);
     addLiveViewValue(root, "Min_Cell_Voltage", _MinCellVoltage, "mV", 0);
     addLiveViewValue(root, "Min_Cell_Voltage_Number", _MinCellVoltageNumber, "Cell", 0);
 
-    addLiveViewValue(root, "Capacity_Remaining", _capacityRemaining, "Ah", 0);
-    addLiveViewValue(root, "Full_Charge_Cap", _fullChargeCapacity, "Ah", 0);
-    addLiveViewValue(root, "Cycle_Capacity", _cycleCapacity, "Ah", 0);
+    addLiveViewValue(root, "Capacity_Remaining", _capacityRemaining, "Ah", 1);
+    addLiveViewValue(root, "Full_Charge_Cap", _fullChargeCapacity, "Ah", 1);
+    addLiveViewValue(root, "Cycle_Capacity", _cycleCapacity, "Ah", 1);
     addLiveViewValue(root, "Cycle_Count", _cycleCount, " ", 0);
 
 
@@ -109,29 +109,19 @@ void Stats::mqttPublish() const
     MqttSettings.publish("battery/charging/dischargeEnabled", String(_dischargeEnabled));
     MqttSettings.publish("battery/charging/chargeRequest", String(_chargeRequest));
     MqttSettings.publish("battery/modulesTotal", String(config.Battery.JkBmsCan.NumberOfCells));
+    MqttSettings.publish("battery/Capacity_Remaining", String(_capacityRemaining));
+    MqttSettings.publish("battery/Full_Charge_Cap", String(_fullChargeCapacity));
+    MqttSettings.publish("battery/Cycle_Capacity", String(_cycleCapacity));
     String cellno;
-    //char str[4];
-    String str;
     for (i=0; i<config.Battery.JkBmsCan.NumberOfCells; i++)
     {
-        str = String(i); //itoa(i, str, 10);
-        if (i>99)
-        {
-            i=99;
-        }
         if (i<10)
         {
-            cellno="battery/Cell0"+str+"Voltage";
-            //cellno.concat("battery/Cell0");
-            //cellno.concat(str);
-            //cellno.concat("Voltage");
+            cellno="battery/Cell0"+String(i)+"Voltage";
         }
         else
         {
-            cellno="battery/Cell0"+str+"Voltage";
-            //cellno.concat("battery/Cell");
-            //cellno.concat(str);
-            //cellno.concat("Voltage");
+            cellno="battery/Cell"+String(i)+"Voltage";
         }
         MqttSettings.publish(cellno, String(_cellVoltage[i]));
        
@@ -155,10 +145,10 @@ void Stats::updateFromV2(uint8_t* rx, uint32_t now)
 void Stats::updateFromV1(uint8_t* rx, uint32_t now)
 {
     _v1SeverityMask =
-        (uint64_t)rx[0] |
-        ((uint64_t)rx[1] << 8) |
-        ((uint64_t)rx[2] << 16) |
-        ((uint64_t)rx[3] << 24);
+        static_cast<uint32_t>(rx[0]) |
+        (static_cast<uint32_t>(rx[1]) << 8U) |
+        (static_cast<uint32_t>(rx[2]) << 16U) |
+        (static_cast<uint32_t>(rx[3]) << 24U);
 
     _lastV1Ts = now;
 }
