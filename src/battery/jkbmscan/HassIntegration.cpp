@@ -14,9 +14,12 @@ void HassIntegration::publishSensors() const
     uint8_t i;
     auto const& config = Configuration.get();
 
-    publishSensor("Temperature", NULL, "temperature", "temperature", "measurement", "°C");
+    publishSensor("Min Cell Temperature", "mdi:thermometer-low", "minCellTemperature", "temperature", "measurement", "°C");
+    publishSensor("Max Cell Temperature", "mdi:thermometer-high", "maxCellTemperature", "temperature", "measurement", "°C");
+    publishSensor("MOSFET Temperature", "mdi:thermometer", "mosfetTemperature", "temperature", "measurement", "°C");
     publishSensor("State of Health (SOH)", "mdi:heart-plus", "stateOfHealth", NULL, "measurement", "%");
     publishSensor("Charge voltage (BMS)", NULL, "settings/chargeVoltage", "voltage", "measurement", "V");
+    publishSensor("Battery Power", NULL, "power", "power", "measurement", "W");
     publishSensor("Charge current limit", NULL, "settings/chargeCurrentLimitation", "current", "measurement", "A");
     publishSensor("Discharge voltage limit", NULL, "settings/dischargeVoltageLimitation", "voltage", "measurement", "V");
     publishSensor("Discharge current limit", NULL, "settings/dischargeCurrentLimitation", "current", "measurement", "A");

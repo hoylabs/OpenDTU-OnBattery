@@ -68,7 +68,7 @@ namespace Batteries::JkBmsCan
         uint32_t now = millis();
         switch (rx_message.identifier & 0xFFFFFF00)
         {
-           
+
         case 0x0200:
         {
             // CAN protocol v1 provides pack voltage directly in this frame.
@@ -109,10 +109,12 @@ namespace Batteries::JkBmsCan
 
         case 0x0500:
         {
-            _stats->_temperature = (static_cast<uint8_t>(this->readUnsignedInt8(rx_message.data + 4))) - 50.0;
-            DTU_LOGD("[JkBmsCan] voltage: %f current: %f temperature: %f",
-                     _stats->getVoltage(), _stats->getChargeCurrent(), _stats->_temperature);
-
+            _stats->_maxCellTemperature =
+                static_cast<uint8_t>(this->readUnsignedInt8(rx_message.data + 0)) - 50.0;
+            _stats->_minCellTemperature =
+                static_cast<uint8_t>(this->readUnsignedInt8(rx_message.data + 2)) - 50.0;
+            _stats->_avgCellTemperature =
+                static_cast<uint8_t>(this->readUnsignedInt8(rx_message.data + 4)) - 50.0;
             break;
         }
 
@@ -190,7 +192,8 @@ namespace Batteries::JkBmsCan
         }
         case 0x18E62800:
         {
-            if (Stats::MAX_CELLS > 24) {
+            if (Stats::MAX_CELLS > 24)
+            {
                 _stats->_cellVoltage[24] = (static_cast<uint16_t>(this->readUnsignedInt16(rx_message.data)));
             }
             break;
@@ -202,6 +205,53 @@ namespace Batteries::JkBmsCan
             _stats->_fullChargeCapacity = this->scaleValue(this->readUnsignedInt16(rx_message.data + 2), 0.1);
             _stats->_cycleCapacity = this->scaleValue(this->readUnsignedInt16(rx_message.data + 4), 0.1);
             _stats->_cycleCount = (static_cast<uint16_t>(this->readUnsignedInt16(rx_message.data + 6)));
+            break;
+        }
+
+        case 0x18F22800:
+        {
+            uint8_t mask = rx_message.data[0];
+
+            float minTemp = FLT_MAX;
+            float maxTemp = -FLT_MAX;
+            float sumTemp = 0.0f;
+            uint8_t count = 0;
+
+            _stats->_hasMosfetTemperature = false;
+
+            for (uint8_t i = 0; i < 5; i++)
+            {
+                if (!(mask & (1 << i)))
+                    continue;
+
+                uint8_t raw = rx_message.data[i + 1];
+
+                if (raw == 0xFF)
+                    continue;
+
+                float temp = raw - 50.0f;
+
+                // Sensor 3 = MOS laut Doku
+                if (i == 2)
+                {
+                    _stats->_mosfetTemperature = temp;
+                    _stats->_hasMosfetTemperature = true;
+                    continue;
+                }
+
+                minTemp = std::min(minTemp, temp);
+                maxTemp = std::max(maxTemp, temp);
+                sumTemp += temp;
+                count++;
+            }
+
+            if (count > 0)
+            {
+                _stats->_minCellTemperature = minTemp;
+                _stats->_maxCellTemperature = maxTemp;
+                _stats->_avgCellTemperature = sumTemp / count;
+            }
+
             break;
         }
 
@@ -266,5 +316,5 @@ namespace Batteries::JkBmsCan
 
         _stats->setLastUpdate(now);
     }
-    
+
 } // namespace Batteries::JkBmsCan
