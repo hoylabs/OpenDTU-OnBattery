@@ -10,7 +10,7 @@
 
 #define CONFIG_FILENAME "/config.json"
 #define CONFIG_VERSION 0x00011e00 // 0.1.30 // make sure to clean all after change
-#define CONFIG_VERSION_ONBATTERY 8
+#define CONFIG_VERSION_ONBATTERY 9
 
 #define WIFI_MAX_SSID_STRLEN 32
 #define WIFI_MAX_PASSWORD_STRLEN 64
@@ -128,7 +128,7 @@ struct POWERMETER_HTTP_JSON_VALUE_T {
 using PowerMeterHttpJsonValue = struct POWERMETER_HTTP_JSON_VALUE_T;
 
 struct POWERMETER_HTTP_JSON_CONFIG_T {
-    uint32_t PollingInterval;
+    uint32_t PollingIntervalMs;
     bool IndividualRequests;
     PowerMeterHttpJsonValue Values[POWERMETER_HTTP_JSON_MAX_VALUES];
 };
