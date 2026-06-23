@@ -229,12 +229,7 @@ void LocalMqttProvider::onMqttMessageReport(espMqttClientTypes::MessagePropertie
     auto obj = json.as<JsonObjectConst>();
 
     // validate input data
-    // messageId has to be set to "123"
     // deviceId has to be set to the configured deviceId
-    if (!json["messageId"].as<String>().equals("123")) {
-        DTU_LOGE("Invalid or missing 'messageId' in '%s'", logValue.c_str());
-        return;
-    }
     if (!json["deviceId"].as<String>().equals(Configuration.get().Battery.Zendure.DeviceId)) {
         DTU_LOGE("Invalid or missing 'deviceId' in '%s'", logValue.c_str());
         return;
