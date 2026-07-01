@@ -44,7 +44,7 @@ bool Provider::init()
 
     _upSdmSerial = std::make_unique<SoftwareSerial>();
 
-    if (pin.powermeter_rxen > GPIO_NUM_NC && pin.powermeter_txen > GPIO_NUM_NC) {
+    if (pin.powermeter_rxen <= GPIO_NUM_NC && pin.powermeter_txen <= GPIO_NUM_NC) {
         _upSdm = std::make_unique<SDM>(*_upSdmSerial, 9600, pin.powermeter_rxen, pin.powermeter_txen,
             SWSERIAL_8N1, pin.powermeter_rx, pin.powermeter_tx);
     }
