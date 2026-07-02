@@ -60,7 +60,7 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
     if (!fullUpdate && !hasUpdate) { return; }
 
     auto instance = root["solarcharger"]["instances"]["MQTT"].to<JsonObject>();
-    populateAgeFields(instance, age, true);
+    populateJsonWithBasicStats(instance, age, true);
     instance["product_id"] = "MQTT"; // will be translated by the web app
 
     const JsonObject output = instance["values"]["output"].to<JsonObject>();
