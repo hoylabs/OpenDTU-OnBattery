@@ -52,7 +52,7 @@ public:
 protected:
     virtual void mqttPublish() const;
 
-    // the maximum age of data before solar charger is rendered as unreachable in Web UI
+    // maximum age before data is considered stale (affects MQTT publish, live view, and Web UI timeout display)
     virtual uint32_t getMaxAgeMilliSeconds() const { return 10 * 1000; }
 
     void populateJsonWithBasicStats(JsonObject instance, uint32_t age_ms, bool hideSerial = false) const;
