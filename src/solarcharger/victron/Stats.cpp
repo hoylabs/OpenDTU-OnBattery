@@ -209,7 +209,7 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
         if (!fullUpdate && !hasUpdate) { continue; }
 
         auto instance = instances[entry.second.serialNr_SER].to<JsonObject>();
-        populateJsonWithBasicStats(instance, age);
+        populateAgeFields(instance, age);
         populateJsonWithInstanceStats(instance, entry.second);
     }
 }
