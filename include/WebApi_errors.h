@@ -98,6 +98,9 @@ enum WebApiError {
     HardwareBase = 12000,
     HardwarePinMappingLength,
 
+    ModbusServerBase = 13000,
+    ModbusServerDuplicateUnitId,
+
     // OpenDTU-OnBattery-specific
     R48xxVoltageLimitOutOfRange = 1002,
     R48xxCurrentLimitOutOfRange = 1003,
