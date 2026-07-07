@@ -4,7 +4,8 @@
 #include "modbus/sunspec/SunSpecUtils.h"
 #include <Hoymiles.h>
 
-using namespace SunSpec;
+using SunSpec::NI_S;
+using SunSpec::NI_U;
 
 void SunSpecNameplateModel120::fill(uint16_t* n, std::shared_ptr<InverterAbstract> const& inv, uint8_t unitId)
 {

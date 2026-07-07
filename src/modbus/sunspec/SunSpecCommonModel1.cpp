@@ -18,5 +18,5 @@ void SunSpecCommonModel1::fill(uint16_t* payload, std::shared_ptr<InverterAbstra
     memset(payload + 32, 0, 8 * sizeof(uint16_t)); // Opt: options - empty string, none defined
     SunSpec::packString(payload + 40, version, 8); // Vr: firmware version
     SunSpec::packString(payload + 48, inv->serialString().c_str(), 16); // SN: serial number
-    payload[64] = (uint16_t)unitId; // DA: device address = unit ID for this inverter
+    payload[64] = static_cast<uint16_t>(unitId); // DA: device address = unit ID for this inverter
 }
