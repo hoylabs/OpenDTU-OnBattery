@@ -5,7 +5,7 @@
             :show="duplicateUnitIds.size > 0"
             :dismissible="duplicateUnitIds.size === 0"
             :variant="duplicateUnitIds.size > 0 ? 'danger' : alertType"
-            :auto-dismiss="duplicateUnitIds.size > 0 ? 0 : (alertType != 'success' ? 0 : 5000)"
+            :auto-dismiss="duplicateUnitIds.size > 0 ? 0 : alertType != 'success' ? 0 : 5000"
         >
             {{ duplicateUnitIds.size > 0 ? $t('modbusserveradmin.DuplicateUnitId') : alertMessage }}
         </BootstrapAlert>
@@ -42,7 +42,9 @@
                 <table class="table table-borderless">
                     <thead>
                         <tr>
-                            <th scope="col" style="width: 1%; white-space: nowrap">{{ $t('modbusserveradmin.Enable') }}</th>
+                            <th scope="col" style="width: 1%; white-space: nowrap">
+                                {{ $t('modbusserveradmin.Enable') }}
+                            </th>
                             <th scope="col">{{ $t('modbusserveradmin.Inverter') }}</th>
                             <th scope="col">{{ $t('modbusserveradmin.UnitId') }}</th>
                         </tr>
@@ -63,7 +65,10 @@
                             <td>
                                 <input
                                     class="form-control"
-                                    :class="{ 'is-invalid': isEnabled(i.serial) && duplicateUnitIds.has(getEntry(i.serial)!.unit_id) }"
+                                    :class="{
+                                        'is-invalid':
+                                            isEnabled(i.serial) && duplicateUnitIds.has(getEntry(i.serial)!.unit_id),
+                                    }"
                                     type="number"
                                     min="1"
                                     max="247"
