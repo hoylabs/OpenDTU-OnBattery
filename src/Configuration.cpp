@@ -769,8 +769,10 @@ void ConfigurationClass::deserializeModbusServerConfig(JsonObject const& source,
         if (idx >= INV_MAX_COUNT) { break; }
         if (!inv["unit_id"].is<uint8_t>()) { continue; } // malformed entry, drop it
         if (!inv["serial"].is<const char*>()) { continue; } // malformed entry, drop it
+        uint8_t unitId = inv["unit_id"].as<uint8_t>();
+        if (unitId < 1 || unitId > 247) { continue; } // out of valid Modbus unit ID range, drop it
         target.Inverter[idx].Serial = strtoll(inv["serial"].as<const char*>(), nullptr, 16);
-        target.Inverter[idx].UnitId = inv["unit_id"].as<uint8_t>();
+        target.Inverter[idx].UnitId = unitId;
         ++idx;
     }
     // zero-terminate remaining slots

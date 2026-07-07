@@ -90,7 +90,7 @@ void SunSpecInverterModel101_103::fill(uint16_t* ac, std::shared_ptr<InverterAbs
     ac[29] = NI_S; // DCW: DC power - not measured on the AC side
     ac[30] = static_cast<uint16_t>(SF_W); // DCW_SF
 
-    bool hasTemp = stats->hasChannelFieldValue(TYPE_INV, CH0, FLD_T);
+    bool hasTemp = reach && stats->hasChannelFieldValue(TYPE_INV, CH0, FLD_T);
     ac[31] = hasTemp ? static_cast<uint16_t>(static_cast<int16_t>(temp * 10.0f)) : NI_S; // TmpCab
     ac[32] = NI_S; // TmpSnk: heatsink temperature - not reported
     ac[33] = NI_S; // TmpTrns: transformer temperature - not reported
