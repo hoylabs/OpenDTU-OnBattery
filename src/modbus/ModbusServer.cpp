@@ -96,7 +96,7 @@ bool ModbusServerClass::tryProcessFrame(Client& c)
     // Need at least 6-byte MBAP header
     if (c.buf.size() < 6) return false;
 
-    uint16_t pduLen = ((uint16_t)c.buf[4] << 8) | c.buf[5];
+    uint16_t pduLen = (static_cast<uint16_t>(c.buf[4]) << 8) | c.buf[5];
     size_t   total  = 6u + pduLen; // MBAP + PDU
 
     if (pduLen < 2 || pduLen > 254) {
@@ -107,14 +107,14 @@ bool ModbusServerClass::tryProcessFrame(Client& c)
     // Full frame not yet buffered
     if (c.buf.size() < total) return false;
 
-    uint16_t tid    = ((uint16_t)c.buf[0] << 8) | c.buf[1];
+    uint16_t tid    = (static_cast<uint16_t>(c.buf[0]) << 8) | c.buf[1];
     // buf[2-3]: protocol id (must be 0x0000, not validated — be lenient)
     uint8_t  unitId = c.buf[6];
     uint8_t  fc     = c.buf[7];
 
     if (fc == 0x03 && pduLen >= 6) {
-        uint16_t startAddr = ((uint16_t)c.buf[8] << 8)  | c.buf[9];
-        uint16_t regCount  = ((uint16_t)c.buf[10] << 8) | c.buf[11];
+        uint16_t startAddr = (static_cast<uint16_t>(c.buf[8]) << 8)  | c.buf[9];
+        uint16_t regCount  = (static_cast<uint16_t>(c.buf[10]) << 8) | c.buf[11];
         handleReadRegs(c.tcp, tid, unitId, startAddr, regCount);
     } else {
         sendException(c.tcp, tid, unitId, fc, 0x01); // ILLEGAL FUNCTION
@@ -135,7 +135,7 @@ void ModbusServerClass::handleReadRegs(WiFiClient& client, uint16_t tid, uint8_t
     if (regCount == 0 || regCount > 125) {
         sendException(client, tid, unitId, 0x03, 0x03); return;
     }
-    if (startAddr < kBase || (uint32_t)(startAddr - kBase) + regCount > kTotalRegs) {
+    if (startAddr < kBase || static_cast<uint32_t>(startAddr - kBase) + regCount > kTotalRegs) {
         sendException(client, tid, unitId, 0x03, 0x02); return;
     }
 
@@ -158,23 +158,23 @@ void ModbusServerClass::handleReadRegs(WiFiClient& client, uint16_t tid, uint8_t
     fillRegisters(regs, inv, unitId);
 
     uint16_t offset    = startAddr - kBase;
-    uint8_t  byteCount = (uint8_t)(regCount * 2);
+    uint8_t  byteCount = static_cast<uint8_t>(regCount * 2);
     uint16_t pduResp   = 3u + byteCount;
 
     uint8_t resp[6 + 3 + 125 * 2];
     uint8_t* p = resp;
-    *p++ = (uint8_t)(tid >> 8); *p++ = (uint8_t)(tid & 0xFF);
+    *p++ = static_cast<uint8_t>(tid >> 8); *p++ = static_cast<uint8_t>(tid & 0xFF);
     *p++ = 0x00; *p++ = 0x00;
-    *p++ = (uint8_t)(pduResp >> 8); *p++ = (uint8_t)(pduResp & 0xFF);
+    *p++ = static_cast<uint8_t>(pduResp >> 8); *p++ = static_cast<uint8_t>(pduResp & 0xFF);
     *p++ = unitId;
     *p++ = 0x03;
     *p++ = byteCount;
     for (uint16_t i = 0; i < regCount; i++) {
         uint16_t v = regs[offset + i];
-        *p++ = (uint8_t)(v >> 8);
-        *p++ = (uint8_t)(v & 0xFF);
+        *p++ = static_cast<uint8_t>(v >> 8);
+        *p++ = static_cast<uint8_t>(v & 0xFF);
     }
-    client.write(resp, (size_t)(p - resp));
+    client.write(resp, static_cast<size_t>(p - resp));
 }
 
 // ---------------------------------------------------------------------------
@@ -185,9 +185,9 @@ void ModbusServerClass::sendException(WiFiClient& client, uint16_t tid, uint8_t 
                                        uint8_t fc, uint8_t code)
 {
     uint8_t resp[9] = {
-        (uint8_t)(tid >> 8), (uint8_t)(tid & 0xFF),
+        static_cast<uint8_t>(tid >> 8), static_cast<uint8_t>(tid & 0xFF),
         0x00, 0x00, 0x00, 0x03,
-        unitId, (uint8_t)(fc | 0x80), code
+        unitId, static_cast<uint8_t>(fc | 0x80), code
     };
     client.write(resp, 9);
 }
