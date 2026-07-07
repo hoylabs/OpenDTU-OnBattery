@@ -71,9 +71,29 @@ void WebApiModbusServerClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
+    // Match what deserializeModbusServerConfig() and the web UI (unit ID
+    // input has min=1 max=247) each require, so a malformed entry is
+    // rejected here with a clear error instead of silently being dropped
+    // or defaulted during persistence.
     std::set<uint8_t> seenUnitIds;
     for (JsonObject inv : root["inverter"].as<JsonArray>()) {
-        uint8_t unitId = inv["unit_id"] | (uint8_t)0;
+        if (!inv["serial"].is<const char*>() || !inv["unit_id"].is<uint8_t>()) {
+            retMsg["message"] = "Inverter entry is missing a serial or unit ID!";
+            retMsg["code"] = WebApiError::GenericValueMissing;
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        uint8_t unitId = inv["unit_id"].as<uint8_t>();
+        if (unitId < 1 || unitId > 247) {
+            retMsg["message"] = "Unit ID must be between 1 and 247!";
+            retMsg["code"] = WebApiError::GenericValueMissing;
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
         if (!seenUnitIds.insert(unitId).second) {
             retMsg["message"] = "Duplicate unit ID: each inverter needs a unique unit ID!";
             retMsg["code"] = WebApiError::ModbusServerDuplicateUnitId;
