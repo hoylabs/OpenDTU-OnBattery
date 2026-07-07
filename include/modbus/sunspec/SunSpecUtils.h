@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <cstdint>
 
-// Protocol spec: https://sunspec.org/wp-content/uploads/2019/08/SunSpec-Information-Model-Reference-20190815.pdf
 // Model definitions (JSON): https://github.com/sunspec/models/tree/master/json
 namespace SunSpec {
 
