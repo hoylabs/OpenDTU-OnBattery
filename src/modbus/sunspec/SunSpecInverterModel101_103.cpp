@@ -9,8 +9,10 @@ using SunSpec::NI_S;
 using SunSpec::NI_U;
 using SunSpec::SF_A;
 using SunSpec::SF_HZ;
+using SunSpec::SF_PF;
 using SunSpec::SF_TMP;
 using SunSpec::SF_V;
+using SunSpec::SF_VAR;
 using SunSpec::SF_W;
 using SunSpec::SF_WH;
 
@@ -34,6 +36,8 @@ void SunSpecInverterModel101_103::fill(uint16_t* ac, std::shared_ptr<InverterAbs
     float freq = reach ? stats->getChannelFieldValue(TYPE_AC,  CH0, FLD_F)   : 0.0f;
     float temp = reach ? stats->getChannelFieldValue(TYPE_INV, CH0, FLD_T)   : 0.0f;
     float yt   = reach ? stats->getChannelFieldValue(TYPE_INV, CH0, FLD_YT)  : 0.0f;
+    float q    = reach ? stats->getChannelFieldValue(TYPE_AC,  CH0, FLD_Q)   : 0.0f;
+    float pf   = reach ? stats->getChannelFieldValue(TYPE_AC,  CH0, FLD_PF)  : 0.0f;
     uint32_t whTotal = static_cast<uint32_t>(yt * 1000.0f); // kWh -> Wh
 
     ac[0] = static_cast<uint16_t>(static_cast<int16_t>(iac * 100.0f + 0.5f)); // A: total AC current
@@ -76,10 +80,12 @@ void SunSpecInverterModel101_103::fill(uint16_t* ac, std::shared_ptr<InverterAbs
     ac[15] = static_cast<uint16_t>(SF_HZ); // Hz_SF
     ac[16] = NI_S; // VA: apparent power - not computed
     ac[17] = NI_S; // VA_SF: paired with NI value, must also read NI
-    ac[18] = NI_S; // VAr: reactive power - not computed
-    ac[19] = NI_S; // VAr_SF: paired with NI value, must also read NI
-    ac[20] = NI_S; // PF: power factor - not computed
-    ac[21] = NI_S; // PF_SF: paired with NI value, must also read NI
+
+    bool hasQPf = reach && stats->hasChannelFieldValue(TYPE_AC, CH0, FLD_Q);
+    ac[18] = hasQPf ? static_cast<uint16_t>(static_cast<int16_t>(q + 0.5f)) : NI_S; // VAr
+    ac[19] = hasQPf ? static_cast<uint16_t>(SF_VAR) : NI_S; // VAr_SF
+    ac[20] = hasQPf ? static_cast<uint16_t>(static_cast<int16_t>(pf * 100.0f + 0.5f)) : NI_S; // PF
+    ac[21] = hasQPf ? static_cast<uint16_t>(SF_PF) : NI_S; // PF_SF
     ac[22] = static_cast<uint16_t>(whTotal >> 16); // WH acc32 high word: lifetime energy
     ac[23] = static_cast<uint16_t>(whTotal & 0xFFFF); // WH acc32 low word
     ac[24] = static_cast<uint16_t>(SF_WH); // WH_SF
