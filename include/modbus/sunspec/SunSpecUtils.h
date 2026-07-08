@@ -8,12 +8,14 @@
 namespace SunSpec {
 
 // Scale factors (SunSpec sunssf: signed int16, power-of-10 exponent)
-static constexpr int16_t SF_A   = -2; // current: raw = A   * 100
-static constexpr int16_t SF_V   = -1; // voltage: raw = V   * 10
-static constexpr int16_t SF_W   =  0; // power:   raw = W
-static constexpr int16_t SF_HZ  = -2; // freq:    raw = Hz  * 100
-static constexpr int16_t SF_WH  =  0; // energy:  raw = Wh
-static constexpr int16_t SF_TMP = -1; // temp:    raw = °C  * 10
+static constexpr int16_t SF_A   = -2; // current:        raw = A   * 100
+static constexpr int16_t SF_V   = -1; // voltage:        raw = V   * 10
+static constexpr int16_t SF_W   =  0; // power:          raw = W
+static constexpr int16_t SF_VAR =  0; // reactive power: raw = VAr
+static constexpr int16_t SF_PF  = -2; // power factor:   raw = PF  * 100
+static constexpr int16_t SF_HZ  = -2; // freq:           raw = Hz  * 100
+static constexpr int16_t SF_WH  =  0; // energy:         raw = Wh
+static constexpr int16_t SF_TMP = -1; // temp:           raw = °C  * 10
 
 // SunSpec "not implemented" sentinels
 static constexpr uint16_t NI_U = 0xFFFF; // uint16
