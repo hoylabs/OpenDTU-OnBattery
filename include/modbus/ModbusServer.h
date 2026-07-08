@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <array>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 class InverterAbstract;
@@ -48,6 +49,7 @@ private:
     WiFiServer _server;
     std::array<Client, kMaxClients> _clients;
     Task _loopTask;
+    std::mutex _mutex; // guards _server/_clients across threads
 
     void loop();
     void drainClient(Client& c);
