@@ -771,7 +771,12 @@ void ConfigurationClass::deserializeModbusServerConfig(JsonObject const& source,
         if (!inv["serial"].is<const char*>()) { continue; } // malformed entry, drop it
         uint8_t unitId = inv["unit_id"].as<uint8_t>();
         if (unitId < 1 || unitId > 247) { continue; } // out of valid Modbus unit ID range, drop it
-        target.Inverter[idx].Serial = strtoll(inv["serial"].as<const char*>(), nullptr, 16);
+        uint64_t serial = strtoll(inv["serial"].as<const char*>(), nullptr, 16);
+        // Serial == 0 doubles as the "end of list" terminator below and in
+        // unitIdToInverter(), so a zero/unparseable serial must never be
+        // written mid-array - it would hide every entry after it.
+        if (serial == 0) { continue; }
+        target.Inverter[idx].Serial = serial;
         target.Inverter[idx].UnitId = unitId;
         ++idx;
     }
