@@ -92,7 +92,7 @@
                 </ul>
             </div>
 
-            <FormFooter :disabled="duplicateUnitIds.size > 0" @reload="getModbusServerConfig" />
+            <FormFooter :disabled="duplicateUnitIds.size > 0" @reload="getInverterList" />
         </form>
     </BasePage>
 </template>
@@ -105,8 +105,11 @@ import CardElement from '@/components/CardElement.vue';
 import FormFooter from '@/components/FormFooter.vue';
 import InputElement from '@/components/InputElement.vue';
 import { handleResponse, authHeader } from '@/utils/authentication';
-import type { ModbusServerConfig, ModbusServerInverterConfig } from '@/types/ModbusServerConfig';
-import type { Inverter } from '@/types/InverterConfig';
+import type {
+    ModbusServerConfig,
+    ModbusServerInverterConfig,
+    ModbusServerInverterMetadata,
+} from '@/types/ModbusServerConfig';
 
 export default defineComponent({
     components: {
@@ -120,7 +123,7 @@ export default defineComponent({
         return {
             dataLoading: true,
             modbusServerConfigList: {} as ModbusServerConfig,
-            inverterList: [] as Array<Inverter>,
+            inverterList: [] as Array<ModbusServerInverterMetadata>,
             alertMessage: '',
             alertType: 'info',
             showAlert: false,
@@ -131,7 +134,6 @@ export default defineComponent({
         };
     },
     created() {
-        this.getModbusServerConfig();
         this.getInverterList();
     },
     computed: {
@@ -153,6 +155,7 @@ export default defineComponent({
             fetch('/api/modbusserver/config', { headers: authHeader() })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
+                    data.inverter = this.tidyUpInverterConfig(data.inverter);
                     this.modbusServerConfigList = data;
                     for (const inv of this.modbusServerConfigList.inverter) {
                         this.rememberedUnitIds[inv.serial] = inv.unit_id;
@@ -161,11 +164,17 @@ export default defineComponent({
                 });
         },
         getInverterList() {
-            fetch('/api/inverter/list', { headers: authHeader() })
+            fetch('/api/modbusserver/metadata', { headers: authHeader() })
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
-                    this.inverterList = data.inverter;
+                    this.inverterList = data.inverters;
+                    this.getModbusServerConfig();
                 });
+        },
+        // Drop entries for inverters that no longer exist, same as
+        // PowerLimiterAdminView's tidyUpInverterConfigs().
+        tidyUpInverterConfig(inverters: ModbusServerInverterConfig[]): ModbusServerInverterConfig[] {
+            return inverters.filter((cfgInv) => this.inverterList.some((inv) => inv.serial === cfgInv.serial));
         },
         getEntry(serial: string): ModbusServerInverterConfig | undefined {
             return this.modbusServerConfigList.inverter.find((i) => i.serial === serial);

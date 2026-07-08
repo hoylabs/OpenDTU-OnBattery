@@ -6,6 +6,7 @@
 #include "defaults.h"
 #include "modbus/ModbusServer.h"
 #include <AsyncJson.h>
+#include <Hoymiles.h>
 #include <set>
 
 WebApiModbusServerClass WebApiModbusServer;
@@ -20,6 +21,33 @@ void WebApiModbusServerClass::init(AsyncWebServer& server, Scheduler& scheduler)
         static_cast<ArRequestHandlerFunction>(std::bind(&WebApiModbusServerClass::onAdminGet, this, _1)));
     _server->on("/api/modbusserver/config", HTTP_POST,
         static_cast<ArRequestHandlerFunction>(std::bind(&WebApiModbusServerClass::onAdminPost, this, _1)));
+    _server->on("/api/modbusserver/metadata", HTTP_GET,
+        static_cast<ArRequestHandlerFunction>(std::bind(&WebApiModbusServerClass::onMetaData, this, _1)));
+}
+
+void WebApiModbusServerClass::onMetaData(AsyncWebServerRequest* request)
+{
+    if (!WebApi.checkCredentials(request)) {
+        return;
+    }
+
+    auto const& config = Configuration.get();
+
+    AsyncJsonResponse* response = new AsyncJsonResponse();
+    auto& root = response->getRoot();
+    JsonArray inverters = root["inverters"].to<JsonArray>();
+
+    for (uint8_t i = 0; i < INV_MAX_COUNT; i++) {
+        auto inv = Hoymiles.getInverterBySerial(config.Inverter[i].Serial);
+        if (!inv) { continue; }
+
+        JsonObject obj = inverters.add<JsonObject>();
+        obj["serial"] = inv->serialString();
+        obj["name"] = String(config.Inverter[i].Name);
+        obj["type"] = inv->typeName();
+    }
+
+    WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
 void WebApiModbusServerClass::onAdminGet(AsyncWebServerRequest* request)

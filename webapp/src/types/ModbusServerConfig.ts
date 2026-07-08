@@ -8,3 +8,9 @@ export interface ModbusServerConfig {
     port: number;
     inverter: Array<ModbusServerInverterConfig>;
 }
+
+export interface ModbusServerInverterMetadata {
+    serial: string;
+    name: string;
+    type: string;
+}
