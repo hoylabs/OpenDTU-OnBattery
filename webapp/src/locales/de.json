@@ -695,6 +695,22 @@
         "timeout": "Zeitüberschreitung",
         "milliSeconds": "Millisekunden"
     },
+    "modbusserveradmin": {
+        "ModbusServerSettings": "Modbus-Server Einstellungen",
+        "General": "Allgemein",
+        "Enable": "Aktivieren",
+        "Port": "TCP-Port",
+        "InverterMapping": "Wechselrichter Konfiguration",
+        "InverterMappingHint": "Jeder über Modbus bereitgestellte Wechselrichter benötigt eine eigene eindeutige Unit-ID (1–247).",
+        "Inverter": "Wechselrichter",
+        "UnitId": "Unit-ID",
+        "DuplicateUnitId": "Doppelte Unit-ID: Jeder Wechselrichter benötigt eine eindeutige Unit-ID!",
+        "ExposedModelsHeading": "Bereitgestellte SunSpec-Model",
+        "ExposedModelsIntro": "Für jeden aktivierten Wechselrichter werden Daten über die folgenden SunSpec-Modelle bereitgestellt:",
+        "ExposedModel1": "Model 1 (Common) — Hersteller, Modellname, Firmware-Version, Seriennummer",
+        "ExposedModel101103": "Modell 101 / 103 (Inverter) — Strom, Spannung, Leistung, Blindleistung, Leistungsfaktor, Frequenz, Energie, Temperatur und Betriebszustand. Einphasige Wechselrichter verwenden Model 101, dreiphasige Wechselrichter Model 103. Die Auswahl erfolgt automatisch.",
+        "ExposedModel120": "Modell 120 (Nameplate) — maximale Nennleistung",
+    },
     "powerlimiteradmin": {
         "PowerLimiterSettings": "Dynamic Power Limiter Einstellungen",
         "ConfigAlertMessage": "Eine oder mehrere Voraussetzungen zum Betrieb des Dynamic Power Limiter sind nicht erfüllt.",
