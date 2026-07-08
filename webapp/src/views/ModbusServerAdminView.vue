@@ -11,9 +11,9 @@
         </BootstrapAlert>
 
         <form @submit="saveModbusServerConfig">
-            <CardElement :text="$t('modbusserveradmin.ModbusServerConfiguration')" textVariant="text-bg-primary">
+            <CardElement :text="$t('modbusserveradmin.General')" textVariant="text-bg-primary">
                 <InputElement
-                    :label="$t('modbusserveradmin.ModbusServerEnable')"
+                    :label="$t('modbusserveradmin.Enable')"
                     v-model="modbusServerConfigList.enabled"
                     type="checkbox"
                     wide
