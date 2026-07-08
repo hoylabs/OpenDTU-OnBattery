@@ -28,6 +28,9 @@ void ModbusServerClass::init(Scheduler& scheduler)
 
 void ModbusServerClass::updateSettings()
 {
+    // Also called from the AsyncWebServer task, not just loop()'s.
+    std::lock_guard<std::mutex> lock(_mutex);
+
     _loopTask.disable();
     for (auto& c : _clients) {
         if (c.tcp) c.tcp.stop();
@@ -52,6 +55,8 @@ void ModbusServerClass::updateSettings()
 
 void ModbusServerClass::loop()
 {
+    std::lock_guard<std::mutex> lock(_mutex);
+
     for (auto& c : _clients) {
         if (!c.tcp || !c.tcp.connected()) {
             WiFiClient n = _server.accept();
