@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include "Configuration.h"
 #include "modbus/sunspec/SunSpecCommonModel1.h"
 #include "modbus/sunspec/SunSpecInverterModel101_103.h"
 #include "modbus/sunspec/SunSpecNameplateModel120.h"
@@ -28,7 +29,11 @@ public:
 
 private:
     static constexpr uint16_t kBase        = 40000;
-    static constexpr uint8_t  kMaxClients  = 4;
+    // SunSpec masters (e.g. Victron/dbus-fronius) open one persistent
+    // connection per unit_id, not one shared connection for all - so this
+    // must cover as many inverters as can be configured, not just a
+    // handful of simultaneous clients.
+    static constexpr uint8_t  kMaxClients  = INV_MAX_COUNT;
     static constexpr size_t   kMaxFrameLen = 260; // MBAP(6) + max PDU(254)
 
     // Register map: SunS id (2 regs), then each model as a (2-reg ID/L
