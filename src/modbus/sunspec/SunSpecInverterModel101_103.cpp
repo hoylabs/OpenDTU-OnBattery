@@ -75,20 +75,20 @@ void SunSpecInverterModel101_103::fill(uint16_t* ac, std::shared_ptr<InverterAbs
     ac[14] = static_cast<uint16_t>(freq * 100.0f + 0.5f); // Hz
     ac[15] = static_cast<uint16_t>(SF_HZ); // Hz_SF
     ac[16] = NI_S; // VA: apparent power - not computed
-    ac[17] = static_cast<uint16_t>(SF_W); // VA_SF
+    ac[17] = NI_S; // VA_SF: paired with NI value, must also read NI
     ac[18] = NI_S; // VAr: reactive power - not computed
-    ac[19] = static_cast<uint16_t>(SF_W); // VAr_SF
+    ac[19] = NI_S; // VAr_SF: paired with NI value, must also read NI
     ac[20] = NI_S; // PF: power factor - not computed
-    ac[21] = static_cast<uint16_t>(SF_W); // PF_SF
+    ac[21] = NI_S; // PF_SF: paired with NI value, must also read NI
     ac[22] = static_cast<uint16_t>(whTotal >> 16); // WH acc32 high word: lifetime energy
     ac[23] = static_cast<uint16_t>(whTotal & 0xFFFF); // WH acc32 low word
     ac[24] = static_cast<uint16_t>(SF_WH); // WH_SF
     ac[25] = NI_U; // DCA: DC current - not measured on the AC side
-    ac[26] = static_cast<uint16_t>(SF_A); // DCA_SF
+    ac[26] = NI_S; // DCA_SF: paired with NI value, must also read NI
     ac[27] = NI_U; // DCV: DC voltage - not measured on the AC side
-    ac[28] = static_cast<uint16_t>(SF_V); // DCV_SF
+    ac[28] = NI_S; // DCV_SF: paired with NI value, must also read NI
     ac[29] = NI_S; // DCW: DC power - not measured on the AC side
-    ac[30] = static_cast<uint16_t>(SF_W); // DCW_SF
+    ac[30] = NI_S; // DCW_SF: paired with NI value, must also read NI
 
     bool hasTemp = reach && stats->hasChannelFieldValue(TYPE_INV, CH0, FLD_T);
     ac[31] = hasTemp ? static_cast<uint16_t>(static_cast<int16_t>(temp * 10.0f)) : NI_S; // TmpCab
