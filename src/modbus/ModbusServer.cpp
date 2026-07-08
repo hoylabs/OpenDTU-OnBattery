@@ -2,6 +2,7 @@
 #include "modbus/ModbusServer.h"
 #include "Configuration.h"
 #include <Hoymiles.h>
+#include <functional>
 #include <memory>
 #include <Arduino.h>
 #include <esp_log.h>
