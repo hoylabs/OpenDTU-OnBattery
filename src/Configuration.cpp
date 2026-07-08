@@ -765,17 +765,20 @@ void ConfigurationClass::deserializeModbusServerConfig(JsonObject const& source,
     target.Port = source["port"] | MODBUS_SERVER_PORT;
     JsonArrayConst inverters = source["inverter"].as<JsonArrayConst>();
     size_t idx = 0;
+    bool seenUnitId[256] = {}; // unit_id is a uint8_t, one slot per possible value
     for (JsonObjectConst inv : inverters) {
         if (idx >= INV_MAX_COUNT) { break; }
         if (!inv["unit_id"].is<uint8_t>()) { continue; } // malformed entry, drop it
         if (!inv["serial"].is<const char*>()) { continue; } // malformed entry, drop it
         uint8_t unitId = inv["unit_id"].as<uint8_t>();
         if (unitId < 1 || unitId > 247) { continue; } // out of valid Modbus unit ID range, drop it
+        if (seenUnitId[unitId]) { continue; } // duplicate unit_id, drop it (WebApi rejects these too)
         uint64_t serial = strtoll(inv["serial"].as<const char*>(), nullptr, 16);
         // Serial == 0 doubles as the "end of list" terminator below and in
         // unitIdToInverter(), so a zero/unparseable serial must never be
         // written mid-array - it would hide every entry after it.
         if (serial == 0) { continue; }
+        seenUnitId[unitId] = true;
         target.Inverter[idx].Serial = serial;
         target.Inverter[idx].UnitId = unitId;
         ++idx;
