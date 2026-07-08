@@ -11,6 +11,7 @@ public:
 private:
     void onAdminGet(AsyncWebServerRequest* request);
     void onAdminPost(AsyncWebServerRequest* request);
+    void onMetaData(AsyncWebServerRequest* request);
 
     AsyncWebServer* _server;
 };
