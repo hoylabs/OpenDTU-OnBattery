@@ -75,10 +75,22 @@ void WebApiModbusServerClass::onAdminPost(AsyncWebServerRequest* request)
     // input has min=1 max=247) each require, so a malformed entry is
     // rejected here with a clear error instead of silently being dropped
     // or defaulted during persistence.
+    // Serial doubles as the "end of list" terminator everywhere else
+    // (Serial == 0 means "no more entries"), so a zero/unparseable serial
+    // anywhere but the last entry would silently hide every entry after
+    // it - reject the whole request rather than let that happen.
     std::set<uint8_t> seenUnitIds;
     for (JsonObject inv : root["inverter"].as<JsonArray>()) {
         if (!inv["serial"].is<const char*>() || !inv["unit_id"].is<uint8_t>()) {
             retMsg["message"] = "Inverter entry is missing a serial or unit ID!";
+            retMsg["code"] = WebApiError::GenericValueMissing;
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        if (strtoll(inv["serial"].as<const char*>(), nullptr, 16) == 0) {
+            retMsg["message"] = "Invalid serial: must be a non-zero hex value!";
             retMsg["code"] = WebApiError::GenericValueMissing;
             response->setLength();
             request->send(response);
