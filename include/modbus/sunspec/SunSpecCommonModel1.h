@@ -12,7 +12,7 @@ class InverterAbstract;
 // Spec: https://github.com/sunspec/models/blob/master/json/model_1.json
 class SunSpecCommonModel1 {
 public:
-    static constexpr uint16_t kLength = 65;
+    static constexpr uint16_t kLength = 66;
 
     static uint16_t id() { return 1; }
     static uint16_t length() { return kLength; }
