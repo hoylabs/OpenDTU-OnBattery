@@ -710,7 +710,7 @@
         "ExposedModelsIntro": "For each enabled inverter, we expose data using the following SunSpec models:",
         "ExposedModel1": "Model 1 (Common) — manufacturer, model name, firmware version, serial number",
         "ExposedModel101103": "Model 101 / 103 (Inverter) — AC current, voltage, power, reactive power, power factor, frequency, energy, temperature and operating state. Single-phase inverters use model 101, three-phase inverters use model 103, chosen automatically.",
-        "ExposedModel120": "Model 120 (Nameplate) — maximum power rating",
+        "ExposedModel120": "Model 120 (Nameplate) — maximum power rating"
     },
     "powerlimiteradmin": {
         "PowerLimiterSettings": "Dynamic Power Limiter Settings",
