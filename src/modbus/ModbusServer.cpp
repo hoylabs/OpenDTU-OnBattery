@@ -8,7 +8,7 @@
 #include <esp_log.h>
 
 #undef TAG
-static const char* TAG = "ModbusServer";
+static const char* TAG = "modbusServer";
 
 ModbusServerClass ModbusServer;
 
