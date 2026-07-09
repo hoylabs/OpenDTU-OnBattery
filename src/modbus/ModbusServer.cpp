@@ -57,8 +57,10 @@ void ModbusServerClass::loop()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
+    bool anyFreeSlot = false;
     for (auto& c : _clients) {
         if (!c.tcp || !c.tcp.connected()) {
+            anyFreeSlot = true;
             WiFiClient n = _server.accept();
             if (n) {
                 // Accepted sockets get no send/receive timeout by default in
@@ -72,6 +74,16 @@ void ModbusServerClass::loop()
                 c.buf.clear();
                 ESP_LOGD(TAG, "Client connected from %s", n.remoteIP().toString().c_str());
             }
+        }
+    }
+    // All slots busy: reject rather than leave the peer queued in the
+    // backlog indefinitely, and make the rejection observable.
+    if (!anyFreeSlot && _server.hasClient()) {
+        WiFiClient rejected = _server.accept();
+        if (rejected) {
+            ESP_LOGE(TAG, "Client list full (%u/%u), rejecting connection from %s",
+                     kMaxClients, kMaxClients, rejected.remoteIP().toString().c_str());
+            rejected.stop();
         }
     }
     for (auto& c : _clients) {
