@@ -88,6 +88,12 @@ void setup()
         Configuration.migrateOnBattery();
     }
 
+    // Read runtime data. Must happen before any component's init() runs, so
+    // components can read their persisted state immediately at init() time.
+    ESP_LOGI(TAG, "Reading runtime data...");
+    Runtime.init(scheduler);
+    Runtime.read();
+
     // Set configured log levels
     Logging.applyLogLevels();
     esp_log_level_set(TAG, ESP_LOG_VERBOSE);
@@ -147,14 +153,11 @@ void setup()
     RestartHelper.init(scheduler);
 
     // OpenDTU-OnBattery-specific initializations go between here...
-    Runtime.init(scheduler); // Runtime must be initialized before the components below can register providers to it
     SolarCharger.init(scheduler);
     PowerMeter.init(scheduler);
     PowerLimiter.init(scheduler);
     GridCharger.init(scheduler);
     Battery.init(scheduler);
-
-    Runtime.read(); // Read runtime values from all components that are registered to read on startup
 
     ESP_LOGI(TAG, "Startup complete");
 }

@@ -32,8 +32,8 @@ void RestartHelperClass::loop()
         LedSingle.turnAllOff();
         Display.setStatus(false);
 
-        // write the runtime data to LittleFS, but do not write if last write operation was less than 10 min ago
-        Runtime.writeAll(10);
+        // write the runtime data to LittleFS if anything changed
+        Runtime.write();
     } else {
         ESP.restart();
     }

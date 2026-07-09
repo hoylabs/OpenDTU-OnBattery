@@ -25,10 +25,6 @@
 static const char* TAG = "dynamicPowerLimiter";
 static const char* SUBTAG = "Controller";
 
-// runtime data keys
-static constexpr const char* FROM_START = "battery_from_start";
-static constexpr const char* ONE_STOP_PER_NIGHT_DONE = "battery_one_stop_per_night_done";
-
 static auto sBatteryPoweredFilter = [](PowerLimiterInverter const& inv) {
     return inv.isBatteryPowered();
 };
@@ -56,7 +52,19 @@ void PowerLimiterClass::init(Scheduler& scheduler)
     _loopTask.setIterations(TASK_FOREVER);
     _loopTask.enable();
 
-    Runtime.registerProvider(this); // register for read on startup
+    // Runtime is read synchronously before any component's init() runs (see main.cpp),
+    // so the persisted battery state is available immediately, no timing tricks needed.
+    // Discard it only if we can positively tell it is stale (saved more than 1h ago) --
+    // a long power-off means the battery may have changed state while we were away.
+    // NTP is usually not synced yet at this point, so "can't tell" defaults to trusting
+    // the data; any wrong carry-over gets corrected on the next real threshold crossing.
+    time_t nowEpoch;
+    bool stale = Utils::getEpoch(&nowEpoch, 1) &&
+            (difftime(nowEpoch, Runtime.get().Meta.WriteEpoch) > 60 * 60);
+    if (!stale) {
+        _fromStart = Runtime.get().PowerLimiter.FromStart;
+        _oneStopPerNightDone = Runtime.get().PowerLimiter.OneStopPerNightDone;
+    }
 }
 
 frozen::string const& PowerLimiterClass::getStatusText(PowerLimiterClass::Status status) const
@@ -268,24 +276,6 @@ void PowerLimiterClass::loop()
         // check if we have a battery powered inverter
         if (!usesBatteryPoweredInverter()) { return BatteryState::STOP; }
 
-        // the startup requires special handling, because the voltage or the SoC may not be available at the beginning of the DPL loop.
-        // if we are in the first 15 seconds after startup, we use the buffered information from the runtime data if available and not too old.
-        // A perfect solution would require refactoring of isStopThresholdReached() and related methods to handle the state if
-        // data is not available during the startup scenario properly.
-        if (_fromStartRT && (millis() < 15 * 1000)) {
-            time_t nowEpoch;
-            Utils::getEpoch(&nowEpoch, 1);
-
-            // if the runtime epoch is more than one hour in the past, we assume that the runtime data is too old.
-            if ((nowEpoch - _lastBatteryStateSaveEpoch) <= (60 * 60)) {
-                _fromStart = _fromStartRT;
-                _oneStopPerNightDone = _oneStopPerNightDoneRT;
-            }
-        } else {
-            _fromStartRT = false;
-            _oneStopPerNightDoneRT = false;
-        }
-
         // check the stop condition
         auto day = SunPosition.isDayPeriod();
         if (isStopThresholdReached()) {
@@ -359,6 +349,7 @@ void PowerLimiterClass::loop()
 
     _loadCorrectedVoltage = getLoadCorrectedVoltage();
     _batteryState = getBatteryState();
+    persistBatteryState();
     _fullSolarPassThroughActive = getFullSolarPassthrough();
 
     DTU_LOGD("up %lu s, it is %s, next inverter restart at %d s (set to %d)",
@@ -1008,26 +999,10 @@ bool PowerLimiterClass::isGovernedBatteryPoweredInverterProducing() const
     return false;
 }
 
-void PowerLimiterClass::serializeRT(JsonObject obj) const
+void PowerLimiterClass::persistBatteryState()
 {
-    // Note: Up to now the PowerLimiterClass does not use a mutex
-    // As long as we read and write during startup or from the main task, we are fine.
-    obj[FROM_START] = _fromStart;
-    obj[ONE_STOP_PER_NIGHT_DONE] = _oneStopPerNightDone;
-}
-
-void PowerLimiterClass::deserializeRT(JsonObject obj)
-{
-    // Note: Up to now the PowerLimiterClass does not use a mutex
-    // As long as we read and write during startup or from the main task, we are fine.
-    // We can not use the write epoch time to determine whether the serialized data is outdated,
-    // because the system time may not be available at the time of deserialization
-    _lastBatteryStateSaveEpoch = Runtime.getWriteEpochTime();
-
-    if (obj[FROM_START].is<bool>()) {
-        _fromStartRT = obj[FROM_START];
-    }
-    if (obj[ONE_STOP_PER_NIGHT_DONE].is<bool>()) {
-        _oneStopPerNightDoneRT = obj[ONE_STOP_PER_NIGHT_DONE];
-    }
+    auto guard = Runtime.getWriteGuard();
+    auto& runtimeData = guard.getRuntimeData();
+    runtimeData.PowerLimiter.FromStart = _fromStart;
+    runtimeData.PowerLimiter.OneStopPerNightDone = _oneStopPerNightDone;
 }

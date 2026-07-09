@@ -2,336 +2,198 @@
 
 /* Runtime Data Management
  *
- * Read and write runtime data persistent on LittleFS
- * - The data is stored in JSON format
- * - The data is written during WebApp 'OTA firmware upgrade' and during Webapp 'Reboot'
- * - For security reasons such as 'unexpected power cycles' or 'physical resets', data is also written once a day at 00:05
- * - The data will not be written if the last write operation was less than 10 minutes ago.
- * - Threadsafe access to data and interface is provided by two mutexes.
- * - Reading is done on startup and if requested on demand.
+ * Read and write runtime data persistent on LittleFS.
+ * - RuntimeData is the shared home for internally-derived state that components
+ *   want to survive a reboot (as opposed to Configuration, which is user settings).
+ * - The whole RUNTIME_DATA_T struct is known at compile time (like CONFIG_T), so
+ *   there is no provider registration/dispatch: components just read/write their
+ *   own section of the struct directly via get()/WriteGuard.
+ * - read() is called once, synchronously, before any component's init() runs, so
+ *   components have their persisted state available immediately.
+ * - write() is only ever a no-op away from being called: it is gated on a dirty
+ *   flag that WriteGuard sets by comparing the struct before/after mutation, so
+ *   unchanged data is never rewritten (avoids flash wear and avoids bumping
+ *   Meta.WriteEpoch when nothing actually changed).
+ * - write() is triggered from WebApp 'OTA firmware upgrade' and 'Reboot' (via
+ *   RestartHelper), and once a day at 00:05 as a safety net against unexpected
+ *   power loss between those graceful triggers.
  *
- * How to use:
- *  - Derive your own class from the interface class InterfaceProviderRT.
- *  - Implement the serializeRT() and deserializeRT() methods to define how your subsystem's runtime data is stored and read.
- *  - Register the provider to the RuntimeProvider singleton instance in the setup() method of your subsystem
- *  - Use requestWriteOnNextLoop() and requestReadOnNextLoop() if you want to handle runtime data on demand.
- *
- * Note:
- * - The LittleFS filesystem must be initialized before using Runtime, otherwise the write and read operations will fail.
- *
- * 2025.09.11 - 1.0 - first version
+ * 2025.09.11 - 1.0 - first version (generic provider/JSON model)
  * 2025.12.01 - 1.1 - added read mode ON_DEMAND and START_UP
- * 2026.05.06 - 1.2 - added InterfaceProviderRT interface and provider registration and unregistration methods
- *                    improved read() method to read data of all or of specific providers
- *                    improved writeAll() method to keep data of providers that are currently not active or not registered
+ * 2026.05.06 - 1.2 - added InterfaceProviderRT interface and provider registration
+ * 2026.07.06 - 2.0 - replaced provider/JSON-map model with a compile-time struct
+ *                    (mirrors Configuration), dirty-gated writes, no eager startup read
  */
 
 #include <Utils.h>
 #include <LittleFS.h>
 #include <esp_log.h>
 #include <ArduinoJson.h>
-#include <algorithm>
 #include "RuntimeData.h"
 
 #undef TAG
 static const char* TAG = "runtime";
 
-static constexpr const char* RUNTIME_FILENAME = "/runtime.json";    // filename of the runtime data file
-static constexpr uint16_t RUNTIME_VERSION = 1;                      // version prepared for future migration support
+static constexpr const char* RUNTIME_FILENAME = "/runtime.json";
+static constexpr uint32_t RUNTIME_VERSION = 2;
+static constexpr uint16_t WRITE_FREEZE_MINUTES = 10; // do not write more often than this
 
-// runtime data keys
-static constexpr const char* INFO = "info";
+// JSON section/key names
+static constexpr const char* META = "meta";
 static constexpr const char* VERSION = "version";
-static constexpr const char* SAVE_COUNT = "save_count";
-static constexpr const char* SAVE_EPOCH = "save_epoch";
+static constexpr const char* WRITE_COUNT = "write_count";
+static constexpr const char* WRITE_EPOCH = "write_epoch";
+static constexpr const char* POWER_LIMITER = "power_limiter";
+static constexpr const char* FROM_START = "from_start";
+static constexpr const char* ONE_STOP_PER_NIGHT_DONE = "one_stop_per_night_done";
 
+RuntimeDataClass Runtime; // singleton instance
 
-RuntimeProvider Runtime; // singleton instance
+static RUNTIME_DATA_T runtimeData;
+static std::mutex sMutex;
 
-
-/*
- * Init the runtime data loop task
- */
-void RuntimeProvider::init(Scheduler& scheduler)
+void RuntimeDataClass::init(Scheduler& scheduler)
 {
     scheduler.addTask(_loopTask);
-    _loopTask.setCallback(std::bind(&RuntimeProvider::loop, this));
+    _loopTask.setCallback(std::bind(&RuntimeDataClass::loop, this));
     _loopTask.setIterations(TASK_FOREVER);
     _loopTask.setInterval(15 * 1000); // every 15 seconds
     _loopTask.enable();
+
+    memset(&runtimeData, 0x0, sizeof(runtimeData));
 }
 
-
-/*
- * The runtime data loop is called every 15 seconds and checks if a write or read operation is requested
- */
-void RuntimeProvider::loop(void)
+// daily safety-net write, in case a reboot/OTA never happens gracefully
+void RuntimeDataClass::loop(void)
 {
-    // check if we need to write the runtime data, either it is 00:05 or on request
-    bool dailyWriteTriggered = getWriteTrigger();
-    if (_writeNow.exchange(false) || dailyWriteTriggered) {
-        writeAll(0); // no freeze time.
+    if (getDailyWriteTrigger()) { write(); }
+}
+
+bool RuntimeDataClass::getDailyWriteTrigger(void)
+{
+    struct tm nowTime;
+    if (!getLocalTime(&nowTime, 1)) { return false; }
+
+    if ((nowTime.tm_hour == 0) && (nowTime.tm_min >= 5) && (nowTime.tm_min <= 10)) {
+        if (!_lastTrigger) {
+            _lastTrigger = true;
+            return true;
+        }
+    } else {
+        _lastTrigger = false;
+    }
+    return false;
+}
+
+bool RuntimeDataClass::read()
+{
+    std::lock_guard<std::mutex> lock(sMutex);
+
+    if (!LittleFS.exists(RUNTIME_FILENAME)) {
+        ESP_LOGI(TAG, "No runtime data file, using default values");
+        return false;
     }
 
-    // check if we need to read runtime data on request
-    if (_readNow.exchange(false)) {
-        read(false); // read on demand, not on startup
-    }
-}
-
-
-/*
- * Register a provider to be managed by the RuntimeProvider,
- * if readOnStartup is true, the data of this provider will be read on startup
- */
-void RuntimeProvider::registerProvider(InterfaceProviderRT* provider, bool readOnStartup) {
-
-    { // mutex is automatically released when lock goes out of this scope
-        std::lock_guard<std::mutex> lock(_mutexInterface);
-
-        provider->setReadOnStartupRT(readOnStartup);
-        _providers[provider->getIdRT()] = provider;
-    } // mutex is automatically released when lock goes out of this scope
-
-    ESP_LOGI(TAG, "Provider '%s' registered", provider->getIdRT().c_str());
-}
-
-
-/*
- * Unregister a provider, the provider will no longer be managed by the RuntimeProvider,
- * and its data will not be read or written anymore
- */
-void RuntimeProvider::unregisterProvider(const String& id) {
-
-    { // mutex is automatically released when lock goes out of this scope
-        std::lock_guard<std::mutex> lock(_mutexInterface);
-
-        _providers.erase(id);
-    } // mutex is automatically released when lock goes out of this scope
-
-    ESP_LOGI(TAG, "Provider '%s' unregistered", id.c_str());
-}
-
-void RuntimeProvider::unregisterProvider(InterfaceProviderRT* provider) {
-
-    { // mutex is automatically released when lock goes out of this scope
-        std::lock_guard<std::mutex> lock(_mutexInterface);
-
-        _providers.erase(provider->getIdRT());
-    } // mutex is automatically released when lock goes out of this scope
-
-    ESP_LOGI(TAG, "Provider '%s' unregistered", provider->getIdRT().c_str());
-}
-
-
-/*
- * Write the runtime data from all registered providers into LittleFS file
- * freezeMinutes: Minimum necessary time [minutes] between now and last write operation
- */
-bool RuntimeProvider::writeAll(uint16_t const freezeMinutes)
-{
-    auto cleanExit = [this](const bool writeOk, const char* text) -> bool {
-        if (writeOk) {
-            ESP_LOGI(TAG,"%s", text);
-        } else {
-            ESP_LOGE(TAG,"%s", text);
-        }
-        _writeOK.store(writeOk);
-        return writeOk;
-    };
-
-    // we need a valid epoch time before we can write the runtime data
-    time_t nextEpoch;
-    if (!Utils::getEpoch(&nextEpoch, 1)) { return cleanExit(false, "Local time not available, skipping write"); }
-
-    { // mutex is automatically released when lock goes out of this scope
-        std::lock_guard<std::mutex> lock(_mutexInterface);
-
-        // fast exit if no providers are registered, no need to write an empty file
-        if (_providers.empty()) {
-            return cleanExit(true, "No providers registered, skipping write");
-        }
-    } // mutex is automatically released when lock goes out of this scope
-
-    { // mutex is automatically released when lock goes out of this scope
-        std::lock_guard<std::mutex> lock(_mutexData);
-
-        if (!LittleFS.exists(RUNTIME_FILENAME)) { _writeEpoch = 0; }
-
-        // check minimum interval between writes (enforced only when freezeMinutes > 0)
-        if ((freezeMinutes > 0) && (_writeEpoch != 0) && (difftime(nextEpoch, _writeEpoch) < 60 * freezeMinutes)) {
-            return cleanExit(false, "Time interval too short, skipping write");
-        }
-    } // mutex is automatically released when lock goes out of this scope
-
-    // prepare the JSON document and store the runtime data is done outside the
-    // mutex protection to minimize the time the mutex is locked.
-    JsonDocument doc;
-
-    // read the existing runtime data to keep the data of providers that are currently not active or
-    // not registered anymore, otherwise we would lose this data on write
     File fRuntime = LittleFS.open(RUNTIME_FILENAME, "r", false);
-    if (fRuntime) {
-        Utils::skipBom(fRuntime);
-        DeserializationError error = deserializeJson(doc, fRuntime);
-        fRuntime.close();
-        if (error || !Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
-            ESP_LOGW(TAG, "Read data error, rewriting runtime file from current provider state");
-            doc.clear();
-        }
+    if (!fRuntime) {
+        ESP_LOGE(TAG, "Failed to open runtime data file");
+        return false;
     }
 
-    JsonObject info = doc[INFO].as<JsonObject>();
-    uint16_t nextCount = info[SAVE_COUNT] | 0U;
-    nextCount++; // increase the count for the next write operation
+    JsonDocument doc;
+    Utils::skipBom(fRuntime);
+    DeserializationError error = deserializeJson(doc, fRuntime);
+    fRuntime.close();
+    if (error || !Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
+        ESP_LOGE(TAG, "Failed to parse runtime data file");
+        return false;
+    }
 
-    info = doc[INFO].to<JsonObject>();
-    info[VERSION] = RUNTIME_VERSION;
-    info[SAVE_COUNT] = nextCount;
-    info[SAVE_EPOCH] = nextEpoch;
+    JsonObject meta = doc[META];
+    runtimeData.Meta.Version = meta[VERSION] | 0U;
+    runtimeData.Meta.WriteCount = meta[WRITE_COUNT] | 0U;
+    runtimeData.Meta.WriteEpoch = meta[WRITE_EPOCH].as<time_t>();
 
-    { // mutex is automatically released when lock goes out of this scope
-        std::lock_guard<std::mutex> lock(_mutexInterface);
+    JsonObject powerLimiter = doc[POWER_LIMITER];
+    runtimeData.PowerLimiter.FromStart = powerLimiter[FROM_START] | false;
+    runtimeData.PowerLimiter.OneStopPerNightDone = powerLimiter[ONE_STOP_PER_NIGHT_DONE] | false;
 
-        // serialize the runtime data of all registered providers
-        for (auto& [id, provider] : _providers) {
-            provider->serializeRT(doc[id].to<JsonObject>());
-        }
-    } // mutex is automatically released when lock goes out of this scope
+    ESP_LOGI(TAG, "Read from file");
+    return true;
+}
+
+bool RuntimeDataClass::write()
+{
+    std::lock_guard<std::mutex> lock(sMutex);
+
+    if (!_dirty) {
+        ESP_LOGD(TAG, "No changes, skipping write");
+        return true;
+    }
+
+    time_t nextEpoch;
+    if (!Utils::getEpoch(&nextEpoch, 1)) {
+        ESP_LOGW(TAG, "Local time not available, skipping write");
+        return false;
+    }
+
+    if ((runtimeData.Meta.WriteEpoch != 0) &&
+            (difftime(nextEpoch, runtimeData.Meta.WriteEpoch) < 60 * WRITE_FREEZE_MINUTES)) {
+        ESP_LOGD(TAG, "Time interval too short, skipping write");
+        return false;
+    }
+
+    runtimeData.Meta.Version = RUNTIME_VERSION;
+    runtimeData.Meta.WriteEpoch = nextEpoch;
+    runtimeData.Meta.WriteCount++;
+
+    JsonDocument doc;
+    JsonObject meta = doc[META].to<JsonObject>();
+    meta[VERSION] = runtimeData.Meta.Version;
+    meta[WRITE_COUNT] = runtimeData.Meta.WriteCount;
+    meta[WRITE_EPOCH] = runtimeData.Meta.WriteEpoch;
+
+    JsonObject powerLimiter = doc[POWER_LIMITER].to<JsonObject>();
+    powerLimiter[FROM_START] = runtimeData.PowerLimiter.FromStart;
+    powerLimiter[ONE_STOP_PER_NIGHT_DONE] = runtimeData.PowerLimiter.OneStopPerNightDone;
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
-        return cleanExit(false, "JSON alloc fault, skipping write");
+        ESP_LOGE(TAG, "JSON alloc fault, skipping write");
+        return false;
     }
 
-    fRuntime = LittleFS.open(RUNTIME_FILENAME, "w");
-    if (!fRuntime) { return cleanExit(false, "Failed to open file for writing"); }
+    File fRuntime = LittleFS.open(RUNTIME_FILENAME, "w");
+    if (!fRuntime) {
+        ESP_LOGE(TAG, "Failed to open file for writing");
+        return false;
+    }
 
     if (serializeJson(doc, fRuntime) == 0) {
         fRuntime.close();
-        return cleanExit(false, "Failed to serialize to file");
+        ESP_LOGE(TAG, "Failed to serialize to file");
+        return false;
     }
     fRuntime.close();
 
-    { // mutex is automatically released when lock goes out of this scope
-        std::lock_guard<std::mutex> lock(_mutexData);
-
-        // commit the new state only after a successful write
-        _fileVersion = RUNTIME_VERSION;
-        _writeEpoch = nextEpoch;
-        _writeCount = nextCount;
-    } // mutex is automatically released when lock goes out of this scope
-
-    return cleanExit(true, "Write to file");
+    _dirty = false;
+    ESP_LOGI(TAG, "Write to file");
+    return true;
 }
 
-
-/*
- * Read the runtime data from LittleFS file
- * readOnStartup = true: read data from providers that are marked to be read on startup
- * readOnStartup = false: read data from providers that are requested to be read on demand
- */
-bool RuntimeProvider::read(bool const readOnStartup)
+RUNTIME_DATA_T const& RuntimeDataClass::get()
 {
-    auto cleanExit = [this](const bool readOk, const char* text) -> bool {
-        if (readOk) {
-            ESP_LOGI(TAG,"%s", text);
-        } else {
-            ESP_LOGE(TAG,"%s", text);
-        }
-        _readOK.store(readOk);
-        return readOk;
-    };
-
-    JsonDocument doc;
-
-    // Note: We do not exit on read or allocation errors.
-    // Every provider can decide by itself whether to use default configuration values in that case
-    bool readOk = LittleFS.exists(RUNTIME_FILENAME);
-    File fRuntime = LittleFS.open(RUNTIME_FILENAME, "r", false);
-    if (fRuntime) {
-        Utils::skipBom(fRuntime);
-        DeserializationError error = deserializeJson(doc, fRuntime);
-        fRuntime.close();
-        if (error || !Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
-            readOk = false;
-        }
-    }
-
-    JsonObject info = doc[INFO].as<JsonObject>();
-
-    { // mutex is automatically released when lock goes out of this scope
-        std::lock_guard<std::mutex> lock(_mutexData);
-
-        // 0 means no file available and runtime data is not valid
-        _fileVersion = info[VERSION] | 0U;
-        _writeCount = info[SAVE_COUNT] | 0U;
-        _writeEpoch = info[SAVE_EPOCH].as<time_t>();
-        if (_writeEpoch == 0) { readOk = false; } // no valid data available
-    } // mutex is automatically released when lock goes out of this scope
-
-    { // mutex is automatically released when lock goes out of this scope
-        std::lock_guard<std::mutex> lock(_mutexInterface);
-
-        for (auto& [id, provider] : _providers) {
-            if (readOnStartup) {
-                if (!provider->getReadOnStartupRT()) { continue; } // skip providers that are not read on startup
-            } else {
-                auto providerIt = std::find(_readIDList.begin(), _readIDList.end(), id);
-                if (providerIt == _readIDList.end()) { continue; } // skip providers that are not requested to be read on demand
-            }
-
-            // JsonObject can be empty, but as mentioned before, we do not exit on read or allocation errors,
-            // so the provider can decide by itself whether to use default configuration values in that case
-            provider->deserializeRT(doc[id].as<JsonObject>());
-        }
-
-        // Clear the on-demand read list after processing
-        if (!readOnStartup) { _readIDList.clear(); }
-
-    } // mutex is automatically released when lock goes out of this scope
-
-    if (!readOk) {
-        return cleanExit(false, "File not found or error, using default values");
-    }
-
-    return cleanExit(true, "Read from file");
+    return runtimeData;
 }
 
-
-/*
- * Get the write counter
- */
-uint16_t RuntimeProvider::getWriteCount(void) const
-{
-    std::lock_guard<std::mutex> lock(_mutexData);
-    return _writeCount;
-}
-
-
-/*
- * Get the write epoch time
- */
-time_t RuntimeProvider::getWriteEpochTime(void) const
-{
-    std::lock_guard<std::mutex> lock(_mutexData);
-    return _writeEpoch;
-}
-
-
-/*
- * Get the write count and time as string
- * Format: "<count> / <dd>-<mon> <hh>:<mm>"
- * If epoch time and local time is not available the time is replaced by "no time"
- */
-String RuntimeProvider::getWriteCountAndTimeString(void) const
+String RuntimeDataClass::getWriteCountAndTimeString() const
 {
     time_t epoch;
     uint16_t count;
 
     { // mutex is automatically released when lock goes out of this scope
-        std::lock_guard<std::mutex> lock(_mutexData);
-        epoch = _writeEpoch;
-        count = _writeCount;
+        std::lock_guard<std::mutex> lock(sMutex);
+        epoch = runtimeData.Meta.WriteEpoch;
+        count = runtimeData.Meta.WriteCount;
     } // mutex is automatically released when lock goes out of this scope
 
     char buf[32] = "";
@@ -345,44 +207,28 @@ String RuntimeProvider::getWriteCountAndTimeString(void) const
     } else {
         snprintf(buf, sizeof(buf), " / no time");
     }
-    String ctString = String(count) + String(buf);
-    return ctString;
+    return String(count) + String(buf);
 }
 
-
-/*
- * Get the daily write trigger
- * Returns true once a day between 00:05 - 00:10
- */
-bool RuntimeProvider::getWriteTrigger(void) {
-
-    struct tm nowTime;
-    if (!getLocalTime(&nowTime, 1)) {
-        return false;
-    }
-
-    std::lock_guard<std::mutex> lock(_mutexData);
-    if ((nowTime.tm_hour == 0) && (nowTime.tm_min >= 5) && (nowTime.tm_min <= 10)) {
-        if (_lastTrigger == false) {
-            _lastTrigger = true;
-            return true;
-        }
-    } else {
-        _lastTrigger = false;
-    }
-    return false;
+RuntimeDataClass::WriteGuard RuntimeDataClass::getWriteGuard()
+{
+    return WriteGuard();
 }
 
+RuntimeDataClass::WriteGuard::WriteGuard()
+    : _lock(sMutex)
+    , _before(runtimeData)
+{
+}
 
-/*
- * Add an provider ID to the read list
- */
-void RuntimeProvider::requestReadOnNextLoop(String const& addID) {
+RUNTIME_DATA_T& RuntimeDataClass::WriteGuard::getRuntimeData()
+{
+    return runtimeData;
+}
 
-    std::lock_guard<std::mutex> lock(_mutexInterface);
-
-    // if the ID is not already on the list, add it
-    auto id = std::find(_readIDList.begin(), _readIDList.end(), addID);
-    if (id == _readIDList.end()) { _readIDList.push_back(addID); }
-    _readNow.store(true);
+RuntimeDataClass::WriteGuard::~WriteGuard()
+{
+    if (memcmp(&_before, &runtimeData, sizeof(RUNTIME_DATA_T)) != 0) {
+        Runtime._dirty = true;
+    }
 }
