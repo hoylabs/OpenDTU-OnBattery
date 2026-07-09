@@ -61,6 +61,13 @@ void ModbusServerClass::loop()
     for (auto& c : _clients) {
         if (!c.tcp || !c.tcp.connected()) {
             anyFreeSlot = true;
+            if (c.tcp) {
+                // Slot held a client that's now gone; log once and free the
+                // slot so this branch doesn't re-fire every tick until reused.
+                ESP_LOGD(TAG, "Client %s disconnected", c.tcp.remoteIP().toString().c_str());
+                c.tcp.stop();
+                c.tcp = WiFiClient();
+            }
             WiFiClient n = _server.accept();
             if (n) {
                 // Accepted sockets get no send/receive timeout by default in
@@ -106,6 +113,8 @@ void ModbusServerClass::drainClient(Client& c)
             c.buf.push_back((uint8_t)b);
         else {
             // Oversized frame — discard and reset
+            ESP_LOGE(TAG, "Oversized frame from %s (>%u bytes), discarding",
+                     c.tcp.remoteIP().toString().c_str(), (unsigned)kMaxFrameLen);
             c.buf.clear();
             c.tcp.flush();
             return;
@@ -125,6 +134,7 @@ bool ModbusServerClass::tryProcessFrame(Client& c)
     size_t   total  = 6u + pduLen; // MBAP + PDU
 
     if (pduLen < 2 || pduLen > 254) {
+        ESP_LOGD(TAG, "Malformed frame, bad PDU length %u, discarding", pduLen);
         c.buf.clear(); // malformed
         return false;
     }
@@ -142,6 +152,7 @@ bool ModbusServerClass::tryProcessFrame(Client& c)
         uint16_t regCount  = (static_cast<uint16_t>(c.buf[10]) << 8) | c.buf[11];
         handleReadRegs(c.tcp, tid, unitId, startAddr, regCount);
     } else {
+        ESP_LOGD(TAG, "Unsupported function code 0x%02X from unit %u", fc, unitId);
         sendException(c.tcp, tid, unitId, fc, 0x01); // ILLEGAL FUNCTION
     }
 
@@ -158,14 +169,17 @@ void ModbusServerClass::handleReadRegs(WiFiClient& client, uint16_t tid, uint8_t
                                         uint16_t startAddr, uint16_t regCount)
 {
     if (regCount == 0 || regCount > 125) {
+        ESP_LOGD(TAG, "Illegal register count %u from unit %u", regCount, unitId);
         sendException(client, tid, unitId, 0x03, 0x03); return;
     }
     if (startAddr < kBase || static_cast<uint32_t>(startAddr - kBase) + regCount > kTotalRegs) {
+        ESP_LOGD(TAG, "Register range out of bounds: start=%u count=%u from unit %u", startAddr, regCount, unitId);
         sendException(client, tid, unitId, 0x03, 0x02); return;
     }
 
     auto inv = unitIdToInverter(unitId);
     if (!inv) {
+        ESP_LOGD(TAG, "Unknown unit ID %u, no matching inverter configured", unitId);
         sendException(client, tid, unitId, 0x03, 0x02); return;
     }
 
@@ -176,8 +190,11 @@ void ModbusServerClass::handleReadRegs(WiFiClient& client, uint16_t tid, uint8_t
     // resets DevInfo back to zero), so this only delays first discovery,
     // it doesn't affect normal reachable/unreachable cycling afterwards.
     if (inv->DevInfo()->getMaxPower() == 0) {
+        ESP_LOGD(TAG, "Inverter for unit %u not ready yet (nameplate power unknown)", unitId);
         sendException(client, tid, unitId, 0x03, 0x0B); return; // GATEWAY TARGET DEVICE FAILED TO RESPOND
     }
+
+    ESP_LOGV(TAG, "Read regs: unit=%u start=%u count=%u", unitId, startAddr, regCount);
 
     uint16_t regs[kTotalRegs] = {};
     fillRegisters(regs, inv, unitId);
@@ -204,6 +221,8 @@ void ModbusServerClass::handleReadRegs(WiFiClient& client, uint16_t tid, uint8_t
         // Peer didn't drain a ~260-byte reply within the 1s cap set at
         // accept() - stalled or gone. Drop it instead of leaving a wedged
         // slot that would eat this timeout again on every future request.
+        ESP_LOGE(TAG, "Write failed sending read-regs response to %s, dropping client",
+                 client.remoteIP().toString().c_str());
         client.stop();
     }
 }
@@ -221,6 +240,8 @@ void ModbusServerClass::sendException(WiFiClient& client, uint16_t tid, uint8_t 
         unitId, static_cast<uint8_t>(fc | 0x80), code
     };
     if (client.write(resp, sizeof(resp)) != sizeof(resp)) {
+        ESP_LOGE(TAG, "Write failed sending exception response to %s, dropping client",
+                 client.remoteIP().toString().c_str());
         client.stop();
     }
 }
