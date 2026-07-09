@@ -1090,6 +1090,7 @@
         "Module_powerMeter": "Power Meter",
         "Module_solarCharger": "Solar Charger",
         "Module_veDirect": "VE.Direct",
+        "Module_modbusServer": "Modbus Server",
         "CoreHint": "Warning: A too detailed log level of the ESP-IDF Core module can significantly impact performance and lead to unpredictable behavior. The log level setting should only be temporarily adjusted for targeted troubleshooting. The default setting 'Error' is sufficient for normal operation.",
         "log_inherit": "Inherit from default",
         "log_none": "None",
