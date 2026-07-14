@@ -44,13 +44,22 @@ bool Provider::init()
 
     _upSdmSerial = std::make_unique<SoftwareSerial>();
 
+    // NOTE: the pin arguments must match the SDM constructors' parameter types
+    // (int for the dere/re pins, int8_t for rx/tx). since switching the pin
+    // config to gpio_num_t, passing the enum values directly changes overload
+    // resolution: gpio_num_t promotes to int, which lets the 6-argument call
+    // below bind to the 7-parameter (rxen/txen) constructor instead of the
+    // intended 6-parameter (dere) one, silently shifting every argument by one.
+    // cast explicitly to restore the exact-match overload selection.
     if (pin.powermeter_rxen > GPIO_NUM_NC && pin.powermeter_txen > GPIO_NUM_NC) {
-        _upSdm = std::make_unique<SDM>(*_upSdmSerial, 9600, pin.powermeter_rxen, pin.powermeter_txen,
-            SWSERIAL_8N1, pin.powermeter_rx, pin.powermeter_tx);
+        _upSdm = std::make_unique<SDM>(*_upSdmSerial, 9600,
+            static_cast<int>(pin.powermeter_rxen), static_cast<int>(pin.powermeter_txen),
+            SWSERIAL_8N1, static_cast<int8_t>(pin.powermeter_rx), static_cast<int8_t>(pin.powermeter_tx));
     }
     else {
-        _upSdm = std::make_unique<SDM>(*_upSdmSerial, 9600, pin.powermeter_dere,
-            SWSERIAL_8N1, pin.powermeter_rx, pin.powermeter_tx);
+        _upSdm = std::make_unique<SDM>(*_upSdmSerial, 9600,
+            static_cast<int>(pin.powermeter_dere),
+            SWSERIAL_8N1, static_cast<int8_t>(pin.powermeter_rx), static_cast<int8_t>(pin.powermeter_tx));
     }
 
     _upSdm->begin();
