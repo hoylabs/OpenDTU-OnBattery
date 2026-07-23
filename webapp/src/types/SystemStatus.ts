@@ -31,7 +31,6 @@ export interface SystemStatus {
     resetreason_0: string;
     resetreason_1: string;
     cfgsavecount: number;
-    runtime_savecount: string;
     uptime: number;
     update_text: string;
     update_url: string;

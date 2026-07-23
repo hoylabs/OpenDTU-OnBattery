@@ -84,10 +84,6 @@
                         <td>{{ $n(systemStatus.cfgsavecount, 'decimal') }}</td>
                     </tr>
                     <tr>
-                        <th>{{ $t('firmwareinfo.RuntimeSaveCount') }}</th>
-                        <td>{{ systemStatus.runtime_savecount }}</td>
-                    </tr>
-                    <tr>
                         <th>{{ $t('firmwareinfo.Uptime') }}</th>
                         <td>
                             {{ $t('firmwareinfo.UptimeValue', timeInHours(systemStatus.uptime)) }}
