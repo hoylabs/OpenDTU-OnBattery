@@ -13,7 +13,7 @@ void SunSpecCommonModel1::fill(uint16_t* payload, std::shared_ptr<InverterAbstra
     char version[16];
     snprintf(version, sizeof(version), "%u.%u.%u", fw / 10000, (fw / 100) % 100, fw % 100);
 
-    SunSpec::packString(payload + 0, "OpenDTU", 16); // Mn: manufacturer
+    SunSpec::packString(payload + 0, "Hoymiles", 16); // Mn: manufacturer
     SunSpec::packString(payload + 16, inv->typeName().c_str(), 16); // Md: model name
     memset(payload + 32, 0, 8 * sizeof(uint16_t)); // Opt: options - empty string, none defined
     SunSpec::packString(payload + 40, version, 8); // Vr: firmware version
