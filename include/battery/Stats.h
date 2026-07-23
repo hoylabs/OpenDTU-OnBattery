@@ -69,6 +69,9 @@ public:
 protected:
     virtual void mqttPublish() const;
 
+    // the maximum age of data before battery is rendered as unreachable in Web UI
+    virtual uint32_t getMaxAgeSeconds() const { return 20; }
+
     void setSoC(float soc, uint8_t precision, uint32_t timestamp) {
         _soc = soc;
         _socPrecision = precision;

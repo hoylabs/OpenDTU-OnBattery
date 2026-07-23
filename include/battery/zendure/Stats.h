@@ -204,6 +204,8 @@ public:
     }
 
 protected:
+    uint32_t getMaxAgeSeconds() const override { return 90; }
+
     std::shared_ptr<PackStats> getPackData(size_t index) const;
     std::shared_ptr<PackStats> addPackData(size_t index, String serial);
 
