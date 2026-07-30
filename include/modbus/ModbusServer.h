@@ -35,6 +35,10 @@ private:
     // handful of simultaneous clients.
     static constexpr uint8_t  kMaxClients  = INV_MAX_COUNT;
     static constexpr size_t   kMaxFrameLen = 260; // MBAP(6) + max PDU(254)
+    // Refuse new clients below this free-heap floor so a full Modbus table
+    // can't starve the web UI/MQTT of their own sockets/buffers. Internal
+    // DRAM only - lwIP isn't PSRAM-backed.
+    static constexpr uint32_t kMinFreeHeap = 20 * 1024;
 
     // Register map: SunS id (2 regs), then each model as a (2-reg ID/L
     // header + payload) block, then a 2-reg end marker. fillRegisters()
