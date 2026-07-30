@@ -68,6 +68,15 @@ void ModbusServerClass::loop()
                 c.tcp.stop();
                 c.tcp = WiFiClient();
             }
+            if (_server.hasClient() && ESP.getFreeHeap() < kMinFreeHeap) {
+                WiFiClient rejected = _server.accept();
+                if (rejected) {
+                    ESP_LOGE(TAG, "Free heap low (%u bytes), rejecting connection from %s",
+                             ESP.getFreeHeap(), rejected.remoteIP().toString().c_str());
+                    rejected.stop();
+                }
+                continue;
+            }
             WiFiClient n = _server.accept();
             if (n) {
                 // Accepted sockets get no send/receive timeout by default in
