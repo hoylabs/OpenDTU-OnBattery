@@ -39,6 +39,9 @@ private:
     // can't starve the web UI/MQTT of their own sockets/buffers. Internal
     // DRAM only - lwIP isn't PSRAM-backed.
     static constexpr uint32_t kMinFreeHeap = 20 * 1024;
+    // A peer that vanishes without a clean FIN/RST (crash, dead link) can
+    // stay "connected" per TCP forever - reap slots idle longer than this.
+    static constexpr uint32_t kIdleTimeoutMs = 60 * 1000;
 
     // Register map: SunS id (2 regs), then each model as a (2-reg ID/L
     // header + payload) block, then a 2-reg end marker. fillRegisters()
@@ -53,6 +56,7 @@ private:
     struct Client {
         WiFiClient      tcp;
         std::vector<uint8_t> buf;
+        uint32_t        lastActivityMs = 0;
     };
 
     WiFiServer _server;
