@@ -59,6 +59,15 @@ void ModbusServerClass::loop()
 
     bool anyFreeSlot = false;
     for (auto& c : _clients) {
+        if (c.tcp && c.tcp.connected() && millis() - c.lastActivityMs > kIdleTimeoutMs) {
+            // No frame (and no bytes at all) for kIdleTimeoutMs - most likely
+            // a peer that vanished without a clean FIN/RST. TCP alone won't
+            // notice that on its own, so time it out here instead.
+            ESP_LOGW(TAG, "Client %s idle for over %u ms, disconnecting",
+                     c.tcp.remoteIP().toString().c_str(), kIdleTimeoutMs);
+            c.tcp.stop();
+            c.tcp = WiFiClient();
+        }
         if (!c.tcp || !c.tcp.connected()) {
             anyFreeSlot = true;
             if (c.tcp) {
@@ -88,6 +97,7 @@ void ModbusServerClass::loop()
                 n.setTimeout(1);
                 c.tcp = n;
                 c.buf.clear();
+                c.lastActivityMs = millis();
                 ESP_LOGD(TAG, "Client connected from %s", n.remoteIP().toString().c_str());
             }
         }
@@ -115,6 +125,7 @@ void ModbusServerClass::drainClient(Client& c)
 {
     // Read all currently available bytes — never block
     int avail = c.tcp.available();
+    if (avail > 0) c.lastActivityMs = millis();
     while (avail-- > 0) {
         int b = c.tcp.read();
         if (b < 0) break;
