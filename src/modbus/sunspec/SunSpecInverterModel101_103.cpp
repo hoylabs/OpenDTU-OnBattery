@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Spec: https://github.com/sunspec/models/blob/master/json/model_101.json
 //       https://github.com/sunspec/models/blob/master/json/model_103.json
+// DTU-Pro: Technical Note - Modbus implementation using 3Gen DTU-Pro V1.2
+//          https://www.mikrocontroller.net/attachment/552319/Technical-Note-Modbus-implementation-using-3Gen-DTU-Pro-V1.2.pdf
 #include "modbus/sunspec/SunSpecInverterModel101_103.h"
 #include "modbus/sunspec/SunSpecUtils.h"
 #include <Hoymiles.h>
@@ -35,7 +37,11 @@ void SunSpecInverterModel101_103::fill(uint16_t* ac, std::shared_ptr<InverterAbs
     float pac  = reach ? stats->getChannelFieldValue(TYPE_AC,  CH0, FLD_PAC) : 0.0f;
     float freq = reach ? stats->getChannelFieldValue(TYPE_AC,  CH0, FLD_F)   : 0.0f;
     float temp = reach ? stats->getChannelFieldValue(TYPE_INV, CH0, FLD_T)   : 0.0f;
-    float yt   = reach ? stats->getChannelFieldValue(TYPE_INV, CH0, FLD_YT)  : 0.0f;
+    // yt is a lifetime counter, not an instantaneous reading - unlike the
+    // other reach-gated fields it must hold its last known value across an
+    // outage, not reset to 0 (that would fabricate a 0 -> total step on
+    // every reconnect, corrupting downstream energy-delta accounting).
+    float yt   = stats->getChannelFieldValue(TYPE_INV, CH0, FLD_YT);
     float q    = reach ? stats->getChannelFieldValue(TYPE_AC,  CH0, FLD_Q)   : 0.0f;
     float pf   = reach ? stats->getChannelFieldValue(TYPE_AC,  CH0, FLD_PF)  : 0.0f;
     uint32_t whTotal = static_cast<uint32_t>(yt * 1000.0f); // kWh -> Wh
