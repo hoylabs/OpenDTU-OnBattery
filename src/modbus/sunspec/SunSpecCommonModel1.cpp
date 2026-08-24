@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Spec: https://github.com/sunspec/models/blob/master/json/model_1.json
+// DTU-Pro: Technical Note - Modbus implementation using 3Gen DTU-Pro V1.2
+//          https://www.mikrocontroller.net/attachment/552319/Technical-Note-Modbus-implementation-using-3Gen-DTU-Pro-V1.2.pdf
 #include "modbus/sunspec/SunSpecCommonModel1.h"
 #include "modbus/sunspec/SunSpecUtils.h"
 #include <Hoymiles.h>
