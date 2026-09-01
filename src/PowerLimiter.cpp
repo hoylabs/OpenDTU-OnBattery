@@ -18,6 +18,8 @@
 #include <frozen/map.h>
 #include "SunPosition.h"
 #include <LogHelper.h>
+#include "Utils.h"
+#include "RuntimeData.h"
 
 #undef TAG
 static const char* TAG = "dynamicPowerLimiter";
@@ -49,6 +51,20 @@ void PowerLimiterClass::init(Scheduler& scheduler)
     _loopTask.setCallback(std::bind(&PowerLimiterClass::loop, this));
     _loopTask.setIterations(TASK_FOREVER);
     _loopTask.enable();
+
+    // Runtime is read synchronously before any component's init() runs (see main.cpp),
+    // so the persisted battery state is available immediately, no timing tricks needed.
+    // Discard it only if we can positively tell it is stale (saved more than 1h ago) --
+    // a long power-off means the battery may have changed state while we were away.
+    // NTP is usually not synced yet at this point, so "can't tell" defaults to trusting
+    // the data; any wrong carry-over gets corrected on the next real threshold crossing.
+    time_t nowEpoch;
+    bool stale = Utils::getEpoch(&nowEpoch, 1) &&
+            (difftime(nowEpoch, Runtime.get().Meta.WriteEpoch) > 60 * 60);
+    if (!stale) {
+        _fromStart = Runtime.get().PowerLimiter.FromStart;
+        _oneStopPerNightDone = Runtime.get().PowerLimiter.OneStopPerNightDone;
+    }
 }
 
 frozen::string const& PowerLimiterClass::getStatusText(PowerLimiterClass::Status status) const
@@ -333,6 +349,7 @@ void PowerLimiterClass::loop()
 
     _loadCorrectedVoltage = getLoadCorrectedVoltage();
     _batteryState = getBatteryState();
+    persistBatteryState();
     _fullSolarPassThroughActive = getFullSolarPassthrough();
 
     DTU_LOGD("up %lu s, it is %s, next inverter restart at %d s (set to %d)",
@@ -980,4 +997,12 @@ bool PowerLimiterClass::isGovernedBatteryPoweredInverterProducing() const
         if (upInv->isBatteryPowered() && upInv->isProducing()) { return true; }
     }
     return false;
+}
+
+void PowerLimiterClass::persistBatteryState()
+{
+    auto guard = Runtime.getWriteGuard();
+    auto& runtimeData = guard.getRuntimeData();
+    runtimeData.PowerLimiter.FromStart = _fromStart;
+    runtimeData.PowerLimiter.OneStopPerNightDone = _oneStopPerNightDone;
 }

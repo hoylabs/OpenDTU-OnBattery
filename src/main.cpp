@@ -88,6 +88,12 @@ void setup()
         Configuration.migrateOnBattery();
     }
 
+    // Read runtime data. Must happen before any component's init() runs, so
+    // components can read their persisted state immediately at init() time.
+    ESP_LOGI(TAG, "Reading runtime data...");
+    Runtime.init(scheduler);
+    Runtime.read();
+
     // Set configured log levels
     Logging.applyLogLevels();
     esp_log_level_set(TAG, ESP_LOG_VERBOSE);
@@ -152,11 +158,6 @@ void setup()
     PowerLimiter.init(scheduler);
     GridCharger.init(scheduler);
     Battery.init(scheduler);
-    // ... and here (before RuntimeData)
-
-    // Must be done after all other components have been initialized
-    RuntimeData.init(scheduler);
-    RuntimeData.read();
 
     ESP_LOGI(TAG, "Startup complete");
 }

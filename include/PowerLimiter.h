@@ -12,6 +12,7 @@
 #include <optional>
 #include <TaskSchedulerDeclarations.h>
 #include <frozen/string.h>
+#include "RuntimeData.h"
 
 #define PL_UI_STATE_INACTIVE 0
 #define PL_UI_STATE_CHARGING 1
@@ -106,6 +107,7 @@ private:
     bool isBelowStopThreshold() const;
     void calcNextInverterRestart();
     bool isSolarPassThroughEnabled() const;
+    void persistBatteryState();
 };
 
 extern PowerLimiterClass PowerLimiter;

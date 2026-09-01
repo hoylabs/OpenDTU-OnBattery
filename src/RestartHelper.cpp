@@ -5,6 +5,7 @@
 #include "RestartHelper.h"
 #include "Display_Graphic.h"
 #include "Led_Single.h"
+#include "RuntimeData.h"
 #include <Esp.h>
 
 RestartHelperClass RestartHelper;
@@ -30,6 +31,9 @@ void RestartHelperClass::loop()
     if (_rebootTask.isFirstIteration()) {
         LedSingle.turnAllOff();
         Display.setStatus(false);
+
+        // write the runtime data to LittleFS if anything changed
+        Runtime.write();
     } else {
         ESP.restart();
     }
