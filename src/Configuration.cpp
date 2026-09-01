@@ -289,6 +289,16 @@ void ConfigurationClass::serializeGridChargerTruckiConfig(GridChargerTruckiConfi
     target["password"] = source.Password;
 }
 
+void ConfigurationClass::serializeGridChargerHTTPConfig(GridChargerHTTPConfig const& source, JsonObject& target)
+{
+    target["Url"] = source.Url;
+    target["UriOn"] = source.UriOn;
+    target["UriOff"] = source.UriOff;
+    target["UriStats"] = source.UriStats;
+    target["UriPowerParam"] = source.UriPowerParam;
+    target["AcPower"] = source.AcPower;
+}
+
 bool ConfigurationClass::write()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "w");
@@ -478,6 +488,9 @@ bool ConfigurationClass::write()
 
     JsonObject gridcharger_trucki = gridcharger["trucki"].to<JsonObject>();
     serializeGridChargerTruckiConfig(config.GridCharger.Trucki, gridcharger_trucki);
+
+    JsonObject gridcharger_HTTP = gridcharger["HTTP"].to<JsonObject>();
+    serializeGridChargerHTTPConfig(config.GridCharger.HTTP, gridcharger_HTTP);
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
@@ -739,6 +752,16 @@ void ConfigurationClass::deserializeGridChargerTruckiConfig(JsonObject const& so
     strlcpy(target.Password, source["password"] | "", sizeof(target.Password));
 }
 
+void ConfigurationClass::deserializeGridChargerHTTPConfig(JsonObject const& source, GridChargerHTTPConfig& target)
+{
+    strlcpy(target.Url, source["Url"] | GRIDCHARGER_HTTP_IPADDRESS, sizeof(target.Url));
+    strlcpy(target.UriOn, source["UriOn"] | GRIDCHARGER_HTTP_URION, sizeof(target.UriOn));
+    strlcpy(target.UriOff, source["UriOff"] | GRIDCHARGER_HTTP_URIOFF, sizeof(target.UriOff));
+    strlcpy(target.UriStats, source["UriStats"] | GRIDCHARGER_HTTP_URISTATS, sizeof(target.UriStats));
+    strlcpy(target.UriPowerParam, source["UriPowerParam"] | GRIDCHARGER_HTTP_URIPOWERPARAM, sizeof(target.UriPowerParam));
+    target.AcPower = source["AcPower"] | GRIDCHARGER_HTTP_ACPOWER;
+}
+
 bool ConfigurationClass::read()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "r", false);
@@ -952,6 +975,7 @@ bool ConfigurationClass::read()
     deserializeGridChargerCanConfig(gridcharger["can"], config.GridCharger.Can);
     deserializeGridChargerHuaweiConfig(gridcharger["huawei"], config.GridCharger.Huawei);
     deserializeGridChargerTruckiConfig(gridcharger["trucki"], config.GridCharger.Trucki);
+    deserializeGridChargerHTTPConfig(gridcharger["HTTP"], config.GridCharger.HTTP);
 
     f.close();
 
