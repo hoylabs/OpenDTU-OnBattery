@@ -12,6 +12,7 @@
         "DeviceManager": "Device-Manager",
         "SolarChargerSettings": "Solar Charger",
         "PowerMeterSettings": "Power Meter",
+        "ModbusServerSettings": "Modbus Server",
         "BatterySettings": "Battery",
         "AcChargerSettings": "AC Charger",
         "ConfigManagement": "Config Management",
@@ -695,6 +696,22 @@
         "timeout": "Timeout",
         "milliSeconds": "Milliseconds"
     },
+    "modbusserveradmin": {
+        "ModbusServerSettings": "Modbus Server Settings",
+        "General": "General",
+        "Enable": "Enable",
+        "Port": "TCP Port",
+        "InverterMapping": "Inverter Configuration",
+        "InverterMappingHint": "Each inverter exposed via Modbus needs its own unique unit ID (1-247).",
+        "Inverter": "Inverter",
+        "UnitId": "Unit ID",
+        "DuplicateUnitId": "Duplicate unit ID: each inverter needs a unique unit ID!",
+        "ExposedModelsHeading": "Exposed SunSpec Models",
+        "ExposedModelsIntro": "For each enabled inverter, we expose data using the following SunSpec models:",
+        "ExposedModel1": "Model 1 (Common) — manufacturer, model name, firmware version, serial number",
+        "ExposedModel101103": "Model 101 / 103 (Inverter) — AC current, voltage, power, reactive power, power factor, frequency, energy, temperature and operating state. Single-phase inverters use model 101, three-phase inverters use model 103, chosen automatically.",
+        "ExposedModel120": "Model 120 (Nameplate) — maximum power rating"
+    },
     "powerlimiteradmin": {
         "PowerLimiterSettings": "Dynamic Power Limiter Settings",
         "ConfigAlertMessage": "One or more prerequisites for operating the Dynamic Power Limiter are not met.",
@@ -1073,6 +1090,7 @@
         "Module_powerMeter": "Power Meter",
         "Module_solarCharger": "Solar Charger",
         "Module_veDirect": "VE.Direct",
+        "Module_modbusServer": "Modbus Server",
         "CoreHint": "Warning: A too detailed log level of the ESP-IDF Core module can significantly impact performance and lead to unpredictable behavior. The log level setting should only be temporarily adjusted for targeted troubleshooting. The default setting 'Error' is sufficient for normal operation.",
         "log_inherit": "Inherit from default",
         "log_none": "None",
