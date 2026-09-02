@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
@@ -18,6 +19,7 @@ public:
 protected:
     uint8_t readUnsignedInt8(uint8_t *data);
     uint16_t readUnsignedInt16(uint8_t *data);
+    uint16_t readBigEndianUnsignedInt16(uint8_t *data);
     int16_t readSignedInt16(uint8_t *data);
     uint32_t readUnsignedInt32(uint8_t *data);
     int32_t readSignedInt24(uint8_t *data);

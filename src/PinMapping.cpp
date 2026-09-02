@@ -168,6 +168,10 @@ static const char* TAG = "pinmapping";
 #define BATTERY_PIN_RX GPIO_NUM_NC
 #endif
 
+#ifndef BATTERY_CAN_TYPE
+#define BATTERY_CAN_TYPE 1
+#endif
+
 #ifdef PYLONTECH_PIN_RX
 #undef BATTERY_PIN_RX
 #define BATTERY_PIN_RX PYLONTECH_PIN_RX
@@ -305,6 +309,7 @@ PinMappingClass::PinMappingClass()
     _pinMapping.battery_rxen = BATTERY_PIN_RXEN;
     _pinMapping.battery_tx = BATTERY_PIN_TX;
     _pinMapping.battery_txen = BATTERY_PIN_TXEN;
+    _pinMapping.battery_can_type = BATTERY_CAN_TYPE;
 
     _pinMapping.huawei_miso = HUAWEI_PIN_MISO;
     _pinMapping.huawei_mosi = HUAWEI_PIN_MOSI;
@@ -415,6 +420,7 @@ bool PinMappingClass::init(const String& deviceMapping)
             _pinMapping.battery_rxen = doc[i]["battery"]["rxen"] | BATTERY_PIN_RXEN;
             _pinMapping.battery_tx = doc[i]["battery"]["tx"] | BATTERY_PIN_TX;
             _pinMapping.battery_txen = doc[i]["battery"]["txen"] | BATTERY_PIN_TXEN;
+            _pinMapping.battery_can_type = doc[i]["battery"]["can_type"] | BATTERY_CAN_TYPE;
 
             _pinMapping.huawei_miso = doc[i]["huawei"]["miso"] | HUAWEI_PIN_MISO;
             _pinMapping.huawei_mosi = doc[i]["huawei"]["mosi"] | HUAWEI_PIN_MOSI;

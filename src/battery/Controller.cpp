@@ -9,6 +9,7 @@
 #include <battery/victronsmartshunt/Provider.h>
 #include <battery/zendure/LocalMqttProvider.h>
 #include <battery/zendure/ZendureMqttProvider.h>
+#include <battery/jkbmscan/Provider.h>
 #include <Configuration.h>
 #include <LogHelper.h>
 
@@ -88,6 +89,9 @@ void Controller::updateSettings()
                     DTU_LOGE("Unknown Zendure connection type: %d", config.Battery.Zendure.ConnectionType);
                     return;
             }
+            break;
+        case 8:
+            _upProvider = std::make_unique<JkBmsCan::Provider>();
             break;
         default:
             DTU_LOGE("Unknown provider: %d", config.Battery.Provider);
