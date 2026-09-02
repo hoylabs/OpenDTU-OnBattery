@@ -35,6 +35,9 @@ public:
     float getChargeCurrentLimit() const { return _chargeCurrentLimit; };
     uint32_t getChargeCurrentLimitAgeSeconds() const { return (millis() - _lastUpdateChargeCurrentLimit) / 1000; }
 
+    std::optional<uint16_t> getNominalCapacity() const;
+    std::optional<float> getNominalVoltage() const;
+
     std::optional<float> getTemperature() const {
         if (_lastUpdateTemperature > 0) {
             return _temperature;
@@ -97,6 +100,14 @@ protected:
     void setChargeCurrentLimit(float chargeCurrentLimit, uint32_t timestamp) {
         _chargeCurrentLimit = chargeCurrentLimit;
         _lastUpdateChargeCurrentLimit = _lastUpdate = timestamp;
+    }
+
+    void setNominalCapacity(uint16_t nominalCapacity) {
+        _nominalCapacity = nominalCapacity;
+    }
+
+    void setNominalVoltage(float nominalVoltage) {
+        _nominalVoltage = nominalVoltage;
     }
 
     void setTemperature(float temperature, uint32_t timestamp) {
@@ -210,6 +221,9 @@ private:
 
     float _temperature = 0;
     uint32_t _lastUpdateTemperature = 0;
+
+    uint16_t _nominalCapacity = 0;  // the nominal capacity of the battery [Ah]
+    float _nominalVoltage = 0;      // the nominal voltage of the battery [V]
 };
 
 } // namespace Batteries

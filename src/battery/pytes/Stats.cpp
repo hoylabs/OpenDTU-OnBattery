@@ -21,7 +21,6 @@ void Stats::getLiveViewData(JsonVariant& root) const
         addLiveViewValue(root, "temperature", *oTemperature, "°C", 1);
     }
 
-    addLiveViewValue(root, "capacity", _totalCapacity, "Ah", _capacityPrecision);
     addLiveViewValue(root, "availableCapacity", _availableCapacity, "Ah", _capacityPrecision);
 
     if (_chargedEnergy != -1) {
@@ -113,7 +112,6 @@ void Stats::mqttPublish() const
         MqttSettings.publish("battery/dischargedEnergy", String(_dischargedEnergy));
     }
 
-    MqttSettings.publish("battery/capacity", String(_totalCapacity));
     MqttSettings.publish("battery/availableCapacity", String(_availableCapacity));
 
     MqttSettings.publish("battery/CellMinMilliVolt", String(_cellMinMilliVolt));

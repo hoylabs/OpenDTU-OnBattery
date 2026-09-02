@@ -42,6 +42,8 @@ void HassIntegration::publishSensors() const
     publishSensor("State of Charge (SoC)", "mdi:battery-medium", "stateOfCharge", "battery",  "measurement", "%");
     publishSensor("Voltage", "mdi:battery-charging", "voltage", "voltage", "measurement", "V");
     publishSensor("Current", "mdi:current-dc", "current", "current", "measurement", "A");
+    publishSensor("Nominal capacity", NULL, "nominalCapacity", NULL, "measurement", "Ah");
+    publishSensor("Nominal voltage", NULL, "nominalVoltage", "voltage", "measurement", "V");
 }
 
 void HassIntegration::publishSensor(const char* caption, const char* icon,
