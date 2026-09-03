@@ -82,6 +82,9 @@ void Provider::processSmlByte(uint8_t byte)
             }
             break;
         case SML_FINAL:
+            // Edge-case: updateFrom() keeps previous timestamps for unchanged values.
+            // Any future average window logic must not assume "new sample" implies
+            // getLastUpdate() changed for every received SML telegram.
             _dataCurrent.updateFrom(_dataInFlight);
             reset();
             DTU_LOGD("TotalPower: %5.2f", getPowerTotal());

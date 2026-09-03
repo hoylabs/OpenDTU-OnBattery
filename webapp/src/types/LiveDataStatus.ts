@@ -85,6 +85,17 @@ export interface Battery {
 export interface PowerMeter {
     enabled: boolean;
     Power: ValueObject;
+    PowerRaw?: ValueObject;
+    PowerAvg?: ValueObject;
+    PowerLast?: ValueObject;
+    PowerMin?: ValueObject;
+    PowerMax?: ValueObject;
+    PowerL1?: ValueObject;
+    PowerL1Avg?: ValueObject;
+    PowerL2?: ValueObject;
+    PowerL2Avg?: ValueObject;
+    PowerL3?: ValueObject;
+    PowerL3Avg?: ValueObject;
 }
 
 export interface LiveData {

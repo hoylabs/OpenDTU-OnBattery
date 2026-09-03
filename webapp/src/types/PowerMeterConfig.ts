@@ -40,10 +40,17 @@ export interface PowerMeterUdpVictronConfig {
     ip_address: string;
 }
 
+export interface PowerMeterAveragingConfig {
+    enabled: boolean;
+    mode: number;
+    window: number;
+}
+
 export interface PowerMeterConfig {
     enabled: boolean;
     source: number;
     interval: number;
+    averaging: PowerMeterAveragingConfig;
     mqtt: PowerMeterMqttConfig;
     serial_sdm: PowerMeterSerialSdmConfig;
     http_json: PowerMeterHttpJsonConfig;

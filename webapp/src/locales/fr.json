@@ -618,6 +618,14 @@
         "MqttDischargeCurrentLimitTopic": "Discharge Current Limit Value Topic",
         "MqttAmperageUnit": "Unit"
     },
+    "powermeteradmin": {
+        "AveragingEnable": "Activer le moyennage",
+        "AveragingMode": "Mode de moyennage",
+        "AveragingModeSamples": "Basé sur les mesures",
+        "AveragingModeTime": "Basé sur le temps",
+        "AveragingWindow": "Fenêtre de moyennage",
+        "samples": "mesures"
+    },
     "inverteradmin": {
         "InverterSettings": "Paramètres des onduleurs",
         "AddInverter": "Ajouter un nouvel onduleur",
