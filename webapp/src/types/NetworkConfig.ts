@@ -1,6 +1,7 @@
 export interface NetworkConfig {
     ssid: string;
     password: string;
+    bssid: string;
     hostname: string;
     dhcp: boolean;
     ipaddress: string;
