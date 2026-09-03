@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <battery/pytes/rs485/HassIntegration.h>
 
-#include <battery/pytes/HassIntegration.h>
-
-namespace Batteries::Pytes {
+namespace Batteries::Pytes::Rs485 {
 
 HassIntegration::HassIntegration(std::shared_ptr<Stats> spStats)
     : ::Batteries::HassIntegration(spStats) { }
@@ -11,31 +10,25 @@ void HassIntegration::publishSensors() const
 {
     ::Batteries::HassIntegration::publishSensors();
 
-    publishSensor("Charge voltage (BMS)", NULL, "settings/chargeVoltage", "voltage", "measurement", "V");
-    publishSensor("Charge current limit", NULL, "settings/chargeCurrentLimitation", "current", "measurement", "A");
-    publishSensor("Discharge current limit", NULL, "settings/dischargeCurrentLimitation", "current", "measurement", "A");
-    publishSensor("Discharge voltage limit", NULL, "settings/dischargeVoltageLimitation", "voltage", "measurement", "V");
+    publishSensor("Charge voltage (BMS)", nullptr, "settings/chargeVoltage", "voltage", "measurement", "V");
+    publishSensor("Charge current limit", nullptr, "settings/chargeCurrentLimitation", "current", "measurement", "A");
+    publishSensor("Discharge current limit", nullptr, "settings/dischargeCurrentLimitation", "current", "measurement", "A");
+    publishSensor("Discharge voltage limit", nullptr, "settings/dischargeVoltageLimitation", "voltage", "measurement", "V");
 
-    publishSensor("State of Health (SOH)", "mdi:heart-plus", "stateOfHealth", NULL, "measurement", "%");
+    publishSensor("State of Health (SOH)", "mdi:heart-plus", "stateOfHealth", nullptr, "measurement", "%");
     publishSensor("Temperature", "mdi:thermometer", "temperature", "temperature", "measurement", "°C");
-    publishSensor("Charge Cycles", "mdi:counter", "chargeCycles");
 
-    publishSensor("Charged Energy", NULL, "chargedEnergy", "energy", "total_increasing", "kWh");
-    publishSensor("Discharged Energy", NULL, "dischargedEnergy", "energy", "total_increasing", "kWh");
+    publishSensor("Charged Energy", nullptr, "chargedEnergy", "energy", "total_increasing", "kWh");
+    publishSensor("Discharged Energy", nullptr, "dischargedEnergy", "energy", "total_increasing", "kWh");
 
-    publishSensor("Total Capacity", NULL, "capacity");
-    publishSensor("Available Capacity", NULL, "availableCapacity");
+    publishSensor("Total Capacity", nullptr, "capacity");
+    publishSensor("Available Capacity", nullptr, "availableCapacity");
 
-    publishSensor("Cell Min Voltage", NULL, "CellMinMilliVolt", "voltage", "measurement", "mV");
-    publishSensor("Cell Max Voltage", NULL, "CellMaxMilliVolt", "voltage", "measurement", "mV");
+    publishSensor("Cell Min Voltage", nullptr, "CellMinMilliVolt", "voltage", "measurement", "mV");
+    publishSensor("Cell Max Voltage", nullptr, "CellMaxMilliVolt", "voltage", "measurement", "mV");
     publishSensor("Cell Voltage Diff", "mdi:battery-alert", "CellDiffMilliVolt", "voltage", "measurement", "mV");
-    publishSensor("Cell Min Temperature", NULL, "CellMinTemperature", "temperature", "measurement", "°C");
-    publishSensor("Cell Max Temperature", NULL, "CellMaxTemperature", "temperature", "measurement", "°C");
-
-    publishSensor("Cell Min Voltage Label", NULL, "CellMinVoltageName");
-    publishSensor("Cell Max Voltage Label", NULL, "CellMaxVoltageName");
-    publishSensor("Cell Min Temperature Label", NULL, "CellMinTemperatureName");
-    publishSensor("Cell Max Temperature Label", NULL, "CellMaxTemperatureName");
+    publishSensor("Cell Min Temperature", nullptr, "CellMinTemperature", "temperature", "measurement", "°C");
+    publishSensor("Cell Max Temperature", nullptr, "CellMaxTemperature", "temperature", "measurement", "°C");
 
     publishSensor("Modules Online", "mdi:counter", "modulesOnline");
     publishSensor("Modules Offline", "mdi:counter", "modulesOffline");
@@ -64,8 +57,7 @@ void HassIntegration::publishSensors() const
     publishBinarySensor("Warning BMS internal", "mdi:alert-outline", "warning/bmsInternal", "1", "0");
     publishBinarySensor("Warning Cell Imbalance", "mdi:alert-outline", "warning/cellImbalance", "1", "0");
 
-    publishBinarySensor("Balancing Active", "mdi:scale-balance", "balancingActive", "1", "0");
     publishBinarySensor("Charge immediately", "mdi:alert", "charging/chargeImmediately", "1", "0");
 }
 
-} // namespace Batteries::Pytes
+} // namespace Batteries::Pytes::Rs485
