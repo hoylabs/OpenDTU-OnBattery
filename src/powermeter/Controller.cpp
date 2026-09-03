@@ -8,6 +8,7 @@
 #include <powermeter/sml/serial/Provider.h>
 #include <powermeter/smahm/udp/Provider.h>
 #include <powermeter/modbus/udp/victron/Provider.h>
+#include <powermeter/modbus/tcp/Provider.h>
 
 PowerMeters::Controller PowerMeter;
 
@@ -59,6 +60,9 @@ void Controller::updateSettings()
             break;
         case Provider::Type::MODBUS_UDP_VICTRON:
             _upProvider = std::make_unique<::PowerMeters::Modbus::Udp::Victron::Provider>(pmcfg.UdpVictron);
+            break;
+        case Provider::Type::MODBUS_TCP:
+            _upProvider = std::make_unique<::PowerMeters::Modbus::Tcp::Provider>(pmcfg.ModbusTcp);
             break;
     }
 
