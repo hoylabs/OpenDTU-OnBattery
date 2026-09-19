@@ -8,10 +8,10 @@
         "offline": "εκτός σύνδεση",
         "power_w": "%.0f W",
         "power_kw": "%.1f kW",
-        "yield_today_wh": "Hoy: %4.0f Wh",
-        "yield_today_kwh": "Hoy: %.1f kWh",
-        "yield_total_kwh": "Total: %.1f kWh",
-        "yield_total_mwh": "Total: %.0f kWh"
+        "yield_today_wh": "Σήμερινή παραγωγή: %4.0f Wh",
+        "yield_today_kwh": "Σήμερινή παραγωγή: %.1f kWh",
+        "yield_total_kwh": "Συνολική παραγωγή: %.1f kWh",
+        "yield_total_mwh": "Συνολική παραγωγή: %.0f kWh"
     },
     "webapp": {
         "menu": {
@@ -22,7 +22,7 @@
             "MQTTSettings": "MQTT Ρυθμίσεις",
             "InverterSettings": "Ρυθμίσεις Μετατροπέα",
             "SecuritySettings": "Ρυθμίσεις Ασφάλειας",
-            "LoggingSettings": "Logging Settings",
+            "LoggingSettings": "Ρυθμίσεις Καταγραφής",
             "DTUSettings": "DTU Ρυθμίσεις",
             "DeviceManager": "Διαχείριση Συσκευών",
             "ConfigManagement": "Διαχείριση διαμόρφωσης",
@@ -47,8 +47,8 @@
             "Pull": "Τραβήξτε προς τα κάτω για ανανέωση",
             "Release": "Ανακοινώνω",
             "Close": "Κλείνω",
-            "Yes": "Yes",
-            "No": "No"
+            "Yes": "Ναι",
+            "No": "Όχι"
         },
         "wait": {
             "NotReady": "Το OpenDTU δεν είναι έτοιμο ακόμα",
@@ -203,7 +203,7 @@
             "FirmwareBuildDate": "Ημερομηνία δημιουργίας υλικολογισμικού",
             "HardwarePartNumber": "Αριθμός εξαρτήματος υλικού",
             "HardwareVersion": "Έκδοση υλικού",
-            "SupportsPowerDistributionLogic": "'Power Distribution Logic' supported",
+            "SupportsPowerDistributionLogic": "'Υποστηρίζεται η «Λογική Διανομής Ισχύος»",
             "Yes": "@:base.Yes",
             "No": "@:base.No"
         },
@@ -273,7 +273,7 @@
         "taskdetails": {
             "TaskDetails": "Λεπτομέρειες εργασίας",
             "Name": "Ονομα",
-            "StackFree": "Stack Free",
+            "StackFree": "Μη χρησιμοποιημένης μνήμης stack",
             "Priority": "Προτεραιότητα",
             "Task_idle0": "Αδράνεια (CPU Core 0)",
             "Task_idle1": "Αδράνεια (CPU Core 1)",
@@ -663,7 +663,7 @@
             "TimeSyncLink": "Ελέγξτε τις ρυθμίσεις ώρας.",
             "DefaultPassword": "Χρησιμοποιείτε τον προεπιλεγμένο κωδικό πρόσβασης για τη διεπαφή ιστού και το σημείο πρόσβασης έκτακτης ανάγκης. Αυτό είναι δυνητικά μη ασφαλές.",
             "DefaultPasswordLink": "Αλλάξτε τον κωδικό πρόσβασης.",
-            "PinMappingIssue": "You are using a generic firmware image, but have not yet uploaded a file with device profiles (<code>pin_mapping.json</code>) or have not selected a profile defined there. Please refer to the <a href=\"https://opendtu.solar/firmware/device_profiles/\" target=\"_blank\" class=\"alert-link\">documentation</a> for details."
+            "PinMappingIssue": "Χρησιμοποιείτε μια γενική εικόνα υλικολογισμικού, αλλά δεν έχετε ανεβάσει ακόμα αρχείο με προφίλ συσκευών (pin_mapping.json) ή δεν έχετε επιλέξει προφίλ που ορίζεται εκεί. Ανατρέξτε στην <a href="https://opendtu.solar/firmware/device_profiles/" target="_blank" class="alert-link">τεκμηρίωση</a> για λεπτομέρειες."
         },
         "deviceadmin": {
             "DeviceManager": "Διαχείριση Συσκευών",
@@ -713,25 +713,25 @@
             "format_unknown": "Άγνωστη μορφή"
         },
         "loggingadmin": {
-            "LoggingSettings": "Logging Settings",
-            "LogLevel": "Log Level",
-            "DefaultLevel": "Default log level",
-            "Module": "Module",
+            "LoggingSettings": "Ρυθμίσεις καταγραφής",
+            "LogLevel": "Επίπεδο καταγραφής",
+            "DefaultLevel": "Προεπιλεγμένο επίπεδο καταγραφής",
+            "Module": "Μονάδα μέτρησης",
             "Module_CORE": "Κεντρικό μέρος",
             "Module_hoymiles": "Ραδιοφωνική επικοινωνία Hoymiles",
             "Module_mqtt": "Πελάτης MQTT",
             "Module_network": "Δίκτυο",
             "Module_webapi": "Διεπαφή Web",
-            "Module_async_ws": "Async WebSockets",
-            "Module_async_tcp": "Async TCP",
-            "CoreHint": "Warning: A too detailed log level of the CORE module can significantly impact performance and lead to unpredictable behavior. The log level setting should only be temporarily adjusted for targeted troubleshooting. The default setting 'Error' is sufficient for normal operation.",
-            "log_inherit": "Inherit from default",
-            "log_none": "None",
-            "log_error": "(E) Error",
-            "log_warn": "(W) Warning",
-            "log_info": "(I) Info",
-            "log_debug": "(D) Debug",
-            "log_verbose": "(V) Verbose"
+            "Module_async_ws": "Ασύγχρονα WebSockets",
+            "Module_async_tcp": "Ασύγχρονο TCP",
+            "CoreHint": "Προειδοποίηση: Ένα υπερβολικά λεπτομερές επίπεδο καταγραφής (log level) για τη μονάδα CORE μπορεί να επηρεάσει σημαντικά την απόδοση και να οδηγήσει σε απρόβλεπτη συμπεριφορά. Η ρύθμιση του επιπέδου καταγραφής θα πρέπει να τροποποιείται μόνο προσωρινά, για στοχευμένη αντιμετώπιση προβλημάτων. Η προεπιλεγμένη ρύθμιση «Error» επαρκεί για την κανονική λειτουργία.",
+            "log_inherit": "Κληρονομεί από το προεπιλεγμένο",
+            "log_none": "Κανένα",
+            "log_error": "(E) Σφάλματα",
+            "log_warn": "(W) Προειδοποίηση",
+            "log_info": "(I) Πληροφορίες",
+            "log_debug": "(D) Αποσφαλμάτωση",
+            "log_verbose": "(V) Λεπτομερής"
         }
     }
 }
