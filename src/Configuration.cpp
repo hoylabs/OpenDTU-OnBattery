@@ -362,6 +362,7 @@ bool ConfigurationClass::write()
     mqtt_hass["topic"] = config.Mqtt.Hass.Topic;
     mqtt_hass["individual_panels"] = config.Mqtt.Hass.IndividualPanels;
     mqtt_hass["expire"] = config.Mqtt.Hass.Expire;
+    mqtt_hass["battery_legacy_cleanup_pending"] = config.Mqtt.Hass.BatteryLegacyCleanupPending;
 
     JsonObject dtu = doc["dtu"].to<JsonObject>();
     dtu["serial"] = config.Dtu.Serial;
@@ -859,6 +860,7 @@ bool ConfigurationClass::read()
     config.Mqtt.Hass.Expire = mqtt_hass["expire"] | MQTT_HASS_EXPIRE;
     config.Mqtt.Hass.IndividualPanels = mqtt_hass["individual_panels"] | MQTT_HASS_INDIVIDUALPANELS;
     strlcpy(config.Mqtt.Hass.Topic, mqtt_hass["topic"] | MQTT_HASS_TOPIC, sizeof(config.Mqtt.Hass.Topic));
+    config.Mqtt.Hass.BatteryLegacyCleanupPending = mqtt_hass["battery_legacy_cleanup_pending"] | false;
 
     JsonObject dtu = doc["dtu"];
     config.Dtu.Serial = dtu["serial"] | DTU_SERIAL;
@@ -1248,6 +1250,14 @@ void ConfigurationClass::migrateOnBattery()
         config.GridCharger.Huawei.FanOfflineFullSpeed = huawei["fan_offline_full_speed"] | GRIDCHARGER_HUAWEI_FAN_OFFLINE_FULL_SPEED;
     }
 
+    if (config.Cfg.VersionOnBattery < 9) {
+        // the battery used to be announced to Home Assistant with the device
+        // id "0001", let the battery HassIntegration remove those discovery
+        // configs once. new installations never had them, hence this is only
+        // set when migrating.
+        config.Mqtt.Hass.BatteryLegacyCleanupPending = true;
+    }
+
     f.close();
 
     config.Cfg.VersionOnBattery = CONFIG_VERSION_ONBATTERY;
@@ -1258,6 +1268,14 @@ void ConfigurationClass::migrateOnBattery()
 CONFIG_T const& ConfigurationClass::get()
 {
     return config;
+}
+
+void ConfigurationClass::clearBatteryLegacyCleanupPending()
+{
+    // no WriteGuard: this runs in the main loop, and guarded writers from
+    // other tasks only proceed while the main loop waits in loop()
+    config.Mqtt.Hass.BatteryLegacyCleanupPending = false;
+    write();
 }
 
 ConfigurationClass::WriteGuard ConfigurationClass::getWriteGuard()

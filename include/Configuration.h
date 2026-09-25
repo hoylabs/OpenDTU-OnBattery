@@ -10,7 +10,7 @@
 
 #define CONFIG_FILENAME "/config.json"
 #define CONFIG_VERSION 0x00011e00 // 0.1.30 // make sure to clean all after change
-#define CONFIG_VERSION_ONBATTERY 8
+#define CONFIG_VERSION_ONBATTERY 9
 
 #define WIFI_MAX_SSID_STRLEN 32
 #define WIFI_MAX_PASSWORD_STRLEN 64
@@ -403,6 +403,9 @@ struct CONFIG_T {
             char Topic[MQTT_MAX_TOPIC_STRLEN + 1];
             bool IndividualPanels;
             bool Expire;
+            // set once when upgrading from a firmware that announced the
+            // battery with the device id "0001", see battery::HassIntegration
+            bool BatteryLegacyCleanupPending;
         } Hass;
 
         struct {
@@ -498,6 +501,9 @@ public:
     };
 
     WriteGuard getWriteGuard();
+
+    // main loop only (a WriteGuard would deadlock there, it waits for loop())
+    void clearBatteryLegacyCleanupPending();
 
     INVERTER_CONFIG_T* getFreeInverterSlot();
     INVERTER_CONFIG_T* getInverterConfig(const uint64_t serial);
