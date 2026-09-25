@@ -32,6 +32,7 @@ protected:
 private:
     static String sanitizeUniqueId(const char* value);
     static String createBatteryId();
+    void removeLegacyConfig(const char* component, String const& sensorId) const;
 
     std::shared_ptr<Stats> _spStats = nullptr;
 
