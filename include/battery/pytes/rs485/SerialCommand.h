@@ -14,12 +14,11 @@ class SerialCommand {
 public:
     // CID2 command codes
     enum class Command : uint8_t {
-        PackBasic    = 0x60,
-        PackAnalog   = 0x61,
-        PackChgDsg   = 0x62,
+        ClusterBasic    = 0x60,
+        ClusterAnalog   = 0x61,
+        ClusterChgDsg   = 0x62,
         ModuleBasic    = 0x80,
         ModuleAnalog   = 0x81,
-        ModuleProtect  = 0x82,
         ModuleChgDsg   = 0x83,
         ModuleCells    = 0x92,
     };

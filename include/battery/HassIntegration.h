@@ -18,6 +18,10 @@ public:
 
     void hassLoop();
 
+    // publish the discovery configs again, e.g. once data they depend on
+    // (like module serial numbers) became known
+    void republish() { _publishSensors = true; }
+
 protected:
     // a separate HASS device below the battery (e.g. a module of a multi-module
     // battery), its entities are keyed by id instead of the battery device id
