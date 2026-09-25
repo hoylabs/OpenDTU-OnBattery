@@ -53,7 +53,7 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
     String sensorId = sanitizeUniqueId(caption);
     String deviceId = subDevice ? subDevice->id : _serial;
 
-    String configTopic = (subDevice ? "sensor/" + deviceId : "sensor/dtu_battery_" + _serial)
+    String configTopic = (subDevice ? "sensor/" + sanitizeNodeId(deviceId) : "sensor/dtu_battery_" + _serial)
         + "/" + sensorId
         + "/config";
 
@@ -119,7 +119,7 @@ void HassIntegration::publishBinarySensor(const char* caption,
     String sensorId = sanitizeUniqueId(caption);
     String deviceId = subDevice ? subDevice->id : _serial;
 
-    String configTopic = (subDevice ? "binary_sensor/" + deviceId : "binary_sensor/dtu_battery_" + _serial)
+    String configTopic = (subDevice ? "binary_sensor/" + sanitizeNodeId(deviceId) : "binary_sensor/dtu_battery_" + _serial)
         + "/" + sensorId
         + "/config";
 
@@ -188,6 +188,19 @@ void HassIntegration::publish(const String& subtopic, const String& payload) con
     String topic = Configuration.get().Mqtt.Hass.Topic;
     topic += subtopic;
     MqttSettings.publishGeneric(topic.c_str(), payload.c_str(), Configuration.get().Mqtt.Hass.Retain);
+}
+
+// HASS only accepts discovery node ids matching [a-zA-Z0-9_-]+, a sub-device
+// id may be derived from a serial containing other characters (e.g. '.').
+// unique ids and state topics keep the original value.
+String HassIntegration::sanitizeNodeId(String const& value)
+{
+    String nodeId = value;
+    for (size_t i = 0; i < nodeId.length(); ++i) {
+        char c = nodeId[i];
+        if (!isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '-') { nodeId.setCharAt(i, '_'); }
+    }
+    return nodeId;
 }
 
 String HassIntegration::sanitizeUniqueId(const char* value) {
