@@ -33,6 +33,12 @@ void HassIntegration::hassLoop()
     publishSensors();
 
     _publishSensors = false;
+
+    // the legacy discovery configs were cleared by publishSensors(), this is
+    // needed only once per installation
+    if (config.Mqtt.Hass.BatteryLegacyCleanupPending) {
+        Configuration.clearBatteryLegacyCleanupPending();
+    }
 }
 
 void HassIntegration::publishSensors() const
@@ -162,13 +168,17 @@ void HassIntegration::publish(const String& subtopic, const String& payload) con
     MqttSettings.publishGeneric(topic.c_str(), payload.c_str(), Configuration.get().Mqtt.Hass.Retain);
 }
 
-// Until all batteries shared the hardcoded device id "0001", which made
+// All batteries used to share the hardcoded device id "0001", which made
 // batteries of multiple DTUs collide in HASS. Clearing the old (retained)
 // discovery config makes HASS delete the old entity (and the old device once
 // it has no entities left) before the new one is announced, so the new
-// entity gets the old entity id and keeps its history.
+// entity gets the old entity id and keeps its history. This runs once after
+// upgrading (see Mqtt.Hass.BatteryLegacyCleanupPending) and can be removed
+// again once upgrades from such old firmware are no longer expected.
 void HassIntegration::removeLegacyConfig(const char* component, String const& sensorId) const
 {
+    if (!Configuration.get().Mqtt.Hass.BatteryLegacyCleanupPending) { return; }
+
     // always retained: an empty retained message is what removes the old
     // retained config from the broker, independent of the retain setting
     String topic = Configuration.get().Mqtt.Hass.Topic;
