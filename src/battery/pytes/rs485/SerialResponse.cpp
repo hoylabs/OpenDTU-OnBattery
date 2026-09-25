@@ -54,6 +54,7 @@ SerialResponse::SerialResponse(std::vector<uint8_t> const& frame)
     uint16_t csRecv = (static_cast<uint16_t>(csHi) << 8) | csLo;
     if (csRecv != frameChksum(frame)) {
         DTU_LOGW("Checksum mismatch: recv=0x%04X calc=0x%04X", csRecv, frameChksum(frame));
+        return;
     }
 
     // Decode fixed 12-char ASCII header: VER(2) ADR(2) CID1(2) RTN(2) LEN(4)
@@ -71,6 +72,13 @@ SerialResponse::SerialResponse(std::vector<uint8_t> const& frame)
     constexpr size_t infoOffset = 13; // SOI(1) + header(12)
     if (infoOffset + lenid + 5 > n) {
         DTU_LOGW("INFO length %u out of bounds (frame %u bytes)", lenid, static_cast<unsigned>(n));
+        return;
+    }
+
+    // error replies (RTN != 0) usually carry no INFO at all, they are still
+    // valid frames so the provider can skip the failed step
+    if (lenid == 0 && _rtn != 0) {
+        _valid = true;
         return;
     }
 
@@ -99,7 +107,9 @@ uint32_t SerialResponse::readHex(Iterator& pos, size_t nBytes) const
     if (std::distance(pos, _info.cend()) < static_cast<ptrdiff_t>(chars)) { return 0; }
     uint32_t val = 0;
     for (size_t i = 0; i < chars; ++i) {
-        val = (val << 4) | (hexNibble(*(pos++)) & 0xF);
+        uint8_t nibble = hexNibble(*(pos++));
+        if (nibble == 0xFF) { return 0; }
+        val = (val << 4) | nibble;
     }
     return val;
 }

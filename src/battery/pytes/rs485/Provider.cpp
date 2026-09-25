@@ -58,6 +58,7 @@ bool Provider::init()
 
     if (_rxEnablePin <= GPIO_NUM_NC || _txEnablePin <= GPIO_NUM_NC) {
         DTU_LOGE("Invalid transceiver pin config");
+        deinit(); // free the serial port, the controller discards us without calling deinit()
         return false;
     }
 
@@ -71,6 +72,8 @@ bool Provider::init()
 
 void Provider::deinit()
 {
+    if (!_upSerial) { return; }
+
     _upSerial->end();
 
     if (_rxEnablePin > GPIO_NUM_NC) { pinMode(_rxEnablePin, INPUT); }
@@ -134,7 +137,7 @@ void Provider::loop()
     sendRequest(pollInterval);
 
     if (_readState != ReadState::Idle &&
-        millis() > _lastRequest + 2 * pollInterval * 1000 + 250) {
+        millis() - _lastRequest > 2 * pollInterval * 1000 + 250) {
         reset();
         _queryStep = QueryStep::Done;
         announceStatus(Status::Timeout);
@@ -148,7 +151,7 @@ void Provider::loop()
 void Provider::sendRequest(uint8_t pollInterval)
 {
     // Only send a new poll when we have finished the previous cycle
-    if (_queryStep != QueryStep::Done && _queryStep != QueryStep::PackBasic) {
+    if (_queryStep != QueryStep::Done && _queryStep != QueryStep::ClusterBasic) {
         if (_readState != ReadState::Idle) {
             return announceStatus(Status::BusyReading);
         }
@@ -160,7 +163,7 @@ void Provider::sendRequest(uint8_t pollInterval)
             return announceStatus(Status::WaitingForPollInterval);
         }
         // Start new cycle
-        _queryStep = _firstPoll ? QueryStep::PackBasic : QueryStep::PackAnalog;
+        _queryStep = _firstPoll ? QueryStep::ClusterBasic : QueryStep::ClusterAnalog;
         newCycle = true;
     }
 
@@ -174,24 +177,20 @@ void Provider::sendRequest(uint8_t pollInterval)
 
     bool sent = false;
     switch (_queryStep) {
-        case QueryStep::PackBasic:
-            sendCommand(SerialCommand::Command::PackBasic);
+        case QueryStep::ClusterBasic:
+            sendCommand(SerialCommand::Command::ClusterBasic);
             sent = true;
             break;
         case QueryStep::ModuleBasic:
             sendCommand(SerialCommand::Command::ModuleBasic, { _currentModuleNo });
             sent = true;
             break;
-        case QueryStep::ModuleProtect:
-            sendCommand(SerialCommand::Command::ModuleProtect, { _currentModuleNo });
+        case QueryStep::ClusterAnalog:
+            sendCommand(SerialCommand::Command::ClusterAnalog);
             sent = true;
             break;
-        case QueryStep::PackAnalog:
-            sendCommand(SerialCommand::Command::PackAnalog);
-            sent = true;
-            break;
-        case QueryStep::PackChgDsg:
-            sendCommand(SerialCommand::Command::PackChgDsg);
+        case QueryStep::ClusterChgDsg:
+            sendCommand(SerialCommand::Command::ClusterChgDsg);
             sent = true;
             break;
         case QueryStep::ModuleAnalog:
@@ -303,7 +302,9 @@ void Provider::frameComplete()
                  it != rtnNames.end() ? it->second.data() : "unknown");
 
         switch (_queryStep) {
-            case QueryStep::PackBasic: {
+            case QueryStep::ClusterBasic: {
+                // don't retry every cycle, 0x61 also reports the module count
+                _firstPoll = false;
                 _currentModuleNo = 1;
                 _queryStep = QueryStep::ModuleBasic;
                 break;
@@ -313,24 +314,16 @@ void Provider::frameComplete()
                     _queryStep = QueryStep::ModuleBasic;
                 else {
                     _currentModuleNo = 1;
-                    _queryStep = QueryStep::ModuleProtect;
+                    _queryStep = QueryStep::ClusterAnalog;
+                    _hassIntegration->republish(); // module serials (HASS ids) are known now
                 }
                 break;
             }
-            case QueryStep::ModuleProtect: {
-                if (++_currentModuleNo <= _numModules)
-                    _queryStep = QueryStep::ModuleProtect;
-                else {
-                    _currentModuleNo = 1;
-                    _queryStep = QueryStep::PackAnalog;
-                }
+            case QueryStep::ClusterAnalog: {
+                _queryStep = QueryStep::ClusterChgDsg;
                 break;
             }
-            case QueryStep::PackAnalog: {
-                _queryStep = QueryStep::PackChgDsg;
-                break;
-            }
-            case QueryStep::PackChgDsg: {
+            case QueryStep::ClusterChgDsg: {
                 _currentModuleNo = 1;
                 _queryStep = QueryStep::ModuleAnalog;
                 break;
@@ -370,8 +363,8 @@ void Provider::frameComplete()
 
     switch (response.cid2()) {
         case 0x60: {
-            auto dp = Parsers::parsePackBasic(response);
-            _stats->updatePackData(dp);
+            auto dp = Parsers::parseClusterBasic(response);
+            _stats->updateBatteryData(dp);
 
             auto oCount = dp.get<DataPointLabel::ModuleCount>();
             if (oCount.has_value()) {
@@ -385,38 +378,36 @@ void Provider::frameComplete()
         }
         case 0x80: {
             auto r = Parsers::parseModuleBasic(response);
-            _stats->setModuleBasic(r.moduleNo, r.hwVersion, r.swVersion, r.serial);
+            _stats->setModuleBasic(r);
 
             if (++_currentModuleNo <= _numModules) {
                 _queryStep = QueryStep::ModuleBasic;
             } else {
                 _currentModuleNo = 1;
-                _queryStep = QueryStep::ModuleProtect;
-            }
-            break;
-        }
-        case 0x82: {
-            auto r = Parsers::parseModuleProtect(response);
-            _stats->setModuleProtect(r.moduleNo, r.protect);
-
-            if (++_currentModuleNo <= _numModules) {
-                _queryStep = QueryStep::ModuleProtect;
-            } else {
-                _currentModuleNo = 1;
-                _queryStep = QueryStep::PackAnalog;
+                _queryStep = QueryStep::ClusterAnalog;
+                _hassIntegration->republish(); // module serials (HASS ids) are known now
             }
             break;
         }
         case 0x61: {
-            auto dp = Parsers::parsePackAnalog(response);
-            _stats->updatePackData(dp);
+            auto dp = Parsers::parseClusterAnalog(response);
+            _stats->updateBatteryData(dp);
 
-            _queryStep = QueryStep::PackChgDsg;
+            // module count changed: poll the new module count from now on and
+            // re-read the static per-module data (0x60/0x80) next cycle
+            auto oCount = dp.get<DataPointLabel::ModuleCount>();
+            if (oCount.has_value() && *oCount != _numModules) {
+                DTU_LOGI("Module count changed from %u to %u", _numModules, *oCount);
+                _numModules = *oCount;
+                _firstPoll = true;
+            }
+
+            _queryStep = QueryStep::ClusterChgDsg;
             break;
         }
         case 0x62: {
-            auto dp = Parsers::parsePackChgDsg(response);
-            _stats->updatePackData(dp);
+            auto dp = Parsers::parseClusterChgDsg(response);
+            _stats->updateBatteryData(dp);
 
             _currentModuleNo = 1;
             _queryStep = QueryStep::ModuleAnalog;
@@ -424,11 +415,7 @@ void Provider::frameComplete()
         }
         case 0x81: {
             auto r = Parsers::parseModuleAnalog(response);
-            _stats->setModuleAnalog(r.moduleNo, r.voltageV, r.currentA, r.soc, r.health,
-                                    r.totalCapacityMah, r.remainCapacityMah,
-                                    r.ambientTemp, r.chargeCycles, r.balance,
-                                    r.cellMaxV, r.cellMaxNo, r.cellMinV, r.cellMinNo,
-                                    r.tempMaxC, r.tempMaxNo, r.tempMinC, r.tempMinNo);
+            _stats->setModuleAnalog(r);
 
             if (++_currentModuleNo <= _numModules) {
                 _queryStep = QueryStep::ModuleAnalog;
@@ -440,8 +427,7 @@ void Provider::frameComplete()
         }
         case 0x83: {
             auto r = Parsers::parseModuleChgDsg(response);
-            _stats->setModuleChgDsg(r.moduleNo, r.maxChgVoltV, r.minDsgVoltV,
-                                        r.maxChgCurrA, r.maxDsgCurrA, r.fullChgReq, r.emergFlags);
+            _stats->setModuleChgDsg(r);
 
             if (++_currentModuleNo <= _numModules) {
                 _queryStep = QueryStep::ModuleChgDsg;

@@ -46,11 +46,10 @@ private:
 
     // Query step: which command are we currently waiting for a response to
     enum class QueryStep : unsigned {
-        PackBasic,     // 0x60 – sent only on first poll
+        ClusterBasic,     // 0x60 – sent only on first poll
         ModuleBasic,   // 0x80 – first poll only, per module
-        ModuleProtect, // 0x82 – first poll only, per module (static protection thresholds)
-        PackAnalog,    // 0x61 – live data, every poll
-        PackChgDsg,    // 0x62 – cluster charge/discharge limits, every poll
+        ClusterAnalog,    // 0x61 – live data, every poll
+        ClusterChgDsg,    // 0x62 – cluster charge/discharge limits, every poll
         ModuleChgDsg,  // 0x83 – per-module charge/discharge limits, every poll
         ModuleAnalog,  // 0x81 – ambient temp, cycles, balance, every poll, per module
         ModuleCells,   // 0x92 – per-cell voltage, current, temperature, SOC, every poll, per module
@@ -90,7 +89,7 @@ private:
 
     std::vector<uint8_t> _rxBuffer;
 
-    QueryStep _queryStep = QueryStep::PackBasic;
+    QueryStep _queryStep = QueryStep::ClusterBasic;
     bool _firstPoll = true;
     uint8_t _numModules = 1;      // populated from 0x61; safe default of 1
     uint8_t _currentModuleNo = 1; // 1-based, cycles 1.._numModules
