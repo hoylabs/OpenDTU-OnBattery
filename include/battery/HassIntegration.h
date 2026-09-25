@@ -37,6 +37,8 @@ private:
     std::shared_ptr<Stats> _spStats = nullptr;
 
     bool _publishSensors = true;
+    // set by removeLegacyConfig() if a legacy config could not be cleared
+    mutable bool _legacyCleanupFailed = false;
 };
 
 } // namespace Batteries
