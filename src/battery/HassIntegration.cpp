@@ -8,6 +8,11 @@
 #include <MqttHandleHass.h>
 #include <Utils.h>
 #include <__compiled_constants.h>
+#include <LogHelper.h>
+
+#undef TAG
+static const char* TAG = "battery";
+static const char* SUBTAG = "HASS";
 
 namespace Batteries {
 
@@ -30,14 +35,21 @@ void HassIntegration::hassLoop()
         !_spStats->getManufacturer().has_value() ||
         !_spStats->getHassDeviceName().has_value()) { return; }
 
+    _legacyCleanupFailed = false;
+
     publishSensors();
 
     _publishSensors = false;
 
     // the legacy discovery configs were cleared by publishSensors(), this is
-    // needed only once per installation
+    // needed only once per installation. if a deletion could not be queued,
+    // keep the flag so the next discovery run (reconnect, reboot) retries.
     if (config.Mqtt.Hass.BatteryLegacyCleanupPending) {
-        Configuration.clearBatteryLegacyCleanupPending();
+        if (_legacyCleanupFailed) {
+            DTU_LOGW("Could not remove all legacy Home Assistant battery configs, retrying on next discovery");
+        } else {
+            Configuration.clearBatteryLegacyCleanupPending();
+        }
     }
 }
 
@@ -183,7 +195,9 @@ void HassIntegration::removeLegacyConfig(const char* component, String const& se
     // retained config from the broker, independent of the retain setting
     String topic = Configuration.get().Mqtt.Hass.Topic;
     topic += String(component) + "/dtu_battery_0001/" + sensorId + "/config";
-    MqttSettings.publishGeneric(topic.c_str(), "", true);
+    if (!MqttSettings.publishGeneric(topic.c_str(), "", true)) {
+        _legacyCleanupFailed = true;
+    }
 }
 
 String HassIntegration::createBatteryId() {

@@ -218,13 +218,14 @@ void MqttSettingsClass::publish(const String& subtopic, const String& payload)
     publishGeneric(topic, value, Configuration.get().Mqtt.Retain, 0);
 }
 
-void MqttSettingsClass::publishGeneric(const String& topic, const String& payload, const bool retain, const uint8_t qos)
+bool MqttSettingsClass::publishGeneric(const String& topic, const String& payload, const bool retain, const uint8_t qos)
 {
     std::lock_guard<std::mutex> lock(_clientLock);
     if (_mqttClient == nullptr) {
-        return;
+        return false;
     }
-    _mqttClient->publish(topic.c_str(), qos, retain, payload.c_str());
+    // espMqttClient returns packet id 0 if the message could not be queued
+    return _mqttClient->publish(topic.c_str(), qos, retain, payload.c_str()) != 0;
 }
 
 void MqttSettingsClass::init()
