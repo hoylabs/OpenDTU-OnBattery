@@ -8,17 +8,17 @@
 namespace Batteries::Pytes::Rs485::Parsers {
 
 // ---------------------------------------------------------------------------
-// Pack-level parsers (CID2 0x60, 0x61, 0x62) — return DataPointContainer
+// Battery-level parsers, the spec calls these "cluster" commands (CID2 0x60, 0x61, 0x62) — return DataPointContainer
 // ---------------------------------------------------------------------------
 
-// Parse 0x60 PackBasic.  Pack serial number and battery count (ModulesOnlineCount)
+// Parse 0x60 ClusterBasic.  Cluster serial number and module count (ModuleCount)
 // are returned via the DataPointContainer.  Per-battery serials are skipped here
 // as they are redundantly available from parseModuleBasic (0x80).
-DataPointContainer parsePackBasic(SerialResponse const& response);
+DataPointContainer parseClusterBasic(SerialResponse const& response);
 
-DataPointContainer parsePackAnalog(SerialResponse const& response);
+DataPointContainer parseClusterAnalog(SerialResponse const& response);
 
-DataPointContainer parsePackChgDsg(SerialResponse const& response);
+DataPointContainer parseClusterChgDsg(SerialResponse const& response);
 
 // ---------------------------------------------------------------------------
 // Per-battery parsers (CID2 0x80, 0x81, 0x82, 0x83, 0x92) — return structs
@@ -43,6 +43,8 @@ struct ModuleAnalogResult {
     float ambientTemp          = 0;
     int chargeCycles           = -1;
     uint16_t balance           = 0;
+    uint32_t status            = 0;
+    uint32_t errorStatus       = 0;
     float cellMaxV             = 0;
     uint8_t cellMaxNo          = 0;
     float cellMinV             = 0;
@@ -59,8 +61,8 @@ struct ModuleChgDsgResult {
     float minDsgVoltV   = 0;
     float maxChgCurrA   = 0;
     float maxDsgCurrA   = 0;
+    bool chargeImmediately = false;
     bool fullChgReq     = false;
-    uint8_t emergFlags  = 0;
 };
 
 struct ModuleCellsResult {
@@ -68,15 +70,9 @@ struct ModuleCellsResult {
     std::vector<CellData> cells;
 };
 
-struct ModuleProtectResult {
-    uint8_t moduleNo = 0;
-    ProtectParams protect;
-};
-
 ModuleBasicResult   parseModuleBasic(SerialResponse const& response);
 ModuleAnalogResult  parseModuleAnalog(SerialResponse const& response);
 ModuleChgDsgResult  parseModuleChgDsg(SerialResponse const& response);
 ModuleCellsResult   parseModuleCells(SerialResponse const& response);
-ModuleProtectResult parseModuleProtect(SerialResponse const& response);
 
 } // namespace Batteries::Pytes::Rs485::Parsers

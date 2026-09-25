@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include <mutex>
 #include <battery/Stats.h>
 #include <battery/pytes/rs485/DataPoints.h>
+#include <battery/pytes/rs485/Parsers.h>
 
 namespace Batteries::Pytes::Rs485 {
 
@@ -12,24 +14,42 @@ public:
     void mqttPublish() const final;
     bool getImmediateChargingRequest() const final;
 
-    void updatePackData(DataPointContainer const& dp);
+    void updateBatteryData(DataPointContainer const& dp);
+    struct ModuleIdentity {
+        String serial;
+        String hwVersion;
+        String swVersion;
+        uint8_t nCells;
+    };
+    // modules with a usable serial (MQTT topic level / HASS id) and their cell count
+    std::vector<ModuleIdentity> getModuleIdentities() const;
 
-    void resizeModules(size_t n);
-    void setModuleBasic(uint8_t moduleNo, String hwVersion, String swVersion, String serial);
-    void setModuleAnalog(uint8_t moduleNo, float voltageV, float currentA, float soc, uint16_t health,
-                         uint32_t totalCapacityMah, uint32_t remainCapacityMah,
-                         float ambientTemp, int chargeCycles, uint16_t balance,
-                         float cellMaxV, uint8_t cellMaxNo, float cellMinV, uint8_t cellMinNo,
-                         float tempMaxC, uint8_t tempMaxNo, float tempMinC, uint8_t tempMinNo);
-    void setModuleChgDsg(uint8_t moduleNo, float maxChgVoltV, float minDsgVoltV, float maxChgCurrA, float maxDsgCurrA, bool fullChgReq, uint8_t emergFlags);
+    void setModuleBasic(Parsers::ModuleBasicResult const& r);
+    void setModuleAnalog(Parsers::ModuleAnalogResult const& r);
+    void setModuleChgDsg(Parsers::ModuleChgDsgResult const& r);
     void setModuleCells(uint8_t moduleNo, std::vector<CellData> cells);
-    void setModuleProtect(uint8_t moduleNo, ProtectParams const& protect);
 
 private:
+    void resizeModules(size_t n);
+
+    // the provider loop writes while the async web server task reads
+    // (/api/batterylivedata/status), _modules may reallocate in between
+    mutable std::mutex _mutex;
+
+    String moduleName(size_t index) const;
+    struct ModuleCounts {
+        int blockingCharge = 0;
+        int blockingDischarge = 0;
+    };
+    ModuleCounts getModuleCounts() const;
+    static bool isOnline(BatteryModule const& mod);
+    static std::optional<bool> isBalancing(BatteryModule const& mod);
+    static std::optional<float> averageCellTemperature(BatteryModule const& mod);
+    std::optional<bool> isBalancing() const;
+    std::optional<std::string> extremeCellName(float BatteryModule::*value, uint8_t BatteryModule::*no, bool max) const;
+
     DataPointContainer _dataPoints;
     std::vector<BatteryModule> _modules;
-    mutable uint32_t _lastMqttPublish = 0;
-    mutable uint32_t _lastFullMqttPublish = 0;
 };
 
 } // namespace Batteries::Pytes::Rs485

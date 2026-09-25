@@ -14,18 +14,35 @@ public:
 
     void hassLoop();
 
+    // publish the discovery configs again, e.g. once data they depend on
+    // (like module serial numbers) became known
+    void republish() { _publishSensors = true; }
+
 protected:
+    // a separate HASS device below the battery (e.g. a module of a multi-module
+    // battery), its entities are keyed by id instead of the battery device id
+    struct SubDevice {
+        String id;      // globally unique, e.g. derived from a serial number
+        String name;
+        String model;
+        String swVersion;
+    };
+
     void publish(const String& subtopic, const String& payload) const;
     void publishBinarySensor(const char* caption,
             const char* icon, const char* subTopic,
             const char* payload_on, const char* payload_off,
-            const bool enabled = true) const;
+            const bool enabled = true,
+            SubDevice const* subDevice = nullptr) const;
     void publishSensor(const char* caption, const char* icon,
             const char* subTopic, const char* deviceClass = nullptr,
             const char* stateClass = nullptr,
             const char* unitOfMeasurement = nullptr,
-            const bool enabled = true) const;
+            const bool enabled = true,
+            SubDevice const* subDevice = nullptr,
+            int8_t displayPrecision = -1) const; // -1: HASS default (0 decimals for V!)
     void createDeviceInfo(JsonObject& object) const;
+    void createSubDeviceInfo(JsonObject& object, SubDevice const& subDevice) const;
 
     virtual void publishSensors() const;
 

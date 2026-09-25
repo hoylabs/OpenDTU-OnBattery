@@ -10,6 +10,9 @@ class HassIntegration : public ::Batteries::HassIntegration {
 public:
     explicit HassIntegration(std::shared_ptr<Stats> spStats);
     void publishSensors() const final;
+
+private:
+    std::shared_ptr<Stats> _spRs485Stats;
 };
 
 } // namespace Batteries::Pytes::Rs485

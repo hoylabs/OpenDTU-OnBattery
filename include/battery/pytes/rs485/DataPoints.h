@@ -15,28 +15,9 @@ namespace Batteries::Pytes::Rs485 {
 struct CellData {
     float voltageV;     // V
     float temperatureC; // °C
-};
-
-// ---------------------------------------------------------------------------
-// Per-module protection thresholds (used in BatteryModule)
-// ---------------------------------------------------------------------------
-struct ProtectParams {
-    uint32_t overvoltageProtectionMv  = 0;
-    uint32_t undervoltageProtectionMv = 0;
-    uint32_t highVoltageAlarmMv       = 0;
-    uint32_t lowVoltageAlarmMv        = 0;
-    int32_t  chargeOverTempProtMc     = 0;
-    int32_t  chargeUnderTempProtMc    = 0;
-    int32_t  chargeHighTempAlarmMc    = 0;
-    int32_t  chargeLowTempAlarmMc     = 0;
-    int32_t  dischargeOverTempProtMc  = 0;
-    int32_t  dischargeUnderTempProtMc = 0;
-    int32_t  dischargeHighTempAlarmMc = 0;
-    int32_t  dischargeLowTempAlarmMc  = 0;
-    int32_t  chargeOvercurrentMa      = 0;
-    int32_t  dischargeOvercurrentMa   = 0;
-    uint32_t balanceStartVoltageMv    = 0;
-    uint32_t balanceDiffMv            = 0;
+    float currentA;     // A
+    uint16_t soc;       // %
+    uint32_t status;    // status bitmask, see spec 1.3.7
 };
 
 // ---------------------------------------------------------------------------
@@ -47,7 +28,6 @@ struct BatteryModule {
     bool hasAnalog  = false;
     bool hasCells   = false;
     bool hasChgDsg  = false;
-    bool hasProtect = false;
     String serial;
     String hwVersion;
     String swVersion;
@@ -61,6 +41,8 @@ struct BatteryModule {
     float ambientTemp      = 0;
     int chargeCycles       = -1;
     uint16_t balance       = 0;
+    uint32_t status        = 0; // status bitmask, see spec 1.3.7
+    uint32_t errorStatus   = 0; // system error bitmask, see spec 1.3.8
     std::vector<CellData> cells;
     float cellMaxV      = 0;
     uint8_t cellMaxNo   = 0;
@@ -71,74 +53,60 @@ struct BatteryModule {
     float tempMinC      = 0;
     uint8_t tempMinNo   = 0;
     bool hasTempMinMax  = false;
+    uint32_t lastUpdate = 0; // millis() of the last 0x81 (analog) response
     float maxChgVoltV  = 0;
     float minDsgVoltV  = 0;
     float maxChgCurrA  = 0;
     float maxDsgCurrA  = 0;
-    bool fullChgReq    = false;
-    uint8_t emergFlags = 0;
-    ProtectParams protect;
+    bool chargeImmediately = false; // emergency charge flag 1 or 2
+    bool fullChgReq        = false;
 };
 
 // ---------------------------------------------------------------------------
 // Alarm bits
 // ---------------------------------------------------------------------------
+// fnc(enum name, bit, key used for MQTT topic and live view)
 #define PYTESRS485_ALARM_BITS(fnc) \
-    fnc(OverVoltage,            (1<<0)) \
-    fnc(UnderVoltage,           (1<<1)) \
-    fnc(OverCurrentCharge,      (1<<2)) \
-    fnc(OverCurrentDischarge,   (1<<3)) \
-    fnc(OverTemperature,        (1<<4)) \
-    fnc(UnderTemperature,       (1<<5)) \
-    fnc(OverTemperatureCharge,  (1<<6)) \
-    fnc(UnderTemperatureCharge, (1<<7)) \
-    fnc(InternalFailure,        (1<<8)) \
-    fnc(CellImbalance,          (1<<9))
+    fnc(OverVoltage,            (1<<0), "overVoltage") \
+    fnc(UnderVoltage,           (1<<1), "underVoltage") \
+    fnc(OverCurrentCharge,      (1<<2), "overCurrentCharge") \
+    fnc(OverCurrentDischarge,   (1<<3), "overCurrentDischarge") \
+    fnc(OverTemperature,        (1<<4), "overTemperature") \
+    fnc(UnderTemperature,       (1<<5), "underTemperature") \
+    fnc(OverTemperatureCharge,  (1<<6), "overTemperatureCharge") \
+    fnc(UnderTemperatureCharge, (1<<7), "underTemperatureCharge") \
+    fnc(InternalFailure,        (1<<8), "bmsInternal")
 
 enum class AlarmBits : uint16_t {
-#define ALARM_ENUM(name, value) name = value,
+#define ALARM_ENUM(name, value, key) name = value,
     PYTESRS485_ALARM_BITS(ALARM_ENUM)
 #undef ALARM_ENUM
-};
-
-static const frozen::map<AlarmBits, frozen::string, 10> AlarmBitTexts = {
-#define ALARM_TEXT(name, value) { AlarmBits::name, #name },
-    PYTESRS485_ALARM_BITS(ALARM_TEXT)
-#undef ALARM_TEXT
 };
 
 // ---------------------------------------------------------------------------
 // Warning bits
 // ---------------------------------------------------------------------------
 #define PYTESRS485_WARNING_BITS(fnc) \
-    fnc(HighVoltage,            (1<<0)) \
-    fnc(LowVoltage,             (1<<1)) \
-    fnc(HighCurrentCharge,      (1<<2)) \
-    fnc(HighCurrentDischarge,   (1<<3)) \
-    fnc(HighTemperature,        (1<<4)) \
-    fnc(LowTemperature,         (1<<5)) \
-    fnc(HighTemperatureCharge,  (1<<6)) \
-    fnc(LowTemperatureCharge,   (1<<7)) \
-    fnc(InternalFailure,        (1<<8)) \
-    fnc(CellImbalance,          (1<<9))
+    fnc(HighVoltage,            (1<<0), "highVoltage") \
+    fnc(LowVoltage,             (1<<1), "lowVoltage") \
+    fnc(HighCurrentCharge,      (1<<2), "highCurrentCharge") \
+    fnc(HighCurrentDischarge,   (1<<3), "highCurrentDischarge") \
+    fnc(HighTemperature,        (1<<4), "highTemperature") \
+    fnc(LowTemperature,         (1<<5), "lowTemperature") \
+    fnc(HighTemperatureCharge,  (1<<6), "highTemperatureCharge") \
+    fnc(LowTemperatureCharge,   (1<<7), "lowTemperatureCharge")
 
 enum class WarningBits : uint16_t {
-#define WARNING_ENUM(name, value) name = value,
+#define WARNING_ENUM(name, value, key) name = value,
     PYTESRS485_WARNING_BITS(WARNING_ENUM)
 #undef WARNING_ENUM
-};
-
-static const frozen::map<WarningBits, frozen::string, 10> WarningBitTexts = {
-#define WARNING_TEXT(name, value) { WarningBits::name, #name },
-    PYTESRS485_WARNING_BITS(WARNING_TEXT)
-#undef WARNING_TEXT
 };
 
 // ---------------------------------------------------------------------------
 // DataPointLabel enum
 // ---------------------------------------------------------------------------
 enum class DataPointLabel : uint8_t {
-    PackManufacturer                  = 0x01,
+    Manufacturer                  = 0x01,
     BatteryVoltageMilliVolt           = 0x05,
     BatteryCurrentMilliAmps           = 0x06,
     BatterySoCPercent                 = 0x07,
@@ -159,6 +127,9 @@ enum class DataPointLabel : uint8_t {
     ChargeCurrentLimitMilliAmps       = 0x1A,
     DischargeCurrentLimitMilliAmps    = 0x1B,
     ChargeImmediately                 = 0x1C,
+    StatusBitmask                 = 0x1F,
+    ErrorBitmask                  = 0x20,
+    FullChargeRequest                 = 0x25,
 };
 
 // ---------------------------------------------------------------------------
@@ -172,7 +143,7 @@ template<DataPointLabel> struct DataPointLabelTraits;
     static constexpr char const unit[] = u; \
 };
 
-LABEL_TRAIT(PackManufacturer,               std::string, "");
+LABEL_TRAIT(Manufacturer,               std::string, "");
 LABEL_TRAIT(BatteryVoltageMilliVolt,        uint32_t,    "mV");
 LABEL_TRAIT(BatteryCurrentMilliAmps,        int32_t,     "mA");
 LABEL_TRAIT(BatterySoCPercent,              float,       "%");
@@ -181,8 +152,8 @@ LABEL_TRAIT(TotalCapacityMilliAmpHours,     uint32_t,    "mAh");
 LABEL_TRAIT(RemainingCapacityMilliAmpHours, uint32_t,    "mAh");
 LABEL_TRAIT(CellMaxMilliVolt,               uint16_t,    "mV");
 LABEL_TRAIT(CellMinMilliVolt,               uint16_t,    "mV");
-LABEL_TRAIT(CellMaxTemperatureCelsius,      int16_t,     "°C");
-LABEL_TRAIT(CellMinTemperatureCelsius,      int16_t,     "°C");
+LABEL_TRAIT(CellMaxTemperatureCelsius,      float,       "°C");
+LABEL_TRAIT(CellMinTemperatureCelsius,      float,       "°C");
 LABEL_TRAIT(AccumulatedChargeDeciKWh,       uint32_t,    "kWh");
 LABEL_TRAIT(AccumulatedDischargeDeciKWh,    uint32_t,    "kWh");
 LABEL_TRAIT(ModuleCount,                    uint8_t,     "");
@@ -193,6 +164,9 @@ LABEL_TRAIT(DischargeVoltageLimitMilliVolt, uint32_t,    "mV");
 LABEL_TRAIT(ChargeCurrentLimitMilliAmps,    uint32_t,    "mA");
 LABEL_TRAIT(DischargeCurrentLimitMilliAmps, uint32_t,    "mA");
 LABEL_TRAIT(ChargeImmediately,              bool,        "");
+LABEL_TRAIT(StatusBitmask,              uint32_t,    "");
+LABEL_TRAIT(ErrorBitmask,               uint32_t,    "");
+LABEL_TRAIT(FullChargeRequest,              bool,        "");
 #undef LABEL_TRAIT
 
 } // namespace Batteries::Pytes::Rs485
