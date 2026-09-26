@@ -8,6 +8,11 @@
 #include <MqttHandleHass.h>
 #include <Utils.h>
 #include <__compiled_constants.h>
+#include <LogHelper.h>
+
+#undef TAG
+static const char* TAG = "battery";
+static const char* SUBTAG = "HASS";
 
 namespace Batteries {
 
@@ -30,9 +35,22 @@ void HassIntegration::hassLoop()
         !_spStats->getManufacturer().has_value() ||
         !_spStats->getHassDeviceName().has_value()) { return; }
 
+    _legacyCleanupFailed = false;
+
     publishSensors();
 
     _publishSensors = false;
+
+    // the legacy discovery configs were cleared by publishSensors(), this is
+    // needed only once per installation. if a deletion could not be queued,
+    // keep the flag so the next discovery run (reconnect, reboot) retries.
+    if (config.Mqtt.Hass.BatteryLegacyCleanupPending) {
+        if (_legacyCleanupFailed) {
+            DTU_LOGW("Could not remove all legacy Home Assistant battery configs, retrying on next discovery");
+        } else {
+            Configuration.clearBatteryLegacyCleanupPending();
+        }
+    }
 }
 
 void HassIntegration::publishSensors() const
@@ -51,20 +69,19 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
 {
     String sensorId = sanitizeUniqueId(caption);
 
-    String configTopic = "sensor/dtu_battery_" + _serial
+    String configTopic = "sensor/" + createBatteryId()
         + "/" + sensorId
         + "/config";
 
+    removeLegacyConfig("sensor", sensorId);
+
     String statTopic = MqttSettings.getPrefix() + "battery/";
-    // omit serial to avoid a breaking change
-    // statTopic.concat(_serial);
-    // statTopic.concat("/");
     statTopic.concat(subTopic);
 
     JsonDocument root;
     root["name"] = caption;
     root["stat_t"] = statTopic;
-    root["uniq_id"] = _serial + "_" + sensorId;
+    root["uniq_id"] = createBatteryId() + "_" + sensorId;
 
     if (icon != NULL) {
         root["icon"] = icon;
@@ -108,20 +125,19 @@ void HassIntegration::publishBinarySensor(const char* caption,
 {
     String sensorId = sanitizeUniqueId(caption);
 
-    String configTopic = "binary_sensor/dtu_battery_" + _serial
+    String configTopic = "binary_sensor/" + createBatteryId()
         + "/" + sensorId
         + "/config";
 
+    removeLegacyConfig("binary_sensor", sensorId);
+
     String statTopic = MqttSettings.getPrefix() + "battery/";
-    // omit serial to avoid a breaking change
-    // statTopic.concat(_serial);
-    // statTopic.concat("/");
     statTopic.concat(subTopic);
 
     JsonDocument root;
 
     root["name"] = caption;
-    root["uniq_id"] = _serial + "_" + sensorId;
+    root["uniq_id"] = createBatteryId() + "_" + sensorId;
     root["stat_t"] = statTopic;
     root["pl_on"] = payload_on;
     root["pl_off"] = payload_off;
@@ -149,7 +165,7 @@ void HassIntegration::publishBinarySensor(const char* caption,
 void HassIntegration::createDeviceInfo(JsonObject& object) const
 {
     object["name"] = *_spStats->getHassDeviceName();
-    object["ids"] = _serial;
+    object["ids"] = createBatteryId();
     object["cu"] = MqttHandleHass.getDtuUrl();
     object["mf"] = "OpenDTU";
     object["mdl"] = *_spStats->getManufacturer();
@@ -162,6 +178,30 @@ void HassIntegration::publish(const String& subtopic, const String& payload) con
     String topic = Configuration.get().Mqtt.Hass.Topic;
     topic += subtopic;
     MqttSettings.publishGeneric(topic.c_str(), payload.c_str(), Configuration.get().Mqtt.Hass.Retain);
+}
+
+// All batteries used to share the hardcoded device id "0001", which made
+// batteries of multiple DTUs collide in HASS. Clearing the old (retained)
+// discovery config makes HASS delete the old entity (and the old device once
+// it has no entities left) before the new one is announced, so the new
+// entity gets the old entity id and keeps its history. This runs once after
+// upgrading (see Mqtt.Hass.BatteryLegacyCleanupPending) and can be removed
+// again once upgrades from such old firmware are no longer expected.
+void HassIntegration::removeLegacyConfig(const char* component, String const& sensorId) const
+{
+    if (!Configuration.get().Mqtt.Hass.BatteryLegacyCleanupPending) { return; }
+
+    // always retained: an empty retained message is what removes the old
+    // retained config from the broker, independent of the retain setting
+    String topic = Configuration.get().Mqtt.Hass.Topic;
+    topic += String(component) + "/dtu_battery_0001/" + sensorId + "/config";
+    if (!MqttSettings.publishGeneric(topic.c_str(), "", true)) {
+        _legacyCleanupFailed = true;
+    }
+}
+
+String HassIntegration::createBatteryId() {
+    return MqttHandleHass.getDtuUniqueId() + "_battery";
 }
 
 String HassIntegration::sanitizeUniqueId(const char* value) {
