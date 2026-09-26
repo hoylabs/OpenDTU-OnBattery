@@ -36,6 +36,7 @@ export interface BatteryModule {
     error?: string;
     online?: boolean;
     cellColumns?: CellColumn[];
+    balancing?: number; // bitmask, bit 0 = cell 1
     // compact on purpose to keep the JSON (built on the ESP for every push) small:
     // one row per cell, values in cellColumns order, unit/decimals only in cellColumns
     cells?: number[][];
