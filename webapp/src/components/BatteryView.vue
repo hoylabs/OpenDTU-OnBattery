@@ -6,6 +6,7 @@
     </div>
 
     <div v-else-if="'values' in batteryData">
+        <!-- ── Battery overview card ──────────────────────────────────────── -->
         <div class="row gy-3 mt-0">
             <div class="tab-content col-sm-12 col-md-12" id="v-pills-tabContent">
                 <div class="card">
@@ -40,7 +41,7 @@
                             <div
                                 v-for="(values, section) in batteryData.values"
                                 v-bind:key="section"
-                                class="col order-0"
+                                class="col-auto order-0"
                             >
                                 <div class="card card-table" :class="{ 'border-info': true }">
                                     <div class="card-header text-bg-info">
@@ -145,6 +146,269 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- ── Per-module section ──────────────────────────────────────────── -->
+                        <div v-if="sortedModules.length > 0" class="row gy-3 mt-0">
+                            <!-- Module pills (like the inverter selector) — hidden when there is only one module -->
+                            <div class="col-sm-3 col-md-2" v-if="sortedModules.length > 1">
+                                <div
+                                    class="nav nav-pills row-cols-sm-1 gap-3"
+                                    id="battery-module-nav"
+                                    role="tablist"
+                                    aria-orientation="vertical"
+                                >
+                                    <button
+                                        v-for="mod in sortedModules"
+                                        :key="mod.moduleNumber"
+                                        class="nav-link border border-primary text-break"
+                                        :class="{ active: mod.moduleNumber === activeModuleNumber }"
+                                        :id="'battery-module-tab-' + mod.moduleNumber"
+                                        @click="selectedModuleNumber = mod.moduleNumber"
+                                        type="button"
+                                        role="tab"
+                                        :aria-controls="'battery-module-' + mod.moduleNumber"
+                                        :aria-selected="mod.moduleNumber === activeModuleNumber"
+                                    >
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-2">
+                                                <span class="badge" :class="moduleStateClass(mod)">
+                                                    <template v-if="mod.values?.SoC && !isStringValue(mod.values.SoC)">
+                                                        {{ $n(mod.values.SoC.v, 'decimalNoDigits') }} %
+                                                    </template>
+                                                    <template v-else>-</template>
+                                                </span>
+                                            </div>
+                                            <div class="ms-auto me-auto">{{ mod.moduleName }}</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tab panes -->
+                            <div
+                                class="tab-content"
+                                id="battery-module-content"
+                                :class="sortedModules.length > 1 ? 'col-sm-9 col-md-10' : 'col-12'"
+                            >
+                                <div
+                                    v-for="mod in sortedModules"
+                                    :key="mod.moduleNumber"
+                                    class="tab-pane fade"
+                                    :class="{ 'show active': mod.moduleNumber === activeModuleNumber }"
+                                    :id="'battery-module-' + mod.moduleNumber"
+                                    role="tabpanel"
+                                    :aria-labelledby="'battery-module-tab-' + mod.moduleNumber"
+                                    tabindex="0"
+                                >
+                                    <div class="card">
+                                        <div
+                                            class="card-header d-flex flex-wrap align-items-center"
+                                            :class="moduleStateClass(mod)"
+                                        >
+                                            <div style="padding-right: 2em">{{ mod.moduleName }}</div>
+                                            <div v-if="mod.moduleSerialNumber" style="padding-right: 2em">
+                                                S/N: {{ mod.moduleSerialNumber }}
+                                            </div>
+                                            <div v-if="mod.swversion" style="padding-right: 2em">
+                                                {{ $t('battery.FwVersion') }}: {{ mod.swversion }}
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row flex-row flex-wrap align-items-start g-3">
+                                                <!-- small cards wrap next to the (tall) cells table -->
+                                                <div class="col-12 module-grid">
+                                                    <div>
+                                                        <div class="row g-3 align-items-start">
+                                                            <!-- Module-level value cards (status, limits, capacities) -->
+                                                            <div
+                                                                class="col-auto"
+                                                                v-for="(values, section) in moduleSections(mod)"
+                                                                :key="section"
+                                                            >
+                                                                <div
+                                                                    class="card card-table border-info"
+                                                                    style="overflow: hidden"
+                                                                >
+                                                                    <div class="card-header text-bg-info">
+                                                                        {{ $t('battery.' + section) }}
+                                                                    </div>
+                                                                    <div class="table-responsive">
+                                                                        <table
+                                                                            class="table table-striped table-hover mb-0"
+                                                                        >
+                                                                            <tbody>
+                                                                                <tr
+                                                                                    v-for="(prop, key) in values"
+                                                                                    :key="key"
+                                                                                >
+                                                                                    <th scope="row">
+                                                                                        {{ $t('battery.' + key) }}
+                                                                                    </th>
+                                                                                    <td class="value">
+                                                                                        <template
+                                                                                            v-if="
+                                                                                                isStringValue(prop) &&
+                                                                                                prop.translate
+                                                                                            "
+                                                                                        >
+                                                                                            {{
+                                                                                                $t(
+                                                                                                    'battery.' +
+                                                                                                        prop.value
+                                                                                                )
+                                                                                            }}
+                                                                                        </template>
+                                                                                        <template
+                                                                                            v-else-if="
+                                                                                                isStringValue(prop)
+                                                                                            "
+                                                                                        >
+                                                                                            {{ prop.value }}
+                                                                                        </template>
+                                                                                        <template v-else>
+                                                                                            {{
+                                                                                                $n(prop.v, 'decimal', {
+                                                                                                    minimumFractionDigits:
+                                                                                                        prop.d,
+                                                                                                    maximumFractionDigits:
+                                                                                                        prop.d,
+                                                                                                })
+                                                                                            }}
+                                                                                        </template>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <template
+                                                                                            v-if="!isStringValue(prop)"
+                                                                                        >
+                                                                                            {{ prop.u }}
+                                                                                        </template>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Cell status summary (min/max voltage and temperature) -->
+                                                            <div class="col-auto" v-if="mod.cellStatus">
+                                                                <div
+                                                                    class="card card-table border-info"
+                                                                    style="overflow: hidden"
+                                                                >
+                                                                    <div class="card-header text-bg-info">
+                                                                        {{ $t('battery.cell_status') }}
+                                                                    </div>
+                                                                    <div class="table-responsive">
+                                                                        <table
+                                                                            class="table table-striped table-hover mb-0"
+                                                                        >
+                                                                            <tbody>
+                                                                                <tr
+                                                                                    v-for="(
+                                                                                        prop, key
+                                                                                    ) in mod.cellStatus"
+                                                                                    :key="key"
+                                                                                >
+                                                                                    <th scope="row">
+                                                                                        {{ $t('battery.' + key) }}
+                                                                                    </th>
+                                                                                    <td class="value">
+                                                                                        {{
+                                                                                            $n(prop.v, 'decimal', {
+                                                                                                minimumFractionDigits:
+                                                                                                    prop.d,
+                                                                                                maximumFractionDigits:
+                                                                                                    prop.d,
+                                                                                            })
+                                                                                        }}
+                                                                                    </td>
+                                                                                    <td>{{ prop.u }}</td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Per-cell table: cells are compact number rows, unit and decimals
+                                                         come from cellColumns (keeps the JSON built on the ESP small) -->
+                                                    <div
+                                                        class="module-grid-cells"
+                                                        v-if="mod.cells && mod.cells.length > 0"
+                                                    >
+                                                        <div
+                                                            class="card card-table border-info"
+                                                            style="overflow: hidden"
+                                                        >
+                                                            <div class="card-header text-bg-info">
+                                                                {{ $t('battery.cells') }}
+                                                            </div>
+                                                            <div class="table-responsive">
+                                                                <table class="table table-striped table-hover mb-0">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th scope="col">
+                                                                                {{ $t('battery.cell') }}
+                                                                            </th>
+                                                                            <template
+                                                                                v-for="col in mod.cellColumns"
+                                                                                :key="col.name"
+                                                                            >
+                                                                                <th scope="col" class="value">
+                                                                                    {{ $t('battery.' + col.name) }}
+                                                                                </th>
+                                                                                <th scope="col"></th>
+                                                                            </template>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        <tr v-for="(row, idx) in mod.cells" :key="idx">
+                                                                            <th scope="row">
+                                                                                {{ idx + 1 }}
+                                                                                <span
+                                                                                    v-if="
+                                                                                        ((mod.balancing ?? 0) >> idx) &
+                                                                                        1
+                                                                                    "
+                                                                                    class="badge text-bg-info ms-1"
+                                                                                    :title="
+                                                                                        $t('battery.balancingActive')
+                                                                                    "
+                                                                                    >⚖</span
+                                                                                >
+                                                                            </th>
+                                                                            <template
+                                                                                v-for="(col, ci) in mod.cellColumns"
+                                                                                :key="col.name"
+                                                                            >
+                                                                                <td class="value">
+                                                                                    {{
+                                                                                        $n(row[ci] ?? 0, 'decimal', {
+                                                                                            minimumFractionDigits:
+                                                                                                col.d,
+                                                                                            maximumFractionDigits:
+                                                                                                col.d,
+                                                                                        })
+                                                                                    }}
+                                                                                </td>
+                                                                                <td>{{ col.u }}</td>
+                                                                            </template>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -154,7 +418,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import type { Battery } from '@/types/BatteryDataStatus';
+import type { Battery, BatteryModule } from '@/types/BatteryDataStatus';
 import { isStringValue } from '@/types/StringValue';
 import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
 import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
@@ -167,16 +431,10 @@ export default defineComponent({
     data() {
         return {
             socket: {} as WebSocketService,
-            heartInterval: 0,
             dataAgeInterval: 0,
             dataLoading: true,
             batteryData: {} as Battery,
-            isFirstFetchAfterConnect: true,
-
-            alertMessageLimit: '',
-            alertTypeLimit: 'info',
-            showAlertLimit: false,
-            checked: false,
+            selectedModuleNumber: -1,
         };
     },
     created() {
@@ -188,8 +446,34 @@ export default defineComponent({
         this.socket?.close();
         clearInterval(this.dataAgeInterval);
     },
+    computed: {
+        maxIssueValue() {
+            if (!('issues' in this.batteryData)) return 0;
+            return Math.max(0, ...Object.values(this.batteryData.issues));
+        },
+        sortedModules(): BatteryModule[] {
+            if (!this.batteryData.modules) return [];
+            return this.batteryData.modules.slice().sort((a, b) => a.moduleNumber - b.moduleNumber);
+        },
+        activeModuleNumber(): number {
+            if (this.sortedModules.some((m) => m.moduleNumber === this.selectedModuleNumber)) {
+                return this.selectedModuleNumber;
+            }
+            return this.sortedModules.length > 0 ? this.sortedModules[0]!.moduleNumber : -1;
+        },
+    },
     methods: {
         isStringValue,
+        // same scheme as the inverter view: red = unreachable, yellow = reachable but not ok, green = ok
+        moduleStateClass(mod: BatteryModule) {
+            if (mod.online === false) return 'text-bg-danger';
+            if (mod.error) return 'text-bg-warning';
+            return 'text-bg-success';
+        },
+        moduleSections(mod: BatteryModule) {
+            const sections = { status: mod.values, limits: mod.limits, capacities: mod.capacities };
+            return Object.fromEntries(Object.entries(sections).filter(([, v]) => v && Object.keys(v).length > 0));
+        },
         getInitialData() {
             console.log('Get initalData for Battery');
             this.dataLoading = true;
@@ -238,10 +522,26 @@ export default defineComponent({
             }, 1000);
         },
     },
-    computed: {
-        maxIssueValue() {
-            return 'issues' in this.batteryData ? Math.max(...Object.values(this.batteryData.issues)) : 0;
-        },
-    },
 });
 </script>
+
+<style scoped>
+/* value cards take up to their natural width and wrap when space runs out, the cells table sits right next to them */
+.module-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, max-content) auto;
+    justify-content: start;
+    align-items: start;
+}
+
+@media (max-width: 991.98px) {
+    .module-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .module-grid-cells {
+        justify-self: start;
+    }
+}
+</style>

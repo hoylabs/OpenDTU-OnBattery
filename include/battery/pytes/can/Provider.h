@@ -4,10 +4,10 @@
 #include <memory>
 #include <driver/twai.h>
 #include <battery/CanReceiver.h>
-#include <battery/pytes/Stats.h>
-#include <battery/pytes/HassIntegration.h>
+#include <battery/pytes/can/Stats.h>
+#include <battery/pytes/can/HassIntegration.h>
 
-namespace Batteries::Pytes {
+namespace Batteries::Pytes::Can {
 
 class Provider : public ::Batteries::CanReceiver {
 public:
@@ -23,4 +23,4 @@ private:
     std::shared_ptr<HassIntegration> _hassIntegration;
 };
 
-} // namespace Batteries::Pytes
+} // namespace Batteries::Pytes::Can

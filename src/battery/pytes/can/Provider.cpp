@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include <battery/pytes/Provider.h>
+#include <battery/pytes/can/Provider.h>
 #include <PinMapping.h>
 #include <driver/twai.h>
 #include <ctime>
@@ -9,7 +9,7 @@
 static const char* TAG = "battery";
 static const char* SUBTAG = "Pytes";
 
-namespace Batteries::Pytes {
+namespace Batteries::Pytes::Can {
 
 Provider::Provider()
     : _stats(std::make_shared<Stats>())
@@ -440,4 +440,4 @@ void Provider::onMessage(twai_message_t rx_message)
     _stats->setLastUpdate(millis());
 }
 
-} // namespace Batteries::Pytes
+} // namespace Batteries::Pytes::Can
