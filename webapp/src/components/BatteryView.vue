@@ -366,7 +366,20 @@
                                                                     </thead>
                                                                     <tbody>
                                                                         <tr v-for="(row, idx) in mod.cells" :key="idx">
-                                                                            <th scope="row">{{ idx + 1 }}</th>
+                                                                            <th scope="row">
+                                                                                {{ idx + 1 }}
+                                                                                <span
+                                                                                    v-if="
+                                                                                        ((mod.balancing ?? 0) >> idx) &
+                                                                                        1
+                                                                                    "
+                                                                                    class="badge text-bg-info ms-1"
+                                                                                    :title="
+                                                                                        $t('battery.balancingActive')
+                                                                                    "
+                                                                                    >⚖</span
+                                                                                >
+                                                                            </th>
                                                                             <template
                                                                                 v-for="(col, ci) in mod.cellColumns"
                                                                                 :key="col.name"

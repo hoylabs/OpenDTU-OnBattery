@@ -195,8 +195,10 @@ bool Stats::isOnline(BatteryModule const& mod)
     return millis() - mod.lastUpdate < 3 * pollIntervalMs + 10 * 1000;
 }
 
-// "equilibrium state" (0x81): 0 = not balancing. Any other value means balancing,
-// likely a per-cell bitmask (not verified yet). 0xFFFF = unsupported (spec 1.3.5).
+// "equilibrium state" (0x81): bitmask of the cells being balanced, bit 0 =
+// cell 1 (verified on a V5 while balancing: the set bits matched the highest
+// cells). 0xFFFF = unsupported (spec 1.3.5), passive balancing never bleeds
+// all cells at once, so this is no valid bitmask for 16 cells.
 std::optional<bool> Stats::isBalancing(BatteryModule const& mod)
 {
     if (!mod.hasAnalog || mod.balance == 0xFFFF) { return std::nullopt; }
@@ -400,6 +402,9 @@ void Stats::getLiveViewData(JsonVariant& root) const
         // only identify offline modules, their last values are outdated
         module["online"] = isOnline(mod);
         if (!isOnline(mod)) { continue; }
+
+        // bit i set: cell i+1 is being balanced
+        if (isBalancing(mod)) { module["balancing"] = mod.balance; }
 
         // sections and their order mirror the battery cards above
         // system error bits (spec 1.3.8) or FAULT status flag (spec 1.3.7, bit 28)
@@ -721,6 +726,9 @@ void Stats::mqttPublish() const
             pub((cp + "current").c_str(),       String(c.currentA, 3));
             pub((cp + "stateOfCharge").c_str(), String(c.soc));
             pub((cp + "status").c_str(),        String(c.status));
+            if (isBalancing(mod) && j < 16) {
+                pub((cp + "balancing").c_str(), String((mod.balance >> j) & 1));
+            }
         }
     }
 }
