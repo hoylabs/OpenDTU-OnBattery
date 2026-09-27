@@ -441,9 +441,9 @@ void Provider::onMessage(twai_message_t rx_message)
 
         case 0x40d: { // Pytes protocol: balancing info
             // bytes 4-5: bitmask of the cells being balanced (bit 0 = cell 1),
-            // same as the equilibrium state of the Pytes RS485 protocol. the
-            // meaning of the other bytes (module?) is not known yet, so only
-            // active / not active is published.
+            // combined over all modules (observed: 0x86E1 = 0x84E1 of module 1
+            // OR 0x0240 of module 2 as reported via RS485), the module is not
+            // reported. hence only active / not active is published.
             _stats->_balance = this->readUnsignedInt16(rx_message.data + 4);
             DTU_LOGD("balance: %d (raw: %s)", _stats->_balance,
                     hexBytes(rx_message.data, rx_message.data_length_code).c_str());
