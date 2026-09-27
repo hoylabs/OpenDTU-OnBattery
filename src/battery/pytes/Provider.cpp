@@ -21,6 +21,18 @@ static void pytesSetCellLabel(String& label, uint16_t value) {
     label = name;  // updates existing string in-place
 }
 
+// raw frame content for debug logs, to analyze fields that are not (fully)
+// decoded yet
+static String hexBytes(uint8_t const* data, uint8_t len) {
+    String out;
+    char buf[4];
+    for (uint8_t i = 0; i < len; ++i) {
+        snprintf(buf, sizeof(buf), i ? " %02X" : "%02X", data[i]);
+        out += buf;
+    }
+    return out;
+}
+
 static uint32_t popCount(uint32_t val) {
     uint32_t cnt = 0;
     for (; val; ++cnt)
@@ -287,9 +299,10 @@ void Provider::onMessage(twai_message_t rx_message)
             pytesSetCellLabel(_stats->_cellMinVoltageName, this->readUnsignedInt8(rx_message.data + 6));
 
             DTU_LOGD("lowestCellMilliVolt: %d highestCellMilliVolt: %d "
-                    "cellMinVoltageName: %s cellMaxVoltageName: %s",
+                    "cellMinVoltageName: %s cellMaxVoltageName: %s (raw: %s)",
                     _stats->_cellMinMilliVolt, _stats->_cellMaxMilliVolt,
-                    _stats->_cellMinVoltageName.c_str(), _stats->_cellMaxVoltageName.c_str());
+                    _stats->_cellMinVoltageName.c_str(), _stats->_cellMaxVoltageName.c_str(),
+                    hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             break;
         }
 
@@ -300,9 +313,10 @@ void Provider::onMessage(twai_message_t rx_message)
             pytesSetCellLabel(_stats->_cellMinTemperatureName, this->readUnsignedInt16(rx_message.data + 6));
 
             DTU_LOGD("minimumCellTemperature: %f maximumCellTemperature: %f "
-                    "cellMinTemperatureName: %s cellMaxTemperatureName: %s",
+                    "cellMinTemperatureName: %s cellMaxTemperatureName: %s (raw: %s)",
                     _stats->_cellMinTemperature, _stats->_cellMaxTemperature,
-                    _stats->_cellMinTemperatureName.c_str(), _stats->_cellMaxTemperatureName.c_str());
+                    _stats->_cellMinTemperatureName.c_str(), _stats->_cellMaxTemperatureName.c_str(),
+                    hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             break;
         }
 
@@ -428,11 +442,15 @@ void Provider::onMessage(twai_message_t rx_message)
             // It is somewhat likely that this is a percentage value on
             // the scale of 0-32768, but that is just a theory.
             _stats->_balance = this->readUnsignedInt16(rx_message.data + 4);
-            DTU_LOGD("balance: %d", _stats->_balance);
+            DTU_LOGD("balance: %d (raw: %s)", _stats->_balance,
+                    hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             break;
         }
 
         default:
+            // frames not decoded (yet), to find out what else the BMS sends
+            DTU_LOGD("unhandled CAN message 0x%03X: %s", rx_message.identifier,
+                    hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             return; // do not update last update timestamp
             break;
     }
