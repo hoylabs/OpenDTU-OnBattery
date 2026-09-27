@@ -237,7 +237,8 @@ std::optional<bool> Stats::isBalancing() const
     return res;
 }
 
-// "<module>-<cell>" of the module holding the battery-wide min/max cell value
+// "<module>-<cell>" (just "<cell>" with a single module) of the module
+// holding the battery-wide min/max cell value
 std::optional<std::string> Stats::extremeCellName(float BatteryModule::*value, uint8_t BatteryModule::*no, bool max) const
 {
     std::optional<size_t> idx;
@@ -247,6 +248,8 @@ std::optional<std::string> Stats::extremeCellName(float BatteryModule::*value, u
         if (!idx || (max ? m.*value > _modules[*idx].*value : m.*value < _modules[*idx].*value)) { idx = i; }
     }
     if (!idx) { return std::nullopt; }
+    // with a single module the module number is noise, show the cell only
+    if (_modules.size() == 1) { return std::to_string(_modules[*idx].*no); }
     return std::to_string(*idx + 1) + "-" + std::to_string(_modules[*idx].*no);
 }
 
