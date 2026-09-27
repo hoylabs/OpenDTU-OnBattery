@@ -15,9 +15,12 @@ Provider::Provider()
     : _stats(std::make_shared<Stats>())
     , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
 
+// low byte: 0-based cell (or temperature sensor) number, high byte: 0-based
+// module number. presented as "<module>-<cell>", 1-based, like the Pytes
+// RS485 provider does.
 static void pytesSetCellLabel(String& label, uint16_t value) {
     char name[8];
-    snprintf(name, sizeof(name), "%02d%02d", value & 0xff, value >> 8);
+    snprintf(name, sizeof(name), "%d-%d", (value >> 8) + 1, (value & 0xff) + 1);
     label = name;  // updates existing string in-place
 }
 
@@ -295,8 +298,8 @@ void Provider::onMessage(twai_message_t rx_message)
         case 0x401: { // Pytes protocol: Highest/Lowest Cell Voltage
             _stats->_cellMaxMilliVolt = this->readUnsignedInt16(rx_message.data);
             _stats->_cellMinMilliVolt = this->readUnsignedInt16(rx_message.data + 2);
-            pytesSetCellLabel(_stats->_cellMaxVoltageName, this->readUnsignedInt8(rx_message.data + 4));
-            pytesSetCellLabel(_stats->_cellMinVoltageName, this->readUnsignedInt8(rx_message.data + 6));
+            pytesSetCellLabel(_stats->_cellMaxVoltageName, this->readUnsignedInt16(rx_message.data + 4));
+            pytesSetCellLabel(_stats->_cellMinVoltageName, this->readUnsignedInt16(rx_message.data + 6));
 
             DTU_LOGD("lowestCellMilliVolt: %d highestCellMilliVolt: %d "
                     "cellMinVoltageName: %s cellMaxVoltageName: %s (raw: %s)",
@@ -437,10 +440,10 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x40d: { // Pytes protocol: balancing info
-            // We don't know the exact unit for this yet, so we only use
-            // it to publish active / not active.
-            // It is somewhat likely that this is a percentage value on
-            // the scale of 0-32768, but that is just a theory.
+            // bytes 4-5: bitmask of the cells being balanced (bit 0 = cell 1),
+            // same as the equilibrium state of the Pytes RS485 protocol. the
+            // meaning of the other bytes (module?) is not known yet, so only
+            // active / not active is published.
             _stats->_balance = this->readUnsignedInt16(rx_message.data + 4);
             DTU_LOGD("balance: %d (raw: %s)", _stats->_balance,
                     hexBytes(rx_message.data, rx_message.data_length_code).c_str());
