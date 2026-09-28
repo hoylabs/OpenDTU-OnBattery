@@ -54,6 +54,7 @@ struct BatteryModule {
     uint8_t tempMinNo   = 0;
     bool hasTempMinMax  = false;
     uint32_t lastUpdate = 0; // millis() of the last 0x81 (analog) response
+    uint32_t lastChange = 0; // millis() of the last response of any kind
     float maxChgVoltV  = 0;
     float minDsgVoltV  = 0;
     float maxChgCurrA  = 0;

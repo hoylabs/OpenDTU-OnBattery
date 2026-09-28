@@ -9,37 +9,40 @@ export interface CellValue {
     d: number;
 }
 
-export interface CellStatus {
-    cellMinVoltage: CellValue;
-    cellMaxVoltage: CellValue;
-    cellDiffVoltage: CellValue;
-    cellMinTemperature: CellValue;
-    cellMaxTemperature: CellValue;
-}
-
 export interface CellColumn {
     name: string;
     u: string;
-    d: number;
+    d: number; // -1: yes/no flag
 }
 
-export interface BatteryModule {
+// module selector data, part of the battery document
+export interface BatteryModuleSummary {
     moduleNumber: number;
     moduleName: string;
-    moduleSerialNumber: string;
+    online?: boolean;
+    SoC?: number;
+    error?: string;
+}
+
+// details of one module, sent as {"module": ...} per module (websocket) or
+// fetched with ?module=N. Plain arrays, positions described by moduleColumns
+// in BatteryView.vue (keeps the JSON built on the ESP small)
+export interface BatteryModuleRaw {
+    moduleNumber: number;
+    moduleSerialNumber?: string;
     swversion?: string;
     nCells?: number;
-    values: { [key: string]: CellValue | StringValue };
-    limits?: { [key: string]: CellValue };
-    capacities?: { [key: string]: CellValue };
-    cellStatus?: CellStatus;
-    error?: string;
-    online?: boolean;
-    cellColumns?: CellColumn[];
     balancing?: number; // bitmask, bit 0 = cell 1
-    // compact on purpose to keep the JSON (built on the ESP for every push) small:
-    // one row per cell, values in cellColumns order, unit/decimals only in cellColumns
-    cells?: number[][];
+    values?: (number | boolean | null)[];
+    cellStatus?: number[];
+    cells?: number[][]; // one row per cell
+}
+
+// summary and details, expanded by the web UI into the usual value cards
+export interface BatteryModule extends BatteryModuleSummary, Omit<BatteryModuleRaw, 'values' | 'cellStatus'> {
+    values: { [key: string]: CellValue | StringValue };
+    cellStatus?: { [key: string]: CellValue };
+    cellColumns?: CellColumn[];
 }
 
 export interface Battery {
@@ -53,5 +56,5 @@ export interface Battery {
     showIssues: boolean;
     issues: number[];
     numberOfModules?: number;
-    modules?: BatteryModule[];
+    modules?: BatteryModuleSummary[];
 }
