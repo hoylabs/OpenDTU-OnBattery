@@ -451,9 +451,6 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         default:
-            // frames not decoded (yet), to find out what else the BMS sends
-            DTU_LOGD("unhandled CAN message 0x%03X: %s", rx_message.identifier,
-                    hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             return; // do not update last update timestamp
             break;
     }
