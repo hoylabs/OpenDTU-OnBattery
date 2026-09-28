@@ -15,10 +15,25 @@ Provider::Provider()
     : _stats(std::make_shared<Stats>())
     , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
 
+// low byte: 0-based cell (or temperature sensor) number, high byte: 0-based
+// module number. presented as "<module>-<cell>", 1-based, like the Pytes
+// RS485 provider does.
 static void pytesSetCellLabel(String& label, uint16_t value) {
     char name[8];
-    snprintf(name, sizeof(name), "%02d%02d", value & 0xff, value >> 8);
+    snprintf(name, sizeof(name), "%d-%d", (value >> 8) + 1, (value & 0xff) + 1);
     label = name;  // updates existing string in-place
+}
+
+// raw frame content for debug logs, to analyze fields that are not (fully)
+// decoded yet
+static String hexBytes(uint8_t const* data, uint8_t len) {
+    String out;
+    char buf[4];
+    for (uint8_t i = 0; i < len; ++i) {
+        snprintf(buf, sizeof(buf), i ? " %02X" : "%02X", data[i]);
+        out += buf;
+    }
+    return out;
 }
 
 static uint32_t popCount(uint32_t val) {
@@ -258,7 +273,7 @@ void Provider::onMessage(twai_message_t rx_message)
             String snPart1(reinterpret_cast<char*>(rx_message.data),
                     rx_message.data_length_code);
 
-            if (snPart1.isEmpty() || !isgraph(snPart1.charAt(0))) { break; }
+            if (snPart1.isEmpty() || !isgraph(static_cast<unsigned char>(snPart1.charAt(0)))) { break; }
 
             DTU_LOGD("snPart1: %s", snPart1.c_str());
 
@@ -271,7 +286,7 @@ void Provider::onMessage(twai_message_t rx_message)
             String snPart2(reinterpret_cast<char*>(rx_message.data),
                     rx_message.data_length_code);
 
-            if (snPart2.isEmpty() || !isgraph(snPart2.charAt(0))) { break; }
+            if (snPart2.isEmpty() || !isgraph(static_cast<unsigned char>(snPart2.charAt(0)))) { break; }
 
             DTU_LOGD("snPart2: %s", snPart2.c_str());
 
@@ -283,13 +298,14 @@ void Provider::onMessage(twai_message_t rx_message)
         case 0x401: { // Pytes protocol: Highest/Lowest Cell Voltage
             _stats->_cellMaxMilliVolt = this->readUnsignedInt16(rx_message.data);
             _stats->_cellMinMilliVolt = this->readUnsignedInt16(rx_message.data + 2);
-            pytesSetCellLabel(_stats->_cellMaxVoltageName, this->readUnsignedInt8(rx_message.data + 4));
-            pytesSetCellLabel(_stats->_cellMinVoltageName, this->readUnsignedInt8(rx_message.data + 6));
+            pytesSetCellLabel(_stats->_cellMaxVoltageName, this->readUnsignedInt16(rx_message.data + 4));
+            pytesSetCellLabel(_stats->_cellMinVoltageName, this->readUnsignedInt16(rx_message.data + 6));
 
             DTU_LOGD("lowestCellMilliVolt: %d highestCellMilliVolt: %d "
-                    "cellMinVoltageName: %s cellMaxVoltageName: %s",
+                    "cellMinVoltageName: %s cellMaxVoltageName: %s (raw: %s)",
                     _stats->_cellMinMilliVolt, _stats->_cellMaxMilliVolt,
-                    _stats->_cellMinVoltageName.c_str(), _stats->_cellMaxVoltageName.c_str());
+                    _stats->_cellMinVoltageName.c_str(), _stats->_cellMaxVoltageName.c_str(),
+                    hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             break;
         }
 
@@ -300,9 +316,10 @@ void Provider::onMessage(twai_message_t rx_message)
             pytesSetCellLabel(_stats->_cellMinTemperatureName, this->readUnsignedInt16(rx_message.data + 6));
 
             DTU_LOGD("minimumCellTemperature: %f maximumCellTemperature: %f "
-                    "cellMinTemperatureName: %s cellMaxTemperatureName: %s",
+                    "cellMinTemperatureName: %s cellMaxTemperatureName: %s (raw: %s)",
                     _stats->_cellMinTemperature, _stats->_cellMaxTemperature,
-                    _stats->_cellMinTemperatureName.c_str(), _stats->_cellMaxTemperatureName.c_str());
+                    _stats->_cellMinTemperatureName.c_str(), _stats->_cellMaxTemperatureName.c_str(),
+                    hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             break;
         }
 
@@ -405,6 +422,10 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_totalCapacity = this->scaleValue(this->readUnsignedInt32(rx_message.data), 0.001);
             _stats->_availableCapacity = this->scaleValue(this->readUnsignedInt32(rx_message.data + 4), 0.001);
             _stats->_capacityPrecision = 2;
+
+            // a total capacity of 0 would result in an invalid SoC
+            if (_stats->_totalCapacity <= 0) { break; }
+
             float soc = 100.0 * _stats->_availableCapacity / _stats->_totalCapacity;
             _stats->setSoC(soc, 2/*precision*/, millis());
 
@@ -423,12 +444,13 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x40d: { // Pytes protocol: balancing info
-            // We don't know the exact unit for this yet, so we only use
-            // it to publish active / not active.
-            // It is somewhat likely that this is a percentage value on
-            // the scale of 0-32768, but that is just a theory.
+            // bytes 4-5: bitmask of the cells being balanced (bit 0 = cell 1),
+            // combined over all modules (observed: 0x86E1 = 0x84E1 of module 1
+            // OR 0x0240 of module 2 as reported via RS485), the module is not
+            // reported. hence only active / not active is published.
             _stats->_balance = this->readUnsignedInt16(rx_message.data + 4);
-            DTU_LOGD("balance: %d", _stats->_balance);
+            DTU_LOGD("balance: %d (raw: %s)", _stats->_balance,
+                    hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             break;
         }
 
