@@ -48,6 +48,7 @@ export interface BatteryMqttConfig {
 export interface BatterySerialConfig {
     interface: number;
     polling_interval: number;
+    cluster_address: number;
 }
 
 export interface BatteryConfig {

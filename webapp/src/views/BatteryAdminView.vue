@@ -85,6 +85,18 @@
                     :postfix="$t('batteryadmin.Seconds')"
                     wide
                 />
+
+                <InputElement
+                    v-if="batteryConfigList.provider == 4 && batteryConfigList.bus_type == 1"
+                    :label="$t('batteryadmin.ClusterAddress')"
+                    v-model="batteryConfigList.serial.cluster_address"
+                    type="number"
+                    min="1"
+                    max="7"
+                    step="1"
+                    :tooltip="$t('batteryadmin.ClusterAddressDescription')"
+                    wide
+                />
             </CardElement>
 
             <template v-if="batteryConfigList.enabled && batteryConfigList.provider == 2">

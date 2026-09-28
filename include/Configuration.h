@@ -244,6 +244,7 @@ using BatteryMqttConfig = struct BATTERY_MQTT_CONFIG_T;
 struct BATTERY_SERIAL_CONFIG_T {
     uint8_t Interface;
     uint8_t PollingInterval;
+    uint8_t ClusterAddress; // Pytes RS485: set with the DIP switches of the first battery, 1-7 (the Pytes HUB connects up to 7 clusters)
 };
 using BatterySerialConfig = struct BATTERY_SERIAL_CONFIG_T;
 

@@ -789,6 +789,8 @@
         "SerialInterfaceTypeUart": "TTL-UART an der MCU",
         "SerialInterfaceTypeTransceiver": "RS-485 Transceiver an der MCU",
         "JbdBmsConfiguration": "JBD BMS Einstellungen",
+        "ClusterAddress": "Cluster-Adresse",
+        "ClusterAddressDescription": "Wird über die DIP-Schalter der ersten Batterie des Clusters eingestellt (Standard: 1).",
         "PollingInterval": "Abfrageintervall",
         "Seconds": "@:base.Seconds",
         "DischargeCurrentLimitConfiguration": "Einstellungen Entladestromlimit",

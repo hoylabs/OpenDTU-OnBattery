@@ -204,6 +204,7 @@ void ConfigurationClass::serializeBatterySerialConfig(BatterySerialConfig const&
 {
     target["interface"] = source.Interface;
     target["polling_interval"] = source.PollingInterval;
+    target["cluster_address"] = source.ClusterAddress;
 }
 
 void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target)
@@ -655,6 +656,7 @@ void ConfigurationClass::deserializeBatterySerialConfig(JsonObject const& source
 {
     target.Interface = source["interface"] | BATTERY_SERIAL_INTERFACE;
     target.PollingInterval = source["polling_interval"] | BATTERY_SERIAL_POLLING_INTERVAL;
+    target.ClusterAddress = source["cluster_address"] | BATTERY_SERIAL_CLUSTER_ADDRESS;
 }
 
 void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target)
