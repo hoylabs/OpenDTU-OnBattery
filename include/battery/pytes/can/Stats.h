@@ -13,7 +13,7 @@ friend class Provider;
 public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
-    bool getImmediateChargingRequest() const { return _chargeImmediately; };
+    bool isImmediateChargingRequested() const final { return _chargeImmediately; }
 
     static constexpr uint8_t MaxModules = 16;
     static constexpr uint8_t MaxCells = 16;

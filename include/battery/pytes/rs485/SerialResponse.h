@@ -35,8 +35,9 @@ public:
     }
 
     // Advance pos and decode the next ASCII-hex-encoded numeric value.
-    // Returns 0 (silently) on out-of-bounds or invalid hex — frame-level
-    // validation is expected to catch structural problems before parsing.
+    // Returns 0 on out-of-bounds or invalid hex and marks the response as
+    // truncated(): the frame is intact (checksum), but its INFO is shorter
+    // than the command requires, so its values must not be used.
     uint8_t  getU8(Iterator& pos)  const;
     uint16_t getU16(Iterator& pos) const;
     uint32_t getU32(Iterator& pos) const;
@@ -45,6 +46,8 @@ public:
     // Advance pos by n bytes and return them as a trimmed String.
     // String fields in this protocol are raw ASCII, NOT hex-encoded.
     String getString(Iterator& pos, size_t n) const;
+
+    bool truncated() const { return _truncated; }
 
 private:
     static uint8_t  hexNibble(uint8_t c);
@@ -57,6 +60,7 @@ private:
     uint8_t _rtn   = 0;
     uint8_t _cid2  = 0;
     std::vector<uint8_t> _info; // raw INFO bytes after the CID2 field
+    mutable bool _truncated = false; // a read ran past the INFO or hit invalid hex
 };
 
 } // namespace Batteries::Pytes::Rs485

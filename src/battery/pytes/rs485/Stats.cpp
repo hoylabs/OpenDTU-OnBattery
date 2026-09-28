@@ -251,9 +251,9 @@ std::optional<std::string> Stats::extremeCellName(float BatteryModule::*value, u
 }
 
 // ---------------------------------------------------------------------------
-// getImmediateChargingRequest
+// isImmediateChargingRequested
 // ---------------------------------------------------------------------------
-bool Stats::getImmediateChargingRequest() const
+bool Stats::isImmediateChargingRequested() const
 {
     std::lock_guard<std::mutex> lock(_mutex);
     auto o = _dataPoints.get<Label::ChargeImmediately>();

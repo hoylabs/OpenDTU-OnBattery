@@ -364,9 +364,37 @@ void Provider::frameComplete()
         return;
     }
 
+    // a late answer to an earlier request (e.g. after a timeout) must not be
+    // mistaken for the answer to the current one
+    static constexpr frozen::map<QueryStep, uint8_t, 7> expectedCid2 = {
+        { QueryStep::ClusterBasic,  0x60 },
+        { QueryStep::ModuleBasic,   0x80 },
+        { QueryStep::ClusterAnalog, 0x61 },
+        { QueryStep::ClusterChgDsg, 0x62 },
+        { QueryStep::ModuleAnalog,  0x81 },
+        { QueryStep::ModuleChgDsg,  0x83 },
+        { QueryStep::ModuleCells,   0x92 },
+    };
+    auto expected = expectedCid2.find(_queryStep);
+    if (expected == expectedCid2.end() || expected->second != response.cid2()) {
+        DTU_LOGW("Unexpected response 0x%02X, ending poll cycle", response.cid2());
+        _queryStep = QueryStep::Done;
+        return;
+    }
+
+    // the INFO of a response is shorter than the command requires: its
+    // (partly zero) values are not stored
+    auto truncated = [this, &response]() {
+        if (!response.truncated()) { return false; }
+        DTU_LOGW("Incomplete response 0x%02X, ending poll cycle", response.cid2());
+        _queryStep = QueryStep::Done;
+        return true;
+    };
+
     switch (response.cid2()) {
         case 0x60: {
             auto dp = Parsers::parseClusterBasic(response);
+            if (truncated()) { break; }
             _stats->updateBatteryData(dp);
 
             auto oCount = dp.get<DataPointLabel::ModuleCount>();
@@ -381,6 +409,7 @@ void Provider::frameComplete()
         }
         case 0x80: {
             auto r = Parsers::parseModuleBasic(response);
+            if (truncated()) { break; }
             _stats->setModuleBasic(r);
 
             if (++_currentModuleNo <= _numModules) {
@@ -394,6 +423,7 @@ void Provider::frameComplete()
         }
         case 0x61: {
             auto dp = Parsers::parseClusterAnalog(response);
+            if (truncated()) { break; }
             _stats->updateBatteryData(dp);
 
             // module count changed: poll the new module count from now on and
@@ -410,6 +440,7 @@ void Provider::frameComplete()
         }
         case 0x62: {
             auto dp = Parsers::parseClusterChgDsg(response);
+            if (truncated()) { break; }
             _stats->updateBatteryData(dp);
 
             _currentModuleNo = 1;
@@ -418,6 +449,7 @@ void Provider::frameComplete()
         }
         case 0x81: {
             auto r = Parsers::parseModuleAnalog(response);
+            if (truncated()) { break; }
             _stats->setModuleAnalog(r);
 
             if (++_currentModuleNo <= _numModules) {
@@ -430,6 +462,7 @@ void Provider::frameComplete()
         }
         case 0x83: {
             auto r = Parsers::parseModuleChgDsg(response);
+            if (truncated()) { break; }
             _stats->setModuleChgDsg(r);
 
             if (++_currentModuleNo <= _numModules) {
@@ -442,6 +475,7 @@ void Provider::frameComplete()
         }
         case 0x92: {
             auto r = Parsers::parseModuleCells(response);
+            if (truncated()) { break; }
             _stats->setModuleCells(r.moduleNo, std::move(r.cells));
 
             if (++_currentModuleNo <= _numModules) {
