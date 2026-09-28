@@ -80,7 +80,7 @@
                     v-model="batteryConfigList.serial.polling_interval"
                     type="number"
                     min="2"
-                    max="90"
+                    max="30"
                     step="1"
                     :postfix="$t('batteryadmin.Seconds')"
                     wide

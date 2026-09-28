@@ -7,6 +7,7 @@
 #include "Utils.h"
 #include "defaults.h"
 #include <LittleFS.h>
+#include <algorithm>
 #include <esp_log.h>
 #include <nvs_flash.h>
 
@@ -655,7 +656,8 @@ void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, 
 void ConfigurationClass::deserializeBatterySerialConfig(JsonObject const& source, BatterySerialConfig& target)
 {
     target.Interface = source["interface"] | BATTERY_SERIAL_INTERFACE;
-    target.PollingInterval = source["polling_interval"] | BATTERY_SERIAL_POLLING_INTERVAL;
+    target.PollingInterval = std::min<uint8_t>(source["polling_interval"] | BATTERY_SERIAL_POLLING_INTERVAL,
+        BATTERY_SERIAL_POLLING_INTERVAL_MAX);
     target.ClusterAddress = source["cluster_address"] | BATTERY_SERIAL_CLUSTER_ADDRESS;
 }
 
