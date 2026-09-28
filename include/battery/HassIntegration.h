@@ -45,6 +45,9 @@ protected:
     void createSubDeviceInfo(JsonObject& object, SubDevice const& subDevice) const;
 
     virtual void publishSensors() const;
+    // called on every loop after publishSensors(), to spread the discovery
+    // messages of large batteries over several loops
+    virtual void publishDeferredSensors() const { }
 
 private:
     static String sanitizeUniqueId(const char* value);

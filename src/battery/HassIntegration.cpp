@@ -26,13 +26,16 @@ void HassIntegration::hassLoop()
         return;
     }
 
-    if (!_publishSensors ||
-        !_spStats->getManufacturer().has_value() ||
+    if (!_spStats->getManufacturer().has_value() ||
         !_spStats->getHassDeviceName().has_value()) { return; }
 
-    publishSensors();
+    if (_publishSensors) {
+        publishSensors();
+        _publishSensors = false;
+        return;
+    }
 
-    _publishSensors = false;
+    publishDeferredSensors();
 }
 
 void HassIntegration::publishSensors() const
