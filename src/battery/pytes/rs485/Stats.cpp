@@ -11,20 +11,13 @@ using Label = DataPointLabel;
 // Helpers (local to this TU)
 // ---------------------------------------------------------------------------
 
-static void addValue(JsonObject& obj, char const* key, float v, char const* unit, uint8_t d)
-{
-    auto f = obj[key].to<JsonObject>();
-    f["v"] = v;
-    f["u"] = unit;
-    f["d"] = d;
-}
-
-static void addText(JsonObject& obj, char const* key, char const* value, bool translate = true)
-{
-    auto f = obj[key].to<JsonObject>();
-    f["value"] = value;
-    f["translate"] = translate;
-}
+// Module values go out as plain arrays. Labels, units and decimals of each
+// position live in the web UI (moduleColumns in BatteryView.vue), keep both
+// in the same order. The live view JSON is rebuilt for every websocket push
+// and HTTP request and kept in memory until it is sent. With a {"v","u","d"}
+// object per value, the document of a two module stack took ~9 KB of heap
+// and a few parallel requests used up the heap; the WiFi driver then stopped
+// sending until WiFi reconnected.
 
 // ---------------------------------------------------------------------------
 // updateFrom
@@ -82,6 +75,7 @@ void Stats::setModuleBasic(Parsers::ModuleBasicResult const& r)
     if (r.moduleNo == 0) { return; }
     resizeModules(r.moduleNo);
     auto& mod = _modules[r.moduleNo - 1];
+    mod.lastChange = millis();
     mod.hasBasic  = true;
     mod.hwVersion = r.hwVersion;
     mod.swVersion = r.swVersion;
@@ -95,6 +89,7 @@ void Stats::setModuleAnalog(Parsers::ModuleAnalogResult const& r)
     if (r.moduleNo == 0) { return; }
     resizeModules(r.moduleNo);
     auto& mod = _modules[r.moduleNo - 1];
+    mod.lastChange = millis();
     mod.hasAnalog         = true;
     mod.lastUpdate        = millis();
     mod.voltageV          = r.voltageV;
@@ -125,6 +120,7 @@ void Stats::setModuleChgDsg(Parsers::ModuleChgDsgResult const& r)
     if (r.moduleNo == 0) { return; }
     resizeModules(r.moduleNo);
     auto& mod = _modules[r.moduleNo - 1];
+    mod.lastChange = millis();
     mod.hasChgDsg   = true;
     mod.maxChgVoltV = r.maxChgVoltV;
     mod.minDsgVoltV = r.minDsgVoltV;
@@ -140,6 +136,7 @@ void Stats::setModuleCells(uint8_t moduleNo, std::vector<CellData> cells)
     if (moduleNo == 0 || cells.size() == 0) { return; }
     resizeModules(moduleNo);
     auto& mod = _modules[moduleNo - 1];
+    mod.lastChange = millis();
     mod.hasCells = true;
     mod.nCells   = cells.size();
     mod.cells    = std::move(cells);
@@ -271,13 +268,16 @@ void Stats::getLiveViewData(JsonVariant& root) const
     std::lock_guard<std::mutex> lock(_mutex);
     ::Batteries::Stats::getLiveViewData(root);
 
-    // sections and their order mirror the per-module cards below
-
-    // status: the base class added SoC, voltage and current (and the current
-    // limits, which are moved to "limits" below to keep a fixed order there)
-    auto status = root["values"]["status"];
-    auto chgCurrLimit = status["chargeCurrentLimitation"];
-    auto dsgCurrLimit = status["dischargeCurrentLimitation"];
+    // one status card, same values and order as the Pytes CAN provider
+    // (the base class already added SoC, voltage, current and current limits)
+    auto oChgVolt = _dataPoints.get<Label::ChargeVoltageLimitMilliVolt>();
+    if (oChgVolt.has_value()) {
+        addLiveViewValue(root, "chargeVoltage", *oChgVolt / 1000.0f, "V", 1);
+    }
+    auto oDsgVolt = _dataPoints.get<Label::DischargeVoltageLimitMilliVolt>();
+    if (oDsgVolt.has_value()) {
+        addLiveViewValue(root, "dischargeVoltageLimitation", *oDsgVolt / 1000.0f, "V", 1);
+    }
 
     auto oSoH = _dataPoints.get<Label::BatterySoHPercent>();
     if (oSoH.has_value()) {
@@ -289,8 +289,22 @@ void Stats::getLiveViewData(JsonVariant& root) const
         addLiveViewValue(root, "temperature", *oTemperature, "°C", 1);
     }
 
-    auto oBalancing = isBalancing();
-    if (oBalancing) { addLiveViewTextValue(root, "balancingActive", *oBalancing ? "yes" : "no"); }
+    auto oTotal = _dataPoints.get<Label::TotalCapacityMilliAmpHours>();
+    if (oTotal.has_value()) {
+        addLiveViewValue(root, "capacity", *oTotal / 1000.0f, "Ah", 2);
+    }
+    auto oRemain = _dataPoints.get<Label::RemainingCapacityMilliAmpHours>();
+    if (oRemain.has_value()) {
+        addLiveViewValue(root, "availableCapacity", *oRemain / 1000.0f, "Ah", 2);
+    }
+    auto oChg = _dataPoints.get<Label::AccumulatedChargeDeciKWh>();
+    if (oChg.has_value()) {
+        addLiveViewValue(root, "chargedEnergy", *oChg * 0.1f, "kWh", 1);
+    }
+    auto oDsg = _dataPoints.get<Label::AccumulatedDischargeDeciKWh>();
+    if (oDsg.has_value()) {
+        addLiveViewValue(root, "dischargedEnergy", *oDsg * 0.1f, "kWh", 1);
+    }
 
     auto oImm = _dataPoints.get<Label::ChargeImmediately>();
     addLiveViewTextValue(root, "chargeImmediately", (oImm.has_value() && *oImm) ? "yes" : "no");
@@ -298,65 +312,36 @@ void Stats::getLiveViewData(JsonVariant& root) const
     auto oFullChgReq = _dataPoints.get<Label::FullChargeRequest>();
     if (oFullChgReq.has_value()) { addLiveViewTextValue(root, "fullChargeRequest", *oFullChgReq ? "yes" : "no"); }
 
-    // limits
-    auto oChgVolt = _dataPoints.get<Label::ChargeVoltageLimitMilliVolt>();
-    if (oChgVolt.has_value()) {
-        addLiveViewInSection(root, "limits", "chargeVoltage", *oChgVolt / 1000.0f, "V", 1);
-    }
-    auto oDsgVolt = _dataPoints.get<Label::DischargeVoltageLimitMilliVolt>();
-    if (oDsgVolt.has_value()) {
-        addLiveViewInSection(root, "limits", "dischargeVoltageLimitation", *oDsgVolt / 1000.0f, "V", 1);
-    }
-    if (!chgCurrLimit.isNull()) { root["values"]["limits"]["chargeCurrentLimitation"] = chgCurrLimit; }
-    if (!dsgCurrLimit.isNull()) { root["values"]["limits"]["dischargeCurrentLimitation"] = dsgCurrLimit; }
-    status.remove("chargeCurrentLimitation");
-    status.remove("dischargeCurrentLimitation");
+    auto oBalancing = isBalancing();
+    if (oBalancing) { addLiveViewTextValue(root, "balancingActive", *oBalancing ? "yes" : "no"); }
 
-    // capacities
-    auto oTotal = _dataPoints.get<Label::TotalCapacityMilliAmpHours>();
-    if (oTotal.has_value()) {
-        addLiveViewInSection(root, "capacities", "capacity", *oTotal / 1000.0f, "Ah", 2);
-    }
-    auto oRemain = _dataPoints.get<Label::RemainingCapacityMilliAmpHours>();
-    if (oRemain.has_value()) {
-        addLiveViewInSection(root, "capacities", "availableCapacity", *oRemain / 1000.0f, "Ah", 2);
-    }
-    auto oChg = _dataPoints.get<Label::AccumulatedChargeDeciKWh>();
-    if (oChg.has_value()) {
-        addLiveViewInSection(root, "capacities", "chargedEnergy", *oChg * 0.1f, "kWh", 1);
-    }
-    auto oDsg = _dataPoints.get<Label::AccumulatedDischargeDeciKWh>();
-    if (oDsg.has_value()) {
-        addLiveViewInSection(root, "capacities", "dischargedEnergy", *oDsg * 0.1f, "kWh", 1);
-    }
-
-    // cell_status
+    // cells (min/max)
     auto oCellMin = _dataPoints.get<Label::CellMinMilliVolt>();
     auto oCellMax = _dataPoints.get<Label::CellMaxMilliVolt>();
     if (oCellMin.has_value()) {
-        addLiveViewInSection(root, "cell_status", "cellMinVoltage",
+        addLiveViewInSection(root, "cells", "cellMinVoltage",
             static_cast<float>(*oCellMin) / 1000.0f, "V", 3);
     }
     if (oCellMax.has_value()) {
-        addLiveViewInSection(root, "cell_status", "cellMaxVoltage",
+        addLiveViewInSection(root, "cells", "cellMaxVoltage",
             static_cast<float>(*oCellMax) / 1000.0f, "V", 3);
     }
     if (oCellMin.has_value() && oCellMax.has_value()) {
-        addLiveViewInSection(root, "cell_status", "cellDiffVoltage",
+        addLiveViewInSection(root, "cells", "cellDiffVoltage",
             static_cast<int>(*oCellMax - *oCellMin), "mV", 0);
     }
 
     auto oTempMin = _dataPoints.get<Label::CellMinTemperatureCelsius>();
     auto oTempMax = _dataPoints.get<Label::CellMaxTemperatureCelsius>();
     if (oTempMin.has_value()) {
-        addLiveViewInSection(root, "cell_status", "cellMinTemperature", *oTempMin, "°C", 1);
+        addLiveViewInSection(root, "cells", "cellMinTemperature", *oTempMin, "°C", 0);
     }
     if (oTempMax.has_value()) {
-        addLiveViewInSection(root, "cell_status", "cellMaxTemperature", *oTempMax, "°C", 1);
+        addLiveViewInSection(root, "cells", "cellMaxTemperature", *oTempMax, "°C", 0);
     }
 
     auto addCellName = [&](char const* key, std::optional<std::string> const& o) {
-        if (o) { addLiveViewTextInSection(root, "cell_status", key, *o, false); }
+        if (o) { addLiveViewTextInSection(root, "cells", key, *o, false); }
     };
     addCellName("cellMinVoltageName", extremeCellName(&BatteryModule::cellMinV, &BatteryModule::cellMinNo, false));
     addCellName("cellMaxVoltageName", extremeCellName(&BatteryModule::cellMaxV, &BatteryModule::cellMaxNo, true));
@@ -388,6 +373,8 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
     root["numberOfModules"] = static_cast<int>(_modules.size());
 
+    // summary for the module selector; the details of each module are sent
+    // separately, see getLiveViewModuleData()
     JsonArray modules = root["modules"].to<JsonArray>();
     for (size_t i = 0; i < _modules.size(); ++i) {
         auto const& mod = _modules[i];
@@ -395,148 +382,100 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
         module["moduleNumber"] = static_cast<int>(i + 1);
         module["moduleName"]   = moduleName(i);
-        module["moduleSerialNumber"] = mod.serial;
-
-        if (mod.hasBasic) {
-            if (!mod.swVersion.isEmpty()) { module["swversion"] = mod.swVersion; }
-            if (mod.nCells > 0)           { module["nCells"]    = mod.nCells; }
-        }
-
-        // only identify offline modules, their last values are outdated
+        // offline: the last values stay visible, like other components do
         module["online"] = isOnline(mod);
-        if (!isOnline(mod)) { continue; }
 
-        // bit i set: cell i+1 is being balanced
-        if (isBalancing(mod)) { module["balancing"] = mod.balance; }
+        if (mod.hasAnalog) { module["SoC"] = mod.soc; }
 
-        // sections and their order mirror the battery cards above
         // system error bits (spec 1.3.8) or FAULT status flag (spec 1.3.7, bit 28)
         if (mod.hasAnalog && (mod.errorStatus != 0 || (mod.status & (1u << 28)) != 0)) {
             char buf[11];
             snprintf(buf, sizeof(buf), "0x%08X", static_cast<unsigned>(mod.errorStatus));
             module["error"] = buf; // ponytail: raw bitmask, decode when LV/HV variant is known
         }
-
-        auto modValues = module["values"].to<JsonObject>(); // status
-
-        if (mod.hasAnalog) {
-            uint8_t socPrecision = (mod.soc == static_cast<float>(static_cast<int>(mod.soc))) ? 0 : 2;
-            addValue(modValues, "SoC", mod.soc, "%", socPrecision);
-            addValue(modValues, "voltage", mod.voltageV, "V", 2);
-            addValue(modValues, "current", mod.currentA, "A", 3);
-            if (mod.health > 0) {
-                addValue(modValues, "stateOfHealth", static_cast<float>(mod.health), "%", 0);
-            }
-        }
-
-        auto oModTemp = averageCellTemperature(mod);
-        if (oModTemp) { addValue(modValues, "temperature", *oModTemp, "°C", 1); }
-
-        if (mod.hasAnalog) {
-            auto oBalancing = isBalancing(mod);
-            if (oBalancing) { addText(modValues, "balancingActive", *oBalancing ? "yes" : "no"); }
-        }
-        if (mod.hasChgDsg) {
-            addText(modValues, "chargeImmediately", mod.chargeImmediately ? "yes" : "no");
-            addText(modValues, "fullChargeRequest", mod.fullChgReq ? "yes" : "no");
-
-            auto modLimits = module["limits"].to<JsonObject>();
-            addValue(modLimits, "chargeVoltage", mod.maxChgVoltV, "V", 1);
-            addValue(modLimits, "dischargeVoltageLimitation", mod.minDsgVoltV, "V", 1);
-            addValue(modLimits, "chargeCurrentLimitation", mod.maxChgCurrA, "A", 1);
-            addValue(modLimits, "dischargeCurrentLimitation", mod.maxDsgCurrA, "A", 1);
-        }
-
-        if (mod.hasAnalog) {
-            auto modCapacities = module["capacities"].to<JsonObject>();
-            if (mod.totalCapacityMah > 0) {
-                addValue(modCapacities, "capacity", mod.totalCapacityMah / 1000.0f, "Ah", 2);
-            }
-            if (mod.remainCapacityMah > 0) {
-                addValue(modCapacities, "availableCapacity", mod.remainCapacityMah / 1000.0f, "Ah", 2);
-            }
-            if (mod.chargeCycles >= 0) {
-                addValue(modCapacities, "chargeCycles", static_cast<float>(mod.chargeCycles), "", 0);
-            }
-
-            auto cellStatus = module["cellStatus"].to<JsonObject>();
-
-            auto csMinV = cellStatus["cellMinVoltage"].to<JsonObject>();
-            csMinV["v"] = mod.cellMinV;
-            csMinV["u"] = "V";
-            csMinV["d"] = 3;
-
-            auto csMaxV = cellStatus["cellMaxVoltage"].to<JsonObject>();
-            csMaxV["v"] = mod.cellMaxV;
-            csMaxV["u"] = "V";
-            csMaxV["d"] = 3;
-
-            auto csDiff = cellStatus["cellDiffVoltage"].to<JsonObject>();
-            csDiff["v"] = static_cast<int>((mod.cellMaxV - mod.cellMinV) * 1000.0f + 0.5f);
-            csDiff["u"] = "mV";
-            csDiff["d"] = 0;
-
-            auto csMinT = cellStatus["cellMinTemperature"].to<JsonObject>();
-            csMinT["v"] = mod.tempMinC;
-            csMinT["u"] = "°C";
-            csMinT["d"] = 1;
-
-            auto csMaxT = cellStatus["cellMaxTemperature"].to<JsonObject>();
-            csMaxT["v"] = mod.tempMaxC;
-            csMaxT["u"] = "°C";
-            csMaxT["d"] = 1;
-
-            auto csMinVno = cellStatus["cellMinVoltageName"].to<JsonObject>();
-            csMinVno["v"] = mod.cellMinNo;
-            csMinVno["u"] = "";
-            csMinVno["d"] = 0;
-
-            auto csMaxVno = cellStatus["cellMaxVoltageName"].to<JsonObject>();
-            csMaxVno["v"] = mod.cellMaxNo;
-            csMaxVno["u"] = "";
-            csMaxVno["d"] = 0;
-
-            auto csMinTno = cellStatus["cellMinTemperatureName"].to<JsonObject>();
-            csMinTno["v"] = mod.tempMinNo;
-            csMinTno["u"] = "";
-            csMinTno["d"] = 0;
-
-            auto csMaxTno = cellStatus["cellMaxTemperatureName"].to<JsonObject>();
-            csMaxTno["v"] = mod.tempMaxNo;
-            csMaxTno["u"] = "";
-            csMaxTno["d"] = 0;
-        }
-
-        // Cells are sent as plain number rows plus one column description
-        // (label, unit, decimals) instead of a {"v","u","d"} object per value.
-        // The live view JSON is rebuilt for every websocket push and HTTP
-        // request and kept in memory until sent. With per-value objects the
-        // cells made up most of the document (2 modules x 16 cells: 8.8 KB
-        // serialized, 20+ KB in RAM) and parallel requests drove the free
-        // heap below 30 KB. This layout roughly halves the cell part and
-        // scales much better with larger stacks.
-        if (mod.hasCells && !mod.cells.empty()) {
-            auto columns = module["cellColumns"].to<JsonArray>();
-            auto addColumn = [&columns](char const* name, char const* unit, uint8_t decimals) {
-                auto col = columns.add<JsonObject>();
-                col["name"] = name;
-                col["u"] = unit;
-                col["d"] = decimals;
-            };
-            addColumn("voltage", "V", 3);
-            addColumn("SoC", "%", 0);
-            addColumn("temperature", "°C", 1);
-
-            auto cells = module["cells"].to<JsonArray>();
-            for (auto const& c : mod.cells) {
-                auto row = cells.add<JsonArray>();
-                row.add(c.voltageV);
-                row.add(c.soc);
-                row.add(c.temperatureC);
-            }
-        }
-
     }
+}
+
+// The details of all modules in one document would need ~20 KB of heap for a
+// stack of 16 modules, and the document is kept until it was sent, per
+// request and websocket push. They are sent one module at a time instead.
+size_t Stats::getLiveViewModuleCount() const
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    return _modules.size();
+}
+
+bool Stats::getLiveViewModuleData(JsonVariant& root, size_t index, uint32_t since) const
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (index >= _modules.size()) { return false; }
+    auto const& mod = _modules[index];
+    if (since != 0 && static_cast<int32_t>(mod.lastChange - since) <= 0) { return false; }
+
+    JsonObject module = root["module"].to<JsonObject>();
+    module["moduleNumber"] = static_cast<int>(index + 1);
+    module["moduleSerialNumber"] = mod.serial;
+
+    if (mod.hasBasic) {
+        if (!mod.swVersion.isEmpty()) { module["swversion"] = mod.swVersion; }
+        if (mod.nCells > 0)           { module["nCells"]    = mod.nCells; }
+    }
+
+    // bit i set: cell i+1 is being balanced
+    if (isBalancing(mod)) { module["balancing"] = mod.balance; }
+
+    // same values and order as the battery status card, null = not reported
+    auto values = module["values"].to<JsonArray>();
+    auto addNumber = [&values](bool valid, float v) {
+        if (valid) { values.add(v); } else { values.add(nullptr); }
+    };
+    auto addFlag = [&values](bool valid, bool v) {
+        if (valid) { values.add(v); } else { values.add(nullptr); }
+    };
+    auto oModTemp = averageCellTemperature(mod);
+    auto oBalancing = isBalancing(mod);
+
+    addNumber(mod.hasAnalog, mod.soc);
+    addNumber(mod.hasAnalog, mod.voltageV);
+    addNumber(mod.hasAnalog, mod.currentA);
+    addNumber(mod.hasChgDsg, mod.maxDsgCurrA);
+    addNumber(mod.hasChgDsg, mod.maxChgCurrA);
+    addNumber(mod.hasChgDsg, mod.maxChgVoltV);
+    addNumber(mod.hasChgDsg, mod.minDsgVoltV);
+    addNumber(mod.hasAnalog && mod.health > 0, mod.health);
+    addNumber(mod.hasAnalog && mod.chargeCycles >= 0, mod.chargeCycles);
+    addNumber(oModTemp.has_value(), oModTemp.value_or(0));
+    addNumber(mod.hasAnalog && mod.totalCapacityMah > 0, mod.totalCapacityMah / 1000.0f);
+    addNumber(mod.hasAnalog && mod.remainCapacityMah > 0, mod.remainCapacityMah / 1000.0f);
+    addFlag(mod.hasChgDsg, mod.chargeImmediately);
+    addFlag(mod.hasChgDsg, mod.fullChgReq);
+    addFlag(mod.hasAnalog && oBalancing.has_value(), oBalancing.value_or(false));
+
+    // min/max cell voltage, difference [mV], min/max temperature, cell numbers of those
+    if (mod.hasAnalog) {
+        auto cellStatus = module["cellStatus"].to<JsonArray>();
+        cellStatus.add(mod.cellMinV);
+        cellStatus.add(mod.cellMaxV);
+        cellStatus.add(static_cast<int>((mod.cellMaxV - mod.cellMinV) * 1000.0f + 0.5f));
+        cellStatus.add(mod.tempMinC);
+        cellStatus.add(mod.tempMaxC);
+        cellStatus.add(mod.cellMinNo);
+        cellStatus.add(mod.cellMaxNo);
+        cellStatus.add(mod.tempMinNo);
+        cellStatus.add(mod.tempMaxNo);
+    }
+
+    // one row per cell: voltage, SoC, temperature
+    if (mod.hasCells && !mod.cells.empty()) {
+        auto cells = module["cells"].to<JsonArray>();
+        for (auto const& c : mod.cells) {
+            auto row = cells.add<JsonArray>();
+            row.add(c.voltageV);
+            row.add(c.soc);
+            row.add(c.temperatureC);
+        }
+    }
+    return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -565,7 +504,7 @@ void Stats::mqttPublish() const
 
     auto oTemperature = getTemperature();
     if (oTemperature) {
-        MqttSettings.publish("battery/temperature", String(*oTemperature));
+        MqttSettings.publish("battery/temperature", String(*oTemperature, 1));
     }
 
     auto oChg = _dataPoints.get<Label::AccumulatedChargeDeciKWh>();
@@ -601,10 +540,10 @@ void Stats::mqttPublish() const
     auto oTempMin = _dataPoints.get<Label::CellMinTemperatureCelsius>();
     auto oTempMax = _dataPoints.get<Label::CellMaxTemperatureCelsius>();
     if (oTempMin.has_value()) {
-        MqttSettings.publish("battery/CellMinTemperature", String(*oTempMin, 1));
+        MqttSettings.publish("battery/CellMinTemperature", String(*oTempMin, 0));
     }
     if (oTempMax.has_value()) {
-        MqttSettings.publish("battery/CellMaxTemperature", String(*oTempMax, 1));
+        MqttSettings.publish("battery/CellMaxTemperature", String(*oTempMax, 0));
     }
 
     auto publishDp = [](char const* topic, auto const& o) {
@@ -654,17 +593,49 @@ void Stats::mqttPublish() const
     auto oBalancing = isBalancing();
     if (oBalancing) { MqttSettings.publish("battery/balancingActive", String(*oBalancing ? 1 : 0)); }
 
-    // Per-module data
+    // Per-module data. A stack of 16 modules has ~1900 module and cell
+    // topics, publishing all of them at once floods the MQTT client (and
+    // its heap). Module values are only published if they changed; to detect
+    // that, a hash of topic and value is kept per publish call of each module.
+    // All values of a module, including its cells (which change on almost
+    // every poll), are published once per getMqttFullPublishIntervalMs(), but
+    // only for one module per call, so the full updates are spread out.
+    _mqttHashes.resize(_modules.size());
+    _lastFullModulePublish.resize(_modules.size(), 0);
+    bool fullPublishDone = false;
+
     for (size_t i = 0; i < _modules.size(); ++i) {
         auto const& mod = _modules[i];
+        auto& hashes = _mqttHashes[i];
+        size_t slot = 0;
+
+        bool fullPublish = false;
+        if (!fullPublishDone && (_lastFullModulePublish[i] == 0
+                || millis() - _lastFullModulePublish[i] >= getMqttFullPublishIntervalMs())) {
+            fullPublish = fullPublishDone = true;
+            _lastFullModulePublish[i] = millis();
+        }
         // keyed by serial, not by module number: the BMS assigns numbers by the
         // position in the link cable chain, so they change when modules are
         // re-wired, added or removed. Value names match the battery-level topics (Cell... for cell stats).
         if (!isUsableSerial(mod.serial)) { continue; }
         String prefix = "battery/" + mod.serial + "/";
 
-        auto pub = [&prefix](char const* topic, String const& value) {
-            MqttSettings.publish(prefix + topic, value);
+        auto pub = [&](char const* topic, String const& value) {
+            // FNV-1a over topic and value
+            uint32_t hash = 2166136261u;
+            auto add = [&hash](char const* str) {
+                for (; *str; ++str) { hash = (hash ^ static_cast<uint8_t>(*str)) * 16777619u; }
+            };
+            add(topic);
+            add(value.c_str());
+
+            if (slot >= hashes.size()) { hashes.resize(slot + 1, 0); }
+            if (fullPublish || hashes[slot] != hash) {
+                MqttSettings.publish(prefix + topic, value);
+                hashes[slot] = hash;
+            }
+            ++slot;
         };
 
         // stop publishing (retained) values of an offline module, only flag it
@@ -690,7 +661,7 @@ void Stats::mqttPublish() const
                 pub("capacity",          String(mod.totalCapacityMah  / 1000.0f, 2));
                 pub("availableCapacity", String(mod.remainCapacityMah / 1000.0f, 2));
             }
-            pub("ambientTemperature", String(mod.ambientTemp, 1));
+            pub("ambientTemperature", String(mod.ambientTemp, 0));
             if (mod.chargeCycles >= 0) { pub("chargeCycles", String(mod.chargeCycles)); }
             auto oBalancing = isBalancing(mod);
             if (oBalancing) { pub("balancingActive", String(*oBalancing ? 1 : 0)); }
@@ -702,8 +673,8 @@ void Stats::mqttPublish() const
             pub("CellDiffMilliVolt", String(static_cast<int>((mod.cellMaxV - mod.cellMinV) * 1000.0f + 0.5f)));
             pub("CellMinVoltageName", String(mod.cellMinNo));
             pub("CellMaxVoltageName", String(mod.cellMaxNo));
-            pub("CellMinTemperature", String(mod.tempMinC, 1));
-            pub("CellMaxTemperature", String(mod.tempMaxC, 1));
+            pub("CellMinTemperature", String(mod.tempMinC, 0));
+            pub("CellMaxTemperature", String(mod.tempMaxC, 0));
             pub("CellMinTemperatureName", String(mod.tempMinNo));
             pub("CellMaxTemperatureName", String(mod.tempMaxNo));
         }
@@ -721,11 +692,13 @@ void Stats::mqttPublish() const
         }
 
 
+        if (!fullPublish) { continue; }
+
         for (size_t j = 0; j < mod.cells.size(); ++j) {
             auto const& c = mod.cells[j];
             String cp = "cell/" + String(static_cast<int>(j + 1)) + "/";
             pub((cp + "voltage").c_str(),       String(c.voltageV, 3));
-            pub((cp + "temperature").c_str(),   String(c.temperatureC, 1));
+            pub((cp + "temperature").c_str(),   String(c.temperatureC, 0));
             pub((cp + "current").c_str(),       String(c.currentA, 3));
             pub((cp + "stateOfCharge").c_str(), String(c.soc));
             pub((cp + "status").c_str(),        String(c.status));

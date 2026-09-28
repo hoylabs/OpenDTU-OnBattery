@@ -11,6 +11,9 @@ namespace Batteries::Pytes::Rs485 {
 class Stats : public ::Batteries::Stats {
 public:
     void getLiveViewData(JsonVariant& root) const final;
+    size_t getLiveViewModuleCount() const final;
+    bool getLiveViewModuleData(JsonVariant& root, size_t index, uint32_t since) const final;
+    uint32_t getMqttFullPublishIntervalMs() const final { return 60 * 1000; }
     void mqttPublish() const final;
     bool getImmediateChargingRequest() const final;
 
@@ -50,6 +53,9 @@ private:
 
     DataPointContainer _dataPoints;
     std::vector<BatteryModule> _modules;
+
+    mutable std::vector<uint32_t> _lastFullModulePublish; // millis(), per module
+    mutable std::vector<std::vector<uint32_t>> _mqttHashes; // per module, per published topic
 };
 
 } // namespace Batteries::Pytes::Rs485
