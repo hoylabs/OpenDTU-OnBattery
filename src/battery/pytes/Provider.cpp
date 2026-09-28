@@ -273,7 +273,7 @@ void Provider::onMessage(twai_message_t rx_message)
             String snPart1(reinterpret_cast<char*>(rx_message.data),
                     rx_message.data_length_code);
 
-            if (snPart1.isEmpty() || !isgraph(snPart1.charAt(0))) { break; }
+            if (snPart1.isEmpty() || !isgraph(static_cast<unsigned char>(snPart1.charAt(0)))) { break; }
 
             DTU_LOGD("snPart1: %s", snPart1.c_str());
 
@@ -286,7 +286,7 @@ void Provider::onMessage(twai_message_t rx_message)
             String snPart2(reinterpret_cast<char*>(rx_message.data),
                     rx_message.data_length_code);
 
-            if (snPart2.isEmpty() || !isgraph(snPart2.charAt(0))) { break; }
+            if (snPart2.isEmpty() || !isgraph(static_cast<unsigned char>(snPart2.charAt(0)))) { break; }
 
             DTU_LOGD("snPart2: %s", snPart2.c_str());
 
@@ -422,6 +422,10 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_totalCapacity = this->scaleValue(this->readUnsignedInt32(rx_message.data), 0.001);
             _stats->_availableCapacity = this->scaleValue(this->readUnsignedInt32(rx_message.data + 4), 0.001);
             _stats->_capacityPrecision = 2;
+
+            // a total capacity of 0 would result in an invalid SoC
+            if (_stats->_totalCapacity <= 0) { break; }
+
             float soc = 100.0 * _stats->_availableCapacity / _stats->_totalCapacity;
             _stats->setSoC(soc, 2/*precision*/, millis());
 
