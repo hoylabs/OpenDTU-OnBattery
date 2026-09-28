@@ -104,11 +104,17 @@ SerialResponse::SerialResponse(std::vector<uint8_t> const& frame)
 uint32_t SerialResponse::readHex(Iterator& pos, size_t nBytes) const
 {
     size_t chars = nBytes * 2;
-    if (std::distance(pos, _info.cend()) < static_cast<ptrdiff_t>(chars)) { return 0; }
+    if (std::distance(pos, _info.cend()) < static_cast<ptrdiff_t>(chars)) {
+        _truncated = true;
+        return 0;
+    }
     uint32_t val = 0;
     for (size_t i = 0; i < chars; ++i) {
         uint8_t nibble = hexNibble(*(pos++));
-        if (nibble == 0xFF) { return 0; }
+        if (nibble == 0xFF) {
+            _truncated = true;
+            return 0;
+        }
         val = (val << 4) | nibble;
     }
     return val;
@@ -127,7 +133,10 @@ int32_t SerialResponse::getS32(Iterator& pos) const
 String SerialResponse::getString(Iterator& pos, size_t n) const
 {
     size_t avail = static_cast<size_t>(std::distance(pos, _info.cend()));
-    if (avail < n) { return ""; }
+    if (avail < n) {
+        _truncated = true;
+        return "";
+    }
     String s;
     s.reserve(n);
     for (size_t i = 0; i < n; ++i) {

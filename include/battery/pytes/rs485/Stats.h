@@ -15,7 +15,7 @@ public:
     bool getLiveViewModuleData(JsonVariant& root, size_t index, uint32_t since) const final;
     uint32_t getMqttFullPublishIntervalMs() const final { return 60 * 1000; }
     void mqttPublish() const final;
-    bool getImmediateChargingRequest() const final;
+    bool isImmediateChargingRequested() const final;
 
     void updateBatteryData(DataPointContainer const& dp);
     struct ModuleIdentity {
