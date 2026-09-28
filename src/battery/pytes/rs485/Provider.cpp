@@ -136,8 +136,11 @@ void Provider::loop()
 
     sendRequest(pollInterval);
 
-    if (_readState != ReadState::Idle &&
-        millis() - _lastRequest > 2 * pollInterval * 1000 + 250) {
+    // the BMS answers within a few hundred milliseconds (the largest
+    // response, all cells of a module, takes less than a second at 9600
+    // baud). a fixed timeout keeps a lost response from stalling the
+    // polling for twice the poll interval.
+    if (_readState != ReadState::Idle && millis() - _lastRequest > 2000) {
         reset();
         _queryStep = QueryStep::Done;
         announceStatus(Status::Timeout);
