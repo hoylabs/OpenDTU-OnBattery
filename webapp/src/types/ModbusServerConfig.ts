@@ -1,0 +1,16 @@
+export interface ModbusServerInverterConfig {
+    serial: string;
+    unit_id: number;
+}
+
+export interface ModbusServerConfig {
+    enabled: boolean;
+    port: number;
+    inverter: Array<ModbusServerInverterConfig>;
+}
+
+export interface ModbusServerInverterMetadata {
+    serial: string;
+    name: string;
+    type: string;
+}
