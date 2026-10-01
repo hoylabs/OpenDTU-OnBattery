@@ -12,9 +12,10 @@
 class HttpGetterClient : public HTTPClient {
 public:
     void restartTCP() {
-        // keeps the NetworkClient, and closes the TCP connections (as we
-        // effectively do not support keep-alive with HTTP 1.0).
-        HTTPClient::disconnect(true);
+        // keeps the WiFiClient, but closes the TCP connection and opens a
+        // new one. HTTPClient::disconnect() would keep the TCP connection
+        // open if reusing the connection is enabled.
+        if (_client) { _client->stop(); }
         HTTPClient::connect();
     }
 };

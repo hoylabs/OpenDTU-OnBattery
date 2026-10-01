@@ -60,6 +60,7 @@
         :label="$t('httprequestsettings.timeout')"
         v-model="cfg.timeout"
         type="number"
+        min="500"
         :postfix="$t('httprequestsettings.milliSeconds')"
         wide
     />

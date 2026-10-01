@@ -14,6 +14,7 @@
 #include <powermeter/sml/http/Provider.h>
 #include "WebApi.h"
 #include "helper.h"
+#include "defaults.h"
 
 void WebApiPowerMeterClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -113,8 +114,8 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
         }
 
         if (!cfg["timeout"].is<uint16_t>()
-                || cfg["timeout"].as<uint16_t>() <= 0) {
-            retMsg["message"] = "Timeout must be greater than 0 ms!";
+                || cfg["timeout"].as<uint16_t>() < HTTP_REQUEST_TIMEOUT_MIN_MS) {
+            retMsg["message"] = "Timeout must be at least " + String(HTTP_REQUEST_TIMEOUT_MIN_MS) + " ms!";
             response->setLength();
             request->send(response);
             return false;
