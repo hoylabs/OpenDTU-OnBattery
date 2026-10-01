@@ -18,6 +18,7 @@
 
 #define WIFI_SSID ""
 #define WIFI_PASSWORD ""
+#define WIFI_BSSID ""
 #define WIFI_DHCP true
 
 #define MDNS_ENABLED false
