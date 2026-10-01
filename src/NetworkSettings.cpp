@@ -340,6 +340,10 @@ void NetworkSettingsClass::applyConfig()
 {
     setHostname();
 
+    // syslog is also used without WiFi (e.g., Ethernet only), so configure it
+    // before bailing out below.
+    Syslog.updateSettings(getHostname());
+
     const auto& config = Configuration.get().WiFi;
 
     if (!wifiConfigured()) {
@@ -363,8 +367,6 @@ void NetworkSettingsClass::applyConfig()
     ESP_LOG_LEVEL_LOCAL((success ? ESP_LOG_INFO : ESP_LOG_ERROR), TAG, "Configuring WiFi %s", success ? "done" : "failed");
 
     setStaticIp();
-
-    Syslog.updateSettings(getHostname());
 }
 
 void NetworkSettingsClass::setHostname()

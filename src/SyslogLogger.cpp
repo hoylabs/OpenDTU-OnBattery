@@ -8,9 +8,18 @@
 #include "defaults.h"
 #include <ESPmDNS.h>
 #include <HardwareSerial.h>
+#include <algorithm>
 
 #undef TAG
 static const char* TAG = "syslog";
+
+// initial retry interval if the hostname could not be resolved. doubled after
+// each failed attempt as resolving blocks the main loop until it times out.
+static constexpr uint32_t RESOLVE_RETRY_INTERVAL_MS = 30 * 1000;
+
+// re-resolve a successfully resolved hostname in this interval to pick up
+// address changes (does not apply to numeric IP addresses)
+static constexpr uint32_t RESOLVE_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
 SyslogLogger::SyslogLogger()
     : _loopTask(TASK_IMMEDIATE, TASK_FOREVER, std::bind(&SyslogLogger::loop, this))
@@ -61,7 +70,9 @@ void SyslogLogger::updateSettings(const String&& hostname)
 void SyslogLogger::write(const uint8_t* buffer, size_t size)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    if (!_enabled || !isResolved()) {
+    // sending while the network is down fails and makes the Arduino core log
+    // an error, which would in turn be sent to syslog and fail again.
+    if (!_enabled || !isResolved() || !NetworkSettings.isConnected()) {
         return;
     }
 
@@ -102,25 +113,36 @@ void SyslogLogger::enable()
     }
 
     std::lock_guard<std::mutex> lock(_mutex);
+
+    // a numeric IP address needs no (repeated) resolution
+    IPAddress address;
+    _hostIsIp = address.fromString(_syslog_hostname);
+    if (_hostIsIp) {
+        _address = address;
+    }
+
+    _resolveNow = true;
+    _resolveFailures = 0;
     _enabled = true;
 }
 
-bool SyslogLogger::resolveAndStart()
+IPAddress SyslogLogger::resolve()
 {
-    if (Configuration.get().Mdns.Enabled) {
-        _address = MDNS.queryHost(_syslog_hostname); // INADDR_NONE if failed
-    }
-    if (_address != INADDR_NONE) {
-        if (!_udp.beginPacket(_address, _port)) {
-            return false;
+    // MDNS.queryHost() appends ".local" itself, hence it can only resolve
+    // plain hostnames. skip it otherwise, as a failed query takes 2 seconds.
+    if (Configuration.get().Mdns.Enabled && _syslog_hostname.indexOf('.') < 0) {
+        IPAddress address = MDNS.queryHost(_syslog_hostname); // INADDR_NONE if failed
+        if (address != INADDR_NONE) {
+            return address;
         }
-    } else {
-        if (!_udp.beginPacket(_syslog_hostname.c_str(), _port)) {
-            return false;
-        }
-        _address = _udp.remoteIP(); // Store resolved address.
     }
-    return true;
+
+    // beginPacket() resolves the hostname using DNS and stores the resulting
+    // address, which is then returned by remoteIP().
+    if (!_udp.beginPacket(_syslog_hostname.c_str(), _port)) {
+        return INADDR_NONE;
+    }
+    return _udp.remoteIP();
 }
 
 uint8_t SyslogLogger::calculatePrival(uint8_t facility, char errorCode)
@@ -143,11 +165,36 @@ uint8_t SyslogLogger::calculatePrival(uint8_t facility, char errorCode)
 void SyslogLogger::loop()
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    if (!_enabled || !NetworkSettings.isConnected() || isResolved()) {
+    if (!_enabled || _hostIsIp || !NetworkSettings.isConnected()) {
         return;
     }
-    if (!resolveAndStart()) {
-        _enabled = false;
+
+    uint32_t interval = RESOLVE_REFRESH_INTERVAL_MS;
+    if (!isResolved() && _resolveFailures > 0) {
+        uint32_t retryInterval = RESOLVE_RETRY_INTERVAL_MS << (_resolveFailures - 1);
+        interval = std::min(retryInterval, RESOLVE_REFRESH_INTERVAL_MS);
+    }
+    if (!_resolveNow && millis() - _lastResolveAttempt < interval) {
+        return;
+    }
+    _resolveNow = false;
+    _lastResolveAttempt = millis();
+
+    IPAddress address = resolve();
+    if (address == INADDR_NONE) {
+        // keep using the previously resolved address (if any)
+        ESP_LOGW(TAG, "Could not resolve %s", _syslog_hostname.c_str());
+        if (_resolveFailures < 6) {
+            ++_resolveFailures;
+        }
+        return;
+    }
+
+    _resolveFailures = 0;
+
+    if (address != _address) {
+        ESP_LOGI(TAG, "Resolved %s to %s", _syslog_hostname.c_str(), address.toString().c_str());
+        _address = address;
     }
 }
 
