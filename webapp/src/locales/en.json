@@ -683,7 +683,7 @@
     "httprequestsettings": {
         "url": "URL",
         "urlDescription": "URL must start with 'http://' or 'https://'. Characters like spaces and '=' have to be URL-encoded (%xx). Warning: SSL server certificate check is not implemented (MITM attacks are possible)!",
-        "authorization": "Authorization Type",
+        "authorization": "Authentication Type",
         "authTypeNone": "None",
         "authTypeBasic": "Basic",
         "authTypeDigest": "Digest",
