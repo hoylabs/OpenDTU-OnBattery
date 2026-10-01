@@ -177,6 +177,14 @@ void WebApiNetworkClass::onNetworkAdminPost(AsyncWebServerRequest* request)
         return;
     }
     if (root["rescanenabled"].as<bool>()) {
+        if (!(root["rescaninterval"].is<uint>()
+                && root["rescanthreshold"].is<uint>())) {
+            retMsg["message"] = "Values are missing!";
+            retMsg["code"] = WebApiError::GenericValueMissing;
+            WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
+            return;
+        }
+
         if (root["rescaninterval"].as<uint>() < 1 || root["rescaninterval"].as<uint>() > 1440) {
             retMsg["message"] = "Wi-Fi rescan interval must be a number between 1 and 1440!";
             retMsg["code"] = WebApiError::NetworkWifiRescanInterval;
