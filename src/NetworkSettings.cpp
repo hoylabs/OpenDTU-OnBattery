@@ -547,7 +547,8 @@ String NetworkSettingsClass::getHostname()
 
 bool NetworkSettingsClass::isConnected() const
 {
-    return (WiFi.localIP()[0] != 0 && WiFi.isConnected() ) || ETH.localIP()[0] != 0;
+    // a static Ethernet IP is still reported after the link went down
+    return (WiFi.localIP()[0] != 0 && WiFi.isConnected() ) || (_ethConnected && ETH.localIP()[0] != 0);
 }
 
 network_mode NetworkSettingsClass::NetworkMode() const
