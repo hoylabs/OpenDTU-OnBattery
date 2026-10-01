@@ -501,7 +501,8 @@ void ConfigurationClass::deserializeHttpRequestConfig(JsonObject const& source_h
     strlcpy(target.Password, source_http_config["password"] | "", sizeof(target.Password));
     strlcpy(target.HeaderKey, source_http_config["header_key"] | "", sizeof(target.HeaderKey));
     strlcpy(target.HeaderValue, source_http_config["header_value"] | "", sizeof(target.HeaderValue));
-    target.Timeout = source_http_config["timeout"] | HTTP_REQUEST_TIMEOUT_MS;
+    target.Timeout = std::max<uint16_t>(source_http_config["timeout"] | HTTP_REQUEST_TIMEOUT_MS,
+            HTTP_REQUEST_TIMEOUT_MIN_MS);
 }
 
 void ConfigurationClass::deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target)
