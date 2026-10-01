@@ -138,11 +138,11 @@ HttpRequestResult HttpGetter::performGetRequest()
         case Auth_t::Digest: {
             // send "Connection: keep-alive" (despite using HTTP/1.0, where
             // "Connection: close" is the default) so there is a chance to
-            // reuse the TCP connection when performing the second GET request.
+            // reuse the TCP connection for subsequent requests.
             upTmpHttpClient->setReuse(true);
 
-            const char *headers[2] = {"WWW-Authenticate", "Connection"};
-            upTmpHttpClient->collectHeaders(headers, 2);
+            const char *headers[1] = {"WWW-Authenticate"};
+            upTmpHttpClient->collectHeaders(headers, 1);
 
             // try with new auth response based on previous WWW-Authenticate
             // header, which allows us to retrieve the resource without a
@@ -181,14 +181,12 @@ HttpRequestResult HttpGetter::performGetRequest()
         }
         upTmpHttpClient->addHeader("Authorization", authorization.second);
 
-        // use a new TCP connection if the server sent "Connection: close".
-        bool restart = true;
-        if (upTmpHttpClient->hasHeader("Connection")) {
-            String connection = upTmpHttpClient->header("Connection");
-            connection.toLowerCase();
-            restart = connection.indexOf("keep-alive") == -1;
-        }
-        if (restart) { upTmpHttpClient->restartTCP(); }
+        // always use a new TCP connection for the second GET request. the
+        // body of the HTTP401 response was not read, and unread parts of it
+        // would otherwise be parsed as the beginning of the next response.
+        // reading the body instead would require buffering or draining a
+        // response of arbitrary size.
+        upTmpHttpClient->restartTCP();
 
         httpCode = upTmpHttpClient->GET();
     }
