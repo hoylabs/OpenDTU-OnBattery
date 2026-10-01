@@ -63,6 +63,7 @@ struct PinMapping_t {
     gpio_num_t battery_rxen;
     gpio_num_t battery_tx;
     gpio_num_t battery_txen;
+    uint8_t battery_can_type;
     gpio_num_t huawei_miso;
     gpio_num_t huawei_mosi;
     gpio_num_t huawei_clk;
