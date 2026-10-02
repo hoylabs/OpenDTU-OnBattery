@@ -11,6 +11,13 @@ class Provider {
 public:
     virtual ~Provider() { }
 
+    struct PowerChannels {
+        std::optional<float> Total;
+        std::optional<float> L1;
+        std::optional<float> L2;
+        std::optional<float> L3;
+    };
+
     enum class Type : unsigned {
         MQTT = 0,
         SDM1PH = 1,
@@ -29,6 +36,7 @@ public:
     virtual bool isDataValid() const;
 
     float getPowerTotal() const;
+    PowerChannels getPowerChannels() const;
     uint32_t getLastUpdate() const { return _dataCurrent.getLastUpdate(); }
     void mqttLoop() const;
 
