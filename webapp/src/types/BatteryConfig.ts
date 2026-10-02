@@ -48,11 +48,13 @@ export interface BatteryMqttConfig {
 export interface BatterySerialConfig {
     interface: number;
     polling_interval: number;
+    cluster_address: number;
 }
 
 export interface BatteryConfig {
     enabled: boolean;
     provider: number;
+    bus_type: number;
     serial: BatterySerialConfig;
     mqtt: BatteryMqttConfig;
     zendure: BatteryZendureConfig;

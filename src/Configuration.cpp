@@ -7,6 +7,7 @@
 #include "Utils.h"
 #include "defaults.h"
 #include <LittleFS.h>
+#include <algorithm>
 #include <esp_log.h>
 #include <nvs_flash.h>
 
@@ -134,6 +135,7 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
 {
     target["enabled"] = config.Battery.Enabled;
     target["provider"] = config.Battery.Provider;
+    target["bus_type"] = config.Battery.Bus;
     target["enable_discharge_current_limit"] = config.Battery.EnableDischargeCurrentLimit;
     target["discharge_current_limit"] = config.Battery.DischargeCurrentLimit;
     target["discharge_current_limit_below_soc"] = config.Battery.DischargeCurrentLimitBelowSoc;
@@ -203,6 +205,7 @@ void ConfigurationClass::serializeBatterySerialConfig(BatterySerialConfig const&
 {
     target["interface"] = source.Interface;
     target["polling_interval"] = source.PollingInterval;
+    target["cluster_address"] = source.ClusterAddress;
 }
 
 void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target)
@@ -586,7 +589,8 @@ void ConfigurationClass::deserializePowerMeterUdpVictronConfig(JsonObject const&
 void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target)
 {
     target.Enabled = source["enabled"] | BATTERY_ENABLED;
-    target.Provider = source["provider"] | BATTERY_PROVIDER;
+    target.Provider = source["provider"] | BatteryConfig::ProviderType::PYLONTECH;
+    target.Bus = source["bus_type"] | BatteryConfig::BusType::CAN;
     target.EnableDischargeCurrentLimit = source["enable_discharge_current_limit"] | BATTERY_ENABLE_DISCHARGE_CURRENT_LIMIT;
     target.DischargeCurrentLimit = source["discharge_current_limit"] | BATTERY_DISCHARGE_CURRENT_LIMIT;
     target.DischargeCurrentLimitBelowSoc = source["discharge_current_limit_below_soc"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_SOC;
@@ -652,7 +656,9 @@ void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, 
 void ConfigurationClass::deserializeBatterySerialConfig(JsonObject const& source, BatterySerialConfig& target)
 {
     target.Interface = source["interface"] | BATTERY_SERIAL_INTERFACE;
-    target.PollingInterval = source["polling_interval"] | BATTERY_SERIAL_POLLING_INTERVAL;
+    target.PollingInterval = std::min<uint8_t>(source["polling_interval"] | BATTERY_SERIAL_POLLING_INTERVAL,
+        BATTERY_SERIAL_POLLING_INTERVAL_MAX);
+    target.ClusterAddress = source["cluster_address"] | BATTERY_SERIAL_CLUSTER_ADDRESS;
 }
 
 void ConfigurationClass::deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target)
