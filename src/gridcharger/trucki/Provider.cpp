@@ -132,9 +132,15 @@ void Provider::powerControlLoop()
     if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
         // Battery request has changed. Set current to 0, wait for PSU to respond and then clear state
         setRequestedPowerAc(0);
-        if (oOutputPower && oOutputPower < 1) {
+        if (oOutputPower && *oOutputPower < 1) {
             _batteryEmergencyCharging = false;
         }
+        return;
+    }
+
+    if (_batteryEmergencyCharging) {
+        // Emergency charging is ongoing. Do not let automatic power control
+        // override the emergency setpoint.
         return;
     }
 

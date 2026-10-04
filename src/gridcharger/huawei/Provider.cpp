@@ -158,7 +158,8 @@ void Provider::loop()
         _outputCurrentOnSinceMillis = millis();
     }
 
-    if (_outputCurrentOnSinceMillis + HUAWEI_AUTO_MODE_SHUTDOWN_DELAY < millis() &&
+    if (!_batteryEmergencyCharging &&
+            _outputCurrentOnSinceMillis + HUAWEI_AUTO_MODE_SHUTDOWN_DELAY < millis() &&
             (_mode == HUAWEI_MODE_AUTO_EXT || _mode == HUAWEI_MODE_AUTO_INT)) {
         disableOutput();
     }
@@ -190,6 +191,11 @@ void Provider::loop()
 
         _batteryEmergencyCharging = true;
 
+        // The PSU must deliver power regardless of the mode, so make sure
+        // its output is enabled.
+        enableOutput();
+        _outputCurrentOnSinceMillis = millis();
+
         // Set output current
         float outputCurrent = config.GridCharger.AutoPowerUpperPowerLimit / *oOutputVoltage;
         DTU_LOGI("Emergency Charge Output current %.02f", outputCurrent);
@@ -204,7 +210,14 @@ void Provider::loop()
         _setParameter(0, Setting::OnlineCurrent);
         if (oOutputCurrent && *oOutputCurrent < 1) {
             _batteryEmergencyCharging = false;
+            if (_mode == HUAWEI_MODE_OFF) { disableOutput(); }
         }
+        return;
+    }
+
+    if (_batteryEmergencyCharging) {
+        // Emergency charging is ongoing. Do not let automatic power control
+        // override the emergency setpoint.
         return;
     }
 
