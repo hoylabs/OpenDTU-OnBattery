@@ -396,7 +396,8 @@ void Provider::setMode(uint8_t mode) {
     if (!_upHardwareInterface) { return; }
 
     if (mode == HUAWEI_MODE_OFF) {
-        disableOutput();
+        // while emergency charging, the output is disabled once it has ended
+        if (!_batteryEmergencyCharging) { disableOutput(); }
         _mode = HUAWEI_MODE_OFF;
     }
     if (mode == HUAWEI_MODE_ON) {
