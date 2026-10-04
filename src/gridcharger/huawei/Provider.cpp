@@ -331,6 +331,14 @@ void Provider::loop()
 
 void Provider::setEmergencyCurrent(float outputVoltage, float outputCurrent)
 {
+    _nextEmergencyUpdateMillis = millis() + 2 * HardwareInterface::DataRequestIntervalMillis;
+
+    if (!(outputVoltage > 0.0f)) {
+        DTU_LOGW("Cannot perform emergency charging with invalid PSU output voltage %.02f", outputVoltage);
+        _setParameter(0, HardwareInterface::Setting::OnlineCurrent);
+        return;
+    }
+
     auto const& config = Configuration.get();
 
     float calculatedCurrent = config.GridCharger.AutoPowerUpperPowerLimit / outputVoltage;
@@ -339,7 +347,7 @@ void Provider::setEmergencyCurrent(float outputVoltage, float outputCurrent)
     float permissibleCurrent = Battery.getChargeCurrentLimit() -
         (Battery.getStats()->getChargeCurrent() - outputCurrent);
 
-    float current = std::min(calculatedCurrent, permissibleCurrent);
+    float current = std::min({calculatedCurrent, permissibleCurrent, MAX_ONLINE_CURRENT});
     current = current > 0 ? current : 0;
 
     DTU_LOGI("Emergency Charge Output current %.02fA. This is the lower value of "
@@ -347,7 +355,6 @@ void Provider::setEmergencyCurrent(float outputVoltage, float outputCurrent)
             current, calculatedCurrent, permissibleCurrent);
 
     _setParameter(current, HardwareInterface::Setting::OnlineCurrent);
-    _nextEmergencyUpdateMillis = millis() + 2 * HardwareInterface::DataRequestIntervalMillis;
 }
 
 void Provider::setFan(bool online, bool fullSpeed)

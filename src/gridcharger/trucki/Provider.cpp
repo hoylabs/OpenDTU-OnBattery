@@ -117,11 +117,11 @@ void Provider::powerControlLoop()
     if ((!_batteryEmergencyCharging || _batteryEmergencyStopping) &&
             config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
         auto oOutputVoltage = _dataCurrent.get<DataPointLabel::DcVoltage>();
-        if (!oMaxAcPower || !oOutputVoltage) {
+        if (!oMaxAcPower || !oOutputVoltage || *oOutputVoltage <= 0) {
             // TODO(andreasboehm): if this situation actually occurs, this message
             // will be printed with high frequency for a prolonged time. how can
             // we deal with that?
-            DTU_LOGW("Cannot perform emergency charging with unknown PSU max ac power or output voltage value");
+            DTU_LOGW("Cannot perform emergency charging with unknown PSU max ac power or unknown/invalid output voltage value");
             return;
         }
 
@@ -257,6 +257,8 @@ void Provider::powerControlLoop()
 
 void Provider::updateEmergencyPowerAc(float maxAcPower, float outputVoltage)
 {
+    if (outputVoltage <= 0.0f) { return; }
+
     auto efficiency = _dataCurrent.get<DataPointLabel::Efficiency>().value_or(90) / 100.0f;
     efficiency = efficiency > 0.5f ? efficiency : 0.9f;
 

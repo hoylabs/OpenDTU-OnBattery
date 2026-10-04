@@ -62,8 +62,8 @@ public:
 
     // returns true if the battery reached a critically low voltage/SoC,
     // such that it is in need of charging to prevent degredation.
-    // implementations must ignore requests of a battery that went silent, see
-    // hasRecentData().
+    // implementations must ignore a request that was not refreshed within
+    // StaleRequestSeconds.
     virtual bool getImmediateChargingRequest() const { return false; };
 
     virtual bool supportsAlarmsAndWarnings() const { return true; };
@@ -75,12 +75,8 @@ protected:
     virtual uint32_t getMaxAgeSeconds() const { return 20; }
 
     // a cached request (e.g., to charge immediately) must not be trusted
-    // anymore if the battery stopped reporting.
-    bool hasRecentData() const {
-        return _lastUpdate > 0 && getAgeSeconds() <= StaleDataSeconds;
-    }
-
-    static constexpr uint32_t StaleDataSeconds = 60;
+    // anymore if the battery stopped sending it.
+    static constexpr uint32_t StaleRequestSeconds = 60;
 
     void setSoC(float soc, uint8_t precision, uint32_t timestamp) {
         _soc = soc;

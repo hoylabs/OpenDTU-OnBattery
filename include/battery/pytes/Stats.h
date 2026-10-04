@@ -11,7 +11,9 @@ friend class Provider;
 public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
-    bool getImmediateChargingRequest() const { return _chargeImmediately && hasRecentData(); }
+    bool getImmediateChargingRequest() const {
+        return _chargeImmediately && (millis() - _lastUpdateChargeImmediately) / 1000 <= StaleRequestSeconds;
+    }
 
 private:
     void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
@@ -76,7 +78,13 @@ private:
     bool _warningInternalFailure;
     bool _warningCellImbalance;
 
+    void setChargeImmediately(bool value) {
+        _chargeImmediately = value;
+        _lastUpdateChargeImmediately = millis();
+    }
+
     bool _chargeImmediately;
+    uint32_t _lastUpdateChargeImmediately = 0;
 };
 
 } // namespace Batteries::Pytes
