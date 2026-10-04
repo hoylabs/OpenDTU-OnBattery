@@ -199,10 +199,7 @@ void Provider::loop()
         enableOutput();
         _outputCurrentOnSinceMillis = millis();
 
-        // Set output current
-        float outputCurrent = config.GridCharger.AutoPowerUpperPowerLimit / *oOutputVoltage;
-        DTU_LOGI("Emergency Charge Output current %.02f", outputCurrent);
-        _setParameter(outputCurrent, Setting::OnlineCurrent);
+        setEmergencyCurrent(*oOutputVoltage, oOutputCurrent.value_or(0));
         return;
     }
 
@@ -222,7 +219,12 @@ void Provider::loop()
 
     if (_batteryEmergencyCharging) {
         // Emergency charging is ongoing. Do not let automatic power control
-        // override the emergency setpoint.
+        // override the emergency setpoint. The charge current limit and the
+        // charging current of other sources change over time, so the
+        // setpoint is updated periodically.
+        if (oOutputVoltage && _nextEmergencyUpdateMillis < millis()) {
+            setEmergencyCurrent(*oOutputVoltage, oOutputCurrent.value_or(0));
+        }
         return;
     }
 
@@ -325,6 +327,27 @@ void Provider::loop()
             }
         }
     }
+}
+
+void Provider::setEmergencyCurrent(float outputVoltage, float outputCurrent)
+{
+    auto const& config = Configuration.get();
+
+    float calculatedCurrent = config.GridCharger.AutoPowerUpperPowerLimit / outputVoltage;
+
+    // battery current limit - current from other sources, e.g. Victron MPPT charger
+    float permissibleCurrent = Battery.getChargeCurrentLimit() -
+        (Battery.getStats()->getChargeCurrent() - outputCurrent);
+
+    float current = std::min(calculatedCurrent, permissibleCurrent);
+    current = current > 0 ? current : 0;
+
+    DTU_LOGI("Emergency Charge Output current %.02fA. This is the lower value of "
+            "calculated %.02fA and BMS permissible %.02fA currents",
+            current, calculatedCurrent, permissibleCurrent);
+
+    _setParameter(current, HardwareInterface::Setting::OnlineCurrent);
+    _nextEmergencyUpdateMillis = millis() + 2 * HardwareInterface::DataRequestIntervalMillis;
 }
 
 void Provider::setFan(bool online, bool fullSpeed)

@@ -116,19 +116,19 @@ void Provider::powerControlLoop()
     // a request that returns while we are still ramping down restarts emergency charging
     if ((!_batteryEmergencyCharging || _batteryEmergencyStopping) &&
             config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
-        if (!oMaxAcPower) {
+        auto oOutputVoltage = _dataCurrent.get<DataPointLabel::DcVoltage>();
+        if (!oMaxAcPower || !oOutputVoltage) {
             // TODO(andreasboehm): if this situation actually occurs, this message
             // will be printed with high frequency for a prolonged time. how can
             // we deal with that?
-            DTU_LOGW("Cannot perform emergency charging with unknown PSU max ac power value");
+            DTU_LOGW("Cannot perform emergency charging with unknown PSU max ac power or output voltage value");
             return;
         }
 
         _batteryEmergencyCharging = true;
         _batteryEmergencyStopping = false;
 
-        DTU_LOGI("Emergency Charge AC Power %.02f", *oMaxAcPower);
-        setRequestedPowerAc(*oMaxAcPower);
+        updateEmergencyPowerAc(*oMaxAcPower, *oOutputVoltage);
         return;
     }
 
@@ -145,7 +145,13 @@ void Provider::powerControlLoop()
 
     if (_batteryEmergencyCharging) {
         // Emergency charging is ongoing. Do not let automatic power control
-        // override the emergency setpoint.
+        // override the emergency setpoint. The charge current limit and the
+        // charging current of other sources change over time, so the
+        // setpoint is updated continuously.
+        auto oOutputVoltage = _dataCurrent.get<DataPointLabel::DcVoltage>();
+        if (oMaxAcPower && oOutputVoltage) {
+            updateEmergencyPowerAc(*oMaxAcPower, *oOutputVoltage);
+        }
         return;
     }
 
@@ -247,6 +253,28 @@ void Provider::powerControlLoop()
             }
         }
     }
+}
+
+void Provider::updateEmergencyPowerAc(float maxAcPower, float outputVoltage)
+{
+    auto efficiency = _dataCurrent.get<DataPointLabel::Efficiency>().value_or(90) / 100.0f;
+    efficiency = efficiency > 0.5f ? efficiency : 0.9f;
+
+    float calculatedCurrent = efficiency * (maxAcPower / outputVoltage);
+
+    // battery current limit - current from other sources, e.g. Victron MPPT charger
+    float outputCurrentNow = _dataCurrent.get<DataPointLabel::DcCurrent>().value_or(0);
+    float permissibleCurrent = Battery.getChargeCurrentLimit() -
+        (Battery.getStats()->getChargeCurrent() - outputCurrentNow);
+
+    float outputCurrent = std::min(calculatedCurrent, permissibleCurrent);
+    outputCurrent = outputCurrent > 0 ? outputCurrent : 0;
+
+    float power = (outputCurrent * outputVoltage) / efficiency;
+    power = std::min(power, maxAcPower);
+
+    DTU_LOGV("Emergency Charge AC Power %.02f", power);
+    setRequestedPowerAc(power);
 }
 
 void Provider::setRequestedPowerAc(float power)

@@ -11,7 +11,7 @@ friend class Provider;
 public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
-    bool getImmediateChargingRequest() const { return _chargeImmediately; } ;
+    bool getImmediateChargingRequest() const { return _chargeImmediately && hasRecentData(); }
 
 private:
     void setLastUpdate(uint32_t ts) { _lastUpdate = ts; }
