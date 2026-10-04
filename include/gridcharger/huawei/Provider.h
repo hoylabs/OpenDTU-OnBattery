@@ -80,6 +80,7 @@ private:
     uint8_t _autoPowerEnabledCounter = 0;
     bool _autoPowerEnabled = false;
     bool _batteryEmergencyCharging = false;
+    bool _batteryEmergencyStopping = false;
 
     enum class Topic : unsigned {
         LimitOnlineVoltage,

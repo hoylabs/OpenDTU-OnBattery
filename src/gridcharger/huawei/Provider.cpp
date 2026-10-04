@@ -180,7 +180,9 @@ void Provider::loop()
     // Emergency charge
     // ***********************
     auto stats = Battery.getStats();
-    if (!_batteryEmergencyCharging && config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
+    // a request that returns while we are still ramping down restarts emergency charging
+    if ((!_batteryEmergencyCharging || _batteryEmergencyStopping) &&
+            config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
         if (!oOutputVoltage) {
             // TODO(schlimmchen): if this situation actually occurs, this message
             // will be printed with high frequency for a prolonged time. how can
@@ -190,6 +192,7 @@ void Provider::loop()
         }
 
         _batteryEmergencyCharging = true;
+        _batteryEmergencyStopping = false;
 
         // The PSU must deliver power regardless of the mode, so make sure
         // its output is enabled.
@@ -204,12 +207,14 @@ void Provider::loop()
     }
 
     if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
+        _batteryEmergencyStopping = true;
         // Battery request has changed. Set current to 0, wait for PSU to respond and then clear state
         // TODO(schlimmchen): this is repeated very often for up to (polling interval) seconds. maybe
         // trigger sending request for data immediately? otherwise implement a backoff instead.
         _setParameter(0, Setting::OnlineCurrent);
         if (oOutputCurrent && *oOutputCurrent < 1) {
             _batteryEmergencyCharging = false;
+            _batteryEmergencyStopping = false;
             if (_mode == HUAWEI_MODE_OFF) { disableOutput(); }
         }
         return;

@@ -89,6 +89,7 @@ private:
 
     bool _autoPowerEnabled = false;
     bool _batteryEmergencyCharging = false;
+    bool _batteryEmergencyStopping = false;
 };
 
 } // namespace GridChargers::Trucki

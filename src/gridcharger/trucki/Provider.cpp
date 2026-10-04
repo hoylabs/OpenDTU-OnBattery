@@ -113,7 +113,9 @@ void Provider::powerControlLoop()
     // Emergency charge
     // ***********************
     auto stats = Battery.getStats();
-    if (!_batteryEmergencyCharging && config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
+    // a request that returns while we are still ramping down restarts emergency charging
+    if ((!_batteryEmergencyCharging || _batteryEmergencyStopping) &&
+            config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
         if (!oMaxAcPower) {
             // TODO(andreasboehm): if this situation actually occurs, this message
             // will be printed with high frequency for a prolonged time. how can
@@ -123,6 +125,7 @@ void Provider::powerControlLoop()
         }
 
         _batteryEmergencyCharging = true;
+        _batteryEmergencyStopping = false;
 
         DTU_LOGI("Emergency Charge AC Power %.02f", *oMaxAcPower);
         setRequestedPowerAc(*oMaxAcPower);
@@ -130,10 +133,12 @@ void Provider::powerControlLoop()
     }
 
     if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
+        _batteryEmergencyStopping = true;
         // Battery request has changed. Set current to 0, wait for PSU to respond and then clear state
         setRequestedPowerAc(0);
         if (oOutputPower && *oOutputPower < 1) {
             _batteryEmergencyCharging = false;
+            _batteryEmergencyStopping = false;
         }
         return;
     }
