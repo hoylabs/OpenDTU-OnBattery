@@ -200,8 +200,20 @@ void HassIntegration::removeLegacyConfig(const char* component, String const& se
     }
 }
 
+// The battery state topics (<prefix>battery/...) are only distinguished by
+// the MQTT prefix, so it has to be unique per DTU on a broker anyway. Unlike
+// the hostname or the chip id, it survives renaming the DTU and replacing the
+// ESP32 (the user sets the same prefix again, other MQTT consumers depend on
+// it). HASS only allows [a-zA-Z0-9_-] in the discovery topic node id.
 String HassIntegration::createBatteryId() {
-    return MqttHandleHass.getDtuUniqueId() + "_battery";
+    String prefix = MqttSettings.getPrefix();
+    if (prefix.endsWith("/")) { prefix.remove(prefix.length() - 1); }
+
+    String id = "dtu_battery_";
+    for (char c : prefix) {
+        id += (isalnum(static_cast<unsigned char>(c)) || c == '-') ? c : '_';
+    }
+    return id;
 }
 
 String HassIntegration::sanitizeUniqueId(const char* value) {
