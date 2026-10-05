@@ -19,6 +19,11 @@ namespace Batteries {
 HassIntegration::HassIntegration(std::shared_ptr<Stats> spStats)
     : _spStats(spStats) { }
 
+HassIntegration::~HassIntegration()
+{
+    stopLegacyCleanup();
+}
+
 void HassIntegration::hassLoop()
 {
     auto const& config = Configuration.get();
@@ -28,6 +33,7 @@ void HassIntegration::hassLoop()
     // connection problems are actually always noticed.
     if (!MqttSettings.getConnected()) {
         _publishSensors = true;
+        stopLegacyCleanup();
         return;
     }
 
@@ -35,22 +41,22 @@ void HassIntegration::hassLoop()
         !_spStats->getManufacturer().has_value() ||
         !_spStats->getHassDeviceName().has_value()) { return; }
 
-    _legacyCleanupFailed = false;
+    if (!_oLegacyCleanupStart) {
+        startLegacyCleanup();
+        return;
+    }
+
+    clearLegacyConfigs();
+
+    // give HASS time to delete the old entities first, otherwise the new
+    // ones get an entity id with suffix "_2"
+    if (millis() - *_oLegacyCleanupStart < 3000) { return; }
+
+    stopLegacyCleanup();
 
     publishSensors();
 
     _publishSensors = false;
-
-    // the legacy discovery configs were cleared by publishSensors(), this is
-    // needed only once per installation. if a deletion could not be queued,
-    // keep the flag so the next discovery run (reconnect, reboot) retries.
-    if (config.Mqtt.Hass.BatteryLegacyCleanupPending) {
-        if (_legacyCleanupFailed) {
-            DTU_LOGW("Could not remove all legacy Home Assistant battery configs, retrying on next discovery");
-        } else {
-            Configuration.clearBatteryLegacyCleanupPending();
-        }
-    }
 }
 
 void HassIntegration::publishSensors() const
@@ -69,11 +75,14 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
 {
     String sensorId = sanitizeUniqueId(caption);
 
+    if (_legacyCleanupOnly) {
+        MqttSettings.publishGeneric(legacyConfigTopic("sensor", sensorId), "", true);
+        return;
+    }
+
     String configTopic = "sensor/" + createBatteryId()
         + "/" + sensorId
         + "/config";
-
-    removeLegacyConfig("sensor", sensorId);
 
     String statTopic = MqttSettings.getPrefix() + "battery/";
     statTopic.concat(subTopic);
@@ -125,11 +134,14 @@ void HassIntegration::publishBinarySensor(const char* caption,
 {
     String sensorId = sanitizeUniqueId(caption);
 
+    if (_legacyCleanupOnly) {
+        MqttSettings.publishGeneric(legacyConfigTopic("binary_sensor", sensorId), "", true);
+        return;
+    }
+
     String configTopic = "binary_sensor/" + createBatteryId()
         + "/" + sensorId
         + "/config";
-
-    removeLegacyConfig("binary_sensor", sensorId);
 
     String statTopic = MqttSettings.getPrefix() + "battery/";
     statTopic.concat(subTopic);
@@ -181,23 +193,63 @@ void HassIntegration::publish(const String& subtopic, const String& payload) con
 }
 
 // All batteries used to share the hardcoded device id "0001", which made
-// batteries of multiple DTUs collide in HASS. Clearing the old (retained)
-// discovery config makes HASS delete the old entity (and the old device once
-// it has no entities left) before the new one is announced, so the new
-// entity gets the old entity id and keeps its history. This runs once after
-// upgrading (see Mqtt.Hass.BatteryLegacyCleanupPending) and can be removed
-// again once upgrades from such old firmware are no longer expected.
-void HassIntegration::removeLegacyConfig(const char* component, String const& sensorId) const
+// batteries of multiple DTUs collide in HASS. Clearing the old discovery
+// configs makes HASS delete the old entities (and the old device) before the
+// new ones are announced, so these get the old entity ids and keep their
+// history. An empty message must be retained to remove a retained config
+// from the broker, independent of the retain setting.
+//
+// This runs before every discovery: it is a no-op once the old configs are
+// gone, and it also catches old configs reappearing (downgrade, a second DTU
+// with older firmware). It can be removed again once upgrades from firmware
+// using "0001" are no longer expected.
+String HassIntegration::legacyConfigTopic(String const& component, String const& sensorId)
 {
-    if (!Configuration.get().Mqtt.Hass.BatteryLegacyCleanupPending) { return; }
+    return String(Configuration.get().Mqtt.Hass.Topic) + component + "/dtu_battery_0001/" + sensorId + "/config";
+}
 
-    // always retained: an empty retained message is what removes the old
-    // retained config from the broker, independent of the retain setting
-    String topic = Configuration.get().Mqtt.Hass.Topic;
-    topic += String(component) + "/dtu_battery_0001/" + sensorId + "/config";
-    if (!MqttSettings.publishGeneric(topic.c_str(), "", true)) {
-        _legacyCleanupFailed = true;
+void HassIntegration::startLegacyCleanup()
+{
+    // finds all retained old configs, also those of sensors that are no longer
+    // published (renamed sensors, a different battery provider before)
+    MqttSettings.subscribe(legacyConfigTopic("+", "+"), 0,
+        [this](espMqttClientTypes::MessageProperties const& properties,
+                char const* topic, uint8_t const*, size_t len) {
+            if (!properties.retain || len == 0) { return; }
+            std::lock_guard<std::mutex> lock(_legacyTopicsMutex);
+            _legacyTopics.emplace_back(topic);
+        });
+
+    // with retain disabled there is nothing on the broker to find, but HASS
+    // still knows the old configs if it was running while they were announced
+    _legacyCleanupOnly = true;
+    publishSensors();
+    _legacyCleanupOnly = false;
+
+    _oLegacyCleanupStart = millis();
+}
+
+void HassIntegration::clearLegacyConfigs()
+{
+    std::vector<String> topics;
+    {
+        std::lock_guard<std::mutex> lock(_legacyTopicsMutex);
+        topics.swap(_legacyTopics);
     }
+
+    for (auto const& topic : topics) {
+        DTU_LOGI("Removing legacy Home Assistant config %s", topic.c_str());
+        MqttSettings.publishGeneric(topic, "", true);
+    }
+}
+
+void HassIntegration::stopLegacyCleanup()
+{
+    if (!_oLegacyCleanupStart) { return; }
+
+    MqttSettings.unsubscribe(legacyConfigTopic("+", "+"));
+    clearLegacyConfigs();
+    _oLegacyCleanupStart.reset();
 }
 
 // The battery state topics (<prefix>battery/...) are only distinguished by
