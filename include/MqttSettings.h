@@ -17,8 +17,7 @@ public:
     void performReconnect();
     bool getConnected();
     void publish(const String& subtopic, const String& payload);
-    // returns false if the message could not be queued for sending
-    bool publishGeneric(const String& topic, const String& payload, const bool retain, const uint8_t qos = 0);
+    void publishGeneric(const String& topic, const String& payload, const bool retain, const uint8_t qos = 0);
 
     void subscribe(const String& topic, const uint8_t qos, const OnMessageCallback& cb);
     void unsubscribe(const String& topic);
