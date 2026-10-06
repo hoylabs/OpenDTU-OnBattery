@@ -358,6 +358,9 @@ struct CONFIG_T {
         bool Dhcp;
         char Hostname[WIFI_MAX_HOSTNAME_STRLEN + 1];
         uint32_t ApTimeout;
+        bool RescanEnabled;
+        uint16_t RescanInterval; // minutes
+        uint8_t RescanThreshold; // dB
     } WiFi;
 
     struct {
