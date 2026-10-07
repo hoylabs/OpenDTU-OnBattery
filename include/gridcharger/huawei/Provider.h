@@ -50,6 +50,7 @@ public:
 
 private:
     void _setParameter(float val, HardwareInterface::Setting setting, bool pollFeedback = false);
+    void setEmergencyCurrent(float outputVoltage, float outputCurrent);
     void _setProduction(bool enable) const;
 
     void setFan(bool online, bool fullSpeed);
@@ -76,10 +77,12 @@ private:
     uint32_t _nextAutoModePeriodicIntMillis;      // When to set the next output voltage in automatic mode
     uint32_t _lastPowerMeterUpdateReceivedMillis; // Timestamp of last seen power meter value
     uint32_t _autoModeBlockedTillMillis = 0;      // Timestamp to block running auto mode for some time
+    uint32_t _nextEmergencyUpdateMillis = 0;      // When to re-evaluate the emergency charge current
 
     uint8_t _autoPowerEnabledCounter = 0;
     bool _autoPowerEnabled = false;
     bool _batteryEmergencyCharging = false;
+    bool _batteryEmergencyStopping = false;
 
     enum class Topic : unsigned {
         LimitOnlineVoltage,
