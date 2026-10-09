@@ -37,6 +37,7 @@
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
 #include "RuntimeData.h"
+#include "modbus/ModbusServer.h"
 
 #undef TAG
 static const char* TAG = "main";
@@ -153,6 +154,9 @@ void setup()
     GridCharger.init(scheduler);
     Battery.init(scheduler);
     // ... and here (before RuntimeData)
+
+    // SunSpec/Modbus TCP server (must be after network init)
+    ModbusServer.init(scheduler);
 
     // Must be done after all other components have been initialized
     RuntimeData.init(scheduler);

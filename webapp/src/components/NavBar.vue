@@ -92,6 +92,11 @@
                                 >
                             </li>
                             <li>
+                                <router-link @click="onClick" class="dropdown-item" to="/settings/modbusserver">{{
+                                    $t('menu.ModbusServerSettings')
+                                }}</router-link>
+                            </li>
+                            <li>
                                 <router-link @click="onClick" class="dropdown-item" to="/settings/battery">{{
                                     $t('menu.BatterySettings')
                                 }}</router-link>
