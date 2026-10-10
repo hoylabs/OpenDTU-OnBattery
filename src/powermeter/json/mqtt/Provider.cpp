@@ -64,6 +64,9 @@ void Provider::onMessage(Provider::MsgProperties const& properties,
 
     if (cfg->SignInverted) { newValue *= -1; }
 
+    // Edge-case: each topic update (often per phase) arrives independently.
+    // For future count-based averaging, counting every callback as one complete
+    // meter sample may bias the window when phases update at different rates.
     {
         auto scopedLock = _dataCurrent.lock();
         switch (phaseIndex) {

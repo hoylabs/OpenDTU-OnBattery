@@ -162,7 +162,25 @@ void WebApiWsLiveClass::generateOnBatteryJsonResponse(JsonVariant& root, bool al
         powerMeterObj["enabled"] = config.PowerMeter.Enabled;
 
         if (config.PowerMeter.Enabled) {
+            auto addOptionalField = [&](char const* name, std::optional<float> const& value) {
+                if (!value) { return; }
+                addTotalField(powerMeterObj, name, *value, "W", 1);
+            };
+
+            auto stats = PowerMeter.getPowerStats();
             addTotalField(powerMeterObj, "Power", PowerMeter.getPowerTotal(), "W", 1);
+            addOptionalField("PowerRaw", stats.Total.Raw);
+            addOptionalField("PowerAvg", stats.Total.Average);
+            addOptionalField("PowerLast", stats.Total.Last);
+            addOptionalField("PowerMin", stats.Total.Minimum);
+            addOptionalField("PowerMax", stats.Total.Maximum);
+
+            addOptionalField("PowerL1", stats.L1.Raw);
+            addOptionalField("PowerL1Avg", stats.L1.Average);
+            addOptionalField("PowerL2", stats.L2.Raw);
+            addOptionalField("PowerL2Avg", stats.L2.Average);
+            addOptionalField("PowerL3", stats.L3.Raw);
+            addOptionalField("PowerL3Avg", stats.L3.Average);
         }
 
         if (!all) { _lastPublishPowerMeter = millis(); }
