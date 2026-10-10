@@ -31,11 +31,14 @@ protected:
 
 private:
     static String sanitizeUniqueId(const char* value);
+    static String createBatteryId();
+    void removeLegacyConfig(const char* component, String const& sensorId) const;
 
-    String _serial = "0001"; // pseudo-serial, can be replaced in future with real serialnumber
     std::shared_ptr<Stats> _spStats = nullptr;
 
     bool _publishSensors = true;
+    // set by removeLegacyConfig() if a legacy config could not be cleared
+    mutable bool _legacyCleanupFailed = false;
 };
 
 } // namespace Batteries
