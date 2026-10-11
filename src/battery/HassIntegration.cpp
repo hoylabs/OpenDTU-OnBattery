@@ -256,14 +256,21 @@ void HassIntegration::stopLegacyCleanup()
 // the MQTT prefix, so it has to be unique per DTU on a broker anyway. Unlike
 // the hostname or the chip id, it survives renaming the DTU and replacing the
 // ESP32 (the user sets the same prefix again, other MQTT consumers depend on
-// it). HASS only allows [a-zA-Z0-9_-] in the discovery topic node id.
+// it). HASS only allows [a-zA-Z0-9_-] in the discovery topic node id, other
+// characters are escaped as "_<hex>", so distinct prefixes never map to the
+// same id (e.g. "dtu/a/" and "dtu_a/"). "solar/" -> "dtu_battery_solar".
 String HassIntegration::createBatteryId() {
     String prefix = MqttSettings.getPrefix();
     if (prefix.endsWith("/")) { prefix.remove(prefix.length() - 1); }
 
     String id = "dtu_battery_";
     for (char c : prefix) {
-        id += (isalnum(static_cast<unsigned char>(c)) || c == '-') ? c : '_';
+        auto const b = static_cast<unsigned char>(c);
+        if (isalnum(b) || c == '-') { id += c; continue; }
+
+        char escaped[4];
+        snprintf(escaped, sizeof(escaped), "_%02x", b);
+        id += escaped;
     }
     return id;
 }
