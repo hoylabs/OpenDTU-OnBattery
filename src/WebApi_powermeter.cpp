@@ -36,6 +36,8 @@ void WebApiPowerMeterClass::generateStatus(AsyncWebServerRequest* request, bool 
 
     root["enabled"] = config.PowerMeter.Enabled;
     root["source"] = config.PowerMeter.Source;
+    auto averaging = root["averaging"].to<JsonObject>();
+    Configuration.serializePowerMeterAveragingConfig(config.PowerMeter.Averaging, averaging);
 
     auto mqtt = root["mqtt"].to<JsonObject>();
     Configuration.serializePowerMeterMqttConfig(config.PowerMeter.Mqtt, mqtt);
@@ -123,6 +125,46 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
         return true;
     };
 
+    if (root["averaging"].is<JsonObject>()) {
+        JsonObject averaging = root["averaging"];
+        if (!(averaging["enabled"].is<bool>() && averaging["mode"].is<uint8_t>() && averaging["window"].is<uint16_t>())) {
+            retMsg["message"] = "Averaging settings are invalid!";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        uint8_t mode = averaging["mode"].as<uint8_t>();
+        uint16_t window = averaging["window"].as<uint16_t>();
+        if (mode > PowerMeterAveragingConfig::Mode::Time) {
+            retMsg["message"] = "Averaging mode is invalid!";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        if (window < 1) {
+            retMsg["message"] = "Averaging window must be greater than 0!";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        if (mode == PowerMeterAveragingConfig::Mode::Samples && window > 200) {
+            retMsg["message"] = "Sample-based averaging supports max 200 samples.";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+
+        if (mode == PowerMeterAveragingConfig::Mode::Time && window > 120) {
+            retMsg["message"] = "Time-based averaging supports max 120 seconds.";
+            response->setLength();
+            request->send(response);
+            return;
+        }
+    }
+
     if (static_cast<::PowerMeters::Provider::Type>(root["source"].as<uint8_t>()) == ::PowerMeters::Provider::Type::HTTP_JSON) {
         JsonObject httpJson = root["http_json"];
         JsonArray valueConfigs = httpJson["values"];
@@ -180,6 +222,10 @@ void WebApiPowerMeterClass::onAdminPost(AsyncWebServerRequest* request)
         auto& config = guard.getConfig();
         config.PowerMeter.Enabled = root["enabled"].as<bool>();
         config.PowerMeter.Source = root["source"].as<uint8_t>();
+        if (root["averaging"].is<JsonObject>()) {
+            Configuration.deserializePowerMeterAveragingConfig(root["averaging"].as<JsonObject>(),
+                    config.PowerMeter.Averaging);
+        }
 
         Configuration.deserializePowerMeterMqttConfig(root["mqtt"].as<JsonObject>(),
                 config.PowerMeter.Mqtt);

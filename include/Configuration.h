@@ -146,6 +146,16 @@ struct POWERMETER_UDP_VICTRON_CONFIG_T {
 };
 using PowerMeterUdpVictronConfig = struct POWERMETER_UDP_VICTRON_CONFIG_T;
 
+struct POWERMETER_AVERAGING_CONFIG_T {
+    bool Enabled;
+
+    enum Mode { Samples = 0, Time = 1 };
+    Mode WindowMode;
+
+    uint16_t WindowSize;
+};
+using PowerMeterAveragingConfig = struct POWERMETER_AVERAGING_CONFIG_T;
+
 struct POWERLIMITER_INVERTER_CONFIG_T {
     uint64_t Serial;
     bool IsGoverned;
@@ -453,6 +463,7 @@ struct CONFIG_T {
     struct PowerMeterConfig {
         bool Enabled;
         uint32_t Source;
+        PowerMeterAveragingConfig Averaging;
         PowerMeterMqttConfig Mqtt;
         PowerMeterSerialSdmConfig SerialSdm;
         PowerMeterHttpJsonConfig HttpJson;
@@ -513,6 +524,7 @@ public:
     static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target, bool includeCredentials);
     static void serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target, bool includeCredentials);
     static void serializePowerMeterUdpVictronConfig(PowerMeterUdpVictronConfig const& source, JsonObject& target);
+    static void serializePowerMeterAveragingConfig(PowerMeterAveragingConfig const& source, JsonObject& target);
     static void serializeBatteryConfig(BatteryConfig const& source, JsonObject& target);
     static void serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target, bool includeCredentials);
     static void serializeBatteryMqttConfig(BatteryMqttConfig const& source, JsonObject& target);
@@ -531,6 +543,7 @@ public:
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);
     static void deserializePowerMeterHttpSmlConfig(JsonObject const& source, PowerMeterHttpSmlConfig& target);
     static void deserializePowerMeterUdpVictronConfig(JsonObject const& source, PowerMeterUdpVictronConfig& target);
+    static void deserializePowerMeterAveragingConfig(JsonObject const& source, PowerMeterAveragingConfig& target);
     static void deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target);
     static void deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target);
     static void deserializeBatteryMqttConfig(JsonObject const& source, BatteryMqttConfig& target);
