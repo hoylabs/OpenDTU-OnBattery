@@ -6,6 +6,7 @@
 #include "modbus/sunspec/SunSpecInverterModel101_103.h"
 #include "modbus/sunspec/SunSpecUtils.h"
 #include <Hoymiles.h>
+#include <cmath>
 
 using SunSpec::NI_S;
 using SunSpec::NI_U;
@@ -44,7 +45,11 @@ void SunSpecInverterModel101_103::fill(uint16_t* ac, std::shared_ptr<InverterAbs
     float yt   = stats->getChannelFieldValue(TYPE_INV, CH0, FLD_YT);
     float q    = reach ? stats->getChannelFieldValue(TYPE_AC,  CH0, FLD_Q)   : 0.0f;
     float pf   = reach ? stats->getChannelFieldValue(TYPE_AC,  CH0, FLD_PF)  : 0.0f;
-    uint32_t whTotal = static_cast<uint32_t>(yt * 1000.0f); // kWh -> Wh
+    // A garbage yt (NaN/Inf/negative/overflow) must not reach the WH acc32
+    // register: dbus-fronius feeds it unchecked into VRM's energy history and
+    // has no ceiling on the delta. Report "not implemented" instead.
+    bool ytValid = std::isfinite(yt) && yt >= 0.0f && yt < 4294967.0f; // < UINT32_MAX Wh
+    uint32_t whTotal = ytValid ? static_cast<uint32_t>(yt * 1000.0f) : 0xFFFFFFFFu; // kWh -> Wh
 
     ac[0] = static_cast<uint16_t>(static_cast<int16_t>(iac * 100.0f + 0.5f)); // A: total AC current
 
