@@ -31,11 +31,29 @@
                             </select>
                         </div>
                     </div>
+
+                    <div class="row mb-3" v-if="batteryConfigList.provider == 4">
+                        <label class="col-sm-4 col-form-label">
+                            {{ $t('batteryadmin.BusType') }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select class="form-select" v-model="batteryConfigList.bus_type">
+                                <option v-for="bus in busTypeList" :key="bus.key" :value="bus.key">
+                                    {{ $t(`batteryadmin.BusType` + bus.value) }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
                 </template>
             </CardElement>
 
             <CardElement
-                v-if="batteryConfigList.enabled && (batteryConfigList.provider == 1 || batteryConfigList.provider == 6)"
+                v-if="
+                    batteryConfigList.enabled &&
+                    (batteryConfigList.provider == 1 ||
+                        batteryConfigList.provider == 6 ||
+                        (batteryConfigList.provider == 4 && batteryConfigList.bus_type == 1))
+                "
                 :text="$t('batteryadmin.SerialSettings')"
                 textVariant="text-bg-primary"
                 addSpace
@@ -62,9 +80,21 @@
                     v-model="batteryConfigList.serial.polling_interval"
                     type="number"
                     min="2"
-                    max="90"
+                    max="30"
                     step="1"
                     :postfix="$t('batteryadmin.Seconds')"
+                    wide
+                />
+
+                <InputElement
+                    v-if="batteryConfigList.provider == 4 && batteryConfigList.bus_type == 1"
+                    :label="$t('batteryadmin.ClusterAddress')"
+                    v-model="batteryConfigList.serial.cluster_address"
+                    type="number"
+                    min="1"
+                    max="7"
+                    step="1"
+                    :tooltip="$t('batteryadmin.ClusterAddressDescription')"
                     wide
                 />
             </CardElement>
@@ -877,10 +907,14 @@ export default defineComponent({
                 { key: 1, value: 'JkBmsSerial' },
                 { key: 2, value: 'Mqtt' },
                 { key: 3, value: 'Victron' },
-                { key: 4, value: 'PytesCan' },
+                { key: 4, value: 'Pytes' },
                 { key: 5, value: 'SBSCan' },
                 { key: 6, value: 'JbdBmsSerial' },
                 { key: 7, value: 'ZendureMqtt' },
+            ],
+            busTypeList: [
+                { key: 0, value: 'Can' },
+                { key: 1, value: 'Rs485' },
             ],
             serialBmsInterfaceTypeList: [
                 { key: 0, value: 'Uart' },

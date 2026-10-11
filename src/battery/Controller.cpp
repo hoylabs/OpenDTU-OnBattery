@@ -4,7 +4,8 @@
 #include <battery/jkbms/Provider.h>
 #include <battery/mqtt/Provider.h>
 #include <battery/pylontech/Provider.h>
-#include <battery/pytes/Provider.h>
+#include <battery/pytes/can/Provider.h>
+#include <battery/pytes/rs485/Provider.h>
 #include <battery/sbs/Provider.h>
 #include <battery/victronsmartshunt/Provider.h>
 #include <battery/zendure/LocalMqttProvider.h>
@@ -55,28 +56,32 @@ void Controller::updateSettings()
     if (!config.Battery.Enabled) { return; }
 
     switch (config.Battery.Provider) {
-        case 0:
+        case BatteryConfig::ProviderType::PYLONTECH:
             _upProvider = std::make_unique<Pylontech::Provider>();
             break;
-        case 1:
+        case BatteryConfig::ProviderType::JKBMS:
             _upProvider = std::make_unique<JkBms::Provider>();
             break;
-        case 2:
+        case BatteryConfig::ProviderType::MQTT:
             _upProvider = std::make_unique<Mqtt::Provider>();
             break;
-        case 3:
+        case BatteryConfig::ProviderType::VICTRON:
             _upProvider = std::make_unique<VictronSmartShunt::Provider>();
             break;
-        case 4:
-            _upProvider = std::make_unique<Pytes::Provider>();
+        case BatteryConfig::ProviderType::PYTES:
+            if (config.Battery.Bus == BatteryConfig::BusType::RS485) {
+                _upProvider = std::make_unique<Pytes::Rs485::Provider>();
+            } else {
+                _upProvider = std::make_unique<Pytes::Can::Provider>();
+            }
             break;
-        case 5:
+        case BatteryConfig::ProviderType::SBS:
             _upProvider = std::make_unique<SBS::Provider>();
             break;
-        case 6:
+        case BatteryConfig::ProviderType::JBDBMS:
             _upProvider = std::make_unique<JbdBms::Provider>();
             break;
-        case 7:
+        case BatteryConfig::ProviderType::ZENDURE:
             switch (config.Battery.Zendure.ConnectionType) {
                 case BatteryZendureConfig::ConnectionType_t::LocalMqtt:
                     _upProvider = std::make_unique<Zendure::LocalMqttProvider>();

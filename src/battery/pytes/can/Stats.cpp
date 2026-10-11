@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <MqttSettings.h>
-#include <battery/pytes/Stats.h>
+#include <battery/pytes/can/Stats.h>
 
-namespace Batteries::Pytes {
+namespace Batteries::Pytes::Can {
 
 void Stats::getLiveViewData(JsonVariant& root) const
 {
@@ -156,4 +156,4 @@ void Stats::mqttPublish() const
     MqttSettings.publish("battery/charging/chargeImmediately", String(_chargeImmediately));
 }
 
-} // namespace Batteries::Pytes
+} // namespace Batteries::Pytes::Can

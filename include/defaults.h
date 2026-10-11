@@ -150,9 +150,12 @@
 #define POWERLIMITER_FULL_SOLAR_PASSTHROUGH_STOP_VOLTAGE 66.0
 
 #define BATTERY_ENABLED false
-#define BATTERY_PROVIDER 0 // Pylontech CAN receiver
 #define BATTERY_SERIAL_INTERFACE 0
 #define BATTERY_SERIAL_POLLING_INTERVAL 5
+// battery values older than 60 seconds are not used (e.g. by the power
+// limiter), 30 seconds leave room for one failed poll cycle
+#define BATTERY_SERIAL_POLLING_INTERVAL_MAX 30
+#define BATTERY_SERIAL_CLUSTER_ADDRESS 1
 #define BATTERY_ENABLE_DISCHARGE_CURRENT_LIMIT false
 #define BATTERY_DISCHARGE_CURRENT_LIMIT 0.0
 #define BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_SOC 100.0

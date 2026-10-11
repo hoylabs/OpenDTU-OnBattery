@@ -48,6 +48,13 @@ public:
     // convert stats to JSON for web application live view
     virtual void getLiveViewData(JsonVariant& root) const;
 
+    // batteries made of several modules can send the details of each module
+    // separately (as "module" object) instead of in getLiveViewData(), to
+    // keep the documents small. getLiveViewModuleData() returns false if the
+    // module does not exist or did not change since `since` (millis(), 0: any).
+    virtual size_t getLiveViewModuleCount() const { return 0; }
+    virtual bool getLiveViewModuleData([[maybe_unused]] JsonVariant& root, [[maybe_unused]] size_t index, [[maybe_unused]] uint32_t since) const { return false; }
+
     void mqttLoop();
 
     // the interval at which all battery data will be re-published, even
