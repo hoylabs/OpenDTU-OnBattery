@@ -6,6 +6,7 @@
 #include "NetworkSettings.h"
 #include "Utils.h"
 #include "defaults.h"
+#include <algorithm>
 #include <LittleFS.h>
 #include <esp_log.h>
 #include <nvs_flash.h>
@@ -101,7 +102,7 @@ void ConfigurationClass::serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmC
 
 void ConfigurationClass::serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target, bool includeCredentials)
 {
-    target["polling_interval"] = source.PollingInterval;
+    target["polling_interval_ms"] = source.PollingIntervalMs;
     target["individual_requests"] = source.IndividualRequests;
 
     JsonArray values = target["values"].to<JsonArray>();
@@ -547,7 +548,8 @@ void ConfigurationClass::deserializePowerMeterSerialSdmConfig(JsonObject const& 
 
 void ConfigurationClass::deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target)
 {
-    target.PollingInterval = source["polling_interval"] | POWERMETER_POLLING_INTERVAL;
+    target.PollingIntervalMs = source["polling_interval_ms"] | POWERMETER_POLLING_INTERVAL * 1000;
+    target.PollingIntervalMs = std::clamp(target.PollingIntervalMs, 100u, 15000u);
     target.IndividualRequests = source["individual_requests"] | false;
 
     JsonArray values = source["values"].as<JsonArray>();
@@ -1246,6 +1248,13 @@ void ConfigurationClass::migrateOnBattery()
         config.GridCharger.Huawei.InputCurrentLimit = huawei["input_current_limit"] | GRIDCHARGER_HUAWEI_INPUT_CURRENT_LIMIT;
         config.GridCharger.Huawei.FanOnlineFullSpeed = huawei["fan_online_full_speed"] | GRIDCHARGER_HUAWEI_FAN_ONLINE_FULL_SPEED;
         config.GridCharger.Huawei.FanOfflineFullSpeed = huawei["fan_offline_full_speed"] | GRIDCHARGER_HUAWEI_FAN_OFFLINE_FULL_SPEED;
+    }
+
+    if (config.Cfg.VersionOnBattery < 9) {
+        // new unit is now milliseconds
+        JsonObject httpJson = doc["powermeter"]["http_json"];
+        config.PowerMeter.HttpJson.PollingIntervalMs = httpJson["polling_interval"] | POWERMETER_POLLING_INTERVAL;
+        config.PowerMeter.HttpJson.PollingIntervalMs *= 1000;
     }
 
     f.close();

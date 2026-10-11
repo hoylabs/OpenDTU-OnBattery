@@ -7,6 +7,7 @@
 #include <base64.h>
 #include <ESPmDNS.h>
 #include <LogHelper.h>
+#include "Statistic.h"
 
 #undef TAG
 static const char* TAG = "powerMeter";
@@ -82,28 +83,78 @@ void Provider::pollingLoop()
 {
     std::unique_lock<std::mutex> lock(_pollingMutex);
 
+    // debug variables
+    uint32_t lastPrint = 0;
+    uint16_t dataCounter = 0;
+    uint16_t identicalDataCounter = 0;
+    uint16_t errorCount = 0;
+    float lastTotalPower = 0.0f;
+    WeightedAVG<uint32_t> avgPollTime{50};     // average poll time
+    WeightedAVG<uint32_t> avgIntervalTime{50}; // average interval time
+
     while (!_stopPolling) {
-        auto elapsedMillis = millis() - _lastPoll;
-        auto intervalMillis = _cfg.PollingInterval * 1000;
+        uint32_t elapsedMillis = millis() - _lastPoll;
+        uint32_t intervalMillis = _cfg.PollingIntervalMs;
         if (_lastPoll > 0 && elapsedMillis < intervalMillis) {
             auto sleepMs = intervalMillis - elapsedMillis;
+            sleepMs = std::max(sleepMs, intervalMillis / 2); // to avoid too fast polling
             _cv.wait_for(lock, std::chrono::milliseconds(sleepMs),
                     [this] { return _stopPolling; }); // releases the mutex
             continue;
         }
 
-        _lastPoll = millis();
+        // record the average interval time
+        uint32_t pollStart = millis();
+        if (_lastPoll > 0) { avgIntervalTime.addNumber(pollStart - _lastPoll); }
+
+        _lastPoll = pollStart; // used for calculating the next polling interval
 
         lock.unlock(); // polling can take quite some time
         auto res = poll();
         lock.lock();
 
+        uint32_t pollEnd = millis();
+
         if (std::holds_alternative<String>(res)) {
             DTU_LOGE("%s", std::get<String>(res).c_str());
-            continue;
+            errorCount++;
+        } else {
+            float currentTotalPower = getPowerTotal();
+            if ((currentTotalPower == lastTotalPower) && (currentTotalPower != 0.0f)) { identicalDataCounter++; }
+            lastTotalPower = currentTotalPower;
+
+            DTU_LOGD("New total: %.2fW", currentTotalPower);
         }
 
-        DTU_LOGD("New total: %.2f", getPowerTotal());
+        // record the average poll time
+        avgPollTime.addNumber(pollEnd - pollStart);
+
+        // prevent overflow of the counters by halving them when reaching 10.000,
+        // which is sufficient for calculating the percentage of data
+        if (dataCounter == 10000) {
+            dataCounter /= 2;
+            identicalDataCounter /= 2;
+            errorCount /= 2;
+        }
+        dataCounter++;
+
+        // periodic information output
+        if (pollEnd - lastPrint > 30 * 1000) {
+            lastPrint = pollEnd;
+            DTU_LOGI("Average interval time: %ums, [Min: %u, Max: %u]",
+                avgIntervalTime.getAverage(), avgIntervalTime.getMin(), avgIntervalTime.getMax());
+            DTU_LOGI("Average poll time: %ums, [Min: %u, Max: %u]",
+                avgPollTime.getAverage(), avgPollTime.getMin(), avgPollTime.getMax());
+
+            if (dataCounter >= 10) {
+                DTU_LOGI("Http/Poll errors: %.1f%% [%u of %u polls]",
+                    (static_cast<float>(errorCount) / static_cast<float>(dataCounter)) * 100.0f,
+                    errorCount, dataCounter);
+                DTU_LOGI("Identical data: %.1f%% [%u of %u polls]",
+                    (static_cast<float>(identicalDataCounter) / static_cast<float>(dataCounter)) * 100.0f,
+                    identicalDataCounter, dataCounter);
+            }
+        }
     }
 }
 
@@ -192,7 +243,9 @@ Provider::poll_result_t Provider::poll()
 bool Provider::isDataValid() const
 {
     uint32_t age = millis() - getLastUpdate();
-    return getLastUpdate() > 0 && (age < (3 * _cfg.PollingInterval * 1000));
+
+    // consider data valid if last update was within 3 polling intervals, but at least 5 seconds
+    return getLastUpdate() > 0 && (age < std::max(5000u, 3 * _cfg.PollingIntervalMs));
 }
 
 } // namespace PowerMeters::Json::Http
