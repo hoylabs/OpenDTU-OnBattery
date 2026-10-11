@@ -1,7 +1,8 @@
 version: 2
 updates:
   # The webapp's npm dependencies follow upstream (tbnobody/OpenDTU merges).
-  # A limit of 0 disables version updates, security updates are not affected.
+  # A limit of 0 disables version updates. Security updates are disabled in
+  # the repository settings, as they are taken via upstream merges as well.
   - package-ecosystem: "npm"
     directory: "/webapp"
     schedule:
