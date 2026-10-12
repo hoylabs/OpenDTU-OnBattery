@@ -117,8 +117,8 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_chargeEnabled = this->getBit(chargeStatusBits, 7);
             _stats->_dischargeEnabled = this->getBit(chargeStatusBits, 6);
             // bit 5: request force charge I, bit 4: request force charge II
-            _stats->_chargeImmediately = this->getBit(chargeStatusBits, 5) ||
-                                         this->getBit(chargeStatusBits, 4);
+            _stats->setChargeImmediately(this->getBit(chargeStatusBits, 5) ||
+                                         this->getBit(chargeStatusBits, 4));
 
             DTU_LOGD("chargeStatusBits: %d %d %d",
                     _stats->_chargeEnabled,
@@ -165,7 +165,7 @@ void Provider::dummyData()
 
     _stats->_chargeEnabled = true;
     _stats->_dischargeEnabled = true;
-    _stats->_chargeImmediately = false;
+    _stats->setChargeImmediately(false);
 
     _stats->_moduleCount = 1;
 
@@ -210,7 +210,7 @@ void Provider::dummyData()
         _stats->_warningLowTemperature = true;
         _stats->_alarmUnderVoltage = true;
         _stats->_dischargeEnabled = false;
-        _stats->_chargeImmediately = true;
+        _stats->setChargeImmediately(true);
     }
 
     issues = (issues + 1) % 5;

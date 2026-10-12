@@ -73,6 +73,7 @@ private:
     static constexpr int HTTP_REQUEST_TIMEOUT_MS = 500; // 500ms
 
     void setRequestedPowerAc(float power);
+    void updateEmergencyPowerAc(float maxAcPower, float outputVoltage);
     float _requestedPowerAc = 0;
 
     void sendControlCommandRequest();
@@ -89,6 +90,7 @@ private:
 
     bool _autoPowerEnabled = false;
     bool _batteryEmergencyCharging = false;
+    bool _batteryEmergencyStopping = false;
 };
 
 } // namespace GridChargers::Trucki

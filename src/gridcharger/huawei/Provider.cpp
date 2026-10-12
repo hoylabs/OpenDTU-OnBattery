@@ -158,7 +158,8 @@ void Provider::loop()
         _outputCurrentOnSinceMillis = millis();
     }
 
-    if (_outputCurrentOnSinceMillis + HUAWEI_AUTO_MODE_SHUTDOWN_DELAY < millis() &&
+    if (!_batteryEmergencyCharging &&
+            _outputCurrentOnSinceMillis + HUAWEI_AUTO_MODE_SHUTDOWN_DELAY < millis() &&
             (_mode == HUAWEI_MODE_AUTO_EXT || _mode == HUAWEI_MODE_AUTO_INT)) {
         disableOutput();
     }
@@ -179,7 +180,9 @@ void Provider::loop()
     // Emergency charge
     // ***********************
     auto stats = Battery.getStats();
-    if (!_batteryEmergencyCharging && config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
+    // a request that returns while we are still ramping down restarts emergency charging
+    if ((!_batteryEmergencyCharging || _batteryEmergencyStopping) &&
+            config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
         if (!oOutputVoltage) {
             // TODO(schlimmchen): if this situation actually occurs, this message
             // will be printed with high frequency for a prolonged time. how can
@@ -189,21 +192,38 @@ void Provider::loop()
         }
 
         _batteryEmergencyCharging = true;
+        _batteryEmergencyStopping = false;
 
-        // Set output current
-        float outputCurrent = config.GridCharger.AutoPowerUpperPowerLimit / *oOutputVoltage;
-        DTU_LOGI("Emergency Charge Output current %.02f", outputCurrent);
-        _setParameter(outputCurrent, Setting::OnlineCurrent);
+        // The PSU must deliver power regardless of the mode, so make sure
+        // its output is enabled.
+        enableOutput();
+        _outputCurrentOnSinceMillis = millis();
+
+        setEmergencyCurrent(*oOutputVoltage, oOutputCurrent.value_or(0));
         return;
     }
 
     if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
+        _batteryEmergencyStopping = true;
         // Battery request has changed. Set current to 0, wait for PSU to respond and then clear state
         // TODO(schlimmchen): this is repeated very often for up to (polling interval) seconds. maybe
         // trigger sending request for data immediately? otherwise implement a backoff instead.
         _setParameter(0, Setting::OnlineCurrent);
         if (oOutputCurrent && *oOutputCurrent < 1) {
             _batteryEmergencyCharging = false;
+            _batteryEmergencyStopping = false;
+            if (_mode == HUAWEI_MODE_OFF) { disableOutput(); }
+        }
+        return;
+    }
+
+    if (_batteryEmergencyCharging) {
+        // Emergency charging is ongoing. Do not let automatic power control
+        // override the emergency setpoint. The charge current limit and the
+        // charging current of other sources change over time, so the
+        // setpoint is updated periodically.
+        if (oOutputVoltage && _nextEmergencyUpdateMillis < millis()) {
+            setEmergencyCurrent(*oOutputVoltage, oOutputCurrent.value_or(0));
         }
         return;
     }
@@ -309,6 +329,34 @@ void Provider::loop()
     }
 }
 
+void Provider::setEmergencyCurrent(float outputVoltage, float outputCurrent)
+{
+    _nextEmergencyUpdateMillis = millis() + 2 * HardwareInterface::DataRequestIntervalMillis;
+
+    if (!(outputVoltage > 0.0f)) {
+        DTU_LOGW("Cannot perform emergency charging with invalid PSU output voltage %.02f", outputVoltage);
+        _setParameter(0, HardwareInterface::Setting::OnlineCurrent);
+        return;
+    }
+
+    auto const& config = Configuration.get();
+
+    float calculatedCurrent = config.GridCharger.AutoPowerUpperPowerLimit / outputVoltage;
+
+    // battery current limit - current from other sources, e.g. Victron MPPT charger
+    float permissibleCurrent = Battery.getChargeCurrentLimit() -
+        (Battery.getStats()->getChargeCurrent() - outputCurrent);
+
+    float current = std::min({calculatedCurrent, permissibleCurrent, MAX_ONLINE_CURRENT});
+    current = current > 0 ? current : 0;
+
+    DTU_LOGI("Emergency Charge Output current %.02fA. This is the lower value of "
+            "calculated %.02fA and BMS permissible %.02fA currents",
+            current, calculatedCurrent, permissibleCurrent);
+
+    _setParameter(current, HardwareInterface::Setting::OnlineCurrent);
+}
+
 void Provider::setFan(bool online, bool fullSpeed)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -378,7 +426,8 @@ void Provider::setMode(uint8_t mode) {
     if (!_upHardwareInterface) { return; }
 
     if (mode == HUAWEI_MODE_OFF) {
-        disableOutput();
+        // while emergency charging, the output is disabled once it has ended
+        if (!_batteryEmergencyCharging) { disableOutput(); }
         _mode = HUAWEI_MODE_OFF;
     }
     if (mode == HUAWEI_MODE_ON) {

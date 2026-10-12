@@ -173,7 +173,7 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x360: { // Victron protocol: Charging request
-            _stats->_chargeImmediately = rx_message.data[0]; // 0xff requests charging.
+            _stats->setChargeImmediately(rx_message.data[0]); // 0xff requests charging.
             DTU_LOGD("chargeImmediately: %d", _stats->_chargeImmediately);
             break;
         }
@@ -406,7 +406,7 @@ void Provider::onMessage(twai_message_t rx_message)
         case 0x408: { // Pytes protocol: charge status
             bool chargeEnabled = rx_message.data[0];
             bool dischargeEnabled = rx_message.data[1];
-            _stats->_chargeImmediately = rx_message.data[2];
+            _stats->setChargeImmediately(rx_message.data[2]);
             // Note: Should use std::popcount once supported by the compiler.
             _stats->_moduleCountBlockingCharge = popCount(rx_message.data[5]);
             _stats->_moduleCountBlockingDischarge = popCount(rx_message.data[6]);
