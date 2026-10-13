@@ -62,8 +62,8 @@ void SunSpecInverterModel101_103::fill(uint16_t* ac, std::shared_ptr<InverterAbs
         ac[3] = static_cast<uint16_t>(static_cast<int16_t>(i3 * 100.0f + 0.5f)); // AphC
     } else {
         ac[1] = ac[0]; // AphA: total for single-phase
-        ac[2] = NI_S; // AphB: not applicable, single-phase
-        ac[3] = NI_S; // AphC: not applicable, single-phase
+        ac[2] = NI_U; // AphB: not applicable, single-phase
+        ac[3] = NI_U; // AphC: not applicable, single-phase
     }
 
     ac[4] = static_cast<uint16_t>(SF_A); // A_SF
