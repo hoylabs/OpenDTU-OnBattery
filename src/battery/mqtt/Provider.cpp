@@ -161,9 +161,9 @@ void Provider::onMqttMessageVoltage(espMqttClientTypes::MessageProperties const&
     }
 
     // since this project is revolving around Hoymiles microinverters, which can
-    // only handle up to 65V of input voltage at best, it is safe to assume that
+    // only handle up to 66V of input voltage at best, it is safe to assume that
     // an even higher voltage is implausible.
-    if (*voltage < 0 || *voltage > 65) {
+    if (*voltage < 0 || *voltage > 66) {
         DTU_LOGW("Implausible voltage '%.2f' in topic '%s'", *voltage, topic);
         return;
     }

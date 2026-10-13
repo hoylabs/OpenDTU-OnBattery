@@ -116,7 +116,9 @@ void Provider::onMessage(twai_message_t rx_message)
             uint16_t chargeStatusBits = rx_message.data[0];
             _stats->_chargeEnabled = this->getBit(chargeStatusBits, 7);
             _stats->_dischargeEnabled = this->getBit(chargeStatusBits, 6);
-            _stats->_chargeImmediately = this->getBit(chargeStatusBits, 5);
+            // bit 5: request force charge I, bit 4: request force charge II
+            _stats->_chargeImmediately = this->getBit(chargeStatusBits, 5) ||
+                                         this->getBit(chargeStatusBits, 4);
 
             DTU_LOGD("chargeStatusBits: %d %d %d",
                     _stats->_chargeEnabled,

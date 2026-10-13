@@ -1,13 +1,21 @@
 version: 2
 updates:
-  # Maintain dependencies for npm
+  # The webapp's npm dependencies follow upstream (tbnobody/OpenDTU merges).
+  # A limit of 0 disables version updates. Security updates are disabled in
+  # the repository settings, as they are taken via upstream merges as well.
   - package-ecosystem: "npm"
     directory: "/webapp"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 0
 
-  # Maintain dependencies for GitHub Actions
+  # Also covers the OnBattery-only workflows, which upstream merges don't
+  # update. One grouped pull request per month.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
