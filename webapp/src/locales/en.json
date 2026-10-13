@@ -201,7 +201,8 @@
             "ERR": "Error code",
             "HSDS": "Day sequence number (0..364)",
             "MpptTemperature": "Charge controller temperature",
-            "ChargeCurrentLimit": "Charge current limit"
+            "ChargeCurrentLimit": "Charge current limit",
+            "MpptTransmitError": "Transmit errors"
         },
         "section_output": "Output (Battery)",
         "output": {
@@ -1337,6 +1338,7 @@
         "full-access": "@:batteryadmin.zendure.controlModes.Full",
         "write-once": "Write Once",
         "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly",
+        "transmitError": "Transmit errors",
         "zendure": {
             "chargeThroughState": "Charge through state",
             "chargeThroughStates": {
