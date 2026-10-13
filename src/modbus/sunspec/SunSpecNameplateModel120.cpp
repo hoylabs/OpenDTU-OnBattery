@@ -30,8 +30,8 @@ void SunSpecNameplateModel120::fill(uint16_t* n, std::shared_ptr<InverterAbstrac
     n[16] = NI_S; // PFRtg_SF: paired with NI values, must also read NI
     n[17] = 0; // WHRtg: nominal storage energy rating - genuinely 0, not a storage device
     n[18] = 0; // WHRtg_SF
-    n[19] = 0; // AhrRtg: usable battery capacity - MUST be 0, some SunSpec clients (e.g. dbus-fronius) key off this to filter out battery/storage inverters
-    n[20] = 0; // AhrRtg_SF: paired with AhrRtg, must also read as 0
+    n[19] = 0; // AhrRtg: usable battery capacity - genuinely 0, not a storage device (dbus-fronius skips devices reporting a capacity > 0)
+    n[20] = 0; // AhrRtg_SF
     n[21] = 0; // MaxChaRte: max charge rate - genuinely 0, not a storage device
     n[22] = 0; // MaxChaRte_SF
     n[23] = 0; // MaxDisChaRte: max discharge rate - genuinely 0, not a storage device
