@@ -289,6 +289,23 @@ void ConfigurationClass::serializeGridChargerTruckiConfig(GridChargerTruckiConfi
     target["password"] = source.Password;
 }
 
+void ConfigurationClass::serializeModbusServerConfig(ModbusServerConfig const& source, JsonObject& target)
+{
+    char buf[sizeof(uint64_t) * 8 + 1];
+    target["enabled"] = source.Enabled;
+    target["port"] = source.Port;
+    JsonArray inverters = target["inverter"].to<JsonArray>();
+    for (size_t i = 0; i < INV_MAX_COUNT; ++i) {
+        if (source.Inverter[i].Serial == 0ULL) { break; }
+        JsonObject inv = inverters.add<JsonObject>();
+        snprintf(buf, sizeof(buf), "%0x%08x",
+            static_cast<uint32_t>((source.Inverter[i].Serial >> 32) & 0xFFFFFFFF),
+            static_cast<uint32_t>(source.Inverter[i].Serial & 0xFFFFFFFF));
+        inv["serial"] = buf;
+        inv["unit_id"] = source.Inverter[i].UnitId;
+    }
+}
+
 bool ConfigurationClass::write()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "w");
@@ -478,6 +495,9 @@ bool ConfigurationClass::write()
 
     JsonObject gridcharger_trucki = gridcharger["trucki"].to<JsonObject>();
     serializeGridChargerTruckiConfig(config.GridCharger.Trucki, gridcharger_trucki);
+
+    JsonObject modbusServer = doc["modbusserver"].to<JsonObject>();
+    serializeModbusServerConfig(config.ModbusServer, modbusServer);
 
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
@@ -739,6 +759,37 @@ void ConfigurationClass::deserializeGridChargerTruckiConfig(JsonObject const& so
     strlcpy(target.Password, source["password"] | "", sizeof(target.Password));
 }
 
+void ConfigurationClass::deserializeModbusServerConfig(JsonObject const& source, ModbusServerConfig& target)
+{
+    target.Enabled = source["enabled"] | MODBUS_SERVER_ENABLED;
+    target.Port = source["port"] | MODBUS_SERVER_PORT;
+    JsonArrayConst inverters = source["inverter"].as<JsonArrayConst>();
+    size_t idx = 0;
+    bool seenUnitId[256] = {}; // unit_id is a uint8_t, one slot per possible value
+    for (JsonObjectConst inv : inverters) {
+        if (idx >= INV_MAX_COUNT) { break; }
+        if (!inv["unit_id"].is<uint8_t>()) { continue; } // malformed entry, drop it
+        if (!inv["serial"].is<const char*>()) { continue; } // malformed entry, drop it
+        uint8_t unitId = inv["unit_id"].as<uint8_t>();
+        if (unitId < 1 || unitId > 247) { continue; } // out of valid Modbus unit ID range, drop it
+        if (seenUnitId[unitId]) { continue; } // duplicate unit_id, drop it (WebApi rejects these too)
+        uint64_t serial = strtoll(inv["serial"].as<const char*>(), nullptr, 16);
+        // Serial == 0 doubles as the "end of list" terminator below and in
+        // unitIdToInverter(), so a zero/unparseable serial must never be
+        // written mid-array - it would hide every entry after it.
+        if (serial == 0) { continue; }
+        seenUnitId[unitId] = true;
+        target.Inverter[idx].Serial = serial;
+        target.Inverter[idx].UnitId = unitId;
+        ++idx;
+    }
+    // zero-terminate remaining slots
+    for (; idx < INV_MAX_COUNT; ++idx) {
+        target.Inverter[idx].Serial = 0ULL;
+        target.Inverter[idx].UnitId = 0;
+    }
+}
+
 bool ConfigurationClass::read()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "r", false);
@@ -952,6 +1003,8 @@ bool ConfigurationClass::read()
     deserializeGridChargerCanConfig(gridcharger["can"], config.GridCharger.Can);
     deserializeGridChargerHuaweiConfig(gridcharger["huawei"], config.GridCharger.Huawei);
     deserializeGridChargerTruckiConfig(gridcharger["trucki"], config.GridCharger.Trucki);
+
+    deserializeModbusServerConfig(doc["modbusserver"], config.ModbusServer);
 
     f.close();
 
