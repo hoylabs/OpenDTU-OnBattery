@@ -336,8 +336,8 @@ void Provider::onMessage(twai_message_t rx_message)
             bool highTemp = this->getBit(mergedBits, 9);
             bool lowTemp = this->getBit(mergedBits, 11);
             bool underTemp = this->getBit(mergedBits, 12);
-            bool overCurrentDischarge = this->getBit(mergedBits, 17) || this->getBit(mergedBits, 18);
-            bool overCurrentCharge = this->getBit(mergedBits, 19) || this->getBit(mergedBits, 20);
+            bool overCurrentDischarge = this->getBit(mergedBits, 17) || this->getBit(mergedBits, 18) || this->getBit(mergedBits, 24);
+            bool overCurrentCharge = this->getBit(mergedBits, 19) || this->getBit(mergedBits, 20) || this->getBit(mergedBits, 29);
             bool highCurrentDischarge = this->getBit(mergedBits, 21);
             bool highCurrentCharge = this->getBit(mergedBits, 22);
             bool stateCharging = this->getBit(mergedBits, 26);
