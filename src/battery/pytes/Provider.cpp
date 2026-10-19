@@ -56,13 +56,6 @@ static String hexBytes(uint8_t const* data, uint8_t len) {
     return out;
 }
 
-static uint32_t popCount(uint32_t val) {
-    uint32_t cnt = 0;
-    for (; val; ++cnt)
-        val &= val - 1;
-    return cnt;
-}
-
 bool Provider::init()
 {
     return ::Batteries::CanReceiver::init("Pytes");
@@ -433,9 +426,8 @@ void Provider::onMessage(twai_message_t rx_message)
             // battery uses for the charge request in the Victron protocol
             // (0x360).
             _stats->_chargeImmediately = (rx_message.data[2] || rx_message.data[3]) && !rx_message.data[5];
-            // Note: Should use std::popcount once supported by the compiler.
-            _stats->_moduleCountBlockingCharge = popCount(rx_message.data[5]);
-            _stats->_moduleCountBlockingDischarge = popCount(rx_message.data[6]);
+            _stats->_moduleCountBlockingCharge = __builtin_popcount(rx_message.data[5]);
+            _stats->_moduleCountBlockingDischarge = __builtin_popcount(rx_message.data[6]);
 
             DTU_LOGD("chargeEnabled: %d dischargeEnabled: %d chargeImmediately: %d "
                     "moduleCountBlockingDischarge: %d moduleCountBlockingCharge: %d",
@@ -471,7 +463,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
         case 0x40d: { // Pytes protocol: heating / balancing info
             // bytes 0-3: bitmask of the modules heating (bit 0 = module 1)
-            _stats->_moduleCountHeating = popCount(this->readUnsignedInt32(rx_message.data));
+            _stats->_moduleCountHeating = __builtin_popcount(this->readUnsignedInt32(rx_message.data));
 
             // bytes 4-5: bitmask of the cells being balanced (bit 0 = cell 1),
             // combined over all modules (observed: 0x86E1 = 0x84E1 of module 1
