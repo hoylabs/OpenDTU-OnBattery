@@ -169,6 +169,10 @@ void HassIntegration::publishBinarySensor(const char* caption,
     auto deviceObj = root["dev"].to<JsonObject>();
     createDeviceInfo(deviceObj);
 
+    if (Configuration.get().Mqtt.Hass.Expire) {
+        root["exp_aft"] = _spStats->getMqttFullPublishIntervalMs() / 1000 * 3;
+    }
+
     if (!Utils::checkJsonAlloc(root, __FUNCTION__, __LINE__)) {
         return;
     }
