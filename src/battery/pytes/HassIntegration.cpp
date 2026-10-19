@@ -41,6 +41,7 @@ void HassIntegration::publishSensors() const
     publishSensor("Modules Offline", "mdi:counter", "modulesOffline");
     publishSensor("Modules Blocking Charge", "mdi:counter", "modulesBlockingCharge");
     publishSensor("Modules Blocking Discharge", "mdi:counter", "modulesBlockingDischarge");
+    publishSensor("Modules Heating", "mdi:heating-coil", "modulesHeating");
 
     publishBinarySensor("Alarm Discharge current", "mdi:alert", "alarm/overCurrentDischarge", "1", "0");
     publishBinarySensor("Alarm High charge current", "mdi:alert", "alarm/overCurrentCharge", "1", "0");
