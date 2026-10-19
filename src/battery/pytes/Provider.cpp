@@ -409,7 +409,12 @@ void Provider::onMessage(twai_message_t rx_message)
         case 0x408: { // Pytes protocol: charge status
             bool chargeEnabled = rx_message.data[0];
             bool dischargeEnabled = rx_message.data[1];
-            _stats->_chargeImmediately = rx_message.data[2];
+            // byte 2: force charge I, raised at SoC <= 8 %, cleared at
+            // >= 12 %. byte 3: force charge II, raised at SoC < 10 %, cleared
+            // at > 12 %. byte 5: modules blocking charge. same condition the
+            // battery uses for the charge request in the Victron protocol
+            // (0x360).
+            _stats->_chargeImmediately = (rx_message.data[2] || rx_message.data[3]) && !rx_message.data[5];
             // Note: Should use std::popcount once supported by the compiler.
             _stats->_moduleCountBlockingCharge = popCount(rx_message.data[5]);
             _stats->_moduleCountBlockingDischarge = popCount(rx_message.data[6]);
