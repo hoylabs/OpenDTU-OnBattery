@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <gridcharger/HTTP/Provider.h>
-#include <gridcharger/HTTP/DataPoints.h>
 #include <battery/Controller.h>
 #include <powermeter/Controller.h>
 #include <PowerLimiter.h>
-#include <Utils.h>
-#include <WiFiUdp.h>
 #include <LogHelper.h>
+#include <array>
 
 #undef TAG
 static const char* TAG = "gridCharger";
@@ -17,41 +15,33 @@ namespace GridChargers::HTTP {
 
 bool Provider::init()
 {
-    _stopPollingData = false;
     DTU_LOGI("Initialize HTTP AC charger interface...");
 
-    auto const& config = Configuration.get();
-    String  url = config.GridCharger.HTTP.Url;
+    auto const& config = Configuration.get().GridCharger.HTTP;
 
-    auto const checkLength = [&url](char const* label, char const* uri) {
-        size_t const combined = url.length() + strlen(uri);
-        if (combined >= HTTP_REQUEST_MAX_URL_STRLEN) {
-            DTU_LOGE("Combined URL for %s exceeds %u chars (got %u) and would be truncated",
-                    label, HTTP_REQUEST_MAX_URL_STRLEN, combined);
-            return false;
-        }
-        return true;
-    };
+    _chargers.clear();
+    for (size_t i = 0; i < GRIDCHARGER_HTTP_MAX_CHARGERS; ++i) {
+        if (!config.Chargers[i].Enabled) { continue; }
 
-    if (!checkLength("UriOn", config.GridCharger.HTTP.UriOn) ||
-        !checkLength("UriOff", config.GridCharger.HTTP.UriOff) ||
-        !checkLength("UriStats", config.GridCharger.HTTP.UriStats)) {
+        auto charger = std::make_shared<Charger>(i, config);
+        if (!charger->init()) { return false; }
+        _chargers.push_back(std::move(charger));
+    }
+
+    if (_chargers.empty()) {
+        DTU_LOGE("No HTTP AC charger enabled");
         return false;
     }
 
-    _uriOn = url + config.GridCharger.HTTP.UriOn;
-    _uriOff = url + config.GridCharger.HTTP.UriOff;
-    _uriStats = url + config.GridCharger.HTTP.UriStats;
-    _uriPowerparam = config.GridCharger.HTTP.UriPowerParam;
-    _maximumAcPower = config.GridCharger.HTTP.AcPower;
+    _stats->setChargers(std::vector<std::shared_ptr<Charger const>>(_chargers.cbegin(), _chargers.cend()));
+
+    _stopPollingData = false;
     return true;
 }
 
 void Provider::deinit()
 {
     DTU_LOGI("DEInitialize HTTP AC charger interface...");
-    PowerOFF();
-    _dataPollingTaskDone = false;
 
     std::unique_lock pollingLock(_dataPollingMutex);
     _stopPollingData = true;
@@ -63,6 +53,10 @@ void Provider::deinit()
         while (!_dataPollingTaskDone) { delay(10); }
         _dataPollingTaskHandle = nullptr;
     }
+    _dataPollingTaskDone = false;
+
+    // the actual state of the smart plugs is unknown, so switch off all of them
+    for (auto& charger : _chargers) { charger->powerOff(); }
 }
 
 void Provider::loop()
@@ -80,198 +74,244 @@ void Provider::loop()
     }
 }
 
-void Provider::PowerON()
+bool Provider::getAutoPowerStatus() const
 {
-    if (!send_http(_uriOn))
-    {
-        return;
-    }
-    _powerState = true;
-    DTU_LOGI("Power ON\r\n");
+    // battery-powered inverters have priority over the HTTP chargers: they are
+    // never blocked by a running charger. instead, all chargers are switched
+    // off as soon as an inverter produces (see powerControlLoop()).
+    return false;
 }
 
-void Provider::PowerOFF()
+bool Provider::isAnyChargerOn() const
 {
-    if (!send_http(_uriOff))
-    {
-        return;
-    };
-    _powerState = false;
-    DTU_LOGI("Power OFF\r\n");
+    for (auto const& charger : _chargers) {
+        if (charger->getPowerState()) { return true; }
+    }
+    return false;
 }
 
-bool Provider::send_http(String Url)
+void Provider::switchAll(bool on)
 {
-    HttpRequestConfig HttpRequest;
-    strlcpy(HttpRequest.Url, Url.c_str(), sizeof(HttpRequest.Url));
-    HttpRequest.Timeout = 60000; // 60 seconds
-    auto httpGetter = std::make_unique<HttpGetter>(HttpRequest);
-    DTU_LOGI("Start sending to URL: %s\r\n",Url.c_str());
-
-    if (!httpGetter->init()) {
-        DTU_LOGE("ERROR INIT HttpGetter %s\r\n", httpGetter->getErrorText());
-        return false;
+    for (auto& charger : _chargers) {
+        if (charger->getPowerState() == on) { continue; }
+        on ? charger->powerOn() : charger->powerOff();
     }
-
-    if (!httpGetter->performGetRequest()) {
-        DTU_LOGE("ERROR GET HttpGetter %s\r\n", httpGetter->getErrorText());
-        return false;
-    }
-
-    return true;
-}
-
-float Provider::read_http(String Url)
-{
-    auto oAcPower = _dataCurrent.get<DataPointLabel::AcPower>();
-    HttpRequestConfig HttpRequest;
-    JsonDocument jsonResponse;
-    strlcpy(HttpRequest.Url, Url.c_str(), sizeof(HttpRequest.Url));
-    HttpRequest.Timeout = 60000;  // 60 seconds
-    auto httpGetter = std::make_unique<HttpGetter>(HttpRequest);
-    DTU_LOGI("Start reading from URL: %s\r\n",Url.c_str());
-
-    if (!httpGetter->init()) {
-        DTU_LOGE("ERROR INIT HttpGetter %s\r\n", httpGetter->getErrorText());
-        return oAcPower.value_or(0.0f);
-    }
-
-    httpGetter->addHeader("Content-Type", "application/json");
-    httpGetter->addHeader("Accept", "application/json");
-
-    auto res = httpGetter->performGetRequest();
-    if (!res) {
-        DTU_LOGE("ERROR GET HttpGetter %s\r\n", httpGetter->getErrorText());
-        return oAcPower.value_or(0.0f);
-    }
-
-    auto pStream = res.getStream();
-    if (!pStream) {
-        DTU_LOGE("Programmer error: HTTP request yields no stream");
-        return oAcPower.value_or(0.0f);
-    }
-
-    const DeserializationError error = deserializeJson(jsonResponse, *pStream);
-    if (error) {
-        String msg = error.c_str();
-        DTU_LOGE("Unable to parse server response as JSON: %s\r\n", msg.c_str());
-        return oAcPower.value_or(0.0f);
-    }
-
-    auto pathResolutionResult = Utils::getJsonValueByPath<float>(jsonResponse, _uriPowerparam);
-    if (!pathResolutionResult.second.isEmpty()) {
-        DTU_LOGE("ERROR reading AC Power from Smart Plug %s\r\n",pathResolutionResult.second.c_str());
-        return oAcPower.value_or(0.0f);
-    }
-
-    return pathResolutionResult.first;
 }
 
 void Provider::powerControlLoop()
 {
-    auto& config = Configuration.get();
-    auto oAcPower = _dataCurrent.get<DataPointLabel::AcPower>();
+    auto const& config = Configuration.get();
     auto stats = Battery.getStats();
-    uint8_t _batterySoC = stats->getSoC();
-    if (_autowaitTillMillis < millis()) {
-        DTU_LOGI("SoC: %i", _batterySoC);
-        _autowaitTillMillis = millis() + 10000;
+    uint8_t batterySoC = stats->getSoC();
+    if (millis() - _lastSoCLogMillis > 10000) {
+        DTU_LOGI("SoC: %i", batterySoC);
+        _lastSoCLogMillis = millis();
     }
+
+    auto blockAutoMode = [this](uint32_t ms) {
+        _autoModeBlockedSinceMillis = millis();
+        _autoModeBlockedForMillis = ms;
+    };
 
     // ***********************
     // Emergency charge
     // ***********************
     if (!_batteryEmergencyCharging && config.GridCharger.EmergencyChargeEnabled && stats->getImmediateChargingRequest()) {
-        if (!oAcPower) {
-            DTU_LOGW("Cannot perform emergency charging with unknown PSU max ac power value");
-            return;
-        }
-
         _batteryEmergencyCharging = true;
-
-        DTU_LOGI("Emergency Charge AC Power %.02f SoC: %i", *oAcPower, _batterySoC);
-        PowerON();
+        DTU_LOGI("Emergency charge ON, SoC: %i", batterySoC);
+        switchAll(true);
         return;
     }
 
-    if (_batteryEmergencyCharging && !stats->getImmediateChargingRequest()) {
-        DTU_LOGI("Emergency Charge OFF %.02f", oAcPower.value_or(0.0f));
-        PowerOFF();
-        _batteryEmergencyCharging = false;
+    if (_batteryEmergencyCharging) {
+        if (!stats->getImmediateChargingRequest()) {
+            DTU_LOGI("Emergency charge OFF, SoC: %i", batterySoC);
+            switchAll(false);
+            _batteryEmergencyCharging = false;
+            blockAutoMode(STABILIZATION_TIME_MS);
+        }
         return;
     }
+
     // ***********************
     // Automatic power control
     // ***********************
+    if (!config.GridCharger.AutoPowerEnabled) { return; }
 
-    if (config.GridCharger.AutoPowerEnabled) {
-
-        // Check if we should run automatic power calculation at all.
-        // We may have set a value recently and still wait for output stabilization
-        if (_autoModeBlockedTillMillis > millis()) {
-             return;
+    // the following conditions switch off all chargers immediately,
+    // regardless of the stabilization time and the minimum on/off time.
+    if (!config.Battery.Enabled ||
+        PowerLimiter.isGovernedBatteryPoweredInverterProducing() ||
+        PowerLimiter.isFullSolarPassthroughActive()) {
+        if (isAnyChargerOn()) {
+            DTU_LOGI("Inverter is active, full solar passthrough or battery disabled, disable all chargers");
+            switchAll(false);
+            blockAutoMode(STABILIZATION_TIME_MS);
         }
+        return;
+    }
 
-        if (PowerLimiter.isGovernedBatteryPoweredInverterProducing() && _powerState) {
-            PowerOFF();
-            DTU_LOGI("Inverter is active, disable PSU");
-            _autoModeBlockedTillMillis = millis() + 19900;
-            return;
-        }
-
-        if (millis() - _dataCurrent.getLastUpdate() > 30 * 1000) {
-            DTU_LOGW("Cannot perform auto power control when critical PSU values are outdated");
-            _autoModeBlockedTillMillis = millis() + 6000;
-            return;
-        }
-
-        if (!oAcPower ) {
-            DTU_LOGW("Cannot perform auto power control while critical PSU values are still unknown");
-            _autoModeBlockedTillMillis = millis() + 6000;
-            return;
-        }
-
-
-        // Decide whether auto mode should be active. The SoC limit is an
-        // optional gate on top of this, not a precondition.
-        _autoPowerEnabled = config.Battery.Enabled && !PowerLimiter.isGovernedBatteryPoweredInverterProducing();
-
-        if (_autoPowerEnabled) {
-            // Optionally power OFF charger if the BMS reported SoC reaches or exceeds the user configured value
-            if (config.GridCharger.AutoPowerBatterySoCLimitsEnabled &&
-                _batterySoC >= config.GridCharger.AutoPowerStopBatterySoCThreshold && _powerState) {
-                DTU_LOGV("Current battery SoC %i reached stop threshold %i", _batterySoC, config.GridCharger.AutoPowerStopBatterySoCThreshold);
-                PowerOFF();
-                _autoPowerEnabled = false;
-                return;
+    if (config.GridCharger.AutoPowerBatterySoCLimitsEnabled) {
+        // Optionally power OFF all chargers if the BMS reported SoC reaches or exceeds the user configured value
+        if (batterySoC >= config.GridCharger.AutoPowerStopBatterySoCThreshold) {
+            if (isAnyChargerOn()) {
+                DTU_LOGI("Current battery SoC %i reached stop threshold %i, disable all chargers",
+                        batterySoC, config.GridCharger.AutoPowerStopBatterySoCThreshold);
+                switchAll(false);
             }
-            // Don't run auto mode some time to allow for output stabilization after issuing a new value
-            _autoModeBlockedTillMillis = millis() + 19900;
-        } else if (_powerState) {
-            PowerOFF();
             return;
         }
 
-        // We have received a new PowerMeter value. Also we're _autoPowerEnabled
-        if (PowerMeter.getLastUpdate() > _lastPowerMeterUpdateReceivedMillis && _autoPowerEnabled) {
-            _lastPowerMeterUpdateReceivedMillis = PowerMeter.getLastUpdate();
-            float powerTotal = round(PowerMeter.getPowerTotal());
-            DTU_LOGV("powerTotal: %.0fW, AC Power: %.0fW, Target to Power on Charger: %.0fW", powerTotal, *oAcPower, config.GridCharger.AutoPowerTargetPowerConsumption - _maximumAcPower);
-            if (powerTotal > config.GridCharger.AutoPowerTargetPowerConsumption && _powerState) {
-                DTU_LOGI("Power consumption %.0fW exceeds target %.0fW, disable PSU", powerTotal, config.GridCharger.AutoPowerTargetPowerConsumption );
-                PowerOFF();
-                _autoModeBlockedTillMillis = millis() + 29900;
-                return;
-            }
-            else if (powerTotal < config.GridCharger.AutoPowerTargetPowerConsumption - _maximumAcPower && !_powerState && !PowerLimiter.isGovernedBatteryPoweredInverterProducing() && _batterySoC < config.GridCharger.AutoPowerStopBatterySoCThreshold) {
-                DTU_LOGI("Set AC Power to %.0fW to reach target consumption of %.0fW (current total: %.0fW)", _maximumAcPower, config.GridCharger.AutoPowerTargetPowerConsumption , powerTotal);
-                PowerON();
-                _autoModeBlockedTillMillis = millis() + 29900;
-            }
-
+        if (isBatteryVoltageStopActive()) {
+            if (isAnyChargerOn()) { switchAll(false); }
+            return;
         }
+    } else {
+        _batteryVoltageStopActive = false;
+    }
+
+    // We may have switched recently and still wait for output stabilization
+    if (millis() - _autoModeBlockedSinceMillis < _autoModeBlockedForMillis) { return; }
+
+    // only act on new power meter values
+    if (PowerMeter.getLastUpdate() <= _lastPowerMeterUpdateReceivedMillis) { return; }
+    _lastPowerMeterUpdateReceivedMillis = PowerMeter.getLastUpdate();
+
+    float powerTotal = round(PowerMeter.getPowerTotal());
+    if (applyBestCombination(powerTotal, config.GridCharger.AutoPowerTargetPowerConsumption)) {
+        blockAutoMode(STABILIZATION_TIME_MS);
     }
 }
+
+bool Provider::isBatteryVoltageStopActive()
+{
+    auto const& config = Configuration.get().GridCharger;
+    float stopVoltage = config.AutoPowerStopBatteryVoltageThreshold;
+    float resumeVoltage = config.AutoPowerResumeBatteryVoltageThreshold;
+
+    if (stopVoltage <= 0) {
+        _batteryVoltageStopActive = false;
+        return false;
+    }
+
+    // keep the current decision while the battery voltage is unknown or outdated
+    auto stats = Battery.getStats();
+    if (!stats->isVoltageValid() || stats->getVoltageAgeSeconds() > 60) {
+        return _batteryVoltageStopActive;
+    }
+
+    // the battery voltage drops as soon as charging stops, so charging only
+    // resumes after the voltage dropped below the (lower) resume threshold.
+    float voltage = stats->getVoltage();
+    if (!_batteryVoltageStopActive && voltage >= stopVoltage) {
+        DTU_LOGI("Battery voltage %.2fV reached stop threshold %.2fV, disable all chargers",
+                voltage, stopVoltage);
+        _batteryVoltageStopActive = true;
+    } else if (_batteryVoltageStopActive && voltage < resumeVoltage) {
+        DTU_LOGI("Battery voltage %.2fV dropped below resume threshold %.2fV, chargers may be enabled again",
+                voltage, resumeVoltage);
+        _batteryVoltageStopActive = false;
+    }
+
+    return _batteryVoltageStopActive;
+}
+
+bool Provider::applyBestCombination(float powerTotal, float targetConsumption)
+{
+    size_t const count = _chargers.size();
+
+    // estimated household consumption without any charger, the expected
+    // load of each charger and the chargers which must not be switched now.
+    float baseConsumption = powerTotal;
+    std::array<float, GRIDCHARGER_HTTP_MAX_CHARGERS> load{};
+    uint32_t currentMask = 0;
+    uint32_t lockedMask = 0;
+
+    for (size_t i = 0; i < count; ++i) {
+        auto const& charger = *_chargers[i];
+        auto oPower = charger.getAcPower();
+
+        if (charger.getPowerState()) {
+            currentMask |= (1u << i);
+            load[i] = oPower.value_or(charger.getNominalPower());
+            baseConsumption -= load[i];
+        } else {
+            load[i] = charger.getNominalPower();
+        }
+
+        if (!oPower) {
+            DTU_LOGD("[%s] Data outdated, keeping charger %s",
+                    charger.getName().c_str(), charger.getPowerState() ? "on" : "off");
+            lockedMask |= (1u << i);
+        } else if (!charger.isSwitchAllowed()) {
+            lockedMask |= (1u << i);
+        }
+    }
+
+    auto loadOf = [&](uint32_t mask) {
+        float sum = 0;
+        for (size_t i = 0; i < count; ++i) {
+            if (mask & (1u << i)) { sum += load[i]; }
+        }
+        return sum;
+    };
+
+    // try all combinations (at most 2^GRIDCHARGER_HTTP_MAX_CHARGERS). prefer
+    // combinations which keep the consumption at or below the target and use
+    // as much power as possible. if no combination achieves that, minimize the
+    // consumption. on equal load, prefer the one with fewer switch operations.
+    uint32_t bestMask = currentMask;
+    float bestLoad = loadOf(currentMask);
+    bool bestFeasible = baseConsumption + bestLoad <= targetConsumption;
+    int bestSwitches = 0;
+
+    for (uint32_t mask = 0; mask < (1u << count); ++mask) {
+        if ((mask ^ currentMask) & lockedMask) { continue; }
+
+        float l = loadOf(mask);
+        bool feasible = baseConsumption + l <= targetConsumption;
+        int switches = __builtin_popcount(mask ^ currentMask);
+
+        bool better = false;
+        if (feasible != bestFeasible) {
+            better = feasible;
+        } else if (l != bestLoad) {
+            better = feasible ? (l > bestLoad) : (l < bestLoad);
+        } else {
+            better = switches < bestSwitches;
+        }
+
+        if (better) {
+            bestMask = mask;
+            bestLoad = l;
+            bestFeasible = feasible;
+            bestSwitches = switches;
+        }
+    }
+
+    if (bestMask == currentMask) { return false; }
+
+    // avoid switching back and forth for a negligible gain
+    float currentLoad = loadOf(currentMask);
+    bool currentFeasible = baseConsumption + currentLoad <= targetConsumption;
+    if (currentFeasible && bestLoad - currentLoad < SWITCH_HYSTERESIS_W) { return false; }
+
+    DTU_LOGI("Power consumption %.0fW, target %.0fW, base %.0fW: switching chargers from %.0fW to %.0fW",
+            powerTotal, targetConsumption, baseConsumption, currentLoad, bestLoad);
+
+    // switch off first to avoid a temporary peak in grid consumption
+    for (size_t i = 0; i < count; ++i) {
+        uint32_t bit = 1u << i;
+        if ((currentMask & bit) && !(bestMask & bit)) { _chargers[i]->powerOff(); }
+    }
+    for (size_t i = 0; i < count; ++i) {
+        uint32_t bit = 1u << i;
+        if (!(currentMask & bit) && (bestMask & bit)) { _chargers[i]->powerOn(); }
+    }
+
+    return true;
+}
+
 void Provider::dataPollingLoopHelper(void* context)
 {
     auto pInstance = static_cast<Provider*>(context);
@@ -301,23 +341,16 @@ void Provider::dataPollingLoop()
         lock.lock();
     }
 }
+
 void Provider::pollData()
 {
-    float acPowerCurrent = read_http(_uriStats);
-    DTU_LOGV("acPowerCurrent: %f", acPowerCurrent);
-
-    // One-way confirmation: a non-zero measurement proves the charger is
-    // drawing power, but a zero reading does not prove it is off (battery
-    // may be full, or the charger may not yet have ramped up). The
-    // commanded state is otherwise maintained by PowerON()/PowerOFF().
-    if (acPowerCurrent > 0) { _powerState = true; }
-
-    // Update data points
-    {
-        auto scopedLock = _dataCurrent.lock();
-        _dataCurrent.add<DataPointLabel::AcPower>(acPowerCurrent);
+    for (auto& charger : _chargers) {
+        {
+            std::lock_guard<std::mutex> lock(_dataPollingMutex);
+            if (_stopPollingData) { return; }
+        }
+        charger->poll();
     }
-    _stats->updateFrom(_dataCurrent);
 }
 
 } // namespace GridChargers::HTTP

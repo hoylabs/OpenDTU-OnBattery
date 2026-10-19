@@ -1131,6 +1131,10 @@
         "SetVoltageLimit": "Spannungslimit",
         "SetCurrentLimit": "Stromlimit",
         "state": "Status",
+        "on": "Ein",
+        "off": "Aus",
+        "reachable": "Erreichbar",
+        "nominalPower": "Nennleistung",
         "trucki": {
             "batteryGridState": "Batterie/Netz Status",
             "VBAT_LOW": "Batterie Niedrig",
@@ -1175,6 +1179,10 @@
         "upperPowerLimit": "Maximale Leistung",
         "StopBatterySoCThreshold": "Laden bei SoC beenden",
         "StopBatterySoCThresholdHint": "Zur Verlängerung der Akku-Lebensdauer kann der Ladevorgang bei einem bestimmten SoC gestoppt werden.\nHinweis: Manche LiFePO-Akkus müssen gelegentlich voll geladen werden, um die SoC-Anzeige akkurat zu halten.",
+        "StopBatteryVoltageThreshold": "Laden bei Batteriespannung beenden",
+        "StopBatteryVoltageThresholdHint": "Alle AC Ladegeräte werden ausgeschaltet, sobald die vom BMS gemeldete Batteriespannung diesen Wert erreicht. 0 deaktiviert die Spannungsschwelle.",
+        "ResumeBatteryVoltageThreshold": "Laden ab Batteriespannung wieder freigeben",
+        "ResumeBatteryVoltageThresholdHint": "Nach Erreichen der Abschaltspannung wird erst wieder geladen, wenn die Batteriespannung unter diesen Wert gefallen ist. Muss kleiner als die Abschaltspannung sein, da die Spannung nach dem Abschalten sofort sinkt.",
         "Seconds": "@:base.Seconds",
         "EnableEmergencyCharge": "Notfallladen",
         "EnableEmergencyChargeHint": "Batterie wird mit maximaler Leistung geladen wenn durch das Batterie BMS angefordert",
@@ -1192,7 +1200,10 @@
         "HTTPuriSTATSHint": "URI welche zum Auslesen des Zustandes und der Leistung des Kontaktes angehängt wird, mit führendem /",
         "HTTPuriPOWERPARAMHint": "Wert der den Leistungswert markiert",
         "HTTPSettings": "AC Charger via HTTP Einstellungen",
-        "HTTPAcPower": "AC Leistung des angeschlossenen Ladegeräts"
+        "HTTPAcPower": "AC Leistung des angeschlossenen Ladegeräts",
+        "HTTPCharger": "AC Ladegerät {chargerNumber}",
+        "HTTPChargerEnabled": "Aktiviert",
+        "HTTPChargerName": "Name"
     },
     "battery": {
         "battery": "Batterie",

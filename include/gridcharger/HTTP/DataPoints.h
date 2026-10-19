@@ -6,7 +6,6 @@
 namespace GridChargers::HTTP {
 
 enum class DataPointLabel : uint8_t {
-    AcPowerSetpoint,
     AcPower,
 };
 
@@ -18,7 +17,6 @@ template<DataPointLabel> struct DataPointLabelTraits;
     static constexpr char const unit[] = u; \
 };
 
-LABEL_TRAIT(AcPowerSetpoint,        float,       "W");
 LABEL_TRAIT(AcPower,                float,       "W");
 #undef LABEL_TRAIT
 

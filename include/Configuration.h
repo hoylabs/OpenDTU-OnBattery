@@ -51,6 +51,10 @@
 #define POWERMETER_MQTT_MAX_VALUES 3
 #define POWERMETER_HTTP_JSON_MAX_VALUES 3
 
+#define GRIDCHARGER_HTTP_MAX_CHARGERS 4
+#define GRIDCHARGER_HTTP_MAX_NAME_STRLEN 31
+#define GRIDCHARGER_HTTP_MAX_BASE_URL_STRLEN 128
+
 #define ZENDURE_MAX_SERIAL_STRLEN   8
 #define ZENDURE_MAX_SERVER_STRLEN   256
 #define ZENDURE_MAX_CLIENTID_STRLEN 23
@@ -291,13 +295,21 @@ struct GRID_CHARGER_HUAWEI_CONFIG_T {
 };
 using GridChargerHuaweiConfig = struct GRID_CHARGER_HUAWEI_CONFIG_T;
 
+struct GRID_CHARGER_HTTP_CHARGER_T {
+    bool Enabled;
+    char Name[GRIDCHARGER_HTTP_MAX_NAME_STRLEN + 1];
+    char Url[GRIDCHARGER_HTTP_MAX_BASE_URL_STRLEN + 1];
+    float AcPower;
+};
+using GridChargerHTTPChargerConfig = struct GRID_CHARGER_HTTP_CHARGER_T;
+
 struct GRID_CHARGER_HTTP_CONFIG_T {
-    char Url[HTTP_REQUEST_MAX_URL_STRLEN + 1];
+    // URIs and JSON path are shared by all chargers (usually identical smart plugs)
     char UriOn[HTTP_REQUEST_MAX_URL_STRLEN + 1];
     char UriOff[HTTP_REQUEST_MAX_URL_STRLEN + 1];
     char UriStats[HTTP_REQUEST_MAX_URL_STRLEN + 1];
     char UriPowerParam[MQTT_MAX_JSON_PATH_STRLEN + 1];
-    float AcPower;
+    GridChargerHTTPChargerConfig Chargers[GRIDCHARGER_HTTP_MAX_CHARGERS];
 };
 using GridChargerHTTPConfig = struct GRID_CHARGER_HTTP_CONFIG_T;
 
@@ -311,6 +323,8 @@ struct GRID_CHARGER_CONFIG_T {
     float AutoPowerLowerPowerLimit;
     float AutoPowerUpperPowerLimit;
     uint8_t AutoPowerStopBatterySoCThreshold;
+    float AutoPowerStopBatteryVoltageThreshold;   // 0 = disabled
+    float AutoPowerResumeBatteryVoltageThreshold;
     float AutoPowerTargetPowerConsumption;
     GridChargerProviderType Provider;
     GridChargerCanConfig Can;

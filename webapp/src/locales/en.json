@@ -1132,6 +1132,10 @@
         "SetVoltageLimit": "Voltage Limit",
         "SetCurrentLimit": "Current Limit",
         "state": "State",
+        "on": "On",
+        "off": "Off",
+        "reachable": "Reachable",
+        "nominalPower": "Nominal power",
         "trucki": {
             "zepc": "ZEPC",
             "batteryGridState": "Battery/Grid State",
@@ -1178,6 +1182,10 @@
         "upperPowerLimit": "Maximum output power",
         "StopBatterySoCThreshold": "Stop charging at SoC",
         "StopBatterySoCThresholdHint": "To prolong the battery's lifespan, charging can be stopped at a certain SoC level.\nHint: In order to keep the SoC reading accurate, some LiFePO cells must be charged to full capacity regularly.",
+        "StopBatteryVoltageThreshold": "Stop charging at battery voltage",
+        "StopBatteryVoltageThresholdHint": "All AC chargers are switched off as soon as the battery voltage reported by the BMS reaches this value. 0 disables the voltage threshold.",
+        "ResumeBatteryVoltageThreshold": "Resume charging below battery voltage",
+        "ResumeBatteryVoltageThresholdHint": "After the stop voltage was reached, charging only resumes once the battery voltage dropped below this value. Must be lower than the stop voltage, as the voltage drops as soon as charging stops.",
         "Seconds": "@:base.Seconds",
         "EnableEmergencyCharge": "Emergency charge",
         "EnableEmergencyChargeHint": "Battery charged with maximum power if requested by Battery BMS",
@@ -1195,7 +1203,10 @@
         "HTTPuriSTATSHint": "URI appended to read the status and power of the contact, starting with /",
         "HTTPuriPOWERPARAMHint": "Key that marks the power value",
         "HTTPSettings": "AC Charger via HTTP settings",
-        "HTTPAcPower": "AC power of the connected charger"
+        "HTTPAcPower": "AC power of the connected charger",
+        "HTTPCharger": "AC charger {chargerNumber}",
+        "HTTPChargerEnabled": "Enabled",
+        "HTTPChargerName": "Name"
     },
     "battery": {
         "battery": "Battery",

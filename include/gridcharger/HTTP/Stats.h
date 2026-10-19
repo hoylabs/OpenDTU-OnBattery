@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include <memory>
+#include <mutex>
+#include <vector>
 #include <gridcharger/Stats.h>
-#include <gridcharger/HTTP/DataPoints.h>
+#include <gridcharger/HTTP/Charger.h>
 
 namespace GridChargers::HTTP {
 
@@ -10,8 +13,10 @@ class Stats : public ::GridChargers::Stats {
 friend class Provider;
 
 public:
+    // the most recent update of any charger
     uint32_t getLastUpdate() const final;
 
+    // sum of the AC power of all chargers with recent data
     std::optional<float> getInputPower() const final;
 
     void getLiveViewData(JsonVariant& root) const final;
@@ -19,32 +24,13 @@ public:
 protected:
     void mqttPublish() const final {}
 
-    void updateFrom(DataPointContainer const& dataPoints) const;
+    void setChargers(std::vector<std::shared_ptr<Charger const>> chargers);
 
 private:
-    template<DataPointLabel L>
-    void addValueInSection(JsonVariant& root,
-        std::string const& section, std::string const& name,
-        int precision = 2) const
-    {
-        auto oVal = _dataPoints.get<L>();
-        if (!oVal) { return; }
+    std::vector<std::shared_ptr<Charger const>> getChargers() const;
 
-        ::GridChargers::Stats::addValueInSection(root, section, name, *oVal, DataPointLabelTraits<L>::unit, precision);
-    }
-
-    template<DataPointLabel L>
-    void addStringInSection(JsonVariant& root,
-        std::string const& section, std::string const& name,
-        bool translate = true) const
-    {
-        auto oVal = _dataPoints.get<L>();
-        if (!oVal) { return; }
-
-        ::GridChargers::Stats::addStringInSection(root, section, name, *oVal, translate);
-    }
-
-    mutable DataPointContainer _dataPoints;
+    mutable std::mutex _mutex;
+    std::vector<std::shared_ptr<Charger const>> _chargers;
 };
 
 } // namespace GridChargers::HTTP

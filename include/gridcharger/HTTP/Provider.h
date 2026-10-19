@@ -3,11 +3,11 @@
 
 #include <atomic>
 #include <gridcharger/Provider.h>
+#include <gridcharger/HTTP/Charger.h>
 #include <gridcharger/HTTP/Stats.h>
-#include <HttpGetter.h>
-#include <Utils.h>
 #include <memory>
 #include <mutex>
+#include <vector>
 #include <condition_variable>
 
 namespace GridChargers::HTTP {
@@ -17,52 +17,31 @@ public:
     bool init() final;
     void deinit() final;
     void loop() final;
-    void PowerON();
-    void PowerOFF();
     std::shared_ptr<::GridChargers::Stats> getStats() const final { return _stats; }
 
-    bool getAutoPowerStatus() const final {
-        return _requestedPowerAc > 0
-            || _dataCurrent.get<DataPointLabel::AcPowerSetpoint>().value_or(0) > 0.0f;
-    }
+    // always false: the HTTP chargers never block the battery-powered inverters
+    bool getAutoPowerStatus() const final;
 
 private:
-    template<DataPointLabel L>
-    void addStringToDataPoints(const JsonDocument& doc, const char* key)
-    {
-        if (doc[key].is<std::string>()) {
-            _dataCurrent.add<L>(doc[key].as<std::string>());
-            return;
-        }
-
-        if (doc[key].is<const char*>()) {
-            _dataCurrent.add<L>(std::string{doc[key].as<const char*>()});
-        }
-    }
-
-    template<DataPointLabel L>
-    void addFloatToDataPoints(const JsonDocument& doc, const char* key)
-    {
-        std::optional<float> value;
-
-        if (doc[key].is<float>()) {
-            value = doc[key].as<float>();
-        }
-
-        if (doc[key].is<char const*>()) {
-            value = Utils::getFromString<float>(doc[key].as<char const*>());
-        }
-
-        if (!value.has_value()) { return; }
-        _dataCurrent.add<L>(*value);
-    }
-
-    bool send_http(String Url);
-    float read_http(String uri);
     void powerControlLoop();
+
+    // switches all chargers, ignoring the minimum on/off time
+    void switchAll(bool on);
+    bool isAnyChargerOn() const;
+
+    // evaluates the battery voltage stop/resume thresholds (with hysteresis)
+    bool isBatteryVoltageStopActive();
+
+    // selects and applies the combination of chargers which uses the most
+    // surplus power without exceeding the target consumption. returns true
+    // if any charger was switched.
+    bool applyBestCombination(float powerTotal, float targetConsumption);
+
     static void dataPollingLoopHelper(void* context);
     void dataPollingLoop();
     void pollData();
+
+    std::vector<std::shared_ptr<Charger>> _chargers;
 
     TaskHandle_t _dataPollingTaskHandle = nullptr;
     std::atomic<bool> _dataPollingTaskDone = false;
@@ -73,25 +52,21 @@ private:
 
     static constexpr int DATA_POLLING_INTERVAL_MS = 5000; // 5 seconds
 
-    float _requestedPowerAc = 0;
-    std::atomic<bool> _powerState{false};
+    // only switch to a combination with more power if it gains at least this much
+    static constexpr float SWITCH_HYSTERESIS_W = 50.0f;
 
-    String _uriOn;
-    String _uriOff;
-    String _uriStats;
-    String _uriPowerparam;
-    float _maximumAcPower = 0.0f;
+    // time to wait for output and power meter stabilization after switching
+    static constexpr uint32_t STABILIZATION_TIME_MS = 30 * 1000;
 
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
 
-    DataPointContainer _dataCurrent;
-
     uint32_t _lastPowerMeterUpdateReceivedMillis = 0;
-    uint32_t _autoModeBlockedTillMillis = 0;
-    uint32_t _autowaitTillMillis = 0;
+    uint32_t _autoModeBlockedSinceMillis = 0;
+    uint32_t _autoModeBlockedForMillis = 0;
+    uint32_t _lastSoCLogMillis = 0;
 
-    bool _autoPowerEnabled = false;
     bool _batteryEmergencyCharging = false;
+    bool _batteryVoltageStopActive = false;
 };
 
 } // namespace GridChargers::HTTP
