@@ -15,13 +15,33 @@ Provider::Provider()
     : _stats(std::make_shared<Stats>())
     , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
 
-// low byte: 0-based cell (or temperature sensor) number, high byte: 0-based
-// module number. presented as "<module>-<cell>", 1-based, like the Pytes
-// RS485 provider does.
-static void pytesSetCellLabel(String& label, uint16_t value) {
+// present a cell (or temperature sensor) and its module as "<module>-<cell>",
+// 1-based, like the Pytes RS485 provider does. both inputs are 0-based.
+static void setCellLabel(String& label, uint8_t cell, uint8_t module) {
     char name[8];
-    snprintf(name, sizeof(name), "%d-%d", (value >> 8) + 1, (value & 0xff) + 1);
+    snprintf(name, sizeof(name), "%d-%d", module + 1, cell + 1);
     label = name;  // updates existing string in-place
+}
+
+// Pytes protocol (0x401/0x402): the label is a 16-bit value, low byte =
+// 0-based cell (or temperature sensor), high byte = 0-based module.
+static void pytesSetCellLabel(String& label, uint16_t packed) {
+    setCellLabel(label, packed & 0xff, packed >> 8);
+}
+
+// Victron protocol (0x374-0x377): four ASCII digits, 0-based cell (or
+// temperature sensor) number followed by the 0-based module number, e.g.
+// "0500". presented like the Pytes protocol labels above.
+static void victronSetCellLabel(String& label, String const& value) {
+    auto digit = [&value](unsigned i) { return isdigit(static_cast<unsigned char>(value[i])); };
+    if (value.length() >= 4 && digit(0) && digit(1) && digit(2) && digit(3)) {
+        uint8_t cell = (value[0] - '0') * 10 + (value[1] - '0');
+        uint8_t module = (value[2] - '0') * 10 + (value[3] - '0');
+        setCellLabel(label, cell, module);
+        return;
+    }
+
+    label = value;
 }
 
 // raw frame content for debug logs, to analyze fields that are not (fully)
@@ -212,7 +232,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             DTU_LOGD("cellMinVoltageName: %s", cellMinVoltageName.c_str());
 
-            _stats->_cellMinVoltageName = cellMinVoltageName;
+            victronSetCellLabel(_stats->_cellMinVoltageName, cellMinVoltageName);
             break;
         }
 
@@ -224,7 +244,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             DTU_LOGD("cellMaxVoltageName: %s", cellMaxVoltageName.c_str());
 
-            _stats->_cellMaxVoltageName = cellMaxVoltageName;
+            victronSetCellLabel(_stats->_cellMaxVoltageName, cellMaxVoltageName);
             break;
         }
 
@@ -236,7 +256,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             DTU_LOGD("cellMinTemperatureName: %s", cellMinTemperatureName.c_str());
 
-            _stats->_cellMinTemperatureName = cellMinTemperatureName;
+            victronSetCellLabel(_stats->_cellMinTemperatureName, cellMinTemperatureName);
             break;
         }
 
@@ -248,7 +268,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             DTU_LOGD("cellMaxTemperatureName: %s", cellMaxTemperatureName.c_str());
 
-            _stats->_cellMaxTemperatureName = cellMaxTemperatureName;
+            victronSetCellLabel(_stats->_cellMaxTemperatureName, cellMaxTemperatureName);
             break;
         }
 
