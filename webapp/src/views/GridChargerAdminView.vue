@@ -120,7 +120,6 @@
                             type="text"
                             wide
                         />
-
                     </template>
 
                     <InputElement
