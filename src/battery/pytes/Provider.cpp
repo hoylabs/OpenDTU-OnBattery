@@ -310,8 +310,8 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x402: { // Pytes protocol: Highest/Lowest Cell Temperature
-            _stats->_cellMaxTemperature = this->scaleValue(this->readUnsignedInt16(rx_message.data), 0.1);
-            _stats->_cellMinTemperature = this->scaleValue(this->readUnsignedInt16(rx_message.data + 2), 0.1);
+            _stats->_cellMaxTemperature = this->scaleValue(this->readSignedInt16(rx_message.data), 0.1);
+            _stats->_cellMinTemperature = this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1);
             pytesSetCellLabel(_stats->_cellMaxTemperatureName, this->readUnsignedInt16(rx_message.data + 4));
             pytesSetCellLabel(_stats->_cellMinTemperatureName, this->readUnsignedInt16(rx_message.data + 6));
 
