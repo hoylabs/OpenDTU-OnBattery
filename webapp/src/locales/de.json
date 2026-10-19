@@ -1212,6 +1212,7 @@
         "offline": "Offline",
         "blockingCharge": "Ladung blockiert",
         "blockingDischarge": "Entladung blockiert",
+        "heating": "Heizung aktiv",
         "cells": "Zellen",
         "batOneTemp": "Batterietemperatur 1",
         "batTwoTemp": "Batterietemperatur 2",

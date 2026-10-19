@@ -469,13 +469,17 @@ void Provider::onMessage(twai_message_t rx_message)
             break;
         }
 
-        case 0x40d: { // Pytes protocol: balancing info
+        case 0x40d: { // Pytes protocol: heating / balancing info
+            // bytes 0-3: bitmask of the modules heating (bit 0 = module 1)
+            _stats->_moduleCountHeating = popCount(this->readUnsignedInt32(rx_message.data));
+
             // bytes 4-5: bitmask of the cells being balanced (bit 0 = cell 1),
             // combined over all modules (observed: 0x86E1 = 0x84E1 of module 1
             // OR 0x0240 of module 2 as reported via RS485), the module is not
             // reported. hence only active / not active is published.
             _stats->_balance = this->readUnsignedInt16(rx_message.data + 4);
-            DTU_LOGD("balance: %d (raw: %s)", _stats->_balance,
+            DTU_LOGD("balance: %d moduleCountHeating: %d (raw: %s)", _stats->_balance,
+                    _stats->_moduleCountHeating,
                     hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             break;
         }
