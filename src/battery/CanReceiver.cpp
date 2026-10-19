@@ -163,9 +163,9 @@ float CanReceiver::scaleValue(int32_t value, float factor)
     return value * factor;
 }
 
-bool CanReceiver::getBit(uint8_t value, uint8_t bit)
+bool CanReceiver::getBit(uint32_t value, uint8_t bit)
 {
-    return (value & (1 << bit)) >> bit;
+    return (value >> bit) & 1;
 }
 
 } // namespace Batteries
