@@ -5,12 +5,16 @@
 #include <ArduinoJson.h>
 #include <battery/Stats.h>
 #include <memory>
+#include <mutex>
+#include <optional>
+#include <vector>
 
 namespace Batteries {
 
 class HassIntegration {
 public:
     explicit HassIntegration(std::shared_ptr<Stats> spStats);
+    virtual ~HassIntegration();
 
     void hassLoop();
 
@@ -31,11 +35,21 @@ protected:
 
 private:
     static String sanitizeUniqueId(const char* value);
+    static String createBatteryId();
+    static String legacyConfigTopic(String const& component, String const& sensorId);
+    void startLegacyCleanup();
+    void clearLegacyConfigs();
+    void stopLegacyCleanup();
 
-    String _serial = "0001"; // pseudo-serial, can be replaced in future with real serialnumber
     std::shared_ptr<Stats> _spStats = nullptr;
 
     bool _publishSensors = true;
+
+    // see startLegacyCleanup()
+    bool _legacyCleanupOnly = false;
+    std::optional<uint32_t> _oLegacyCleanupStart;
+    std::mutex _legacyTopicsMutex;
+    std::vector<String> _legacyTopics; // filled by the MQTT task
 };
 
 } // namespace Batteries
