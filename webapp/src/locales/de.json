@@ -1207,6 +1207,7 @@
         "chargeEnabled": "Laden ermöglicht",
         "dischargeEnabled": "Entladen ermöglicht",
         "chargeImmediately": "Sofortiges Laden angefordert",
+        "fullChargeRequest": "Volladung angefordert",
         "modules": "Batteriemodule",
         "online": "Online",
         "offline": "Offline",

@@ -1210,6 +1210,7 @@
         "chargeEnabled": "Charging possible",
         "dischargeEnabled": "Discharging possible",
         "chargeImmediately": "Immediate charging requested",
+        "fullChargeRequest": "Full charge requested",
         "modules": "Battery modules",
         "online": "Online",
         "offline": "Offline",
