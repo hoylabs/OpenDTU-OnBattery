@@ -396,8 +396,11 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x406: { // Pytes protocol: alarms (part 2)
+            // bit 9: module communication timeout, bits 2, 12-15, 20: self
+            // checks (current sensor, SRAM, flash, PC/register, coding,
+            // temperature) failed
             uint32_t alarmBits = this->readUnsignedInt32(rx_message.data);
-            _stats->_alarmInternalFailure = this->getBit(alarmBits, 15);
+            _stats->_alarmInternalFailure = (alarmBits & 0x0010F204) != 0;
 
             DTU_LOGD("internalFailure: %d (bits: %08x)", _stats->_alarmInternalFailure, alarmBits);
             break;
