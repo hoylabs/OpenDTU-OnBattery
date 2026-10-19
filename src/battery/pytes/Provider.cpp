@@ -426,12 +426,15 @@ void Provider::onMessage(twai_message_t rx_message)
             // battery uses for the charge request in the Victron protocol
             // (0x360).
             _stats->_chargeImmediately = (rx_message.data[2] || rx_message.data[3]) && !rx_message.data[5];
+            // byte 4: full charge request, raised while a module stays below
+            // 97 % SoC for too long.
+            _stats->_fullChargeRequest = static_cast<bool>(rx_message.data[4]);
             _stats->_moduleCountBlockingCharge = __builtin_popcount(rx_message.data[5]);
             _stats->_moduleCountBlockingDischarge = __builtin_popcount(rx_message.data[6]);
 
-            DTU_LOGD("chargeEnabled: %d dischargeEnabled: %d chargeImmediately: %d "
-                    "moduleCountBlockingDischarge: %d moduleCountBlockingCharge: %d",
-                    chargeEnabled, dischargeEnabled, _stats->_chargeImmediately,
+            DTU_LOGD("chargeEnabled: %d dischargeEnabled: %d chargeImmediately: %d fullChargeRequest: %d "
+                    "moduleCountBlockingCharge: %d moduleCountBlockingDischarge: %d",
+                    chargeEnabled, dischargeEnabled, _stats->_chargeImmediately, *_stats->_fullChargeRequest,
                     _stats->_moduleCountBlockingCharge, _stats->_moduleCountBlockingDischarge);
             break;
         }
