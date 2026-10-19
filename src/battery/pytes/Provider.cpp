@@ -181,14 +181,12 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x35F: { // Victron protocol: BatteryInfo
-            auto fwVersionPart1 = String(this->readUnsignedInt8(rx_message.data + 2));
-            auto fwVersionPart2 = String(this->readUnsignedInt8(rx_message.data + 3));
-            _stats->_fwversion = "v" + fwVersionPart1 + "." + fwVersionPart2;
-
+            // bytes 2-3 are an internal build number (sent as value/100 and
+            // value%100), not the SPBMS... firmware version, so they are
+            // intentionally not exposed as a firmware version.
             _stats->_availableCapacity = this->readUnsignedInt16(rx_message.data + 4);
 
-            DTU_LOGD("fwversion: %s availableCapacity: %f Ah",
-                    _stats->_fwversion.c_str(), _stats->_availableCapacity);
+            DTU_LOGD("availableCapacity: %f Ah", _stats->_availableCapacity);
             break;
         }
 
