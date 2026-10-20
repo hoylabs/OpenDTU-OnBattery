@@ -66,6 +66,10 @@ void HassIntegration::publishSensors() const
     publishSensor("State of Charge (SoC)", "mdi:battery-medium", "stateOfCharge", "battery",  "measurement", "%");
     publishSensor("Voltage", "mdi:battery-charging", "voltage", "voltage", "measurement", "V");
     publishSensor("Current", "mdi:current-dc", "current", "current", "measurement", "A");
+
+    if (_spStats->supportsFullChargeRequest()) {
+        publishBinarySensor("Full charge requested", "mdi:battery-charging-high", "charging/fullChargeRequest", "1", "0");
+    }
 }
 
 void HassIntegration::publishSensor(const char* caption, const char* icon,
@@ -164,6 +168,10 @@ void HassIntegration::publishBinarySensor(const char* caption,
 
     auto deviceObj = root["dev"].to<JsonObject>();
     createDeviceInfo(deviceObj);
+
+    if (Configuration.get().Mqtt.Hass.Expire) {
+        root["exp_aft"] = _spStats->getMqttFullPublishIntervalMs() / 1000 * 3;
+    }
 
     if (!Utils::checkJsonAlloc(root, __FUNCTION__, __LINE__)) {
         return;

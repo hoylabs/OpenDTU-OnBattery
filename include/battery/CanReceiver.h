@@ -22,7 +22,7 @@ protected:
     uint32_t readUnsignedInt32(uint8_t *data);
     int32_t readSignedInt24(uint8_t *data);
     float scaleValue(int32_t value, float factor);
-    bool getBit(uint8_t value, uint8_t bit);
+    bool getBit(uint32_t value, uint8_t bit);
 
 private:
     char const* _providerName = "Battery CAN";
