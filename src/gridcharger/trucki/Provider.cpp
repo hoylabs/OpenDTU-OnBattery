@@ -173,8 +173,15 @@ void Provider::powerControlLoop()
             return;
         }
 
-        // Re-enable automatic power control if the output voltage has dropped below threshold
-        if (oOutputVoltage && *oOutputVoltage < oBatteryVoltageLimit) {
+        // Re-enable automatic power control if the output voltage has dropped below threshold.
+        // While the PSU is idle, some Mean Well NPB firmware versions (EEPROM mode) are parked
+        // by the Trucki at the PSU's minimum output voltage (e.g. 42 V on an NPB-750-48), which
+        // is then reported as voltage setpoint and is far below the battery voltage. Without
+        // this, auto power control would never start. Requiring the setpoint to be at least
+        // 2 V below the battery voltage keeps the existing behaviour for a PSU that rests at
+        // (or just below) the battery voltage, e.g. after reaching the cutoff voltage.
+        bool psuParkedAtMinimum = *oOutputPower < 1 && *oBatteryVoltageLimit <= *oOutputVoltage - 2.0f;
+        if (*oOutputVoltage < *oBatteryVoltageLimit || psuParkedAtMinimum) {
             _autoPowerEnabled = true;
         }
 
