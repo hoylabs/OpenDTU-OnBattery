@@ -95,7 +95,6 @@ void Stats::setModuleAnalog(Parsers::ModuleAnalogResult const& r)
     mod.voltageV          = r.voltageV;
     mod.currentA          = r.currentA;
     mod.soc               = r.soc;
-    mod.health            = r.health;
     mod.totalCapacityMah  = r.totalCapacityMah;
     mod.remainCapacityMah = r.remainCapacityMah;
     mod.ambientTemp       = r.ambientTemp;
@@ -126,8 +125,6 @@ void Stats::setModuleChgDsg(Parsers::ModuleChgDsgResult const& r)
     mod.minDsgVoltV = r.minDsgVoltV;
     mod.maxChgCurrA = r.maxChgCurrA;
     mod.maxDsgCurrA = r.maxDsgCurrA;
-    mod.chargeImmediately = r.chargeImmediately;
-    mod.fullChgReq  = r.fullChgReq;
 }
 
 void Stats::setModuleCells(uint8_t moduleNo, std::vector<CellData> cells)
@@ -188,6 +185,10 @@ std::vector<Stats::ModuleIdentity> Stats::getModuleIdentities() const
 bool Stats::isOnline(BatteryModule const& mod)
 {
     if (!mod.hasAnalog) { return false; }
+    // system error bit 9 (internal communication error): the master lost the
+    // connection to this module (no answer for 60 polls) and keeps reporting
+    // its last values
+    if (mod.errorStatus & (1u << 9)) { return false; }
     uint32_t pollIntervalMs = Configuration.get().Battery.Serial.PollingInterval * 1000;
     return millis() - mod.lastUpdate < 3 * pollIntervalMs + 10 * 1000;
 }
@@ -442,13 +443,10 @@ bool Stats::getLiveViewModuleData(JsonVariant& root, size_t index, uint32_t sinc
     addNumber(mod.hasChgDsg, mod.maxChgCurrA);
     addNumber(mod.hasChgDsg, mod.maxChgVoltV);
     addNumber(mod.hasChgDsg, mod.minDsgVoltV);
-    addNumber(mod.hasAnalog && mod.health > 0, mod.health);
     addNumber(mod.hasAnalog && mod.chargeCycles >= 0, mod.chargeCycles);
     addNumber(oModTemp.has_value(), oModTemp.value_or(0));
     addNumber(mod.hasAnalog && mod.totalCapacityMah > 0, mod.totalCapacityMah / 1000.0f);
     addNumber(mod.hasAnalog && mod.remainCapacityMah > 0, mod.remainCapacityMah / 1000.0f);
-    addFlag(mod.hasChgDsg, mod.chargeImmediately);
-    addFlag(mod.hasChgDsg, mod.fullChgReq);
     addFlag(mod.hasAnalog && oBalancing.has_value(), oBalancing.value_or(false));
 
     // min/max cell voltage, difference [mV], min/max temperature, cell numbers of those
@@ -656,7 +654,6 @@ void Stats::mqttPublish() const
             pub("current",           String(mod.currentA, 3));
             pub("power",             String(mod.voltageV * mod.currentA, 1));
             pub("stateOfCharge",     String(mod.soc));
-            if (mod.health > 0) { pub("stateOfHealth", String(mod.health)); }
             if (mod.totalCapacityMah > 0) {
                 pub("capacity",          String(mod.totalCapacityMah  / 1000.0f, 2));
                 pub("availableCapacity", String(mod.remainCapacityMah / 1000.0f, 2));
@@ -687,8 +684,6 @@ void Stats::mqttPublish() const
             pub("settings/dischargeVoltageLimitation", String(mod.minDsgVoltV, 3));
             pub("settings/chargeCurrentLimitation",    String(mod.maxChgCurrA, 3));
             pub("settings/dischargeCurrentLimitation", String(mod.maxDsgCurrA, 3));
-            pub("charging/chargeImmediately",          String(mod.chargeImmediately ? 1 : 0));
-            pub("charging/fullChargeRequest",          String(mod.fullChgReq ? 1 : 0));
         }
 
 
@@ -699,7 +694,6 @@ void Stats::mqttPublish() const
             String cp = "cell/" + String(static_cast<int>(j + 1)) + "/";
             pub((cp + "voltage").c_str(),       String(c.voltageV, 3));
             pub((cp + "temperature").c_str(),   String(c.temperatureC, 0));
-            pub((cp + "current").c_str(),       String(c.currentA, 3));
             pub((cp + "stateOfCharge").c_str(), String(c.soc));
             pub((cp + "status").c_str(),        String(c.status));
             if (isBalancing(mod) && j < 16) {

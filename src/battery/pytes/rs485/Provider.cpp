@@ -221,9 +221,9 @@ void Provider::sendRequest(uint8_t pollInterval)
 
 void Provider::sendCommand(SerialCommand::Command cmd, std::vector<uint8_t> info)
 {
-    // cluster address, set with the DIP switches of the first battery
-    uint8_t address = Configuration.get().Battery.Serial.ClusterAddress;
-    SerialCommand frame(cmd, address > 0 ? address : 1, info);
+    // the address is fixed to 1 inside SerialCommand (the battery only
+    // answers address 1, RTN 0x07 otherwise, regardless of its DIP switches)
+    SerialCommand frame(cmd, info);
 
     if (Interface::Transceiver == getInterface()) {
         digitalWrite(_rxEnablePin, HIGH); // disable reception while transmitting

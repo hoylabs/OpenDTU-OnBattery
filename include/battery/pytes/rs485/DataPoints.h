@@ -15,7 +15,6 @@ namespace Batteries::Pytes::Rs485 {
 struct CellData {
     float voltageV;     // V
     float temperatureC; // °C
-    float currentA;     // A
     uint16_t soc;       // %
     uint32_t status;    // status bitmask, see spec 1.3.7
 };
@@ -35,8 +34,7 @@ struct BatteryModule {
     float voltageV         = 0;
     float currentA         = 0;
     float soc              = 0;
-    uint16_t health        = 0;
-    uint32_t totalCapacityMah  = 0;
+    uint32_t totalCapacityMah  = 0; // design capacity of the module
     uint32_t remainCapacityMah = 0;
     float ambientTemp      = 0;
     int chargeCycles       = -1;
@@ -59,8 +57,6 @@ struct BatteryModule {
     float minDsgVoltV  = 0;
     float maxChgCurrA  = 0;
     float maxDsgCurrA  = 0;
-    bool chargeImmediately = false; // emergency charge flag 1 or 2
-    bool fullChgReq        = false;
 };
 
 // ---------------------------------------------------------------------------

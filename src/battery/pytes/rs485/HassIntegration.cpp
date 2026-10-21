@@ -113,7 +113,6 @@ void HassIntegration::publishDeferredSensors() const
     sensor("Voltage", nullptr, "voltage", "voltage", "measurement", "V", true, 2);
     sensor("Current", nullptr, "current", "current", "measurement", "A");
     sensor("State Of Charge", nullptr, "stateOfCharge", nullptr, "measurement", "%");
-    sensor("State Of Health", nullptr, "stateOfHealth", nullptr, "measurement", "%");
     // module values that also exist on battery level: same captions as there
     sensor("Charge voltage (BMS)", nullptr, "settings/chargeVoltage", "voltage", "measurement", "V", true, 2);
     sensor("Charge current limit", nullptr, "settings/chargeCurrentLimitation", "current", "measurement", "A");
@@ -125,8 +124,6 @@ void HassIntegration::publishDeferredSensors() const
     sensor("Cell Min Temperature", nullptr, "CellMinTemperature", "temperature", "measurement", "°C");
     sensor("Charge Cycles", "mdi:counter", "chargeCycles", nullptr, nullptr, nullptr);
     publishBinarySensor("Balancing Active", "mdi:scale-balance", String(id.serial + "/balancingActive").c_str(), "1", "0", true, &device);
-    publishBinarySensor("Charge immediately", "mdi:alert", String(id.serial + "/charging/chargeImmediately").c_str(), "1", "0", true, &device);
-    publishBinarySensor("Full charge requested", "mdi:battery-sync", String(id.serial + "/charging/fullChargeRequest").c_str(), "1", "0", true, &device);
 
     // cell count comes from the module info (0x80), read right before this republish
     for (uint8_t c = 1; c <= id.nCells; ++c) {

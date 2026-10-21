@@ -455,20 +455,17 @@ import type { ValueObject } from '@/types/LiveDataStatus';
 // d = decimals, -1 = yes/no flag
 const moduleColumns: { values: CellColumn[]; cellStatus: CellColumn[]; cells: CellColumn[] } = {
     values: [
-        { name: 'SoC', u: '%', d: 2 },
+        { name: 'SoC', u: '%', d: 0 },
         { name: 'voltage', u: 'V', d: 2 },
         { name: 'current', u: 'A', d: 3 },
         { name: 'dischargeCurrentLimitation', u: 'A', d: 1 },
         { name: 'chargeCurrentLimitation', u: 'A', d: 1 },
         { name: 'chargeVoltage', u: 'V', d: 1 },
         { name: 'dischargeVoltageLimitation', u: 'V', d: 1 },
-        { name: 'stateOfHealth', u: '%', d: 0 },
         { name: 'chargeCycles', u: '', d: 0 },
         { name: 'temperature', u: '°C', d: 1 },
         { name: 'capacity', u: 'Ah', d: 2 },
         { name: 'availableCapacity', u: 'Ah', d: 2 },
-        { name: 'chargeImmediately', u: '', d: -1 },
-        { name: 'fullChargeRequest', u: '', d: -1 },
         { name: 'balancingActive', u: '', d: -1 },
     ],
     cellStatus: [

@@ -162,8 +162,13 @@ DataPointContainer parseClusterAnalog(SerialResponse const& response)
     alarm(!charging && statusBit(12),     AlarmBits::UnderTemperature);      // UT
     alarm(charging && statusBit(8),       AlarmBits::OverTemperatureCharge);
     alarm(charging && statusBit(12),      AlarmBits::UnderTemperatureCharge);
-    alarm(statusBit(16) || statusBit(17) || statusBit(19), AlarmBits::OverCurrentDischarge); // SC, DOC2, DOC
-    alarm(statusBit(18) || statusBit(20), AlarmBits::OverCurrentCharge);     // COC2, COC
+    // the current bits differ from spec 1.3.7 (bit 18 COC2, 19 DOC, 24 PD,
+    // 29 SLP): the battery firmware names them SC, DOC2, DOC, COC2, COC,
+    // DOC1 and COC1 and uses them like this for its Victron CAN alarms
+    alarm(statusBit(16) || statusBit(17) || statusBit(18) || statusBit(24),
+          AlarmBits::OverCurrentDischarge);                                  // SC, DOC2, DOC, DOC1
+    alarm(statusBit(19) || statusBit(20) || statusBit(29),
+          AlarmBits::OverCurrentCharge);                                     // COC2, COC, COC1
     alarm(statusBit(28) || errStatus != 0, AlarmBits::InternalFailure);      // FAULT, system error
 
     uint16_t warnings = 0;
@@ -271,7 +276,7 @@ ModuleAnalogResult parseModuleAnalog(SerialResponse const& response)
     uint32_t totalMah   = response.getU32(pos);
     uint32_t remainMah  = response.getU32(pos);
     uint16_t soc        = response.getU16(pos);
-    uint16_t health     = response.getU16(pos);
+    response.getU16(pos); // skip health, see below
     int32_t  voltMv     = response.getS32(pos);
     int32_t  currMa     = response.getS32(pos);
     int32_t  ambientMc  = response.getS32(pos);
@@ -289,15 +294,11 @@ ModuleAnalogResult parseModuleAnalog(SerialResponse const& response)
     r.voltageV         = isSint32Supported(voltMv)  ? voltMv  / 1000.0f : 0.0f;
     r.currentA         = isSint32Supported(currMa)  ? currMa  / 1000.0f : 0.0f;
 
-    // use more precise calculated SoC when possible
-    if (isUint32Supported(totalMah) && totalMah > 0 && isUint32Supported(remainMah)) {
-        r.soc           = 100.0 * remainMah / totalMah;
-
-    } else {
-        r.soc           = static_cast<float>(soc);
-    }
-
-    r.health            = isUint16Supported(health)  ? health  : 0;
+    // the module's own SoC. not calculated from the capacities: total_mah is
+    // the design capacity of the module (not its full charge capacity), so
+    // remain / total would be too low by the SoH. health is skipped, the
+    // battery reports the SoH of the whole battery here, not of the module.
+    r.soc               = isUint16Supported(soc) ? static_cast<float>(soc) : 0.0f;
     r.totalCapacityMah  = isUint32Supported(totalMah)  ? totalMah  : 0;
     r.remainCapacityMah = isUint32Supported(remainMah) ? remainMah : 0;
     r.ambientTemp       = isSint32Supported(ambientMc) ? ambientMc / 1000.0f : 0.0f;
@@ -312,9 +313,9 @@ ModuleAnalogResult parseModuleAnalog(SerialResponse const& response)
     r.tempMinC          = isSint32Supported(tempMinMc) ? tempMinMc / 1000.0f : 0.0f;
     r.tempMinNo         = cellNo(tempMinNo);
 
-    DTU_LOGD("MOD%u: %.3fV %+.3fA SoC=%.2f%% SoH=%u%% cap=%u/%umAh ambient=%.1f°C cycles=%d "
+    DTU_LOGD("MOD%u: %.3fV %+.3fA SoC=%.0f%% cap=%u/%umAh ambient=%.1f°C cycles=%d "
              "cellMax=%.3fV(C%u) cellMin=%.3fV(C%u) tempMax=%.1f°C(C%u) tempMin=%.1f°C(C%u)",
-             r.moduleNo, r.voltageV, r.currentA, r.soc, r.health,
+             r.moduleNo, r.voltageV, r.currentA, r.soc,
              r.remainCapacityMah, r.totalCapacityMah, r.ambientTemp, r.chargeCycles,
              r.cellMaxV, r.cellMaxNo, r.cellMinV, r.cellMinNo,
              r.tempMaxC, r.tempMaxNo, r.tempMinC, r.tempMinNo);
@@ -328,6 +329,8 @@ ModuleAnalogResult parseModuleAnalog(SerialResponse const& response)
 // module_no(U8) max_chg_voltage_mv(U32) min_dsg_voltage_mv(U32)
 // max_chg_current_ma(U32) max_dsg_current_ma(U32)
 // emerg_chg_flag1(U8) emerg_chg_flag2(U8) full_chg_request(U8)
+// the flags are skipped: the battery sends the values of the whole battery
+// (see 0x62) for every module
 ModuleChgDsgResult parseModuleChgDsg(SerialResponse const& response)
 {
     ModuleChgDsgResult r;
@@ -338,19 +341,14 @@ ModuleChgDsgResult parseModuleChgDsg(SerialResponse const& response)
     uint32_t minDsgVoltMv = response.getU32(pos);
     uint32_t maxChgCurrMa = response.getU32(pos);
     uint32_t maxDsgCurrMa = response.getU32(pos);
-    uint8_t emergFlag1    = response.getU8(pos);
-    uint8_t emergFlag2    = response.getU8(pos);
-    uint8_t fullChgReq    = response.getU8(pos);
 
     r.maxChgVoltV = isUint32Supported(maxChgVoltMv) ? maxChgVoltMv / 1000.0f : 0.0f;
     r.minDsgVoltV = isUint32Supported(minDsgVoltMv) ? minDsgVoltMv / 1000.0f : 0.0f;
     r.maxChgCurrA = isUint32Supported(maxChgCurrMa) ? maxChgCurrMa / 1000.0f : 0.0f;
     r.maxDsgCurrA = isUint32Supported(maxDsgCurrMa) ? maxDsgCurrMa / 1000.0f : 0.0f;
-    r.chargeImmediately = emergencyCharge(emergFlag1, emergFlag2);
-    r.fullChgReq  = (fullChgReq != 0 && fullChgReq != 0xFF);
 
-    DTU_LOGD("MOD%u: maxChgV=%.1fV minDsgV=%.1fV maxChgI=%.1fA maxDsgI=%.1fA fullChgReq=%u",
-             r.moduleNo, r.maxChgVoltV, r.minDsgVoltV, r.maxChgCurrA, r.maxDsgCurrA, fullChgReq);
+    DTU_LOGD("MOD%u: maxChgV=%.1fV minDsgV=%.1fV maxChgI=%.1fA maxDsgI=%.1fA",
+             r.moduleNo, r.maxChgVoltV, r.minDsgVoltV, r.maxChgCurrA, r.maxDsgCurrA);
 
     return r;
 }
@@ -371,18 +369,18 @@ ModuleCellsResult parseModuleCells(SerialResponse const& response)
     r.cells.reserve(nCells);
 
     for (uint8_t i = 0; i < nCells; ++i) {
-        // spec lists current and temperature as Uint32, but both are signed
-        // in every other command (and in practice: discharge, sub-zero temps)
+        // spec lists temperature as Uint32, but it is signed like in every
+        // other command (sub-zero temps). the current is skipped: the battery
+        // sends the module current (see 0x81) for every cell.
         uint32_t cellStatus = response.getU32(pos);
         uint16_t cellSoc    = response.getU16(pos);
         int32_t  voltageMv  = response.getS32(pos);
-        int32_t  currentMa  = response.getS32(pos);
+        response.getS32(pos);
         int32_t  tempMc     = response.getS32(pos);
 
         CellData cd;
         cd.voltageV     = isSint32Supported(voltageMv) ? voltageMv / 1000.0f : 0.0f;
         cd.temperatureC = isSint32Supported(tempMc)    ? tempMc    / 1000.0f : 0.0f;
-        cd.currentA     = isSint32Supported(currentMa) ? currentMa / 1000.0f : 0.0f;
         cd.soc          = isUint16Supported(cellSoc)   ? cellSoc : 0;
         cd.status       = cellStatus;
 
