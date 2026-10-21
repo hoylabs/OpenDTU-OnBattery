@@ -3,6 +3,8 @@
 #include <PinMapping.h>
 #include <driver/twai.h>
 #include <LogHelper.h>
+#include <algorithm>
+#include <cstring>
 
 #undef TAG
 static const char* TAG = "battery";
@@ -34,6 +36,10 @@ bool CanReceiver::init(char const* providerName)
     // esp_intr_dump() function, but that's not available yet in our version
     // of the underlying esp-idf.
     g_config.intr_flags = ESP_INTR_FLAG_LEVEL2;
+
+    // batteries send their frames in bursts (and answer requests on top of
+    // that), the default of 5 frames overflows easily
+    g_config.rx_queue_len = 32;
 
     // Initialize configuration structures using macro initializers
     twai_timing_config_t t_config = TWAI_TIMING_CONFIG_500KBITS();
@@ -101,6 +107,8 @@ void CanReceiver::deinit()
 
 void CanReceiver::loop()
 {
+    onLoop();
+
     // Check for messages. twai_receive is blocking when there is no data so we return if there are no frames in the buffer
     twai_status_info_t status_info;
     esp_err_t twaiLastResult = twai_get_status_info(&status_info);
@@ -115,6 +123,20 @@ void CanReceiver::loop()
         }
         return;
     }
+
+    // only possible while transmitting: transmit errors (e.g. while the
+    // battery is off) can put the controller into bus off state, in which it
+    // does not receive either
+    if (status_info.state == TWAI_STATE_BUS_OFF) {
+        DTU_LOGW("TWAI bus off, initiating recovery");
+        twai_initiate_recovery();
+        return;
+    }
+    if (status_info.state == TWAI_STATE_STOPPED) {
+        twai_start(); // after a recovery
+        return;
+    }
+
     if (status_info.msgs_to_rx == 0) {
         return;
     }
@@ -131,6 +153,41 @@ void CanReceiver::loop()
     LogHelper::dumpBytes(TAG, _providerName, rx_message.data, rx_message.data_length_code);
 
     onMessage(rx_message);
+}
+
+bool CanReceiver::transmit(uint32_t identifier, uint8_t const* data, uint8_t length, bool extended)
+{
+    // only drive the bus when the controller is healthy and no transmission
+    // is still pending. a stuck (unacknowledged) frame must not pile up and
+    // push the controller towards bus off, which would also stop reception.
+    twai_status_info_t status;
+    if (twai_get_status_info(&status) != ESP_OK
+            || status.state != TWAI_STATE_RUNNING
+            || status.msgs_to_tx > 0) {
+        DTU_LOGW("TX 0x%X skipped (state=%d msgs_to_tx=%d)",
+                (unsigned)identifier, (int)status.state, (int)status.msgs_to_tx);
+        return false;
+    }
+
+    twai_message_t message = {};
+    message.identifier = identifier;
+    message.extd = extended ? 1 : 0;
+    // keep automatic retransmission on (like the working Huawei TWAI code):
+    // single-shot frames silently lose arbitration against the battery's
+    // continuous frame bursts and never reach it. the msgs_to_tx guard above
+    // keeps only one frame in flight, and bus off recovery in loop() handles
+    // the battery-absent case.
+    message.data_length_code = std::min<uint8_t>(length, TWAI_FRAME_MAX_DLC);
+    memcpy(message.data, data, message.data_length_code);
+
+    if (twai_transmit(&message, 0) != ESP_OK) {
+        DTU_LOGD("Failed to queue CAN message 0x%04X", identifier);
+        return false;
+    }
+
+    DTU_LOGD("Sent CAN message: 0x%04X (%d bytes)", identifier, message.data_length_code);
+    LogHelper::dumpBytes(TAG, _providerName, message.data, message.data_length_code);
+    return true;
 }
 
 uint8_t CanReceiver::readUnsignedInt8(uint8_t *data)
