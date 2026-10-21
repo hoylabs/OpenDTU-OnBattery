@@ -23,9 +23,11 @@ public:
         ModuleCells    = 0x92,
     };
 
-    // addr: cluster address (1-based)
+    // The address is fixed to 1: the battery only ever answers address 1
+    // (RTN 0x07 otherwise), regardless of its DIP switches, so it is not
+    // configurable.
     // info: optional INFO payload bytes (already the raw data, will be hex-encoded)
-    explicit SerialCommand(Command cmd, uint8_t addr = 1, std::vector<uint8_t> info = {});
+    explicit SerialCommand(Command cmd, std::vector<uint8_t> info = {});
 
     uint8_t const* data() const { return _frame.data(); }
     size_t         size() const { return _frame.size(); }

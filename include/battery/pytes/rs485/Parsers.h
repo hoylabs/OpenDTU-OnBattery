@@ -37,8 +37,7 @@ struct ModuleAnalogResult {
     float voltageV             = 0;
     float currentA             = 0;
     float soc                  = 0;
-    uint16_t health            = 0;
-    uint32_t totalCapacityMah  = 0;
+    uint32_t totalCapacityMah  = 0; // design capacity of the module
     uint32_t remainCapacityMah = 0;
     float ambientTemp          = 0;
     int chargeCycles           = -1;
@@ -61,8 +60,6 @@ struct ModuleChgDsgResult {
     float minDsgVoltV   = 0;
     float maxChgCurrA   = 0;
     float maxDsgCurrA   = 0;
-    bool chargeImmediately = false;
-    bool fullChgReq     = false;
 };
 
 struct ModuleCellsResult {

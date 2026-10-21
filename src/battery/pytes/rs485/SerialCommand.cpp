@@ -7,6 +7,7 @@ static constexpr uint8_t SOI = 0x7E;
 static constexpr uint8_t EOI = 0x0D;
 static constexpr uint8_t VER = 0x20;
 static constexpr uint8_t CID1 = 0x46;
+static constexpr uint8_t ADDRESS = 1; // the battery only answers address 1
 
 // Append two ASCII hex chars representing val to buf
 static void appendHex8(std::vector<uint8_t>& buf, uint8_t val)
@@ -37,7 +38,7 @@ uint16_t SerialCommand::frameChksum(std::vector<uint8_t> const& inner)
     return static_cast<uint16_t>((~(sum % 65536) + 1) & 0xFFFF);
 }
 
-SerialCommand::SerialCommand(Command cmd, uint8_t addr, std::vector<uint8_t> info)
+SerialCommand::SerialCommand(Command cmd, std::vector<uint8_t> info)
 {
     // Build INFO as ASCII hex of raw bytes
     std::vector<uint8_t> infoAscii;
@@ -50,7 +51,7 @@ SerialCommand::SerialCommand(Command cmd, uint8_t addr, std::vector<uint8_t> inf
     std::vector<uint8_t> inner;
     inner.reserve(8 + infoAscii.size());
     appendHex8(inner, VER);
-    appendHex8(inner, addr);
+    appendHex8(inner, ADDRESS);
     appendHex8(inner, CID1);
     appendHex8(inner, static_cast<uint8_t>(cmd));
     appendHex16(inner, lengthField);
