@@ -38,7 +38,8 @@ void ModbusServerClass::updateSettings()
     }
     _server.end();
 
-    auto const& cfg = Configuration.get().ModbusServer;
+    _cfg = Configuration.get().ModbusServer;
+    auto const& cfg = _cfg;
     if (!cfg.Enabled) {
         ESP_LOGI(TAG, "SunSpec/Modbus TCP server disabled");
         return;
@@ -89,11 +90,9 @@ void ModbusServerClass::loop()
             WiFiClient n = _server.accept();
             if (n) {
                 // Accepted sockets get no send/receive timeout by default in
-                // this framework (unlike client-initiated connect()), so a
-                // stalled peer could otherwise block this task's write()
-                // indefinitely. 1s is the finest granularity setTimeout()
-                // offers; write() below drops the client if that's not
-                // enough for it to drain a reply.
+                // this framework (unlike client-initiated connect()). Writes
+                // are guarded by sendFrame() so they shouldn't block, but keep
+                // a 1s cap (the finest setTimeout() granularity) as a backstop.
                 n.setTimeout(1);
                 c.tcp = n;
                 c.buf.clear();
@@ -237,14 +236,25 @@ void ModbusServerClass::handleReadRegs(WiFiClient& client, uint16_t tid, uint8_t
         *p++ = static_cast<uint8_t>(v & 0xFF);
     }
     size_t respLen = static_cast<size_t>(p - resp);
-    if (client.write(resp, respLen) != respLen) {
-        // Peer didn't drain a ~260-byte reply within the 1s cap set at
-        // accept() - stalled or gone. Drop it instead of leaving a wedged
-        // slot that would eat this timeout again on every future request.
+    if (!sendFrame(client, resp, respLen)) {
         ESP_LOGE(TAG, "Write failed sending read-regs response to %s, dropping client",
                  client.remoteIP().toString().c_str());
         client.stop();
     }
+}
+
+// ---------------------------------------------------------------------------
+// Send a complete frame without ever blocking the (shared) main loop: a reply
+// is a few hundred bytes at most, so if the socket's send buffer can't take it
+// right now the peer isn't draining and is dropped by the caller, instead of
+// stalling every other task for the socket timeout.
+// ---------------------------------------------------------------------------
+
+bool ModbusServerClass::sendFrame(WiFiClient& client, const uint8_t* data, size_t len)
+{
+    if (!client.connected()) { return false; }
+    if (static_cast<size_t>(client.availableForWrite()) < len) { return false; }
+    return client.write(data, len) == len;
 }
 
 // ---------------------------------------------------------------------------
@@ -259,7 +269,7 @@ void ModbusServerClass::sendException(WiFiClient& client, uint16_t tid, uint8_t 
         0x00, 0x00, 0x00, 0x03,
         unitId, static_cast<uint8_t>(fc | 0x80), code
     };
-    if (client.write(resp, sizeof(resp)) != sizeof(resp)) {
+    if (!sendFrame(client, resp, sizeof(resp))) {
         ESP_LOGE(TAG, "Write failed sending exception response to %s, dropping client",
                  client.remoteIP().toString().c_str());
         client.stop();
@@ -272,7 +282,8 @@ void ModbusServerClass::sendException(WiFiClient& client, uint16_t tid, uint8_t 
 
 std::shared_ptr<InverterAbstract> ModbusServerClass::unitIdToInverter(uint8_t unitId) const
 {
-    auto const& cfg = Configuration.get().ModbusServer;
+    // Called from loop() with _mutex held; _cfg is only replaced under it.
+    auto const& cfg = _cfg;
     for (size_t i = 0; i < INV_MAX_COUNT; ++i) {
         if (cfg.Inverter[i].Serial == 0ULL) { break; }
         if (cfg.Inverter[i].UnitId == unitId) {

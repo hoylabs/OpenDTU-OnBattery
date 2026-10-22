@@ -62,13 +62,18 @@ private:
     WiFiServer _server;
     std::array<Client, kMaxClients> _clients;
     Task _loopTask;
-    std::mutex _mutex; // guards _server/_clients across threads
+    std::mutex _mutex; // guards _server/_clients/_cfg across threads
+    // Snapshot of Configuration.get().ModbusServer, taken in updateSettings().
+    // The loop task reads this instead of the live config, which the web task
+    // may rewrite at any time without synchronizing with readers.
+    ModbusServerConfig _cfg = {};
 
     void loop();
     void drainClient(Client& c);
     bool tryProcessFrame(Client& c);
     void handleReadRegs(WiFiClient& tcp, uint16_t tid, uint8_t unitId,
                         uint16_t startAddr, uint16_t regCount);
+    bool sendFrame(WiFiClient& tcp, const uint8_t* data, size_t len);
     void sendException(WiFiClient& tcp, uint16_t tid, uint8_t unitId,
                        uint8_t fc, uint8_t code);
     std::shared_ptr<InverterAbstract> unitIdToInverter(uint8_t unitId) const;
