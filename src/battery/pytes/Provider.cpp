@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <battery/pytes/Provider.h>
+#include <algorithm>
 #include <PinMapping.h>
 #include <driver/twai.h>
 #include <ctime>
@@ -63,7 +64,39 @@ bool Provider::init()
 
 void Provider::onMessage(twai_message_t rx_message)
 {
-    switch (rx_message.identifier) {
+    // module firmware version replies (extended id). must NOT blanket-drop
+    // other extended frames: the battery sends its regular frames as extended
+    // ids too, they have to reach the switch below.
+    if (rx_message.extd) {
+        if (rx_message.identifier >= 0x19A61 && rx_message.identifier <= 0x19A65) {
+            onModuleVersionFrame(rx_message.identifier, rx_message.data, rx_message.data_length_code);
+            return;
+        }
+    }
+
+    // per-module cell data replies (0x4F0 + module * 0x10 + n), not used by
+    // the regular protocol
+    if ((rx_message.identifier & 0x7FF) >= 0x500 && (rx_message.identifier & 0x7FF) <= 0x5FF) {
+        onModuleCellFrame(rx_message.identifier & 0x7FF, rx_message.data, rx_message.data_length_code);
+        return;
+    }
+
+    // in the Pytes native protocol with CAN group addressing the regular
+    // frames carry the group in the upper bits (id = base + group * 0x1000,
+    // sent as extended frames), e.g. 0xE400 for group 14. mask it off so the
+    // base ids below match for any group.
+    uint32_t id = rx_message.extd ? (rx_message.identifier & 0xFFF) : rx_message.identifier;
+
+    // per-module requests are only answered in the Pytes native protocol
+    // (0x400-0x41E); the Victron protocol rejects them. remember when such a
+    // frame was last seen so onLoop() only requests then, and remember the
+    // group so the requests can be addressed to it.
+    if (id >= 0x400 && id <= 0x41E) {
+        _lastPytesFrame = millis();
+        _group = (rx_message.identifier >> 12) & 0xF;
+    }
+
+    switch (id) {
         case 0x351:
         case 0x400: {
             _stats->_chargeVoltageLimit = this->scaleValue(this->readUnsignedInt16(rx_message.data), 0.1);
@@ -418,8 +451,10 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x408: { // Pytes protocol: charge status
-            bool chargeEnabled = rx_message.data[0];
-            bool dischargeEnabled = rx_message.data[1];
+            // bytes 0/1: pack charge/discharge allowed (charge/discharge
+            // current limit != 0). pack-level, unlike the per-module 0x40C.
+            _stats->_chargeEnabled = rx_message.data[0] != 0;
+            _stats->_dischargeEnabled = rx_message.data[1] != 0;
             // byte 2: force charge I, raised at SoC <= 8 %, cleared at
             // >= 12 %. byte 3: force charge II, raised at SoC < 10 %, cleared
             // at > 12 %. byte 5: modules blocking charge. same condition the
@@ -434,7 +469,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             DTU_LOGD("chargeEnabled: %d dischargeEnabled: %d chargeImmediately: %d fullChargeRequest: %d "
                     "moduleCountBlockingCharge: %d moduleCountBlockingDischarge: %d",
-                    chargeEnabled, dischargeEnabled, _stats->_chargeImmediately, *_stats->_fullChargeRequest,
+                    *_stats->_chargeEnabled, *_stats->_dischargeEnabled, _stats->_chargeImmediately, *_stats->_fullChargeRequest,
                     _stats->_moduleCountBlockingCharge, _stats->_moduleCountBlockingDischarge);
             break;
         }
@@ -464,9 +499,24 @@ void Provider::onMessage(twai_message_t rx_message)
             break;
         }
 
+        case 0x40c: { // Pytes protocol: per-module charge/discharge enable
+            // bytes 0-3: bitmask of modules with charging enabled (bit 0 =
+            // module 1), bytes 4-7: modules with discharging enabled. Each bit
+            // is the module's charge/discharge-allow flag that gates its FET
+            // (charge cleared on over-voltage etc., discharge on under-voltage
+            // etc.). 32-bit, so unlike 0x408 (8-bit) this covers all modules.
+            // The blockingCharge/blockingDischarge module fields are derived
+            // from these inverted.
+            _stats->_moduleMaskChargeEnable = this->readUnsignedInt32(rx_message.data);
+            _stats->_moduleMaskDischargeEnable = this->readUnsignedInt32(rx_message.data + 4);
+            _stats->_moduleMasksValid = true;
+            break;
+        }
+
         case 0x40d: { // Pytes protocol: heating / balancing info
             // bytes 0-3: bitmask of the modules heating (bit 0 = module 1)
-            _stats->_moduleCountHeating = __builtin_popcount(this->readUnsignedInt32(rx_message.data));
+            _stats->_moduleMaskHeating = this->readUnsignedInt32(rx_message.data);
+            _stats->_moduleCountHeating = __builtin_popcount(_stats->_moduleMaskHeating);
 
             // bytes 4-5: bitmask of the cells being balanced (bit 0 = cell 1),
             // combined over all modules (observed: 0x86E1 = 0x84E1 of module 1
@@ -485,6 +535,138 @@ void Provider::onMessage(twai_message_t rx_message)
     }
 
     _stats->setLastUpdate(millis());
+}
+
+// Pytes protocol only (the Victron protocol answers no requests): the cell
+// data of a module is requested with 0x307 [group + 1, module number], the
+// battery answers in its next cycle (once per second) and handles only one
+// request at a time. the firmware version of a module is requested once with
+// 0x19A60 (extended identifier) [module number (16 bit)].
+void Provider::onLoop()
+{
+    // only request in the Pytes native protocol: the Victron protocol (the
+    // default, used when an inverter is the CAN master) rejects these requests
+    // in the battery firmware, so they are never answered. gating on a recent
+    // Pytes-protocol frame also avoids injecting frames onto an inverter's bus.
+    if (_lastPytesFrame == 0 || millis() - _lastPytesFrame > 5000) { return; }
+
+    // no requests without recent data, e.g. while the battery is off.
+    uint8_t moduleCount = std::min<uint8_t>(Stats::MaxModules,
+            _stats->_moduleCountOnline + _stats->_moduleCountOffline);
+    if (moduleCount == 0 || _stats->getAgeSeconds() > 10) { return; }
+
+    // a request is completed by its answer, a lost answer is given up
+    uint32_t now = millis();
+    if (now - _lastRequest < 1000) { return; }
+    if (_pendingModule != 0) {
+        if (now - _lastRequest < 3000) { return; }
+        _pendingModule = 0;
+        if (_unansweredRequests < UINT8_MAX) { ++_unansweredRequests; }
+        if (_unansweredRequests == 3) {
+            DTU_LOGW("Module data requests are not answered, retrying every 10 minutes");
+        }
+    }
+
+    // e.g. a battery firmware without support for these requests, or another
+    // device on the bus interfering: only try now and then
+    if (_unansweredRequests >= 3 && now - _lastRequest < 10 * 60 * 1000) { return; }
+    _lastRequest = now;
+
+    if (_nextModule > moduleCount) { _nextModule = 1; }
+    uint8_t module = _nextModule;
+    auto const& mod = _stats->_modules[module - 1];
+
+    // the version is answered immediately, the cell data of the same module
+    // is requested on the next turn
+    if (mod.lastUpdate != 0 && mod.fwVersion.isEmpty() && _versionRequests[module - 1] < 3) {
+        ++_versionRequests[module - 1];
+        uint8_t data[8] = { module, 0 };
+        transmit(0x19A60, data, sizeof(data), true);
+        return;
+    }
+
+    // the battery talks in extended ids (its regular frames arrive extended),
+    // so the request must be extended too, otherwise it is ignored
+    uint8_t data[8] = { static_cast<uint8_t>(_group + 1), module }; // byte0 = group + 1, byte1 = module
+    if (transmit(0x307, data, sizeof(data), true)) { _pendingModule = module; }
+    _nextModule = module % moduleCount + 1;
+}
+
+// 0x4F0 + module number * 0x10 + n. n = 0: number of cells, 1-4: cell
+// voltages [mV], 5-8: cell temperatures [0.1 °C], 4 cells per frame.
+void Provider::onModuleCellFrame(uint32_t identifier, uint8_t const* data, uint8_t length)
+{
+    uint8_t module = (identifier - 0x4F0) >> 4;
+    uint8_t n = (identifier - 0x4F0) & 0x0F;
+    if (module < 1 || module > Stats::MaxModules || n > 8) { return; }
+
+    auto& mod = _stats->_modules[module - 1];
+    uint8_t* values = const_cast<uint8_t*>(data);
+
+    if (n == 0) {
+        if (length >= 2) {
+            mod.cellCount = std::min<uint16_t>(readUnsignedInt16(values), Stats::MaxCells);
+        }
+        return;
+    }
+
+    for (uint8_t i = 0; i < 4 && 2 * i + 1 < length; ++i) {
+        uint8_t cell = ((n - 1) % 4) * 4 + i;
+        if (n <= 4) {
+            mod.cellMilliVolt[cell] = readUnsignedInt16(values + 2 * i);
+        } else {
+            mod.cellTemperature[cell] = readSignedInt16(values + 2 * i) / 10.0f;
+        }
+    }
+
+    if (n < 8) { return; }
+
+    // a new module: announce its HASS device
+    if (mod.lastUpdate == 0) { _hassIntegration->republish(); }
+
+    mod.lastUpdate = millis();
+    if (module == _pendingModule) { _pendingModule = 0; }
+    _unansweredRequests = 0;
+
+    DTU_LOGD("Module %u: %u cells, cell 1: %u mV %.1f °C", module, mod.cellCount,
+            mod.cellMilliVolt[0], mod.cellTemperature[0]);
+}
+
+// 0x19A61: [length (16 bit), CRC16 (16 bit), module number (16 bit)],
+// 0x19A62-0x19A65: version string, 8 characters each, zero padded
+void Provider::onModuleVersionFrame(uint32_t identifier, uint8_t const* data, uint8_t length)
+{
+    uint8_t* values = const_cast<uint8_t*>(data);
+
+    if (identifier == 0x19A61) {
+        if (length < 6) { return; }
+        uint16_t module = readUnsignedInt16(values + 4);
+        _versionModule = (module >= 1 && module <= Stats::MaxModules) ? module : 0;
+        _versionLength = std::min<uint16_t>(readUnsignedInt16(values), _versionBuffer.size());
+        _versionBuffer.fill(0);
+        return;
+    }
+
+    if (_versionModule == 0) { return; }
+
+    size_t offset = (identifier - 0x19A62) * 8;
+    memcpy(_versionBuffer.data() + offset, data, std::min<uint8_t>(length, 8));
+
+    if (identifier != 0x19A65) { return; }
+
+    String version;
+    for (uint8_t i = 0; i < _versionLength && _versionBuffer[i] != 0; ++i) {
+        if (!isprint(static_cast<unsigned char>(_versionBuffer[i]))) { break; }
+        version += _versionBuffer[i];
+    }
+    version.trim();
+
+    if (!version.isEmpty()) {
+        _stats->_modules[_versionModule - 1].fwVersion = version;
+        DTU_LOGI("Module %u: firmware %s", _versionModule, version.c_str());
+        _hassIntegration->republish(); // the version is part of the HASS device
+    }
+    _versionModule = 0;
 }
 
 } // namespace Batteries::Pytes
