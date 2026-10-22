@@ -118,7 +118,12 @@ void WebApiModbusServerClass::onAdminPost(AsyncWebServerRequest* request)
         }
 
         const char* serialText = inv["serial"].as<const char*>();
-        if (serialText[0] == '-' || strtoull(serialText, nullptr, 16) == 0) {
+        char* serialEnd = nullptr;
+        uint64_t serial = 0;
+        if (isxdigit(static_cast<unsigned char>(serialText[0]))) {
+            serial = strtoull(serialText, &serialEnd, 16);
+        }
+        if (serial == 0 || *serialEnd != '\0') {
             retMsg["message"] = "Invalid serial: must be a non-zero hex value!";
             retMsg["code"] = WebApiError::GenericValueMissing;
             response->setLength();
