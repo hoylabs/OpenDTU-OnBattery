@@ -774,7 +774,9 @@ void ConfigurationClass::deserializeModbusServerConfig(JsonObject const& source,
         uint8_t unitId = inv["unit_id"].as<uint8_t>();
         if (unitId < 1 || unitId > 247) { continue; } // out of valid Modbus unit ID range, drop it
         if (seenUnitId[unitId]) { continue; } // duplicate unit_id, drop it (WebApi rejects these too)
-        uint64_t serial = strtoll(inv["serial"].as<const char*>(), nullptr, 16);
+        const char* serialText = inv["serial"].as<const char*>();
+        if (serialText[0] == '-') { continue; } // strtoull would accept and negate it, drop it
+        uint64_t serial = strtoull(serialText, nullptr, 16);
         // Serial == 0 doubles as the "end of list" terminator below and in
         // unitIdToInverter(), so a zero/unparseable serial must never be
         // written mid-array - it would hide every entry after it.
