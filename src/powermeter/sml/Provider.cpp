@@ -14,9 +14,10 @@ void Provider::reset()
     _dataInFlight.clear();
 }
 
-void Provider::processSmlByte(uint8_t byte)
+sml_states_t Provider::processSmlByte(uint8_t byte)
 {
-    switch (smlState(byte)) {
+    auto const state = smlState(byte);
+    switch (state) {
         case SML_LISTEND:
             for (auto& handler: smlHandlerList) {
                 if (!smlOBISCheck(handler.OBIS)) { continue; }
@@ -93,6 +94,8 @@ void Provider::processSmlByte(uint8_t byte)
         default:
             break;
     }
+
+    return state;
 }
 
 } // namespace PowerMeters::Sml
