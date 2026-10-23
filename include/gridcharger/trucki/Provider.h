@@ -17,12 +17,24 @@ public:
     std::shared_ptr<::GridChargers::Stats> getStats() const final { return _stats; }
 
     bool getAutoPowerStatus() const final {
+        // the Trucki stops charging by itself if it does not receive setpoints
+        // for 10 seconds, and control decisions rely on HTTP-polled values, so
+        // outdated values must not report it as active.
+        if (millis() - getLastHttpUpdate() > DATA_MAX_AGE_MS) { return false; }
+
         return _requestedPowerAc > 0
             || _dataCurrent.get<DataPointLabel::AcPowerSetpoint>().value_or(0) > 0.0f
             || _dataCurrent.get<DataPointLabel::DcPower>().value_or(0) > 0.0f;
     }
 
 private:
+    // DC values and the AC power setpoint are only polled via HTTP, while the
+    // UDP responses only refresh AC power, max AC power and battery/grid state.
+    uint32_t getLastHttpUpdate() const {
+        auto oDataPoint = _dataCurrent.getDataPointFor<DataPointLabel::DcVoltage>();
+        return oDataPoint ? oDataPoint->getTimestamp() : 0;
+    }
+
     template<DataPointLabel L>
     void addStringToDataPoints(const JsonDocument& doc, const char* key)
     {
@@ -70,6 +82,8 @@ private:
     std::unique_ptr<HttpGetter> _httpGetter;
 
     static constexpr int DATA_POLLING_INTERVAL_MS = 3000; // 3 seconds
+    static constexpr int HTTP_TIMEOUT_MS = 2000; // 2 seconds
+    static constexpr uint32_t DATA_MAX_AGE_MS = 30 * 1000;
 
     void setRequestedPowerAc(float power);
     float _requestedPowerAc = 0;
@@ -86,7 +100,12 @@ private:
     uint32_t _lastPowerMeterUpdateReceivedMillis = 0; // Timestamp of last seen power meter value
     uint32_t _autoModeBlockedTillMillis = 0;      // Timestamp to block running auto mode for some time
 
-    bool _autoPowerEnabled = false;
+    // battery/grid state reported via UDP (Trucki firmware >= 1.09), -1 if unknown
+    static constexpr int BATTERY_GRID_STATE_VBAT_FULL = 2;
+    static constexpr int BATTERY_GRID_STATE_VGRID_LOW_DELAYED = 4;
+    static constexpr int BATTERY_GRID_STATE_VGRID_LOW = 5;
+    int _batteryGridState = -1;
+    uint32_t _lastBatteryGridStateMillis = 0;
     bool _batteryEmergencyCharging = false;
 };
 
