@@ -60,7 +60,7 @@
                             <div v-for="(values, section) in data.values" v-bind:key="section" class="col order-0">
                                 <div class="card card-table" :class="{ 'border-info': section === 'device' }">
                                     <div :class="section === 'device' ? 'card-header text-bg-info' : 'card-header'">
-                                        {{ $t('gridcharger.' + section) }}
+                                        {{ $te('gridcharger.' + section) ? $t('gridcharger.' + section) : section }}
                                     </div>
                                     <div class="card-body">
                                         <div class="table-responsive">

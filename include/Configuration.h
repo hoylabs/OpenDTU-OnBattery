@@ -51,6 +51,10 @@
 #define POWERMETER_MQTT_MAX_VALUES 3
 #define POWERMETER_HTTP_JSON_MAX_VALUES 3
 
+#define GRIDCHARGER_HTTP_MAX_CHARGERS 4
+#define GRIDCHARGER_HTTP_MAX_NAME_STRLEN 31
+#define GRIDCHARGER_HTTP_MAX_BASE_URL_STRLEN 128
+
 #define ZENDURE_MAX_SERIAL_STRLEN   8
 #define ZENDURE_MAX_SERVER_STRLEN   256
 #define ZENDURE_MAX_CLIENTID_STRLEN 23
@@ -267,7 +271,7 @@ struct BATTERY_CONFIG_T {
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
-enum GridChargerProviderType { HUAWEI = 0, TRUCKI = 1 };
+enum GridChargerProviderType { HUAWEI = 0, TRUCKI = 1, HTTP = 2 };
 enum GridChargerHardwareInterface { MCP2515 = 0, TWAI = 1 };
 
 struct GRID_CHARGER_TRUCKI_CONFIG_T {
@@ -291,6 +295,24 @@ struct GRID_CHARGER_HUAWEI_CONFIG_T {
 };
 using GridChargerHuaweiConfig = struct GRID_CHARGER_HUAWEI_CONFIG_T;
 
+struct GRID_CHARGER_HTTP_CHARGER_T {
+    bool Enabled;
+    char Name[GRIDCHARGER_HTTP_MAX_NAME_STRLEN + 1];
+    char Url[GRIDCHARGER_HTTP_MAX_BASE_URL_STRLEN + 1];
+    float AcPower;
+};
+using GridChargerHTTPChargerConfig = struct GRID_CHARGER_HTTP_CHARGER_T;
+
+struct GRID_CHARGER_HTTP_CONFIG_T {
+    // URIs and JSON path are shared by all chargers (usually identical smart plugs)
+    char UriOn[HTTP_REQUEST_MAX_URL_STRLEN + 1];
+    char UriOff[HTTP_REQUEST_MAX_URL_STRLEN + 1];
+    char UriStats[HTTP_REQUEST_MAX_URL_STRLEN + 1];
+    char UriPowerParam[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    GridChargerHTTPChargerConfig Chargers[GRIDCHARGER_HTTP_MAX_CHARGERS];
+};
+using GridChargerHTTPConfig = struct GRID_CHARGER_HTTP_CONFIG_T;
+
 struct GRID_CHARGER_CONFIG_T {
     bool Enabled;
     bool AutoPowerEnabled;
@@ -301,11 +323,14 @@ struct GRID_CHARGER_CONFIG_T {
     float AutoPowerLowerPowerLimit;
     float AutoPowerUpperPowerLimit;
     uint8_t AutoPowerStopBatterySoCThreshold;
+    float AutoPowerStopBatteryVoltageThreshold;   // 0 = disabled
+    float AutoPowerResumeBatteryVoltageThreshold;
     float AutoPowerTargetPowerConsumption;
     GridChargerProviderType Provider;
     GridChargerCanConfig Can;
     GridChargerHuaweiConfig Huawei;
     GridChargerTruckiConfig Trucki;
+    GridChargerHTTPConfig HTTP;
 };
 using GridChargerConfig = struct GRID_CHARGER_CONFIG_T;
 
@@ -522,6 +547,7 @@ public:
     static void serializeGridChargerCanConfig(GridChargerCanConfig const& source, JsonObject& target);
     static void serializeGridChargerHuaweiConfig(GridChargerHuaweiConfig const& source, JsonObject& target);
     static void serializeGridChargerTruckiConfig(GridChargerTruckiConfig const& source, JsonObject& target);
+    static void serializeGridChargerHTTPConfig(GridChargerHTTPConfig const& source, JsonObject& target);
 
     static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
     static void deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target);
@@ -540,6 +566,7 @@ public:
     static void deserializeGridChargerCanConfig(JsonObject const& source, GridChargerCanConfig& target);
     static void deserializeGridChargerHuaweiConfig(JsonObject const& source, GridChargerHuaweiConfig& target);
     static void deserializeGridChargerTruckiConfig(JsonObject const& source, GridChargerTruckiConfig& target);
+    static void deserializeGridChargerHTTPConfig(JsonObject const& source, GridChargerHTTPConfig& target);
 
 private:
     void loop();

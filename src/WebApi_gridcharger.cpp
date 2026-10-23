@@ -5,6 +5,7 @@
 #include "WebApi_gridcharger.h"
 #include <gridcharger/Controller.h>
 #include <gridcharger/huawei/Provider.h>
+#include <gridcharger/HTTP/Provider.h>
 #include "Configuration.h"
 #include "PinMapping.h"
 #include "WebApi.h"
@@ -175,6 +176,9 @@ void WebApiGridChargerClass::onAdminGet(AsyncWebServerRequest* request)
     auto trucki = root["trucki"].to<JsonObject>();
     ConfigurationClass::serializeGridChargerTruckiConfig(config.GridCharger.Trucki, trucki);
 
+    auto HTTP = root["HTTP"].to<JsonObject>();
+    ConfigurationClass::serializeGridChargerHTTPConfig(config.GridCharger.HTTP, HTTP);
+
     response->setLength();
     request->send(response);
 }
@@ -215,6 +219,54 @@ void WebApiGridChargerClass::onAdminPost(AsyncWebServerRequest* request)
         return;
     }
 
+    if (root["provider"].as<uint8_t>() == static_cast<uint8_t>(GridChargerProviderType::HTTP)) {
+        auto sendHttpError = [&]() {
+            retMsg["message"] = "HTTP values are missing or of wrong type!";
+            retMsg["code"] = WebApiError::GenericValueMissing;
+            response->setLength();
+            request->send(response);
+        };
+
+        if (!root["HTTP"]["Chargers"].is<JsonArrayConst>()) {
+            sendHttpError();
+            return;
+        }
+
+        bool anyEnabled = false;
+        for (JsonVariantConst charger : root["HTTP"]["Chargers"].as<JsonArrayConst>()) {
+            if (!charger["Enabled"].is<bool>() ||
+                !charger["Url"].is<const char*>() ||
+                !charger["AcPower"].is<float>()) {
+                sendHttpError();
+                return;
+            }
+
+            if (!charger["Enabled"].as<bool>()) { continue; }
+            anyEnabled = true;
+
+            if (strlen(charger["Url"].as<const char*>()) == 0 ||
+                strlen(charger["Url"].as<const char*>()) > GRIDCHARGER_HTTP_MAX_BASE_URL_STRLEN ||
+                charger["AcPower"].as<float>() <= 0) {
+                sendHttpError();
+                return;
+            }
+        }
+
+        if (!anyEnabled) {
+            sendHttpError();
+            return;
+        }
+
+        float stopVoltage = root["stop_battery_voltage_threshold"] | 0.0f;
+        float resumeVoltage = root["resume_battery_voltage_threshold"] | 0.0f;
+        if (stopVoltage > 0 && (resumeVoltage <= 0 || resumeVoltage >= stopVoltage)) {
+            retMsg["message"] = "Resume voltage must be greater than 0 and lower than the stop voltage!";
+            retMsg["code"] = WebApiError::GenericValueMissing;
+            response->setLength();
+            request->send(response);
+            return;
+        }
+    }
     using HuaweiProvider = GridChargers::Huawei::Provider;
 
     auto isValidRange = [&](const char* valueName, float min, float max, WebApiError error) -> bool {
@@ -242,6 +294,7 @@ void WebApiGridChargerClass::onAdminPost(AsyncWebServerRequest* request)
         ConfigurationClass::deserializeGridChargerCanConfig(root["can"].as<JsonObject>(), config.GridCharger.Can);
         ConfigurationClass::deserializeGridChargerHuaweiConfig(root["huawei"].as<JsonObject>(), config.GridCharger.Huawei);
         ConfigurationClass::deserializeGridChargerTruckiConfig(root["trucki"].as<JsonObject>(), config.GridCharger.Trucki);
+        ConfigurationClass::deserializeGridChargerHTTPConfig(root["HTTP"].as<JsonObject>(), config.GridCharger.HTTP);
     }
 
     WebApi.writeConfig(retMsg);
