@@ -272,7 +272,8 @@ void PowerLimiterClass::loop()
         // if we are in the first 15 seconds after startup, we use the buffered information from the runtime data if available and not too old.
         // A perfect solution would require refactoring of isStopThresholdReached() and related methods to handle the state if
         // data is not available during the startup scenario properly.
-        if (_fromStartRT && (millis() < 15 * 1000)) {
+        // todo: change handling if refactoring of isStopThresholdReached() and related methods is done
+        if ((_fromStartRT || _oneStopPerNightDoneRT) && (millis() < 15 * 1000)) {
             time_t nowEpoch;
             Utils::getEpoch(&nowEpoch, 1);
 
