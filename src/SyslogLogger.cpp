@@ -13,7 +13,8 @@
 #undef TAG
 static const char* TAG = "syslog";
 
-// initial retry interval if the hostname could not be resolved. doubled after
+// initial retry interval if the hostname could not be resolved (also after a
+// failed refresh, while the last known address keeps being used). doubled after
 // each failed attempt as resolving blocks the main loop until it times out.
 static constexpr uint32_t RESOLVE_RETRY_INTERVAL_MS = 30 * 1000;
 
@@ -184,7 +185,7 @@ void SyslogLogger::loop()
     }
 
     uint32_t interval = RESOLVE_REFRESH_INTERVAL_MS;
-    if (!isResolved() && _resolveFailures > 0) {
+    if (_resolveFailures > 0) {
         uint32_t retryInterval = RESOLVE_RETRY_INTERVAL_MS << (_resolveFailures - 1);
         interval = std::min(retryInterval, RESOLVE_REFRESH_INTERVAL_MS);
     }
