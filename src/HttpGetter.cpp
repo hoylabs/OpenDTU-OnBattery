@@ -166,9 +166,9 @@ HttpRequestResult HttpGetter::performGetRequest()
             // HTTPClient also ends up here if the server stalls within the
             // header line for longer than the timeout (rounded to seconds).
             logError("Cannot perform digest authentication as server did "
-                        "not send a WWW-Authenticate header. If the server is "
-                        "slow, try a higher timeout (currently %u ms).",
-                        _config.Timeout);
+                        "not send a complete WWW-Authenticate header. If the "
+                        "server is slow, try a higher timeout (currently %u ms).",
+                        static_cast<unsigned>(_config.Timeout));
             return { false };
         }
 
