@@ -110,11 +110,14 @@ String Provider::poll()
         return "Programmer error: HTTP request yields no stream";
     }
 
-    // wait for the rest of the message if the server pauses within it.
-    // readBytes() gives up after the timeout (rounded to seconds).
+    // wait for the rest of the message if the server pauses within it, but
+    // not longer than the timeout in total. readBytes() gives up after the
+    // timeout (rounded to seconds), so the last call may exceed the deadline.
+    uint32_t const startMillis = millis();
     auto state = SML_START;
     uint8_t byte;
     while (state != SML_FINAL && state != SML_CHECKSUM_ERROR &&
+            (millis() - startMillis) < _cfg.HttpRequest.Timeout &&
             pStream->readBytes(&byte, 1) == 1) {
         state = processSmlByte(byte);
     }
