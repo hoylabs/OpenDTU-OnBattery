@@ -122,9 +122,13 @@ String Provider::poll()
         state = processSmlByte(byte);
     }
 
-    // process data that already arrived after the message, as before
+    // process data that already arrived, as before. this may complete the
+    // message if the deadline expired while the rest was already buffered.
     while (pStream->available()) {
-        processSmlByte(pStream->read());
+        auto const drainState = processSmlByte(pStream->read());
+        if (state != SML_FINAL && state != SML_CHECKSUM_ERROR) {
+            state = drainState;
+        }
     }
 
     ::PowerMeters::Sml::Provider::reset();
