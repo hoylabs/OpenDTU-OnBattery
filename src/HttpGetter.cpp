@@ -163,8 +163,12 @@ HttpRequestResult HttpGetter::performGetRequest()
         _wwwAuthenticate = "";
 
         if (!upTmpHttpClient->hasHeader("WWW-Authenticate")) {
+            // HTTPClient also ends up here if the server stalls within the
+            // header line for longer than the timeout (rounded to seconds).
             logError("Cannot perform digest authentication as server did "
-                        "not send a WWW-Authenticate header");
+                        "not send a WWW-Authenticate header. If the server is "
+                        "slow, try a higher timeout (currently %u ms).",
+                        _config.Timeout);
             return { false };
         }
 
