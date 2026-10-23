@@ -21,6 +21,9 @@ static constexpr uint32_t RESOLVE_RETRY_INTERVAL_MS = 30 * 1000;
 // address changes (does not apply to numeric IP addresses)
 static constexpr uint32_t RESOLVE_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
+// pause sending after a failed send, see write()
+static constexpr uint32_t SEND_FAILURE_PAUSE_MS = 1000;
+
 SyslogLogger::SyslogLogger()
     : _loopTask(TASK_IMMEDIATE, TASK_FOREVER, std::bind(&SyslogLogger::loop, this))
 {
@@ -76,6 +79,14 @@ void SyslogLogger::write(const uint8_t* buffer, size_t size)
         return;
     }
 
+    // a failed send (e.g., while the ARP entry of the server is still being
+    // resolved right after the link came up) also makes the Arduino core log
+    // an error. pause sending for a moment, so that this error does not
+    // cause another failed send, and so on.
+    if (_sendFailed && millis() - _lastSendFailure < SEND_FAILURE_PAUSE_MS) {
+        return;
+    }
+
     String header = "<";
     header += String(calculatePrival(1, buffer[0]));
 
@@ -90,7 +101,10 @@ void SyslogLogger::write(const uint8_t* buffer, size_t size)
             _udp.write(c >= 0x20 && c < 0x7f ? c : '?');
         }
     }
-    _udp.endPacket();
+    _sendFailed = !_udp.endPacket();
+    if (_sendFailed) {
+        _lastSendFailure = millis();
+    }
 }
 
 void SyslogLogger::disable()

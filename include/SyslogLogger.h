@@ -34,6 +34,8 @@ private:
     bool _resolveNow = false;
     uint8_t _resolveFailures = 0;
     uint32_t _lastResolveAttempt = 0;
+    bool _sendFailed = false;
+    uint32_t _lastSendFailure = 0;
 };
 
 extern SyslogLogger Syslog;
