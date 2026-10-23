@@ -196,6 +196,15 @@ HttpRequestResult HttpGetter::performGetRequest()
     }
 
     if (httpCode <= 0) {
+        // HTTPClient reports these if the server stalls for longer than the
+        // timeout (rounded to seconds) before or within the status line.
+        if (httpCode == HTTPC_ERROR_NO_HTTP_SERVER || httpCode == HTTPC_ERROR_READ_TIMEOUT) {
+            logError("HTTP Error: %s. If the server is slow, try a higher "
+                        "timeout (currently %u ms).",
+                        upTmpHttpClient->errorToString(httpCode).c_str(),
+                        static_cast<unsigned>(_config.Timeout));
+            return { false };
+        }
         logError("HTTP Error: %s", upTmpHttpClient->errorToString(httpCode).c_str());
         return { false };
     }
