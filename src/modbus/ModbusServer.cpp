@@ -6,6 +6,7 @@
 #include <memory>
 #include <Arduino.h>
 #include <esp_log.h>
+#include <lwip/sockets.h>
 
 #undef TAG
 static const char* TAG = "modbusServer";
@@ -253,8 +254,10 @@ void ModbusServerClass::handleReadRegs(WiFiClient& client, uint16_t tid, uint8_t
 bool ModbusServerClass::sendFrame(WiFiClient& client, const uint8_t* data, size_t len)
 {
     if (!client.connected()) { return false; }
-    if (static_cast<size_t>(client.availableForWrite()) < len) { return false; }
-    return client.write(data, len) == len;
+    // WiFiClient::write() retries for seconds if the send buffer is full and
+    // WiFiClient does not implement availableForWrite() (always 0), so send
+    // directly without waiting.
+    return ::send(client.fd(), data, len, MSG_DONTWAIT) == static_cast<ssize_t>(len);
 }
 
 // ---------------------------------------------------------------------------
