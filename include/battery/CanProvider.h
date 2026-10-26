@@ -7,7 +7,7 @@
 
 namespace Batteries {
 
-class CanReceiver : public Provider {
+class CanProvider : public Provider {
 public:
     bool init(char const* providerName);
     void deinit() final;
@@ -16,6 +16,12 @@ public:
     virtual void onMessage(twai_message_t rx_message) = 0;
 
 protected:
+    // called on every loop, e.g. to send requests to the battery
+    virtual void onLoop() { }
+
+    // single shot, does not block. returns false if the frame was not queued.
+    bool transmit(uint32_t identifier, uint8_t const* data, uint8_t length, bool extended = false);
+
     uint8_t readUnsignedInt8(uint8_t *data);
     uint16_t readUnsignedInt16(uint8_t *data);
     int16_t readSignedInt16(uint8_t *data);
