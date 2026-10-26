@@ -265,6 +265,8 @@ void ConfigurationClass::serializeGridChargerConfig(GridChargerConfig const& sou
     target["lower_power_limit"] = source.AutoPowerLowerPowerLimit;
     target["upper_power_limit"] = source.AutoPowerUpperPowerLimit;
     target["stop_batterysoc_threshold"] = source.AutoPowerStopBatterySoCThreshold;
+    target["stop_battery_voltage_threshold"] = roundedFloat(source.AutoPowerStopBatteryVoltageThreshold);
+    target["resume_battery_voltage_threshold"] = roundedFloat(source.AutoPowerResumeBatteryVoltageThreshold);
     target["target_power_consumption"] = source.AutoPowerTargetPowerConsumption;
 }
 
@@ -287,6 +289,24 @@ void ConfigurationClass::serializeGridChargerTruckiConfig(GridChargerTruckiConfi
 {
     target["ip_address"] = IPAddress(source.IpAddress).toString();
     target["password"] = source.Password;
+}
+
+void ConfigurationClass::serializeGridChargerHTTPConfig(GridChargerHTTPConfig const& source, JsonObject& target)
+{
+    target["UriOn"] = source.UriOn;
+    target["UriOff"] = source.UriOff;
+    target["UriStats"] = source.UriStats;
+    target["UriPowerParam"] = source.UriPowerParam;
+
+    JsonArray chargers = target["Chargers"].to<JsonArray>();
+    for (size_t i = 0; i < GRIDCHARGER_HTTP_MAX_CHARGERS; ++i) {
+        auto const& c = source.Chargers[i];
+        JsonObject charger = chargers.add<JsonObject>();
+        charger["Enabled"] = c.Enabled;
+        charger["Name"] = c.Name;
+        charger["Url"] = c.Url;
+        charger["AcPower"] = c.AcPower;
+    }
 }
 
 void ConfigurationClass::serializeModbusServerConfig(ModbusServerConfig const& source, JsonObject& target)
@@ -496,6 +516,8 @@ bool ConfigurationClass::write()
     JsonObject gridcharger_trucki = gridcharger["trucki"].to<JsonObject>();
     serializeGridChargerTruckiConfig(config.GridCharger.Trucki, gridcharger_trucki);
 
+    JsonObject gridcharger_HTTP = gridcharger["HTTP"].to<JsonObject>();
+    serializeGridChargerHTTPConfig(config.GridCharger.HTTP, gridcharger_HTTP);
     JsonObject modbusServer = doc["modbusserver"].to<JsonObject>();
     serializeModbusServerConfig(config.ModbusServer, modbusServer);
 
@@ -731,6 +753,8 @@ void ConfigurationClass::deserializeGridChargerConfig(JsonObject const& source, 
     target.AutoPowerLowerPowerLimit = source["lower_power_limit"] | GRIDCHARGER_AUTO_POWER_LOWER_POWER_LIMIT;
     target.AutoPowerUpperPowerLimit = source["upper_power_limit"] | GRIDCHARGER_AUTO_POWER_UPPER_POWER_LIMIT;
     target.AutoPowerStopBatterySoCThreshold = source["stop_batterysoc_threshold"] | GRIDCHARGER_AUTO_POWER_STOP_BATTERYSOC_THRESHOLD;
+    target.AutoPowerStopBatteryVoltageThreshold = source["stop_battery_voltage_threshold"] | GRIDCHARGER_AUTO_POWER_STOP_BATTERY_VOLTAGE_THRESHOLD;
+    target.AutoPowerResumeBatteryVoltageThreshold = source["resume_battery_voltage_threshold"] | GRIDCHARGER_AUTO_POWER_RESUME_BATTERY_VOLTAGE_THRESHOLD;
     target.AutoPowerTargetPowerConsumption = source["target_power_consumption"] | GRIDCHARGER_AUTO_POWER_TARGET_POWER_CONSUMPTION;
 }
 
@@ -758,6 +782,28 @@ void ConfigurationClass::deserializeGridChargerTruckiConfig(JsonObject const& so
     target.IpAddress[2] = ip[2];
     target.IpAddress[3] = ip[3];
     strlcpy(target.Password, source["password"] | "", sizeof(target.Password));
+}
+
+void ConfigurationClass::deserializeGridChargerHTTPConfig(JsonObject const& source, GridChargerHTTPConfig& target)
+{
+    strlcpy(target.UriOn, source["UriOn"] | GRIDCHARGER_HTTP_URION, sizeof(target.UriOn));
+    strlcpy(target.UriOff, source["UriOff"] | GRIDCHARGER_HTTP_URIOFF, sizeof(target.UriOff));
+    strlcpy(target.UriStats, source["UriStats"] | GRIDCHARGER_HTTP_URISTATS, sizeof(target.UriStats));
+    strlcpy(target.UriPowerParam, source["UriPowerParam"] | GRIDCHARGER_HTTP_URIPOWERPARAM, sizeof(target.UriPowerParam));
+
+    JsonArray chargers = source["Chargers"];
+    for (size_t i = 0; i < GRIDCHARGER_HTTP_MAX_CHARGERS; ++i) {
+        JsonObject charger = chargers[i];
+        auto& c = target.Chargers[i];
+
+        // only the first charger is enabled and pre-filled by default
+        bool const first = (i == 0);
+        c.Enabled = charger["Enabled"] | first;
+        String defaultName = "Charger " + String(i + 1);
+        strlcpy(c.Name, charger["Name"] | defaultName.c_str(), sizeof(c.Name));
+        strlcpy(c.Url, charger["Url"] | (first ? GRIDCHARGER_HTTP_IPADDRESS : ""), sizeof(c.Url));
+        c.AcPower = charger["AcPower"] | static_cast<float>(GRIDCHARGER_HTTP_ACPOWER);
+    }
 }
 
 void ConfigurationClass::deserializeModbusServerConfig(JsonObject const& source, ModbusServerConfig& target)
@@ -1010,6 +1056,7 @@ bool ConfigurationClass::read()
     deserializeGridChargerCanConfig(gridcharger["can"], config.GridCharger.Can);
     deserializeGridChargerHuaweiConfig(gridcharger["huawei"], config.GridCharger.Huawei);
     deserializeGridChargerTruckiConfig(gridcharger["trucki"], config.GridCharger.Trucki);
+    deserializeGridChargerHTTPConfig(gridcharger["HTTP"], config.GridCharger.HTTP);
 
     deserializeModbusServerConfig(doc["modbusserver"], config.ModbusServer);
 
