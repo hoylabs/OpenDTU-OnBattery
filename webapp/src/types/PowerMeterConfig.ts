@@ -40,6 +40,28 @@ export interface PowerMeterUdpVictronConfig {
     ip_address: string;
 }
 
+export interface PowerMeterModbusTcpRegisterConfig {
+    address: number;
+    scaling_factor: number;
+    data_type: number;
+}
+
+export interface PowerMeterModbusTcpConfig {
+    polling_interval: number;
+    ip_address: string;
+    port: number;
+    device_id: number;
+    power_register: PowerMeterModbusTcpRegisterConfig;
+    power_l1_register: PowerMeterModbusTcpRegisterConfig;
+    power_l2_register: PowerMeterModbusTcpRegisterConfig;
+    power_l3_register: PowerMeterModbusTcpRegisterConfig;
+    voltage_l1_register: PowerMeterModbusTcpRegisterConfig;
+    voltage_l2_register: PowerMeterModbusTcpRegisterConfig;
+    voltage_l3_register: PowerMeterModbusTcpRegisterConfig;
+    import_register: PowerMeterModbusTcpRegisterConfig;
+    export_register: PowerMeterModbusTcpRegisterConfig;
+}
+
 export interface PowerMeterConfig {
     enabled: boolean;
     source: number;
@@ -49,4 +71,5 @@ export interface PowerMeterConfig {
     http_json: PowerMeterHttpJsonConfig;
     http_sml: PowerMeterHttpSmlConfig;
     udp_victron: PowerMeterUdpVictronConfig;
+    modbus_tcp: PowerMeterModbusTcpConfig;
 }

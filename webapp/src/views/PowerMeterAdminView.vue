@@ -298,6 +298,381 @@
                         />
                     </CardElement>
                 </template>
+
+                <template v-if="powerMeterConfigList.source === 8">
+                    <CardElement :text="$t('powermeteradmin.MODBUS_TCP')" textVariant="text-bg-primary" add-space>
+                        <InputElement
+                            :label="$t('powermeteradmin.pollingInterval')"
+                            v-model="powerMeterConfigList.modbus_tcp.polling_interval"
+                            type="number"
+                            min="1"
+                            max="15"
+                            :postfix="$t('powermeteradmin.seconds')"
+                            wide
+                        />
+
+                        <InputElement
+                            :label="$t('powermeteradmin.ipAddress')"
+                            v-model="powerMeterConfigList.modbus_tcp.ip_address"
+                            type="text"
+                            maxlength="15"
+                            wide
+                        />
+
+                        <InputElement
+                            :label="$t('powermeteradmin.modbusTcpPort')"
+                            v-model="powerMeterConfigList.modbus_tcp.port"
+                            type="number"
+                            min="1"
+                            max="65535"
+                            wide
+                        />
+
+                        <InputElement
+                            :label="$t('powermeteradmin.modbusTcpDeviceId')"
+                            v-model="powerMeterConfigList.modbus_tcp.device_id"
+                            type="number"
+                            min="1"
+                            max="247"
+                            wide
+                        />
+
+                        <h4>{{ $t('powermeteradmin.modbusTcpRegisterMapping') }}</h4>
+                        <div class="alert alert-info">
+                            {{ $t('powermeteradmin.modbusTcpRegisterMappingHint') }}
+                        </div>
+
+                        <!-- Power Register Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">{{ $t('powermeteradmin.modbusTcpPowerRegister') }}</div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpRegisterAddress')"
+                                            v-model="powerMeterConfigList.modbus_tcp.power_register.address"
+                                            type="text"
+                                            pattern="[0-9]{0,4}"
+                                            maxlength="4"
+                                            placeholder="0000"
+                                            :tooltip="$t('powermeteradmin.modbusTcpRegisterAddressTooltip')"
+                                        />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label class="form-label">{{
+                                                $t('powermeteradmin.modbusTcpDataType')
+                                            }}</label>
+                                            <select
+                                                class="form-select"
+                                                v-model="powerMeterConfigList.modbus_tcp.power_register.data_type"
+                                                :title="$t('powermeteradmin.modbusTcpDataTypeTooltip')"
+                                            >
+                                                <option
+                                                    v-for="option in dataTypeOptions"
+                                                    :key="option.value"
+                                                    :value="option.value"
+                                                >
+                                                    {{ option.text }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpScalingFactor')"
+                                            v-model="powerMeterConfigList.modbus_tcp.power_register.scaling_factor"
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            :tooltip="$t('powermeteradmin.modbusTcpScalingFactorTooltip')"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Power L1 Register Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">{{ $t('powermeteradmin.modbusTcpPowerL1Register') }}</div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpRegisterAddress')"
+                                            v-model="powerMeterConfigList.modbus_tcp.power_l1_register.address"
+                                            type="text"
+                                            pattern="[0-9]{0,4}"
+                                            maxlength="4"
+                                            placeholder="0000"
+                                            :tooltip="$t('powermeteradmin.modbusTcpRegisterAddressTooltip')"
+                                        />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label class="form-label">{{
+                                                $t('powermeteradmin.modbusTcpDataType')
+                                            }}</label>
+                                            <select
+                                                class="form-select"
+                                                v-model="powerMeterConfigList.modbus_tcp.power_l1_register.data_type"
+                                                :title="$t('powermeteradmin.modbusTcpDataTypeTooltip')"
+                                            >
+                                                <option
+                                                    v-for="option in dataTypeOptions"
+                                                    :key="option.value"
+                                                    :value="option.value"
+                                                >
+                                                    {{ option.text }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpScalingFactor')"
+                                            v-model="powerMeterConfigList.modbus_tcp.power_l1_register.scaling_factor"
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            :tooltip="$t('powermeteradmin.modbusTcpScalingFactorTooltip')"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Power L2 Register Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">{{ $t('powermeteradmin.modbusTcpPowerL2Register') }}</div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpRegisterAddress')"
+                                            v-model="powerMeterConfigList.modbus_tcp.power_l2_register.address"
+                                            type="text"
+                                            pattern="[0-9]{0,4}"
+                                            maxlength="4"
+                                            placeholder="0000"
+                                            :tooltip="$t('powermeteradmin.modbusTcpRegisterAddressTooltip')"
+                                        />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpScalingFactor')"
+                                            v-model="powerMeterConfigList.modbus_tcp.power_l2_register.scaling_factor"
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            :tooltip="$t('powermeteradmin.modbusTcpScalingFactorTooltip')"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Power L3 Register Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">{{ $t('powermeteradmin.modbusTcpPowerL3Register') }}</div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpRegisterAddress')"
+                                            v-model="powerMeterConfigList.modbus_tcp.power_l3_register.address"
+                                            type="text"
+                                            pattern="[0-9]{0,4}"
+                                            maxlength="4"
+                                            placeholder="0000"
+                                            :tooltip="$t('powermeteradmin.modbusTcpRegisterAddressTooltip')"
+                                        />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpScalingFactor')"
+                                            v-model="powerMeterConfigList.modbus_tcp.power_l3_register.scaling_factor"
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            :tooltip="$t('powermeteradmin.modbusTcpScalingFactorTooltip')"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Voltage L1 Register Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">{{ $t('powermeteradmin.modbusTcpVoltageL1Register') }}</div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpRegisterAddress')"
+                                            v-model="powerMeterConfigList.modbus_tcp.voltage_l1_register.address"
+                                            type="text"
+                                            pattern="[0-9]{0,4}"
+                                            maxlength="4"
+                                            placeholder="0000"
+                                            :tooltip="$t('powermeteradmin.modbusTcpRegisterAddressTooltip')"
+                                        />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label class="form-label">{{
+                                                $t('powermeteradmin.modbusTcpDataType')
+                                            }}</label>
+                                            <select
+                                                class="form-select"
+                                                v-model="powerMeterConfigList.modbus_tcp.voltage_l1_register.data_type"
+                                                :title="$t('powermeteradmin.modbusTcpDataTypeTooltip')"
+                                            >
+                                                <option
+                                                    v-for="option in dataTypeOptions"
+                                                    :key="option.value"
+                                                    :value="option.value"
+                                                >
+                                                    {{ option.text }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpScalingFactor')"
+                                            v-model="powerMeterConfigList.modbus_tcp.voltage_l1_register.scaling_factor"
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            :tooltip="$t('powermeteradmin.modbusTcpScalingFactorTooltip')"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Voltage L2 Register Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">{{ $t('powermeteradmin.modbusTcpVoltageL2Register') }}</div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpRegisterAddress')"
+                                            v-model="powerMeterConfigList.modbus_tcp.voltage_l2_register.address"
+                                            type="text"
+                                            pattern="[0-9]{0,4}"
+                                            maxlength="4"
+                                            placeholder="0000"
+                                            :tooltip="$t('powermeteradmin.modbusTcpRegisterAddressTooltip')"
+                                        />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpScalingFactor')"
+                                            v-model="powerMeterConfigList.modbus_tcp.voltage_l2_register.scaling_factor"
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            :tooltip="$t('powermeteradmin.modbusTcpScalingFactorTooltip')"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Voltage L3 Register Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">{{ $t('powermeteradmin.modbusTcpVoltageL3Register') }}</div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpRegisterAddress')"
+                                            v-model="powerMeterConfigList.modbus_tcp.voltage_l3_register.address"
+                                            type="text"
+                                            pattern="[0-9]{0,4}"
+                                            maxlength="4"
+                                            placeholder="0000"
+                                            :tooltip="$t('powermeteradmin.modbusTcpRegisterAddressTooltip')"
+                                        />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpScalingFactor')"
+                                            v-model="powerMeterConfigList.modbus_tcp.voltage_l3_register.scaling_factor"
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            :tooltip="$t('powermeteradmin.modbusTcpScalingFactorTooltip')"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Import Energy Register Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">{{ $t('powermeteradmin.modbusTcpImportRegister') }}</div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpRegisterAddress')"
+                                            v-model="powerMeterConfigList.modbus_tcp.import_register.address"
+                                            type="text"
+                                            pattern="[0-9]{0,4}"
+                                            maxlength="4"
+                                            placeholder="0000"
+                                            :tooltip="$t('powermeteradmin.modbusTcpRegisterAddressTooltip')"
+                                        />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpScalingFactor')"
+                                            v-model="powerMeterConfigList.modbus_tcp.import_register.scaling_factor"
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            :tooltip="$t('powermeteradmin.modbusTcpScalingFactorTooltip')"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Export Energy Register Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">{{ $t('powermeteradmin.modbusTcpExportRegister') }}</div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpRegisterAddress')"
+                                            v-model="powerMeterConfigList.modbus_tcp.export_register.address"
+                                            type="text"
+                                            pattern="[0-9]{0,4}"
+                                            maxlength="4"
+                                            placeholder="0000"
+                                            :tooltip="$t('powermeteradmin.modbusTcpRegisterAddressTooltip')"
+                                        />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <InputElement
+                                            :label="$t('powermeteradmin.modbusTcpScalingFactor')"
+                                            v-model="powerMeterConfigList.modbus_tcp.export_register.scaling_factor"
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            :tooltip="$t('powermeteradmin.modbusTcpScalingFactorTooltip')"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </CardElement>
+                </template>
             </template>
 
             <FormFooter @reload="getPowerMeterConfig" />
@@ -338,6 +713,7 @@ export default defineComponent({
                 { key: 5, value: this.$t('powermeteradmin.typeSMAHM2') },
                 { key: 6, value: this.$t('powermeteradmin.typeHTTP_SML') },
                 { key: 7, value: this.$t('powermeteradmin.typeUDP_VICTRON') },
+                { key: 8, value: this.$t('powermeteradmin.typeMODBUS_TCP') },
             ],
             unitTypeList: [
                 { key: 1, value: 'mW' },
@@ -371,6 +747,15 @@ export default defineComponent({
                 this.powerMeterConfigList.udp_victron.polling_interval_ms = value * 1000;
             },
         },
+        dataTypeOptions() {
+            return [
+                { value: 0, text: this.$t('powermeteradmin.modbusTcpDataTypeInt16') },
+                { value: 1, text: this.$t('powermeteradmin.modbusTcpDataTypeUint16') },
+                { value: 2, text: this.$t('powermeteradmin.modbusTcpDataTypeInt32') },
+                { value: 3, text: this.$t('powermeteradmin.modbusTcpDataTypeUint32') },
+                { value: 4, text: this.$t('powermeteradmin.modbusTcpDataTypeFloat') },
+            ];
+        },
     },
     methods: {
         getPowerMeterConfig() {
@@ -379,8 +764,56 @@ export default defineComponent({
                 .then((response) => handleResponse(response, this.$emitter, this.$router))
                 .then((data) => {
                     this.powerMeterConfigList = data;
+                    this.ensureModbusTcpRegisterStructure();
                     this.dataLoading = false;
                 });
+        },
+        ensureModbusTcpRegisterStructure() {
+            // Ensure modbus_tcp registers have the new structure for backward compatibility
+            if (this.powerMeterConfigList.modbus_tcp) {
+                const modbusTcp = this.powerMeterConfigList.modbus_tcp;
+                const registerNames = [
+                    'power_register',
+                    'power_l1_register',
+                    'power_l2_register',
+                    'power_l3_register',
+                    'voltage_l1_register',
+                    'voltage_l2_register',
+                    'voltage_l3_register',
+                    'import_register',
+                    'export_register',
+                ];
+
+                registerNames.forEach((regName) => {
+                    const reg = (modbusTcp as any)[regName];
+                    if (typeof reg === 'number') {
+                        // Old format: convert number to register config object
+                        (modbusTcp as any)[regName] = {
+                            address: reg,
+                            scaling_factor: 1.0,
+                            data_type: 1, // Default to UINT16
+                        };
+                    } else if (!reg || typeof reg !== 'object') {
+                        // Missing: create default (but only if truly missing)
+                        (modbusTcp as any)[regName] = {
+                            address: 0,
+                            scaling_factor: 1.0,
+                            data_type: 1, // Default to UINT16
+                        };
+                    } else {
+                        // Valid object: ensure required fields exist with defaults
+                        if (!reg.hasOwnProperty('address')) {
+                            reg.address = 0;
+                        }
+                        if (!reg.hasOwnProperty('scaling_factor')) {
+                            reg.scaling_factor = 1.0;
+                        }
+                        if (!reg.hasOwnProperty('data_type')) {
+                            reg.data_type = 1; // Default to UINT16
+                        }
+                    }
+                });
+            }
         },
         savePowerMeterConfig(e: Event) {
             e.preventDefault();
