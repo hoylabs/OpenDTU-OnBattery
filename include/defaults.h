@@ -124,6 +124,12 @@
 #define POWERMETER_SDMADDRESS 1
 
 #define HTTP_REQUEST_TIMEOUT_MS 1000
+// the Arduino HTTPClient applies the timeout to the underlying WiFiClient
+// in whole seconds, rounded to the nearest second. timeouts below 500 ms
+// therefore become 0 s, which makes reading header lines and the response
+// body fail whenever the data arrives in more than one TCP segment. 500 ms
+// is the smallest timeout that results in a non-zero timeout (1 s).
+#define HTTP_REQUEST_TIMEOUT_MIN_MS 500
 
 #define POWERLIMITER_ENABLED false
 #define POWERLIMITER_SOLAR_PASSTHROUGH_ENABLED false
@@ -214,3 +220,6 @@
 #define GRIDCHARGER_HTTP_URISTATS "/rpc/Switch.GetStatus?id=0"
 #define GRIDCHARGER_HTTP_URIPOWERPARAM "apower"
 #define GRIDCHARGER_HTTP_ACPOWER 500
+
+#define MODBUS_SERVER_ENABLED false
+#define MODBUS_SERVER_PORT 502U

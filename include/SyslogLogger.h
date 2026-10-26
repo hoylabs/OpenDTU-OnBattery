@@ -15,7 +15,7 @@ private:
     void loop();
     void disable();
     void enable();
-    bool resolveAndStart();
+    IPAddress resolve();
     bool isResolved() const {
         return _address != INADDR_NONE;
     }
@@ -30,6 +30,12 @@ private:
     String _header;
     uint16_t _port;
     bool _enabled;
+    bool _hostIsIp = false;
+    bool _resolveNow = false;
+    uint8_t _resolveFailures = 0;
+    uint32_t _lastResolveAttempt = 0;
+    bool _sendFailed = false;
+    uint32_t _lastSendFailure = 0;
 };
 
 extern SyslogLogger Syslog;

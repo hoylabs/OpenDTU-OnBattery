@@ -61,6 +61,19 @@
 #define ZENDURE_MAX_SECRET_STRLEN   32
 #define ZENDURE_MAX_APPKEY_STRLEN   16
 
+struct MODBUS_SERVER_INVERTER_CONFIG_T {
+    uint64_t Serial;
+    uint8_t UnitId;
+};
+using ModbusServerInverterConfig = struct MODBUS_SERVER_INVERTER_CONFIG_T;
+
+struct MODBUS_SERVER_CONFIG_T {
+    bool Enabled;
+    uint16_t Port;
+    ModbusServerInverterConfig Inverter[INV_MAX_COUNT];
+};
+using ModbusServerConfig = struct MODBUS_SERVER_CONFIG_T;
+
 struct CHANNEL_CONFIG_T {
     uint16_t MaxChannelPower;
     char Name[CHAN_MAX_NAME_STRLEN];
@@ -491,6 +504,8 @@ struct CONFIG_T {
 
     GridChargerConfig GridCharger;
 
+    ModbusServerConfig ModbusServer;
+
     INVERTER_CONFIG_T Inverter[INV_MAX_COUNT];
     char Dev_PinMapping[DEV_MAX_MAPPING_NAME_STRLEN + 1];
 
@@ -548,6 +563,7 @@ public:
     static void serializeGridChargerHuaweiConfig(GridChargerHuaweiConfig const& source, JsonObject& target);
     static void serializeGridChargerTruckiConfig(GridChargerTruckiConfig const& source, JsonObject& target);
     static void serializeGridChargerHTTPConfig(GridChargerHTTPConfig const& source, JsonObject& target);
+    static void serializeModbusServerConfig(ModbusServerConfig const& source, JsonObject& target);
 
     static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
     static void deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target);
@@ -567,6 +583,7 @@ public:
     static void deserializeGridChargerHuaweiConfig(JsonObject const& source, GridChargerHuaweiConfig& target);
     static void deserializeGridChargerTruckiConfig(JsonObject const& source, GridChargerTruckiConfig& target);
     static void deserializeGridChargerHTTPConfig(JsonObject const& source, GridChargerHTTPConfig& target);
+    static void deserializeModbusServerConfig(JsonObject const& source, ModbusServerConfig& target);
 
 private:
     void loop();
