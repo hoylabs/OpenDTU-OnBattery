@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+#pragma once
+
+#include <memory>
+#include <driver/twai.h>
+#include <battery/CanReceiver.h>
+#include <battery/jkbmscan/Stats.h>
+#include <battery/jkbmscan/HassIntegration.h>
+
+namespace Batteries::JkBmsCan {
+
+class Provider : public ::Batteries::CanReceiver {
+public:
+    Provider();
+    bool init() final;
+    void onMessage(twai_message_t rx_message) final;
+
+    std::shared_ptr<::Batteries::Stats> getStats() const final { return _stats; }
+    std::shared_ptr<::Batteries::HassIntegration> getHassIntegration() final { return _hassIntegration; }
+
+private:
+    void dummyData();
+    void updateCellCountIfNeeded();
+    bool isSelectedBms(uint32_t can_id, uint8_t configuredId);
+
+    std::shared_ptr<Stats> _stats;
+    std::shared_ptr<HassIntegration> _hassIntegration;
+    uint8_t _cellCount = 0;
+    uint8_t _lastConfiguredCells = 0;
+};
+
+} // namespace Batteries::JkBmsCan
