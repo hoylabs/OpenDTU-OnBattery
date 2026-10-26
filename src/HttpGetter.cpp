@@ -5,6 +5,7 @@
 #include "mbedtls/md5.h"
 #include <base64.h>
 #include <ESPmDNS.h>
+#include <algorithm>
 
 template<typename... Args>
 void HttpGetter::logError(char const* format, Args... args) {
@@ -115,7 +116,10 @@ HttpRequestResult HttpGetter::performGetRequest()
 
     upTmpHttpClient->setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
     upTmpHttpClient->setUserAgent("OpenDTU-OnBattery");
-    upTmpHttpClient->setConnectTimeout(_config.Timeout);
+
+    // _config.Timeout is used for both connection and response. Usually the connection is the slower part.
+    // We enforce a minimum timeout for the connection phase of 2000ms to avoid failed requests
+    upTmpHttpClient->setConnectTimeout(std::max(_config.Timeout, static_cast<uint16_t>(2000)));
     upTmpHttpClient->setTimeout(_config.Timeout);
     for (auto const& h : _additionalHeaders) {
         upTmpHttpClient->addHeader(h.first.c_str(), h.second.c_str());
