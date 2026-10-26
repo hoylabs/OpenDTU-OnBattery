@@ -16,7 +16,7 @@ Provider::Provider()
 
 bool Provider::init()
 {
-    return ::Batteries::CanReceiver::init("Pylontech");
+    return ::Batteries::CanProvider::init("Pylontech");
 }
 
 void Provider::onMessage(twai_message_t rx_message)

@@ -3,13 +3,13 @@
 
 #include <memory>
 #include <driver/twai.h>
-#include <battery/CanReceiver.h>
+#include <battery/CanProvider.h>
 #include <battery/pylontech/Stats.h>
 #include <battery/pylontech/HassIntegration.h>
 
 namespace Batteries::Pylontech {
 
-class Provider : public ::Batteries::CanReceiver {
+class Provider : public ::Batteries::CanProvider {
 public:
     Provider();
     bool init() final;

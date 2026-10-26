@@ -18,7 +18,7 @@ Provider::Provider()
 bool Provider::init()
 {
     _stats->_chargeVoltage =58.4;
-    return ::Batteries::CanReceiver::init("SBS");
+    return ::Batteries::CanProvider::init("SBS");
 }
 
 void Provider::onMessage(twai_message_t rx_message)
@@ -128,7 +128,7 @@ void Provider::onMessage(twai_message_t rx_message)
     _stats->setLastUpdate(millis());
 }
 
-#ifdef SBSCanReceiver_DUMMY
+#ifdef SBSCanProvider_DUMMY
 void Provider::dummyData()
 {
     static uint32_t lastUpdate = millis();

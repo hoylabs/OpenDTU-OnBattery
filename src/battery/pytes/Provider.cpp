@@ -59,7 +59,7 @@ static String hexBytes(uint8_t const* data, uint8_t len) {
 
 bool Provider::init()
 {
-    return ::Batteries::CanReceiver::init("Pytes");
+    return ::Batteries::CanProvider::init("Pytes");
 }
 
 void Provider::onMessage(twai_message_t rx_message)
