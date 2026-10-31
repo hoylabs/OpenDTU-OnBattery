@@ -31,6 +31,7 @@ export interface PowerLimiterInverterConfig {
     allow_standby: boolean;
     lower_power_limit: number;
     upper_power_limit: number;
+    has_priority: boolean;
 }
 
 export interface PowerLimiterConfig {
