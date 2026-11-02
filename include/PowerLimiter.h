@@ -35,6 +35,7 @@ public:
         InverterStatsPending,
         UnconditionalSolarPassthrough,
         Stable,
+        DevicesPending
     };
 
     void init(Scheduler& scheduler);
@@ -76,6 +77,7 @@ private:
     static constexpr uint32_t _calculationBackoffMsDefault = 128;
     uint32_t _calculationBackoffMs = _calculationBackoffMsDefault;
     Mode _mode = Mode::Normal;
+    bool _devicesReadyAfterStartup = false;
 
     std::deque<std::unique_ptr<PowerLimiterInverter>> _inverters;
     std::deque<std::unique_ptr<PowerLimiterInverter>> _retirees;
@@ -83,10 +85,8 @@ private:
     enum class BatteryState : uint8_t { STOP = 0, NO_DISCHARGE = 1, DISCHARGE_ALLOWED = 2, DISCHARGE_NIGHT = 3 };
     BatteryState _batteryState = BatteryState::STOP;
     bool _fromStart = false;
-    bool _fromStartRT = false;
     bool _oneStopPerNightDone = false;
-    bool _oneStopPerNightDoneRT = false;
-    time_t _lastBatteryStateSaveEpoch = 0;
+    time_t _batteryStateSaveEpoch = 0;
 
     std::pair<bool, uint32_t> _nextInverterRestart = { false, 0 };
     bool _fullSolarPassThroughActive = false;
@@ -115,6 +115,7 @@ private:
     bool isBelowStopThreshold() const;
     void calcNextInverterRestart();
     bool isSolarPassThroughEnabled() const;
+    bool areDevicesReadyAfterStartup();
 };
 
 extern PowerLimiterClass PowerLimiter;
