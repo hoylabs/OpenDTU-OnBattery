@@ -72,6 +72,9 @@ public:
     bool isReachable() const { return _spInverter->isReachable(); }
     bool isProducing() const { return _spInverter->isProducing(); }
 
+    uint16_t getLowerPowerLimit() const { return _config.LowerPowerLimit; }
+    uint16_t getUpperPowerLimit() const { return _config.UpperPowerLimit; }
+
     uint64_t getSerial() const { return _config.Serial; }
     char const* getSerialStr() const { return _serialStr; }
     bool isBehindPowerMeter() const { return _config.IsBehindPowerMeter; }
