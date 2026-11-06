@@ -23,6 +23,9 @@
                                     {{ $t('battery.battery') }}: {{ batteryData.manufacturer }}
                                 </div>
                                 <!-- single module: the module is the battery, its identity goes here -->
+                                <div style="padding-right: 2em" v-if="singleModule?.moduleSerialNumber">
+                                    S/N: {{ singleModule.moduleSerialNumber }}
+                                </div>
                                 <div style="padding-right: 2em" v-if="singleModule?.swversion">
                                     {{ $t('battery.FwVersion') }}: {{ singleModule.swversion }}
                                 </div>
@@ -178,7 +181,12 @@
                                             >
                                                 <div class="d-flex align-items-center">
                                                     <div class="me-2">
-                                                        <span class="badge" :class="moduleStateClass(mod)">●</span>
+                                                        <span class="badge" :class="moduleStateClass(mod)">
+                                                            <template v-if="mod.SoC !== undefined">
+                                                                {{ $n(mod.SoC, 'decimalNoDigits') }} %
+                                                            </template>
+                                                            <template v-else>●</template>
+                                                        </span>
                                                     </div>
                                                     <div class="ms-auto me-auto">{{ mod.moduleName }}</div>
                                                 </div>
@@ -197,6 +205,9 @@
                                                 :class="moduleStateClass(activeModule)"
                                             >
                                                 <span>{{ activeModule.moduleName }}</span>
+                                                <span v-if="activeModule.moduleSerialNumber"
+                                                    >S/N: {{ activeModule.moduleSerialNumber }}</span
+                                                >
                                                 <span v-if="activeModule.swversion"
                                                     >{{ $t('battery.FwVersion') }}: {{ activeModule.swversion }}</span
                                                 >
@@ -377,6 +388,20 @@
                                                                             >
                                                                                 <th scope="row">
                                                                                     {{ idx + 1 }}
+                                                                                    <span
+                                                                                        v-if="
+                                                                                            ((mod.balancing ?? 0) >>
+                                                                                                idx) &
+                                                                                            1
+                                                                                        "
+                                                                                        class="badge text-bg-info ms-1"
+                                                                                        :title="
+                                                                                            $t(
+                                                                                                'battery.balancingActive'
+                                                                                            )
+                                                                                        "
+                                                                                        >⚖</span
+                                                                                    >
                                                                                 </th>
                                                                                 <template
                                                                                     v-for="(col, ci) in mod.cellColumns"
@@ -429,11 +454,23 @@ import { handleResponse, authHeader, authUrl } from '@/utils/authentication';
 import DataAgeDisplay from '@/components/DataAgeDisplay.vue';
 import WebSocketService from '@/utils/websocketService';
 
-// positions of the module arrays sent by the ESP (see Pytes CAN Stats.cpp),
-// d = decimals, -1 = yes/no flag
+// positions of the module arrays sent by the ESP (see the Stats.cpp of Pytes
+// CAN and RS485), shared by all providers: a provider sends null for a value
+// it does not report. d = decimals, -1 = yes/no flag
 const moduleColumns: { values: CellColumn[]; cellStatus: CellColumn[]; cells: CellColumn[] } = {
     values: [
+        { name: 'SoC', u: '%', d: 0 },
+        { name: 'voltage', u: 'V', d: 2 },
+        { name: 'current', u: 'A', d: 3 },
+        { name: 'dischargeCurrentLimitation', u: 'A', d: 1 },
+        { name: 'chargeCurrentLimitation', u: 'A', d: 1 },
+        { name: 'chargeVoltage', u: 'V', d: 1 },
+        { name: 'dischargeVoltageLimitation', u: 'V', d: 1 },
+        { name: 'chargeCycles', u: '', d: 0 },
         { name: 'temperature', u: '°C', d: 1 },
+        { name: 'capacity', u: 'Ah', d: 2 },
+        { name: 'availableCapacity', u: 'Ah', d: 2 },
+        { name: 'balancingActive', u: '', d: -1 },
         { name: 'blockingCharge', u: '', d: -1 },
         { name: 'blockingDischarge', u: '', d: -1 },
         { name: 'heating', u: '', d: -1 },
@@ -451,6 +488,7 @@ const moduleColumns: { values: CellColumn[]; cellStatus: CellColumn[]; cells: Ce
     ],
     cells: [
         { name: 'voltage', u: 'V', d: 3 },
+        { name: 'SoC', u: '%', d: 0 },
         { name: 'temperature', u: '°C', d: 0 },
     ],
 };
@@ -554,9 +592,10 @@ export default defineComponent({
     },
     methods: {
         isStringValue,
-        // red = no data for a minute, green = online
+        // same scheme as the inverter view: red = unreachable, yellow = reachable but not ok, green = ok
         moduleStateClass(mod: BatteryModule) {
             if (mod.online === false) return 'text-bg-danger';
+            if (mod.error) return 'text-bg-warning';
             return 'text-bg-success';
         },
         moduleSections(mod: BatteryModule) {

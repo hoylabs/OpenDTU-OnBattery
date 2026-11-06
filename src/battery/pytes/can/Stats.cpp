@@ -152,9 +152,14 @@ bool Stats::getLiveViewModuleData(JsonVariant& root, size_t index, uint32_t sinc
         tempSum += mod.cellTemperature[c];
     }
 
-    // temperature, charging blocked, discharging blocked, heating
+    // module value columns shared with Pytes RS485 (see BatteryView.vue),
+    // null: not reported by the CAN protocol. SoC, voltage, current, limits
+    // (4), cycles: null, temperature, capacity, available capacity,
+    // balancing: null, charging blocked, discharging blocked, heating
     auto values = module["values"].to<JsonArray>();
+    for (uint8_t i = 0; i < 8; ++i) { values.add(nullptr); }
     if (mod.cellCount > 0) { values.add(tempSum / mod.cellCount); } else { values.add(nullptr); }
+    for (uint8_t i = 0; i < 3; ++i) { values.add(nullptr); }
     // blocking = not enabled (0x40C, inverted); 32-bit so all modules covered.
     // null until the first 0x40C frame, else the all-zero default reads as
     // "blocking" for every module.
@@ -185,11 +190,12 @@ bool Stats::getLiveViewModuleData(JsonVariant& root, size_t index, uint32_t sinc
     cellStatus.add(minTemp + 1);
     cellStatus.add(maxTemp + 1);
 
-    // one row per cell: voltage, temperature
+    // one row per cell: voltage, SoC (not reported), temperature
     auto cells = module["cells"].to<JsonArray>();
     for (uint8_t c = 0; c < mod.cellCount; ++c) {
         auto row = cells.add<JsonArray>();
         row.add(mod.cellMilliVolt[c] / 1000.0f);
+        row.add(nullptr);
         row.add(mod.cellTemperature[c]);
     }
 
