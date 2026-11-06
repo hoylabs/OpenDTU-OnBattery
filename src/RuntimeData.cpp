@@ -221,7 +221,7 @@ bool RuntimeProvider::writeAll(uint16_t const freezeMinutes)
         _writeCount = nextCount;
     } // mutex is automatically released when lock goes out of this scope
 
-    return cleanExit(true, "Write to file");
+    return cleanExit(true, "Written to file");
 }
 
 
