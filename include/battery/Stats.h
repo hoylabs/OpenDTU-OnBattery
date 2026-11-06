@@ -70,8 +70,13 @@ public:
     bool isChargeCurrentLimitValid() const { return _lastUpdateChargeCurrentLimit > 0; }
 
     // returns true if the battery reached a critically low voltage/SoC,
-    // such that it is in need of charging to prevent degredation.
-    virtual bool getImmediateChargingRequest() const { return false; };
+    // such that it is in need of charging to prevent degredation. only a
+    // battery that delivered data within the last 60 seconds (the age limit
+    // of the other battery values) can request it: a lost connection must
+    // not keep an emergency charge running.
+    bool getImmediateChargingRequest() const {
+        return getAgeSeconds() <= 60 && isImmediateChargingRequested();
+    }
 
     // whether the battery reports a full charge request (a periodic full
     // charge it asks for, distinct from the critical immediate charging
@@ -85,6 +90,10 @@ protected:
 
     // the maximum age of data before battery is rendered as unreachable in Web UI
     virtual uint32_t getMaxAgeSeconds() const { return 20; }
+
+    // the last immediate charging request reported by the battery, see
+    // getImmediateChargingRequest()
+    virtual bool isImmediateChargingRequested() const { return false; }
 
     void setSoC(float soc, uint8_t precision, uint32_t timestamp) {
         _soc = soc;

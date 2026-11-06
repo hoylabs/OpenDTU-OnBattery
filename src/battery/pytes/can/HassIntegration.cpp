@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include <battery/pytes/HassIntegration.h>
+#include <battery/pytes/can/HassIntegration.h>
 #include <algorithm>
 
-namespace Batteries::Pytes {
+namespace Batteries::Pytes::Can {
 
 HassIntegration::HassIntegration(std::shared_ptr<Stats> spStats)
     : ::Batteries::HassIntegration(spStats)
@@ -13,10 +13,10 @@ void HassIntegration::publishSensors() const
 {
     ::Batteries::HassIntegration::publishSensors();
 
-    publishSensor("Charge voltage (BMS)", NULL, "settings/chargeVoltage", "voltage", "measurement", "V");
+    publishSensor("Charge voltage (BMS)", NULL, "settings/chargeVoltage", "voltage", "measurement", "V", true, NULL, 2);
     publishSensor("Charge current limit", NULL, "settings/chargeCurrentLimitation", "current", "measurement", "A");
     publishSensor("Discharge current limit", NULL, "settings/dischargeCurrentLimitation", "current", "measurement", "A");
-    publishSensor("Discharge voltage limit", NULL, "settings/dischargeVoltageLimitation", "voltage", "measurement", "V");
+    publishSensor("Discharge voltage limit", NULL, "settings/dischargeVoltageLimitation", "voltage", "measurement", "V", true, NULL, 2);
 
     publishSensor("State of Health (SOH)", "mdi:heart-plus", "stateOfHealth", NULL, "measurement", "%");
     publishSensor("Temperature", "mdi:thermometer", "temperature", "temperature", "measurement", "°C");
@@ -25,8 +25,8 @@ void HassIntegration::publishSensors() const
     publishSensor("Charged Energy", NULL, "chargedEnergy", "energy", "total_increasing", "kWh");
     publishSensor("Discharged Energy", NULL, "dischargedEnergy", "energy", "total_increasing", "kWh");
 
-    publishSensor("Total Capacity", NULL, "capacity");
-    publishSensor("Available Capacity", NULL, "availableCapacity");
+    publishSensor("Total Capacity", NULL, "capacity", NULL, "measurement", "Ah");
+    publishSensor("Available Capacity", NULL, "availableCapacity", NULL, "measurement", "Ah");
 
     publishSensor("Cell Min Voltage", NULL, "CellMinMilliVolt", "voltage", "measurement", "mV");
     publishSensor("Cell Max Voltage", NULL, "CellMaxMilliVolt", "voltage", "measurement", "mV");
@@ -140,4 +140,4 @@ void HassIntegration::publishDeferredSensors() const
     }
 }
 
-} // namespace Batteries::Pytes
+} // namespace Batteries::Pytes::Can

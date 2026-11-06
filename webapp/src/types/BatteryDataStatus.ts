@@ -20,6 +20,8 @@ export interface BatteryModuleSummary {
     moduleNumber: number;
     moduleName: string;
     online?: boolean;
+    SoC?: number;
+    error?: string;
 }
 
 // details of one module, sent as {"module": ...} per module (websocket) or
@@ -27,7 +29,10 @@ export interface BatteryModuleSummary {
 // in BatteryView.vue (keeps the JSON built on the ESP small)
 export interface BatteryModuleRaw {
     moduleNumber: number;
+    moduleSerialNumber?: string;
     swversion?: string;
+    nCells?: number;
+    balancing?: number; // bitmask, bit 0 = cell 1
     values?: (number | boolean | null)[];
     cellStatus?: number[];
     cells?: (number | null)[][]; // one row per cell, null: not reported

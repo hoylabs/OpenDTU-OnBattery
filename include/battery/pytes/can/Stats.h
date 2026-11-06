@@ -5,7 +5,7 @@
 #include <vector>
 #include <battery/Stats.h>
 
-namespace Batteries::Pytes {
+namespace Batteries::Pytes::Can {
 
 class Stats : public ::Batteries::Stats {
 friend class Provider;
@@ -13,7 +13,7 @@ friend class Provider;
 public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
-    bool getImmediateChargingRequest() const { return _chargeImmediately; };
+    bool isImmediateChargingRequested() const final { return _chargeImmediately; }
 
     static constexpr uint8_t MaxModules = 16;
     static constexpr uint8_t MaxCells = 16;
@@ -128,4 +128,4 @@ private:
     bool _moduleMasksValid = false;
 };
 
-} // namespace Batteries::Pytes
+} // namespace Batteries::Pytes::Can

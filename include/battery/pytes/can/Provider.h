@@ -5,10 +5,10 @@
 #include <memory>
 #include <driver/twai.h>
 #include <battery/CanProvider.h>
-#include <battery/pytes/Stats.h>
-#include <battery/pytes/HassIntegration.h>
+#include <battery/pytes/can/Stats.h>
+#include <battery/pytes/can/HassIntegration.h>
 
-namespace Batteries::Pytes {
+namespace Batteries::Pytes::Can {
 
 class Provider : public ::Batteries::CanProvider {
 public:
@@ -45,4 +45,4 @@ private:
     std::array<char, 32> _versionBuffer = {};
 };
 
-} // namespace Batteries::Pytes
+} // namespace Batteries::Pytes::Can
