@@ -84,6 +84,44 @@
                         />
                     </template>
 
+                    <template v-if="gridChargerConfigList.provider === 2">
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPuriON')"
+                            v-model="gridChargerConfigList.HTTP.UriOn"
+                            :tooltip="$t('gridchargeradmin.HTTPuriONHint')"
+                            placeholder="/relay/0?turn=on"
+                            type="text"
+                            wide
+                        />
+
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPuriOFF')"
+                            v-model="gridChargerConfigList.HTTP.UriOff"
+                            :tooltip="$t('gridchargeradmin.HTTPuriOFFHint')"
+                            placeholder="/relay/0?turn=off"
+                            type="text"
+                            wide
+                        />
+
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPuriSTATS')"
+                            v-model="gridChargerConfigList.HTTP.UriStats"
+                            :tooltip="$t('gridchargeradmin.HTTPuriSTATSHint')"
+                            placeholder="/relay/0?turn=stats"
+                            type="text"
+                            wide
+                        />
+
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPuriPOWERPARAM')"
+                            v-model="gridChargerConfigList.HTTP.UriPowerParam"
+                            :tooltip="$t('gridchargeradmin.HTTPuriPOWERPARAMHint')"
+                            placeholder="apower"
+                            type="text"
+                            wide
+                        />
+                    </template>
+
                     <InputElement
                         :label="$t('gridchargeradmin.EnableAutoPower')"
                         v-model="gridChargerConfigList.auto_power_enabled"
@@ -108,6 +146,56 @@
                     />
                 </template>
             </CardElement>
+
+            <template v-if="gridChargerConfigList.enabled && gridChargerConfigList.provider === 2">
+                <CardElement
+                    v-for="(charger, index) in gridChargerConfigList.HTTP.Chargers"
+                    :key="index"
+                    :text="$t('gridchargeradmin.HTTPCharger', { chargerNumber: index + 1 })"
+                    textVariant="text-bg-primary"
+                    add-space
+                >
+                    <InputElement
+                        :label="$t('gridchargeradmin.HTTPChargerEnabled')"
+                        v-model="charger.Enabled"
+                        type="checkbox"
+                        wide
+                    />
+
+                    <template v-if="charger.Enabled">
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPChargerName')"
+                            v-model="charger.Name"
+                            type="text"
+                            maxlength="31"
+                            wide
+                            required
+                        />
+
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPipAddress')"
+                            :tooltip="$t('gridchargeradmin.HTTPAddressHint')"
+                            v-model="charger.Url"
+                            placeholder="http://192.168.2.100"
+                            type="text"
+                            maxlength="128"
+                            wide
+                            required
+                        />
+
+                        <InputElement
+                            :label="$t('gridchargeradmin.HTTPAcPower')"
+                            v-model="charger.AcPower"
+                            placeholder="500"
+                            postfix="W"
+                            type="number"
+                            min="1"
+                            wide
+                            required
+                        />
+                    </template>
+                </CardElement>
+            </template>
 
             <CardElement
                 :text="$t('gridchargeradmin.HuaweiSettings')"
@@ -254,6 +342,33 @@
                     min="2"
                     max="99"
                 />
+
+                <template v-if="gridChargerConfigList.provider === 2">
+                    <InputElement
+                        :label="$t('gridchargeradmin.StopBatteryVoltageThreshold')"
+                        :tooltip="$t('gridchargeradmin.StopBatteryVoltageThresholdHint')"
+                        v-model="gridChargerConfigList.stop_battery_voltage_threshold"
+                        postfix="V"
+                        type="number"
+                        wide
+                        step="0.01"
+                        min="0"
+                    />
+
+                    <InputElement
+                        v-if="gridChargerConfigList.stop_battery_voltage_threshold > 0"
+                        :label="$t('gridchargeradmin.ResumeBatteryVoltageThreshold')"
+                        :tooltip="$t('gridchargeradmin.ResumeBatteryVoltageThresholdHint')"
+                        v-model="gridChargerConfigList.resume_battery_voltage_threshold"
+                        postfix="V"
+                        type="number"
+                        wide
+                        required
+                        step="0.01"
+                        min="0.01"
+                        :max="(gridChargerConfigList.stop_battery_voltage_threshold - 0.01).toFixed(2)"
+                    />
+                </template>
             </CardElement>
 
             <FormFooter @reload="getChargerConfig" />
@@ -289,6 +404,7 @@ export default defineComponent({
             providerTypeList: [
                 { key: 0, value: 'Huawei' },
                 { key: 1, value: 'Trucki' },
+                { key: 2, value: 'HTTP' },
             ],
             frequencyTypeList: [
                 { key: 8, value: 8000000 },
