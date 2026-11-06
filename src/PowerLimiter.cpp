@@ -20,6 +20,7 @@
 #include <LogHelper.h>
 #include "Utils.h"
 #include "RuntimeData.h"
+#include <esp_system.h>
 
 #undef TAG
 static const char* TAG = "dynamicPowerLimiter";
@@ -268,7 +269,8 @@ void PowerLimiterClass::loop()
         //
         // Notes: The combination of 'Use Battery at night' and use of 'voltage thresholds' can leads to oscillation between the states
         // STOP and DISCHARGE_NIGHT. To avoid this problem, we allow only one transmission from STOP to DISCHARGE_NIGHT per night.
-        // In case of restart or power-cycle, we accept that the inverter may start discharging at night once again.
+        // After a planned restart the state is restored from the runtime data. In case of a power-cycle, crash or
+        // other unplanned reset, we accept that the inverter may start discharging at night once again.
         // Start-Up can be tricky, because data from the battery provider may not be available. As fallback we use the not very
         // accurate inverter voltage and this can lead to the wrong state.
 
@@ -1063,9 +1065,20 @@ void PowerLimiterClass::deserializeRT(JsonObject obj)
     }
 
     // Only apply the deserialized values if all fields are valid
-    if (dataValidCounter == 3) {
-        _batteryStateSaveEpoch = batteryStateSaveEpoch;
-        _fromStart = fromStart;
-        _oneStopPerNightDone = oneStopPerNightDone;
+    if (dataValidCounter != 3) { return; }
+
+    // The battery state is a snapshot that becomes outdated within minutes. It is only valid
+    // after a planned restart (software reset), because the RestartHelper writes the runtime
+    // data right before it. After a crash, watchdog, brownout or power cycle the file was written
+    // at some earlier point in time, so we keep the default state.
+    if (esp_reset_reason() != ESP_RST_SW) {
+        DTU_LOGI("no planned restart, battery state not restored");
+        return;
     }
+
+    _batteryStateSaveEpoch = batteryStateSaveEpoch;
+    _fromStart = fromStart;
+    _oneStopPerNightDone = oneStopPerNightDone;
+    DTU_LOGI("battery state restored (from start: %d, one stop per night done: %d)",
+            _fromStart, _oneStopPerNightDone);
 }
