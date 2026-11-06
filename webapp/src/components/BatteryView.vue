@@ -580,12 +580,14 @@ export default defineComponent({
         fetchModule(moduleNumber: number) {
             if (moduleNumber < 1) return;
             fetch(`/api/batterylivedata/status?module=${moduleNumber}`, { headers: authHeader() })
-                .then((response) => handleResponse(response, this.$emitter, this.$router))
+                // ignore_error: a module without data is no reason to leave the page
+                .then((response) => handleResponse(response, this.$emitter, this.$router, true))
                 .then((data) => {
                     // only fills a gap: a websocket update may have arrived meanwhile, it is newer
                     if (data?.module && !this.moduleDetails[data.module.moduleNumber])
                         this.moduleDetails[data.module.moduleNumber] = data.module;
-                });
+                })
+                .catch(() => {}); // the websocket delivers the module once it has data
         },
         selectModule(moduleNumber: number) {
             this.selectedModuleNumber = moduleNumber;
