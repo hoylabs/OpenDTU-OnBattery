@@ -279,8 +279,8 @@ void PowerLimiterClass::loop()
         // on this point we have all the necessary information to determine if the runtime data is valid and not older than one hour.
         if (_batteryStateSaveEpoch != 0) {
             time_t nowEpoch;
-            Utils::getEpoch(&nowEpoch, 1);
-            if ((nowEpoch < _batteryStateSaveEpoch) || ((nowEpoch - _batteryStateSaveEpoch) > (60 * 60))) {
+            if (!Utils::getEpoch(&nowEpoch, 1) || (nowEpoch < _batteryStateSaveEpoch)
+                    || ((nowEpoch - _batteryStateSaveEpoch) > (60 * 60))) {
                 _fromStart = _oneStopPerNightDone = false; // back to default state
             }
             _batteryStateSaveEpoch = 0; // mark the check as handled
