@@ -115,7 +115,7 @@
         "8006": "Admin AccessPoint Zeitlimit ist ungültig!",
         "8007": "Syslog-Server muss zwischen 1 und {max} Zeichen lang sein!",
         "8008": "Port muss eine Zahl zwischen 1 und 65535 sein!",
-        "8009": "WLAN-Suchintervall muss eine Zahl zwischen 1 und 1440 sein!",
+        "8009": "WLAN-Suchintervall muss eine Zahl zwischen 5 und 1440 sein!",
         "8010": "WLAN-Schwellwert muss eine Zahl zwischen 1 und 50 sein!",
         "9001": "Zeitserver muss zwischen 1 und {max} Zeichen lang sein!",
         "9002": "Zeitzone muss zwischen 1 und {max} Zeichen lang sein!",

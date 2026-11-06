@@ -54,7 +54,7 @@
                         :label="$t('networkadmin.WifiRescanInterval')"
                         v-model="networkConfigList.rescaninterval"
                         type="number"
-                        min="1"
+                        min="5"
                         max="1440"
                         :postfix="$t('networkadmin.Minutes')"
                         :tooltip="$t('networkadmin.WifiRescanIntervalHint')"

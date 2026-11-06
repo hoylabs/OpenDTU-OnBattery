@@ -185,8 +185,8 @@ void WebApiNetworkClass::onNetworkAdminPost(AsyncWebServerRequest* request)
             return;
         }
 
-        if (root["rescaninterval"].as<uint>() < 1 || root["rescaninterval"].as<uint>() > 1440) {
-            retMsg["message"] = "Wi-Fi rescan interval must be a number between 1 and 1440!";
+        if (root["rescaninterval"].as<uint>() < 5 || root["rescaninterval"].as<uint>() > 1440) {
+            retMsg["message"] = "Wi-Fi rescan interval must be a number between 5 and 1440!";
             retMsg["code"] = WebApiError::NetworkWifiRescanInterval;
             WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
             return;

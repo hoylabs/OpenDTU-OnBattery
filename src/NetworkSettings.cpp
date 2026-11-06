@@ -404,7 +404,7 @@ void NetworkSettingsClass::handleWifiRescan()
         return;
     }
 
-    uint32_t const intervalMillis = std::max<uint32_t>(config.RescanInterval, 1) * 60 * 1000;
+    uint32_t const intervalMillis = std::max<uint32_t>(config.RescanInterval, 5) * 60 * 1000;
     if (millis() - _lastWifiRescan < intervalMillis) {
         return;
     }
