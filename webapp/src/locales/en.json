@@ -573,7 +573,7 @@
         "ApTimeoutHint": "Time which the AccessPoint is kept open. A value of 0 means infinite.",
         "WifiRescanSettings": "WiFi Access Point Rescan",
         "EnableWifiRescan": "Periodically scan for a better access point",
-        "EnableWifiRescanHint": "Useful if multiple access points (e.g., mesh or repeaters) broadcast the same SSID. OpenDTU-OnBattery periodically scans for access points with the configured SSID and reconnects to one with a considerably stronger signal. The connection is briefly interrupted when switching.",
+        "EnableWifiRescanHint": "Useful if multiple access points (e.g., mesh or repeaters) broadcast the same SSID. OpenDTU-OnBattery periodically scans for access points with the configured SSID and reconnects to one with a considerably stronger signal. The connection is briefly interrupted when switching. Each scan also interrupts the connection for a few seconds, so, e.g., a power meter reading may be missed once.",
         "WifiRescanInterval": "Rescan Interval",
         "WifiRescanIntervalHint": "Time between two scans for a better access point.",
         "WifiRescanThreshold": "Signal Improvement Threshold",
