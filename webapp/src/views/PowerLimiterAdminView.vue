@@ -177,6 +177,15 @@
                         />
 
                         <InputElement
+                            v-if="inv.power_source == 2"
+                            :label="$t('powerlimiteradmin.HasPriority')"
+                            v-model="inv.has_priority"
+                            :tooltip="$t('powerlimiteradmin.HasPriorityHint')"
+                            type="checkbox"
+                            wide
+                        />
+
+                        <InputElement
                             :label="$t('powerlimiteradmin.LowerPowerLimit')"
                             :tooltip="$t('powerlimiteradmin.LowerPowerLimitHint')"
                             v-model="inv.lower_power_limit"
