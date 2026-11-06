@@ -3,13 +3,13 @@
 
 #include <memory>
 #include <driver/twai.h>
-#include <battery/CanReceiver.h>
+#include <battery/CanProvider.h>
 #include <battery/pytes/Stats.h>
 #include <battery/pytes/HassIntegration.h>
 
 namespace Batteries::Pytes {
 
-class Provider : public ::Batteries::CanReceiver {
+class Provider : public ::Batteries::CanProvider {
 public:
     Provider();
     bool init() final;

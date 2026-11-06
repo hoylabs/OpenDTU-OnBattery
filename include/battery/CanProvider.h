@@ -7,7 +7,7 @@
 
 namespace Batteries {
 
-class CanReceiver : public Provider {
+class CanProvider : public Provider {
 public:
     bool init(char const* providerName);
     void deinit() final;

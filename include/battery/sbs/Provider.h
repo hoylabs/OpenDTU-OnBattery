@@ -3,13 +3,13 @@
 
 #include <memory>
 #include <driver/twai.h>
-#include <battery/CanReceiver.h>
+#include <battery/CanProvider.h>
 #include <battery/sbs/Stats.h>
 #include <battery/sbs/HassIntegration.h>
 
 namespace Batteries::SBS {
 
-class Provider : public ::Batteries::CanReceiver {
+class Provider : public ::Batteries::CanProvider {
 public:
     Provider();
     bool init() final;
