@@ -82,6 +82,7 @@ void WebApiWsBatteryLiveClass::sendDataTaskCb()
     }
 
     if (!Battery.getStats()->updateAvailable(_lastUpdateCheck)) { return; }
+    uint32_t previousUpdateCheck = _lastUpdateCheck;
     _lastUpdateCheck = millis();
 
     try {
@@ -99,6 +100,19 @@ void WebApiWsBatteryLiveClass::sendDataTaskCb()
             String buffer;
             serializeJson(root, buffer);
 
+            _ws.textAll(buffer);
+        }
+
+        // module details one message each, only modules that changed
+        auto stats = Battery.getStats();
+        for (size_t i = 0; i < stats->getLiveViewModuleCount(); ++i) {
+            JsonDocument moduleDoc;
+            JsonVariant moduleVar = moduleDoc;
+            if (!stats->getLiveViewModuleData(moduleVar, i, previousUpdateCheck)) { continue; }
+            if (!Utils::checkJsonAlloc(moduleDoc, __FUNCTION__, __LINE__)) { break; }
+
+            String buffer;
+            serializeJson(moduleDoc, buffer);
             _ws.textAll(buffer);
         }
     } catch (std::bad_alloc& bad_alloc) {
@@ -131,7 +145,16 @@ void WebApiWsBatteryLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
         std::lock_guard<std::mutex> lock(_mutex);
         AsyncJsonResponse* response = new AsyncJsonResponse();
         auto& root = response->getRoot();
-        generateCommonJsonResponse(root);
+
+        // ?module=N: details of module N (1-based), see Stats::getLiveViewModuleData()
+        if (request->hasParam("module")) {
+            auto index = request->getParam("module")->value().toInt() - 1;
+            if (index < 0 || !Battery.getStats()->getLiveViewModuleData(root, index, 0)) {
+                response->setCode(404);
+            }
+        } else {
+            generateCommonJsonResponse(root);
+        }
 
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
     } catch (std::bad_alloc& bad_alloc) {
