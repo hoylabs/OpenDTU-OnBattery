@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include <battery/CanReceiver.h>
+#include <battery/CanProvider.h>
 #include <PinMapping.h>
 #include <driver/twai.h>
 #include <LogHelper.h>
@@ -10,7 +10,7 @@ static const char* TAG = "battery";
 
 namespace Batteries {
 
-bool CanReceiver::init(char const* providerName)
+bool CanProvider::init(char const* providerName)
 {
     _providerName = providerName;
 
@@ -74,7 +74,7 @@ bool CanReceiver::init(char const* providerName)
     return true;
 }
 
-void CanReceiver::deinit()
+void CanProvider::deinit()
 {
     // Stop TWAI driver
     esp_err_t twaiLastResult = twai_stop();
@@ -99,7 +99,7 @@ void CanReceiver::deinit()
     }
 }
 
-void CanReceiver::loop()
+void CanProvider::loop()
 {
     // Check for messages. twai_receive is blocking when there is no data so we return if there are no frames in the buffer
     twai_status_info_t status_info;
@@ -133,37 +133,37 @@ void CanReceiver::loop()
     onMessage(rx_message);
 }
 
-uint8_t CanReceiver::readUnsignedInt8(uint8_t *data)
+uint8_t CanProvider::readUnsignedInt8(uint8_t *data)
 {
     return data[0];
 }
 
-uint16_t CanReceiver::readUnsignedInt16(uint8_t *data)
+uint16_t CanProvider::readUnsignedInt16(uint8_t *data)
 {
     return (data[1] << 8) | data[0];
 }
 
-int16_t CanReceiver::readSignedInt16(uint8_t *data)
+int16_t CanProvider::readSignedInt16(uint8_t *data)
 {
     return this->readUnsignedInt16(data);
 }
 
-int32_t CanReceiver::readSignedInt24(uint8_t *data)
+int32_t CanProvider::readSignedInt24(uint8_t *data)
 {
     return (data[2] << 16) | (data[1] << 8) | data[0];
 }
 
-uint32_t CanReceiver::readUnsignedInt32(uint8_t *data)
+uint32_t CanProvider::readUnsignedInt32(uint8_t *data)
 {
     return (data[3] << 24) | (data[2] << 16) | (data[1] << 8) | data[0];
 }
 
-float CanReceiver::scaleValue(int32_t value, float factor)
+float CanProvider::scaleValue(int32_t value, float factor)
 {
     return value * factor;
 }
 
-bool CanReceiver::getBit(uint32_t value, uint8_t bit)
+bool CanProvider::getBit(uint32_t value, uint8_t bit)
 {
     return (value >> bit) & 1;
 }
