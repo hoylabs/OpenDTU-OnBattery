@@ -1015,13 +1015,20 @@ bool PowerLimiterClass::areDevicesReadyAfterStartup() {
     // fast return if we already know the devices are ready after startup
     if (_devicesReadyAfterStartup) { return true; }
 
-    // check if the configured battery provider is ready
-    if (Configuration.get().Battery.Enabled) {
+    // the battery state is only evaluated if we govern a battery powered inverter
+    if (!usesBatteryPoweredInverter()) { return true; }
 
-        // we do not wait infinity for the battery to be ready, we use a 15-second timeout instead
-        if ((Battery.getStats()->getLastUpdate() == 0) && (millis() < 15 * 1000)) {
-            return false;
-        }
+    // the battery thresholds use the SoC if the battery interface is enabled and the SoC is not ignored
+    // (see canUseSoCThresholds in the web UI), otherwise a voltage. Without a source the voltage is 0 V,
+    // which counts as 'stop threshold reached' and would discard the restored battery state.
+    auto const& config = Configuration.get();
+    bool socMode = config.Battery.Enabled && !config.PowerLimiter.IgnoreSoc;
+    bool ready = socMode ? Battery.getStats()->isSoCValid() : (getBatteryVoltage() > 0);
+
+    if (!ready) {
+        // we do not wait infinitely, the 15-second timeout starts when we wait for the first time
+        if (_devicesPendingSince == 0) { _devicesPendingSince = millis(); }
+        if ((millis() - _devicesPendingSince) < 15 * 1000) { return false; }
     }
 
     // add additional devices here if needed, for example Solar-Charger or AC-Charger?

@@ -78,6 +78,7 @@ private:
     uint32_t _calculationBackoffMs = _calculationBackoffMsDefault;
     Mode _mode = Mode::Normal;
     bool _devicesReadyAfterStartup = false;
+    uint32_t _devicesPendingSince = 0;
 
     std::deque<std::unique_ptr<PowerLimiterInverter>> _inverters;
     std::deque<std::unique_ptr<PowerLimiterInverter>> _retirees;
