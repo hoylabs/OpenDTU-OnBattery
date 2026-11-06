@@ -112,8 +112,6 @@
         "8006": "La valeur du délai d'attente du point d'accès administratif n'est pas valide !",
         "8007": "Le serveur Syslog doit comporter entre 1 et {max} caractères !",
         "8008": "Le port doit être un nombre entre 1 et 65535 !",
-        "8009": "L'intervalle de recherche Wi-Fi doit être un nombre entre 5 et 1440 !",
-        "8010": "Le seuil de recherche Wi-Fi doit être un nombre entre 1 et 50 !",
         "9001": "Le serveur NTP doit avoir une longueur comprise entre 1 et {max} caractères !",
         "9002": "Le fuseau horaire doit comporter entre 1 et {max} caractères !",
         "9003": "La description du fuseau horaire doit comporter entre 1 et {max} caractères !",
