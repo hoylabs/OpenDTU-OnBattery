@@ -1049,7 +1049,7 @@ void PowerLimiterClass::deserializeRT(JsonObject obj)
     auto fromStart = false;
     auto oneStopPerNightDone = false;
 
-    uint32_t batteryStateSaveEpoch = Runtime.getWriteEpochTime();
+    time_t batteryStateSaveEpoch = Runtime.getWriteEpochTime();
     if (batteryStateSaveEpoch != 0) {
         ++dataValidCounter;
     }
