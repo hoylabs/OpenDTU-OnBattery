@@ -48,10 +48,12 @@ public:
     // convert stats to JSON for web application live view
     virtual void getLiveViewData(JsonVariant& root) const;
 
-    // batteries made of several modules can send the details of each module
-    // separately (as "module" object) instead of in getLiveViewData(), to
-    // keep the documents small. getLiveViewModuleData() returns false if the
-    // module does not exist or did not change since `since` (millis(), 0: any).
+    // Per-module details for the web UI, one JSON document per module, so the
+    // getLiveViewData() document stays small for batteries with many modules.
+    // getLiveViewModuleCount(): number of module indices to query (0: none).
+    // getLiveViewModuleData(): writes {"module": {...}} for module `index`
+    // (0-based). Returns false if that module has no data, or if `since` is
+    // not 0 and the module did not change after `since` (millis()).
     virtual size_t getLiveViewModuleCount() const { return 0; }
     virtual bool getLiveViewModuleData([[maybe_unused]] JsonVariant& root, [[maybe_unused]] size_t index, [[maybe_unused]] uint32_t since) const { return false; }
 
