@@ -155,7 +155,7 @@ void setup()
     GridCharger.init(scheduler);
     Battery.init(scheduler);
     ModbusServer.init(scheduler);
-    // ... and here (before RuntimeData)
+    // ... and here
 
     Runtime.read(); // Read runtime values from all components that are registered to read on startup
 
