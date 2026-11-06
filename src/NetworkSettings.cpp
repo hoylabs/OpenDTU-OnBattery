@@ -374,10 +374,11 @@ void NetworkSettingsClass::handleWifiRescan()
     auto const& config = Configuration.get().WiFi;
 
     // scanning while the admin access point is active would disturb it.
-    // with a timeout of 0, the admin access point is never closed, though.
+    // with a timeout of 0, the admin access point is never closed, though,
+    // so scan as long as no client is connected to it.
     bool active = config.RescanEnabled
         && _networkMode == network_mode::WiFi
-        && (!_adminEnabled || config.ApTimeout == 0)
+        && (!_adminEnabled || (config.ApTimeout == 0 && WiFi.softAPgetStationNum() == 0))
         && WiFi.isConnected();
 
     if (_wifiRescanRunning) {
