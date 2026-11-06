@@ -8,7 +8,6 @@
 #include <Utils.h>
 #include <WiFiUdp.h>
 #include <LogHelper.h>
-#include <defaults.h>
 
 #undef TAG
 static const char* TAG = "gridCharger";
@@ -38,7 +37,7 @@ bool Provider::init()
 
     _httpRequestConfig = std::make_unique<HttpRequestConfig>();
     strlcpy(_httpRequestConfig->Url, ("http://" + ipAddress.toString() + "/jsonlive").c_str(), sizeof(_httpRequestConfig->Url));
-    _httpRequestConfig->Timeout = HTTP_REQUEST_TIMEOUT_MIN_MS;
+    _httpRequestConfig->Timeout = HTTP_TIMEOUT_MS;
     strlcpy(_httpRequestConfig->HeaderKey, "", sizeof(_httpRequestConfig->HeaderKey));
     strlcpy(_httpRequestConfig->HeaderValue, "", sizeof(_httpRequestConfig->HeaderValue));
     strlcpy(_httpRequestConfig->Username, "admin", sizeof(_httpRequestConfig->Username)); // default username
@@ -143,6 +142,16 @@ void Provider::powerControlLoop()
     // Automatic power control
     // ***********************
     if (config.GridCharger.AutoPowerEnabled) {
+        // check the data age before the stabilization delay below, so an
+        // outdated request is reset immediately.
+        if (millis() - getLastHttpUpdate() > DATA_MAX_AGE_MS) {
+            setRequestedPowerAc(0);
+            if (_autoModeBlockedTillMillis > millis()) { return; }
+            DTU_LOGW("Cannot perform auto power control when critical PSU values are outdated");
+            _autoModeBlockedTillMillis = millis() + 1000;
+            return;
+        }
+
         // Check if we should run automatic power calculation at all.
         // We may have set a value recently and still wait for output stabilization
         if (_autoModeBlockedTillMillis > millis()) {
@@ -151,37 +160,45 @@ void Provider::powerControlLoop()
 
         if (PowerLimiter.isGovernedBatteryPoweredInverterProducing()) {
             setRequestedPowerAc(0);
-            _autoPowerEnabled = false;
             DTU_LOGI("Inverter is active, disable PSU");
             _autoModeBlockedTillMillis = millis() + 1000;
             return;
         }
 
-        if (millis() - _dataCurrent.getLastUpdate() > 30 * 1000) {
-            DTU_LOGW("Cannot perform auto power control when critical PSU values are outdated");
+        // The Trucki refuses to charge while the battery is full or the grid
+        // voltage is low. Firmware >= 1.09 reports this state via UDP. Older
+        // firmware reports a max AC power of 0 W instead (while the battery is
+        // full), which limits the requested power below. The state is ignored
+        // once outdated, the max AC power (also polled via HTTP) still applies.
+        bool batteryGridStateValid = millis() - _lastBatteryGridStateMillis < DATA_MAX_AGE_MS;
+        if (batteryGridStateValid && (_batteryGridState == BATTERY_GRID_STATE_VBAT_FULL
+                || _batteryGridState == BATTERY_GRID_STATE_VGRID_LOW_DELAYED
+                || _batteryGridState == BATTERY_GRID_STATE_VGRID_LOW)) {
+            setRequestedPowerAc(0);
             _autoModeBlockedTillMillis = millis() + 1000;
             return;
         }
 
+        // the AC power drawn from the grid, which is what the power meter sees.
+        // the AC power is estimated by the Trucki based on an efficiency curve
+        // for Meanwell PSUs. fall back to the DC output power if unknown.
+        auto oInputPower = _dataCurrent.get<DataPointLabel::AcPower>();
+        if (!oInputPower) { oInputPower = oOutputPower; }
+
         auto oOutputVoltage = _dataCurrent.get<DataPointLabel::DcVoltage>();
-        auto oBatteryVoltageLimit = _dataCurrent.get<DataPointLabel::DcVoltageSetpoint>();
         auto oMinAcPower = _dataCurrent.get<DataPointLabel::MinAcPower>();
         auto oOutputCurrent = _dataCurrent.get<DataPointLabel::DcCurrent>();
 
-        if (!oOutputPower || !oOutputVoltage || !oBatteryVoltageLimit || !oMinAcPower || !oMaxAcPower || !oOutputCurrent) {
+        if (!oInputPower || !oOutputVoltage || !oMinAcPower || !oMaxAcPower || !oOutputCurrent) {
             DTU_LOGW("Cannot perform auto power control while critical PSU values are still unknown");
             _autoModeBlockedTillMillis = millis() + 1000;
             return;
         }
 
-        // Re-enable automatic power control if the output voltage has dropped below threshold
-        if (oOutputVoltage && *oOutputVoltage < oBatteryVoltageLimit) {
-            _autoPowerEnabled = true;
-        }
-
-        // We have received a new PowerMeter value. Also we're _autoPowerEnabled
-        // So we're good to calculate a new limit
-        if (PowerMeter.getLastUpdate() > _lastPowerMeterUpdateReceivedMillis && _autoPowerEnabled) {
+        // We have received a new PowerMeter value, so we're good to calculate a new limit.
+        // Note: VOUTSET is not a battery voltage limit. On Meanwell PSUs the Trucki parks
+        // it at the PSU's minimum output voltage while idle, so it must not gate this.
+        if (PowerMeter.getLastUpdate() > _lastPowerMeterUpdateReceivedMillis) {
             _lastPowerMeterUpdateReceivedMillis = PowerMeter.getLastUpdate();
 
             float powerTotal = round(PowerMeter.getPowerTotal());
@@ -189,10 +206,10 @@ void Provider::powerControlLoop()
             // Calculate new power limit
             float newPowerLimit = -1 * powerTotal;
 
-            // Powerlimit is the current output power + permissable Grid consumption
-            newPowerLimit += *oOutputPower + config.GridCharger.AutoPowerTargetPowerConsumption;
+            // Powerlimit is the current AC input power + permissable Grid consumption
+            newPowerLimit += *oInputPower + config.GridCharger.AutoPowerTargetPowerConsumption;
 
-            DTU_LOGV("powerTotal: %.0f, outputPower: %.01f, newPowerLimit: %.0f", powerTotal, *oOutputPower, newPowerLimit);
+            DTU_LOGV("powerTotal: %.0f, inputPower: %.01f, newPowerLimit: %.0f", powerTotal, *oInputPower, newPowerLimit);
 
             // Check whether the battery SoC limit setting is enabled
             if (config.Battery.Enabled && config.GridCharger.AutoPowerBatterySoCLimitsEnabled) {
@@ -225,14 +242,12 @@ void Provider::powerControlLoop()
                 // calculate new power limit based on output current
                 newPowerLimit = (outputCurrent * *oOutputVoltage) / efficiency;
 
-                _autoPowerEnabled = true;
                 setRequestedPowerAc(newPowerLimit);
 
                 // Don't run auto mode some time to allow for output stabilization after issuing a new value
                 _autoModeBlockedTillMillis = millis() + 4 * DATA_POLLING_INTERVAL_MS;
             } else {
                 // requested PL is below minium. Set power to 0
-                _autoPowerEnabled = false;
                 setRequestedPowerAc(0);
             }
         }
@@ -270,6 +285,13 @@ void Provider::parseControlCommandResponse()
     int packetSize = TruckiUdp.parsePacket();
     if (0 == packetSize) { return; }
 
+    auto const& truckiIp = IPAddress(Configuration.get().GridCharger.Trucki.IpAddress);
+    if (TruckiUdp.remoteIP() != truckiIp) {
+        DTU_LOGD("ignoring %d bytes from %s", packetSize, TruckiUdp.remoteIP().toString().c_str());
+        TruckiUdp.flush(); // parsePacket() returns 0 while an unread packet is buffered
+        return;
+    }
+
     std::vector<char> buffer(packetSize + 1, '\0');
     int readBytes = TruckiUdp.read(buffer.data(), packetSize);
     if (readBytes <= 0) { return; }
@@ -303,6 +325,9 @@ void Provider::parseControlCommandResponse()
 
         // only use batteryState when it could be parsed from the packet
         if (parsedFields == 3) {
+            _batteryGridState = batteryState;
+            _lastBatteryGridStateMillis = millis();
+
             switch (batteryState) {
                 case 5:
                     _dataCurrent.add<DataPointLabel::BatteryGridState>(std::string("trucki.VGRID_LOW"));
