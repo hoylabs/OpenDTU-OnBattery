@@ -32,9 +32,12 @@ private:
     uint8_t _pendingModule = 0; // module whose cell data was requested, 0: none
     uint32_t _lastRequest = 0;
     uint32_t _lastPytesFrame = 0; // when a Pytes-protocol frame was last seen
-    uint8_t _unansweredRequests = 0; // consecutive, see loop()
+    uint8_t _unansweredRequests = 0; // consecutive, over all modules, see loop()
     uint16_t _cellFrames = 0; // cell-data subframes received, bit n = subframe n
     uint8_t _cellFramesModule = 0; // module the _cellFrames mask belongs to
+    uint8_t _cellCount = 0; // reply in progress, see onModuleCellFrame()
+    std::array<uint16_t, Stats::MaxCells> _cellMilliVolt = {};
+    std::array<float, Stats::MaxCells> _cellTemperature = {};
     std::array<uint8_t, Stats::MaxModules> _versionRequests = {}; // attempts
     uint8_t _versionModule = 0; // module whose version string is received
     uint8_t _versionLength = 0;

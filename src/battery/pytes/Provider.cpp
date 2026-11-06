@@ -562,14 +562,15 @@ void Provider::loop()
         if (now - _lastRequest < 3000) { return; }
         _pendingModule = 0;
         if (_unansweredRequests < UINT8_MAX) { ++_unansweredRequests; }
-        if (_unansweredRequests == 3) {
+        if (_unansweredRequests == 3 * moduleCount) {
             DTU_LOGW("Module data requests are not answered, retrying every 10 minutes");
         }
     }
 
-    // e.g. a battery firmware without support for these requests, or another
-    // device on the bus interfering: only try now and then
-    if (_unansweredRequests >= 3 && now - _lastRequest < 10 * 60 * 1000) { return; }
+    // three full rounds without any answer, e.g. a battery firmware without
+    // support for these requests: only try now and then. counted over all
+    // modules, so single silent (e.g. offline) modules do not stop the polling.
+    if (_unansweredRequests >= 3 * moduleCount && now - _lastRequest < 10 * 60 * 1000) { return; }
     _lastRequest = now;
 
     if (_nextModule > moduleCount) { _nextModule = 1; }
@@ -605,14 +606,13 @@ void Provider::onModuleCellFrame(uint32_t identifier, uint8_t const* data, uint8
     auto& mod = _stats->_modules[module - 1];
     uint8_t* values = const_cast<uint8_t*>(data);
 
-    // n == 0 starts a module's reply; track the subframes (0-8) received so a
-    // lost one does not expose partial data as fresh (see the lastUpdate below)
+    // n == 0 starts a module's reply. the reply is collected in the _cell*
+    // members and only copied to the module once all subframes (0-8) arrived,
+    // so neither a reply in progress nor a lost subframe is ever visible.
     if (n == 0) {
         _cellFramesModule = module;
         _cellFrames = 1; // bit 0
-        if (length >= 2) {
-            mod.cellCount = std::min<uint16_t>(readUnsignedInt16(values), Stats::MaxCells);
-        }
+        _cellCount = (length >= 2) ? std::min<uint16_t>(readUnsignedInt16(values), Stats::MaxCells) : 0;
         return;
     }
 
@@ -623,9 +623,9 @@ void Provider::onModuleCellFrame(uint32_t identifier, uint8_t const* data, uint8
     for (uint8_t i = 0; i < 4 && 2 * i + 1 < length; ++i) {
         uint8_t cell = ((n - 1) % 4) * 4 + i;
         if (n <= 4) {
-            mod.cellMilliVolt[cell] = readUnsignedInt16(values + 2 * i);
+            _cellMilliVolt[cell] = readUnsignedInt16(values + 2 * i);
         } else {
-            mod.cellTemperature[cell] = readSignedInt16(values + 2 * i) / 10.0f;
+            _cellTemperature[cell] = readSignedInt16(values + 2 * i) / 10.0f;
         }
     }
 
@@ -634,6 +634,10 @@ void Provider::onModuleCellFrame(uint32_t identifier, uint8_t const* data, uint8
 
     // all subframes (cell count, 4 voltage, 4 temperature) must have arrived
     if (_cellFrames != 0x1FF) { return; }
+
+    mod.cellCount = _cellCount;
+    mod.cellMilliVolt = _cellMilliVolt;
+    mod.cellTemperature = _cellTemperature;
 
     bool newModule = mod.lastUpdate == 0;
     mod.lastUpdate = millis();
