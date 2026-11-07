@@ -157,10 +157,11 @@
 
                         <InputElement
                             :label="$t('powermeteradmin.pollingInterval')"
-                            v-model="powerMeterConfigList.http_json.polling_interval"
+                            v-model="httpJsonPollIntervalSeconds"
                             type="number"
-                            min="1"
+                            min="0.1"
                             max="15"
+                            step="0.1"
                             :postfix="$t('powermeteradmin.seconds')"
                             wide
                         />
@@ -369,6 +370,14 @@ export default defineComponent({
             },
             set(value: number) {
                 this.powerMeterConfigList.udp_victron.polling_interval_ms = value * 1000;
+            },
+        },
+        httpJsonPollIntervalSeconds: {
+            get(): number {
+                return this.powerMeterConfigList.http_json.polling_interval_ms / 1000;
+            },
+            set(value: number) {
+                this.powerMeterConfigList.http_json.polling_interval_ms = value * 1000;
             },
         },
     },
