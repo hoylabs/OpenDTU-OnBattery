@@ -11,10 +11,14 @@
 #include <battery/zendure/ZendureMqttProvider.h>
 #include <Configuration.h>
 #include <LogHelper.h>
+#include <Utils.h>
 
 #undef TAG
 static const char* TAG = "battery";
 static const char* SUBTAG = "Controller";
+
+// runtime data key
+static constexpr const char* FULLY_CHARGED_EPOCH = "fully_charged_epoch";
 
 Batteries::Controller Battery;
 
@@ -39,62 +43,76 @@ void Controller::init(Scheduler& scheduler)
     _loopTask.setIterations(TASK_FOREVER);
     _loopTask.enable();
 
+    Runtime.registerProvider(this, false); // read runtime data on demand
+
     this->updateSettings();
 }
 
 void Controller::updateSettings()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    auto initialized = true;
 
-    if (_upProvider) {
-        _upProvider->deinit();
-        _upProvider = nullptr;
-    }
+    { // lock scope
+        std::lock_guard<std::mutex> lock(_mutex);
 
-    auto const& config = Configuration.get();
-    if (!config.Battery.Enabled) { return; }
+        if (_upProvider) {
+            _upProvider->deinit();
+            _upProvider = nullptr;
+        }
 
-    switch (config.Battery.Provider) {
-        case 0:
-            _upProvider = std::make_unique<Pylontech::Provider>();
-            break;
-        case 1:
-            _upProvider = std::make_unique<JkBms::Provider>();
-            break;
-        case 2:
-            _upProvider = std::make_unique<Mqtt::Provider>();
-            break;
-        case 3:
-            _upProvider = std::make_unique<VictronSmartShunt::Provider>();
-            break;
-        case 4:
-            _upProvider = std::make_unique<Pytes::Provider>();
-            break;
-        case 5:
-            _upProvider = std::make_unique<SBS::Provider>();
-            break;
-        case 6:
-            _upProvider = std::make_unique<JbdBms::Provider>();
-            break;
-        case 7:
-            switch (config.Battery.Zendure.ConnectionType) {
-                case BatteryZendureConfig::ConnectionType_t::LocalMqtt:
-                    _upProvider = std::make_unique<Zendure::LocalMqttProvider>();
-                    break;
-                case BatteryZendureConfig::ConnectionType_t::ZendureMqtt:
-                    _upProvider = std::make_unique<Zendure::ZendureMqttProvider>();
-                    break;
-                default:
-                    DTU_LOGE("Unknown Zendure connection type: %d", config.Battery.Zendure.ConnectionType);
-                    return;
-            }
-            break;
-        default:
-            DTU_LOGE("Unknown provider: %d", config.Battery.Provider);
-            return;
-    }
+        auto const& config = Configuration.get();
+        if (!config.Battery.Enabled) { return; }
 
-    if (!_upProvider->init()) { _upProvider = nullptr; }
+        switch (config.Battery.Provider) {
+            case 0:
+                _upProvider = std::make_unique<Pylontech::Provider>();
+                break;
+            case 1:
+                _upProvider = std::make_unique<JkBms::Provider>();
+                break;
+            case 2:
+                _upProvider = std::make_unique<Mqtt::Provider>();
+                break;
+            case 3:
+                _upProvider = std::make_unique<VictronSmartShunt::Provider>();
+                break;
+            case 4:
+                _upProvider = std::make_unique<Pytes::Provider>();
+                break;
+            case 5:
+                _upProvider = std::make_unique<SBS::Provider>();
+                break;
+            case 6:
+                _upProvider = std::make_unique<JbdBms::Provider>();
+                break;
+            case 7:
+                switch (config.Battery.Zendure.ConnectionType) {
+                    case BatteryZendureConfig::ConnectionType_t::LocalMqtt:
+                        _upProvider = std::make_unique<Zendure::LocalMqttProvider>();
+                        break;
+                    case BatteryZendureConfig::ConnectionType_t::ZendureMqtt:
+                        _upProvider = std::make_unique<Zendure::ZendureMqttProvider>();
+                        break;
+                    default:
+                        DTU_LOGE("Unknown Zendure connection type: %d", config.Battery.Zendure.ConnectionType);
+                        return;
+                }
+                break;
+            default:
+                DTU_LOGE("Unknown provider: %d", config.Battery.Provider);
+                return;
+        }
+
+        if (!_upProvider->init()) {
+            _upProvider = nullptr;
+            initialized = false;
+        }
+    } // lock scope
+
+    // we request a read on the next loop to ensure the provider has its runtime data
+    // that works on startup and if the provider is initialized later or changed
+    // we call outside of the lock to avoid potential deadlocks or blocking issues
+    if (initialized) { Runtime.requestReadOnNextLoop(getIdRT()); }
 }
 
 void Controller::loop()
@@ -104,6 +122,8 @@ void Controller::loop()
     if (!_upProvider) { return; }
 
     _upProvider->loop();
+
+    _upProvider->getStats()->checkFullyChargedEpoch();
 
     _upProvider->getStats()->mqttLoop();
 
@@ -224,5 +244,34 @@ float Controller::getChargeCurrentLimit() const
 
     auto maxChargeLimit = std::min(getConfiguredMaxLimit(), getBatteryLimit());
     return std::max(maxChargeLimit, getConfiguredMinLimit());
+}
+
+void Controller::serializeRT(JsonObject obj) const
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (!_upProvider) { return; } // no provider, nothing to serialize
+
+    // serialize the fully charged epoch if available and valid
+    auto fullEpoch = _upProvider->getStats()->getFullyChargedEpoch();
+    if (fullEpoch) { obj[FULLY_CHARGED_EPOCH] = fullEpoch.value(); }
+}
+
+void Controller::deserializeRT(JsonObject obj)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (!_upProvider) { return; } // no provider, nothing to deserialize
+
+    if (!obj.isNull() && obj[FULLY_CHARGED_EPOCH].is<time_t>()) {
+
+        // use the fully charged epoch from the runtime file
+        time_t fullEpoch = obj[FULLY_CHARGED_EPOCH];
+        _upProvider->getStats()->setFullyChargedEpoch((fullEpoch == 0) ? std::nullopt : std::optional<time_t>(fullEpoch));
+    } else {
+
+        // indication that the data is not available from the runtime file
+        _upProvider->getStats()->setFullyChargedEpoch(std::nullopt);
+    }
 }
 } // namespace Batteries

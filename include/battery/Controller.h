@@ -6,16 +6,21 @@
 #include <TaskSchedulerDeclarations.h>
 #include <battery/Provider.h>
 #include <battery/Stats.h>
+#include "RuntimeData.h"
 
 namespace Batteries {
 
-class Controller {
+class Controller : public InterfaceProviderRT {
 public:
     void init(Scheduler&);
     void updateSettings();
 
     float getDischargeCurrentLimit();
     float getChargeCurrentLimit() const;
+
+    String getIdRT() const override { return "battery"; }
+    void serializeRT(JsonObject obj) const override;
+    void deserializeRT(JsonObject obj) override;
 
     std::shared_ptr<Stats const> getStats() const;
 
