@@ -63,9 +63,9 @@ jobs:
         id: envs
         run: |
           if [ "$FULL_BUILD" = "true" ]; then
-            echo "environments=$(pio project config --json-output | jq -cr '.[1][1][0][1]|split(",")')" >> $GITHUB_OUTPUT
+            echo "environments=$(pio project config --json-output | jq -cr '.[1][1][0][1]|split(",")')" >> "$GITHUB_OUTPUT"
           else
-            echo 'environments=["generic_esp32s3_usb"]' >> $GITHUB_OUTPUT
+            echo 'environments=["generic_esp32s3_usb"]' >> "$GITHUB_OUTPUT"
           fi
 
     outputs:
