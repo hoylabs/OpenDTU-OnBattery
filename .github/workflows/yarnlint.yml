@@ -39,8 +39,9 @@ jobs:
       - name: Install WebApp dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Linting
-        run: yarn lint
-
+      # check the formatting first, as linting fixes files in place
       - name: Check Formatting
         run: yarn prettier --check src/
+
+      - name: Linting
+        run: yarn lint
