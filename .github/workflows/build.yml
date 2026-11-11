@@ -20,6 +20,9 @@ on:
       - '**/*.md'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 # pull requests build a single environment as a compile check. the full set of
 # environments (and the artifacts comment) is only built for pull requests
 # labeled "build-artifacts", as well as for pushes, tags and manual runs.
@@ -212,6 +215,8 @@ jobs:
   generate_pr_artifacts_comment:
     name: Generate PR artifacts comment and store it as artifact
     needs: build
+    permissions:
+      actions: read
     if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'build-artifacts')
     runs-on: ubuntu-24.04
     steps:
