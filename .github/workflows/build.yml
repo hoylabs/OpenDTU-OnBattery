@@ -291,7 +291,7 @@ jobs:
 
       - name: Get openDTU core release
         run: |
-          echo "OPEN_DTU_CORE_RELEASE=$(git for-each-ref --sort=creatordate --format '%(refname) %(creatordate)' refs/tags | grep 'refs/tags/v' | tail -1 | sed 's#.*/##' | sed 's/ .*//')" >> $GITHUB_ENV
+          echo "OPEN_DTU_CORE_RELEASE=$(git for-each-ref --sort=creatordate --format '%(refname) %(creatordate)' refs/tags | grep 'refs/tags/v' | tail -1 | sed 's#.*/##' | sed 's/ .*//')" >> "$GITHUB_ENV"
 
       - name: Create openDTU-core-release-Badge
         if: vars.BADGE_GIST_ID != ''
@@ -321,7 +321,7 @@ jobs:
           ls -lR artifacts/
           mkdir -p release-artifacts
           for i in artifacts/*/; do
-            for file in ${i}opendtu-onbattery-*.bin; do
+            for file in "${i}"opendtu-onbattery-*.bin; do
               # only process if the file actually exists
               # (is not just a pattern that failed expansion)
               if [ -f "$file" ]; then
@@ -338,9 +338,17 @@ jobs:
           ls -lR release-artifacts/
 
       - name: Create release
-        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
-        with:
-          body: ${{steps.github_release.outputs.changelog}}
-          draft: False
-          files: |
-            release-artifacts/*.bin
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NOTES: ${{ steps.github_release.outputs.changelog }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            # re-run of this job: update the existing release, and publish it
+            # in case an interrupted run left it as a draft
+            gh release upload "$GITHUB_REF_NAME" release-artifacts/*.bin --clobber
+            gh release edit "$GITHUB_REF_NAME" --notes "$NOTES" --draft=false
+          else
+            gh release create "$GITHUB_REF_NAME" release-artifacts/*.bin \
+              --title "$GITHUB_REF_NAME" --notes "$NOTES" --verify-tag
+          fi
