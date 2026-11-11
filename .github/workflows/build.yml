@@ -1,7 +1,8 @@
 name: OpenDTU-OnBattery Build
-# marks full pull request builds for the "Comment on pull request" workflow.
+# marks full pull request builds (and their pull request) for the "Comment on
+# pull request" workflow.
 # evaluates to an empty string otherwise, which keeps the default run name.
-run-name: ${{ contains(github.event.pull_request.labels.*.name, 'build-artifacts') && format('{0} [build-artifacts]', github.event.pull_request.title) || '' }}
+run-name: "${{ contains(github.event.pull_request.labels.*.name, 'build-artifacts') && format('{0} [build-artifacts #{1}]', github.event.pull_request.title, github.event.pull_request.number) || '' }}"
 
 on:
   push:
