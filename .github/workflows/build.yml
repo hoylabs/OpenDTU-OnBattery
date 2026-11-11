@@ -103,10 +103,11 @@ jobs:
         with:
           path: ~/.platformio
           # there are no lockfiles: the platform and its packages are pinned
-          # in platformio.ini, so a changed file stores a new cache
+          # in platformio.ini, so a changed file stores a new cache. no
+          # restore-keys on purpose: restoring an older cache would carry
+          # outdated packages along, so the cache would grow with every
+          # change. unused caches are evicted by GitHub after 7 days.
           key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
-          restore-keys: |
-            ${{ runner.os }}-pio-
 
       - name: Set up Python
         uses: actions/setup-python@v7
