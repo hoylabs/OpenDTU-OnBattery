@@ -72,6 +72,16 @@ jobs:
           const body = fs.readFileSync(`./pr/${fileName}`, "utf8");
           const {owner, repo} = context.repo;
 
+          // the artifact is produced by the pull request's own (untrusted)
+          // workflow files, so only comment on the pull request whose head
+          // commit was actually built.
+          const {data: pr} = await github.rest.pulls.get(
+            {owner, repo, pull_number: Number(issue_number)});
+          if (pr.head.sha !== context.payload.workflow_run.head_sha) {
+            core.warning(`Build of ${context.payload.workflow_run.head_sha} does not match the head of PR #${issue_number}`);
+            return;
+          }
+
           async function upsertComment(owner, repo, issue_number, purpose, body) {
               const {data: comments} = await github.rest.issues.listComments(
                 {owner, repo, issue_number});
