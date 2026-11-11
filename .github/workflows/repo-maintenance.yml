@@ -5,10 +5,7 @@ on:
       - cron: '0 4 * * *'
     workflow_dispatch:
 
-permissions:
-    issues: write
-    pull-requests: write
-    discussions: write
+permissions: {}
 
 concurrency:
     group: lock
@@ -17,6 +14,9 @@ jobs:
     stale:
         name: 'Stale'
         if: github.repository == 'hoylabs/OpenDTU-OnBattery'
+        permissions:
+            issues: write
+            pull-requests: write
         runs-on: ubuntu-latest
         steps:
           - uses: actions/stale@v11
@@ -48,6 +48,10 @@ jobs:
     lock-threads:
         name: 'Lock Old Threads'
         if: github.repository == 'hoylabs/OpenDTU-OnBattery'
+        permissions:
+            issues: write
+            pull-requests: write
+            discussions: write
         runs-on: ubuntu-latest
         steps:
           - uses: dessant/lock-threads@v6

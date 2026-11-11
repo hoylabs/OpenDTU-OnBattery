@@ -41,6 +41,8 @@ jobs:
     if: github.event.action != 'labeled' || github.event.label.name == 'build-artifacts'
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Cache pip
         uses: actions/cache@v6
@@ -80,6 +82,8 @@ jobs:
         environment: ${{ fromJSON(needs.get_default_envs.outputs.environments) }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Get tags
         run: git fetch --force --tags origin
@@ -279,6 +283,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Get openDTU core tags
         run: git fetch --force --tags https://github.com/tbnobody/OpenDTU.git
