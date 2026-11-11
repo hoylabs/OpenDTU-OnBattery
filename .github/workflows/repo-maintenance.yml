@@ -16,6 +16,7 @@ concurrency:
 jobs:
     stale:
         name: 'Stale'
+        if: github.repository == 'hoylabs/OpenDTU-OnBattery'
         runs-on: ubuntu-latest
         steps:
           - uses: actions/stale@v11
@@ -46,6 +47,7 @@ jobs:
 
     lock-threads:
         name: 'Lock Old Threads'
+        if: github.repository == 'hoylabs/OpenDTU-OnBattery'
         runs-on: ubuntu-latest
         steps:
           - uses: dessant/lock-threads@v6

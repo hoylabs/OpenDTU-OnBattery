@@ -14,10 +14,12 @@ jobs:
       pull-requests: write
     if: >
       github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success'
+      github.event.workflow_run.conclusion == 'success' &&
+      endsWith(github.event.workflow_run.display_title, ' [build-artifacts]')
 
     steps:
     - name: "Download artifact"
+      id: download
       uses: actions/github-script@v9
       with:
         script: |
@@ -29,6 +31,12 @@ jobs:
           var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
             return artifact.name == "pr";
           })[0];
+          // only builds of pull requests labeled "build-artifacts" create a comment
+          if (!matchArtifact) {
+            core.info("No PR comment artifact found");
+            return;
+          }
+          core.setOutput("found", "true");
           var download = await github.rest.actions.downloadArtifact({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -39,6 +47,7 @@ jobs:
           fs.writeFileSync('${{github.workspace}}/pr.zip', Buffer.from(download.data));
 
     - name: "Extract artifact"
+      if: steps.download.outputs.found == 'true'
       run: |
         mkdir -p pr
         unzip pr.zip -d pr
@@ -46,6 +55,7 @@ jobs:
 
     - name: "Comment on PR"
       id: comment
+      if: steps.download.outputs.found == 'true'
       uses: actions/github-script@v9
       with:
         script: |

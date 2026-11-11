@@ -1,14 +1,25 @@
-name: Yarn Linting
+name: Yarn Linting and Formatting
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - development
+    paths:
+      - webapp/**
+      - .github/workflows/yarnlint.yml
+  pull_request:
+    paths:
+      - webapp/**
+      - .github/workflows/yarnlint.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-24.04
-
-    # prevent push event from triggering if it's part of a local PR, see
-    # https://github.com/orgs/community/discussions/57827#discussioncomment-6579237
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
 
     defaults:
       run:
@@ -30,3 +41,6 @@ jobs:
 
       - name: Linting
         run: yarn lint
+
+      - name: Check Formatting
+        run: yarn prettier --check src/

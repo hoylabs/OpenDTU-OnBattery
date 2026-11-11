@@ -1,4 +1,7 @@
 name: OpenDTU-OnBattery Build
+# marks full pull request builds for the "Comment on pull request" workflow.
+# evaluates to an empty string otherwise, which keeps the default run name.
+run-name: ${{ contains(github.event.pull_request.labels.*.name, 'build-artifacts') && format('{0} [build-artifacts]', github.event.pull_request.title) || '' }}
 
 on:
   push:
@@ -11,14 +14,28 @@ on:
     tags-ignore:
       - 'v**'
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths-ignore:
       - docs/**
       - '**/*.md'
+  workflow_dispatch:
+
+# pull requests build a single environment as a compile check. the full set of
+# environments (and the artifacts comment) is only built for pull requests
+# labeled "build-artifacts", as well as for pushes, tags and manual runs.
+concurrency:
+  # adding an unrelated label must not cancel a running build
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{ github.event.action == 'labeled' && github.event.label.name != 'build-artifacts' && format('-{0}', github.run_id) || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  FULL_BUILD: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build-artifacts') }}
 
 jobs:
   get_default_envs:
     name: Gather Environments
     runs-on: ubuntu-24.04
+    if: github.event.action != 'labeled' || github.event.label.name == 'build-artifacts'
     steps:
       - uses: actions/checkout@v7
 
@@ -42,7 +59,11 @@ jobs:
       - name: Get default environments
         id: envs
         run: |
-          echo "environments=$(pio project config --json-output | jq -cr '.[1][1][0][1]|split(",")')" >> $GITHUB_OUTPUT
+          if [ "$FULL_BUILD" = "true" ]; then
+            echo "environments=$(pio project config --json-output | jq -cr '.[1][1][0][1]|split(",")')" >> $GITHUB_OUTPUT
+          else
+            echo 'environments=["generic_esp32s3_usb"]' >> $GITHUB_OUTPUT
+          fi
 
     outputs:
       environments: ${{ steps.envs.outputs.environments }}
@@ -141,7 +162,7 @@ jobs:
   generate_pr_artifacts_comment:
     name: Generate PR artifacts comment and store it as artifact
     needs: build
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'build-artifacts')
     runs-on: ubuntu-24.04
     steps:
       - name: Generate PR artifacts comment
