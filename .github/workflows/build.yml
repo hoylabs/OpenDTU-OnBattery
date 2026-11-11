@@ -141,8 +141,33 @@ jobs:
             cd webapp
             yarn build
 
+      # pull requests only recompile what changed, starting from the build of
+      # the latest push to development. branches, tags and manual runs always
+      # build from scratch, and only pushes to development save the cache.
+      - name: Restore build cache
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            .pio/build/project.checksum
+            .pio/build/${{ matrix.environment }}
+            .pio/libdeps/${{ matrix.environment }}
+          key: pio-build-${{ matrix.environment }}-${{ github.sha }}
+          restore-keys: |
+            pio-build-${{ matrix.environment }}-
+
       - name: Build firmware
         run: pio run -e ${{ matrix.environment }}
+
+      - name: Save build cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            .pio/build/project.checksum
+            .pio/build/${{ matrix.environment }}
+            .pio/libdeps/${{ matrix.environment }}
+          key: pio-build-${{ matrix.environment }}-${{ github.sha }}
 
       - name: Rename Firmware
         run: mv .pio/build/${{ matrix.environment }}/firmware.bin .pio/build/${{ matrix.environment }}/opendtu-onbattery-${{ matrix.environment }}.bin
@@ -157,6 +182,26 @@ jobs:
             .pio/build/${{ matrix.environment }}/opendtu-onbattery-${{ matrix.environment }}.bin
             !.pio/build/generic_esp32_4mb_no_ota/opendtu-onbattery-generic_esp32_4mb_no_ota.bin
             .pio/build/${{ matrix.environment }}/opendtu-onbattery-${{ matrix.environment }}.factory.bin
+
+  # keep only the newest build cache per environment, so the build caches
+  # do not grow with every push
+  prune_build_cache:
+    name: Prune build caches
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Delete outdated build caches
+        run: |
+          gh cache list --key pio-build- --ref refs/heads/development --limit 100 \
+            --json id,key,createdAt \
+            --jq 'group_by(.key | sub("-[0-9a-f]{40}$"; "")) | map(sort_by(.createdAt) | .[:-1]) | flatten | .[].id' |
+            xargs -r -n1 gh cache delete
 
   # This snippet is public-domain, taken from
   # https://github.com/oprypin/nightly.link/blob/master/.github/workflows/pr-comment.yml
