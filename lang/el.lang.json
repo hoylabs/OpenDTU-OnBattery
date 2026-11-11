@@ -136,7 +136,8 @@
             "10002": "Επιτυχής έλεγχος ταυτότητας!",
             "11001": "¡@:apiresponse.2001",
             "11002": "¡@:apiresponse:5004",
-            "12001": "Το προφίλ πρέπει να αποτελείται από 1 έως {max} χαρακτήρες!"
+            "12001": "Το προφίλ πρέπει να αποτελείται από 1 έως {max} χαρακτήρες!",
+            "12002": "Diagram display duration must be a number between {min} and {max}!"
         },
         "home": {
             "LiveData": "Τηλεμετρία",
@@ -491,7 +492,7 @@
             "WifiSsid": "SSID για Wi-Fi",
             "WifiPassword": "Κωδικός πρόσβασης Wi-Fi",
             "Hostname": "Όνομα κεντρικού υπολογιστή",
-            "HostnameHint": "<b>Συμβουλή:</b> Το κείμενο <span class=\"font-monospace\">%06X</span> θα αντικατασταθεί με τα τελευταία 6 ψηφία του Ολοκληρωμένου ESP  σε δεκαεξαδική μορφή.",
+            "HostnameHint": "<b>Συμβουλή:</b> Το κείμενο <span class=\"font-monospace\">$id$</span> θα αντικατασταθεί με τα τελευταία 6 ψηφία του Ολοκληρωμένου ESP  σε δεκαεξαδική μορφή.",
             "EnableDhcp": "Ενεργοποίηση DHCP",
             "StaticIpConfiguration": "Στατική Διαμόρφωση IP",
             "IpAddress": "Διεύθυνση IP",

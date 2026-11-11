@@ -126,7 +126,8 @@
         "10002": "Authentification réussie !",
         "11001": "@:apiresponse.2001",
         "11002": "@:apiresponse.5004",
-        "12001": "Le profil doit comporter entre 1 et {max} caractères !"
+        "12001": "Le profil doit comporter entre 1 et {max} caractères !",
+        "12002": "La durée d'affichage du diagramme doit être un nombre compris entre {min} et {max} !"
     },
     "home": {
         "LiveData": "Données en direct",
@@ -535,7 +536,7 @@
         "WifiSsid": "SSID",
         "WifiPassword": "Mot de passe",
         "Hostname": "Nom d'hôte",
-        "HostnameHint": "<b>Astuce :</b> Le texte <span class=\"font-monospace\">%06X</span> sera remplacé par les 6 derniers chiffres de l'ESP ChipID au format hexadécimal.",
+        "HostnameHint": "<b>Astuce :</b> Le texte <span class=\"font-monospace\">$id$</span> sera remplacé par les 6 derniers chiffres de l'ESP ChipID au format hexadécimal.",
         "EnableDhcp": "Activer le DHCP",
         "StaticIpConfiguration": "Configuration de l'IP statique",
         "IpAddress": "Adresse IP",

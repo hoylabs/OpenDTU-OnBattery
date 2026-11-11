@@ -132,7 +132,8 @@
         "10002": "Authentication successful!",
         "11001": "@:apiresponse.2001",
         "11002": "@:apiresponse.5004",
-        "12001": "Profile name must between 1 and {max} characters long!"
+        "12001": "Profile name must between 1 and {max} characters long!",
+        "12002": "Diagram display duration must be a number between {min} and {max}!"
     },
     "onbatteryapiresponse": {
         "1001": "@:apiresponse.1001",
@@ -561,7 +562,7 @@
         "WifiSsid": "WiFi SSID",
         "WifiPassword": "WiFi Password",
         "Hostname": "Hostname",
-        "HostnameHint": "<b>Hint:</b> The text <span class=\"font-monospace\">%06X</span> will be replaced with the last 6 digits of the ESP ChipID in hex format.",
+        "HostnameHint": "<b>Hint:</b> The text <span class=\"font-monospace\">$id$</span> will be replaced with the last 6 digits of the ESP ChipID in hex format.",
         "EnableDhcp": "Enable DHCP",
         "StaticIpConfiguration": "Static IP Configuration",
         "IpAddress": "IP Address",

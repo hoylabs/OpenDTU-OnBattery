@@ -136,7 +136,8 @@
             "10002": "Authentication successful!",
             "11001": "@:apiresponse.2001",
             "11002": "@:apiresponse:5004",
-            "12001": "Profil must between 1 and {max} characters long!"
+            "12001": "Profil must between 1 and {max} characters long!",
+            "12002": "Diagram display duration must be a number between {min} and {max}!"
         },
         "home": {
             "LiveData": "Dati in tempo reale",
@@ -491,7 +492,7 @@
             "WifiSsid": "WiFi SSID",
             "WifiPassword": "WiFi Password",
             "Hostname": "Hostname",
-            "HostnameHint": "<b>Nota:</b> Il testo <span class=\"font-monospace\">%06X</span> sarà rimpiazzato con le ultime 6 cifre del ChipID dell'ESP32 in formato esadecimale.",
+            "HostnameHint": "<b>Nota:</b> Il testo <span class=\"font-monospace\">$id$</span> sarà rimpiazzato con le ultime 6 cifre del ChipID dell'ESP32 in formato esadecimale.",
             "EnableDhcp": "Abilita DHCP",
             "StaticIpConfiguration": "Configurazione IP Statico",
             "IpAddress": "Indirizzo IP",

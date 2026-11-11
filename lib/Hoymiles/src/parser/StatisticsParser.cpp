@@ -199,8 +199,12 @@ bool StatisticsParser::setChannelFieldValue(const ChannelType_t type, const Chan
         return false;
     }
 
-    uint8_t ptr = pos->start + pos->num - 1;
-    const uint8_t end = pos->start;
+    // Use a signed index: with an unsigned uint8_t the loop below would
+    // wrap around after reaching offset 0 and write out of bounds for a
+    // byte assignment starting at offset 0. All current inverter tables
+    // start at offset 2, but this should not depend on table contents.
+    int16_t ptr = static_cast<int16_t>(pos->start) + pos->num - 1;
+    const int16_t end = pos->start;
     const uint16_t div = pos->div;
 
     if (CMD_CALC == div) {
@@ -337,12 +341,12 @@ uint32_t StatisticsParser::getRxFailureCount() const
 
 void StatisticsParser::zeroRuntimeData()
 {
-    zeroFields(runtimeFields);
+    zeroFields(runtimeFields, sizeof(runtimeFields) / sizeof(runtimeFields[0]));
 }
 
 void StatisticsParser::zeroDailyYieldData()
 {
-    zeroFields(dailyProductionFields);
+    zeroFields(dailyProductionFields, sizeof(dailyProductionFields) / sizeof(dailyProductionFields[0]));
 }
 
 void StatisticsParser::zeroDailyRuntimeData()
@@ -397,12 +401,12 @@ void StatisticsParser::setMaxDailyPower(const float power)
     _maxDailyPower = power;
 }
 
-void StatisticsParser::zeroFields(const FieldId_t* fields)
+void StatisticsParser::zeroFields(const FieldId_t* fields, const size_t fieldCount)
 {
     // Loop all channels
     for (auto& t : getChannelTypes()) {
         for (auto& c : getChannelsByType(t)) {
-            for (uint8_t i = 0; i < (sizeof(runtimeFields) / sizeof(runtimeFields[0])); i++) {
+            for (size_t i = 0; i < fieldCount; i++) {
                 if (hasChannelFieldValue(t, c, fields[i])) {
                     setChannelFieldValue(t, c, fields[i], 0);
                 }

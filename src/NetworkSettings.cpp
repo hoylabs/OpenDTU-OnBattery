@@ -106,23 +106,26 @@ void NetworkSettingsClass::NetworkEvent(const WiFiEvent_t event, WiFiEventInfo_t
         // Reason codes can be found here: https://github.com/espressif/esp-idf/blob/5454d37d496a8c58542eb450467471404c606501/components/esp_wifi/include/esp_wifi_types_generic.h#L79-L141
         ESP_LOGW(TAG, "WiFi disconnected: %" PRIu8 "", info.wifi_sta_disconnected.reason);
         if (_networkMode == network_mode::WiFi) {
-            _lastReconnectAttempt = millis();
-            if (_wifiRescanSwitching && info.wifi_sta_disconnected.reason == WIFI_REASON_ASSOC_LEAVE) {
-                // we left the access point on purpose, the connection
-                // attempt to the better access point is already in progress
-                _wifiRescanSwitching = false;
-                ESP_LOGI(TAG, "Left access point to connect to a better one");
-            } else if (isWifiBssidPinned()) {
-                // the BSSID was pinned by the WiFi rescan. do not insist on
-                // that access point, but connect to any with the same SSID.
-                ESP_LOGI(TAG, "Try reconnecting to any access point");
-                auto const& config = Configuration.get().WiFi;
-                WiFi.disconnect(true, false);
-                WiFi.begin(config.Ssid, config.Password);
-            } else {
-                ESP_LOGI(TAG, "Try reconnecting");
-                WiFi.disconnect(true, false);
-                WiFi.begin();
+            // AP-only recovery must not restart a paused connection.
+            if (_performConnection && wifiConfigured()) {
+                _lastReconnectAttempt = millis();
+                if (_wifiRescanSwitching && info.wifi_sta_disconnected.reason == WIFI_REASON_ASSOC_LEAVE) {
+                    // we left the access point on purpose, the connection
+                    // attempt to the better access point is already in progress
+                    _wifiRescanSwitching = false;
+                    ESP_LOGI(TAG, "Left access point to connect to a better one");
+                } else if (isWifiBssidPinned()) {
+                    // the BSSID was pinned by the WiFi rescan. do not insist on
+                    // that access point, but connect to any with the same SSID.
+                    ESP_LOGI(TAG, "Try reconnecting to any access point");
+                    auto const& config = Configuration.get().WiFi;
+                    WiFi.disconnect(true, false);
+                    WiFi.begin(config.Ssid, config.Password);
+                } else {
+                    ESP_LOGI(TAG, "Try reconnecting");
+                    WiFi.disconnect(true, false);
+                    WiFi.begin();
+                }
             }
             raiseEvent(network_event::NETWORK_DISCONNECTED);
         }
@@ -246,6 +249,7 @@ void NetworkSettingsClass::enableAdminMode()
     // credentials gets changed.
     _connectTimeoutTimer = 0;
     _connectRedoTimer = 0;
+    _performConnection = true;
 
     _adminTimeoutCounter = 0;
     _adminTimeoutCounterMax = Configuration.get().WiFi.ApTimeout * 60;
@@ -332,16 +336,17 @@ void NetworkSettingsClass::loop()
         } else {
             if (_connectTimeoutTimer > WIFI_RECONNECT_TIMEOUT && _performConnection) {
                 ESP_LOGI(TAG, "Disabling search for AP...");
+                // Publish the pause before mode changes can emit disconnect events.
+                _performConnection = false;
                 WiFi.mode(WIFI_AP);
                 _connectRedoTimer = 0;
-                _performConnection = false;
             }
             if (_connectRedoTimer > WIFI_RECONNECT_REDO_TIMEOUT && !_performConnection) {
                 ESP_LOGI(TAG, "Enable search for AP...");
+                _performConnection = true;
                 WiFi.mode(WIFI_AP_STA);
                 applyConfig();
                 _connectTimeoutTimer = 0;
-                _performConnection = true;
             }
         }
     }
@@ -536,6 +541,17 @@ void NetworkSettingsClass::setHostname()
     ESP_LOG_LEVEL_LOCAL((success ? ESP_LOG_INFO : ESP_LOG_ERROR), TAG, "Setting hostname %s", success ? "done" : "failed");
 }
 
+String NetworkSettingsClass::buildHostname(const String& hostTemplate)
+{
+    const uint32_t chipId = Utils::getChipId();
+    char chipIdStr[7];
+    snprintf(chipIdStr, sizeof(chipIdStr), "%06X", static_cast<unsigned>(chipId));
+
+    String prepared = hostTemplate;
+    prepared.replace("$id$", chipIdStr);
+    return prepared;
+}
+
 void NetworkSettingsClass::setStaticIp()
 {
     if (_networkMode == network_mode::Undefined) {
@@ -656,8 +672,8 @@ String NetworkSettingsClass::getHostname()
     char resultHostname[WIFI_MAX_HOSTNAME_STRLEN + 1];
     uint8_t pos = 0;
 
-    const uint32_t chipId = Utils::getChipId();
-    snprintf(preparedHostname, WIFI_MAX_HOSTNAME_STRLEN + 1, config.WiFi.Hostname, chipId);
+    String prepared = buildHostname(config.WiFi.Hostname);
+    strlcpy(preparedHostname, prepared.c_str(), sizeof(preparedHostname));
 
     const char* pC = preparedHostname;
     while (*pC && pos < WIFI_MAX_HOSTNAME_STRLEN) { // while !null and not over length
@@ -682,7 +698,8 @@ String NetworkSettingsClass::getHostname()
 
     // Fallback if no other rule applied
     if (strlen(resultHostname) == 0) {
-        snprintf(resultHostname, WIFI_MAX_HOSTNAME_STRLEN + 1, APP_HOSTNAME, chipId);
+        String prepared = buildHostname(APP_HOSTNAME);
+        strlcpy(resultHostname, prepared.c_str(), sizeof(preparedHostname));
     }
 
     return resultHostname;

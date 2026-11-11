@@ -99,6 +99,7 @@ enum WebApiError {
 
     HardwareBase = 12000,
     HardwarePinMappingLength,
+    HardwareInvalidDiagramDuration,
 
     ModbusServerBase = 13000,
     ModbusServerDuplicateUnitId,
