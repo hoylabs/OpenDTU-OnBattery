@@ -1,105 +1,78 @@
 name: Comment on pull request
-# This workflow is based on the following source:
-# https://github.com/live-codes/pr-comment-from-artifact/blob/main/action.yml
+# Posts download links to the firmware artifacts of pull requests labeled
+# "build-artifacts". Builds of pull requests from forks have no permission to
+# comment, hence this separate workflow. As the build runs the pull request's
+# own (untrusted) workflow files, nothing it produces is used except for the
+# names and IDs of its artifacts; the pull request and its label are looked up
+# here.
 on:
   workflow_run:
-    workflows: ["OpenDTU-OnBattery Build"] # the workflow that created the artifact
+    workflows: ["OpenDTU-OnBattery Build"]
     types:
       - completed
 
 jobs:
-  upload:
+  comment:
     runs-on: ubuntu-24.04
     permissions:
       actions: read
       pull-requests: write
+    # the run name marker only avoids starting a runner for other builds,
+    # the label is verified below
     if: >
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'success' &&
       endsWith(github.event.workflow_run.display_title, ' [build-artifacts]')
 
     steps:
-    - name: "Download artifact"
-      id: download
-      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-      with:
-        script: |
-          var artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.payload.workflow_run.id,
-          });
-          var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
-            return artifact.name == "pr";
-          })[0];
-          // only builds of pull requests labeled "build-artifacts" create a comment
-          if (!matchArtifact) {
-            core.info("No PR comment artifact found");
-            return;
-          }
-          core.setOutput("found", "true");
-          var download = await github.rest.actions.downloadArtifact({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              artifact_id: matchArtifact.id,
-              archive_format: 'zip',
-          });
-          var fs = require('fs');
-          fs.writeFileSync('${{github.workspace}}/pr.zip', Buffer.from(download.data));
-
-    - name: "Extract artifact"
-      if: steps.download.outputs.found == 'true'
-      run: |
-        mkdir -p pr
-        unzip pr.zip -d pr
-      shell: bash
-
     - name: "Comment on PR"
-      id: comment
-      if: steps.download.outputs.found == 'true'
       uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       with:
         script: |
-          const fs = require("fs");
-          const removeExtension = (path) => path.split(".").slice(0, -1).join(".");
-
-          const fileName = fs.readdirSync("./pr")?.[0];
-          if (!fileName) {
-            core.setFailed("No artifact found");
-            return;
-          }
-          const issue_number = removeExtension(fileName);
-          const body = fs.readFileSync(`./pr/${fileName}`, "utf8");
+          const run = context.payload.workflow_run;
           const {owner, repo} = context.repo;
 
-          // the artifact is produced by the pull request's own (untrusted)
-          // workflow files, so only comment on the pull request whose head
-          // commit was actually built.
-          const {data: pr} = await github.rest.pulls.get(
-            {owner, repo, pull_number: Number(issue_number)});
-          if (pr.head.sha !== context.payload.workflow_run.head_sha) {
-            core.warning(`Build of ${context.payload.workflow_run.head_sha} does not match the head of PR #${issue_number}`);
+          const {data: prs} = await github.rest.pulls.list({owner, repo, state: "open",
+            head: `${run.head_repository.owner.login}:${run.head_branch}`});
+          const pr = prs.find((p) => p.head.sha === run.head_sha);
+          if (!pr) {
+            core.info(`No open pull request with head ${run.head_sha}`);
+            return;
+          }
+          if (!pr.labels.some((l) => l.name === "build-artifacts")) {
+            core.info(`PR #${pr.number} is not labeled "build-artifacts"`);
             return;
           }
 
-          async function upsertComment(owner, repo, issue_number, purpose, body) {
-              const {data: comments} = await github.rest.issues.listComments(
-                {owner, repo, issue_number});
-              const marker = `<!-- bot: ${purpose} -->`;
-              body = marker + "\n" + body;
-              const existing = comments.filter((c) => c.body.includes(marker));
-              if (existing.length > 0) {
-                const last = existing[existing.length - 1];
-                core.info(`Updating comment ${last.id}`);
-                await github.rest.issues.updateComment({
-                  owner, repo,
-                  body,
-                  comment_id: last.id,
-                });
-              } else {
-                core.info(`Creating a comment in PR #${issue_number}`);
-                await github.rest.issues.createComment({issue_number, body, owner, repo});
-              }
-            }
+          const artifacts = (await github.paginate(
+            github.rest.actions.listWorkflowRunArtifacts, {owner, repo, run_id: run.id}))
+            .filter((art) => /^opendtu-onbattery-[A-Za-z0-9_]+$/.test(art.name));
+          if (!artifacts.length) {
+            core.setFailed("No firmware artifacts found");
+            return;
+          }
 
-          await upsertComment(owner, repo, issue_number, "build-artifacts", body);
+          let body = `### Build Artifacts\n\nFirmware built from this pull request's code:\n`;
+          for (const art of artifacts) {
+            body += `\n* [${art.name}.zip](https://nightly.link/${owner}/${repo}/actions/artifacts/${art.id}.zip)`;
+          }
+          body += `\n\n### Notice\n`
+            + `* These artifacts are ZIP files containing the factory update binary as well as the OTA update binary.\n`
+            + `  Extract the binaries from the ZIP files first. Do not use the ZIP files themselves to perform an update.\n`
+            + `* These links point to artifacts of the latest [**successful** build run](${run.html_url}).\n`
+            + `* The linked artifacts were built from ${run.head_sha}.`;
+
+          const marker = "<!-- bot: build-artifacts -->";
+          body = marker + "\n" + body;
+          const comments = await github.paginate(github.rest.issues.listComments,
+            {owner, repo, issue_number: pr.number});
+          // anyone can quote the marker, so only consider our own comments
+          const existing = comments.filter((c) =>
+            c.user?.login === "github-actions[bot]" && c.body?.includes(marker)).pop();
+          if (existing) {
+            core.info(`Updating comment ${existing.id}`);
+            await github.rest.issues.updateComment({owner, repo, comment_id: existing.id, body});
+          } else {
+            core.info(`Creating a comment in PR #${pr.number}`);
+            await github.rest.issues.createComment({owner, repo, issue_number: pr.number, body});
+          }
