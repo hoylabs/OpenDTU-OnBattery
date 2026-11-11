@@ -19,7 +19,7 @@ public:
     float getChargeCurrentLimit() const;
 
     String getIdRT() const override { return "battery"; }
-    void serializeRT(JsonObject obj) const override;
+    void serializeRT(JsonObject root) const override;
     void deserializeRT(JsonObject obj) override;
 
     std::shared_ptr<Stats const> getStats() const;

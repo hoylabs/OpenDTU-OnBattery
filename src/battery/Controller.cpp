@@ -246,15 +246,18 @@ float Controller::getChargeCurrentLimit() const
     return std::max(maxChargeLimit, getConfiguredMinLimit());
 }
 
-void Controller::serializeRT(JsonObject obj) const
+void Controller::serializeRT(JsonObject root) const
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
     if (!_upProvider) { return; } // no provider, nothing to serialize
 
-    // serialize the fully charged epoch if available and valid
+    // we only serialize the fully charged epoch if it is available
     auto fullEpoch = _upProvider->getStats()->getFullyChargedEpoch();
-    if (fullEpoch) { obj[FULLY_CHARGED_EPOCH] = fullEpoch.value(); }
+    if (!fullEpoch) { return; }
+
+    JsonObject obj = root[getIdRT()].to<JsonObject>();
+    obj[FULLY_CHARGED_EPOCH] = fullEpoch.value();
 }
 
 void Controller::deserializeRT(JsonObject obj)
