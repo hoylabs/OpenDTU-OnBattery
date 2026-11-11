@@ -15,6 +15,7 @@ jobs:
         name: 'Stale'
         if: github.repository == 'hoylabs/OpenDTU-OnBattery'
         permissions:
+            actions: write # replaces the state cache of actions/stale
             issues: write
             pull-requests: write
         runs-on: ubuntu-latest
