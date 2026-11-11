@@ -102,7 +102,11 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.platformio
-          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+          # there are no lockfiles: the platform and its packages are pinned
+          # in platformio.ini, so a changed file stores a new cache
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
 
       - name: Set up Python
         uses: actions/setup-python@v7
