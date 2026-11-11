@@ -147,6 +147,7 @@ jobs:
       # pull requests only recompile what changed, starting from the build of
       # the latest push to development. branches, tags and manual runs always
       # build from scratch, and only pushes to development save the cache.
+      # libraries are not cached, so pull requests fetch them like clean builds.
       - name: Restore build cache
         if: github.event_name == 'pull_request'
         uses: actions/cache/restore@v6
@@ -154,7 +155,6 @@ jobs:
           path: |
             .pio/build/project.checksum
             .pio/build/${{ matrix.environment }}
-            .pio/libdeps/${{ matrix.environment }}
           key: pio-build-${{ matrix.environment }}-${{ github.sha }}
           restore-keys: |
             pio-build-${{ matrix.environment }}-
@@ -169,7 +169,6 @@ jobs:
           path: |
             .pio/build/project.checksum
             .pio/build/${{ matrix.environment }}
-            .pio/libdeps/${{ matrix.environment }}
           key: pio-build-${{ matrix.environment }}-${{ github.sha }}
 
       - name: Rename Firmware
