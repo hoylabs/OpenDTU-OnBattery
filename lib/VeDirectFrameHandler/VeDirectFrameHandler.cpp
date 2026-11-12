@@ -123,8 +123,11 @@ void VeDirectFrameHandler<T>::loop()
 
         // calculate the average transmit errors per day
         _tmpFrame.transmitErrors_Day = static_cast<float>(_errorSumSinceStartup);
-        float errorDays = esp_timer_get_time() / (24.0f*60*60*1000*1000); // 24h, use float to avoid int overflow
-        if (errorDays > 1.0f) { _tmpFrame.transmitErrors_Day /= errorDays; }
+        constexpr uint64_t microsecondsPerDay = 24ULL * 60 * 60 * 1000 * 1000;
+        uint64_t uptimeMicroseconds = esp_timer_get_time();
+        uint64_t errorDays = (uptimeMicroseconds + microsecondsPerDay - 1) / microsecondsPerDay;
+        if (errorDays == 0) { errorDays = 1; }
+        _tmpFrame.transmitErrors_Day /= static_cast<float>(errorDays);
 
         // no need to print the errors if log level is not at least INFO or if we do not have any
         if (DTU_LOG_IS_INFO && (_errorSumSinceStartup != 0)) {
