@@ -125,6 +125,14 @@ OpenDTU-OnBattery is actively maintained. Please note that OpenDTU-OnBattery
 may change significantly during its development. Bug reports, comments, feature
 requests and pull requests are welcome!
 
+### Pull Request Builds
+
+To save CI resources, pull requests are only compiled for a single environment
+by default. To build firmware for all environments and get a comment with
+download links to the binaries, a maintainer adds the `build-artifacts` label
+to the pull request. As long as the label is present, every new commit is
+built again. Ask for the label if you need test binaries for a pull request.
+
 ## Project History
 
 The original OpenDTU project was started from [a discussion on

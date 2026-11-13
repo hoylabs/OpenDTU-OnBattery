@@ -5,10 +5,7 @@ on:
       - cron: '0 4 * * *'
     workflow_dispatch:
 
-permissions:
-    issues: write
-    pull-requests: write
-    discussions: write
+permissions: {}
 
 concurrency:
     group: lock
@@ -16,9 +13,14 @@ concurrency:
 jobs:
     stale:
         name: 'Stale'
+        if: github.repository == 'hoylabs/OpenDTU-OnBattery'
+        permissions:
+            actions: write # replaces the state cache of actions/stale
+            issues: write
+            pull-requests: write
         runs-on: ubuntu-latest
         steps:
-          - uses: actions/stale@v11
+          - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
             with:
                 start-date: 2023-04-26
                 operations-per-run: 300
@@ -46,9 +48,14 @@ jobs:
 
     lock-threads:
         name: 'Lock Old Threads'
+        if: github.repository == 'hoylabs/OpenDTU-OnBattery'
+        permissions:
+            issues: write
+            pull-requests: write
+            discussions: write
         runs-on: ubuntu-latest
         steps:
-          - uses: dessant/lock-threads@v6
+          - uses: dessant/lock-threads@89ae32b08ed1a541efecbab17912962a5e38981c # v6.0.2
             with:
                 issue-inactive-days: '30'
                 pr-inactive-days: '30'
