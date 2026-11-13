@@ -26,12 +26,16 @@
                         <template v-if="key != 'name' && property">
                             <th scope="row">{{ $t('inverterchannelproperty.' + key) }}</th>
                             <td class="value">
-                                {{
-                                    $n(property.v, 'decimal', {
-                                        minimumFractionDigits: property.d,
-                                        maximumFractionDigits: property.d,
-                                    })
-                                }}
+                                <!-- null: no value available (yet), e.g. daily maximum before the first data of the day -->
+                                <template v-if="property.v === null">-</template>
+                                <template v-else>
+                                    {{
+                                        $n(property.v, 'decimal', {
+                                            minimumFractionDigits: property.d,
+                                            maximumFractionDigits: property.d,
+                                        })
+                                    }}
+                                </template>
                             </td>
                             <td>{{ property.u }}</td>
                         </template>

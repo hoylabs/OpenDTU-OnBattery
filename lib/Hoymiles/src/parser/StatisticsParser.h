@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 #include "Parser.h"
+#include <cmath>
 #include <cstdint>
 #include <list>
 
@@ -160,10 +161,7 @@ public:
     void setYieldDayCorrection(const bool enabled);
 
     float getMaxTemperature() const;
-    void setMaxTemperature(const float temperature);
-
     float getMaxDailyPower() const;
-    void setMaxDailyPower(const float power);
 
 private:
     void zeroFields(const FieldId_t* fields, const size_t fieldCount);
@@ -183,6 +181,6 @@ private:
     bool _enableYieldDayCorrection = false;
     float _lastYieldDay[CH_CNT] = {};
 
-    float _maxTemperature = 0;
+    float _maxTemperature = NAN; // NAN: no sample yet, temperatures can be negative
     float _maxDailyPower = 0;
 };

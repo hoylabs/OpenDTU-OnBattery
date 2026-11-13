@@ -130,6 +130,11 @@ void MqttHandleInverterClass::publishField(std::shared_ptr<InverterAbstract> inv
         return;
     }
 
+    // NAN: no value available (yet), e.g. daily maximum before the first data of the day
+    if (std::isnan(inv->Statistics()->getChannelFieldValue(type, channel, fieldId))) {
+        return;
+    }
+
     MqttSettings.publish(topic, inv->Statistics()->getChannelFieldValueString(type, channel, fieldId));
 }
 
