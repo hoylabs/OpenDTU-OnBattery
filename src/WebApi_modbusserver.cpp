@@ -120,7 +120,7 @@ void WebApiModbusServerClass::onAdminPost(AsyncWebServerRequest* request)
         const char* serialText = inv["serial"].as<const char*>();
         char* serialEnd = nullptr;
         uint64_t serial = 0;
-        if (isxdigit(static_cast<unsigned char>(serialText[0]))) {
+        if (serialText != nullptr && isxdigit(static_cast<unsigned char>(serialText[0]))) {
             serial = strtoull(serialText, &serialEnd, 16);
         }
         if (serial == 0 || *serialEnd != '\0') {
