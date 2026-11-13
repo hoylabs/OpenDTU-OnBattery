@@ -6,6 +6,7 @@
 #include "Configuration.h"
 #include "defaults.h"
 #include <AsyncJson.h>
+#include <atomic>
 #include <lwip/priv/tcpip_priv.h>
 #include <lwip/tcp.h>
 
@@ -101,8 +102,13 @@ void WebApiClass::sendTooManyRequests(AsyncWebServerRequest* request)
 // lwIP only has CONFIG_LWIP_MAX_ACTIVE_TCP (16) TCP PCBs for all connections
 // (HTTP, websockets, Modbus TCP, MQTT, HTTP clients). Every web UI tab holds
 // several websockets, so a few tabs used to exhaust the pool and every new
-// connection was dropped. Websockets get the lowest TCP priority, so lwIP
-// closes the oldest websocket instead (the web UI reconnects).
+// connection was dropped. Websocket clients beyond kMaxWsClients are rejected
+// (the web UI retries with backoff), and accepted ones get the lowest TCP
+// priority, so lwIP closes the oldest websocket instead of dropping a new
+// connection if the pool still runs out.
+static constexpr size_t kMaxWsClients = 8;
+static std::atomic<size_t> wsClientCount { 0 };
+
 struct SetLowestPrioCall {
     tcpip_api_call_data call; // must be the first member
     AsyncClient* client;
@@ -118,12 +124,31 @@ static err_t setLowestPrio(tcpip_api_call_data* data)
 
 void WebApiClass::onWsClientEvent(AsyncWebSocketClient* client, AwsEventType type)
 {
+    if (type == WS_EVT_DISCONNECT) {
+        --wsClientCount;
+        return;
+    }
+
     if (type != WS_EVT_CONNECT) { return; }
 
+    ++wsClientCount;
     SetLowestPrioCall call {};
     call.client = client->client();
     tcpip_api_call(setLowestPrio, &call.call);
 }
+
+// clients are counted once their handshake is acknowledged, so handshakes
+// in flight at the same time can exceed the limit for a moment. the lowest
+// TCP priority still protects the other connections in that case.
+AsyncMiddlewareFunction WebApiClass::wsClientLimit([](AsyncWebServerRequest* request, ArMiddlewareNext next) {
+    if (wsClientCount >= kMaxWsClients) {
+        ESP_LOGD(TAG, "Too many websocket clients (%u), rejecting %s",
+                 static_cast<unsigned>(wsClientCount.load()), request->url().c_str());
+        request->send(503);
+        return;
+    }
+    next();
+});
 
 void WebApiClass::writeConfig(JsonVariant& retMsg, const WebApiError code, const String& message)
 {

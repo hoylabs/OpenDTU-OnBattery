@@ -32,6 +32,7 @@ void WebApiWsBatteryLiveClass::init(AsyncWebServer& server, Scheduler& scheduler
     _server->on("/api/batterylivedata/status", HTTP_GET, static_cast<ArRequestHandlerFunction>(std::bind(&WebApiWsBatteryLiveClass::onLivedataStatus, this, _1)));
 
     _server->addHandler(&_ws);
+    _ws.addMiddleware(&WebApiClass::wsClientLimit);
     _ws.onEvent(std::bind(&WebApiWsBatteryLiveClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
 
     scheduler.addTask(_wsCleanupTask);
