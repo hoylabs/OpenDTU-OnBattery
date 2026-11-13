@@ -6,6 +6,8 @@
 #include "Configuration.h"
 #include "defaults.h"
 #include <AsyncJson.h>
+#include <lwip/priv/tcpip_priv.h>
+#include <lwip/tcp.h>
 
 #undef TAG
 static const char* TAG = "webapi";
@@ -94,6 +96,33 @@ void WebApiClass::sendTooManyRequests(AsyncWebServerRequest* request)
     auto response = request->beginResponse(429, asyncsrv::T_text_plain, "Too Many Requests");
     response->addHeader(asyncsrv::T_retry_after, "60");
     request->send(response);
+}
+
+// lwIP only has CONFIG_LWIP_MAX_ACTIVE_TCP (16) TCP PCBs for all connections
+// (HTTP, websockets, Modbus TCP, MQTT, HTTP clients). Every web UI tab holds
+// several websockets, so a few tabs used to exhaust the pool and every new
+// connection was dropped. Websockets get the lowest TCP priority, so lwIP
+// closes the oldest websocket instead (the web UI reconnects).
+struct SetLowestPrioCall {
+    tcpip_api_call_data call; // must be the first member
+    AsyncClient* client;
+};
+
+static err_t setLowestPrio(tcpip_api_call_data* data)
+{
+    // runs in the lwIP thread, which also frees the pcb if the connection fails
+    auto pcb = reinterpret_cast<SetLowestPrioCall*>(data)->client->pcb();
+    if (pcb != nullptr) { tcp_setprio(pcb, TCP_PRIO_MIN); }
+    return ERR_OK;
+}
+
+void WebApiClass::onWsClientEvent(AsyncWebSocketClient* client, AwsEventType type)
+{
+    if (type != WS_EVT_CONNECT) { return; }
+
+    SetLowestPrioCall call {};
+    call.client = client->client();
+    tcpip_api_call(setLowestPrio, &call.call);
 }
 
 void WebApiClass::writeConfig(JsonVariant& retMsg, const WebApiError code, const String& message)
