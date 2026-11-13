@@ -39,6 +39,7 @@ void WebApiWsConsoleClass::init(AsyncWebServer& server, Scheduler& scheduler)
 
 void WebApiWsConsoleClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
 {
+    WebApiClass::onWsClientEvent(client, type);
     if (type == WS_EVT_CONNECT) {
         ESP_LOGD(TAG, "Websocket: [%s][%" PRIu32 "] connect", server->url(), client->id());
     } else if (type == WS_EVT_DISCONNECT) {
