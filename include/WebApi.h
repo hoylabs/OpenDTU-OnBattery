@@ -48,6 +48,7 @@ public:
     static bool checkCredentialsReadonly(AsyncWebServerRequest* request);
 
     static void sendTooManyRequests(AsyncWebServerRequest* request);
+    static void onWsClientEvent(AsyncWebSocketClient* client, AwsEventType type);
 
     static void writeConfig(JsonVariant& retMsg, const WebApiError code = WebApiError::GenericSuccess, const String& message = "Settings saved!");
 
