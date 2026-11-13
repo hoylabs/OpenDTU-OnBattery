@@ -162,6 +162,35 @@
                 </CardElement>
             </template>
 
+            <template v-if="batteryConfigList.enabled">
+                <CardElement :text="$t('batteryadmin.BatteryDataConfiguration')" textVariant="text-bg-primary" addSpace>
+                    <InputElement
+                        :label="$t('batteryadmin.NominalVoltage')"
+                        v-model="batteryConfigList.nominal_voltage"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        postfix="V"
+                        :tooltip="$t('batteryadmin.NominalVoltageInfo')"
+                        wide
+                    />
+
+                    <InputElement
+                        v-if="batteryConfigList.provider != 4"
+                        :label="$t('batteryadmin.NominalCapacity')"
+                        v-model="batteryConfigList.nominal_capacity"
+                        type="number"
+                        min="0"
+                        max="2000"
+                        step="1"
+                        postfix="Ah"
+                        :tooltip="$t('batteryadmin.NominalCapacityInfo')"
+                        wide
+                    />
+                </CardElement>
+            </template>
+
             <CardElement
                 :text="$t('batteryadmin.DischargeCurrentLimitConfiguration')"
                 textVariant="text-bg-primary"

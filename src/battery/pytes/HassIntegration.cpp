@@ -23,7 +23,6 @@ void HassIntegration::publishSensors() const
     publishSensor("Charged Energy", NULL, "chargedEnergy", "energy", "total_increasing", "kWh");
     publishSensor("Discharged Energy", NULL, "dischargedEnergy", "energy", "total_increasing", "kWh");
 
-    publishSensor("Total Capacity", NULL, "capacity");
     publishSensor("Available Capacity", NULL, "availableCapacity");
 
     publishSensor("Cell Min Voltage", NULL, "CellMinMilliVolt", "voltage", "measurement", "mV");

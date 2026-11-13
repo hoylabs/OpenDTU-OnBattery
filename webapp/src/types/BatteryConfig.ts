@@ -67,4 +67,6 @@ export interface BatteryConfig {
     charge_current_limit_below_soc: number;
     charge_current_limit_below_voltage: number;
     use_battery_reported_charge_current_limit: boolean;
+    nominal_voltage: number;
+    nominal_capacity: number;
 }
