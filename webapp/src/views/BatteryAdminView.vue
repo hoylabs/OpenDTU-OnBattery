@@ -177,7 +177,7 @@
                     />
 
                     <InputElement
-                        v-if="batteryConfigList.provider != 4"
+                        v-if="batteryConfigList.provider != 1 && batteryConfigList.provider != 4"
                         :label="$t('batteryadmin.NominalCapacity')"
                         v-model="batteryConfigList.nominal_capacity"
                         type="number"
