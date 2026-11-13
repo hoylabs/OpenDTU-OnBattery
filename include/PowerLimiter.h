@@ -61,7 +61,7 @@ public:
 
     // interface to the Runtime Provider
     String getIdRT() const override { return "power_limiter"; }
-    void serializeRT(JsonObject obj) const override;
+    void serializeRT(JsonObject root) const override;
     void deserializeRT(JsonObject obj) override;
 
 private:

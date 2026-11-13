@@ -1039,10 +1039,11 @@ bool PowerLimiterClass::areDevicesReadyAfterStartup() {
     return true;
 }
 
-void PowerLimiterClass::serializeRT(JsonObject obj) const
+void PowerLimiterClass::serializeRT(JsonObject root) const
 {
     // Note: Up to now the PowerLimiterClass does not use a mutex
     // As long as we read and write during startup or from the main task, we are fine.
+    JsonObject obj = root[getIdRT()].to<JsonObject>();
     obj[FROM_START] = _fromStart;
     obj[ONE_STOP_PER_NIGHT_DONE] = _oneStopPerNightDone;
 }
