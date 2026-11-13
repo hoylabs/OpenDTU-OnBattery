@@ -204,17 +204,21 @@ export default defineComponent({
             const authString = authUrl();
             const webSocketUrl = `${protocol === 'https:' ? 'wss' : 'ws'}://${authString}${host}/console`;
 
-            this.socket = new WebSocketService(webSocketUrl, {
-                onMessage: this.handleMessage,
-                onOpen: () => {
-                    console.log('WebSocket connected');
-                    this.isWebsocketConnected = true;
+            this.socket = new WebSocketService(
+                webSocketUrl,
+                {
+                    onMessage: this.handleMessage,
+                    onOpen: () => {
+                        console.log('WebSocket connected');
+                        this.isWebsocketConnected = true;
+                    },
+                    onClose: () => {
+                        console.log('WebSocket closed');
+                        this.isWebsocketConnected = false;
+                    },
                 },
-                onClose: () => {
-                    console.log('WebSocket closed');
-                    this.isWebsocketConnected = false;
-                },
-            });
+                { pauseWhenHidden: false } // keep collecting log lines in the background
+            );
 
             // Listen to window events , When the window closes , Take the initiative to disconnect websocket Connect
             window.onbeforeunload = () => {
