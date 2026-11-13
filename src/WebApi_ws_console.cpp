@@ -24,6 +24,7 @@ void WebApiWsConsoleClass::init(AsyncWebServer& server, Scheduler& scheduler)
     using std::placeholders::_6;
 
     server.addHandler(&_ws);
+    _ws.addMiddleware(&WebApiClass::wsClientLimit);
     MessageOutput.register_ws_output(&_ws);
     _ws.onEvent(std::bind(&WebApiWsConsoleClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
 
