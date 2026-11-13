@@ -204,7 +204,8 @@
             "ERR": "Fehlerbeschreibung",
             "HSDS": "Anzahl der Tage (0..364)",
             "MpptTemperature": "Ladereglertemperatur",
-            "ChargeCurrentLimit": "Ladestromlimit"
+            "ChargeCurrentLimit": "Ladestromlimit",
+            "MpptTransmitError": "Übertragungsfehler"
         },
         "section_output": "Ausgang (Batterie)",
         "output": {
@@ -1368,6 +1369,7 @@
         "full-access": "@:batteryadmin.zendure.controlModes.Full",
         "write-once": "Einmalig Schreiben",
         "read-only": "@:batteryadmin.zendure.controlModes.ReadOnly",
+        "transmitError": "Übertragungsfehler",
         "zendure": {
             "chargeThroughState": "Status Vollladezyklus",
             "chargeThroughStates": {
