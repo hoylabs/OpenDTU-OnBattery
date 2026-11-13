@@ -363,14 +363,35 @@ void ZendureMqttProvider::onMqttMessage(const espMqttClientTypes::MessagePropert
         return onMqttMessageReport(properties, topic, payload, len);
     }
 
-    auto& fragment = _fragments[String(topic)];
+    // larger messages are not what we subscribed to, and on devices without
+    // PSRAM the memory would be missing elsewhere
+    static constexpr size_t kMaxMessageSize = 32 * 1024;
 
-    // first fragment of a new message
     if (index == 0) {
-        fragment.clear();
-        fragment.reserve(total);
+        _fragments.erase(String(topic));
+
+        if (total > kMaxMessageSize) {
+            DTU_LOGW("Dropping MQTT message on topic '%s', too large (%zu bytes)", topic, total);
+            return;
+        }
+
+        try {
+            _fragments[String(topic)].reserve(total);
+        } catch (std::bad_alloc const&) {
+            _fragments.erase(String(topic));
+            DTU_LOGE("Dropping MQTT message on topic '%s', out of memory (%zu bytes)", topic, total);
+            return;
+        }
     }
 
+    // the first fragment was dropped, or a fragment is missing
+    auto iter = _fragments.find(String(topic));
+    if (iter == _fragments.end() || iter->second.size() != index) {
+        if (iter != _fragments.end()) { _fragments.erase(iter); }
+        return;
+    }
+
+    auto& fragment = iter->second;
     fragment.insert(fragment.end(), payload, payload + len);
 
     if (fragment.size() < total) {
