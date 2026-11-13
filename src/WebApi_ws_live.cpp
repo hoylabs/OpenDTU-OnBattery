@@ -41,6 +41,7 @@ void WebApiWsLiveClass::init(AsyncWebServer& server, Scheduler& scheduler)
     server.on("/api/livedata/status", HTTP_GET, static_cast<ArRequestHandlerFunction>(std::bind(&WebApiWsLiveClass::onLivedataStatus, this, _1)));
 
     server.addHandler(&_ws);
+    _ws.addMiddleware(&WebApiClass::wsClientLimit);
     _ws.onEvent(std::bind(&WebApiWsLiveClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
 
     scheduler.addTask(_wsCleanupTask);

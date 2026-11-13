@@ -32,6 +32,7 @@ void WebApiWsSolarChargerLiveClass::init(AsyncWebServer& server, Scheduler& sche
     _server->on("/api/solarchargerlivedata/status", HTTP_GET, static_cast<ArRequestHandlerFunction>(std::bind(&WebApiWsSolarChargerLiveClass::onLivedataStatus, this, _1)));
 
     _server->addHandler(&_ws);
+    _ws.addMiddleware(&WebApiClass::wsClientLimit);
     _ws.onEvent(std::bind(&WebApiWsSolarChargerLiveClass::onWebsocketEvent, this, _1, _2, _3, _4, _5, _6));
 
 
