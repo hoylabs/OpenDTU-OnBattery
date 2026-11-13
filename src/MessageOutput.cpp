@@ -188,8 +188,7 @@ void MessageOutputClass::send_ws_chunk(const uint8_t* buffer, size_t size)
         // dropped it because its queue was full. Notify the remaining
         // clients (and the serial/syslog sinks) that lines are missing.
         static char const warningStr[] = "\nWARNING: websocket client's queue is full, expect log lines missing\n";
-        auto warning = std::make_shared<message_t>(_ws_chunk->begin(), _ws_chunk->end());
-        warning->insert(warning->end(), warningStr, warningStr + sizeof(warningStr) - 1);
+        auto warning = std::make_shared<message_t>(warningStr, warningStr + sizeof(warningStr) - 1);
         _ws->textAll(warning);
     }
 
