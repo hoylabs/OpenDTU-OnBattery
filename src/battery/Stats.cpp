@@ -43,6 +43,7 @@ void Stats::getLiveViewData(JsonVariant& root) const
         root["hwversion"] = _hwversion;
     }
     root["data_age"] = getAgeSeconds();
+    root["max_age"] = getMaxAgeSeconds();
 
     if (isSoCValid()) {
         addLiveViewValue(root, "SoC", _soc, "%", _socPrecision);
@@ -62,6 +63,10 @@ void Stats::getLiveViewData(JsonVariant& root) const
 
     if (isChargeCurrentLimitValid()) {
         addLiveViewValue(root, "chargeCurrentLimitation", _chargeCurrentLimit, "A", 1);
+    }
+
+    if (_fullChargeRequest.has_value()) {
+        addLiveViewTextValue(root, "fullChargeRequest", *_fullChargeRequest ? "yes" : "no");
     }
 
     root["showIssues"] = supportsAlarmsAndWarnings();
@@ -118,6 +123,10 @@ void Stats::mqttPublish() const
 
     if (isChargeCurrentLimitValid()) {
         MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimit));
+    }
+
+    if (_fullChargeRequest.has_value()) {
+        MqttSettings.publish("battery/charging/fullChargeRequest", String(*_fullChargeRequest));
     }
 }
 

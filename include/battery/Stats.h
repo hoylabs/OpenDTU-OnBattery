@@ -64,10 +64,18 @@ public:
     // such that it is in need of charging to prevent degredation.
     virtual bool getImmediateChargingRequest() const { return false; };
 
+    // whether the battery reports a full charge request (a periodic full
+    // charge it asks for, distinct from the critical immediate charging
+    // request above). only published when a provider sets it.
+    bool supportsFullChargeRequest() const { return _fullChargeRequest.has_value(); }
+
     virtual bool supportsAlarmsAndWarnings() const { return true; };
 
 protected:
     virtual void mqttPublish() const;
+
+    // the maximum age of data before battery is rendered as unreachable in Web UI
+    virtual uint32_t getMaxAgeSeconds() const { return 20; }
 
     void setSoC(float soc, uint8_t precision, uint32_t timestamp) {
         _soc = soc;
@@ -184,6 +192,9 @@ protected:
     String _fwversion = "";
     String _serial = "";
     uint32_t _lastUpdate = 0;
+
+    // set by providers whose battery reports it, see supportsFullChargeRequest()
+    std::optional<bool> _fullChargeRequest = std::nullopt;
 
 private:
     std::optional<String> _oManufacturer = std::nullopt;

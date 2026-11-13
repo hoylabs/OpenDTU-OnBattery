@@ -19,6 +19,7 @@ CONFIG_T config;
 static std::condition_variable sWriterCv;
 static std::mutex sWriterMutex;
 static unsigned sWriterCount = 0;
+static bool sWriterActive = false;
 
 void ConfigurationClass::init(Scheduler& scheduler)
 {
@@ -140,13 +141,19 @@ void ConfigurationClass::serializePowerMeterAveragingConfig(PowerMeterAveragingC
 
 void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, JsonObject& target)
 {
-    target["enabled"] = config.Battery.Enabled;
-    target["provider"] = config.Battery.Provider;
-    target["enable_discharge_current_limit"] = config.Battery.EnableDischargeCurrentLimit;
-    target["discharge_current_limit"] = config.Battery.DischargeCurrentLimit;
-    target["discharge_current_limit_below_soc"] = config.Battery.DischargeCurrentLimitBelowSoc;
-    target["discharge_current_limit_below_voltage"] = config.Battery.DischargeCurrentLimitBelowVoltage;
-    target["use_battery_reported_discharge_current_limit"] = config.Battery.UseBatteryReportedDischargeCurrentLimit;
+    target["enabled"] = source.Enabled;
+    target["provider"] = source.Provider;
+    target["enable_discharge_current_limit"] = source.EnableDischargeCurrentLimit;
+    target["discharge_current_limit"] = source.DischargeCurrentLimit;
+    target["discharge_current_limit_below_soc"] = source.DischargeCurrentLimitBelowSoc;
+    target["discharge_current_limit_below_voltage"] = source.DischargeCurrentLimitBelowVoltage;
+    target["use_battery_reported_discharge_current_limit"] = source.UseBatteryReportedDischargeCurrentLimit;
+    target["enable_charge_current_limit"] = source.EnableChargeCurrentLimit;
+    target["max_charge_current_limit"] = source.MaxChargeCurrentLimit;
+    target["min_charge_current_limit"] = source.MinChargeCurrentLimit;
+    target["charge_current_limit_below_soc"] = source.ChargeCurrentLimitBelowSoc;
+    target["charge_current_limit_below_voltage"] = source.ChargeCurrentLimitBelowVoltage;
+    target["use_battery_reported_charge_current_limit"] = source.UseBatteryReportedChargeCurrentLimit;
 }
 
 void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig const& source, JsonObject& target, bool includeCredentials)
@@ -168,11 +175,13 @@ void ConfigurationClass::serializeBatteryZendureConfig(BatteryZendureConfig cons
     target["charge_through_interval"] = source.ChargeThroughInterval;
     target["buzzer_enable"] = source.BuzzerEnable;
     target["control_mode"] = source.ControlMode;
-    target["charge_through_reset"] = source.ChargeThroughResetLevel;
+    target["charge_through_keep_minutes"] = source.ChargeThroughKeepMinutes;
     target["connection_type"] = source.ConnectionType;
     target["server"] = source.Server;
     target["port"] = source.Port;
     target["client_id"] = source.ClientId;
+    target["battery_protection_enable"] = source.BatteryProtectionEnable;
+    target["battery_protection_hysteresis"] = source.BatteryProtectionHysteresis;
 
     if (!includeCredentials) { return; }
 
@@ -194,6 +203,9 @@ void ConfigurationClass::serializeBatteryMqttConfig(BatteryMqttConfig const& sou
     target["discharge_current_limit_topic"] = source.DischargeCurrentLimitTopic;
     target["discharge_current_limit_json_path"] = source.DischargeCurrentLimitJsonPath;
     target["discharge_current_limit_unit"] = source.DischargeCurrentLimitUnit;
+    target["charge_current_limit_topic"] = source.ChargeCurrentLimitTopic;
+    target["charge_current_limit_json_path"] = source.ChargeCurrentLimitJsonPath;
+    target["charge_current_limit_unit"] = source.ChargeCurrentLimitUnit;
 }
 
 void ConfigurationClass::serializeBatterySerialConfig(BatterySerialConfig const& source, JsonObject& target)
@@ -286,6 +298,23 @@ void ConfigurationClass::serializeGridChargerTruckiConfig(GridChargerTruckiConfi
     target["password"] = source.Password;
 }
 
+void ConfigurationClass::serializeModbusServerConfig(ModbusServerConfig const& source, JsonObject& target)
+{
+    char buf[sizeof(uint64_t) * 8 + 1];
+    target["enabled"] = source.Enabled;
+    target["port"] = source.Port;
+    JsonArray inverters = target["inverter"].to<JsonArray>();
+    for (size_t i = 0; i < INV_MAX_COUNT; ++i) {
+        if (source.Inverter[i].Serial == 0ULL) { break; }
+        JsonObject inv = inverters.add<JsonObject>();
+        snprintf(buf, sizeof(buf), "%0x%08x",
+            static_cast<uint32_t>((source.Inverter[i].Serial >> 32) & 0xFFFFFFFF),
+            static_cast<uint32_t>(source.Inverter[i].Serial & 0xFFFFFFFF));
+        inv["serial"] = buf;
+        inv["unit_id"] = source.Inverter[i].UnitId;
+    }
+}
+
 bool ConfigurationClass::write()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "w");
@@ -312,6 +341,9 @@ bool ConfigurationClass::write()
     wifi["dhcp"] = config.WiFi.Dhcp;
     wifi["hostname"] = config.WiFi.Hostname;
     wifi["aptimeout"] = config.WiFi.ApTimeout;
+    wifi["rescan_enabled"] = config.WiFi.RescanEnabled;
+    wifi["rescan_interval"] = config.WiFi.RescanInterval;
+    wifi["rescan_threshold"] = config.WiFi.RescanThreshold;
 
     JsonObject mdns = doc["mdns"].to<JsonObject>();
     mdns["enabled"] = config.Mdns.Enabled;
@@ -479,6 +511,9 @@ bool ConfigurationClass::write()
     JsonObject gridcharger_trucki = gridcharger["trucki"].to<JsonObject>();
     serializeGridChargerTruckiConfig(config.GridCharger.Trucki, gridcharger_trucki);
 
+    JsonObject modbusServer = doc["modbusserver"].to<JsonObject>();
+    serializeModbusServerConfig(config.ModbusServer, modbusServer);
+
     if (!Utils::checkJsonAlloc(doc, __FUNCTION__, __LINE__)) {
         return false;
     }
@@ -501,7 +536,8 @@ void ConfigurationClass::deserializeHttpRequestConfig(JsonObject const& source_h
     strlcpy(target.Password, source_http_config["password"] | "", sizeof(target.Password));
     strlcpy(target.HeaderKey, source_http_config["header_key"] | "", sizeof(target.HeaderKey));
     strlcpy(target.HeaderValue, source_http_config["header_value"] | "", sizeof(target.HeaderValue));
-    target.Timeout = source_http_config["timeout"] | HTTP_REQUEST_TIMEOUT_MS;
+    target.Timeout = std::max<uint16_t>(source_http_config["timeout"] | HTTP_REQUEST_TIMEOUT_MS,
+            HTTP_REQUEST_TIMEOUT_MIN_MS);
 }
 
 void ConfigurationClass::deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target)
@@ -600,6 +636,12 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     target.DischargeCurrentLimitBelowSoc = source["discharge_current_limit_below_soc"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_SOC;
     target.DischargeCurrentLimitBelowVoltage = source["discharge_current_limit_below_voltage"] | BATTERY_DISCHARGE_CURRENT_LIMIT_BELOW_VOLTAGE;
     target.UseBatteryReportedDischargeCurrentLimit = source["use_battery_reported_discharge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_DISCHARGE_CURRENT_LIMIT;
+    target.EnableChargeCurrentLimit = source["enable_charge_current_limit"] | BATTERY_ENABLE_CHARGE_CURRENT_LIMIT;
+    target.MaxChargeCurrentLimit = source["max_charge_current_limit"] | BATTERY_CHARGE_CURRENT_LIMIT_MAX;
+    target.MinChargeCurrentLimit = source["min_charge_current_limit"] | BATTERY_CHARGE_CURRENT_LIMIT_MIN;
+    target.ChargeCurrentLimitBelowSoc = source["charge_current_limit_below_soc"] | BATTERY_CHARGE_CURRENT_LIMIT_BELOW_SOC;
+    target.ChargeCurrentLimitBelowVoltage = source["charge_current_limit_below_voltage"] | BATTERY_CHARGE_CURRENT_LIMIT_BELOW_VOLTAGE;
+    target.UseBatteryReportedChargeCurrentLimit = source["use_battery_reported_charge_current_limit"] | BATTERY_USE_BATTERY_REPORTED_CHARGE_CURRENT_LIMIT;
 }
 
 void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& source, BatteryZendureConfig& target)
@@ -619,7 +661,7 @@ void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& sourc
     target.SunriseOffset = source["sunrise_offset"] | BATTERY_ZENDURE_SUNRISE_OFFSET;
     target.SunsetOffset = source["sunset_offset"] | BATTERY_ZENDURE_SUNSET_OFFSET;
     target.ChargeThroughEnable = source["charge_through_enable"] | BATTERY_ZENDURE_CHARGE_THROUGH_ENABLE;
-    target.ChargeThroughResetLevel = source["charge_through_reset"] | BATTERY_ZENDURE_CHARGE_THROUGH_RESET_LEVEL;
+    target.ChargeThroughKeepMinutes = source["charge_through_keep_minutes"] | BATTERY_ZENDURE_CHARGE_THROUGH_KEEP_MINUTES;
     target.ChargeThroughInterval = source["charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
     target.BuzzerEnable = source["buzzer_enable"] |BATTERY_ZENDURE_BUZZER_ENABLE;
     target.ControlMode = source["control_mode"] | BatteryZendureConfig::ControlMode::ControlModeFull;
@@ -629,6 +671,8 @@ void ConfigurationClass::deserializeBatteryZendureConfig(JsonObject const& sourc
     strlcpy(target.ClientId, source["client_id"] | NetworkSettings.getApName().substring(0, ZENDURE_MAX_CLIENTID_STRLEN).c_str(), sizeof(target.ClientId));
     strlcpy(target.AppKey, source["app_key"] | "", sizeof(target.AppKey));
     strlcpy(target.Secret, source["secret"] | "", sizeof(target.Secret));
+    target.BatteryProtectionEnable = source["battery_protection_enable"] | BATTERY_ZENDURE_BATTERY_PROTECTION_ENABLE;
+    target.BatteryProtectionHysteresis = source["battery_protection_hysteresis"] | BATTERY_ZENDURE_BATTERY_PROTECTION_HYSTERESIS;
 }
 
 void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, BatteryMqttConfig& target)
@@ -644,6 +688,9 @@ void ConfigurationClass::deserializeBatteryMqttConfig(JsonObject const& source, 
     strlcpy(target.DischargeCurrentLimitTopic, source["discharge_current_limit_topic"] | "", sizeof(target.DischargeCurrentLimitTopic));
     strlcpy(target.DischargeCurrentLimitJsonPath, source["discharge_current_limit_json_path"] | "", sizeof(target.DischargeCurrentLimitJsonPath));
     target.DischargeCurrentLimitUnit = source["discharge_current_limit_unit"] | BatteryAmperageUnit::Amps;
+    strlcpy(target.ChargeCurrentLimitTopic, source["charge_current_limit_topic"] | "", sizeof(target.ChargeCurrentLimitTopic));
+    strlcpy(target.ChargeCurrentLimitJsonPath, source["charge_current_limit_json_path"] | "", sizeof(target.ChargeCurrentLimitJsonPath));
+    target.ChargeCurrentLimitUnit = source["charge_current_limit_unit"] | BatteryAmperageUnit::Amps;
 }
 
 void ConfigurationClass::deserializeBatterySerialConfig(JsonObject const& source, BatterySerialConfig& target)
@@ -736,6 +783,43 @@ void ConfigurationClass::deserializeGridChargerTruckiConfig(JsonObject const& so
     strlcpy(target.Password, source["password"] | "", sizeof(target.Password));
 }
 
+void ConfigurationClass::deserializeModbusServerConfig(JsonObject const& source, ModbusServerConfig& target)
+{
+    target.Enabled = source["enabled"] | MODBUS_SERVER_ENABLED;
+    target.Port = source["port"] | MODBUS_SERVER_PORT;
+    JsonArrayConst inverters = source["inverter"].as<JsonArrayConst>();
+    size_t idx = 0;
+    bool seenUnitId[256] = {}; // unit_id is a uint8_t, one slot per possible value
+    for (JsonObjectConst inv : inverters) {
+        if (idx >= INV_MAX_COUNT) { break; }
+        if (!inv["unit_id"].is<uint8_t>()) { continue; } // malformed entry, drop it
+        if (!inv["serial"].is<const char*>()) { continue; } // malformed entry, drop it
+        uint8_t unitId = inv["unit_id"].as<uint8_t>();
+        if (unitId < 1 || unitId > 247) { continue; } // out of valid Modbus unit ID range, drop it
+        if (seenUnitId[unitId]) { continue; } // duplicate unit_id, drop it (WebApi rejects these too)
+        const char* serialText = inv["serial"].as<const char*>();
+        // strtoull skips leading whitespace and accepts a sign (negating it), so
+        // insist on a hex digit first and a fully consumed string.
+        if (!isxdigit(static_cast<unsigned char>(serialText[0]))) { continue; }
+        char* serialEnd = nullptr;
+        uint64_t serial = strtoull(serialText, &serialEnd, 16);
+        if (*serialEnd != '\0') { continue; }
+        // Serial == 0 doubles as the "end of list" terminator below and in
+        // unitIdToInverter(), so a zero/unparseable serial must never be
+        // written mid-array - it would hide every entry after it.
+        if (serial == 0) { continue; }
+        seenUnitId[unitId] = true;
+        target.Inverter[idx].Serial = serial;
+        target.Inverter[idx].UnitId = unitId;
+        ++idx;
+    }
+    // zero-terminate remaining slots
+    for (; idx < INV_MAX_COUNT; ++idx) {
+        target.Inverter[idx].Serial = 0ULL;
+        target.Inverter[idx].UnitId = 0;
+    }
+}
+
 bool ConfigurationClass::read()
 {
     File f = LittleFS.open(CONFIG_FILENAME, "r", false);
@@ -809,6 +893,9 @@ bool ConfigurationClass::read()
 
     config.WiFi.Dhcp = wifi["dhcp"] | WIFI_DHCP;
     config.WiFi.ApTimeout = wifi["aptimeout"] | ACCESS_POINT_TIMEOUT;
+    config.WiFi.RescanEnabled = wifi["rescan_enabled"] | WIFI_RESCAN_ENABLED;
+    config.WiFi.RescanInterval = wifi["rescan_interval"] | WIFI_RESCAN_INTERVAL;
+    config.WiFi.RescanThreshold = wifi["rescan_threshold"] | WIFI_RESCAN_THRESHOLD;
 
     JsonObject mdns = doc["mdns"];
     config.Mdns.Enabled = mdns["enabled"] | MDNS_ENABLED;
@@ -918,7 +1005,11 @@ bool ConfigurationClass::read()
     for (uint8_t i = 0; i < LOG_MODULE_COUNT; i++) {
         JsonObject module = modules[i].as<JsonObject>();
         strlcpy(config.Logging.Modules[i].Name, module["name"] | "", sizeof(config.Logging.Modules[i].Name));
-        config.Logging.Modules[i].Level = module["level"] | ESP_LOG_VERBOSE;
+        config.Logging.Modules[i].Level = module["level"] | ESP_LOG_ERROR;
+        if (module["level"].isNull()) {
+            // no level saved: leave the slot empty so the module inherits the default level
+            config.Logging.Modules[i].Name[0] = '\0';
+        }
     }
 
     JsonObject solarcharger = doc["solarcharger"];
@@ -950,6 +1041,8 @@ bool ConfigurationClass::read()
     deserializeGridChargerCanConfig(gridcharger["can"], config.GridCharger.Can);
     deserializeGridChargerHuaweiConfig(gridcharger["huawei"], config.GridCharger.Huawei);
     deserializeGridChargerTruckiConfig(gridcharger["trucki"], config.GridCharger.Trucki);
+
+    deserializeModbusServerConfig(doc["modbusserver"], config.ModbusServer);
 
     f.close();
 
@@ -1049,9 +1142,19 @@ void ConfigurationClass::migrate()
     }
 
     if (config.Cfg.Version < 0x00011e00) {
-        config.Logging.Default = ESP_LOG_VERBOSE;
+        // do not enable verbose logging by default: it floods the log buffer,
+        // consumes lots of CPU/heap (esp. on ESP32 without PSRAM) and can make
+        // the web interface and MQTT unresponsive. users can still opt in.
+        config.Logging.Default = ESP_LOG_ERROR;
         strlcpy(config.Logging.Modules[0].Name, "CORE", sizeof(config.Logging.Modules[0].Name));
         config.Logging.Modules[0].Level = ESP_LOG_ERROR;
+    }
+
+    if (config.Cfg.Version < 0x00011f00) {
+        String hostname = String(config.WiFi.Hostname);
+        hostname.replace("%06X", "$id$");
+        hostname.replace("%06x", "$id$");
+        strlcpy(config.WiFi.Hostname, hostname.c_str(), sizeof(config.WiFi.Hostname));
     }
 
     f.close();
@@ -1325,8 +1428,14 @@ void ConfigurationClass::loop()
         return;
     }
 
+    // close the write guard for new writers, inform all existing writers and wait for them to finish
+    sWriterActive = true;
     sWriterCv.notify_all();
     sWriterCv.wait(lock, [] { return sWriterCount == 0; });
+
+    // open the write guard for new writers and inform all waiting writers that they can continue
+    sWriterActive = false;
+    sWriterCv.notify_all();
 }
 
 CONFIG_T& ConfigurationClass::WriteGuard::getConfig()
@@ -1337,8 +1446,14 @@ CONFIG_T& ConfigurationClass::WriteGuard::getConfig()
 ConfigurationClass::WriteGuard::WriteGuard()
     : _lock(sWriterMutex)
 {
+    // if writers are currently processed, we must wait for them to finish before we can add ourselves to the writer count
+    if (sWriterActive) {
+        sWriterCv.wait(_lock, [] { return !sWriterActive; });
+    }
+
+    // add ourselves to the writer count and wait to be processed
     sWriterCount++;
-    sWriterCv.wait(_lock);
+    sWriterCv.wait(_lock, [] { return sWriterActive; });
 }
 
 ConfigurationClass::WriteGuard::~WriteGuard()

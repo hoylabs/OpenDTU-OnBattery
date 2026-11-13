@@ -431,10 +431,12 @@ bool PinMappingClass::init(const String& deviceMapping)
             _pinMapping.powermeter_rxen = doc[i]["powermeter"]["rxen"] | POWERMETER_PIN_RXEN;
             _pinMapping.powermeter_txen = doc[i]["powermeter"]["txen"] | POWERMETER_PIN_TXEN;
 
+            f.close();
             return true;
         }
     }
 
+    f.close();
     return false;
 }
 

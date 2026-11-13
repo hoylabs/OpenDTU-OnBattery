@@ -4,12 +4,18 @@
         <button type="button" class="btn btn-secondary" @click="$emit('reload')">
             {{ $t('base.Cancel') }}
         </button>
-        <button type="submit" class="btn btn-primary">{{ $t('base.Save') }}</button>
+        <button type="submit" class="btn btn-primary" :disabled="disabled">{{ $t('base.Save') }}</button>
     </div>
 </template>
 
 <script lang="ts">
 export default {
+    props: {
+        disabled: {
+            type: Boolean,
+            default: false,
+        },
+    },
     emits: ['reload'],
 };
 </script>

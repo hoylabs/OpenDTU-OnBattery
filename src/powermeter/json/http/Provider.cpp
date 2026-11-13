@@ -140,7 +140,16 @@ Provider::poll_result_t Provider::poll()
             const DeserializationError error = deserializeJson(jsonResponse, *pStream);
             if (error) {
                 String msg("Unable to parse server response as JSON: ");
-                return prefixedError(i, String(msg + error.c_str()).c_str());
+                msg += error.c_str();
+                // the stream returns no more data if the server stalls for
+                // longer than the timeout (rounded to seconds).
+                if (error == DeserializationError::IncompleteInput ||
+                        error == DeserializationError::EmptyInput) {
+                    msg += ". If the server is slow, try a higher timeout (currently ";
+                    msg += cfg.HttpRequest.Timeout;
+                    msg += " ms).";
+                }
+                return prefixedError(i, msg.c_str());
             }
         }
 

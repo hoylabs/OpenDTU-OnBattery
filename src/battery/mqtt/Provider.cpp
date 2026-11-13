@@ -69,6 +69,22 @@ bool Provider::init()
         }
     }
 
+    if (config.Battery.EnableChargeCurrentLimit && config.Battery.UseBatteryReportedChargeCurrentLimit) {
+        _chargeCurrentLimitTopic = config.Battery.Mqtt.ChargeCurrentLimitTopic;
+
+        if (!_chargeCurrentLimitTopic.isEmpty()) {
+            MqttSettings.subscribe(_chargeCurrentLimitTopic, 0/*QoS*/,
+                    std::bind(&Provider::onMqttMessageChargeCurrentLimit,
+                        this, std::placeholders::_1, std::placeholders::_2,
+                        std::placeholders::_3, std::placeholders::_4,
+                        config.Battery.Mqtt.ChargeCurrentLimitJsonPath)
+                    );
+
+            DTU_LOGD("Subscribed to '%s' for charge current limit readings",
+                _chargeCurrentLimitTopic.c_str());
+        }
+    }
+
     return true;
 }
 
@@ -88,6 +104,10 @@ void Provider::deinit()
 
     if (!_dischargeCurrentLimitTopic.isEmpty()) {
         MqttSettings.unsubscribe(_dischargeCurrentLimitTopic);
+    }
+
+    if (!_chargeCurrentLimitTopic.isEmpty()) {
+        MqttSettings.unsubscribe(_chargeCurrentLimitTopic);
     }
 }
 
@@ -141,9 +161,9 @@ void Provider::onMqttMessageVoltage(espMqttClientTypes::MessageProperties const&
     }
 
     // since this project is revolving around Hoymiles microinverters, which can
-    // only handle up to 65V of input voltage at best, it is safe to assume that
+    // only handle up to 66V of input voltage at best, it is safe to assume that
     // an even higher voltage is implausible.
-    if (*voltage < 0 || *voltage > 65) {
+    if (*voltage < 0 || *voltage > 66) {
         DTU_LOGW("Implausible voltage '%.2f' in topic '%s'", *voltage, topic);
         return;
     }
@@ -210,6 +230,33 @@ void Provider::onMqttMessageDischargeCurrentLimit(espMqttClientTypes::MessagePro
     _stats->setDischargeCurrentLimit(*amperage, millis());
 
     DTU_LOGD("Updated discharge current limit to %.2f from '%s'", *amperage, topic);
+}
+
+void Provider::onMqttMessageChargeCurrentLimit(espMqttClientTypes::MessageProperties const& properties,
+        char const* topic, uint8_t const* payload, size_t len,
+        char const* jsonPath)
+{
+    auto amperage = Utils::getNumericValueFromMqttPayload<float>("MqttBattery",
+            std::string(reinterpret_cast<const char*>(payload), len), topic,
+            jsonPath);
+
+    if (!amperage.has_value()) { return; }
+
+    auto const& config = Configuration.get();
+    using Unit_t = BatteryAmperageUnit;
+    switch (config.Battery.Mqtt.ChargeCurrentLimitUnit) {
+        case Unit_t::MilliAmps:
+            *amperage /= 1000;
+            break;
+        default:
+            break;
+    }
+
+    if (*amperage < 0) {
+        DTU_LOGW("Implausible charge current limit '%.2f' in topic '%s'", *amperage, topic);
+        return;
+    }
+    _stats->setChargeCurrentLimit(*amperage, millis());
 }
 
 uint8_t Provider::calculatePrecision(float value) {

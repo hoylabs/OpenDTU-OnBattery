@@ -36,6 +36,8 @@
 #include <LittleFS.h>
 #include <TaskScheduler.h>
 #include <esp_heap_caps.h>
+#include "RuntimeData.h"
+#include "modbus/ModbusServer.h"
 
 #undef TAG
 static const char* TAG = "main";
@@ -145,12 +147,17 @@ void setup()
     Datastore.init(scheduler);
     RestartHelper.init(scheduler);
 
-    // OpenDTU-OnBattery-specific initializations go below
+    // OpenDTU-OnBattery-specific initializations go between here...
+    Runtime.init(scheduler); // Runtime must be initialized before the components below can register providers to it
     SolarCharger.init(scheduler);
     PowerMeter.init(scheduler);
     PowerLimiter.init(scheduler);
     GridCharger.init(scheduler);
     Battery.init(scheduler);
+    ModbusServer.init(scheduler);
+    // ... and here
+
+    Runtime.read(); // Read runtime values from all components that are registered to read on startup
 
     ESP_LOGI(TAG, "Startup complete");
 }

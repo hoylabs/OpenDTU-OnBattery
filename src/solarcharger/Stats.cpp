@@ -47,4 +47,10 @@ void Stats::mqttPublish() const
 {
 }
 
+void Stats::populateJsonWithBasicStats(JsonObject instance, uint32_t age_ms, bool hideSerial /*= false */) const {
+    instance["data_age_ms"] = age_ms;
+    instance["max_age_ms"] = getMaxAgeMilliSeconds();
+    instance["hide_serial"] = hideSerial;
+}
+
 } // namespace SolarChargers

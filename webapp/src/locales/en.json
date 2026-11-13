@@ -12,6 +12,7 @@
         "DeviceManager": "Device-Manager",
         "SolarChargerSettings": "Solar Charger",
         "PowerMeterSettings": "Power Meter",
+        "ModbusServerSettings": "Modbus Server",
         "BatterySettings": "Battery",
         "AcChargerSettings": "AC Charger",
         "ConfigManagement": "Config Management",
@@ -115,6 +116,8 @@
         "8006": "Administrative AccessPoint Timeout value is invalid",
         "8007": "Syslog Server must between 1 and {max} characters long!",
         "8008": "Port must be a number between 1 and 65535!",
+        "8009": "Wi-Fi rescan interval must be a number between 5 and 1440!",
+        "8010": "Wi-Fi rescan threshold must be a number between 1 and 50!",
         "9001": "NTP Server must between 1 and {max} characters long!",
         "9002": "Timezone must between 1 and {max} characters long!",
         "9003": "Timezone description must between 1 and {max} characters long!",
@@ -129,7 +132,8 @@
         "10002": "Authentication successful!",
         "11001": "@:apiresponse.2001",
         "11002": "@:apiresponse.5004",
-        "12001": "Profile name must between 1 and {max} characters long!"
+        "12001": "Profile name must between 1 and {max} characters long!",
+        "12002": "Diagram display duration must be a number between {min} and {max}!"
     },
     "onbatteryapiresponse": {
         "1001": "@:apiresponse.1001",
@@ -200,7 +204,8 @@
             "RELAY": "Error relay state",
             "ERR": "Error code",
             "HSDS": "Day sequence number (0..364)",
-            "MpptTemperature": "Charge controller temperature"
+            "MpptTemperature": "Charge controller temperature",
+            "ChargeCurrentLimit": "Charge current limit"
         },
         "section_output": "Output (Battery)",
         "output": {
@@ -250,6 +255,8 @@
         "HardwarePartNumber": "Hardware Part Number",
         "HardwareVersion": "Hardware Version",
         "SupportsPowerDistributionLogic": "'Power Distribution Logic' supported",
+        "RfHardwareVersion": "RF Module Hardware Version",
+        "RfFirmwareVersion": "RF Module Firmware Version",
         "Yes": "@:base.Yes",
         "No": "@:base.No"
     },
@@ -276,6 +283,7 @@
         "ConfigVersion": "Config Version",
         "FirmwareVersion": "Firmware Version / Git Hash",
         "FirmwareBranch": "Firmware Branch",
+        "CompileDateTime": "Compile Date/Time (UTC)",
         "PioEnv": "PIO Environment",
         "FirmwareVersionHint": "Click here to show information about your current version",
         "FirmwareUpdate": "Firmware Update",
@@ -284,6 +292,7 @@
         "ResetReason0": "Reset Reason CPU 0",
         "ResetReason1": "Reset Reason CPU 1",
         "ConfigSaveCount": "Config save count",
+        "RuntimeSaveCount": "Runtime data save count / time",
         "Uptime": "Uptime",
         "UptimeValue": "0 days {time} | 1 day {time} | {count} days {time}"
     },
@@ -322,6 +331,7 @@
         "Name": "Name",
         "StackFree": "Stack Free",
         "Priority": "Priority",
+        "Core": "Core",
         "Task_idle0": "Idle (CPU Core 0)",
         "Task_idle1": "Idle (CPU Core 1)",
         "Task_wifi": "Wi-Fi",
@@ -466,6 +476,7 @@
     },
     "inverterchannelproperty": {
         "Power": "Power",
+        "MaxDailyPower": "Max Power",
         "Voltage": "Voltage",
         "Current": "Current",
         "Power DC": "Power DC",
@@ -473,6 +484,7 @@
         "YieldTotal": "YieldTotal",
         "Frequency": "Frequency",
         "Temperature": "Temperature",
+        "MaxTemperature": "Max Temperature",
         "PowerFactor": "PowerFactor",
         "ReactivePower": "ReactivePower",
         "Efficiency": "Efficiency",
@@ -550,7 +562,7 @@
         "WifiSsid": "WiFi SSID",
         "WifiPassword": "WiFi Password",
         "Hostname": "Hostname",
-        "HostnameHint": "<b>Hint:</b> The text <span class=\"font-monospace\">%06X</span> will be replaced with the last 6 digits of the ESP ChipID in hex format.",
+        "HostnameHint": "<b>Hint:</b> The text <span class=\"font-monospace\">$id$</span> will be replaced with the last 6 digits of the ESP ChipID in hex format.",
         "EnableDhcp": "Enable DHCP",
         "StaticIpConfiguration": "Static IP Configuration",
         "IpAddress": "IP Address",
@@ -560,6 +572,13 @@
         "AdminAp": "WiFi Configuration (Admin AccessPoint)",
         "ApTimeout": "AccessPoint Timeout",
         "ApTimeoutHint": "Time which the AccessPoint is kept open. A value of 0 means infinite.",
+        "WifiRescanSettings": "WiFi Access Point Rescan",
+        "EnableWifiRescan": "Periodically scan for a better access point",
+        "EnableWifiRescanHint": "Useful if multiple access points (e.g., mesh or repeaters) broadcast the same SSID. OpenDTU-OnBattery periodically scans for access points with the configured SSID and reconnects to one with a considerably stronger signal. The connection is briefly interrupted when switching. Each scan also interrupts the connection for a few seconds, so, e.g., a power meter reading may be missed once.",
+        "WifiRescanInterval": "Rescan Interval",
+        "WifiRescanIntervalHint": "Time between two scans for a better access point.",
+        "WifiRescanThreshold": "Signal Improvement Threshold",
+        "WifiRescanThresholdHint": "Minimum signal strength (RSSI) an access point must exceed the current one by for OpenDTU-OnBattery to switch to it.",
         "Minutes": "minutes",
         "EnableMdns": "Enable mDNS",
         "MdnsSettings": "mDNS Settings",
@@ -687,7 +706,7 @@
     "httprequestsettings": {
         "url": "URL",
         "urlDescription": "URL must start with 'http://' or 'https://'. Characters like spaces and '=' have to be URL-encoded (%xx). Warning: SSL server certificate check is not implemented (MITM attacks are possible)!",
-        "authorization": "Authorization Type",
+        "authorization": "Authentication Type",
         "authTypeNone": "None",
         "authTypeBasic": "Basic",
         "authTypeDigest": "Digest",
@@ -698,6 +717,22 @@
         "headerValue": "HTTP Header - Value",
         "timeout": "Timeout",
         "milliSeconds": "Milliseconds"
+    },
+    "modbusserveradmin": {
+        "ModbusServerSettings": "Modbus Server Settings",
+        "General": "General",
+        "Enable": "Enable",
+        "Port": "TCP Port",
+        "InverterMapping": "Inverter Configuration",
+        "InverterMappingHint": "Each inverter exposed via Modbus needs its own unique unit ID (1-247).",
+        "Inverter": "Inverter",
+        "UnitId": "Unit ID",
+        "DuplicateUnitId": "Duplicate unit ID: each inverter needs a unique unit ID!",
+        "ExposedModelsHeading": "Exposed SunSpec Models",
+        "ExposedModelsIntro": "For each enabled inverter, we expose data using the following SunSpec models:",
+        "ExposedModel1": "Model 1 (Common) — manufacturer, model name, firmware version, serial number",
+        "ExposedModel101103": "Model 101 / 103 (Inverter) — AC current, voltage, power, reactive power, power factor, frequency, energy, temperature and operating state. Single-phase inverters use model 101, three-phase inverters use model 103, chosen automatically.",
+        "ExposedModel120": "Model 120 (Nameplate) — maximum power rating"
     },
     "powerlimiteradmin": {
         "PowerLimiterSettings": "Dynamic Power Limiter Settings",
@@ -801,9 +836,21 @@
         "DischargeCurrentLimitBelowVoltage": "Apply limit below voltage",
         "DischargeCurrentLimitBelowVoltageInfo": "The discharge current limit is only applied below this voltage (used if 'Ignore Battery SoC' is enabled in the DPL settings or when SoC is unavailable).",
         "UseBatteryReportedDischargeCurrentLimit": "Use Battery-Reported limit",
-        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hint:</b> The lowest limit will be applied, with the battery-reported discharge current limit used only if an update was received in the last minute; otherwise, the previously specified limit will act as a fallback.",
+        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hint:</b> The more restrictive of the configured max limit and the battery-reported limit will be applied. The battery-reported limit is only considered if an update was received in the last minute; if it is stale, only the configured max limit applies.",
         "MqttDischargeCurrentLimitTopic": "Discharge Current Limit Value Topic",
         "MqttAmperageUnit": "@:base.Unit",
+        "ChargeCurrentLimitConfiguration": "Charge Current Limit Settings",
+        "LimitChargeCurrent": "Limit Charge Current",
+        "MinChargeCurrentLimit": "min. Charge Current",
+        "MinChargeCurrentLimitInfo": "The configured minimum acts as a floor: if the battery-reported limit falls below this value, this value will be used instead.",
+        "MaxChargeCurrentLimit": "max. Charge Current",
+        "ChargeCurrentLimitBelowSoc": "Apply max limit below SoC",
+        "ChargeCurrentLimitBelowSocInfo": "The charge max current limit is only applied below this SoC (not used if 'Ignore Battery SoC' is enabled in the DPL settings).",
+        "ChargeCurrentLimitBelowVoltage": "Apply max limit below voltage",
+        "ChargeCurrentLimitBelowVoltageInfo": "The max charge current limit is only applied below this voltage (used if 'Ignore Battery SoC' is enabled in the DPL settings or when SoC is unavailable).",
+        "UseBatteryReportedChargeCurrentLimit": "Use Battery-Reported limit",
+        "BatteryReportedChargeCurrentLimitInfo": "<b>Hint:</b> The more restrictive of the configured max limit and the battery-reported limit will be applied. The battery-reported limit is only considered if an update was received in the last minute; if it is stale, only the configured max limit applies.",
+        "MqttChargeCurrentLimitTopic": "Charge Current Limit Value Topic",
         "ZendureConfiguration": "Configuration",
         "ZendureMinSoc": "Minimum SoC",
         "ZendureMaxSoc": "Maximum SoC",
@@ -851,7 +898,8 @@
             "chargeThrough": "Charge Through Settings",
             "chargeThroughEnabled": "Charge Through",
             "chargeThroughInterval": "Maximum time without full charge",
-            "chargeThroughReset": "Reset Threshold",
+            "chargeThroughKeepMinutes": "Keep charge through mode",
+            "chargeThroughKeepMinutesDescription": "Keep charge through mode for at least this amount of minutes after battery reached 100% SoC",
             "connectionType": "Connection Type",
             "connectionTypes": {
                 "local": "Local MQTT Broker",
@@ -870,7 +918,12 @@
             "clientId": "Client ID",
             "appKey": "Application Key",
             "apiDescription": "Please refer the <a href=\"https://github.com/Zendure/developer-device-data-report\" target=\"_blank\">Official Zendure Repository</a> for further information about the Zendure Cloud API.",
-            "secret": "Secret"
+            "secret": "Secret",
+            "socMinWarning": "The configured minimum charge level ({soc}%) is below the recommended minimum of {min}%. This can lead to battery damage.",
+            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
+            "pollingIntervalDescription": "The BMS also transmits data asynchronously. The polling interval additionally enforces full data refreshes at the specified interval.",
+            "batteryProtectionEnabled": "Battery Protection",
+            "batteryProtection": "Advanced Battery Protection Settings"
         }
     },
     "inverteradmin": {
@@ -1028,9 +1081,7 @@
         "LedBrightness": "LED {led} brightness ({brightness})"
     },
     "pininfo": {
-        "Category": "Category",
         "Name": "Name",
-        "Number": "Number",
         "ValueSelected": "Selected",
         "ValueActive": "Active"
     },
@@ -1059,6 +1110,7 @@
         "Module_powerMeter": "Power Meter",
         "Module_solarCharger": "Solar Charger",
         "Module_veDirect": "VE.Direct",
+        "Module_modbusServer": "Modbus Server",
         "CoreHint": "Warning: A too detailed log level of the ESP-IDF Core module can significantly impact performance and lead to unpredictable behavior. The log level setting should only be temporarily adjusted for targeted troubleshooting. The default setting 'Error' is sufficient for normal operation.",
         "log_inherit": "Inherit from default",
         "log_none": "None",
@@ -1196,11 +1248,13 @@
         "chargeEnabled": "Charging possible",
         "dischargeEnabled": "Discharging possible",
         "chargeImmediately": "Immediate charging requested",
+        "fullChargeRequest": "Full charge requested",
         "modules": "Battery modules",
         "online": "Online",
         "offline": "Offline",
         "blockingCharge": "Charging blocked",
         "blockingDischarge": "Discharging blocked",
+        "heating": "Heating",
         "cells": "Cells",
         "batOneTemp": "Battery temperature 1",
         "batTwoTemp": "Battery temperature 2",
@@ -1340,7 +1394,17 @@
                 "discharging": "Discharging",
                 "invalid": "@:battery.invalid",
                 "unknown": "@:battery.unknown"
-            }
+            },
+            "keepUntil": "Hold full charge for",
+            "controlState": "Control state",
+            "controlStates": {
+                "normal": "Normal",
+                "batteryprotection": "Battery Protection",
+                "invalid": "@:battery.invalid"
+            },
+            "batteryProtection": "Battery Protection",
+            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
+            "packMinSoc": "Minimum Pack State of Charge"
         }
     }
 }

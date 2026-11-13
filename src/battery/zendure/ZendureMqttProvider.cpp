@@ -19,8 +19,8 @@ bool ZendureMqttProvider::init()
 {
     auto const& config = Configuration.get();
 
-    if (strlen(config.Battery.Zendure.AppKey) != 8) {
-        DTU_LOGE("Invalid app key length (expected 8 characters)!");
+    if (strlen(config.Battery.Zendure.AppKey) < 8 || strlen(config.Battery.Zendure.AppKey) > 16) {
+        DTU_LOGE("Invalid app key length (expected between 8 and 16 characters)!");
         return false;
     }
 
@@ -59,8 +59,6 @@ bool ZendureMqttProvider::init()
     NetworkSettings.onEvent(std::bind(&ZendureMqttProvider::NetworkEvent, this, _1), network_event::NETWORK_EVENT_MAX, ZENDURE_NETWORK_EVENT_NAME);
     createMqttClientObject();
     performConnect();
-
-    //if (!performConnect()) {  return false; }
 
     DTU_LOGI("INIT DONE");
     return true;

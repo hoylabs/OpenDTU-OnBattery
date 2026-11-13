@@ -11,6 +11,7 @@
 #include <Configuration.h>
 #include <LogHelper.h>
 #include <MqttSettings.h>
+#include <Utils.h>
 
 #undef TAG
 static const char* TAG = "gridCharger";
@@ -65,8 +66,7 @@ bool Provider::init()
         _mode = HUAWEI_MODE_AUTO_INT;
     }
 
-    // Set initial mode in datapoints
-    _dataPoints.add<DataPointLabel::Mode>(_mode, true);
+    updateModeDataPoint();
 
     subscribeTopics();
 
@@ -158,7 +158,7 @@ void Provider::loop()
         _outputCurrentOnSinceMillis = millis();
     }
 
-    if (_outputCurrentOnSinceMillis + HUAWEI_AUTO_MODE_SHUTDOWN_DELAY < millis() &&
+    if (millis() - _outputCurrentOnSinceMillis > HUAWEI_AUTO_MODE_SHUTDOWN_DELAY &&
             (_mode == HUAWEI_MODE_AUTO_EXT || _mode == HUAWEI_MODE_AUTO_INT)) {
         disableOutput();
     }
@@ -168,10 +168,10 @@ void Provider::loop()
     if (_mode == HUAWEI_MODE_AUTO_INT || _batteryEmergencyCharging) {
 
         // Set voltage limit in periodic intervals if we're in auto mode or if emergency battery charge is requested.
-        if ( _nextAutoModePeriodicIntMillis < millis()) {
+        if (!_oLastAutoModePeriodicIntMillis || millis() - *_oLastAutoModePeriodicIntMillis > 60000) {
             DTU_LOGI("Periodically setting voltage limit: %f", config.GridCharger.AutoPowerVoltageLimit);
             _setParameter(config.GridCharger.AutoPowerVoltageLimit, Setting::OnlineVoltage);
-            _nextAutoModePeriodicIntMillis = millis() + 60000;
+            _oLastAutoModePeriodicIntMillis = millis();
         }
     }
 
@@ -214,13 +214,13 @@ void Provider::loop()
     if (_mode == HUAWEI_MODE_AUTO_INT ) {
         // Check if we should run automatic power calculation at all.
         // We may have set a value recently and still wait for output stabilization
-        if (_autoModeBlockedTillMillis > millis()) {
+        if (isAutoModeBlocked()) {
             return;
         }
 
         if (!oOutputVoltage || !oOutputPower || !oOutputCurrent) {
             DTU_LOGW("Cannot perform auto power control while critical PSU values are still unknown");
-            _autoModeBlockedTillMillis = millis() + 1000;
+            blockAutoMode(1000);
             return;
         }
 
@@ -232,12 +232,12 @@ void Provider::loop()
         if (PowerLimiter.isGovernedBatteryPoweredInverterProducing()) {
             _setParameter(0.0, Setting::OnlineCurrent);
             // Don't run auto mode for a second now. Otherwise we may send too much over the CAN bus
-            _autoModeBlockedTillMillis = millis() + 1000;
+            blockAutoMode(1000);
             DTU_LOGI("Inverter is active, disable PSU");
             return;
         }
 
-        if (PowerMeter.getLastUpdate() > _lastPowerMeterUpdateReceivedMillis &&
+        if (PowerMeter.getLastUpdate() != _lastPowerMeterUpdateReceivedMillis &&
                 _autoPowerEnabledCounter > 0) {
             // We have received a new PowerMeter value. Also we're _autoPowerEnabled
             // So we're good to calculate a new limit
@@ -286,8 +286,8 @@ void Provider::loop()
 
                 float calculatedCurrent = newOutputPowerTarget / *oOutputVoltage;
 
-                // Limit output current to value requested by BMS
-                float permissibleCurrent = stats->getChargeCurrentLimit() - (stats->getChargeCurrent() - *oOutputCurrent); // BMS current limit - current from other sources, e.g. Victron MPPT charger
+                // Limit output current
+                float permissibleCurrent = Battery.getChargeCurrentLimit() - (stats->getChargeCurrent() - *oOutputCurrent); // battery current limit - current from other sources, e.g. Victron MPPT charger
                 float outputCurrent = std::min(calculatedCurrent, permissibleCurrent);
                 outputCurrent = outputCurrent > 0 ? outputCurrent : 0;
 
@@ -299,7 +299,7 @@ void Provider::loop()
                 _setParameter(outputCurrent, Setting::OnlineCurrent);
 
                 // Don't run auto mode some time to allow for output stabilization after issuing a new value
-                _autoModeBlockedTillMillis = millis() + 2 * HardwareInterface::DataRequestIntervalMillis;
+                blockAutoMode(2 * HardwareInterface::DataRequestIntervalMillis);
             } else {
                 // requested PL is below minium. Set current to 0
                 _autoPowerEnabled = false;
@@ -372,6 +372,15 @@ void Provider::_setParameter(float val, HardwareInterface::Setting setting, bool
     _upHardwareInterface->setParameter(setting, val, pollFeedback);
 }
 
+void Provider::updateModeDataPoint() const
+{
+    // the stats publish the mode, but otherwise only receive the data read
+    // from the charger, which does not include the mode.
+    DataPointContainer dataPoints;
+    dataPoints.add<DataPointLabel::Mode>(_mode, true);
+    _stats->updateFrom(dataPoints);
+}
+
 void Provider::setMode(uint8_t mode) {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -380,14 +389,13 @@ void Provider::setMode(uint8_t mode) {
     if (mode == HUAWEI_MODE_OFF) {
         disableOutput();
         _mode = HUAWEI_MODE_OFF;
+        updateModeDataPoint();
     }
     if (mode == HUAWEI_MODE_ON) {
         enableOutput();
         _mode = HUAWEI_MODE_ON;
+        updateModeDataPoint();
     }
-
-    // Update mode in datapoints
-    _dataPoints.add<DataPointLabel::Mode>(_mode, true);
 
     auto const& config = Configuration.get();
 
@@ -404,8 +412,7 @@ void Provider::setMode(uint8_t mode) {
 
     if (mode == HUAWEI_MODE_AUTO_EXT || mode == HUAWEI_MODE_AUTO_INT) {
         _mode = mode;
-        // Update mode in datapoints for AUTO modes too
-        _dataPoints.add<DataPointLabel::Mode>(_mode, true);
+        updateModeDataPoint();
     }
 }
 
@@ -414,15 +421,13 @@ void Provider::onMqttMessage(Topic enumTopic,
         const char* topic, const uint8_t* payload, size_t len)
 {
     std::string strValue(reinterpret_cast<const char*>(payload), len);
-    float payload_val = -1;
-    try {
-        payload_val = std::stof(strValue);
-    }
-    catch (std::invalid_argument const& e) {
+    auto parsed = Utils::getFromString<float>(strValue.c_str(), true);
+    if (!parsed) {
         DTU_LOGE("Huawei MQTT handler: cannot parse payload of topic '%s' as float: %s",
                 topic, strValue.c_str());
         return;
     }
+    float payload_val = *parsed;
 
     using Setting = HardwareInterface::Setting;
 

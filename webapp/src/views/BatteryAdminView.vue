@@ -204,7 +204,7 @@
                         v-model="batteryConfigList.discharge_current_limit_below_voltage"
                         type="number"
                         min="0"
-                        max="60"
+                        max="66"
                         step="0.01"
                         postfix="V"
                         :tooltip="$t('batteryadmin.DischargeCurrentLimitBelowVoltageInfo')"
@@ -263,6 +263,130 @@
                                             id="discharge_current_limit_unit"
                                             class="form-select"
                                             v-model="batteryConfigList.mqtt.discharge_current_limit_unit"
+                                        >
+                                            <option v-for="u in amperageUnitTypeList" :key="u.key" :value="u.key">
+                                                {{ u.value }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
+                    </template>
+                </template>
+            </CardElement>
+
+            <CardElement
+                :text="$t('batteryadmin.ChargeCurrentLimitConfiguration')"
+                textVariant="text-bg-primary"
+                addSpace
+            >
+                <InputElement
+                    :label="$t('batteryadmin.LimitChargeCurrent')"
+                    v-model="batteryConfigList.enable_charge_current_limit"
+                    type="checkbox"
+                    wide
+                />
+
+                <template v-if="batteryConfigList.enable_charge_current_limit">
+                    <InputElement
+                        :label="$t('batteryadmin.MaxChargeCurrentLimit')"
+                        v-model="batteryConfigList.max_charge_current_limit"
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        postfix="A"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('batteryadmin.ChargeCurrentLimitBelowSoc')"
+                        v-if="batteryConfigList.enabled"
+                        v-model="batteryConfigList.charge_current_limit_below_soc"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        postfix="%"
+                        :tooltip="$t('batteryadmin.ChargeCurrentLimitBelowSocInfo')"
+                        wide
+                    />
+
+                    <InputElement
+                        :label="$t('batteryadmin.ChargeCurrentLimitBelowVoltage')"
+                        v-if="batteryConfigList.enabled"
+                        v-model="batteryConfigList.charge_current_limit_below_voltage"
+                        type="number"
+                        min="0"
+                        max="66"
+                        step="0.01"
+                        postfix="V"
+                        :tooltip="$t('batteryadmin.ChargeCurrentLimitBelowVoltageInfo')"
+                        wide
+                    />
+
+                    <template
+                        v-if="
+                            batteryConfigList.enabled &&
+                            (batteryConfigList.provider == 0 ||
+                                batteryConfigList.provider == 2 ||
+                                batteryConfigList.provider == 4 ||
+                                batteryConfigList.provider == 5)
+                        "
+                    >
+                        <InputElement
+                            :label="$t('batteryadmin.UseBatteryReportedChargeCurrentLimit')"
+                            v-model="batteryConfigList.use_battery_reported_charge_current_limit"
+                            type="checkbox"
+                            wide
+                        />
+
+                        <template v-if="batteryConfigList.use_battery_reported_charge_current_limit">
+                            <InputElement
+                                :label="$t('batteryadmin.MinChargeCurrentLimit')"
+                                v-model="batteryConfigList.min_charge_current_limit"
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                postfix="A"
+                                :tooltip="$t('batteryadmin.MinChargeCurrentLimitInfo')"
+                                wide
+                            />
+
+                            <div
+                                class="alert alert-secondary"
+                                role="alert"
+                                v-html="$t('batteryadmin.BatteryReportedChargeCurrentLimitInfo')"
+                            ></div>
+
+                            <template v-if="batteryConfigList.provider == 2">
+                                <InputElement
+                                    :label="$t('batteryadmin.MqttChargeCurrentLimitTopic')"
+                                    v-model="batteryConfigList.mqtt.charge_current_limit_topic"
+                                    wide
+                                    type="text"
+                                    maxlength="256"
+                                />
+
+                                <InputElement
+                                    :label="$t('batteryadmin.MqttJsonPath')"
+                                    v-model="batteryConfigList.mqtt.charge_current_limit_json_path"
+                                    wide
+                                    type="text"
+                                    maxlength="256"
+                                    :tooltip="$t('batteryadmin.MqttJsonPathDescription')"
+                                />
+
+                                <div class="row mb-3">
+                                    <label for="charge_current_limit_unit" class="col-sm-4 col-form-label">
+                                        {{ $t('batteryadmin.MqttAmperageUnit') }}
+                                    </label>
+
+                                    <div class="col-sm-8">
+                                        <select
+                                            id="charge_current_limit_unit"
+                                            class="form-select"
+                                            v-model="batteryConfigList.mqtt.charge_current_limit_unit"
                                         >
                                             <option v-for="u in amperageUnitTypeList" :key="u.key" :value="u.key">
                                                 {{ u.value }}
@@ -409,7 +533,7 @@
                             v-model="batteryConfigList.zendure.app_key"
                             type="text"
                             minlength="8"
-                            maxlength="8"
+                            maxlength="16"
                             :key="$route.fullPath"
                         />
                         <InputElement
@@ -426,7 +550,8 @@
                                 <div
                                     v-if="
                                         batteryConfigList.zendure.secret.length != 32 ||
-                                        batteryConfigList.zendure.app_key.length != 8
+                                        batteryConfigList.zendure.app_key.length < 8 ||
+                                        batteryConfigList.zendure.app_key.length > 16
                                     "
                                     class="alert alert-warning"
                                     role="alert"
@@ -449,6 +574,7 @@
                             min="10"
                             max="120"
                             step="1"
+                            :tooltip="$t('batteryadmin.zendure.pollingIntervalDescription')"
                             :postfix="$t('batteryadmin.Seconds')"
                         />
 
@@ -498,7 +624,25 @@
                                 step="1"
                                 :postfix="$t('batteryadmin.Percent')"
                             />
-
+                            <div class="row">
+                                <div class="col-sm-2"></div>
+                                <div class="col-sm-10">
+                                    <div
+                                        v-if="
+                                            batteryConfigList.zendure.soc_min >= 0 &&
+                                            batteryConfigList.zendure.soc_min < 10
+                                        "
+                                        class="alert alert-warning"
+                                        role="alert"
+                                        v-html="
+                                            $t('batteryadmin.zendure.socMinWarning', {
+                                                soc: batteryConfigList.zendure.soc_min,
+                                                min: 10,
+                                            })
+                                        "
+                                    ></div>
+                                </div>
+                            </div>
                             <InputElement
                                 :label="$t('batteryadmin.ZendureMaxSoc')"
                                 v-model="batteryConfigList.zendure.soc_max"
@@ -547,7 +691,33 @@
                         batteryConfigList.zendure.connection_type == 0 || batteryConfigList.zendure.connection_type == 2
                     "
                 >
-                    <template v-if="batteryConfigList.zendure.control_mode == 0">
+                    <template
+                        v-if="
+                            batteryConfigList.zendure.control_mode == 0 && batteryConfigList.zendure.output_control != 0
+                        "
+                    >
+                        <CardElement
+                            :text="$t('batteryadmin.zendure.batteryProtection')"
+                            textVariant="text-bg-primary"
+                            addSpace
+                        >
+                            <InputElement
+                                :label="$t('batteryadmin.zendure.batteryProtectionEnabled')"
+                                v-model="batteryConfigList.zendure.battery_protection_enable"
+                                type="checkbox"
+                            />
+                            <template v-if="batteryConfigList.zendure.battery_protection_enable">
+                                <InputElement
+                                    :label="$t('batteryadmin.zendure.batteryProtectionHysteresis')"
+                                    v-model="batteryConfigList.zendure.battery_protection_hysteresis"
+                                    type="number"
+                                    min="5"
+                                    max="50"
+                                    step="1"
+                                    :postfix="$t('batteryadmin.Percent')"
+                                />
+                            </template>
+                        </CardElement>
                         <CardElement
                             :text="$t('batteryadmin.zendure.chargeThrough')"
                             textVariant="text-bg-primary"
@@ -569,13 +739,14 @@
                                     :postfix="$t('batteryadmin.Hours')"
                                 />
                                 <InputElement
-                                    :label="$t('batteryadmin.zendure.chargeThroughReset')"
-                                    v-model="batteryConfigList.zendure.charge_through_reset"
+                                    :label="$t('batteryadmin.zendure.chargeThroughKeepMinutes')"
+                                    v-model="batteryConfigList.zendure.charge_through_keep_minutes"
                                     type="number"
-                                    min="25"
-                                    max="100"
+                                    min="0"
+                                    max="720"
                                     step="1"
-                                    :postfix="$t('batteryadmin.Percent')"
+                                    :postfix="$t('batteryadmin.Minutes')"
+                                    :tooltip="$t('batteryadmin.zendure.chargeThroughKeepMinutesDescription')"
                                 />
                             </template>
                         </CardElement>
@@ -591,6 +762,10 @@
                                     id="zendure_output_mode"
                                     class="form-select"
                                     v-model="batteryConfigList.zendure.output_control"
+                                    @change="
+                                        batteryConfigList.zendure.charge_through_enable = false;
+                                        batteryConfigList.zendure.battery_protection_enable = false;
+                                    "
                                 >
                                     <option :key="0" :value="0">
                                         {{ $t('batteryadmin.ZendureOutputMode' + zendureOutputControlList[0]?.value) }}

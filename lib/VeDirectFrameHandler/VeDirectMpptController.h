@@ -52,11 +52,11 @@ public:
     void init(gpio_num_t rx, gpio_num_t tx, uint8_t hwSerialPort);
 
     using data_t = veMpptStruct;
-
     void loop() final;
 
     void setRemoteVoltage(float volt);
     void setRemoteTemperature(float degreeCelsius);
+    void setChargeLimit(float value);
 
 private:
     bool hexDataHandler(VeDirectHexData const &data) final;
@@ -71,14 +71,17 @@ private:
 
     // for slow changing values we use a send time period of 4 sec
     #define HIGH_PRIO_COMMAND 1
-    std::array<VeDirectHexQueue, 8> _hexQueue {{
+    std::array<VeDirectHexQueue, 11> _hexQueue {{
          { VeDirectHexRegister::NetworkTotalDcInputPower, false, HIGH_PRIO_COMMAND, 0 },
          { VeDirectHexRegister::NetworkStatus, false, 4, 0 },
          { VeDirectHexRegister::ChargeControllerTemperature, false, 4, 0 },
          { VeDirectHexRegister::SmartBatterySenseTemperature, false, 4, 0 },
          { VeDirectHexRegister::BatteryFloatVoltage, false, 4, 0 },
          { VeDirectHexRegister::BatteryAbsorptionVoltage, false, 4, 0 },
+         { VeDirectHexRegister::ChargeCurrentLimit, false, 4, 0 },
+         { VeDirectHexRegister::BatteryMaximumCurrent, false, 4, 0 },
          { VeDirectHexRegister::BatteryVoltageSense, true, 4, 0, 16 },
          { VeDirectHexRegister::BatteryTemperatureSense, true, 4, 0, 16 },
+         { VeDirectHexRegister::ChargeCurrentLimit, true, 4, 0, 16 },
     }};
 };

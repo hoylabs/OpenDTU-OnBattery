@@ -8,7 +8,7 @@ This parser is used to parse the response of 'AlarmDataCommand'.
 
 Data structure:
 * wcode:
-  * right 8 bit: Event ID
+  * right 12 bit (bits 0-11): Event ID
   * bit 13: Start time = PM (12h has to be added to start time)
   * bit 12: End time = PM (12h has to be added to start time)
 * Start: 12h based start time of the event (PM indicator in wcode)
@@ -83,6 +83,7 @@ const std::array<const AlarmMessage_t, ALARM_MSG_COUNT> AlarmLogParser::_alarmMe
     { AlarmMessageType_t::ALL, 149, "Grid: Island detected", "Netz: Inselbetrieb festgestellt", "Réseau: Détection d’îlots" },
 
     { AlarmMessageType_t::ALL, 150, "DCI exceeded", "", "" },
+    { AlarmMessageType_t::ALL, 151, "Grid: Severe grid wave distortion", "Netz: Starke Netzverzerrung", "Réseau: Distorsion sévère du réseau" },
     { AlarmMessageType_t::ALL, 152, "Grid: Phase angle difference between two phases exceeded 5° >10 times", "", "" },
     { AlarmMessageType_t::HMT, 171, "Grid: Abnormal phase difference between phase to phase", "", "" },
     { AlarmMessageType_t::ALL, 181, "Abnormal insulation impedance", "", "" },
@@ -115,6 +116,8 @@ const std::array<const AlarmMessage_t, ALARM_MSG_COUNT> AlarmLogParser::_alarmMe
     { AlarmMessageType_t::ALL, 221, "PV-4: Input overvoltage", "PV-4: Eingangsüberspannung", "PV-4: Surtension d’entrée" },
     { AlarmMessageType_t::HMT, 221, "Abnormal wiring of grid neutral line", "", "" },
     { AlarmMessageType_t::ALL, 222, "PV-4: Input undervoltage", "PV-4: Eingangsunterspannung", "PV-4: Sous-tension d’entrée" },
+
+    { AlarmMessageType_t::ALL, 223, "Grid: Connection attempt failed", "Netz: Netzaufschaltung fehlgeschlagen", "Réseau: Échec de la connexion au réseau" },
 
     { AlarmMessageType_t::ALL, 301, "FB-A: internal short circuit failure", "", "" },
     { AlarmMessageType_t::ALL, 302, "FB-B: internal short circuit failure", "", "" },
@@ -240,11 +243,23 @@ void AlarmLogParser::setMessageType(const AlarmMessageType_t type)
 
 void AlarmLogParser::getLogEntry(const uint8_t entryId, AlarmLogEntry_t& entry, const AlarmMessageLocale_t locale)
 {
-    const uint8_t entryStartOffset = 2 + entryId * ALARM_LOG_ENTRY_SIZE;
-
     const int timezoneOffset = getTimezoneOffset();
 
     HOY_SEMAPHORE_TAKE();
+
+    // The entry count can have shrunk since the caller fetched it (the
+    // buffer is refetched by the poll loop on the main task while this
+    // runs on the async_tcp task). Never read past the received data.
+    if (entryId >= getEntryCount()) {
+        HOY_SEMAPHORE_GIVE();
+        entry.MessageId = 0;
+        entry.Message = "";
+        entry.StartTime = 0;
+        entry.EndTime = 0;
+        return;
+    }
+
+    const uint8_t entryStartOffset = 2 + entryId * ALARM_LOG_ENTRY_SIZE;
 
     const uint32_t wcode = static_cast<uint16_t>(_payloadAlarmLog[entryStartOffset]) << 8 | _payloadAlarmLog[entryStartOffset + 1];
     uint32_t startTimeOffset = 0;
@@ -257,7 +272,7 @@ void AlarmLogParser::getLogEntry(const uint8_t entryId, AlarmLogEntry_t& entry, 
         endTimeOffset = 12 * 60 * 60;
     }
 
-    entry.MessageId = _payloadAlarmLog[entryStartOffset + 1];
+    entry.MessageId = wcode & 0x0FFF;
     entry.StartTime = ((static_cast<uint16_t>(_payloadAlarmLog[entryStartOffset + 4]) << 8) | static_cast<uint16_t>(_payloadAlarmLog[entryStartOffset + 5])) + startTimeOffset + timezoneOffset;
     entry.EndTime = (static_cast<uint16_t>(_payloadAlarmLog[entryStartOffset + 6]) << 8) | static_cast<uint16_t>(_payloadAlarmLog[entryStartOffset + 7]);
 

@@ -17,13 +17,15 @@ export interface BatteryZendureConfig {
     charge_through_interval: number;
     buzzer_enable: boolean;
     control_mode: number;
-    charge_through_reset: number;
+    charge_through_keep_minutes: number;
     connection_type: number;
     server: string;
     port: number;
     client_id: string;
     app_key: string;
     secret: string;
+    battery_protection_enable: boolean;
+    battery_protection_hysteresis: number;
 }
 
 export interface BatteryMqttConfig {
@@ -38,6 +40,9 @@ export interface BatteryMqttConfig {
     discharge_current_limit_topic: string;
     discharge_current_limit_json_path: string;
     discharge_current_limit_unit: number;
+    charge_current_limit_topic: string;
+    charge_current_limit_json_path: string;
+    charge_current_limit_unit: number;
 }
 
 export interface BatterySerialConfig {
@@ -56,4 +61,10 @@ export interface BatteryConfig {
     discharge_current_limit_below_soc: number;
     discharge_current_limit_below_voltage: number;
     use_battery_reported_discharge_current_limit: boolean;
+    enable_charge_current_limit: boolean;
+    min_charge_current_limit: number;
+    max_charge_current_limit: number;
+    charge_current_limit_below_soc: number;
+    charge_current_limit_below_voltage: number;
+    use_battery_reported_charge_current_limit: boolean;
 }

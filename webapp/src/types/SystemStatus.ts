@@ -2,6 +2,7 @@ export interface TaskDetail {
     name: string;
     stack_watermark: number;
     priority: number;
+    core: number;
 }
 
 export interface UartAllocation {
@@ -27,10 +28,12 @@ export interface SystemStatus {
     git_hash: string;
     git_is_hash: boolean;
     git_branch: string;
+    compile_datetime: Date;
     pioenv: string;
     resetreason_0: string;
     resetreason_1: string;
     cfgsavecount: number;
+    runtime_savecount: string;
     uptime: number;
     update_text: string;
     update_url: string;

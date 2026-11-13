@@ -21,7 +21,7 @@ protected:
     }
 
     void reset();
-    void processSmlByte(uint8_t byte);
+    sml_states_t processSmlByte(uint8_t byte);
 
 private:
     char _user[16];

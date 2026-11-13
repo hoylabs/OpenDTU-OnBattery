@@ -36,7 +36,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '~bootstrap': path.resolve(__dirname, 'node_modules/bootstrap'),
+      '~bootstrap': path.resolve(import.meta.dirname, 'node_modules/bootstrap'),
     }
   },
   build: {
@@ -54,7 +54,7 @@ export default defineConfig({
         comments: false,
       },
     },
-    chunkSizeWarningLimit: 1024,
+    chunkSizeWarningLimit: 1536,
     rollupOptions: {
       output: {
         // Only create one js file

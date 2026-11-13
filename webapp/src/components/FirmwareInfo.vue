@@ -33,6 +33,10 @@
                         <td>{{ systemStatus.git_branch }}</td>
                     </tr>
                     <tr>
+                        <th>{{ $t('firmwareinfo.CompileDateTime') }}</th>
+                        <td>{{ $d(systemStatus.compile_datetime, 'datetime') }}</td>
+                    </tr>
+                    <tr>
                         <th>{{ $t('firmwareinfo.PioEnv') }}</th>
                         <td>{{ systemStatus.pioenv }}</td>
                     </tr>
@@ -82,6 +86,10 @@
                     <tr>
                         <th>{{ $t('firmwareinfo.ConfigSaveCount') }}</th>
                         <td>{{ $n(systemStatus.cfgsavecount, 'decimal') }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ $t('firmwareinfo.RuntimeSaveCount') }}</th>
+                        <td>{{ systemStatus.runtime_savecount }}</td>
                     </tr>
                     <tr>
                         <th>{{ $t('firmwareinfo.Uptime') }}</th>

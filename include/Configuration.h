@@ -9,7 +9,7 @@
 #include <mutex>
 
 #define CONFIG_FILENAME "/config.json"
-#define CONFIG_VERSION 0x00011e00 // 0.1.30 // make sure to clean all after change
+#define CONFIG_VERSION 0x00011f00 // 0.1.31 // make sure to clean all after change
 #define CONFIG_VERSION_ONBATTERY 8
 
 #define WIFI_MAX_SSID_STRLEN 32
@@ -55,7 +55,20 @@
 #define ZENDURE_MAX_SERVER_STRLEN   256
 #define ZENDURE_MAX_CLIENTID_STRLEN 23
 #define ZENDURE_MAX_SECRET_STRLEN   32
-#define ZENDURE_MAX_APPKEY_STRLEN   ZENDURE_MAX_SERIAL_STRLEN
+#define ZENDURE_MAX_APPKEY_STRLEN   16
+
+struct MODBUS_SERVER_INVERTER_CONFIG_T {
+    uint64_t Serial;
+    uint8_t UnitId;
+};
+using ModbusServerInverterConfig = struct MODBUS_SERVER_INVERTER_CONFIG_T;
+
+struct MODBUS_SERVER_CONFIG_T {
+    bool Enabled;
+    uint16_t Port;
+    ModbusServerInverterConfig Inverter[INV_MAX_COUNT];
+};
+using ModbusServerConfig = struct MODBUS_SERVER_CONFIG_T;
 
 struct CHANNEL_CONFIG_T {
     uint16_t MaxChannelPower;
@@ -218,7 +231,7 @@ struct BATTERY_ZENDURE_CONFIG_T {
     bool BuzzerEnable;
     enum ControlMode : uint8_t { ControlModeFull = 0, ControlModeOnce = 1, ControlModeReadOnly = 2 };
     ControlMode ControlMode;
-    uint8_t ChargeThroughResetLevel;
+    uint16_t ChargeThroughKeepMinutes;
     enum ConnectionType_t { LocalMqtt = 0, ZendureMqtt = 1 };
     ConnectionType_t ConnectionType;
     char Server[ZENDURE_MAX_SERVER_STRLEN + 1];
@@ -226,6 +239,8 @@ struct BATTERY_ZENDURE_CONFIG_T {
     char ClientId[ZENDURE_MAX_CLIENTID_STRLEN + 1];
     char AppKey[ZENDURE_MAX_APPKEY_STRLEN + 1];
     char Secret[ZENDURE_MAX_SECRET_STRLEN + 1];
+    bool BatteryProtectionEnable;
+    uint8_t BatteryProtectionHysteresis;
 };
 using BatteryZendureConfig = struct BATTERY_ZENDURE_CONFIG_T;
 
@@ -243,6 +258,9 @@ struct BATTERY_MQTT_CONFIG_T {
     char DischargeCurrentLimitTopic[MQTT_MAX_TOPIC_STRLEN + 1];
     char DischargeCurrentLimitJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryAmperageUnit DischargeCurrentLimitUnit;
+    char ChargeCurrentLimitTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char ChargeCurrentLimitJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    BatteryAmperageUnit ChargeCurrentLimitUnit;
 };
 using BatteryMqttConfig = struct BATTERY_MQTT_CONFIG_T;
 
@@ -263,6 +281,12 @@ struct BATTERY_CONFIG_T {
     float DischargeCurrentLimitBelowSoc;
     float DischargeCurrentLimitBelowVoltage;
     bool UseBatteryReportedDischargeCurrentLimit;
+    bool EnableChargeCurrentLimit;
+    float MaxChargeCurrentLimit;
+    float MinChargeCurrentLimit;
+    float ChargeCurrentLimitBelowSoc;
+    float ChargeCurrentLimitBelowVoltage;
+    bool UseBatteryReportedChargeCurrentLimit;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
@@ -357,6 +381,9 @@ struct CONFIG_T {
         bool Dhcp;
         char Hostname[WIFI_MAX_HOSTNAME_STRLEN + 1];
         uint32_t ApTimeout;
+        bool RescanEnabled;
+        uint16_t RescanInterval; // minutes
+        uint8_t RescanThreshold; // dB
     } WiFi;
 
     struct {
@@ -466,6 +493,8 @@ struct CONFIG_T {
 
     GridChargerConfig GridCharger;
 
+    ModbusServerConfig ModbusServer;
+
     INVERTER_CONFIG_T Inverter[INV_MAX_COUNT];
     char Dev_PinMapping[DEV_MAX_MAPPING_NAME_STRLEN + 1];
 
@@ -523,6 +552,7 @@ public:
     static void serializeGridChargerCanConfig(GridChargerCanConfig const& source, JsonObject& target);
     static void serializeGridChargerHuaweiConfig(GridChargerHuaweiConfig const& source, JsonObject& target);
     static void serializeGridChargerTruckiConfig(GridChargerTruckiConfig const& source, JsonObject& target);
+    static void serializeModbusServerConfig(ModbusServerConfig const& source, JsonObject& target);
 
     static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
     static void deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target);
@@ -542,6 +572,7 @@ public:
     static void deserializeGridChargerCanConfig(JsonObject const& source, GridChargerCanConfig& target);
     static void deserializeGridChargerHuaweiConfig(JsonObject const& source, GridChargerHuaweiConfig& target);
     static void deserializeGridChargerTruckiConfig(JsonObject const& source, GridChargerTruckiConfig& target);
+    static void deserializeModbusServerConfig(JsonObject const& source, ModbusServerConfig& target);
 
 private:
     void loop();

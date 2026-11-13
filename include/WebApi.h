@@ -32,9 +32,11 @@
 #include "WebApi_solarcharger.h"
 #include "WebApi_ws_gridcharger.h"
 #include "WebApi_gridcharger.h"
+#include "WebApi_modbusserver.h"
 #include "WebApi_ws_battery.h"
 #include <ESPAsyncWebServer.h>
 #include <TaskSchedulerDeclarations.h>
+#include <parser/Parser.h>
 
 class WebApiClass {
 public:
@@ -51,6 +53,7 @@ public:
 
     static bool parseRequestData(AsyncWebServerRequest* request, AsyncJsonResponse* response, JsonDocument& json_document);
     static uint64_t parseSerialFromRequest(AsyncWebServerRequest* request, String param_name = "inv");
+    static String formatCommandStatus(LastCommandSuccess status);
     static bool sendJsonResponse(AsyncWebServerRequest* request, AsyncJsonResponse* response, const char* function, const uint16_t line);
 
 private:
@@ -85,6 +88,7 @@ private:
     WebApiSolarChargerlass _webApiSolarCharger;
     WebApiGridChargerClass _webApiGridCharger;
     WebApiWsGridChargerLiveClass _webApiWsGridChargerLive;
+    WebApiModbusServerClass _webApiModbusServer;
     WebApiWsBatteryLiveClass _webApiWsBatteryLive;
 };
 

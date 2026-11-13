@@ -15,6 +15,8 @@ static float calcTotalPowerDc(StatisticsParser* iv, uint8_t arg0);
 static float calcTotalEffiency(StatisticsParser* iv, uint8_t arg0);
 static float calcChIrradiation(StatisticsParser* iv, uint8_t arg0);
 static float calcTotalCurrentAc(StatisticsParser* iv, uint8_t arg0);
+static float calcMaxTemperature(StatisticsParser* iv, uint8_t arg0);
+static float calcMaxDailyPower(StatisticsParser* iv, uint8_t arg0);
 
 using func_t = float(StatisticsParser*, uint8_t);
 
@@ -30,7 +32,9 @@ const calcFunc_t calcFunctions[] = {
     { CALC_TOTAL_PDC, &calcTotalPowerDc },
     { CALC_TOTAL_EFF, &calcTotalEffiency },
     { CALC_CH_IRR, &calcChIrradiation },
-    { CALC_TOTAL_IAC, &calcTotalCurrentAc }
+    { CALC_TOTAL_IAC, &calcTotalCurrentAc },
+    { CALC_MAX_TEMPERATURE, &calcMaxTemperature },
+    { CALC_MAX_PAC, &calcMaxDailyPower },
 };
 
 const FieldId_t runtimeFields[] = {
@@ -195,8 +199,12 @@ bool StatisticsParser::setChannelFieldValue(const ChannelType_t type, const Chan
         return false;
     }
 
-    uint8_t ptr = pos->start + pos->num - 1;
-    const uint8_t end = pos->start;
+    // Use a signed index: with an unsigned uint8_t the loop below would
+    // wrap around after reaching offset 0 and write out of bounds for a
+    // byte assignment starting at offset 0. All current inverter tables
+    // start at offset 2, but this should not depend on table contents.
+    int16_t ptr = static_cast<int16_t>(pos->start) + pos->num - 1;
+    const int16_t end = pos->start;
     const uint16_t div = pos->div;
 
     if (CMD_CALC == div) {
@@ -333,12 +341,18 @@ uint32_t StatisticsParser::getRxFailureCount() const
 
 void StatisticsParser::zeroRuntimeData()
 {
-    zeroFields(runtimeFields);
+    zeroFields(runtimeFields, sizeof(runtimeFields) / sizeof(runtimeFields[0]));
 }
 
-void StatisticsParser::zeroDailyData()
+void StatisticsParser::zeroDailyYieldData()
 {
-    zeroFields(dailyProductionFields);
+    zeroFields(dailyProductionFields, sizeof(dailyProductionFields) / sizeof(dailyProductionFields[0]));
+}
+
+void StatisticsParser::zeroDailyRuntimeData()
+{
+    _maxTemperature = 0;
+    _maxDailyPower = 0;
 }
 
 void StatisticsParser::setLastUpdate(const uint32_t lastUpdate)
@@ -367,12 +381,32 @@ void StatisticsParser::setYieldDayCorrection(const bool enabled)
     _enableYieldDayCorrection = enabled;
 }
 
-void StatisticsParser::zeroFields(const FieldId_t* fields)
+float StatisticsParser::getMaxTemperature() const
+{
+    return _maxTemperature;
+}
+
+void StatisticsParser::setMaxTemperature(const float temperature)
+{
+    _maxTemperature = temperature;
+}
+
+float StatisticsParser::getMaxDailyPower() const
+{
+    return _maxDailyPower;
+}
+
+void StatisticsParser::setMaxDailyPower(const float power)
+{
+    _maxDailyPower = power;
+}
+
+void StatisticsParser::zeroFields(const FieldId_t* fields, const size_t fieldCount)
 {
     // Loop all channels
     for (auto& t : getChannelTypes()) {
         for (auto& c : getChannelsByType(t)) {
-            for (uint8_t i = 0; i < (sizeof(runtimeFields) / sizeof(runtimeFields[0])); i++) {
+            for (size_t i = 0; i < fieldCount; i++) {
                 if (hasChannelFieldValue(t, c, fields[i])) {
                     setChannelFieldValue(t, c, fields[i], 0);
                 }
@@ -459,4 +493,30 @@ static float calcTotalCurrentAc(StatisticsParser* iv, uint8_t arg0)
     acCurrent += iv->getChannelFieldValue(TYPE_AC, CH0, FLD_IAC_2);
     acCurrent += iv->getChannelFieldValue(TYPE_AC, CH0, FLD_IAC_3);
     return acCurrent;
+}
+
+static float calcMaxTemperature(StatisticsParser* iv, uint8_t arg0)
+{
+    auto temp = iv->getChannelFieldValue(TYPE_INV, CH0, FLD_T);
+    auto maxTemp = iv->getMaxTemperature();
+
+    if (temp > maxTemp) {
+        maxTemp = temp;
+        iv->setMaxTemperature(maxTemp);
+    }
+
+    return maxTemp;
+}
+
+static float calcMaxDailyPower(StatisticsParser* iv, uint8_t arg0)
+{
+    auto power = iv->getChannelFieldValue(TYPE_AC, CH0, FLD_PAC);
+    auto maxPower = iv->getMaxDailyPower();
+
+    if (power > maxPower) {
+        maxPower = power;
+        iv->setMaxDailyPower(maxPower);
+    }
+
+    return maxPower;
 }

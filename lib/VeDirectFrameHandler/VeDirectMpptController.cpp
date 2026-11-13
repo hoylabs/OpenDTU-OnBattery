@@ -147,6 +147,8 @@ void VeDirectMpptController::loop()
 	resetTimestamp(_tmpFrame.NetworkTotalDcInputPowerMilliWatts);
 	resetTimestamp(_tmpFrame.BatteryFloatMilliVolt);
 	resetTimestamp(_tmpFrame.BatteryAbsorptionMilliVolt);
+    resetTimestamp(_tmpFrame.BatteryMaximumCurrent);
+    resetTimestamp(_tmpFrame.ChargeCurrentLimit);
 
 #ifdef PROCESS_NETWORK_STATE
 	resetTimestamp(_tmpFrame.NetworkInfo);
@@ -180,6 +182,7 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 		switch (data.addr) {
             case VeDirectHexRegister::BatteryVoltageSense: return true;
             case VeDirectHexRegister::BatteryTemperatureSense: return true;
+		    case VeDirectHexRegister::ChargeCurrentLimit: return true;
             default: return false;
 		}
 	}
@@ -243,6 +246,26 @@ bool VeDirectMpptController::hexDataHandler(VeDirectHexData const &data) {
 			ESP_LOGD(TAG, "%s Hex Data: MPPT Float Voltage (0x%04X): %.2fV",
 					_logId, regLog,
 					_tmpFrame.BatteryFloatMilliVolt.second / 1000.0);
+			return true;
+			break;
+
+        case VeDirectHexRegister::BatteryMaximumCurrent:
+			_tmpFrame.BatteryMaximumCurrent =
+				{ millis(), static_cast<uint16_t>(data.value) };
+
+			ESP_LOGD(TAG, "%s Hex Data: MPPT Battery Max Current (0x%04X): %.1fA",
+					_logId, regLog,
+					_tmpFrame.BatteryMaximumCurrent.second / 10.0);
+			return true;
+			break;
+
+		case VeDirectHexRegister::ChargeCurrentLimit:
+			_tmpFrame.ChargeCurrentLimit =
+				{ millis(), static_cast<uint16_t>(data.value) };
+
+			ESP_LOGD(TAG, "%s Hex Data: MPPT Charge Current Limit (0x%04X): %.1fA",
+					_logId, regLog,
+					static_cast<float>(_tmpFrame.ChargeCurrentLimit.second) / 10.0);
 			return true;
 			break;
 
@@ -368,7 +391,7 @@ void VeDirectMpptController::sendNextHexCommandFromQueue(void) {
  */
 void VeDirectMpptController::setRemoteVoltage(float volt) {
 	for (auto& cmd : _hexQueue) {
-		if (cmd._hexRegister == VeDirectHexRegister::BatteryVoltageSense) {
+		if (cmd._hexRegister == VeDirectHexRegister::BatteryVoltageSense && cmd._setCommand) {
 			float value = volt * 100.0;
 			if (value > 0 && value < UINT16_MAX) {
 				cmd._data = static_cast<uint32_t>(value);
@@ -384,11 +407,30 @@ void VeDirectMpptController::setRemoteVoltage(float volt) {
  */
 void VeDirectMpptController::setRemoteTemperature(float degreeCelsius) {
 	for (auto& cmd : _hexQueue) {
-		if (cmd._hexRegister == VeDirectHexRegister::BatteryTemperatureSense) {
+		if (cmd._hexRegister == VeDirectHexRegister::BatteryTemperatureSense && cmd._setCommand) {
 			float value = degreeCelsius * 100.0;
 			if (value > INT16_MIN && value < INT16_MAX) {
 				cmd._data = static_cast<uint32_t>(static_cast<int16_t>(value));
 			}
 		}
 	}
+}
+
+
+void VeDirectMpptController::setChargeLimit(float limit){
+    for (auto& cmd : _hexQueue) {
+        if (cmd._hexRegister == VeDirectHexRegister::ChargeCurrentLimit && cmd._setCommand) {
+            if (limit == __FLT_MAX__) {
+                cmd._data = 0xFFFF; // default value -> no limit
+            } else {
+                // Victron MPPT needs limit with a resolution of 0.1A
+                float value = limit * 10.0f;
+                if (value > 0 && value < UINT16_MAX) {
+                    cmd._data = static_cast<uint32_t>(static_cast<uint16_t>(value));
+                } else {
+                    cmd._data = 0; // invalid value, we set the limit to 0A to be on the safe side
+                }
+            }
+        }
+    }
 }

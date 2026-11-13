@@ -1,4 +1,8 @@
 name: OpenDTU-OnBattery Build
+# marks full pull request builds (and their pull request) for the "Comment on
+# pull request" workflow.
+# evaluates to an empty string otherwise, which keeps the default run name.
+run-name: "${{ contains(github.event.pull_request.labels.*.name, 'build-artifacts') && format('{0} [build-artifacts #{1}]', github.event.pull_request.title, github.event.pull_request.number) || '' }}"
 
 on:
   push:
@@ -11,38 +15,61 @@ on:
     tags-ignore:
       - 'v**'
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths-ignore:
       - docs/**
       - '**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# pull requests build a single environment as a compile check. the full set of
+# environments (and the artifacts comment) is only built for pull requests
+# labeled "build-artifacts", as well as for pushes, tags and manual runs.
+concurrency:
+  # adding an unrelated label must not cancel a running build
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{ github.event.action == 'labeled' && github.event.label.name != 'build-artifacts' && format('-{0}', github.run_id) || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  FULL_BUILD: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build-artifacts') }}
 
 jobs:
   get_default_envs:
     name: Gather Environments
     runs-on: ubuntu-24.04
+    if: github.event.action != 'labeled' || github.event.label.name == 'build-artifacts'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Cache pip
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.x"
 
       - name: Install PlatformIO
         run: |
           python -m pip install --upgrade pip
-          pip install --upgrade platformio
+          pip install --upgrade platformio intelhex
 
       - name: Get default environments
         id: envs
         run: |
-          echo "environments=$(pio project config --json-output | jq -cr '.[1][1][0][1]|split(",")')" >> $GITHUB_OUTPUT
+          if [ "$FULL_BUILD" = "true" ]; then
+            echo "environments=$(pio project config --json-output | jq -cr '.[1][1][0][1]|split(",")')" >> "$GITHUB_OUTPUT"
+          else
+            echo 'environments=["generic_esp32s3_usb"]' >> "$GITHUB_OUTPUT"
+          fi
 
     outputs:
       environments: ${{ steps.envs.outputs.environments }}
@@ -55,7 +82,9 @@ jobs:
       matrix:
         environment: ${{ fromJSON(needs.get_default_envs.outputs.environments) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Get tags
         run: git fetch --force --tags origin
@@ -70,7 +99,7 @@ jobs:
           git switch -c ${OWNER}/${NAME}/pr${ID}-${DATE}
 
       - name: Cache pip
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -78,20 +107,25 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Cache PlatformIO
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.platformio
-          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+          # there are no lockfiles: the platform and its packages are pinned
+          # in platformio.ini, so a changed file stores a new cache. no
+          # restore-keys on purpose: restoring an older cache would carry
+          # outdated packages along, so the cache would grow with every
+          # change. unused caches are evicted by GitHub after 7 days.
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.x"
 
       - name: Install PlatformIO
         run: |
           python -m pip install --upgrade pip
-          pip install --upgrade platformio setuptools
+          pip install --upgrade platformio setuptools intelhex
 
       - name: Enable Corepack
         run: |
@@ -99,9 +133,9 @@ jobs:
             corepack enable
 
       - name: Setup Node.js and yarn
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24"
+          node-version: "26"
           cache: "yarn"
           cache-dependency-path: "webapp/yarn.lock"
 
@@ -115,8 +149,32 @@ jobs:
             cd webapp
             yarn build
 
+      # pull requests only recompile what changed, starting from the build of
+      # the latest push to development. branches, tags and manual runs always
+      # build from scratch, and only pushes to development save the cache.
+      # libraries are not cached, so pull requests fetch them like clean builds.
+      - name: Restore build cache
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .pio/build/project.checksum
+            .pio/build/${{ matrix.environment }}
+          key: pio-build-${{ matrix.environment }}-${{ github.sha }}
+          restore-keys: |
+            pio-build-${{ matrix.environment }}-
+
       - name: Build firmware
         run: pio run -e ${{ matrix.environment }}
+
+      - name: Save build cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .pio/build/project.checksum
+            .pio/build/${{ matrix.environment }}
+          key: pio-build-${{ matrix.environment }}-${{ github.sha }}
 
       - name: Rename Firmware
         run: mv .pio/build/${{ matrix.environment }}/firmware.bin .pio/build/${{ matrix.environment }}/opendtu-onbattery-${{ matrix.environment }}.bin
@@ -124,7 +182,7 @@ jobs:
       - name: Rename Factory Firmware
         run: mv .pio/build/${{ matrix.environment }}/firmware.factory.bin .pio/build/${{ matrix.environment }}/opendtu-onbattery-${{ matrix.environment }}.factory.bin
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: opendtu-onbattery-${{ matrix.environment }}
           path: |
@@ -132,65 +190,25 @@ jobs:
             !.pio/build/generic_esp32_4mb_no_ota/opendtu-onbattery-generic_esp32_4mb_no_ota.bin
             .pio/build/${{ matrix.environment }}/opendtu-onbattery-${{ matrix.environment }}.factory.bin
 
-  # This snippet is public-domain, taken from
-  # https://github.com/oprypin/nightly.link/blob/master/.github/workflows/pr-comment.yml
-  # and modified to store the comment as an artifact instead of posting it because
-  # the action does not have sufficient permissions to post a comment when triggered
-  # by a forked repository.
-  # source: https://github.com/live-codes/pr-comment-from-artifact/blob/main/action.yml
-  generate_pr_artifacts_comment:
-    name: Generate PR artifacts comment and store it as artifact
+  # keep only the newest build cache per environment, so the build caches
+  # do not grow with every push
+  prune_build_cache:
+    name: Prune build caches
     needs: build
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
     runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
-      - name: Generate PR artifacts comment
-        id: generate_pr_artifacts_comment
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const {owner, repo} = context.repo;
-
-            const artifacts = await github.paginate(
-              github.rest.actions.listWorkflowRunArtifacts,
-              {
-                owner,
-                repo,
-                run_id: context.runId
-              }
-            );
-
-            if (!artifacts.length) {
-              return core.error(`No artifacts found`);
-            }
-
-            let body = `### Build Artifacts\n\nFirmware built from this pull request's code:\n`;
-            for (const art of artifacts) {
-              body += `\n* [${art.name}.zip](https://nightly.link/${owner}/${repo}/actions/artifacts/${art.id}.zip)`;
-            }
-
-            const build_run_url = `https://github.com/hoylabs/OpenDTU-OnBattery/actions/runs/${context.runId}`;
-
-            body += `\n\n### Notice\n`
-              + `* These artifacts are ZIP files containing the factory update binary as well as the OTA update binary.\n`
-              + `  Extract the binaries from the ZIP files first. Do not use the ZIP files themselves to perform an update.\n`
-              + `* These links point to artifacts of the latest [**successful** build run](${build_run_url}).\n`
-              + `* The linked artifacts were built from ${context.sha}.`;
-            core.setOutput("message", body);
-
-      - name: Save output and PR number
-        shell: bash
+      - name: Delete outdated build caches
         run: |
-          mkdir -p ./pr
-          echo "${{ steps.generate_pr_artifacts_comment.outputs.message }}" > ./pr/${{ github.event.number }}.md
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: pr
-          path: pr/
-          retention-days: 1
-          overwrite: true
+          gh cache list --key pio-build- --ref refs/heads/development --limit 100 \
+            --json id,key,createdAt \
+            --jq 'group_by(.key | sub("-[0-9a-f]{40}$"; "")) | map(sort_by(.createdAt) | .[:-1]) | flatten | .[].id' |
+            xargs -r -n1 gh cache delete
 
   release:
     name: Create Release
@@ -203,7 +221,9 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/2')
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Get openDTU core tags
         run: git fetch --force --tags https://github.com/tbnobody/OpenDTU.git
@@ -214,7 +234,7 @@ jobs:
 
       - name: Create openDTU-core-release-Badge
         if: vars.BADGE_GIST_ID != ''
-        uses: schneegans/dynamic-badges-action@0e50b8bad39e7e1afd3e4e9c2b7dd145fad07501 # version 1.8.0
+        uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910 # version 1.9.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: ${{ vars.BADGE_GIST_ID }}
@@ -225,13 +245,13 @@ jobs:
 
       - name: Build Changelog
         id: github_release
-        uses: mikepenz/release-changelog-builder-action@v6.2.1
+        uses: mikepenz/release-changelog-builder-action@aa013739bbc8e7067dbbecd4525ff11aeb51a84b # v6.4.0
         with:
           failOnError: true
           commitMode: true
           configuration: ".github/workflows/config/release-notes-config.json"
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: artifacts/
 
@@ -257,7 +277,7 @@ jobs:
           ls -lR release-artifacts/
 
       - name: Create release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           body: ${{steps.github_release.outputs.changelog}}
           draft: False

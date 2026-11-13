@@ -30,6 +30,11 @@ enum class ChargeThroughState : uint8_t {
     Keep = 4        // ChargeThrough keeping target at 100% till discharing or new day begins
 };
 
+enum class ControlState : uint8_t {
+    NormalOperation = 0,    // Normal operation
+    BatteryProtection = 1   // Disable discharging to protect battery health
+};
+
 static constexpr frozen::map<ChargeThroughState, const char*, 5> _chargeThroughStateStrings {
     { ChargeThroughState::Disabled, "disabled" },
     { ChargeThroughState::Idle,     "idle" },
@@ -42,6 +47,11 @@ static constexpr frozen::map<BatteryZendureConfig::BypassMode_t, const char*, 3>
     { BatteryZendureConfig::BypassMode_t::Automatic, "automatic" },
     { BatteryZendureConfig::BypassMode_t::AlwaysOff, "alwaysoff" },
     { BatteryZendureConfig::BypassMode_t::AlwaysOn,  "alwayson" }
+};
+
+static constexpr frozen::map<ControlState, const char*, 2> _controlStateStrings {
+    { ControlState::NormalOperation,   "normal" },
+    { ControlState::BatteryProtection, "batteryprotection" }
 };
 
 
@@ -65,6 +75,24 @@ class Stats : public ::Batteries::Stats {
         char buffer[16];
         snprintf(buffer, sizeof(buffer), "%" PRIu8 ".%" PRIu8 ".%" PRIu8, major, minor, bugfix);
         return String(buffer);
+    }
+
+    static const char* controlStateToString(ControlState mode) {
+        if (_controlStateStrings.contains(mode)) {
+            return _controlStateStrings.at(mode);
+        }
+
+        return invalid;
+    }
+
+    static std::optional<ControlState> controlStateFromString(String value) {
+        for (auto entry : _controlStateStrings) {
+            if (String(entry.second) == value) {
+                return entry.first;
+            }
+        }
+
+        return std::nullopt;
     }
 
     static const char* chargeThroughStateToString(std::optional<ChargeThroughState> mode) {
@@ -176,6 +204,8 @@ public:
     }
 
 protected:
+    uint32_t getMaxAgeSeconds() const override { return 90; }
+
     std::shared_ptr<PackStats> getPackData(size_t index) const;
     std::shared_ptr<PackStats> addPackData(size_t index, String serial);
 
@@ -388,6 +418,7 @@ private:
     std::optional<uint16_t> _cellMaxMilliVolt = std::nullopt;
     std::optional<uint16_t> _cellDeltaMilliVolt = std::nullopt;
     std::optional<uint16_t> _cellAvgMilliVolt = std::nullopt;
+    std::optional<float> _packSocMin = std::nullopt;
 
     std::optional<float> _soc_max = std::nullopt;
     std::optional<float> _soc_min = std::nullopt;
@@ -432,12 +463,16 @@ private:
     std::optional<uint64_t> _last_empty_timestamp = std::nullopt;
     std::optional<uint32_t> _last_empty_hours = std::nullopt;
     std::optional<ChargeThroughState>  _charge_through_state = std::nullopt;
+    std::optional<uint64_t> _keep_until_timestamp = std::nullopt;
+    std::optional<uint64_t> _keep_until_minutes = std::nullopt;
 
     std::optional<float> _inaccurateSoC= std::nullopt;
     uint32_t _inaccurateSoCTimestamp = 0;
     bool _hasAccurateSoC = false;
 
     bool _reachable = false;
+
+    ControlState _controlState = ControlState::NormalOperation;
 };
 
 class PackStats {

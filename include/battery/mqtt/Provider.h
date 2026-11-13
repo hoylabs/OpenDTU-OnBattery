@@ -22,6 +22,7 @@ private:
     String _voltageTopic;
     String _currentTopic;
     String _dischargeCurrentLimitTopic;
+    String _chargeCurrentLimitTopic;
     std::shared_ptr<Stats> _stats = std::make_shared<Stats>();
     uint8_t _socPrecision = 0;
     uint8_t _currentPrecision = 0;
@@ -36,6 +37,9 @@ private:
             char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath);
     void onMqttMessageDischargeCurrentLimit(espMqttClientTypes::MessageProperties const& properties,
+            char const* topic, uint8_t const* payload, size_t len,
+            char const* jsonPath);
+    void onMqttMessageChargeCurrentLimit(espMqttClientTypes::MessageProperties const& properties,
             char const* topic, uint8_t const* payload, size_t len,
             char const* jsonPath);
     uint8_t calculatePrecision(float value);

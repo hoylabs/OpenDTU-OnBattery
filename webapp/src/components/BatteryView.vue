@@ -12,8 +12,8 @@
                     <div
                         class="card-header d-flex justify-content-between align-items-center"
                         :class="{
-                            'text-bg-danger': batteryData.data_age >= 20,
-                            'text-bg-success': batteryData.data_age < 20,
+                            'text-bg-danger': batteryData.data_age >= batteryData.max_age,
+                            'text-bg-success': batteryData.data_age < batteryData.max_age,
                         }"
                     >
                         <div class="p-1 flex-grow-1">

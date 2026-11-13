@@ -15,17 +15,45 @@ Provider::Provider()
     : _stats(std::make_shared<Stats>())
     , _hassIntegration(std::make_shared<HassIntegration>(_stats)) { }
 
-static void pytesSetCellLabel(String& label, uint16_t value) {
+// present a cell (or temperature sensor) and its module as "<module>-<cell>",
+// 1-based, like the Pytes RS485 provider does. both inputs are 0-based.
+static void setCellLabel(String& label, uint8_t cell, uint8_t module) {
     char name[8];
-    snprintf(name, sizeof(name), "%02d%02d", value & 0xff, value >> 8);
+    snprintf(name, sizeof(name), "%d-%d", module + 1, cell + 1);
     label = name;  // updates existing string in-place
 }
 
-static uint32_t popCount(uint32_t val) {
-    uint32_t cnt = 0;
-    for (; val; ++cnt)
-        val &= val - 1;
-    return cnt;
+// Pytes protocol (0x401/0x402): the label is a 16-bit value, low byte =
+// 0-based cell (or temperature sensor), high byte = 0-based module.
+static void pytesSetCellLabel(String& label, uint16_t packed) {
+    setCellLabel(label, packed & 0xff, packed >> 8);
+}
+
+// Victron protocol (0x374-0x377): four ASCII digits, 0-based cell (or
+// temperature sensor) number followed by the 0-based module number, e.g.
+// "0500". presented like the Pytes protocol labels above.
+static void victronSetCellLabel(String& label, String const& value) {
+    auto digit = [&value](unsigned i) { return isdigit(static_cast<unsigned char>(value[i])); };
+    if (value.length() >= 4 && digit(0) && digit(1) && digit(2) && digit(3)) {
+        uint8_t cell = (value[0] - '0') * 10 + (value[1] - '0');
+        uint8_t module = (value[2] - '0') * 10 + (value[3] - '0');
+        setCellLabel(label, cell, module);
+        return;
+    }
+
+    label = value;
+}
+
+// raw frame content for debug logs, to analyze fields that are not (fully)
+// decoded yet
+static String hexBytes(uint8_t const* data, uint8_t len) {
+    String out;
+    char buf[4];
+    for (uint8_t i = 0; i < len; ++i) {
+        snprintf(buf, sizeof(buf), i ? " %02X" : "%02X", data[i]);
+        out += buf;
+    }
+    return out;
 }
 
 bool Provider::init()
@@ -146,14 +174,12 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x35F: { // Victron protocol: BatteryInfo
-            auto fwVersionPart1 = String(this->readUnsignedInt8(rx_message.data + 2));
-            auto fwVersionPart2 = String(this->readUnsignedInt8(rx_message.data + 3));
-            _stats->_fwversion = "v" + fwVersionPart1 + "." + fwVersionPart2;
-
+            // bytes 2-3 are an internal build number (sent as value/100 and
+            // value%100), not the SPBMS... firmware version, so they are
+            // intentionally not exposed as a firmware version.
             _stats->_availableCapacity = this->readUnsignedInt16(rx_message.data + 4);
 
-            DTU_LOGD("fwversion: %s availableCapacity: %f Ah",
-                    _stats->_fwversion.c_str(), _stats->_availableCapacity);
+            DTU_LOGD("availableCapacity: %f Ah", _stats->_availableCapacity);
             break;
         }
 
@@ -197,7 +223,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             DTU_LOGD("cellMinVoltageName: %s", cellMinVoltageName.c_str());
 
-            _stats->_cellMinVoltageName = cellMinVoltageName;
+            victronSetCellLabel(_stats->_cellMinVoltageName, cellMinVoltageName);
             break;
         }
 
@@ -209,7 +235,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             DTU_LOGD("cellMaxVoltageName: %s", cellMaxVoltageName.c_str());
 
-            _stats->_cellMaxVoltageName = cellMaxVoltageName;
+            victronSetCellLabel(_stats->_cellMaxVoltageName, cellMaxVoltageName);
             break;
         }
 
@@ -221,7 +247,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             DTU_LOGD("cellMinTemperatureName: %s", cellMinTemperatureName.c_str());
 
-            _stats->_cellMinTemperatureName = cellMinTemperatureName;
+            victronSetCellLabel(_stats->_cellMinTemperatureName, cellMinTemperatureName);
             break;
         }
 
@@ -233,7 +259,7 @@ void Provider::onMessage(twai_message_t rx_message)
 
             DTU_LOGD("cellMaxTemperatureName: %s", cellMaxTemperatureName.c_str());
 
-            _stats->_cellMaxTemperatureName = cellMaxTemperatureName;
+            victronSetCellLabel(_stats->_cellMaxTemperatureName, cellMaxTemperatureName);
             break;
         }
 
@@ -258,7 +284,7 @@ void Provider::onMessage(twai_message_t rx_message)
             String snPart1(reinterpret_cast<char*>(rx_message.data),
                     rx_message.data_length_code);
 
-            if (snPart1.isEmpty() || !isgraph(snPart1.charAt(0))) { break; }
+            if (snPart1.isEmpty() || !isgraph(static_cast<unsigned char>(snPart1.charAt(0)))) { break; }
 
             DTU_LOGD("snPart1: %s", snPart1.c_str());
 
@@ -271,7 +297,7 @@ void Provider::onMessage(twai_message_t rx_message)
             String snPart2(reinterpret_cast<char*>(rx_message.data),
                     rx_message.data_length_code);
 
-            if (snPart2.isEmpty() || !isgraph(snPart2.charAt(0))) { break; }
+            if (snPart2.isEmpty() || !isgraph(static_cast<unsigned char>(snPart2.charAt(0)))) { break; }
 
             DTU_LOGD("snPart2: %s", snPart2.c_str());
 
@@ -283,26 +309,28 @@ void Provider::onMessage(twai_message_t rx_message)
         case 0x401: { // Pytes protocol: Highest/Lowest Cell Voltage
             _stats->_cellMaxMilliVolt = this->readUnsignedInt16(rx_message.data);
             _stats->_cellMinMilliVolt = this->readUnsignedInt16(rx_message.data + 2);
-            pytesSetCellLabel(_stats->_cellMaxVoltageName, this->readUnsignedInt8(rx_message.data + 4));
-            pytesSetCellLabel(_stats->_cellMinVoltageName, this->readUnsignedInt8(rx_message.data + 6));
+            pytesSetCellLabel(_stats->_cellMaxVoltageName, this->readUnsignedInt16(rx_message.data + 4));
+            pytesSetCellLabel(_stats->_cellMinVoltageName, this->readUnsignedInt16(rx_message.data + 6));
 
             DTU_LOGD("lowestCellMilliVolt: %d highestCellMilliVolt: %d "
-                    "cellMinVoltageName: %s cellMaxVoltageName: %s",
+                    "cellMinVoltageName: %s cellMaxVoltageName: %s (raw: %s)",
                     _stats->_cellMinMilliVolt, _stats->_cellMaxMilliVolt,
-                    _stats->_cellMinVoltageName.c_str(), _stats->_cellMaxVoltageName.c_str());
+                    _stats->_cellMinVoltageName.c_str(), _stats->_cellMaxVoltageName.c_str(),
+                    hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             break;
         }
 
         case 0x402: { // Pytes protocol: Highest/Lowest Cell Temperature
-            _stats->_cellMaxTemperature = this->scaleValue(this->readUnsignedInt16(rx_message.data), 0.1);
-            _stats->_cellMinTemperature = this->scaleValue(this->readUnsignedInt16(rx_message.data + 2), 0.1);
+            _stats->_cellMaxTemperature = this->scaleValue(this->readSignedInt16(rx_message.data), 0.1);
+            _stats->_cellMinTemperature = this->scaleValue(this->readSignedInt16(rx_message.data + 2), 0.1);
             pytesSetCellLabel(_stats->_cellMaxTemperatureName, this->readUnsignedInt16(rx_message.data + 4));
             pytesSetCellLabel(_stats->_cellMinTemperatureName, this->readUnsignedInt16(rx_message.data + 6));
 
             DTU_LOGD("minimumCellTemperature: %f maximumCellTemperature: %f "
-                    "cellMinTemperatureName: %s cellMaxTemperatureName: %s",
+                    "cellMinTemperatureName: %s cellMaxTemperatureName: %s (raw: %s)",
                     _stats->_cellMinTemperature, _stats->_cellMaxTemperature,
-                    _stats->_cellMinTemperatureName.c_str(), _stats->_cellMaxTemperatureName.c_str());
+                    _stats->_cellMinTemperatureName.c_str(), _stats->_cellMaxTemperatureName.c_str(),
+                    hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             break;
         }
 
@@ -319,8 +347,8 @@ void Provider::onMessage(twai_message_t rx_message)
             bool highTemp = this->getBit(mergedBits, 9);
             bool lowTemp = this->getBit(mergedBits, 11);
             bool underTemp = this->getBit(mergedBits, 12);
-            bool overCurrentDischarge = this->getBit(mergedBits, 17) || this->getBit(mergedBits, 18);
-            bool overCurrentCharge = this->getBit(mergedBits, 19) || this->getBit(mergedBits, 20);
+            bool overCurrentDischarge = this->getBit(mergedBits, 17) || this->getBit(mergedBits, 18) || this->getBit(mergedBits, 24);
+            bool overCurrentCharge = this->getBit(mergedBits, 19) || this->getBit(mergedBits, 20) || this->getBit(mergedBits, 29);
             bool highCurrentDischarge = this->getBit(mergedBits, 21);
             bool highCurrentCharge = this->getBit(mergedBits, 22);
             bool stateCharging = this->getBit(mergedBits, 26);
@@ -379,8 +407,11 @@ void Provider::onMessage(twai_message_t rx_message)
         }
 
         case 0x406: { // Pytes protocol: alarms (part 2)
+            // bit 9: module communication timeout, bits 2, 12-15, 20: self
+            // checks (current sensor, SRAM, flash, PC/register, coding,
+            // temperature) failed
             uint32_t alarmBits = this->readUnsignedInt32(rx_message.data);
-            _stats->_alarmInternalFailure = this->getBit(alarmBits, 15);
+            _stats->_alarmInternalFailure = (alarmBits & 0x0010F204) != 0;
 
             DTU_LOGD("internalFailure: %d (bits: %08x)", _stats->_alarmInternalFailure, alarmBits);
             break;
@@ -389,14 +420,21 @@ void Provider::onMessage(twai_message_t rx_message)
         case 0x408: { // Pytes protocol: charge status
             bool chargeEnabled = rx_message.data[0];
             bool dischargeEnabled = rx_message.data[1];
-            _stats->_chargeImmediately = rx_message.data[2];
-            // Note: Should use std::popcount once supported by the compiler.
-            _stats->_moduleCountBlockingCharge = popCount(rx_message.data[5]);
-            _stats->_moduleCountBlockingDischarge = popCount(rx_message.data[6]);
+            // byte 2: force charge I, raised at SoC <= 8 %, cleared at
+            // >= 12 %. byte 3: force charge II, raised at SoC < 10 %, cleared
+            // at > 12 %. byte 5: modules blocking charge. same condition the
+            // battery uses for the charge request in the Victron protocol
+            // (0x360).
+            _stats->_chargeImmediately = (rx_message.data[2] || rx_message.data[3]) && !rx_message.data[5];
+            // byte 4: full charge request, raised while a module stays below
+            // 97 % SoC for too long.
+            _stats->_fullChargeRequest = static_cast<bool>(rx_message.data[4]);
+            _stats->_moduleCountBlockingCharge = __builtin_popcount(rx_message.data[5]);
+            _stats->_moduleCountBlockingDischarge = __builtin_popcount(rx_message.data[6]);
 
-            DTU_LOGD("chargeEnabled: %d dischargeEnabled: %d chargeImmediately: %d "
-                    "moduleCountBlockingDischarge: %d moduleCountBlockingCharge: %d",
-                    chargeEnabled, dischargeEnabled, _stats->_chargeImmediately,
+            DTU_LOGD("chargeEnabled: %d dischargeEnabled: %d chargeImmediately: %d fullChargeRequest: %d "
+                    "moduleCountBlockingCharge: %d moduleCountBlockingDischarge: %d",
+                    chargeEnabled, dischargeEnabled, _stats->_chargeImmediately, *_stats->_fullChargeRequest,
                     _stats->_moduleCountBlockingCharge, _stats->_moduleCountBlockingDischarge);
             break;
         }
@@ -405,6 +443,10 @@ void Provider::onMessage(twai_message_t rx_message)
             _stats->_totalCapacity = this->scaleValue(this->readUnsignedInt32(rx_message.data), 0.001);
             _stats->_availableCapacity = this->scaleValue(this->readUnsignedInt32(rx_message.data + 4), 0.001);
             _stats->_capacityPrecision = 2;
+
+            // a total capacity of 0 would result in an invalid SoC
+            if (_stats->_totalCapacity <= 0) { break; }
+
             float soc = 100.0 * _stats->_availableCapacity / _stats->_totalCapacity;
             _stats->setSoC(soc, 2/*precision*/, millis());
 
@@ -422,13 +464,18 @@ void Provider::onMessage(twai_message_t rx_message)
             break;
         }
 
-        case 0x40d: { // Pytes protocol: balancing info
-            // We don't know the exact unit for this yet, so we only use
-            // it to publish active / not active.
-            // It is somewhat likely that this is a percentage value on
-            // the scale of 0-32768, but that is just a theory.
+        case 0x40d: { // Pytes protocol: heating / balancing info
+            // bytes 0-3: bitmask of the modules heating (bit 0 = module 1)
+            _stats->_moduleCountHeating = __builtin_popcount(this->readUnsignedInt32(rx_message.data));
+
+            // bytes 4-5: bitmask of the cells being balanced (bit 0 = cell 1),
+            // combined over all modules (observed: 0x86E1 = 0x84E1 of module 1
+            // OR 0x0240 of module 2 as reported via RS485), the module is not
+            // reported. hence only active / not active is published.
             _stats->_balance = this->readUnsignedInt16(rx_message.data + 4);
-            DTU_LOGD("balance: %d", _stats->_balance);
+            DTU_LOGD("balance: %d moduleCountHeating: %d (raw: %s)", _stats->_balance,
+                    _stats->_moduleCountHeating,
+                    hexBytes(rx_message.data, rx_message.data_length_code).c_str());
             break;
         }
 

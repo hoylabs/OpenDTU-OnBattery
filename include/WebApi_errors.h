@@ -74,6 +74,8 @@ enum WebApiError {
     NetworkApTimeoutInvalid,
     NetworkSyslogHostnameLength,
     NetworkSyslogPort,
+    NetworkWifiRescanInterval,
+    NetworkWifiRescanThreshold,
 
     NtpBase = 9000,
     NtpServerLength,
@@ -97,6 +99,10 @@ enum WebApiError {
 
     HardwareBase = 12000,
     HardwarePinMappingLength,
+    HardwareInvalidDiagramDuration,
+
+    ModbusServerBase = 13000,
+    ModbusServerDuplicateUnitId,
 
     // OpenDTU-OnBattery-specific
     R48xxVoltageLimitOutOfRange = 1002,

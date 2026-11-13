@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <solarcharger/victron/Provider.h>
+#include <solarcharger/ChargeCurrentDistributor.h>
 #include <battery/Controller.h>
 #include "Configuration.h"
 #include "PinMapping.h"
@@ -75,14 +76,33 @@ bool Provider::initController(gpio_num_t rx, gpio_num_t tx, uint8_t instance)
 void Provider::loop()
 {
     auto const& config = Configuration.get();
-    auto forwardBatteryData = config.SolarCharger.ForwardBatteryData;
+    auto const forwardBatteryData = config.SolarCharger.ForwardBatteryData;
+    auto const batteryEnabled = config.Battery.Enabled;
+    auto const chargeLimit = Battery.getChargeCurrentLimit();
+    auto const limitActive = (chargeLimit != FLT_MAX);
+
+    std::shared_ptr<::Batteries::Stats const> batteryStats;
+    auto chargeCurrent = 0.0f;
+
+    if (batteryEnabled) {
+        batteryStats = Battery.getStats();
+        chargeCurrent = batteryStats->getChargeCurrent();
+    }
 
     std::lock_guard<std::mutex> lock(_mutex);
 
-    for (auto const& upController : _controllers) {
-        if (forwardBatteryData) {
-            auto batteryStats = Battery.getStats();
+    if (limitActive) {
+        applyChargeCurrentLimit(chargeLimit, chargeCurrent);
+    } else if (_chargeLimitActive) {
+        // transition: release any previously set limit in the MPPTs (once)
+        for (auto const& upController : _controllers) {
+            upController->setChargeLimit(FLT_MAX);
+        }
+        _chargeLimitActive = false;
+    }
 
+    for (auto const& upController : _controllers) {
+        if (forwardBatteryData && batteryEnabled) {
             if (batteryStats->isVoltageValid() && batteryStats->getVoltageAgeSeconds() < 60) {
                 upController->setRemoteVoltage(batteryStats->getVoltage());
             }
@@ -99,6 +119,40 @@ void Provider::loop()
             _stats->update(upController->getLogId(), upController->getData(), upController->getLastUpdate());
         }
     }
+}
+
+void Provider::applyChargeCurrentLimit(float chargeLimit, float chargeCurrent)
+{
+    std::vector<ChargeCurrentDistributor::ControllerData> data;
+    data.reserve(_controllers.size());
+
+    for (auto const& upController : _controllers) {
+        auto const& mpptData = upController->getData();
+
+        std::optional<float> maxCurrent;
+        if (mpptData.BatteryMaximumCurrent.first > 0) {
+            maxCurrent = static_cast<float>(mpptData.BatteryMaximumCurrent.second) / 10.0f;
+        }
+
+        std::optional<float> previousLimit;
+        if (mpptData.ChargeCurrentLimit.first > 0) {
+            previousLimit = static_cast<float>(mpptData.ChargeCurrentLimit.second) / 10.0f;
+        }
+
+        data.push_back({
+            static_cast<float>(mpptData.batteryCurrent_I_mA) / 1000.0f,
+            maxCurrent,
+            previousLimit
+        });
+    }
+
+    auto const limits = ChargeCurrentDistributor::distribute(chargeLimit, chargeCurrent, data);
+
+    for (size_t i = 0; i < _controllers.size(); ++i) {
+        _controllers[i]->setChargeLimit(limits[i]);
+    }
+
+    _chargeLimitActive = true;
 }
 
 } // namespace SolarChargers::Victron

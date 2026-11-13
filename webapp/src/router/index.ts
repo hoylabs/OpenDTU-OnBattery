@@ -12,6 +12,7 @@ import SolarChargerAdminView from '@/views/SolarChargerAdminView.vue';
 import PowerMeterAdminView from '@/views/PowerMeterAdminView.vue';
 import PowerLimiterAdminView from '@/views/PowerLimiterAdminView.vue';
 import InverterAdminView from '@/views/InverterAdminView.vue';
+import ModbusServerAdminView from '@/views/ModbusServerAdminView.vue';
 import LoginView from '@/views/LoginView.vue';
 import MaintenanceRebootView from '@/views/MaintenanceRebootView.vue';
 import LoggingAdminView from '@/views/LoggingAdminView.vue';
@@ -106,6 +107,11 @@ const router = createRouter({
             path: '/settings/powerlimiter',
             name: 'Power limiter Settings',
             component: PowerLimiterAdminView,
+        },
+        {
+            path: '/settings/modbusserver',
+            name: 'Modbus Server Settings',
+            component: ModbusServerAdminView,
         },
         {
             path: '/settings/battery',

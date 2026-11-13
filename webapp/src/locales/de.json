@@ -115,6 +115,8 @@
         "8006": "Admin AccessPoint Zeitlimit ist ungültig!",
         "8007": "Syslog-Server muss zwischen 1 und {max} Zeichen lang sein!",
         "8008": "Port muss eine Zahl zwischen 1 und 65535 sein!",
+        "8009": "WLAN-Suchintervall muss eine Zahl zwischen 5 und 1440 sein!",
+        "8010": "WLAN-Schwellwert muss eine Zahl zwischen 1 und 50 sein!",
         "9001": "Zeitserver muss zwischen 1 und {max} Zeichen lang sein!",
         "9002": "Zeitzone muss zwischen 1 und {max} Zeichen lang sein!",
         "9003": "Zeitzonenbeschreibung muss zwischen 1 und {max} Zeichen lang sein!",
@@ -129,7 +131,8 @@
         "10002": "Authentifizierung erfolgreich!",
         "11001": "@:apiresponse.2001",
         "11002": "@:apiresponse.5004",
-        "12001": "Profilname muss zwischen 1 und {max} Zeichen lang sein!"
+        "12001": "Profilname muss zwischen 1 und {max} Zeichen lang sein!",
+        "12002": "Diagramm Anzeigedauer muss eine Zahl zwischen {min} und {max} sein!"
     },
     "onbatteryapiresponse": {
         "1001": "@:apiresponse.1001",
@@ -200,7 +203,8 @@
             "RELAY": "Status Fehlerrelais",
             "ERR": "Fehlerbeschreibung",
             "HSDS": "Anzahl der Tage (0..364)",
-            "MpptTemperature": "Ladereglertemperatur"
+            "MpptTemperature": "Ladereglertemperatur",
+            "ChargeCurrentLimit": "Ladestromlimit"
         },
         "section_output": "Ausgang (Batterie)",
         "output": {
@@ -250,6 +254,8 @@
         "HardwarePartNumber": "Hardware-Teilenummer",
         "HardwareVersion": "Hardware-Version",
         "SupportsPowerDistributionLogic": "'Power Distribution Logic' unterstützt",
+        "RfHardwareVersion": "RF-Modul Hardware-Version",
+        "RfFirmwareVersion": "RF-Modul Firmware-Version",
         "Yes": "@:base.Yes",
         "No": "@:base.No"
     },
@@ -276,6 +282,7 @@
         "ConfigVersion": "Konfigurationsversion",
         "FirmwareVersion": "Firmwareversion / Git Hash",
         "FirmwareBranch": "Firmware Branch",
+        "CompileDateTime": "Kompilierung Datum/Zeit (UTC)",
         "PioEnv": "PIO Umgebung",
         "FirmwareVersionHint": "Klicke hier, um Informationen über die installierte Version anzuzeigen",
         "FirmwareUpdate": "Firmware-Aktualisierung",
@@ -284,6 +291,7 @@
         "ResetReason0": "Reset Grund CPU 0",
         "ResetReason1": "Reset Grund CPU 1",
         "ConfigSaveCount": "Anzahl der Konfigurationsspeicherungen",
+        "RuntimeSaveCount": "Laufzeitdatenspeicherungen Anzahl / Zeit",
         "Uptime": "Betriebszeit",
         "UptimeValue": "0 Tage {time} | 1 Tag {time} | {count} Tage {time}"
     },
@@ -322,6 +330,7 @@
         "Name": "Name",
         "StackFree": "Stack Frei",
         "Priority": "Priorität",
+        "Core": "Kern",
         "Task_idle0": "Leerlauf (CPU-Kern 0)",
         "Task_idle1": "Leerlauf (CPU-Kern 1)",
         "Task_wifi": "Wi-Fi",
@@ -448,7 +457,7 @@
         "LogLevel": "Protokollierungsstufe ({cnt})"
     },
     "inverterchannelinfo": {
-        "String": "String {num}",
+        "String": "Strang {num}",
         "Phase": "Phase {num}",
         "General": "Allgemein"
     },
@@ -466,6 +475,7 @@
     },
     "inverterchannelproperty": {
         "Power": "Leistung",
+        "MaxDailyPower": "Max. Leistung",
         "Voltage": "Spannung",
         "Current": "Strom",
         "Power DC": "DC-Leistung",
@@ -473,6 +483,7 @@
         "YieldTotal": "Gesamtertrag",
         "Frequency": "Frequenz",
         "Temperature": "Temperatur",
+        "MaxTemperature": "Max. Temperatur",
         "PowerFactor": "Leistungsfaktor",
         "ReactivePower": "Blindleistung",
         "Efficiency": "Wirkungsgrad",
@@ -550,7 +561,7 @@
         "WifiSsid": "WLAN-SSID",
         "WifiPassword": "WLAN-Passwort",
         "Hostname": "Hostname",
-        "HostnameHint": "<b>Hinweis:</b> Der Text <span class=\"font-monospace\">%06X</span> wird durch die letzten 6 Ziffern der ESP-ChipID im Hex-Format ersetzt.",
+        "HostnameHint": "<b>Hinweis:</b> Der Text <span class=\"font-monospace\">$id$</span> wird durch die letzten 6 Ziffern der ESP-ChipID im Hex-Format ersetzt.",
         "EnableDhcp": "DHCP aktivieren",
         "StaticIpConfiguration": "Statische IP-Konfiguration",
         "IpAddress": "IP-Adresse",
@@ -560,6 +571,13 @@
         "AdminAp": "WLAN-Konfiguration (Admin AccessPoint)",
         "ApTimeout": "AccessPoint Zeitlimit",
         "ApTimeoutHint": "Zeit die der AccessPoint offen gehalten wird. Ein Wert von 0 bedeutet unendlich.",
+        "WifiRescanSettings": "WLAN Access Point Suche",
+        "EnableWifiRescan": "Regelmäßig nach besserem Access Point suchen",
+        "EnableWifiRescanHint": "Sinnvoll, wenn mehrere Access Points (z.B. Mesh oder Repeater) die gleiche SSID verwenden. OpenDTU-OnBattery sucht regelmäßig nach Access Points mit der konfigurierten SSID und verbindet sich mit einem, dessen Signal deutlich stärker ist. Beim Wechsel wird die Verbindung kurz unterbrochen. Auch jede Suche unterbricht die Verbindung für einige Sekunden, sodass z.B. ein Stromzählerwert einmal ausfallen kann.",
+        "WifiRescanInterval": "Suchintervall",
+        "WifiRescanIntervalHint": "Zeit zwischen zwei Suchen nach einem besseren Access Point.",
+        "WifiRescanThreshold": "Schwellwert Signalverbesserung",
+        "WifiRescanThresholdHint": "Um diesen Wert muss die Signalstärke (RSSI) eines Access Points die des aktuellen übersteigen, damit OpenDTU-OnBattery zu diesem wechselt.",
         "Minutes": "Minuten",
         "EnableMdns": "mDNS aktivieren",
         "MdnsSettings": "mDNS-Einstellungen",
@@ -699,6 +717,22 @@
         "timeout": "Zeitüberschreitung",
         "milliSeconds": "Millisekunden"
     },
+    "modbusserveradmin": {
+        "ModbusServerSettings": "Modbus-Server Einstellungen",
+        "General": "Allgemein",
+        "Enable": "Aktivieren",
+        "Port": "TCP-Port",
+        "InverterMapping": "Wechselrichter Konfiguration",
+        "InverterMappingHint": "Jeder über Modbus bereitgestellte Wechselrichter benötigt eine eigene eindeutige Unit-ID (1–247).",
+        "Inverter": "Wechselrichter",
+        "UnitId": "Unit-ID",
+        "DuplicateUnitId": "Doppelte Unit-ID: Jeder Wechselrichter benötigt eine eindeutige Unit-ID!",
+        "ExposedModelsHeading": "Bereitgestellte SunSpec-Model",
+        "ExposedModelsIntro": "Für jeden aktivierten Wechselrichter werden Daten über die folgenden SunSpec-Modelle bereitgestellt:",
+        "ExposedModel1": "Model 1 (Common) — Hersteller, Modellname, Firmware-Version, Seriennummer",
+        "ExposedModel101103": "Modell 101 / 103 (Inverter) — Strom, Spannung, Leistung, Blindleistung, Leistungsfaktor, Frequenz, Energie, Temperatur und Betriebszustand. Einphasige Wechselrichter verwenden Model 101, dreiphasige Wechselrichter Model 103. Die Auswahl erfolgt automatisch.",
+        "ExposedModel120": "Modell 120 (Nameplate) — maximale Nennleistung"
+    },
     "powerlimiteradmin": {
         "PowerLimiterSettings": "Dynamic Power Limiter Einstellungen",
         "ConfigAlertMessage": "Eine oder mehrere Voraussetzungen zum Betrieb des Dynamic Power Limiter sind nicht erfüllt.",
@@ -800,9 +834,21 @@
         "DischargeCurrentLimitBelowVoltage": "Limitieren unter Spannung",
         "DischargeCurrentLimitBelowVoltageInfo": "Das Entladestromlimit wird nur unter dieser Spannungs-Schwelle angewendet (wenn 'Batterie SoC ignorieren' in den DPL-Einstellungen aktiviert ist oder SoC nicht verfügbar ist).",
         "UseBatteryReportedDischargeCurrentLimit": "Von der Batterie übermitteltes Limit verwenden",
-        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hinweis:</b> Das niedrigste Limit wird angewendet, wobei das von der Batterie übermittelte Entladestromlimit nur verwendet wird, wenn in der letzten Minute ein Update eingegangen ist. Andernfalls dient das zuvor festgelegte Limit als Fallback.",
+        "BatteryReportedDischargeCurrentLimitInfo": "<b>Hinweis:</b> Das restriktivere der beiden Limits – das konfigurierte Maximum und das von der Batterie gemeldete Entladestromlimit – wird angewendet. Das von der Batterie gemeldete Limit wird nur berücksichtigt, wenn in der letzten Minute ein Update eingegangen ist; andernfalls gilt ausschließlich das konfigurierte Maximum.",
         "MqttDischargeCurrentLimitTopic": "Topic für Entladestromlimit",
         "MqttAmperageUnit": "@:base.Unit",
+        "ChargeCurrentLimitConfiguration": "Einstellungen Ladestromlimit",
+        "LimitChargeCurrent": "Ladestrom limitieren",
+        "MinChargeCurrentLimit": "min. Ladestrom",
+        "MinChargeCurrentLimitInfo": "Der konfigurierte Mindestwert dient als Untergrenze: Fällt das von der Batterie gemeldete Ladestromlimit darunter, wird stattdessen dieser Wert verwendet.",
+        "MaxChargeCurrentLimit": "max. Ladestrom",
+        "ChargeCurrentLimitBelowSoc": "Limitieren unter SoC",
+        "ChargeCurrentLimitBelowSocInfo": "Das max Ladestromlimit wird nur unter dieser SoC-Schwelle angewendet (wird nicht verwendet, falls 'Batterie SoC ignorieren' in den DPL-Einstellungen aktiviert ist).",
+        "ChargeCurrentLimitBelowVoltage": "Limitieren unter Spannung",
+        "ChargeCurrentLimitBelowVoltageInfo": "Das max Ladestromlimit wird nur unter dieser Spannungs-Schwelle angewendet (wenn 'Batterie SoC ignorieren' in den DPL-Einstellungen aktiviert ist oder SoC nicht verfügbar ist).",
+        "UseBatteryReportedChargeCurrentLimit": "Von der Batterie übermitteltes Limit verwenden",
+        "BatteryReportedChargeCurrentLimitInfo": "<b>Hinweis:</b> Das restriktivere der beiden Limits – das konfigurierte Maximum und das von der Batterie gemeldete Ladestromlimit – wird angewendet. Das von der Batterie gemeldete Limit wird nur berücksichtigt, wenn in der letzten Minute ein Update eingegangen ist; andernfalls gilt ausschließlich das konfigurierte Maximum.",
+        "MqttChargeCurrentLimitTopic": "Topic für Ladestromlimit",
         "ZendureConfiguration": "Einstellungen",
         "ZendureMinSoc": "Minimaler Ladezustand",
         "ZendureMaxSoc": "Maximaler Ladezustand",
@@ -850,7 +896,8 @@
             "chargeThrough": "Vollladeeinstellungen",
             "chargeThroughEnabled": "Vollladen",
             "chargeThroughInterval": "Maximales Interval",
-            "chargeThroughReset": "Reset Schwellwert",
+            "chargeThroughKeepMinutes": "Volllade-Modus halten",
+            "chargeThroughKeepMinutesDescription": "Volllade-Modus für mindestens diese Anzahl von Minuten beibehalten, nachdem die Batterie 100% SoC erreicht hat",
             "connectionType": "Verbindungstyp",
             "connectionTypes": {
                 "local": "Lokaler MQTT Broker",
@@ -870,7 +917,12 @@
             "clientId": "Client Identifikation",
             "appKey": "Applikations Schlüssel",
             "apiDescription": "Weitere Informationen zur Zendure Entwickler Schnittstelle sind im <a href=\"https://github.com/Zendure/developer-device-data-report\" target=\"_blank\">Official Zendure Repository</a> zu finden",
-            "secret": "Geheimnis"
+            "secret": "Geheimnis",
+            "socMinWarning": "Der eingestellte minimale Ladezustand ({soc}%) ist kleiner als der empfohlene Mindestwert von {min}%. Dies kann zu einer Beschädigung der Batterie führen.",
+            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
+            "pollingIntervalDescription": "Das BMS überträgt Daten auch asynchron. Zusätzlich wird eine vollständige Datenaktualisierung im angegebenen Intervall erzwungen.",
+            "batteryProtectionEnabled": "Batterieschutz",
+            "batteryProtection": "Erweiterte Batterieschutz Einstellungen"
         }
     },
     "inverteradmin": {
@@ -891,7 +943,7 @@
         "DeleteInverter": "Wechselrichter löschen",
         "EditInverter": "Wechselrichter bearbeiten",
         "General": "Allgemein",
-        "String": "String",
+        "String": "Strang",
         "Advanced": "Erweitert",
         "InverterSerial": "Wechselrichter Seriennummer:",
         "InverterName": "Wechselrichter Name:",
@@ -901,11 +953,11 @@
         "PollEnableNight": "Daten auch nachts abrufen",
         "CommandEnable": "Befehle senden",
         "CommandEnableNight": "Befehle auch nachts senden",
-        "StringName": "Stringname {num}:",
+        "StringName": "Strangname {num}:",
         "StringNameHint": "Hier kann ein eigener Name für den entsprechenden Port des Wechselrichters angegeben werden.",
-        "StringMaxPower": "Max. Leistung String {num}:",
+        "StringMaxPower": "Max. Leistung Strang {num}:",
         "StringMaxPowerHint": "Eingabe der maximalen Leistung der angeschlossenen Solarmodule.",
-        "StringYtOffset": "Ertragsversatz String {num}:",
+        "StringYtOffset": "Ertragsversatz Strang {num}:",
         "StringYtOffsetHint": "Dieser Offset wird beim Auslesen des Gesamtertragswertes des Wechselrichters angewendet. Damit kann der Gesamtertrag des Wechselrichters auf Null gesetzt werden, wenn ein gebrauchter Wechselrichter verwendet wird.",
         "InverterHint": "*) Gib die W<sub>p</sub> des Ports ein, um die Einstrahlung zu errechnen.",
         "ReachableThreshold": "Erreichbarkeit Schwellenwert",
@@ -1028,7 +1080,6 @@
         "LedBrightness": "LED {led} Helligkeit ({brightness})"
     },
     "pininfo": {
-        "Category": "Kategorie",
         "Name": "Name",
         "ValueSelected": "Ausgewählt",
         "ValueActive": "Aktiv"
@@ -1058,6 +1109,7 @@
         "Module_powerMeter": "Stromzähler",
         "Module_solarCharger": "Solarladeregler",
         "Module_veDirect": "VE.Direct",
+        "Module_modbusServer": "Modbus Server",
         "CoreHint": "Achtung: Eine zu detaillierte Protokollierungsstufe des ESP-IDF-Kern-Moduls kann die Performanz signifikant beeinträchtigen und zu unvorhersehbarem Verhalten führen. Die Log-Level-Einstellung sollte nur bei gezielter Fehlersuche temporär angepasst werden. Die Standardeinstellung 'Fehler' ist für den normalen Betrieb ausreichend.",
         "log_inherit": "Von Standard erben",
         "log_none": "Keine",
@@ -1193,11 +1245,13 @@
         "chargeEnabled": "Laden ermöglicht",
         "dischargeEnabled": "Entladen ermöglicht",
         "chargeImmediately": "Sofortiges Laden angefordert",
+        "fullChargeRequest": "Volladung angefordert",
         "modules": "Batteriemodule",
         "online": "Online",
         "offline": "Offline",
         "blockingCharge": "Ladung blockiert",
         "blockingDischarge": "Entladung blockiert",
+        "heating": "Heizung aktiv",
         "cells": "Zellen",
         "batOneTemp": "Batterietemperatur 1",
         "batTwoTemp": "Batterietemperatur 2",
@@ -1337,7 +1391,17 @@
                 "discharging": "Entladen",
                 "invalid": "@:battery.invalid",
                 "unknown": "@:battery.unknown"
-            }
+            },
+            "keepUntil": "Volle Ladung halten für",
+            "controlState": "Steuerungszustand",
+            "controlStates": {
+                "normal": "Normal",
+                "batteryprotection": "Batterieschutz",
+                "invalid": "@:battery.invalid"
+            },
+            "batteryProtection": "Batterieschutz",
+            "batteryProtectionHysteresis": "@:powerlimiteradmin.TargetPowerConsumptionHysteresis",
+            "packMinSoc": "Minimaler Pack Ladezustand"
         }
     }
 }

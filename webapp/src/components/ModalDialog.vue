@@ -4,13 +4,26 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">{{ title }}</h5>
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        :aria-label="getCloseText"
-                        @click="close"
-                    ></button>
+                    <div class="ms-auto d-flex align-items-center gap-2">
+                        <button
+                            v-if="showReload"
+                            type="button"
+                            class="btn d-flex align-items-center"
+                            :disabled="loading"
+                            @click="$emit('reload')"
+                            v-tooltip
+                            :title="$t('base.Reload')"
+                        >
+                            <BIconArrowClockwise />
+                        </button>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            :aria-label="getCloseText"
+                            @click="close"
+                        ></button>
+                    </div>
                 </div>
                 <div class="modal-body">
                     <div class="text-center" v-if="loading">
@@ -33,12 +46,17 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { BIconArrowClockwise } from 'bootstrap-icons-vue';
 
 export default defineComponent({
+    components: {
+        BIconArrowClockwise,
+    },
     props: {
         modalId: { type: String, required: true },
         title: { type: String, required: true },
         closeText: { type: String, required: false, default: '' },
+        showReload: { type: Boolean, required: false, default: false },
         small: Boolean,
         loading: Boolean,
     },

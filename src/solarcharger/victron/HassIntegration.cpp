@@ -58,6 +58,9 @@ void HassIntegration::publishSensors(const VeDirectMpptController::data_t &mpptD
     if (mpptData.MpptTemperatureMilliCelsius.first != 0) {
         publishSensor("MPPT temperature", "mdi:temperature-celsius", "MpptTemperature", "temperature", "measurement", "°C", mpptData);
     }
+    if (mpptData.ChargeCurrentLimit.first != 0) {
+        publishSensor("Charge current limit", "mdi:current-ac", "ChargeCurrentLimit", "current", "measurement", "A", mpptData);
+    }
     if (mpptData.BatteryAbsorptionMilliVolt.first != 0) {
         publishSensor("Battery absorption voltage", "mdi:battery-charging-90", "BatteryAbsorption", "voltage", "measurement", "V", mpptData);
     }

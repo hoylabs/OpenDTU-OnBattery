@@ -46,6 +46,7 @@ void WebApiClass::init(Scheduler& scheduler)
     _webApiSolarCharger.init(_server, scheduler);
     _webApiWsGridChargerLive.init(_server, scheduler);
     _webApiGridCharger.init(_server, scheduler);
+    _webApiModbusServer.init(_server, scheduler);
     _webApiWsBatteryLive.init(_server, scheduler);
 
     _server.begin();
@@ -139,6 +140,20 @@ uint64_t WebApiClass::parseSerialFromRequest(AsyncWebServerRequest* request, Str
     }
 
     return 0;
+}
+
+String WebApiClass::formatCommandStatus(const LastCommandSuccess status)
+{
+    if (status == LastCommandSuccess::CMD_OK) {
+        return "Ok";
+    }
+    if (status == LastCommandSuccess::CMD_NOK) {
+        return "Failure";
+    }
+    if (status == LastCommandSuccess::CMD_PENDING) {
+        return "Pending";
+    }
+    return "Unknown";
 }
 
 bool WebApiClass::sendJsonResponse(AsyncWebServerRequest* request, AsyncJsonResponse* response, const char* function, const uint16_t line)
