@@ -16,8 +16,12 @@ typedef struct {
     uint32_t batteryVoltage_V_mV = 0;       // battery voltage in mV
     int32_t batteryCurrent_I_mA = 0;        // battery current in mA (can be negative)
     float mpptEfficiency_Percent = 0;       // efficiency in percent (calculated, moving average)
+    float transmitErrors_Day = 0.0f;        // transmit errors per day
+
+    enum class Error { TIMEOUT, TEXT_CHECKSUM, HEX_CHECKSUM, HEX_BUFFER, NESTED_HEX, DEBUG_BUFFER, NON_VALID_CHAR, LAST };
 
     frozen::string const& getPidAsString() const; // product ID as string
+    frozen::string const& getTransmitErrorAsString(Error error) const;
     uint32_t getFwVersionAsInteger() const;
     String getFwVersionFormatted() const;
 } veStruct;
