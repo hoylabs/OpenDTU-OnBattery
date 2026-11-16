@@ -29,7 +29,8 @@
 class InterfaceProviderRT {
 public:
     virtual String getIdRT() const = 0;
-    virtual void serializeRT(JsonObject obj) const = 0;
+    // Replace this provider's object in root only when its state is available.
+    virtual void serializeRT(JsonObject root) const = 0;
     virtual void deserializeRT(JsonObject obj) = 0;
     virtual ~InterfaceProviderRT() = default;
 

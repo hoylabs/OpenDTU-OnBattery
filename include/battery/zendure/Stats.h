@@ -185,6 +185,7 @@ class Stats : public ::Batteries::Stats {
 public:
     void getLiveViewData(JsonVariant& root) const final;
     void mqttPublish() const final;
+    void checkFullyChargedEpoch(void) final;
 
     std::optional<String> getHassDeviceName() const final {
         return String(*getManufacturer() + " " + _device);
@@ -459,6 +460,7 @@ private:
     std::optional<bool> _buzzer = std::nullopt;
 
     std::optional<uint64_t> _last_full_timestamp = std::nullopt;
+    std::optional<uint64_t> _checked_last_full_timestamp = std::nullopt;
     std::optional<uint32_t> _last_full_hours = std::nullopt;
     std::optional<uint64_t> _last_empty_timestamp = std::nullopt;
     std::optional<uint32_t> _last_empty_hours = std::nullopt;

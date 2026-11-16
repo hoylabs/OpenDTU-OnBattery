@@ -193,9 +193,9 @@ bool RuntimeProvider::writeAll(uint16_t const freezeMinutes)
     { // mutex is automatically released when lock goes out of this scope
         std::lock_guard<std::mutex> lock(_mutexInterface);
 
-        // serialize the runtime data of all registered providers
+        // providers replace their runtime data only when their state is available
         for (auto& [id, provider] : _providers) {
-            provider->serializeRT(doc[id].to<JsonObject>());
+            provider->serializeRT(doc.as<JsonObject>());
         }
     } // mutex is automatically released when lock goes out of this scope
 

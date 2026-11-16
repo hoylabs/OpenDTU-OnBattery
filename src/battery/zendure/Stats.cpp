@@ -184,4 +184,23 @@ std::shared_ptr<PackStats> Stats::addPackData(size_t index, String serial) {
     return pack;
 }
 
+void Stats::checkFullyChargedEpoch(void)
+{
+    if (!_last_full_timestamp.has_value() || (_last_full_timestamp.value() == 0)) { return; }
+    if (_checked_last_full_timestamp == _last_full_timestamp) { return; } // fast exit from already processed values
+
+    time_t nowEpoch;
+    if (!Utils::getEpoch(&nowEpoch, 0)) { return; } // we need a valid epoch to proceed
+
+    _checked_last_full_timestamp = _last_full_timestamp;
+
+    auto fullEpoch = static_cast<time_t>(_last_full_timestamp.value());
+
+    // we only update if the value is not in the future and we don't have epoch yet or we have a newer value
+    if ((fullEpoch <= nowEpoch) && (!_oFullyChargedEpoch.has_value() || (fullEpoch > _oFullyChargedEpoch.value()))) {
+        _oFullyChargedEpoch = fullEpoch;
+    }
+
+}
+
 } // namespace Batteries::Zendure

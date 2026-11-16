@@ -12,6 +12,7 @@ public:
     void mqttPublish() const final;
 
     void updateFrom(VeDirectShuntController::data_t const& shuntData);
+    void checkFullyChargedEpoch(void) final;
 
 private:
     uint8_t _chargeCycles;
