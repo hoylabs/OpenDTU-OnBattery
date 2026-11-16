@@ -16,6 +16,21 @@ export interface GridChargerHuaweiConfig {
     fan_offline_full_speed: boolean;
 }
 
+export interface GridChargerHTTPCharger {
+    Enabled: boolean;
+    Name: string;
+    Url: string;
+    AcPower: number;
+}
+
+export interface GridChargerHTTPConfig {
+    UriOn: string;
+    UriOff: string;
+    UriStats: string;
+    UriPowerParam: string;
+    Chargers: Array<GridChargerHTTPCharger>;
+}
+
 export interface GridChargerConfig {
     enabled: boolean;
     provider: number;
@@ -27,8 +42,11 @@ export interface GridChargerConfig {
     upper_power_limit: number;
     emergency_charge_enabled: boolean;
     stop_batterysoc_threshold: number;
+    stop_battery_voltage_threshold: number;
+    resume_battery_voltage_threshold: number;
     target_power_consumption: number;
     can: GridChargerCanConfig;
     huawei: GridChargerHuaweiConfig;
     trucki: GridChargerTruckiConfig;
+    HTTP: GridChargerHTTPConfig;
 }
