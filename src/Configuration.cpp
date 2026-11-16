@@ -6,6 +6,7 @@
 #include "NetworkSettings.h"
 #include "Utils.h"
 #include "defaults.h"
+#include <algorithm>
 #include <LittleFS.h>
 #include <esp_log.h>
 #include <nvs_flash.h>
@@ -102,7 +103,7 @@ void ConfigurationClass::serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmC
 
 void ConfigurationClass::serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target, bool includeCredentials)
 {
-    target["polling_interval"] = source.PollingInterval;
+    target["polling_interval_ms"] = source.PollingIntervalMs;
     target["individual_requests"] = source.IndividualRequests;
 
     JsonArray values = target["values"].to<JsonArray>();
@@ -572,7 +573,13 @@ void ConfigurationClass::deserializePowerMeterSerialSdmConfig(JsonObject const& 
 
 void ConfigurationClass::deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target)
 {
-    target.PollingInterval = source["polling_interval"] | POWERMETER_POLLING_INTERVAL;
+    if (source["polling_interval_ms"].is<uint32_t>()) {
+        target.PollingIntervalMs = source["polling_interval_ms"];
+    } else {
+        // legacy migration support, convert polling_interval from seconds to milliseconds
+        target.PollingIntervalMs = (source["polling_interval"] | POWERMETER_POLLING_INTERVAL) * 1000;
+    }
+    target.PollingIntervalMs = std::clamp(target.PollingIntervalMs, 100u, 15000u);
     target.IndividualRequests = source["individual_requests"] | false;
 
     JsonArray values = source["values"].as<JsonArray>();
