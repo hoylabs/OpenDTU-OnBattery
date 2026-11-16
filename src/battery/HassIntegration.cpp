@@ -37,9 +37,13 @@ void HassIntegration::hassLoop()
         return;
     }
 
-    if (!_publishSensors ||
-        !_spStats->getManufacturer().has_value() ||
+    if (!_spStats->getManufacturer().has_value() ||
         !_spStats->getHassDeviceName().has_value()) { return; }
+
+    if (!_publishSensors) {
+        publishDeferredSensors();
+        return;
+    }
 
     if (!_oLegacyCleanupStart) {
         startLegacyCleanup();
@@ -64,7 +68,8 @@ void HassIntegration::publishSensors() const
     publishSensor("Manufacturer",          "mdi:factory",        "manufacturer");
     publishSensor("Data Age",              "mdi:timer-sand",     "dataAge",       "duration", "measurement", "s");
     publishSensor("State of Charge (SoC)", "mdi:battery-medium", "stateOfCharge", "battery",  "measurement", "%");
-    publishSensor("Voltage", "mdi:battery-charging", "voltage", "voltage", "measurement", "V");
+    // HASS shows volts without decimals by default
+    publishSensor("Voltage", "mdi:battery-charging", "voltage", "voltage", "measurement", "V", true, nullptr, 2);
     publishSensor("Current", "mdi:current-dc", "current", "current", "measurement", "A");
 
     if (_spStats->supportsFullChargeRequest()) {
@@ -75,7 +80,7 @@ void HassIntegration::publishSensors() const
 void HassIntegration::publishSensor(const char* caption, const char* icon,
         const char* subTopic, const char* deviceClass,
         const char* stateClass, const char* unitOfMeasurement,
-        const bool enabled) const
+        const bool enabled, SubDevice const* subDevice, int8_t displayPrecision) const
 {
     String sensorId = sanitizeUniqueId(caption);
 
@@ -84,7 +89,9 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
         return;
     }
 
-    String configTopic = "sensor/" + createBatteryId()
+    String deviceId = subDevice ? subDevice->id : createBatteryId();
+
+    String configTopic = "sensor/" + sanitizeNodeId(deviceId)
         + "/" + sensorId
         + "/config";
 
@@ -94,7 +101,7 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
     JsonDocument root;
     root["name"] = caption;
     root["stat_t"] = statTopic;
-    root["uniq_id"] = createBatteryId() + "_" + sensorId;
+    root["uniq_id"] = deviceId + "_" + sensorId;
 
     if (icon != NULL) {
         root["icon"] = icon;
@@ -108,8 +115,16 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
         root["unit_of_meas"] = unitOfMeasurement;
     }
 
+    if (displayPrecision >= 0) {
+        root["sug_dsp_prc"] = displayPrecision;
+    }
+
     JsonObject deviceObj = root["dev"].to<JsonObject>();
-    createDeviceInfo(deviceObj);
+    if (subDevice) {
+        createSubDeviceInfo(deviceObj, *subDevice);
+    } else {
+        createDeviceInfo(deviceObj);
+    }
 
     if (Configuration.get().Mqtt.Hass.Expire) {
         root["exp_aft"] = _spStats->getMqttFullPublishIntervalMs() / 1000 * 3;
@@ -125,16 +140,15 @@ void HassIntegration::publishSensor(const char* caption, const char* icon,
         return;
     }
 
-    char buffer[512];
+    String buffer; // sized dynamically, a fixed buffer silently truncates long configs
     serializeJson(root, buffer);
     publish(configTopic, buffer);
-
 }
 
 void HassIntegration::publishBinarySensor(const char* caption,
         const char* icon, const char* subTopic,
         const char* payload_on, const char* payload_off,
-        const bool enabled) const
+        const bool enabled, SubDevice const* subDevice) const
 {
     String sensorId = sanitizeUniqueId(caption);
 
@@ -143,7 +157,9 @@ void HassIntegration::publishBinarySensor(const char* caption,
         return;
     }
 
-    String configTopic = "binary_sensor/" + createBatteryId()
+    String deviceId = subDevice ? subDevice->id : createBatteryId();
+
+    String configTopic = "binary_sensor/" + sanitizeNodeId(deviceId)
         + "/" + sensorId
         + "/config";
 
@@ -153,7 +169,7 @@ void HassIntegration::publishBinarySensor(const char* caption,
     JsonDocument root;
 
     root["name"] = caption;
-    root["uniq_id"] = createBatteryId() + "_" + sensorId;
+    root["uniq_id"] = deviceId + "_" + sensorId;
     root["stat_t"] = statTopic;
     root["pl_on"] = payload_on;
     root["pl_off"] = payload_off;
@@ -167,7 +183,11 @@ void HassIntegration::publishBinarySensor(const char* caption,
     }
 
     auto deviceObj = root["dev"].to<JsonObject>();
-    createDeviceInfo(deviceObj);
+    if (subDevice) {
+        createSubDeviceInfo(deviceObj, *subDevice);
+    } else {
+        createDeviceInfo(deviceObj);
+    }
 
     if (Configuration.get().Mqtt.Hass.Expire) {
         root["exp_aft"] = _spStats->getMqttFullPublishIntervalMs() / 1000 * 3;
@@ -177,7 +197,7 @@ void HassIntegration::publishBinarySensor(const char* caption,
         return;
     }
 
-    char buffer[512];
+    String buffer; // sized dynamically, a fixed buffer silently truncates long configs
     serializeJson(root, buffer);
     publish(configTopic, buffer);
 }
@@ -191,6 +211,17 @@ void HassIntegration::createDeviceInfo(JsonObject& object) const
     object["mdl"] = *_spStats->getManufacturer();
     object["sw"] = __COMPILED_GIT_HASH__;
     object["via_device"] = MqttHandleHass.getDtuUniqueId();
+}
+
+void HassIntegration::createSubDeviceInfo(JsonObject& object, SubDevice const& subDevice) const
+{
+    object["name"] = subDevice.name;
+    object["ids"] = subDevice.id;
+    object["cu"] = MqttHandleHass.getDtuUrl();
+    object["mf"] = *_spStats->getManufacturer();
+    object["mdl"] = subDevice.model;
+    object["sw"] = subDevice.swVersion;
+    object["via_device"] = createBatteryId(); // the battery device
 }
 
 void HassIntegration::publish(const String& subtopic, const String& payload) const
@@ -281,6 +312,19 @@ String HassIntegration::createBatteryId() {
         id += escaped;
     }
     return id;
+}
+
+// HASS only accepts discovery node ids matching [a-zA-Z0-9_-]+, a sub-device
+// id may be derived from a serial containing other characters (e.g. '.').
+// unique ids and state topics keep the original value.
+String HassIntegration::sanitizeNodeId(String const& value)
+{
+    String nodeId = value;
+    for (size_t i = 0; i < nodeId.length(); ++i) {
+        char c = nodeId[i];
+        if (!isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '-') { nodeId.setCharAt(i, '_'); }
+    }
+    return nodeId;
 }
 
 String HassIntegration::sanitizeUniqueId(const char* value) {
