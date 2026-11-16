@@ -9,14 +9,24 @@ bool Provider::isDataValid() const
     return getLastUpdate() > 0 && ((millis() - getLastUpdate()) < (30 * 1000));
 }
 
+Provider::PowerChannels Provider::getPowerChannels() const
+{
+    PowerChannels channels;
+    channels.Total = _dataCurrent.get<DataPointLabel::PowerTotal>();
+    channels.L1 = _dataCurrent.get<DataPointLabel::PowerL1>();
+    channels.L2 = _dataCurrent.get<DataPointLabel::PowerL2>();
+    channels.L3 = _dataCurrent.get<DataPointLabel::PowerL3>();
+    return channels;
+}
+
 float Provider::getPowerTotal() const
 {
-    auto oPowerTotal = _dataCurrent.get<DataPointLabel::PowerTotal>();
-    if (oPowerTotal) { return *oPowerTotal; }
+    auto channels = getPowerChannels();
+    if (channels.Total) { return *channels.Total; }
 
-    return _dataCurrent.get<DataPointLabel::PowerL1>().value_or(0.0f)
-        + _dataCurrent.get<DataPointLabel::PowerL2>().value_or(0.0f)
-        + _dataCurrent.get<DataPointLabel::PowerL3>().value_or(0.0f);
+    return channels.L1.value_or(0.0f)
+        + channels.L2.value_or(0.0f)
+        + channels.L3.value_or(0.0f);
 }
 
 void Provider::mqttLoop() const
