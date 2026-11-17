@@ -44,7 +44,7 @@ SerialResponse::SerialResponse(tData&& raw)
             _dp.add<Label::BatteryVoltageMilliVolt>(static_cast<uint32_t>(get<uint16_t>(pos)) * 10); // Total voltage
             _dp.add<Label::BatteryCurrentMilliAmps>(static_cast<int32_t>(get<int16_t>(pos)) * 10); // Current
             _dp.add<Label::ActualBatteryCapacityAmpHours>(static_cast<uint32_t>(get<uint16_t>(pos)) * 10 / 1000); // remaining capacity
-            _dp.add<Label::BatteryCapacitySettingAmpHours>(static_cast<uint32_t>(get<uint16_t>(pos)) * 10 / 1000); // nominal capacity
+            _dp.add<Label::BatteryCapacitySettingAmpHours>(static_cast<float>(get<uint16_t>(pos)) / 100.0f); // nominal capacity
             _dp.add<Label::BatteryCycles>(get<uint16_t>(pos));
             _dp.add<Label::DateOfManufacturing >(getProductionDate(pos));
 

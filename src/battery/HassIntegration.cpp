@@ -70,6 +70,8 @@ void HassIntegration::publishSensors() const
     if (_spStats->supportsFullChargeRequest()) {
         publishBinarySensor("Full charge requested", "mdi:battery-charging-high", "charging/fullChargeRequest", "1", "0");
     }
+    publishSensor("Nominal capacity", NULL, "nominalCapacity", NULL, "measurement", "Ah");
+    publishSensor("Nominal voltage", NULL, "nominalVoltage", "voltage", "measurement", "V");
 }
 
 void HassIntegration::publishSensor(const char* caption, const char* icon,

@@ -170,6 +170,11 @@ void Stats::updateFrom(JbdBms::DataPointContainer const& dp)
 
     _dataPoints.updateFrom(dp);
 
+    auto oNominalCapacity = _dataPoints.get<Label::BatteryCapacitySettingAmpHours>();
+    if (oNominalCapacity.has_value()) {
+        setNominalCapacity(*oNominalCapacity);
+    }
+
     auto oCellVoltages = _dataPoints.get<Label::CellsMilliVolt>();
     if (oCellVoltages.has_value()) {
         for (auto iter = oCellVoltages->cbegin(); iter != oCellVoltages->cend(); ++iter) {

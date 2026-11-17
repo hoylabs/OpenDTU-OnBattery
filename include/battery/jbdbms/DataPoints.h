@@ -96,7 +96,7 @@ LABEL_TRAIT(BatteryCellAmount,                      uint16_t,    "");
 LABEL_TRAIT(AlarmsBitmask,                          uint16_t,    "");
 LABEL_TRAIT(BalancingEnabled,                       bool,        "");
 LABEL_TRAIT(CellAmountSetting,                      uint8_t,     "");
-LABEL_TRAIT(BatteryCapacitySettingAmpHours,         uint32_t,    "Ah");
+LABEL_TRAIT(BatteryCapacitySettingAmpHours,         float,       "Ah");
 LABEL_TRAIT(BatteryChargeEnabled,                   bool,        "");
 LABEL_TRAIT(BatteryDischargeEnabled,                bool,        "");
 LABEL_TRAIT(DateOfManufacturing,                    std::string, "");
@@ -108,7 +108,7 @@ LABEL_TRAIT(ActualBatteryCapacityAmpHours,          uint32_t,    "Ah");
 } // namespace Batteries::JbdBms
 
 using JbdBmsDataPoint = DataPoint<bool, uint8_t, uint16_t, uint32_t,
-              int16_t, int32_t, std::string, Batteries::JbdBms::tCells>;
+              int16_t, int32_t, float, std::string, Batteries::JbdBms::tCells>;
 
 template class DataPointContainer<JbdBmsDataPoint, Batteries::JbdBms::DataPointLabel, Batteries::JbdBms::DataPointLabelTraits>;
 
